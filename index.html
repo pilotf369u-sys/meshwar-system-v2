@@ -176,8 +176,20 @@
             window.location.reload();
         }
 
-        function generateMainOrderCode() {
-            return 'MW-' + Math.floor(1000 + Math.random() * 9000);
+        async function generateMainOrderCode(supabase) {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('order_code')
+                .not('order_code', 'is', null)
+                .order('created_at', { ascending: false })
+                .limit(1000);
+            if (error) throw error;
+            let maxNumber = 1000;
+            (data || []).forEach(row => {
+                const match = String(row.order_code || '').match(/^MW-(\d+)$/i);
+                if (match) maxNumber = Math.max(maxNumber, Number(match[1]));
+            });
+            return 'MW-' + (maxNumber + 1);
         }
 
         async function submitOrder() {
@@ -222,7 +234,7 @@
                 }
                 if (!customer) throw new Error('العميل غير موجود في Supabase');
 
-                const orderCode = generateMainOrderCode();
+                const orderCode = await generateMainOrderCode(supabase);
                 const payload = {
                     order_code: orderCode,
                     customer_id: customer.id,
@@ -247,15 +259,8 @@
                 console.log('Supabase order insert succeeded:', insertData, payload);
 
                 const emoji = {
-                    cart: '\uD83D\uDED2',
-                    person: '\uD83D\uDC64',
-                    phone: '\uD83D\uDCF1',
-                    id: '\uD83C\uDD94',
-                    link: '\uD83D\uDD17',
-                    color: '\uD83C\uDFA8',
-                    ruler: '\uD83D\uDCCF',
-                    box: '\uD83D\uDCE6',
-                    pin: '\uD83D\uDCCC'
+                    cart: '\uD83D\uDED2', person: '\uD83D\uDC64', phone: '\uD83D\uDCF1', id: '\uD83C\uDD94',
+                    link: '\uD83D\uDD17', color: '\uD83C\uDFA8', ruler: '\uD83D\uDCCF', box: '\uD83D\uDCE6', pin: '\uD83D\uDCCC'
                 };
                 const message = [
                     '*طلب جديد عبر منصة MeshWar* ' + emoji.cart,
@@ -272,7 +277,6 @@
 
                 const whatsappNumber = '905521855554';
                 const whatsappURL = 'https://wa.me/' + whatsappNumber + '?text=' + encodeURIComponent(message);
-
                 window.open(whatsappURL, '_blank', 'noopener');
 
                 if (urlField) urlField.value = '';
