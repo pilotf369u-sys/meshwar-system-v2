@@ -35,9 +35,13 @@
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); text-align: right; }
         .order-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
         .barcode-svg { max-width: 170px; height: 42px; }
+        .pagination-bar { margin-top: 14px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+        .pagination-bar button { background: #2980b9; min-width: 38px; }
+        .pagination-bar button[disabled] { background: #bdc3c7; cursor: not-allowed; }
+        .pagination-bar .page-current { background: #1abc9c; }
     </style>
 </head>
-<body onload="initDefaultCustomers(); loadAdminOrders(); loadPricingSettings(); loadWhatsappSettings(); loadEmployees(); loadDelivery(); loadBaseCurrency(); loadCurrencies(); loadStoresAdmin(); loadCustomers();">
+<body onload="initDefaultCustomers(); loadAdminOrders(); loadPricingSettings(); loadWhatsappSettings(); loadEmployees(); loadDelivery(); loadBaseCurrency(); loadCurrencies(); loadStoresAdmin(); loadCustomers(); focusOrderSearch();">
     <div class="sidebar">
         <h2>لوحة الإدارة</h2>
         <a onclick="showSection('orders')">إدارة الطلبات</a>
@@ -59,12 +63,15 @@
         <div class="card active-section" id="orders">
             <h3 style="color: #2c3e50; border-bottom: 2px solid #1abc9c; padding-bottom: 10px;">إدارة الطلبات الواردة من العملاء</h3>
             <div style="background:#eef2f3; padding:12px; border-radius:6px; margin-bottom:15px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                <label for="orderSearchInput"><b>بحث الطلبات:</b></label>
-                <input id="orderSearchInput" type="text" oninput="scheduleOrderSearch()" placeholder="رقم الطلب، العميل، الكود، الهاتف أو البريد" autocomplete="off" style="width:360px; max-width:100%;">
+                <label for="orderSearchInput"><b>بحث الطلبات / مسح الباركود:</b></label>
+                <input id="orderSearchInput" type="text" oninput="scheduleOrderSearch()" onkeydown="handleOrderSearchKeydown(event)" placeholder="امسح الباركود أو اكتب رقم الطلب، العميل، الكود، الهاتف أو البريد" autocomplete="off" autofocus style="width:430px; max-width:100%;">
+                <label for="orderPageSize"><b>عدد العناصر:</b></label>
+                <select id="orderPageSize" onchange="changeOrderPageSize(this.value)" style="width:90px;"><option value="20" selected>20</option><option value="40">40</option></select>
             </div>
             <div style="overflow-x:auto;">
                 <table><thead><tr><th>رقم الطلب / الباركود</th><th>العميل</th><th>الهاتف</th><th>المنتج</th><th>التفاصيل</th><th>السعر</th><th>الحالة</th><th>سبب الرفض</th><th>تحديث الحالة</th></tr></thead><tbody id="adminOrdersTableBody"></tbody></table>
             </div>
+            <div id="orderPagination" class="pagination-bar"><button id="orderPrevBtn" onclick="changeOrderPage(-1)">السابق</button><span id="orderPageNumbers"></span><button id="orderNextBtn" onclick="changeOrderPage(1)">التالي</button><span id="orderCountInfo" style="color:#64748b;margin-right:8px;"></span></div>
         </div>
         <div class="card" id="pricing"><h3>إدارة التسعير وعمولات الشحن</h3><div style="background: #eef2f3; padding: 15px; border-radius: 5px; margin-bottom: 15px;"><div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;"><div><label><b>نسبة عمولة الموقع (%) :</b></label><br><input type="number" id="siteCommission" placeholder="مثال: 10"></div><div><label><b>سعر الشحن الثابت ($) :</b></label><br><input type="number" id="baseShippingFee" placeholder="مثال: 5"></div><div style="align-self: flex-end;"><button class="btn-green" onclick="savePricingSettings()">حفظ إعدادات التسعير</button></div></div></div></div>
         <div class="card" id="whatsapp"><h3>إعدادات إشعارات الواتساب</h3><div style="background: #eef2f3; padding: 15px; border-radius: 5px; margin-bottom: 15px;"><input type="text" id="adminWhatsappPhone" placeholder="رقم واتساب الأدمن" style="width: 300px;" dir="ltr"><button class="btn-green" onclick="saveWhatsappSettings()">حفظ رقم الواتساب</button><p style="margin-top: 5px; color: #555;">الرقم الحالي: <span id="displayWhatsappPhone" style="color: #27ae60; font-weight: bold;">غير مسجل</span></p></div></div>
@@ -75,11 +82,12 @@
         <div class="card" id="customers">
             <h3>إدارة العملاء ونظام المكافآت</h3>
             <div style="background: #eef2f3; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div><label><b>تصفية العرض: </b></label><select id="customerFilterSelect" onchange="loadCustomers()" style="width: 220px; padding: 6px;"><option value="all">عرض كافة العملاء</option><option value="eligible">⭐ العملاء المستحقون للمكافأة فقط</option></select></div>
+                <div><label><b>تصفية العرض: </b></label><select id="customerFilterSelect" onchange="resetCustomerPageAndLoad()" style="width: 220px; padding: 6px;"><option value="all">عرض كافة العملاء</option><option value="eligible">⭐ العملاء المستحقون للمكافأة فقط</option></select><label for="customerPageSize"><b>عدد العناصر:</b></label><select id="customerPageSize" onchange="changeCustomerPageSize(this.value)" style="width:90px;"><option value="20" selected>20</option><option value="40">40</option></select></div>
                 <div style="display:flex; align-items:center; gap:6px; flex:1; justify-content:flex-end;"><label for="customerSearchInput"><b>بحث العملاء: </b></label><input type="text" id="customerSearchInput" oninput="scheduleCustomerSearch()" placeholder="الاسم، الهاتف، الكود أو البريد الإلكتروني" autocomplete="off" style="width: 320px; max-width: 100%; padding: 8px;"></div>
             </div>
-            <div style="background: #fdfdfd; padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px;"><h4 id="customerFormTitle" style="margin-top: 0; color: #2c3e50;">إضافة عميل جديد</h4><input type="hidden" id="editCustomerIndex" value="-1"><div style="display: flex; flex-wrap: wrap; gap: 10px;"><input type="text" id="custName" placeholder="اسم العميل الكامل" style="flex: 1; min-width: 200px;"><input type="text" id="custCode" placeholder="كود العميل (اختياري)" style="flex: 1; min-width: 150px;"><input type="email" id="custEmail" placeholder="البريد الإلكتروني" style="flex: 1; min-width: 200px;"><input type="password" id="custPass" placeholder="كلمة المرور" style="flex: 1; min-width: 150px;"><select id="custCountry" onchange="updateCountryCode()" style="flex: 1; min-width: 180px;"><option value="" disabled selected>اختر الدولة</option><option value="تركيا" data-code="+90">تركيا (+90)</option><option value="سوريا" data-code="+963">سوريا (+963)</option><option value="السعودية" data-code="+966">السعودية (+966)</option><option value="الإمارات" data-code="+971">الإمارات (+971)</option><option value="مصر" data-code="+20">مصر (+20)</option><option value="الأردن" data-code="+962">الأردن (+962)</option><option value="العراق" data-code="+964">العراق (+964)</option></select><input type="text" id="custPhone" placeholder="رقم الهاتف" style="flex: 1; min-width: 220px;" dir="ltr"><input type="text" id="custState" placeholder="المحافظة / المدينة" style="flex: 1; min-width: 150px;"><input type="text" id="custAddress" placeholder="العنوان التفصيلي" style="flex: 2; min-width: 250px;"></div><div style="margin-top: 15px; display: flex; gap: 10px;"><button class="btn-green" id="saveCustomerBtn" onclick="saveCustomerData()">+ حفظ وإضافة العميل</button><button class="btn-red" id="cancelEditBtn" onclick="resetCustomerForm()" style="display: none;">إلغاء التعديل</button></div></div>
-            <table><thead><tr><th>الكود</th><th>اسم العميل</th><th>الهاتف</th><th>الدولة والمنطقة</th><th>العنوان</th><th>الطلبات المكتملة</th><th>حالة الاستحقاق</th><th>منح المكافأة</th><th>عدد الاستخدام</th><th>سجل المكافآت</th><th>الإجراءات</th></tr></thead><tbody id="custTableBody"></tbody></table>
+            <div style="background: #fdfdfd; padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px;"><h4 id="customerFormTitle" style="margin-top: 0; color: #2c3e50;">إضافة عميل جديد</h4><input type="hidden" id="editCustomerIndex" value="-1"><div style="display: flex; flex-wrap: wrap; gap: 10px;"><input type="text" id="custName" placeholder="اسم العميل الكامل" style="flex: 1; min-width: 200px;"><input type="text" id="custCode" placeholder="يولد تلقائياً: MW-C1001" readonly style="flex: 1; min-width: 150px; background:#f3f4f6;"><input type="email" id="custEmail" placeholder="البريد الإلكتروني" style="flex: 1; min-width: 200px;"><input type="password" id="custPass" placeholder="كلمة المرور" style="flex: 1; min-width: 150px;"><select id="custCountry" onchange="updateCountryCode()" style="flex: 1; min-width: 180px;"><option value="" disabled selected>اختر الدولة</option><option value="تركيا" data-code="+90">تركيا (+90)</option><option value="سوريا" data-code="+963">سوريا (+963)</option><option value="السعودية" data-code="+966">السعودية (+966)</option><option value="الإمارات" data-code="+971">الإمارات (+971)</option><option value="مصر" data-code="+20">مصر (+20)</option><option value="الأردن" data-code="+962">الأردن (+962)</option><option value="العراق" data-code="+964">العراق (+964)</option></select><input type="text" id="custPhone" placeholder="رقم الهاتف" style="flex: 1; min-width: 220px;" dir="ltr"><input type="text" id="custState" placeholder="المحافظة / المدينة" style="flex: 1; min-width: 150px;"><input type="text" id="custAddress" placeholder="العنوان التفصيلي" style="flex: 2; min-width: 250px;"></div><div style="margin-top: 15px; display: flex; gap: 10px;"><button class="btn-green" id="saveCustomerBtn" onclick="saveCustomerData()">+ حفظ وإضافة العميل</button><button class="btn-red" id="cancelEditBtn" onclick="resetCustomerForm()" style="display: none;">إلغاء التعديل</button></div></div>
+            <div style="overflow-x:auto;"><table><thead><tr><th>الكود</th><th>اسم العميل</th><th>الهاتف</th><th>الدولة والمنطقة</th><th>العنوان</th><th>الطلبات المكتملة</th><th>حالة الاستحقاق</th><th>منح المكافأة</th><th>عدد الاستخدام</th><th>سجل المكافآت</th><th>الإجراءات</th></tr></thead><tbody id="custTableBody"></tbody></table></div>
+            <div id="customerPagination" class="pagination-bar"><button id="customerPrevBtn" onclick="changeCustomerPage(-1)">السابق</button><span id="customerPageNumbers"></span><button id="customerNextBtn" onclick="changeCustomerPage(1)">التالي</button><span id="customerCountInfo" style="color:#64748b;margin-right:8px;"></span></div>
         </div>
         <div class="card" id="content"><h3>إدارة المحتوى والموقع</h3><p>تعديل نصوص وأقسام الموقع الرئيسية.</p></div>
     </div>
@@ -95,48 +103,80 @@
       let customerSearchRequestId = 0;
       let orderSearchTimer = null;
       let orderSearchRequestId = 0;
+      let customerPage = 1;
+      let customerPageSize = 20;
+      let customerTotal = 0;
+      let orderPage = 1;
+      let orderPageSize = 20;
+      let orderTotal = 0;
+      let orderBarcodeAutoOpen = false;
 
       async function ensureCustomerSupabase() { if (customerSupabase) return customerSupabase; const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'); customerSupabase = createClient(CUSTOMER_SUPABASE_URL, CUSTOMER_SUPABASE_KEY); return customerSupabase; }
-      function showSection(sectionId) { let sections = document.querySelectorAll('.card'); sections.forEach(sec => sec.classList.remove('active-section')); let target = document.getElementById(sectionId); if(target) { target.classList.add('active-section'); } }
+      function showSection(sectionId) { let sections = document.querySelectorAll('.card'); sections.forEach(sec => sec.classList.remove('active-section')); let target = document.getElementById(sectionId); if(target) target.classList.add('active-section'); if (sectionId === 'orders') setTimeout(focusOrderSearch, 50); }
       function initDefaultCustomers() { try { ensureCustomerSupabase(); } catch (error) { console.error('Supabase init error:', error); } }
 
       function escapeSupabaseSearchTerm(value) { return String(value || '').trim().replace(/[,%()]/g, ' '); }
-      function scheduleOrderSearch() { clearTimeout(orderSearchTimer); orderSearchTimer = setTimeout(() => loadAdminOrders(), 250); }
+      function totalPages(total, pageSize) { return Math.max(1, Math.ceil((Number(total) || 0) / pageSize)); }
+      function focusOrderSearch() { const input = document.getElementById('orderSearchInput'); if (input && document.getElementById('orders')?.classList.contains('active-section')) input.focus(); }
+
+      function scheduleOrderSearch() { orderPage = 1; clearTimeout(orderSearchTimer); orderSearchTimer = setTimeout(() => loadAdminOrders(), 120); }
+      function handleOrderSearchKeydown(event) { if (event.key !== 'Enter') return; event.preventDefault(); clearTimeout(orderSearchTimer); orderPage = 1; const value = document.getElementById('orderSearchInput')?.value.trim() || ''; orderBarcodeAutoOpen = /^MW-\d+$/i.test(value); loadAdminOrders(); }
+      function changeOrderPage(delta) { const pages = totalPages(orderTotal, orderPageSize); const next = Math.min(pages, Math.max(1, orderPage + delta)); if (next !== orderPage) { orderPage = next; loadAdminOrders(); } }
+      function goOrderPage(page) { const pages = totalPages(orderTotal, orderPageSize); orderPage = Math.min(pages, Math.max(1, Number(page) || 1)); loadAdminOrders(); }
+      function changeOrderPageSize(value) { orderPageSize = Number(value) === 40 ? 40 : 20; orderPage = 1; loadAdminOrders(); }
+      function renderOrderPagination() {
+        const pages = totalPages(orderTotal, orderPageSize);
+        if (orderPage > pages) orderPage = pages;
+        document.getElementById('orderPrevBtn').disabled = orderPage <= 1;
+        document.getElementById('orderNextBtn').disabled = orderPage >= pages;
+        const start = Math.max(1, orderPage - 2), end = Math.min(pages, orderPage + 2);
+        let html = '';
+        for (let p = start; p <= end; p++) html += `<button class="${p === orderPage ? 'page-current' : ''}" onclick="goOrderPage(${p})">${p}</button>`;
+        document.getElementById('orderPageNumbers').innerHTML = html;
+        document.getElementById('orderCountInfo').innerText = `الصفحة ${orderPage} من ${pages} — ${orderTotal} طلب`;
+      }
+
+      function scheduleCustomerSearch() { customerPage = 1; clearTimeout(customerSearchTimer); customerSearchTimer = setTimeout(() => loadCustomers(), 180); }
+      function resetCustomerPageAndLoad() { customerPage = 1; loadCustomers(); }
+      function changeCustomerPage(delta) { const pages = totalPages(customerTotal, customerPageSize); const next = Math.min(pages, Math.max(1, customerPage + delta)); if (next !== customerPage) { customerPage = next; loadCustomers(); } }
+      function goCustomerPage(page) { const pages = totalPages(customerTotal, customerPageSize); customerPage = Math.min(pages, Math.max(1, Number(page) || 1)); loadCustomers(); }
+      function changeCustomerPageSize(value) { customerPageSize = Number(value) === 40 ? 40 : 20; customerPage = 1; loadCustomers(); }
+      function renderCustomerPagination() {
+        const pages = totalPages(customerTotal, customerPageSize);
+        if (customerPage > pages) customerPage = pages;
+        document.getElementById('customerPrevBtn').disabled = customerPage <= 1;
+        document.getElementById('customerNextBtn').disabled = customerPage >= pages;
+        const start = Math.max(1, customerPage - 2), end = Math.min(pages, customerPage + 2);
+        let html = '';
+        for (let p = start; p <= end; p++) html += `<button class="${p === customerPage ? 'page-current' : ''}" onclick="goCustomerPage(${p})">${p}</button>`;
+        document.getElementById('customerPageNumbers').innerHTML = html;
+        document.getElementById('customerCountInfo').innerText = `الصفحة ${customerPage} من ${pages} — ${customerTotal} عميل`;
+      }
+
+      document.addEventListener('keydown', function(event) {
+        const ordersSection = document.getElementById('orders');
+        const searchInput = document.getElementById('orderSearchInput');
+        if (!ordersSection?.classList.contains('active-section') || !searchInput || event.ctrlKey || event.metaKey || event.altKey) return;
+        const tag = document.activeElement?.tagName;
+        if (document.activeElement !== searchInput && !['INPUT','TEXTAREA','SELECT'].includes(tag) && /^[A-Za-z0-9-]$/.test(event.key)) {
+          event.preventDefault();
+          searchInput.focus();
+          searchInput.value += event.key;
+          scheduleOrderSearch();
+        }
+      });
 
       async function ensureJsBarcode() {
         if (window.JsBarcode) return;
         await new Promise((resolve, reject) => {
           const existing = document.getElementById('meshwar-jsbarcode');
           if (existing) { existing.addEventListener('load', resolve, {once:true}); existing.addEventListener('error', reject, {once:true}); return; }
-          const script = document.createElement('script');
-          script.id = 'meshwar-jsbarcode';
-          script.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js';
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
+          const script = document.createElement('script'); script.id = 'meshwar-jsbarcode'; script.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js'; script.onload = resolve; script.onerror = reject; document.head.appendChild(script);
         });
       }
-
-      async function renderAdminOrderBarcodes() {
-        try {
-          await ensureJsBarcode();
-          document.querySelectorAll('svg[data-order-barcode]').forEach(svg => {
-            try { JsBarcode(svg, svg.dataset.orderBarcode, {format:'CODE128', displayValue:false, height:32, margin:2}); } catch (e) { console.warn('Barcode error', e); }
-          });
-        } catch (e) { console.warn('JsBarcode load error:', e); }
-      }
-
-      function orderDetailsText(details) {
-        if (!details) return '---';
-        let d = details;
-        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { return d; } }
-        if (typeof d !== 'object') return String(d);
-        return `اللون: ${d.color || '---'} | المقاس: ${d.size || '---'} | العدد: ${d.quantity || 1}${d.notes ? ' | ' + d.notes : ''}`;
-      }
-
-      function orderStatusOptions(current) {
-        return ORDER_STATUSES.map(status => `<option value="${status}" ${status === current ? 'selected' : ''}>${status}</option>`).join('');
-      }
+      async function renderAdminOrderBarcodes() { try { await ensureJsBarcode(); document.querySelectorAll('svg[data-order-barcode]').forEach(svg => { try { JsBarcode(svg, svg.dataset.orderBarcode, {format:'CODE128', displayValue:false, height:32, margin:2}); } catch (e) { console.warn('Barcode error', e); } }); } catch (e) { console.warn('JsBarcode load error:', e); } }
+      function orderDetailsText(details) { if (!details) return '---'; let d = details; if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { return d; } } if (typeof d !== 'object') return String(d); return `اللون: ${d.color || '---'} | المقاس: ${d.size || '---'} | العدد: ${d.quantity || 1}${d.notes ? ' | ' + d.notes : ''}`; }
+      function orderStatusOptions(current) { return ORDER_STATUSES.map(status => `<option value="${status}" ${status === current ? 'selected' : ''}>${status}</option>`).join(''); }
 
       async function loadAdminOrders() {
         const tbody = document.getElementById('adminOrdersTableBody'); if (!tbody) return;
@@ -146,24 +186,29 @@
         tbody.innerHTML = '<tr><td colspan="9" style="color:#777;padding:20px;">جاري تحميل الطلبات من Supabase...</td></tr>';
         try {
           const supabase = await ensureCustomerSupabase();
+          const exactBarcode = /^MW-\d+$/i.test(searchTerm);
           let matchingCustomerIds = [];
-          if (searchTerm) {
+          if (searchTerm && !exactBarcode) {
             const pattern = `%${searchTerm}%`;
-            const { data: customerMatches, error: customerSearchError } = await supabase.from('customers').select('id').or(`name.ilike.${pattern},phone.ilike.${pattern},code.ilike.${pattern},email.ilike.${pattern}`);
+            const { data: customerMatches, error: customerSearchError } = await supabase.from('customers').select('id').or(`name.ilike.${pattern},phone.ilike.${pattern},code.ilike.${pattern},email.ilike.${pattern}`).limit(500);
             if (customerSearchError) throw customerSearchError;
             matchingCustomerIds = (customerMatches || []).map(c => c.id);
           }
 
-          let query = supabase.from('orders').select('*');
-          if (searchTerm) {
+          let query = supabase.from('orders').select('*', { count: 'exact' });
+          if (exactBarcode) query = query.eq('order_code', searchTerm.toUpperCase());
+          else if (searchTerm) {
             const pattern = `%${searchTerm}%`;
             const clauses = [`order_code.ilike.${pattern}`, `customer_name.ilike.${pattern}`, `customer_phone.ilike.${pattern}`];
             if (matchingCustomerIds.length) clauses.push(`customer_id.in.(${matchingCustomerIds.join(',')})`);
             query = query.or(clauses.join(','));
           }
-          const { data, error } = await query.order('created_at', {ascending:false});
+          const from = (orderPage - 1) * orderPageSize;
+          const to = from + orderPageSize - 1;
+          const { data, error, count } = await query.order('created_at', {ascending:false}).range(from, to);
           if (requestId !== orderSearchRequestId) return;
           if (error) throw error;
+          orderTotal = count || 0;
           adminOrdersCloud = data || [];
           tbody.innerHTML = '';
 
@@ -175,26 +220,16 @@
             const urlHtml = order.order_url ? `<a href="${order.order_url}" target="_blank" rel="noopener" style="display:block;margin-top:5px;color:#2980b9;">فتح الرابط</a>` : '';
             const rejectionReason = order.rejection_reason || '';
             const rejectionVisible = status === 'رفض الطلب' ? 'block' : 'none';
-            tbody.innerHTML += `<tr>
-              <td><b style="color:#2980b9;">${code}</b><br><svg class="barcode-svg" data-order-barcode="${code}"></svg></td>
-              <td style="font-weight:bold;">${order.customer_name || '---'}</td>
-              <td dir="ltr">${order.customer_phone || '---'}</td>
-              <td>${imageHtml}${urlHtml}</td>
-              <td><button class="btn-details" onclick="openOrderDetailsModalData(decodeURIComponent('${idArg}'))">عرض التفاصيل</button></td>
-              <td><b style="color:#27ae60;">${Number(order.total_price || 0).toFixed(2)}</b></td>
-              <td><span style="font-weight:bold;">${status}</span></td>
-              <td>${rejectionReason ? `<span style="color:#c0392b;">${rejectionReason}</span>` : '---'}</td>
-              <td>
-                <select onchange="handleOrderStatusSelect(decodeURIComponent('${idArg}'), this)" style="width:170px;">${orderStatusOptions(status)}</select>
-                <div id="rejectBox-${idArg}" style="display:${rejectionVisible};margin-top:6px;">
-                  <input id="rejectReason-${idArg}" value="${rejectionReason.replace(/"/g,'&quot;')}" placeholder="سبب الرفض" style="width:170px;">
-                  <button class="btn-red" onclick="saveRejectedOrder(decodeURIComponent('${idArg}'))" style="margin-top:4px;">حفظ الرفض</button>
-                </div>
-              </td>
-            </tr>`;
+            tbody.innerHTML += `<tr><td><b style="color:#2980b9;">${code}</b><br><svg class="barcode-svg" data-order-barcode="${code}"></svg></td><td style="font-weight:bold;">${order.customer_name || '---'}</td><td dir="ltr">${order.customer_phone || '---'}</td><td>${imageHtml}${urlHtml}</td><td><button class="btn-details" onclick="openOrderDetailsModalData(decodeURIComponent('${idArg}'))">عرض التفاصيل</button></td><td><b style="color:#27ae60;">${Number(order.total_price || 0).toFixed(2)}</b></td><td><span style="font-weight:bold;">${status}</span></td><td>${rejectionReason ? `<span style="color:#c0392b;">${rejectionReason}</span>` : '---'}</td><td><select onchange="handleOrderStatusSelect(decodeURIComponent('${idArg}'), this)" style="width:170px;">${orderStatusOptions(status)}</select><div id="rejectBox-${idArg}" style="display:${rejectionVisible};margin-top:6px;"><input id="rejectReason-${idArg}" value="${rejectionReason.replace(/"/g,'&quot;')}" placeholder="سبب الرفض" style="width:170px;"><button class="btn-red" onclick="saveRejectedOrder(decodeURIComponent('${idArg}'))" style="margin-top:4px;">حفظ الرفض</button></div></td></tr>`;
           });
           if (!tbody.innerHTML.trim()) tbody.innerHTML = `<tr><td colspan="9" style="color:#777;padding:20px;">${searchTerm ? 'لا توجد طلبات مطابقة للبحث' : 'لا توجد طلبات مسجلة'}</td></tr>`;
-          renderAdminOrderBarcodes();
+          renderOrderPagination();
+          await renderAdminOrderBarcodes();
+          if (orderBarcodeAutoOpen) {
+            const exact = adminOrdersCloud.find(o => String(o.order_code || '').toUpperCase() === searchTerm.toUpperCase());
+            orderBarcodeAutoOpen = false;
+            if (exact) openOrderDetailsModalData(String(exact.id));
+          }
         } catch (error) {
           if (requestId !== orderSearchRequestId) return;
           console.error('Load orders error:', error);
@@ -202,41 +237,11 @@
         }
       }
 
-      function openOrderDetailsModalData(orderId) {
-        const order = adminOrdersCloud.find(o => String(o.id) === String(orderId)); if (!order) return;
-        const details = orderDetailsText(order.details);
-        const urlHtml = order.order_url ? `<a href="${order.order_url}" target="_blank" rel="noopener" style="color:#2980b9;word-break:break-all;">${order.order_url}</a>` : 'لا يوجد رابط';
-        const imageHtml = order.image_url ? `<img src="${order.image_url}" style="max-width:180px;max-height:180px;border-radius:8px;" alt="صورة الطلب">` : 'لا توجد صورة';
-        document.getElementById('modalOrderDetailsBody').innerHTML = `<p><b>رقم الطلب:</b> ${order.order_code || order.id}</p><p><b>العميل:</b> ${order.customer_name || '---'}</p><p><b>الهاتف:</b> ${order.customer_phone || '---'}</p><p><b>الحالة:</b> ${order.status || 'انتظار رد الموظف'}</p><p><b>سبب الرفض:</b> ${order.rejection_reason || '---'}</p><p><b>التفاصيل:</b> ${details}</p><p><b>الرابط:</b> ${urlHtml}</p><div>${imageHtml}</div>`;
-        document.getElementById('orderDetailsModal').style.display = 'flex';
-      }
+      function openOrderDetailsModalData(orderId) { const order = adminOrdersCloud.find(o => String(o.id) === String(orderId)); if (!order) return; const details = orderDetailsText(order.details); const urlHtml = order.order_url ? `<a href="${order.order_url}" target="_blank" rel="noopener" style="color:#2980b9;word-break:break-all;">${order.order_url}</a>` : 'لا يوجد رابط'; const imageHtml = order.image_url ? `<img src="${order.image_url}" style="max-width:180px;max-height:180px;border-radius:8px;" alt="صورة الطلب">` : 'لا توجد صورة'; document.getElementById('modalOrderDetailsBody').innerHTML = `<p><b>رقم الطلب:</b> ${order.order_code || order.id}</p><p><b>العميل:</b> ${order.customer_name || '---'}</p><p><b>الهاتف:</b> ${order.customer_phone || '---'}</p><p><b>الحالة:</b> ${order.status || 'انتظار رد الموظف'}</p><p><b>سبب الرفض:</b> ${order.rejection_reason || '---'}</p><p><b>التفاصيل:</b> ${details}</p><p><b>الرابط:</b> ${urlHtml}</p><div>${imageHtml}</div>`; document.getElementById('orderDetailsModal').style.display = 'flex'; }
       function closeOrderDetailsModal() { document.getElementById('orderDetailsModal').style.display = 'none'; }
-
-      async function updateOrderStatusById(orderId, status, rejectionReason) {
-        try {
-          const supabase = await ensureCustomerSupabase();
-          const payload = { status, rejection_reason: status === 'رفض الطلب' ? rejectionReason : null };
-          const { error } = await supabase.from('orders').update(payload).eq('id', orderId);
-          if (error) throw error;
-          await loadAdminOrders();
-        } catch (error) { console.error('Order status update error:', error); alert('تعذر تحديث حالة الطلب في Supabase: ' + (error.message || error)); }
-      }
-
-      function handleOrderStatusSelect(orderId, select) {
-        const encoded = encodeURIComponent(String(orderId));
-        const box = document.getElementById(`rejectBox-${encoded}`);
-        if (select.value === 'رفض الطلب') { if (box) box.style.display = 'block'; return; }
-        if (box) box.style.display = 'none';
-        updateOrderStatusById(orderId, select.value, null);
-      }
-
-      function saveRejectedOrder(orderId) {
-        const encoded = encodeURIComponent(String(orderId));
-        const input = document.getElementById(`rejectReason-${encoded}`);
-        const reason = input ? input.value.trim() : '';
-        if (!reason) return alert('يرجى إدخال سبب الرفض.');
-        updateOrderStatusById(orderId, 'رفض الطلب', reason);
-      }
+      async function updateOrderStatusById(orderId, status, rejectionReason) { try { const supabase = await ensureCustomerSupabase(); const payload = { status, rejection_reason: status === 'رفض الطلب' ? rejectionReason : null }; const { error } = await supabase.from('orders').update(payload).eq('id', orderId); if (error) throw error; await loadAdminOrders(); } catch (error) { console.error('Order status update error:', error); alert('تعذر تحديث حالة الطلب في Supabase: ' + (error.message || error)); } }
+      function handleOrderStatusSelect(orderId, select) { const encoded = encodeURIComponent(String(orderId)); const box = document.getElementById(`rejectBox-${encoded}`); if (select.value === 'رفض الطلب') { if (box) box.style.display = 'block'; return; } if (box) box.style.display = 'none'; updateOrderStatusById(orderId, select.value, null); }
+      function saveRejectedOrder(orderId) { const encoded = encodeURIComponent(String(orderId)); const input = document.getElementById(`rejectReason-${encoded}`); const reason = input ? input.value.trim() : ''; if (!reason) return alert('يرجى إدخال سبب الرفض.'); updateOrderStatusById(orderId, 'رفض الطلب', reason); }
 
       function savePricingSettings() { localStorage.setItem('siteCommissionVal', document.getElementById('siteCommission').value); localStorage.setItem('baseShippingVal', document.getElementById('baseShippingFee').value); alert('تم حفظ إعدادات التسعير'); }
       function loadPricingSettings() { document.getElementById('siteCommission').value = localStorage.getItem('siteCommissionVal') || ''; document.getElementById('baseShippingFee').value = localStorage.getItem('baseShippingVal') || ''; }
@@ -256,9 +261,7 @@
       function loadStoresAdmin() { let stores = JSON.parse(localStorage.getItem('dynamicStoresList')) || []; let tbody = document.getElementById('storesTableBody'); if(!tbody) return; tbody.innerHTML = ''; stores.forEach((st, i) => { tbody.innerHTML += `<tr><td>${st.name}</td><td>${st.category}</td><td>${st.url}</td><td><button class="btn-red" onclick="deleteStore(${i})">حذف</button></td></tr>`; }); }
       function addStore() { let name = document.getElementById('storeName').value, url = document.getElementById('storeUrl').value, category = document.getElementById('storeCategory').value; if(!name || !url) return; let stores = JSON.parse(localStorage.getItem('dynamicStoresList')) || []; stores.push({name, url, category}); localStorage.setItem('dynamicStoresList', JSON.stringify(stores)); document.getElementById('storeName').value = ''; document.getElementById('storeUrl').value = ''; loadStoresAdmin(); }
       function deleteStore(i) { let stores = JSON.parse(localStorage.getItem('dynamicStoresList')) || []; stores.splice(i, 1); localStorage.setItem('dynamicStoresList', JSON.stringify(stores)); loadStoresAdmin(); }
-      function updateCountryCode() { let select = document.getElementById('custCountry'); let code = select.options[select.selectedIndex].getAttribute('data-code'); let phoneInput = document.getElementById('custPhone'); if(code && !phoneInput.value.startsWith(code.replace('+',''))) { phoneInput.value = code.replace('+', ''); } }
-
-      function scheduleCustomerSearch() { clearTimeout(customerSearchTimer); customerSearchTimer = setTimeout(() => loadCustomers(), 250); }
+      function updateCountryCode() { let select = document.getElementById('custCountry'); let code = select.options[select.selectedIndex].getAttribute('data-code'); let phoneInput = document.getElementById('custPhone'); if(code && !phoneInput.value.startsWith(code.replace('+',''))) phoneInput.value = code.replace('+', ''); }
 
       async function loadCustomers() {
         let tbody = document.getElementById('custTableBody'); if(!tbody) return;
@@ -269,11 +272,14 @@
         tbody.innerHTML = '<tr><td colspan="11" style="color:#777; padding:20px;">جاري تحميل العملاء...</td></tr>';
         try {
           const supabase = await ensureCustomerSupabase();
-          let query = supabase.from('customers').select('*');
+          let query = supabase.from('customers').select('*', { count: 'exact' });
           if (searchTerm) { const pattern = `%${searchTerm}%`; query = query.or(`name.ilike.${pattern},phone.ilike.${pattern},code.ilike.${pattern},email.ilike.${pattern}`); }
-          const { data, error } = await query.order('id', { ascending: true });
+          const from = (customerPage - 1) * customerPageSize;
+          const to = from + customerPageSize - 1;
+          const { data, error, count } = await query.order('id', { ascending: true }).range(from, to);
           if (requestId !== customerSearchRequestId) return;
           if (error) throw error;
+          customerTotal = count || 0;
           adminCustomersCloud = (data || []).map(cust => ({...cust, rewardActive: cust.rewardActive ?? cust.reward_active ?? false, usageCount: cust.usageCount ?? cust.usage_count ?? 0, lastRewardAtCompletedCount: cust.lastRewardAtCompletedCount ?? cust.last_reward_at_completed_count ?? 0, rewardsLog: cust.rewardsLog ?? cust.rewards_log ?? [], orders: cust.orders ?? []}));
           tbody.innerHTML = '';
           adminCustomersCloud.forEach((cust) => {
@@ -281,17 +287,35 @@
             const customerIdArg = encodeURIComponent(String(cust.id));
             tbody.innerHTML += `<tr style="background-color: ${rowBackground};"><td><b style="color: #2980b9;">${cust.code || '---'}</b></td><td style="font-weight: bold;">${cust.name || '---'}</td><td dir="ltr" style="text-align: right;">${cust.phone || '---'}</td><td>${cust.country || '---'} / ${cust.state || '---'}</td><td>${cust.address || '---'}</td><td><span style="background: #e1f5fe; color: #0288d1; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${totalCompleted} كلي (${currentCycleCount} للدورة)</span></td><td>${eligibilityBadge}</td><td><input type="checkbox" ${isChecked} onchange="window.toggleCustomerRewardById(decodeURIComponent('${customerIdArg}'), this.checked)" style="width: 20px; height: 20px; cursor: pointer;"></td><td><span style="background: #e8f8f5; color: #16a085; padding: 4px 10px; border-radius: 4px; font-weight: bold;">${usageCnt} مرة</span></td><td>${rewardsHtml}</td><td><button class="btn-green" onclick="window.loginAsCloudCustomer(decodeURIComponent('${customerIdArg}'))" style="margin-left: 5px; background-color: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-right-to-bracket"></i> دخول</button><button class="btn-blue" onclick="window.editCustomer(decodeURIComponent('${customerIdArg}'))" style="margin-left: 5px;">تعديل</button><button class="btn-red" onclick="window.deleteCustomer(decodeURIComponent('${customerIdArg}'))">حذف</button></td></tr>`;
           });
-          if (!tbody.innerHTML.trim()) tbody.innerHTML = `<tr><td colspan="11" style="color:#777; padding:20px;">${searchTerm ? 'لا توجد نتائج مطابقة للبحث' : 'لا توجد بيانات عملاء'}</td></tr>`;
+          if (!tbody.innerHTML.trim()) tbody.innerHTML = `<tr><td colspan="11" style="color:#777; padding:20px;">${searchTerm ? 'لا توجد نتائج مطابقة للبحث' : 'لا توجد بيانات عملاء في هذه الصفحة'}</td></tr>`;
+          renderCustomerPagination();
         } catch (error) { if (requestId !== customerSearchRequestId) return; console.error('Load customers error:', error); tbody.innerHTML = `<tr><td colspan="11" style="color:#c0392b; padding:20px;">تعذر تحميل العملاء من Supabase: ${error.message || error}</td></tr>`; }
       }
 
       function getCloudCustomerById(customerId) { return adminCustomersCloud.find(cust => String(cust.id) === String(customerId)); }
       function loginAsCloudCustomer(customerId) { const cust = getCloudCustomerById(customerId); if (!cust) return alert('العميل غير موجود'); localStorage.setItem('loggedInUser', JSON.stringify({id: cust.id, code: cust.code || '', name: cust.name || '', phone: cust.phone || '', email: cust.email || '', country: cust.country || '', address: cust.address || ''})); localStorage.setItem('isEmployeeViewing', 'true'); localStorage.setItem('viewingCustomerId', String(cust.id)); localStorage.setItem('viewedBy', 'admin'); window.location.href = 'dashboard.html'; }
 
+      async function generateNextCustomerCode(supabase) {
+        const { data, error } = await supabase.from('customers').select('code').not('code', 'is', null).order('id', { ascending: false }).limit(1000);
+        if (error) throw error;
+        let maxNumber = 1000;
+        (data || []).forEach(row => { const match = String(row.code || '').match(/^MW-C(\d+)$/i); if (match) maxNumber = Math.max(maxNumber, Number(match[1])); });
+        return 'MW-C' + (maxNumber + 1);
+      }
+
       async function saveCustomerData() {
-        let name = document.getElementById('custName').value.trim(); let code = document.getElementById('custCode').value.trim(); let email = document.getElementById('custEmail').value.trim(); let password = document.getElementById('custPass').value.trim(); let country = document.getElementById('custCountry').value; let phone = document.getElementById('custPhone').value.trim(); let address = document.getElementById('custAddress').value.trim(); let editCustomerId = document.getElementById('editCustomerIndex').value;
+        let name = document.getElementById('custName').value.trim(); let email = document.getElementById('custEmail').value.trim(); let password = document.getElementById('custPass').value.trim(); let country = document.getElementById('custCountry').value; let phone = document.getElementById('custPhone').value.trim(); let address = document.getElementById('custAddress').value.trim(); let editCustomerId = document.getElementById('editCustomerIndex').value;
         if(!name || !phone || !address || !country) { alert('الرجاء إدخال الاسم ورقم الهاتف والدولة والعنوان.'); return; }
-        try { const supabase = await ensureCustomerSupabase(); const current = editCustomerId !== '-1' ? getCloudCustomerById(editCustomerId) : null; if (editCustomerId === '-1' && !password) { alert('الرجاء إدخال كلمة مرور للعميل الجديد.'); return; } const payload = { code: code || current?.code || ('CUS-' + Math.floor(1000 + Math.random() * 9000)), name, email, phone, country, address, password: password || current?.password || null }; if (editCustomerId === '-1') { const { error } = await supabase.from('customers').insert([payload]); if (error) throw error; alert('تمت إضافة العميل بنجاح إلى Supabase'); } else { if (!current) throw new Error('العميل المحدد غير موجود'); const { error } = await supabase.from('customers').update(payload).eq('id', current.id); if (error) throw error; alert('تم تحديث بيانات العميل بنجاح في Supabase'); } resetCustomerForm(); await loadCustomers(); } catch (error) { console.error('Save customer error:', error); alert('تعذر حفظ العميل في Supabase: ' + (error.message || error)); }
+        try {
+          const supabase = await ensureCustomerSupabase();
+          const current = editCustomerId !== '-1' ? getCloudCustomerById(editCustomerId) : null;
+          if (editCustomerId === '-1' && !password) { alert('الرجاء إدخال كلمة مرور للعميل الجديد.'); return; }
+          const code = current?.code || await generateNextCustomerCode(supabase);
+          const payload = { code, name, email, phone, country, address, password: password || current?.password || null };
+          if (editCustomerId === '-1') { const { error } = await supabase.from('customers').insert([payload]); if (error) throw error; alert('تمت إضافة العميل بنجاح إلى Supabase بالكود ' + code); }
+          else { if (!current) throw new Error('العميل المحدد غير موجود'); const { error } = await supabase.from('customers').update(payload).eq('id', current.id); if (error) throw error; alert('تم تحديث بيانات العميل بنجاح في Supabase'); }
+          resetCustomerForm(); await loadCustomers();
+        } catch (error) { console.error('Save customer error:', error); alert('تعذر حفظ العميل في Supabase: ' + (error.message || error)); }
       }
 
       function editCustomer(customerId) { let cust = getCloudCustomerById(customerId); if (!cust) return; document.getElementById('editCustomerIndex').value = String(cust.id); document.getElementById('custName').value = cust.name || ''; document.getElementById('custCode').value = cust.code || ''; document.getElementById('custEmail').value = cust.email || ''; document.getElementById('custPass').value = ''; document.getElementById('custCountry').value = cust.country || ''; document.getElementById('custPhone').value = cust.phone || ''; document.getElementById('custState').value = cust.state || ''; document.getElementById('custAddress').value = cust.address || ''; document.getElementById('customerFormTitle').innerText = "تعديل بيانات العميل: " + cust.name; document.getElementById('saveCustomerBtn').innerText = "حفظ التعديلات"; document.getElementById('cancelEditBtn').style.display = "inline-block"; window.scrollTo({top: 400, behavior: 'smooth'}); }
@@ -305,6 +329,15 @@
       window.toggleCustomerRewardById = toggleCustomerRewardById;
       window.scheduleCustomerSearch = scheduleCustomerSearch;
       window.scheduleOrderSearch = scheduleOrderSearch;
+      window.handleOrderSearchKeydown = handleOrderSearchKeydown;
+      window.changeOrderPage = changeOrderPage;
+      window.goOrderPage = goOrderPage;
+      window.changeOrderPageSize = changeOrderPageSize;
+      window.changeCustomerPage = changeCustomerPage;
+      window.goCustomerPage = goCustomerPage;
+      window.changeCustomerPageSize = changeCustomerPageSize;
+      window.resetCustomerPageAndLoad = resetCustomerPageAndLoad;
+      window.focusOrderSearch = focusOrderSearch;
       window.handleOrderStatusSelect = handleOrderStatusSelect;
       window.saveRejectedOrder = saveRejectedOrder;
       window.openOrderDetailsModalData = openOrderDetailsModalData;
