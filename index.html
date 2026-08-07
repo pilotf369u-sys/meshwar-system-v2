@@ -20,69 +20,18 @@
         .store-logo { max-width: 85%; max-height: 100%; object-fit: contain; }
         .store-link { display: inline-block; background-color: #003366; color: white; text-decoration: none; padding: 6px 12px; border-radius: 6px; width: 90%; font-weight: bold; font-size: 12px; margin-top: auto; }
         .local-link { background-color: #cc6600; }
-        
-        /* زر الطلب الثابت العائم */
         .fixed-order-btn { position: fixed; bottom: 30px; right: 30px; background-color: #25d366; color: white; padding: 15px 25px; border-radius: 50px; border: none; z-index: 9999; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); transition: transform 0.3s; }
         .fixed-order-btn:hover { transform: scale(1.05); }
-
-        /* تنسيق التبويبات */
-        .nav-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding: 25px;
-            background: #ffffff;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-        .nav-container a {
-            text-decoration: none;
-            color: #495057;
-            background: #f8f9fa;
-            padding: 10px 22px;
-            border-radius: 50px;
-            font-size: 15px;
-            font-weight: 600;
-            border: 1px solid #dee2e6;
-            transition: all 0.3s ease;
-        }
-        .nav-container a:hover {
-            background: #ff6600;
-            color: #ffffff;
-            border-color: #ff6600;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(255, 102, 0, 0.3);
-        }
+        .nav-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; padding: 25px; background: #ffffff; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .nav-container a { text-decoration: none; color: #495057; background: #f8f9fa; padding: 10px 22px; border-radius: 50px; font-size: 15px; font-weight: 600; border: 1px solid #dee2e6; transition: all 0.3s ease; }
+        .nav-container a:hover { background: #ff6600; color: #ffffff; border-color: #ff6600; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(255, 102, 0, 0.3); }
     </style>
 </head>
 <body>
+    <button class="fixed-order-btn" onclick="document.getElementById('orderModal').style.display='block'"><i class="fa-solid fa-cart-shopping"></i> طلب منتج</button>
+    <div class="user-auth-zone" style="text-align: center;"><a href="#" id="authLink" class="account-btn"><i class="fa-solid fa-circle-user"></i> <span id="authText">حسابي / تسجيل</span></a><br><a href="#" id="logoutBtn" onclick="logout()" style="display:none; color: #cc0000; font-size: 13px; margin-top: 8px; text-decoration: none; font-weight: bold;">تسجيل خروج</a></div>
+    <div class="header-container"><img class="main-logo" src="images/meshwar-logo.png" alt="MeshWar Logo"><h1>منصة MeshWar</h1><p>دليلك الشامل للتسوق من الأسواق التركية والشحن الدولي.</p></div>
 
-    <!-- زر الطلب العائم السريع للرئيسية -->
-    <button class="fixed-order-btn" onclick="document.getElementById('orderModal').style.display='block'">
-        <i class="fa-solid fa-cart-shopping"></i> طلب منتج
-    </button>
-
-    <!-- منطقة حساب المستخدم -->
-    <div class="user-auth-zone" style="text-align: center;">
-        <a href="#" id="authLink" class="account-btn">
-            <i class="fa-solid fa-circle-user"></i> <span id="authText">حسابي / تسجيل</span>
-        </a>
-        <br>
-        <a href="#" id="logoutBtn" onclick="logout()" style="display:none; color: #cc0000; font-size: 13px; margin-top: 8px; text-decoration: none; font-weight: bold;">
-            تسجيل خروج
-        </a>
-    </div>
-
-    <div class="header-container">
-        <img class="main-logo" src="images/meshwar-logo.png" alt="MeshWar Logo">
-        <h1>منصة MeshWar</h1>
-        <p>دليلك الشامل للتسوق من الأسواق التركية والشحن الدولي.</p>
-    </div>
-
-    <!-- الأقسام والمتاجر الشاملة -->
     <h2 class="section-title">المتاجر الشاملة</h2>
     <div class="grid-container">
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/trendyol.png" alt="Trendyol"></div><h3>Trendyol</h3><a class="store-link" href="https://www.trendyol.com" target="_blank" rel="noopener noreferrer">تصفح</a></div>
@@ -92,7 +41,6 @@
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/beymen.png" alt="Beymen"></div><h3>Beymen</h3><a class="store-link" href="https://www.beymen.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
     </div>
 
-    <!-- الأزياء والملابس -->
     <h2 class="section-title">الأزياء والملابس</h2>
     <div class="grid-container">
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/waikiki.png" alt="LC Waikiki"></div><h3>LC Waikiki</h3><a class="store-link" href="https://www.lcwaikiki.com" target="_blank" rel="noopener noreferrer">تصفح</a></div>
@@ -119,7 +67,6 @@
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/kayra.png" alt="Kayra"></div><h3>Kayra</h3><a class="store-link" href="https://www.kayra.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
     </div>
 
-    <!-- الرياضة والأحذية -->
     <h2 class="section-title">الرياضة والأحذية</h2>
     <div class="grid-container">
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/nike.png" alt="Nike"></div><h3>Nike</h3><a class="store-link" href="https://www.nike.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
@@ -130,7 +77,6 @@
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/luvishoes.png" alt="Luvi Shoes"></div><h3>Luvi Shoes</h3><a class="store-link" href="https://www.luvishoes.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
     </div>
 
-    <!-- التجميل والعناية -->
     <h2 class="section-title">التجميل والعناية</h2>
     <div class="grid-container">
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/gratis.png" alt="Gratis"></div><h3>Gratis</h3><a class="store-link" href="https://www.gratis.com" target="_blank" rel="noopener noreferrer">تصفح</a></div>
@@ -142,7 +88,6 @@
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/penti.png" alt="Penti"></div><h3>Penti</h3><a class="store-link" href="https://www.penti.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
     </div>
 
-    <!-- المنزل والأطفال والسوبر ماركت -->
     <h2 class="section-title">المنزل والأطفال والسوبر ماركت</h2>
     <div class="grid-container">
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/madamecoco.png" alt="Madame Coco"></div><h3>Madame Coco</h3><a class="store-link" href="https://www.madamecoco.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
@@ -157,7 +102,6 @@
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/sok.png" alt="Şok Market"></div><h3>Şok Market</h3><a class="store-link" href="https://kurumsal.sokmarket.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
     </div>
 
-    <!-- المتاجر الشخصية والمحلية -->
     <h2 class="section-title">المتاجر الشخصية والمحلية</h2>
     <div class="grid-container">
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/meshwar.png" alt="Meshwar"></div><h3>Meshwar</h3><a class="store-link local-link" href="meshwar.html">دخول</a></div>
@@ -172,61 +116,50 @@
         <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/tech.png" alt="أجهزة وتكنولوجيا"></div><h3>أجهزة وتكنولوجيا</h3><a class="store-link local-link" href="tech.html">دخول</a></div>
     </div>
 
-    <!-- نافذة الطلب (بدون حقول الاسم والكود والعنوان - تسحب تلقائياً) -->
     <div id="orderModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:10000; overflow-y:auto;">
         <div style="background:white; width:90%; max-width:350px; margin:30px auto; padding:15px; border-radius:15px; text-align:right; direction:rtl;">
-            
-            <div style="text-align:center; margin-bottom:10px;">
-                <img src="images/meshwar-logo.png" alt="MeshWar Logo" style="max-width:100px; height:auto;">
-            </div>
-
+            <div style="text-align:center; margin-bottom:10px;"><img src="images/meshwar-logo.png" alt="MeshWar Logo" style="max-width:100px; height:auto;"></div>
             <h3 style="color:#cc0000; text-align:center; margin-top:0; font-size:18px;">إرسال تفاصيل الطلب</h3>
-            
-            <label>رابط المنتج:</label>
-            <input type="text" id="pUrl" placeholder="الصق الرابط هنا" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
-            
-            <div style="display:flex; gap:10px;">
-                <div style="flex:1;"><label>اللون:</label><input type="text" id="pColor" placeholder="مثلاً: أسود" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></div>
-                <div style="flex:1;"><label>المقاس:</label><input type="text" id="pSize" placeholder="مثلاً: XL" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></div>
-            </div>
-            
-            <label>العدد:</label>
-            <input type="number" id="pQuantity" value="1" min="1" style="width:100%; padding:10px; margin-bottom:20px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
-            
-            <button onclick="submitOrder()" style="background:#25d366; color:white; padding:12px; border:none; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">إرسال للواتساب</button>
+            <label>رابط المنتج:</label><input type="text" id="pUrl" placeholder="الصق الرابط هنا" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+            <div style="display:flex; gap:10px;"><div style="flex:1;"><label>اللون:</label><input type="text" id="pColor" placeholder="مثلاً: أسود" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></div><div style="flex:1;"><label>المقاس:</label><input type="text" id="pSize" placeholder="مثلاً: XL" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></div></div>
+            <label>العدد:</label><input type="number" id="pQuantity" value="1" min="1" style="width:100%; padding:10px; margin-bottom:20px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+            <button id="mainOrderSubmitBtn" onclick="submitOrder()" style="background:#25d366; color:white; padding:12px; border:none; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">إرسال للواتساب</button>
             <button onclick="document.getElementById('orderModal').style.display='none'" style="margin-top:10px; background:none; border:none; color:#666; cursor:pointer; width:100%;">إغلاق</button>
         </div>
     </div>
 
-    <!-- السكريبتات -->
     <script>
+        const MAIN_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
+        const MAIN_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+        let mainSupabase = null;
+
+        async function ensureMainSupabase() {
+            if (mainSupabase) return mainSupabase;
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+            mainSupabase = createClient(MAIN_SUPABASE_URL, MAIN_SUPABASE_KEY);
+            return mainSupabase;
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const userDataString = localStorage.getItem('loggedInUser');
             const authLink = document.getElementById('authLink');
             const authText = document.getElementById('authText');
             const logoutBtn = document.getElementById('logoutBtn');
-
             if (userDataString) {
                 try {
                     const userData = JSON.parse(userDataString);
                     if (authText) authText.innerText = userData.name;
                     if (authLink) authLink.href = "dashboard.html";
                     if (logoutBtn) logoutBtn.style.display = 'inline-block';
-                } catch (e) {
-                    console.error("خطأ", e);
-                }
-            } else {
-                if (authLink) authLink.href = "login.html";
-            }
+                } catch (e) { console.error("خطأ", e); }
+            } else if (authLink) authLink.href = "login.html";
 
-            // إنشاء التبويبات العلوية
             const nav = document.createElement('nav');
             nav.className = 'nav-container';
             const all = document.createElement('a');
             all.innerText = "الكل";
             all.href = "#";
             nav.appendChild(all);
-
             document.querySelectorAll('.section-title').forEach((title, index) => {
                 title.id = "section-" + index;
                 const link = document.createElement('a');
@@ -239,11 +172,15 @@
 
         function logout() {
             localStorage.removeItem('loggedInUser');
+            localStorage.removeItem('viewingCustomerId');
             window.location.reload();
         }
 
-        function submitOrder() {
-            // 1. جلب بيانات العميل المسجل حالياً
+        function generateMainOrderCode() {
+            return `MW-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+        }
+
+        async function submitOrder() {
             const userDataString = localStorage.getItem('loggedInUser');
             if (!userDataString) {
                 alert('الرجاء تسجيل الدخول أولاً');
@@ -252,99 +189,88 @@
             }
 
             let userData;
-            try {
-                userData = JSON.parse(userDataString);
-            } catch (e) {
-                userData = {};
+            try { userData = JSON.parse(userDataString); } catch (e) { userData = {}; }
+            const customerId = userData.id || localStorage.getItem('viewingCustomerId');
+            if (!customerId) {
+                alert('تعذر تحديد رقم العميل. يرجى تسجيل الدخول من جديد.');
+                return;
             }
 
-            const userName = userData.name || userData.username || "عميل غير معروف";
-            const userPhone = userData.phone || "";
-
-            // 2. قراءة حقول الإدخال من نموذج الطلب
             const urlField = document.getElementById('pUrl');
             const colorField = document.getElementById('pColor');
             const sizeField = document.getElementById('pSize');
             const quantityField = document.getElementById('pQuantity');
-            const priceField = document.getElementById('pPrice');
-
             const url = urlField ? urlField.value.trim() : '';
             const color = colorField ? colorField.value.trim() : 'غير محدد';
             const size = sizeField ? sizeField.value.trim() : 'غير محدد';
-            const quantity = quantityField ? quantityField.value.trim() : '1';
-            const priceStr = priceField ? priceField.value.trim() : '$0.00';
+            const quantity = Number(quantityField ? quantityField.value : 1) || 1;
+            if (!url) return alert('الرجاء إدخال رابط المنتج على الأقل.');
 
-            if (!url) {
-                alert('الرجاء إدخال رابط المنتج على الأقل.');
-                return;
-            }
+            const submitBtn = document.getElementById('mainOrderSubmitBtn');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'جاري حفظ الطلب...'; }
 
-            // 3. تجهيز كائن الطلب الجديد بالهيكل الذي تتوقعه لوحة التحكم
-            const newOrder = {
-                id: 'MW-' + Math.floor(1000 + Math.random() * 9000),
-                date: new Date().toLocaleString('ar-SA', { hour12: true }),
-                url: url,
-                color: color,
-                size: size,
-                quantity: quantity,
-                price: priceStr.includes('$') ? priceStr : '$' + priceStr,
-                status: 'قيد المعالجة'
-            };
+            try {
+                const supabase = await ensureMainSupabase();
+                const { data: customer, error: customerError } = await supabase.from('customers').select('id,name,phone').eq('id', customerId).maybeSingle();
+                if (customerError) throw customerError;
+                if (!customer) throw new Error('العميل غير موجود في Supabase');
 
-            // 4. ربط الطلب بملف العميل في adminCustomersList لتظهر في لوحة التحكم تلقائياً
-            let adminCustomersList = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            
-            // البحث عن العميل إما برقم الهاتـف أو بالاسم
-            let customerIndex = adminCustomersList.findIndex(c => (userPhone && c.phone === userPhone) || c.name === userName);
+                const payload = {
+                    order_code: generateMainOrderCode(),
+                    customer_id: customer.id,
+                    customer_name: customer.name || '',
+                    customer_phone: customer.phone || '',
+                    details: { color, size, quantity },
+                    total_price: 0,
+                    order_url: url,
+                    image_url: null,
+                    status: 'انتظار رد الموظف'
+                };
 
-            if (customerIndex !== -1) {
-                // إذا كان العميل موجوداً مسبقاً، نضيف الطلب لقائمته
-                if (!adminCustomersList[customerIndex].orders) {
-                    adminCustomersList[customerIndex].orders = [];
-                }
-                adminCustomersList[customerIndex].orders.push(newOrder);
-            } else {
-                // إذا لم يكن موجوداً في القائمة، نقوم بإنشاء سجل جديد له مع طلبه الأول
-                adminCustomersList.push({
-                    name: userName,
-                    phone: userPhone,
-                    address: userData.address || '',
-                    orders: [newOrder]
-                });
-            }
+                const { data: insertedOrder, error: insertError } = await supabase
+                    .from('orders')
+                    .insert([payload])
+                    .select('id,order_code,customer_id,status')
+                    .single();
+                if (insertError) throw insertError;
+                if (!insertedOrder) throw new Error('لم يتم استلام تأكيد حفظ الطلب من Supabase');
 
-            // حفظ التحديثات في الـ localStorage
-            localStorage.setItem('adminCustomersList', JSON.stringify(adminCustomersList));
+                let message = `*طلب جديد عبر منصة MeshWar* 🛒\n\n`;
+                message += `👤 *الاسم:* ${customer.name || ''}\n`;
+                if (customer.phone) message += `📱 *الهاتف:* ${customer.phone}\n`;
+                message += `🆔 *رقم الطلب:* ${insertedOrder.order_code || payload.order_code}\n`;
+                message += `🔗 *رابط المنتج:* ${url}\n`;
+                message += `🎨 *اللون:* ${color}\n`;
+                message += `📏 *المقاس:* ${size}\n`;
+                message += `📦 *العدد:* ${quantity}\n`;
+                message += `📌 *الحالة:* انتظار رد الموظف\n`;
 
-            // 5. تجهيز رسالة الواتساب وإرسالها
-            let message = `*طلب جديد عبر منصة MeshWar* 🛒\n\n`;
-            message += `👤 *الاسم:* ${userName}\n`;
-            if (userPhone) message += `📱 *الهاتف:* ${userPhone}\n`;
-            message += `🆔 *رقم الطلب:* ${newOrder.id}\n`;
-            message += `🔗 *رابط المنتج:* ${url}\n`;
-            message += `🎨 *اللون:* ${color}\n`;
-            message += `📏 *المقاس:* ${size}\n`;
-            message += `📦 *العدد:* ${quantity}\n`;
-            message += `💰 *السعر التقديري:* ${newOrder.price}\n`;
+                const whatsappNumber = '905521855554';
+                const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
-            const whatsappNumber = "905521855554";
-            const encodedMessage = encodeURIComponent(message);
-            const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+                if (typeof window.loadCustomerOrdersFromCloud === 'function') await window.loadCustomerOrdersFromCloud(customer.id);
+                if (typeof window.loadAdminOrders === 'function') await window.loadAdminOrders();
 
-            // فتح واتساب
-            window.open(whatsappURL, '_blank');
+                window.open(whatsappURL, '_blank');
 
-            // 6. تفريغ الحقول وإغلاق النافذة المنبثقة للطلب
-            if (urlField) urlField.value = '';
-            if (colorField) colorField.value = '';
-            if (sizeField) sizeField.value = '';
-            if (quantityField) quantityField.value = '1';
+                if (urlField) urlField.value = '';
+                if (colorField) colorField.value = '';
+                if (sizeField) sizeField.value = '';
+                if (quantityField) quantityField.value = '1';
+                const orderModal = document.getElementById('orderModal');
+                if (orderModal) orderModal.style.display = 'none';
 
-            const orderModal = document.getElementById('orderModal');
-            if (orderModal) {
-                orderModal.style.display = 'none';
+                alert(`تم حفظ الطلب في Supabase بنجاح. رقم الطلب: ${insertedOrder.order_code || payload.order_code}`);
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                console.error('Supabase order submit error:', error);
+                alert('لم يتم فتح واتساب لأن حفظ الطلب في Supabase فشل: ' + (error.message || error));
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'إرسال للواتساب'; }
             }
         }
+
+        window.submitOrder = submitOrder;
     </script>
 </body>
 </html>
