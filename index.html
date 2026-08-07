@@ -177,7 +177,7 @@
         }
 
         function generateMainOrderCode() {
-            return `MW-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+            return 'MW-' + Math.floor(1000 + Math.random() * 9000);
         }
 
         async function submitOrder() {
@@ -211,47 +211,82 @@
 
             try {
                 const supabase = await ensureMainSupabase();
-                const { data: customer, error: customerError } = await supabase.from('customers').select('id,name,phone').eq('id', customerId).maybeSingle();
-                if (customerError) throw customerError;
+                const { data: customer, error: customerError } = await supabase
+                    .from('customers')
+                    .select('id,name,phone')
+                    .eq('id', customerId)
+                    .maybeSingle();
+
+                if (customerError) {
+                    console.error('Supabase customer lookup failed:', customerError);
+                    throw customerError;
+                }
                 if (!customer) throw new Error('العميل غير موجود في Supabase');
 
+                const orderCode = generateMainOrderCode();
                 const payload = {
-                    order_code: generateMainOrderCode(),
+                    order_code: orderCode,
                     customer_id: customer.id,
                     customer_name: customer.name || '',
                     customer_phone: customer.phone || '',
-                    details: { color, size, quantity },
-                    total_price: 0,
-                    order_url: url,
-                    image_url: null,
+                    details: JSON.stringify({ order_url: url, color, size, quantity }),
                     status: 'انتظار رد الموظف'
                 };
 
-                const { data: insertedOrder, error: insertError } = await supabase
-                    .from('orders')
-                    .insert([payload])
-                    .select('id,order_code,customer_id,status')
-                    .single();
-                if (insertError) throw insertError;
-                if (!insertedOrder) throw new Error('لم يتم استلام تأكيد حفظ الطلب من Supabase');
+                console.log('Supabase orders insert payload:', payload);
 
-                let message = `*طلب جديد عبر منصة MeshWar* 🛒\n\n`;
-                message += `👤 *الاسم:* ${customer.name || ''}\n`;
-                if (customer.phone) message += `📱 *الهاتف:* ${customer.phone}\n`;
-                message += `🆔 *رقم الطلب:* ${insertedOrder.order_code || payload.order_code}\n`;
-                message += `🔗 *رابط المنتج:* ${url}\n`;
-                message += `🎨 *اللون:* ${color}\n`;
-                message += `📏 *المقاس:* ${size}\n`;
-                message += `📦 *العدد:* ${quantity}\n`;
-                message += `📌 *الحالة:* انتظار رد الموظف\n`;
+                const { error: insertError } = await supabase
+                    .from('orders')
+                    .insert([payload]);
+
+                if (insertError) {
+                    console.error('Supabase orders insert failed:', insertError, payload);
+                    throw insertError;
+                }
+
+                const { data: savedOrder, error: verifyError } = await supabase
+                    .from('orders')
+                    .select('order_code,customer_id,customer_name,customer_phone,details,status')
+                    .eq('order_code', orderCode)
+                    .eq('customer_id', customer.id)
+                    .maybeSingle();
+
+                if (verifyError) {
+                    console.error('Supabase orders verification failed:', verifyError, { orderCode, customerId: customer.id });
+                    throw verifyError;
+                }
+                if (!savedOrder) {
+                    const verificationError = new Error('تم تنفيذ طلب الإدراج دون خطأ، لكن لم يتم العثور على السجل عند التحقق من Supabase. تحقق من RLS وسياسات SELECT/INSERT.');
+                    console.error('Supabase orders verification returned no row:', verificationError, payload);
+                    throw verificationError;
+                }
+
+                console.log('Supabase order saved and verified:', savedOrder);
+
+                const message = [
+                    '*طلب جديد عبر منصة MeshWar* \u{1F6D2}',
+                    '',
+                    '\u{1F464} *الاسم:* ' + (customer.name || ''),
+                    '\u{1F4F1} *الهاتف:* ' + (customer.phone || ''),
+                    '\u{1F194} *رقم الطلب:* ' + savedOrder.order_code,
+                    '\u{1F517} *رابط المنتج:* ' + url,
+                    '\u{1F3A8} *اللون:* ' + color,
+                    '\u{1F4CF} *المقاس:* ' + size,
+                    '\u{1F4E6} *العدد:* ' + quantity,
+                    '\u{1F4CC} *الحالة:* انتظار رد الموظف'
+                ].join('\n');
 
                 const whatsappNumber = '905521855554';
-                const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+                const whatsappURL = 'https://wa.me/' + whatsappNumber + '?text=' + encodeURIComponent(message);
 
-                if (typeof window.loadCustomerOrdersFromCloud === 'function') await window.loadCustomerOrdersFromCloud(customer.id);
-                if (typeof window.loadAdminOrders === 'function') await window.loadAdminOrders();
+                if (typeof window.loadCustomerOrdersFromCloud === 'function') {
+                    await window.loadCustomerOrdersFromCloud(customer.id);
+                }
+                if (typeof window.loadAdminOrders === 'function') {
+                    await window.loadAdminOrders();
+                }
 
-                window.open(whatsappURL, '_blank');
+                window.open(whatsappURL, '_blank', 'noopener');
 
                 if (urlField) urlField.value = '';
                 if (colorField) colorField.value = '';
@@ -260,11 +295,11 @@
                 const orderModal = document.getElementById('orderModal');
                 if (orderModal) orderModal.style.display = 'none';
 
-                alert(`تم حفظ الطلب في Supabase بنجاح. رقم الطلب: ${insertedOrder.order_code || payload.order_code}`);
+                alert('تم حفظ الطلب والتحقق منه في Supabase بنجاح. رقم الطلب: ' + savedOrder.order_code);
                 window.location.href = 'dashboard.html';
             } catch (error) {
-                console.error('Supabase order submit error:', error);
-                alert('لم يتم فتح واتساب لأن حفظ الطلب في Supabase فشل: ' + (error.message || error));
+                console.error('Supabase order submit aborted before WhatsApp:', error);
+                alert('لم يتم فتح واتساب لأن حفظ الطلب أو التحقق منه في Supabase فشل: ' + (error.message || error));
             } finally {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'إرسال للواتساب'; }
             }
