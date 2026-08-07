@@ -10,22 +10,17 @@
         .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         h2 { color: #2c3e50; margin: 0; }
-        
-        .tabs-bar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: flex-start; }
+        .tabs-bar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: flex-start; flex-wrap: wrap; }
         .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .tab-btn.active { background: #2980b9; color: white; }
-
         .section-panel { display: none; }
         .section-panel.active { display: block; }
-
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         table, th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background: #f2f2f2; font-size: 13px; }
-        
         tr.row-branch-processing { background-color: #a9dfbf !important; }
         tr.row-canceled { background-color: #f5b7b1 !important; }
         tr.row-other { background-color: #e8f8f5 !important; }
-
         .btn-red { background: #c0392b; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; }
         .btn-blue { background: #2980b9; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-green { background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
@@ -34,609 +29,281 @@
         .btn-chat { background: #e67e22; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-details { background: #16a085; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-profile { background: #34495e; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        
         select, input[type="text"], input[type="number"] { padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; }
-
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 550px; border-radius: 8px; max-height: 85vh; overflow-y: auto; }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: min(90%, 600px); border-radius: 8px; max-height: 85vh; overflow-y: auto; }
         .close { color: #aaa; float: left; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close:hover { color: black; }
         .chat-box { height: 250px; border: 1px solid #ccc; background: #f9f9f9; overflow-y: scroll; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .chat-msg { margin-bottom: 8px; padding: 5px 10px; border-radius: 4px; max-width: 75%; }
-        .chat-msg.employee { background: #d1e7dd; margin-right: auto; text-align: right; }
-        .chat-msg.customer { background: #cfe2ff; margin-left: auto; text-align: left; }
+        .employee-badge { background:#eef2ff; color:#3730a3; padding:6px 10px; border-radius:7px; font-size:12px; font-weight:bold; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="top-nav">
-            <h2>لوحة تحكم الموظف - إدارة وتجهيز الطلبات والمكافآت والدردشة</h2>
+            <div><h2>لوحة تحكم الموظف - إدارة وتجهيز الطلبات والمكافآت والدردشة</h2><div id="employeeIdentity" class="employee-badge" style="margin-top:8px;display:inline-block;">جاري التحقق من الموظف...</div></div>
             <a href="login.html" class="btn-red">تسجيل الخروج</a>
         </div>
-        <p style="color: #666; font-size: 13px;">متابعة الطلبات، تعديل الأسعار واختيار العملة، تحديد الفرع، منح المكافآت، والتواصل الفوري مع العملاء عبر الدردشة والإشعارات.</p>
+        <p style="color: #666; font-size: 13px;">متابعة الطلبات، تعديل الأسعار، تحديد الفرع، منح المكافآت، وفق الصلاحيات المحفوظة في Supabase.</p>
 
         <div class="tabs-bar">
-            <button class="tab-btn active" onclick="switchTab('customersTab', this)">1. معالجة طلبات الزبائن والأسعار</button>
-            <button class="tab-btn" onclick="switchTab('branchesTab', this)">2. معالجة وتوجيه الفروع والشحن</button>
-            <button class="tab-btn" onclick="switchTab('rewardsTab', this)"><i class="fa-solid fa-gift"></i> 3. إدارة مكافآت العملاء</button>
+            <button id="ordersTabBtn" class="tab-btn active" onclick="switchTab('customersTab', this)">1. معالجة طلبات الزبائن والأسعار</button>
+            <button id="branchesTabBtn" class="tab-btn" onclick="switchTab('branchesTab', this)">2. معالجة وتوجيه الفروع والشحن</button>
+            <button id="rewardsTabBtn" class="tab-btn" onclick="switchTab('rewardsTab', this)"><i class="fa-solid fa-gift"></i> 3. إدارة مكافآت العملاء</button>
         </div>
 
-        <!-- التبويب الأول: طلبات الزبائن -->
         <div id="customersTab" class="section-panel active">
-            <table>
-                <thead>
-                    <tr>
-                        <th>رقم الطلب</th>
-                        <th>العميل ورقم الهاتف</th>
-                        <th>المبلغ الفعلي والعملة</th>
-                        <th>الحالة الأولية</th>
-                        <th>الفرع المسؤول</th>
-                        <th>إجراءات التواصل وتفاصيل الطلب</th>
-                        <th>الخطوة النهائية</th>
-                    </tr>
-                </thead>
-                <tbody id="customerOrdersBody">
-                    <tr><td colspan="7">جاري التحميل...</td></tr>
-                </tbody>
-            </table>
+            <table><thead><tr><th>رقم الطلب</th><th>العميل ورقم الهاتف</th><th>المبلغ الفعلي والعملة</th><th>الحالة</th><th>الفرع المسؤول</th><th>إجراءات التواصل وتفاصيل الطلب</th><th>حفظ التحديث</th></tr></thead><tbody id="customerOrdersBody"><tr><td colspan="7">جاري التحميل...</td></tr></tbody></table>
         </div>
-
-        <!-- التبويب الثاني: الفروع والشحن -->
         <div id="branchesTab" class="section-panel">
-            <table>
-                <thead>
-                    <tr>
-                        <th>رقم الطلب</th>
-                        <th>العميل والعنوان</th>
-                        <th>المبلغ والعملة</th>
-                        <th>الفرع المسؤول</th>
-                        <th>حالة الطلب مع الفرع</th>
-                        <th>إجراءات التحديث</th>
-                    </tr>
-                </thead>
-                <tbody id="branchOrdersBody">
-                    <tr><td colspan="6">جاري التحميل...</td></tr>
-                </tbody>
-            </table>
+            <table><thead><tr><th>رقم الطلب</th><th>العميل والعنوان</th><th>المبلغ</th><th>الفرع المسؤول</th><th>حالة الطلب</th><th>إجراءات التحديث</th></tr></thead><tbody id="branchOrdersBody"><tr><td colspan="6">جاري التحميل...</td></tr></tbody></table>
         </div>
-
-        <!-- التبويب الثالث: نظام ومكافآت العملاء المدمج -->
         <div id="rewardsTab" class="section-panel">
-            <h3 style="color: #2c3e50; margin-top: 0;"><i class="fa-solid fa-award"></i> نظام مكافآت العملاء المكتملة (دورات 5 طلبات)</h3>
-            <p style="font-size: 13px; color: #666;">يمكنك متابعة عدد الطلبات المكتملة لكل عميل، وتحديد قيمة مبلغ الخصم مع اختيار العملة ومنحه بضغطة زر واحدة.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>اسم العميل</th>
-                        <th>رقم الهاتف</th>
-                        <th>الطلبات المكتملة (الدورة الحالية)</th>
-                        <th>إجمالي المكافآت المستلمة سابقاً</th>
-                        <th>منح مكافأة الخصم للعميل والعملة</th>
-                    </tr>
-                </thead>
-                <tbody id="rewardsTableBody">
-                    <tr><td colspan="5">جاري التحميل...</td></tr>
-                </tbody>
-            </table>
+            <h3 style="color:#2c3e50;margin-top:0;"><i class="fa-solid fa-award"></i> نظام مكافآت العملاء المكتملة</h3>
+            <table><thead><tr><th>اسم العميل</th><th>رقم الهاتف</th><th>الطلبات المكتملة</th><th>المكافآت السابقة</th><th>إدارة المكافأة</th></tr></thead><tbody id="rewardsTableBody"><tr><td colspan="5">جاري التحميل...</td></tr></tbody></table>
         </div>
     </div>
 
-    <!-- نافذة الدردشة -->
-    <div id="chatModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeChatModal()">&times;</span>
-            <h3 id="chatTitle">محادثة العميل</h3>
-            <div id="chatMessages" class="chat-box"></div>
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="chatInput" placeholder="اكتب رد الموظف هنا..." style="flex: 1;" onkeypress="handleChatKeyPress(event)">
-                <button class="btn-green" onclick="sendChatMessage()">إرسال</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- نافذة تفاصيل الطلب الكاملة -->
-    <div id="orderDetailsModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeOrderDetailsModal()">&times;</span>
-            <h3 style="margin-top: 0; color: #2c3e50;"><i class="fa-solid fa-box"></i> تفاصيل الطلب</h3>
-            <div id="modalOrderDetailsBody"></div>
-        </div>
-    </div>
-
-    <!-- نافذة ملف العميل الشامل -->
-    <div id="customerProfileModal" class="modal">
-        <div class="modal-content" style="width: 600px;">
-            <span class="close" onclick="closeCustomerProfileModal()">&times;</span>
-            <h3 style="margin-top: 0; color: #2c3e50;"><i class="fa-solid fa-user"></i> ملف العميل الشامل وسجل طلباته</h3>
-            <div id="customerProfileContent"></div>
-        </div>
-    </div>
+    <div id="chatModal" class="modal"><div class="modal-content"><span class="close" onclick="closeChatModal()">&times;</span><h3 id="chatTitle">محادثة العميل</h3><div id="chatMessages" class="chat-box"><p style="color:#777;">نظام الرسائل يحتاج جدول رسائل مخصص في Supabase؛ لم يتم تخزين أي رسالة محلياً.</p></div><div style="display:flex;gap:5px;"><input type="text" id="chatInput" placeholder="الرسائل السحابية ستفعل عند تجهيز جدول الرسائل" style="flex:1;" disabled><button class="btn-green" disabled>إرسال</button></div></div></div>
+    <div id="orderDetailsModal" class="modal"><div class="modal-content"><span class="close" onclick="closeOrderDetailsModal()">&times;</span><h3 style="margin-top:0;color:#2c3e50;"><i class="fa-solid fa-box"></i> تفاصيل الطلب</h3><div id="modalOrderDetailsBody"></div></div></div>
+    <div id="customerProfileModal" class="modal"><div class="modal-content"><span class="close" onclick="closeCustomerProfileModal()">&times;</span><h3 style="margin-top:0;color:#2c3e50;"><i class="fa-solid fa-user"></i> ملف العميل الشامل وسجل طلباته</h3><div id="customerProfileContent"></div></div></div>
 
     <script>
-        const statusListOptions = `
-            <option value="قيد المعالجة">قيد المعالجة</option>
-            <option value="قيد معالجة الفرع">قيد معالجة الفرع</option>
-            <option value="جاهز للشحن">جاهز للشحن</option>
-            <option value="تم الشحن">تم الشحن</option>
-            <option value="مخزن محلي">مخزن محلي</option>
-            <option value="توزيع داخلي">توزيع داخلي</option>
-            <option value="تم التسليم">تم التسليم</option>
-            <option value="لم يتم الاتفاق - ملغي من الزبون">لم يتم الاتفاق - ملغي من الزبون</option>
-            <option value="تم رفض الطلب أو عدم التسليم">تم رفض الطلب أو عدم التسليم</option>
-        `;
+        const EMPLOYEE_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
+        const EMPLOYEE_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+        const ORDER_STATUSES = ['انتظار رد الموظف','قيد الطلب','مخزن شركة','تجهيز شحن','تم الشحن','مخزن محلي','مندوب','توزيع داخلي','تم التسليم','رفض الطلب'];
+        let employeeSupabase = null;
+        let currentEmployee = null;
+        let employeePermissions = {};
+        let cloudOrders = [];
+        let cloudBranches = [];
+        let cloudCustomers = [];
+        let realtimeChannel = null;
 
-        const currencyListOptions = `
-            <option value="$">$ (دولار)</option>
-            <option value="TL">TL (ليرة تركية)</option>
-            <option value="IQD">IQD (دينار عراقي)</option>
-            <option value="SYP">SYP (ليرة سورية)</option>
-            <option value="EUR">EUR (يورو)</option>
-        `;
+        async function ensureEmployeeSupabase() {
+            if (employeeSupabase) return employeeSupabase;
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+            employeeSupabase = createClient(EMPLOYEE_SUPABASE_URL, EMPLOYEE_SUPABASE_KEY);
+            return employeeSupabase;
+        }
 
-        let currentActiveCustIndex = null;
-        let currentActiveOrdIndex = null;
+        function getEmployeeId() { return new URLSearchParams(location.search).get('employeeId') || ''; }
+        function parsePermissions(value) {
+            if (!value) return {orders:true,branches:true,rewards:true,pricing:true};
+            if (typeof value === 'string') { try { value = JSON.parse(value); } catch (e) { value = value.split(',').map(v=>v.trim()); } }
+            if (Array.isArray(value)) return {orders:value.includes('orders'),branches:value.includes('branches'),rewards:value.includes('rewards'),pricing:value.includes('pricing')};
+            return {
+                orders: value.orders !== false && value.manage_orders !== false,
+                branches: value.branches !== false && value.manage_branches !== false,
+                rewards: value.rewards !== false && value.manage_rewards !== false,
+                pricing: value.pricing !== false && value.manage_pricing !== false
+            };
+        }
+        function can(key) { return employeePermissions[key] !== false; }
+
+        async function loadEmployeeIdentity() {
+            const employeeId = getEmployeeId();
+            if (!employeeId) throw new Error('لم يتم تمرير employeeId. سجل الدخول من صفحة الدخول.');
+            const supabase = await ensureEmployeeSupabase();
+            const { data, error } = await supabase.from('employees').select('*').eq('id', employeeId).maybeSingle();
+            if (error) throw error;
+            if (!data) throw new Error('الموظف غير موجود في جدول employees');
+            if (data.is_active === false || data.active === false || data.disabled === true) throw new Error('حساب الموظف معطل');
+            currentEmployee = data;
+            employeePermissions = parsePermissions(data.permissions);
+            document.getElementById('employeeIdentity').innerText = `الموظف: ${data.name || '---'} — ${data.phone || ''}`;
+            applyPermissions();
+        }
+
+        function applyPermissions() {
+            const map = [['ordersTabBtn','customersTab','orders'],['branchesTabBtn','branchesTab','branches'],['rewardsTabBtn','rewardsTab','rewards']];
+            map.forEach(([btn,panel,key]) => {
+                const allowed = can(key);
+                document.getElementById(btn).style.display = allowed ? '' : 'none';
+                if (!allowed) document.getElementById(panel).classList.remove('active');
+            });
+            const first = map.find(([, , key]) => can(key));
+            if (first) {
+                document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+                document.querySelectorAll('.section-panel').forEach(p=>p.classList.remove('active'));
+                document.getElementById(first[0]).classList.add('active');
+                document.getElementById(first[1]).classList.add('active');
+            }
+        }
 
         function switchTab(tabId, btnElement) {
             document.querySelectorAll('.section-panel').forEach(panel => panel.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            
             document.getElementById(tabId).classList.add('active');
             btnElement.classList.add('active');
-
-            if(tabId === 'customersTab') loadCustomerProcessingOrders();
-            if(tabId === 'branchesTab') loadBranchProcessingOrders();
-            if(tabId === 'rewardsTab') loadRewardsManagementTable();
+            if (tabId === 'customersTab') loadCustomerProcessingOrders();
+            if (tabId === 'branchesTab') loadBranchProcessingOrders();
+            if (tabId === 'rewardsTab') loadRewardsManagementTable();
         }
 
-        function loadCustomerProcessingOrders() {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let branchList = JSON.parse(localStorage.getItem('branchList')) || [];
-            let tbody = document.getElementById('customerOrdersBody');
-            tbody.innerHTML = '';
-            let hasOrders = false;
+        function statusOptions(current) { return ORDER_STATUSES.map(s=>`<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join(''); }
+        function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
+        function parseDetails(v) { if (!v) return {}; if (typeof v === 'object') return v; try { return JSON.parse(v); } catch(e) { return {notes:String(v)}; } }
 
-            customers.forEach((cust, custIndex) => {
-                if (cust.orders && cust.orders.length > 0) {
-                    cust.orders.forEach((ord, ordIndex) => {
-                        hasOrders = true;
-                        
-                        let rawPrice = '';
-                        if (ord.numericPrice !== undefined && ord.numericPrice !== null && ord.numericPrice !== '' && ord.numericPrice !== 0) {
-                            rawPrice = ord.numericPrice;
-                        }
-
-                        let currentCurrency = ord.currency || '$';
-                        let isTransferred = ord.transferredToBranch === true;
-                        let orderStatus = ord.status || 'قيد المعالجة';
-
-                        let rowClass = '';
-                        if (orderStatus === "قيد معالجة الفرع") {
-                            rowClass = 'row-branch-processing';
-                        } else if (orderStatus === "لم يتم الاتفاق - ملغي من الزبون" || orderStatus === "تم رفض الطلب أو عدم التسليم") {
-                            rowClass = 'row-canceled';
-                        } else if (orderStatus !== "قيد المعالجة") {
-                            rowClass = 'row-other';
-                        }
-
-                        let branchOptions = `<option value="">--- اختر الفرع ---</option>`;
-                        branchList.forEach(br => {
-                            let selected = (ord.assignedBranch === br.name) ? 'selected' : '';
-                            branchOptions += `<option value="${br.name}" ${selected}>${br.name}</option>`;
-                        });
-
-                        let currentStatusHtml = statusListOptions.replace(`value="${orderStatus}"`, `value="${orderStatus}" selected`);
-                        let currentCurrHtml = currencyListOptions.replace(`value="${currentCurrency}"`, `value="${currentCurrency}" selected`);
-
-                        let phoneClean = cust.phone ? cust.phone.replace(/[^0-9]/g, '') : '';
-                        let waMsg = `عزيزي العميل ${cust.name}،\nطلبكم رقم (${ord.id}) قيد المعالجة.`;
-                        let waLink = `https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodeURIComponent(waMsg)}`;
-
-                        tbody.innerHTML += `
-                            <tr class="${rowClass}">
-                                <td><b>${ord.id}</b></td>
-                                <td style="text-align: right;"><b>${cust.name}</b><br><span style="font-size: 12px; color: #666;" dir="ltr">${cust.phone}</span></td>
-                                <td>
-                                    <input type="number" id="price_${custIndex}_${ordIndex}" value="${rawPrice}" placeholder="المبلغ" style="width: 75px; text-align: center; font-weight: bold; color: #2980b9;" step="0.01">
-                                    <select id="curr_${custIndex}_${ordIndex}" style="width: 65px;">
-                                        ${currentCurrHtml}
-                                    </select>
-                                    <button class="btn-green" onclick="updateOrderPriceAndCurrency(${custIndex}, ${ordIndex})" style="padding: 2px 5px; font-size: 11px; margin-top: 3px;">حفظ</button>
-                                </td>
-                                <td>
-                                    <select id="status_cust_${custIndex}_${ordIndex}" onchange="updateCustomerOrderStatus(${custIndex}, ${ordIndex})" style="width: 100%;">
-                                        ${currentStatusHtml}
-                                    </select>
-                                </td>
-                                <td>
-                                    <select id="branch_cust_${custIndex}_${ordIndex}" onchange="assignBranchQuick(${custIndex}, ${ordIndex})" style="width: 100%;">
-                                        ${branchOptions}
-                                    </select>
-                                </td>
-                                <td>
-                                   <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
-                                       <a href="${waLink}" target="_blank" class="btn-whatsapp">واتساب</a>
-                                       <button class="btn-chat" onclick="openChatModal(${custIndex}, ${ordIndex})">الدردشة</button>
-                                       <button class="btn-details" onclick="openEmployeeOrderDetailsModal(${custIndex}, ${ordIndex})">التفاصيل</button>
-                                       <button class="btn-profile" onclick="openCustomerProfileModal(${custIndex})">ملف العميل</button>
-                                       <button class="btn-purple" onclick="goToCustomerPortal(${custIndex})">صفحة العميل</button>
-                                   </div>
-                                </td>
-                                <td>
-                                    ${isTransferred ? 
-                                        '<span style="color: #27ae60; font-weight: bold;">تم الإرسال للفرع ✓</span>' : 
-                                        `<button class="btn-purple" onclick="sendToBranchStage(${custIndex}, ${ordIndex})">إرسال إلى الفرع</button>`
-                                    }
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-            });
-
-            if (!hasOrders) {
-                tbody.innerHTML = `<tr><td colspan="7">لا توجد طلبات واردة حالياً</td></tr>`;
-            }
+        async function fetchOrders() {
+            const supabase = await ensureEmployeeSupabase();
+            const { data, error } = await supabase.from('orders').select('*').order('created_at',{ascending:false}).limit(500);
+            if (error) throw error;
+            cloudOrders = data || [];
+            return cloudOrders;
+        }
+        async function fetchBranches() {
+            const supabase = await ensureEmployeeSupabase();
+            const { data, error } = await supabase.from('branches').select('*').order('id',{ascending:true}).limit(500);
+            if (error) { console.warn('Branches load warning:', error); cloudBranches=[]; return []; }
+            cloudBranches = data || [];
+            return cloudBranches;
+        }
+        function branchOptions(order) {
+            const currentId = order.branch_id == null ? '' : String(order.branch_id);
+            const currentName = order.branch_name || '';
+            let html = '<option value="">بدون فرع</option>';
+            cloudBranches.forEach(b=>{ const val=String(b.id); const selected=(currentId===val || (!currentId && currentName && currentName===b.name))?'selected':''; html += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(b.name || b.branch_name || val)}</option>`; });
+            return html;
         }
 
-        function loadBranchProcessingOrders() {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let branchList = JSON.parse(localStorage.getItem('branchList')) || [];
-            let tbody = document.getElementById('branchOrdersBody');
-            tbody.innerHTML = '';
-            let hasOrders = false;
-
-            customers.forEach((cust, custIndex) => {
-                if (cust.orders && cust.orders.length > 0) {
-                    cust.orders.forEach((ord, ordIndex) => {
-                        if (ord.transferredToBranch === true) {
-                            hasOrders = true;
-
-                            let branchOptions = `<option value="">--- اختر الفرع ---</option>`;
-                            branchList.forEach(br => {
-                                let selected = (ord.assignedBranch === br.name) ? 'selected' : '';
-                                branchOptions += `<option value="${br.name}" ${selected}>${br.name}</option>`;
-                            });
-
-                            let orderStatus = ord.status || 'قيد المعالجة';
-                            let currentOptionsHtml = statusListOptions.replace(`value="${orderStatus}"`, `value="${orderStatus}" selected`);
-                            let numericP = ord.numericPrice !== undefined ? ord.numericPrice : 0;
-                            let displayPrice = numericP ? numericP + ' ' + (ord.currency || '$') : 'غير محدد';
-
-                            let rowClass = (orderStatus === "لم يتم الاتفاق - ملغي من الزبون") ? 'row-canceled' : '';
-
-                            tbody.innerHTML += `
-                                <tr class="${rowClass}">
-                                    <td><b>${ord.id}</b></td>
-                                    <td style="text-align: right;"><b>${cust.name}</b><br><span style="font-size: 12px; color: #666;">${cust.country || ''} - ${cust.state || ''}</span></td>
-                                    <td><b style="color: #2980b9;">${displayPrice}</b></td>
-                                    <td>
-                                        <select id="branch_${custIndex}_${ordIndex}" onchange="assignBranch(${custIndex}, ${ordIndex})" style="width: 100%;">
-                                            ${branchOptions}
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <select id="status_${custIndex}_${ordIndex}" style="width: 100%;">
-                                            ${currentOptionsHtml}
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
-                                            <button class="btn-blue" onclick="updateBranchOrderStatus(${custIndex}, ${ordIndex})">حفظ وتحديث</button>
-                                            <button class="btn-details" onclick="openEmployeeOrderDetailsModal(${custIndex}, ${ordIndex})">التفاصيل</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                        }
-                    });
-                }
-            });
-
-            if (!hasOrders) {
-                tbody.innerHTML = `<tr><td colspan="6" style="color: #777;">لا توجد طلبات محولة إلى الفروع حالياً.</td></tr>`;
-            }
-        }
-
-      // --- دالة الانتقال المباشر لصفحة العميل (مستقلة تماماً) ---
-// --- دالة الانتقال المباشر لصفحة العميل (مستقلة تماماً لكل تبويب) ---
-function goToCustomerPortal(custIndex) {
-    let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-    if (!customers[custIndex]) {
-        alert('العميل غير موجود');
-        return;
-    }
-    
-    let cust = customers[custIndex];
-    let custPhone = cust.phone || '';
-
-    // تخزين بيانات المؤشر ورقم الهاتف في sessionStorage الخاص بهذا التبويب فقط (لا يتداخل مع التبويبات الأخرى)
-    sessionStorage.setItem('viewingCustomerIndex', custIndex.toString());
-    sessionStorage.setItem('selectedCustomerPhone', custPhone);
-    sessionStorage.setItem('openedByEmployee', 'true');
-    
-    localStorage.setItem('isEmployeeViewing', 'true');
-
-    // فتح صفحة العميل (dashboard.html) مع تمرير رقم الهاتف في الرابط لضمان الاستقلالية التامة
-    window.open(`dashboard.html?phone=${encodeURIComponent(custPhone)}`, '_blank');
-}
-
-        // --- نافذة ملف العميل الكامل وسجل طلباته ---
-        function openCustomerProfileModal(custIndex) {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let cust = customers[custIndex];
-            if(!cust) return;
-
-            let ordersHtml = '';
-            if(cust.orders && cust.orders.length > 0) {
-                cust.orders.forEach((ord) => {
-                    ordersHtml += `
-                        <tr style="font-size: 13px;">
-                            <td><b>${ord.id || '---'}</b></td>
-                            <td>${ord.date || '---'}</td>
-                            <td><span style="padding: 2px 6px; background: #e0f2fe; border-radius: 4px; font-weight: bold;">${ord.status || 'قيد المعالجة'}</span></td>
-                            <td><b>${ord.price || 'غير محدد'}</b></td>
-                        </tr>
-                    `;
+        async function loadCustomerProcessingOrders() {
+            const tbody = document.getElementById('customerOrdersBody');
+            tbody.innerHTML = '<tr><td colspan="7">جاري تحميل الطلبات من Supabase...</td></tr>';
+            if (!can('orders')) return tbody.innerHTML='<tr><td colspan="7">لا تملك صلاحية إدارة الطلبات.</td></tr>';
+            try {
+                await Promise.all([fetchOrders(), fetchBranches()]);
+                tbody.innerHTML='';
+                cloudOrders.forEach(order=>{
+                    const id = encodeURIComponent(String(order.id));
+                    const details = parseDetails(order.details);
+                    tbody.innerHTML += `<tr class="row-other">
+                        <td><b>${escapeHtml(order.order_code || order.id)}</b></td>
+                        <td><b>${escapeHtml(order.customer_name || '---')}</b><br><span dir="ltr">${escapeHtml(order.customer_phone || '')}</span></td>
+                        <td><input id="price-${id}" type="number" step="0.01" value="${Number(order.total_price || 0)}" style="width:100px;" ${can('pricing')?'':'disabled'}></td>
+                        <td><select id="status-${id}" style="width:160px;">${statusOptions(order.status || 'انتظار رد الموظف')}</select></td>
+                        <td><select id="branch-${id}" style="width:160px;" ${can('branches')?'':'disabled'}>${branchOptions(order)}</select></td>
+                        <td><a class="btn-whatsapp" href="https://wa.me/${String(order.customer_phone||'').replace(/[^0-9]/g,'')}" target="_blank">واتساب</a> <button class="btn-details" onclick="openOrderDetailsById(decodeURIComponent('${id}'))">تفاصيل</button> <button class="btn-profile" onclick="openCustomerProfileById('${encodeURIComponent(String(order.customer_id||''))}')">ملف العميل</button></td>
+                        <td><button class="btn-green" onclick="saveOrderRow(decodeURIComponent('${id}'))">حفظ</button></td>
+                    </tr>`;
                 });
-            } else {
-                ordersHtml = `<tr><td colspan="4">لا توجد طلبات مسجلة لهذا العميل.</td></tr>`;
+                if (!cloudOrders.length) tbody.innerHTML='<tr><td colspan="7">لا توجد طلبات في Supabase.</td></tr>';
+            } catch (e) { console.error(e); tbody.innerHTML=`<tr><td colspan="7" style="color:#c0392b;">${escapeHtml(e.message||e)}</td></tr>`; }
+        }
+
+        async function saveOrderRow(orderId) {
+            const order = cloudOrders.find(o=>String(o.id)===String(orderId)); if (!order) return;
+            const id=encodeURIComponent(String(orderId));
+            const status=document.getElementById('status-'+id)?.value || order.status;
+            const price=Number(document.getElementById('price-'+id)?.value || 0);
+            const selectedBranchId=document.getElementById('branch-'+id)?.value || '';
+            const payload={status};
+            if (can('pricing')) payload.total_price=price;
+            if (can('branches')) {
+                const branch=cloudBranches.find(b=>String(b.id)===String(selectedBranchId));
+                if (Object.prototype.hasOwnProperty.call(order,'branch_id')) payload.branch_id=selectedBranchId || null;
+                if (Object.prototype.hasOwnProperty.call(order,'branch_name')) payload.branch_name=branch ? (branch.name || branch.branch_name || '') : null;
             }
-
-            document.getElementById('customerProfileContent').innerHTML = `
-                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px;">
-                    <p style="margin: 5px 0;"><b>اسم العميل:</b> ${cust.name || '---'}</p>
-                    <p style="margin: 5px 0;"><b>رقم الهاتف:</b> <span dir="ltr">${cust.phone || '---'}</span></p>
-                    <p style="margin: 5px 0;"><b>العنوان:</b> ${cust.country || ''} - ${cust.state || ''} - ${cust.address || cust.userAddress || '---'}</p>
-                    <p style="margin: 5px 0;"><b>إجمالي عدد طلبات العميل:</b> <span style="color: #2980b9; font-weight: bold;">${cust.orders ? cust.orders.length : 0}</span></p>
-                </div>
-                <h4 style="color: #1e293b; margin-bottom: 5px;">سجل طلبات العميل السابقة والجارية:</h4>
-                <div style="max-height: 250px; overflow-y: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>رقم الطلب</th>
-                                <th>التاريخ</th>
-                                <th>الحالة</th>
-                                <th>السعر</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${ordersHtml}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            document.getElementById('customerProfileModal').style.display = 'flex';
+            if (status !== 'رفض الطلب' && Object.prototype.hasOwnProperty.call(order,'rejection_reason')) payload.rejection_reason=null;
+            try {
+                const supabase=await ensureEmployeeSupabase();
+                const {error}=await supabase.from('orders').update(payload).eq('id',orderId);
+                if(error) throw error;
+                await loadCustomerProcessingOrders();
+                alert('تم تحديث الطلب سحابياً.');
+            } catch(e){ console.error('Employee order update error:',e); alert('تعذر تحديث الطلب: '+(e.message||e)); }
         }
 
-        function closeCustomerProfileModal() {
-            document.getElementById('customerProfileModal').style.display = 'none';
-        }
-
-        // --- دوال تفاصيل الطلب ---
-        function openEmployeeOrderDetailsModal(cIndex, oIndex) {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let cust = customers[cIndex];
-            if(!cust || !cust.orders || !cust.orders[oIndex]) return;
-            let order = cust.orders[oIndex];
-
-            let modalBody = document.getElementById('modalOrderDetailsBody');
-            let prodUrl = order.url || order.productUrl || 'لا يوجد رابط مسجل';
-            let color = order.color || 'غير محدد';
-            let size = order.size || 'غير محدد';
-            let quantity = order.quantity || '1';
-            let orderId = order.id || order.productCode || 'غير محدد';
-            let orderDate = order.date || 'غير محدد';
-            let orderStatus = order.status || 'قيد المعالجة';
-
-            let linkDisplay = (prodUrl !== 'لا يوجد رابط مسجل') 
-                ? `<a href="${prodUrl}" target="_blank" style="color: #2980b9; word-break: break-all; text-decoration: underline;">${prodUrl}</a>` 
-                : 'لا يوجد رابط مسجل';
-
-            modalBody.innerHTML = `
-                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
-                    <p style="margin: 5px 0;"><b>رقم الطلب:</b> <span style="color: #2980b9;">${orderId}</span></p>
-                    <p style="margin: 5px 0;"><b>اسم العميل:</b> ${cust.name || '---'}</p>
-                    <p style="margin: 5px 0;"><b>رقم الهاتف:</b> <span dir="ltr">${cust.phone || '---'}</span></p>
-                </div>
-                <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; color: #333; line-height: 1.8;">
-                    <p style="margin: 8px 0;"><strong>تاريخ الطلب:</strong> ${orderDate}</p>
-                    <p style="margin: 8px 0;"><strong>رابط المنتج:</strong> ${linkDisplay}</p>
-                    <p style="margin: 8px 0;"><strong>اللون:</strong> <span style="color: #c0392b; font-weight: bold;">${color}</span></p>
-                    <p style="margin: 8px 0;"><strong>المقاس:</strong> <span style="color: #c0392b; font-weight: bold;">${size}</span></p>
-                    <p style="margin: 8px 0;"><strong>العدد/الكمية:</strong> ${quantity}</p>
-                    <p style="margin: 8px 0;"><strong>حالة الطلب:</strong> <span style="padding: 3px 8px; background: #e0f2fe; color: #0369a1; border-radius: 4px; font-weight: bold;">${orderStatus}</span></p>
-                </div>
-            `;
-            document.getElementById('orderDetailsModal').style.display = 'flex';
-        }
-
-        function closeOrderDetailsModal() {
-            document.getElementById('orderDetailsModal').style.display = 'none';
-        }
-
-        // --- مكافآت العملاء ---
-        function loadRewardsManagementTable() {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let tbody = document.getElementById('rewardsTableBody');
-            tbody.innerHTML = '';
-
-            if (customers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="color: #777; padding: 15px;">لا يوجد عملاء مسجلون في النظام حالياً.</td></tr>`;
-                return;
-            }
-
-            customers.forEach((cust, custIndex) => {
-                let totalCompleted = cust.orders ? cust.orders.filter(o => o.status === "تم التسليم" || o.status === "تم التوصيل").length : 0;
-                let lastBaseline = cust.lastRewardAtCompletedCount || 0;
-                let currentCycleCount = totalCompleted - lastBaseline;
-                let usageCount = cust.usageCount || 0;
-
-                let statusBadge = currentCycleCount >= 5 
-                    ? `<span style="background: #27ae60; color: white; padding: 3px 8px; border-radius: 4px; font-weight: bold;">⭐ مستحق للمكافأة (${currentCycleCount}/5)</span>` 
-                    : `<span>(${currentCycleCount}/5 طلبات مكتملة)</span>`;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="font-weight: bold; text-align: right;">${cust.name}</td>
-                        <td dir="ltr" style="text-align: right;">${cust.phone || 'غير متوفر'}</td>
-                        <td>${statusBadge}</td>
-                        <td><b style="color: #27ae60;">${usageCount}</b> مرات</td>
-                        <td>
-                            <div style="display: flex; gap: 5px; justify-content: center; align-items: center; flex-wrap: wrap;">
-                                <input type="number" id="rewardNumInput_${custIndex}" placeholder="القيمة" style="width: 70px; text-align: center;" step="0.01">
-                                <select id="rewardCurrSelect_${custIndex}" style="width: 70px;">
-                                    ${currencyListOptions}
-                                </select>
-                                <button class="btn-green" onclick="grantRewardToCustomer(${custIndex})">
-                                    <i class="fa-solid fa-gift"></i> منح المكافأة
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function grantRewardToCustomer(custIndex) {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            if (!customers[custIndex]) return;
-
-            let customer = customers[custIndex];
-            let val = document.getElementById(`rewardNumInput_${custIndex}`).value.trim();
-            let curr = document.getElementById(`rewardCurrSelect_${custIndex}`).value;
-
-            if (!val || parseFloat(val) <= 0) {
-                alert('الرجاء كتابة قيمة صحيحة لمبلغ الخصم!');
-                return;
-            }
-
-            let rewardFormatted = `${val} ${curr}`;
-            if (confirm(`هل أنت متأكد من منح العميل (${customer.name}) مكافأة بقيمة (${rewardFormatted})؟`)) {
-                let totalCompleted = customer.orders ? customer.orders.filter(o => o.status === "تم التسليم" || o.status === "تم التوصيل").length : 0;
-                customer.lastRewardAtCompletedCount = totalCompleted;
-                customer.usageCount = (customer.usageCount || 0) + 1;
-
-                if (!customer.orders[0].notifications) customer.orders[0].notifications = [];
-                customer.orders[0].notifications.unshift({
-                    text: `مبروك! لقد حصلت على مكافأة خصم جديدة بقيمة (${rewardFormatted}) من الإدارة.`,
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        async function loadBranchProcessingOrders() {
+            const tbody=document.getElementById('branchOrdersBody');
+            if(!can('branches')) return tbody.innerHTML='<tr><td colspan="6">لا تملك صلاحية إدارة الفروع.</td></tr>';
+            tbody.innerHTML='<tr><td colspan="6">جاري التحميل...</td></tr>';
+            try {
+                await Promise.all([fetchOrders(),fetchBranches()]); tbody.innerHTML='';
+                cloudOrders.forEach(order=>{
+                    const branch=cloudBranches.find(b=>String(b.id)===String(order.branch_id));
+                    tbody.innerHTML += `<tr><td>${escapeHtml(order.order_code||order.id)}</td><td>${escapeHtml(order.customer_name||'---')}</td><td>${Number(order.total_price||0).toFixed(2)}</td><td>${escapeHtml(order.branch_name || branch?.name || 'غير محدد')}</td><td>${escapeHtml(order.status||'انتظار رد الموظف')}</td><td><button class="btn-blue" onclick="openOrderDetailsById('${encodeURIComponent(String(order.id))}')">عرض/تعديل من تبويب الطلبات</button></td></tr>`;
                 });
-
-                localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-                alert('تم منح المكافأة للعميل بنجاح!');
-                loadRewardsManagementTable();
-            }
+                if(!cloudOrders.length) tbody.innerHTML='<tr><td colspan="6">لا توجد طلبات.</td></tr>';
+            } catch(e){ console.error(e); tbody.innerHTML=`<tr><td colspan="6" style="color:#c0392b;">${escapeHtml(e.message||e)}</td></tr>`; }
         }
 
-        function updateOrderPriceAndCurrency(custIndex, ordIndex) {
-            let val = document.getElementById(`price_${custIndex}_${ordIndex}`).value;
-            let curr = document.getElementById(`curr_${custIndex}_${ordIndex}`).value;
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            
-            let numVal = val === '' ? 0 : parseFloat(val);
-            customers[custIndex].orders[ordIndex].numericPrice = numVal;
-            customers[custIndex].orders[ordIndex].currency = curr;
-            customers[custIndex].orders[ordIndex].price = numVal ? `${numVal.toFixed(2)} ${curr}` : `0 ${curr}`;
-            
-            localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-            alert('تم تحديث المبلغ والعملة وإرسال إشعار للعميل بنجاح');
-            loadCustomerProcessingOrders();
+        async function loadRewardsManagementTable() {
+            const tbody=document.getElementById('rewardsTableBody');
+            if(!can('rewards')) return tbody.innerHTML='<tr><td colspan="5">لا تملك صلاحية إدارة المكافآت.</td></tr>';
+            tbody.innerHTML='<tr><td colspan="5">جاري تحميل العملاء والطلبات...</td></tr>';
+            try {
+                const supabase=await ensureEmployeeSupabase();
+                const [{data:customers,error:ce},{data:orders,error:oe}] = await Promise.all([
+                    supabase.from('customers').select('*').order('id',{ascending:true}).limit(500),
+                    supabase.from('orders').select('customer_id,status').eq('status','تم التسليم').limit(5000)
+                ]);
+                if(ce) throw ce; if(oe) throw oe; cloudCustomers=customers||[]; tbody.innerHTML='';
+                cloudCustomers.forEach(c=>{
+                    const completed=(orders||[]).filter(o=>String(o.customer_id)===String(c.id)).length;
+                    const log=c.rewards_log ?? c.rewardsLog ?? [];
+                    const logCount=Array.isArray(log)?log.length:0;
+                    const cid=encodeURIComponent(String(c.id));
+                    tbody.innerHTML += `<tr><td>${escapeHtml(c.name||'---')}</td><td>${escapeHtml(c.phone||'---')}</td><td><b>${completed}</b></td><td>${logCount}</td><td><input id="reward-${cid}" type="number" min="0" step="0.01" placeholder="المبلغ" style="width:90px;"><button class="btn-purple" onclick="grantReward('${cid}')">منح</button></td></tr>`;
+                });
+                if(!cloudCustomers.length) tbody.innerHTML='<tr><td colspan="5">لا يوجد عملاء.</td></tr>';
+            } catch(e){ console.error(e); tbody.innerHTML=`<tr><td colspan="5" style="color:#c0392b;">${escapeHtml(e.message||e)}</td></tr>`; }
         }
 
-        function updateCustomerOrderStatus(custIndex, ordIndex) {
-            let newStatus = document.getElementById(`status_cust_${custIndex}_${ordIndex}`).value;
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            customers[custIndex].orders[ordIndex].status = newStatus;
-            localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-            loadCustomerProcessingOrders(); 
+        async function grantReward(encodedCustomerId) {
+            const customerId=decodeURIComponent(encodedCustomerId); const customer=cloudCustomers.find(c=>String(c.id)===String(customerId)); if(!customer)return;
+            const amount=Number(document.getElementById('reward-'+encodedCustomerId)?.value||0); if(amount<=0)return alert('أدخل مبلغ المكافأة.');
+            const currentLog=customer.rewards_log ?? customer.rewardsLog ?? [];
+            if(!Array.isArray(currentLog)) return alert('حقل سجل المكافآت في customers ليس مصفوفة JSON.');
+            const next=[...currentLog,{amount,date:new Date().toISOString(),employee_id:currentEmployee.id,employee_name:currentEmployee.name||''}];
+            const field=Object.prototype.hasOwnProperty.call(customer,'rewards_log')?'rewards_log':(Object.prototype.hasOwnProperty.call(customer,'rewardsLog')?'rewardsLog':null);
+            if(!field)return alert('جدول customers لا يحتوي حقل rewards_log/rewardsLog.');
+            try{ const supabase=await ensureEmployeeSupabase(); const {error}=await supabase.from('customers').update({[field]:next}).eq('id',customerId); if(error)throw error; await loadRewardsManagementTable(); alert('تم حفظ المكافأة سحابياً.'); }catch(e){console.error(e);alert('تعذر حفظ المكافأة: '+(e.message||e));}
         }
 
-        function assignBranchQuick(custIndex, ordIndex) {
-            let selectedBranch = document.getElementById(`branch_cust_${custIndex}_${ordIndex}`).value;
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            customers[custIndex].orders[ordIndex].assignedBranch = selectedBranch;
-            localStorage.setItem('adminCustomersList', JSON.stringify(customers));
+        function openOrderDetailsById(encodedId) {
+            const id=decodeURIComponent(encodedId); const order=cloudOrders.find(o=>String(o.id)===String(id)); if(!order)return;
+            const d=parseDetails(order.details);
+            document.getElementById('modalOrderDetailsBody').innerHTML=`<p><b>رقم الطلب:</b> ${escapeHtml(order.order_code||order.id)}</p><p><b>العميل:</b> ${escapeHtml(order.customer_name||'---')}</p><p><b>الهاتف:</b> ${escapeHtml(order.customer_phone||'---')}</p><p><b>الحالة:</b> ${escapeHtml(order.status||'---')}</p><p><b>السعر:</b> ${Number(order.total_price||0).toFixed(2)}</p><p><b>اللون:</b> ${escapeHtml(d.color||'---')} — <b>المقاس:</b> ${escapeHtml(d.size||'---')} — <b>العدد:</b> ${escapeHtml(d.quantity||1)}</p>${order.order_url?`<p><a href="${escapeHtml(order.order_url)}" target="_blank">رابط المنتج</a></p>`:''}`;
+            document.getElementById('orderDetailsModal').style.display='block';
+        }
+        function closeOrderDetailsModal(){document.getElementById('orderDetailsModal').style.display='none';}
+
+        async function openCustomerProfileById(encodedCustomerId) {
+            const customerId=decodeURIComponent(encodedCustomerId); if(!customerId)return;
+            try{ const supabase=await ensureEmployeeSupabase(); const [{data:c,error:ce},{data:o,error:oe}]=await Promise.all([supabase.from('customers').select('*').eq('id',customerId).maybeSingle(),supabase.from('orders').select('*').eq('customer_id',customerId).order('created_at',{ascending:false})]); if(ce)throw ce;if(oe)throw oe;if(!c)throw new Error('العميل غير موجود'); document.getElementById('customerProfileContent').innerHTML=`<p><b>الاسم:</b> ${escapeHtml(c.name||'---')}</p><p><b>الكود:</b> ${escapeHtml(c.code||'---')}</p><p><b>الهاتف:</b> ${escapeHtml(c.phone||'---')}</p><p><b>البريد:</b> ${escapeHtml(c.email||'---')}</p><p><b>العنوان:</b> ${escapeHtml(c.address||'---')}</p><hr><h4>الطلبات (${(o||[]).length})</h4>${(o||[]).map(x=>`<div style="padding:6px;border-bottom:1px solid #eee;">${escapeHtml(x.order_code||x.id)} — ${escapeHtml(x.status||'')}</div>`).join('')||'لا توجد طلبات'}`; document.getElementById('customerProfileModal').style.display='block'; }catch(e){console.error(e);alert('تعذر تحميل ملف العميل: '+(e.message||e));}
+        }
+        function closeCustomerProfileModal(){document.getElementById('customerProfileModal').style.display='none';}
+        function closeChatModal(){document.getElementById('chatModal').style.display='none';}
+
+        async function setupRealtime() {
+            try {
+                const supabase=await ensureEmployeeSupabase();
+                realtimeChannel=supabase.channel('employee-orders-live').on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{
+                    const active=document.querySelector('.section-panel.active')?.id;
+                    if(active==='customersTab') loadCustomerProcessingOrders();
+                    else if(active==='branchesTab') loadBranchProcessingOrders();
+                    else if(active==='rewardsTab') loadRewardsManagementTable();
+                }).subscribe();
+            } catch(e){ console.warn('Realtime unavailable:',e); }
         }
 
-        function sendToBranchStage(custIndex, ordIndex) {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let branchSelected = document.getElementById(`branch_cust_${custIndex}_${ordIndex}`).value;
-            if(!branchSelected) {
-                alert('الرجاء اختيار الفرع المسؤول قبل الإرسال!');
-                return;
-            }
-            customers[custIndex].orders[ordIndex].transferredToBranch = true;
-            customers[custIndex].orders[ordIndex].assignedBranch = branchSelected;
-            localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-            alert('تم نقل الطلب بنجاح إلى قسم معالجة الفروع والشحن!');
-            loadCustomerProcessingOrders();
-        }
+        window.onload=async function(){
+            try{
+                await loadEmployeeIdentity();
+                if(can('orders')) await loadCustomerProcessingOrders(); else if(can('branches')) await loadBranchProcessingOrders(); else if(can('rewards')) await loadRewardsManagementTable();
+                await setupRealtime();
+            }catch(e){console.error('Employee dashboard init error:',e);document.getElementById('employeeIdentity').innerText='تعذر التحقق: '+(e.message||e);document.querySelectorAll('.section-panel').forEach(p=>p.innerHTML=`<p style="color:#c0392b;">${escapeHtml(e.message||e)}</p>`);}
+        };
 
-        function assignBranch(custIndex, ordIndex) {
-            let selectedBranch = document.getElementById(`branch_${custIndex}_${ordIndex}`).value;
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            customers[custIndex].orders[ordIndex].assignedBranch = selectedBranch;
-            localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-        }
-
-        function updateBranchOrderStatus(custIndex, ordIndex) {
-            let newStatus = document.getElementById(`status_${custIndex}_${ordIndex}`).value;
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            customers[custIndex].orders[ordIndex].status = newStatus;
-            localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-            alert('تم تحديث حالة الفرع والشحن بنجاح');
-            loadBranchProcessingOrders();
-        }
-
-        // --- الدردشة ---
-        function openChatModal(custIndex, ordIndex) {
-            currentActiveCustIndex = custIndex;
-            currentActiveOrdIndex = ordIndex;
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let cust = customers[custIndex];
-            let ord = cust.orders[ordIndex];
-            document.getElementById('chatTitle').innerText = `محادثة العميل: ${cust.name} (طلب: ${ord.id})`;
-            renderChatMessages();
-            document.getElementById('chatModal').style.display = 'flex';
-        }
-
-        function closeChatModal() { document.getElementById('chatModal').style.display = 'none'; }
-
-        function renderChatMessages() {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let ord = customers[currentActiveCustIndex].orders[currentActiveOrdIndex];
-            if (!ord.chat) ord.chat = [];
-            let chatBox = document.getElementById('chatMessages');
-            chatBox.innerHTML = ord.chat.length === 0 ? `<p style="text-align: center; color: #888;">لا توجد رسائل سابقة.</p>` : '';
-            ord.chat.forEach(msg => {
-                let senderClass = (msg.sender === 'employee') ? 'employee' : 'customer';
-                let senderName = (msg.sender === 'employee') ? 'الموظف' : 'العميل';
-                chatBox.innerHTML += `<div class="chat-msg ${senderClass}"><b style="font-size: 11px; display: block; color: #555;">${senderName} (${msg.time}):</b><span>${msg.text}</span></div>`;
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function sendChatMessage() {
-            let input = document.getElementById('chatInput');
-            let text = input.value.trim();
-            if (!text) return;
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let ord = customers[currentActiveCustIndex].orders[currentActiveOrdIndex];
-            if (!ord.chat) ord.chat = [];
-            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            ord.chat.push({ sender: 'employee', text: text, time: timeStr });
-            localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-            input.value = '';
-            renderChatMessages();
-        }
-
-        function handleChatKeyPress(e) { if (e.key === 'Enter') sendChatMessage(); }
-
-        window.onload = function() {
-            loadCustomerProcessingOrders();
-        }
+        window.switchTab=switchTab;
+        window.saveOrderRow=saveOrderRow;
+        window.openOrderDetailsById=openOrderDetailsById;
+        window.closeOrderDetailsModal=closeOrderDetailsModal;
+        window.openCustomerProfileById=openCustomerProfileById;
+        window.closeCustomerProfileModal=closeCustomerProfileModal;
+        window.closeChatModal=closeChatModal;
+        window.grantReward=grantReward;
     </script>
 </body>
 </html>
