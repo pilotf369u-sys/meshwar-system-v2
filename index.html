@@ -216,7 +216,6 @@
                     .select('id,name,phone')
                     .eq('id', customerId)
                     .maybeSingle();
-
                 if (customerError) {
                     console.error('Supabase customer lookup failed:', customerError);
                     throw customerError;
@@ -229,13 +228,14 @@
                     customer_id: customer.id,
                     customer_name: customer.name || '',
                     customer_phone: customer.phone || '',
-                    details: JSON.stringify({ order_url: url, color, size, quantity }),
+                    details: { color, size, quantity },
+                    order_url: url,
+                    image_url: null,
                     status: 'انتظار رد الموظف'
                 };
 
                 console.log('Supabase orders insert payload:', payload);
-
-                const { error: insertError } = await supabase
+                const { data: insertData, error: insertError } = await supabase
                     .from('orders')
                     .insert([payload]);
 
@@ -244,47 +244,34 @@
                     throw insertError;
                 }
 
-                const { data: savedOrder, error: verifyError } = await supabase
-                    .from('orders')
-                    .select('order_code,customer_id,customer_name,customer_phone,details,status')
-                    .eq('order_code', orderCode)
-                    .eq('customer_id', customer.id)
-                    .maybeSingle();
+                console.log('Supabase order insert succeeded:', insertData, payload);
 
-                if (verifyError) {
-                    console.error('Supabase orders verification failed:', verifyError, { orderCode, customerId: customer.id });
-                    throw verifyError;
-                }
-                if (!savedOrder) {
-                    const verificationError = new Error('تم تنفيذ طلب الإدراج دون خطأ، لكن لم يتم العثور على السجل عند التحقق من Supabase. تحقق من RLS وسياسات SELECT/INSERT.');
-                    console.error('Supabase orders verification returned no row:', verificationError, payload);
-                    throw verificationError;
-                }
-
-                console.log('Supabase order saved and verified:', savedOrder);
-
+                const emoji = {
+                    cart: '\uD83D\uDED2',
+                    person: '\uD83D\uDC64',
+                    phone: '\uD83D\uDCF1',
+                    id: '\uD83C\uDD94',
+                    link: '\uD83D\uDD17',
+                    color: '\uD83C\uDFA8',
+                    ruler: '\uD83D\uDCCF',
+                    box: '\uD83D\uDCE6',
+                    pin: '\uD83D\uDCCC'
+                };
                 const message = [
-                    '*طلب جديد عبر منصة MeshWar* \u{1F6D2}',
+                    '*طلب جديد عبر منصة MeshWar* ' + emoji.cart,
                     '',
-                    '\u{1F464} *الاسم:* ' + (customer.name || ''),
-                    '\u{1F4F1} *الهاتف:* ' + (customer.phone || ''),
-                    '\u{1F194} *رقم الطلب:* ' + savedOrder.order_code,
-                    '\u{1F517} *رابط المنتج:* ' + url,
-                    '\u{1F3A8} *اللون:* ' + color,
-                    '\u{1F4CF} *المقاس:* ' + size,
-                    '\u{1F4E6} *العدد:* ' + quantity,
-                    '\u{1F4CC} *الحالة:* انتظار رد الموظف'
+                    emoji.person + ' *الاسم:* ' + (customer.name || ''),
+                    emoji.phone + ' *الهاتف:* ' + (customer.phone || ''),
+                    emoji.id + ' *رقم الطلب:* ' + orderCode,
+                    emoji.link + ' *رابط المنتج:* ' + url,
+                    emoji.color + ' *اللون:* ' + color,
+                    emoji.ruler + ' *المقاس:* ' + size,
+                    emoji.box + ' *العدد:* ' + quantity,
+                    emoji.pin + ' *الحالة:* انتظار رد الموظف'
                 ].join('\n');
 
                 const whatsappNumber = '905521855554';
                 const whatsappURL = 'https://wa.me/' + whatsappNumber + '?text=' + encodeURIComponent(message);
-
-                if (typeof window.loadCustomerOrdersFromCloud === 'function') {
-                    await window.loadCustomerOrdersFromCloud(customer.id);
-                }
-                if (typeof window.loadAdminOrders === 'function') {
-                    await window.loadAdminOrders();
-                }
 
                 window.open(whatsappURL, '_blank', 'noopener');
 
@@ -295,11 +282,11 @@
                 const orderModal = document.getElementById('orderModal');
                 if (orderModal) orderModal.style.display = 'none';
 
-                alert('تم حفظ الطلب والتحقق منه في Supabase بنجاح. رقم الطلب: ' + savedOrder.order_code);
+                alert('تم حفظ الطلب في Supabase بنجاح. رقم الطلب: ' + orderCode);
                 window.location.href = 'dashboard.html';
             } catch (error) {
                 console.error('Supabase order submit aborted before WhatsApp:', error);
-                alert('لم يتم فتح واتساب لأن حفظ الطلب أو التحقق منه في Supabase فشل: ' + (error.message || error));
+                alert('لم يتم فتح واتساب لأن حفظ الطلب في Supabase فشل: ' + (error.message || error));
             } finally {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'إرسال للواتساب'; }
             }
