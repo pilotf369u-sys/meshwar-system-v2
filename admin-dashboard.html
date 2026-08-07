@@ -338,7 +338,6 @@
                         if(st === "تم التسليم" || st === "تم التوصيل") { statusBg = "#d4edda"; statusColor = "#155724"; }
                         else if(st.includes("ملغي")) { statusBg = "#f8d7da"; statusColor = "#721c24"; }
 
-                        // زر تفاعلي لعرض تفاصيل الطلب بدلاً من الفراغ
                         let detailsBtnHtml = `<button class="btn-details" onclick="openOrderDetailsModalData(${cIndex}, ${oIndex})"><i class="fa-solid fa-eye"></i> عرض تفاصيل الطلب</button>`;
 
                         tbody.innerHTML += `
@@ -367,35 +366,27 @@
             if (!hasOrders) tbody.innerHTML = '<tr><td colspan="8" style="color: #777; padding: 20px;">لا توجد طلبات مسجلة</td></tr>';
         }
 
-// دالة تسجيل الدخول لحساب العميل من لوحة الأدمن
 function loginAsCustomer(index) {
     let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
     let cust = customers[index];
     if (!cust) return alert('العميل غير موجود');
-    
-    // 1. تخزين بيانات الجلسة ليتعرف عليها كود العميل مباشرة
     localStorage.setItem('loggedInUser', JSON.stringify({
         name: cust.name,
         phone: cust.phone,
         address: cust.address || ''
     }));
-    
-    // 2. ضبط مفاتيح العرض المباشر (مثل الموظف تماماً)
 localStorage.setItem('isEmployeeViewing', 'true');
 localStorage.setItem('viewingCustomerIndex', index);
-localStorage.setItem('viewedBy', 'admin'); // تمييز أن الدخول تم من الأدمن
+localStorage.setItem('viewedBy', 'admin');
 window.location.href = 'dashboard.html';
 }
 
-// دالة فتح نافذة تفاصيل الطلب في لوحة الأدمن مطابقة تماماً للوحة العميل
 function openOrderDetailsModalData(cIndex, oIndex) {
     let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
     let cust = customers[cIndex];
     if(!cust || !cust.orders || !cust.orders[oIndex]) return;
     let order = cust.orders[oIndex];
-
     let modalBody = document.getElementById('modalOrderDetailsBody');
-    
     let prodUrl = order.url || order.productUrl || 'لا يوجد رابط مسجل';
     let color = order.color || 'غير محدد';
     let size = order.size || 'غير محدد';
@@ -403,11 +394,9 @@ function openOrderDetailsModalData(cIndex, oIndex) {
     let orderId = order.id || order.productCode || 'غير محدد';
     let orderDate = order.date || 'غير محدد';
     let orderStatus = order.status || 'قيد المعالجة';
-
     let linkDisplay = (prodUrl !== 'لا يوجد رابط مسجل') 
         ? `<a href="${prodUrl}" target="_blank" style="color: #2980b9; word-break: break-all; text-decoration: underline;">${prodUrl}</a>` 
         : 'لا يوجد رابط مسجل';
-
     modalBody.innerHTML = `
         <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
             <p style="margin: 5px 0;"><b>رقم الطلب:</b> <span style="color: #2980b9;">${orderId}</span></p>
@@ -425,7 +414,6 @@ function openOrderDetailsModalData(cIndex, oIndex) {
             <p style="margin: 8px 0;"><strong>حالة الطلب:</strong> <span style="padding: 3px 8px; background: #e0f2fe; color: #0369a1; border-radius: 4px; font-weight: bold;">${orderStatus}</span></p>
         </div>
     `;
-
     document.getElementById('orderDetailsModal').style.display = 'flex';
 }
 
@@ -585,86 +573,100 @@ function openOrderDetailsModalData(cIndex, oIndex) {
             }
         }
 
-        function loadCustomers() {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let tbody = document.getElementById('custTableBody');
-            if(!tbody) return;
-            let filterType = document.getElementById('customerFilterSelect').value;
-            tbody.innerHTML = '';
+        const CUSTOMER_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
+        const CUSTOMER_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_R';
+        let customerSupabase = null;
+        let adminCustomersCloud = [];
 
-            customers.forEach((cust, index) => {
-                let totalCompleted = cust.orders ? cust.orders.filter(o => o.status === "تم التسليم" || o.status === "تم التوصيل").length : 0;
-                let lastBaseline = cust.lastRewardAtCompletedCount || 0;
-                let currentCycleCount = totalCompleted - lastBaseline;
-                let isEligible = currentCycleCount >= 5;
-
-                if (filterType === 'eligible' && !isEligible) return;
-
-                let isChecked = cust.rewardActive ? 'checked' : '';
-                let usageCnt = cust.usageCount || 0;
-                let rowBackground = isEligible ? '#eafaf1' : '#ffffff';
-                
-                let eligibilityBadge = isEligible ? 
-                    '<span style="background: #27ae60; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">مستحق (5/5) ⭐</span>' : 
-                    `<span style="background: #e0e0e0; color: #555; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${currentCycleCount} / 5 طلبات</span>`;
-
-                let rewardsHtml = `<span style="color: #888; font-style: italic; font-size: 11px;">لا توجد مكافآت</span>`;
-                if (cust.rewardsLog && cust.rewardsLog.length > 0) {
-                    rewardsHtml = `<ul class="rewards-list">`;
-                    cust.rewardsLog.forEach(rew => {
-                        rewardsHtml += `<li>🎁 <b>${rew.amount || ''}</b> - <span style="color: #555;">${rew.date || ''}</span></li>`;
-                    });
-                    rewardsHtml += `</ul>`;
-                }
-
-                tbody.innerHTML += `
-                    <tr style="background-color: ${rowBackground};">
-                        <td><b style="color: #2980b9;">${cust.code || '---'}</b></td>
-                        <td style="font-weight: bold;">${cust.name}</td>
-                        <td dir="ltr" style="text-align: right;">${cust.phone}</td>
-                        <td>${cust.country || '---'} / ${cust.state || '---'}</td>
-                        <td>${cust.address || '---'}</td>
-                        <td><span style="background: #e1f5fe; color: #0288d1; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${totalCompleted} كلي (${currentCycleCount} للدورة)</span></td>
-                        <td>${eligibilityBadge}</td>
-                        <td>
-                            <input type="checkbox" ${isChecked} onchange="toggleCustomerReward(${index}, this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
-                        </td>
-                        <td>
-                            <span style="background: #e8f8f5; color: #16a085; padding: 4px 10px; border-radius: 4px; font-weight: bold;">${usageCnt} مرة</span>
-                        </td>
-                        <td>${rewardsHtml}</td>
-                        <td>
-                            <!-- زر الدخول لحساب العميل -->
-                            <button class="btn-green" onclick="loginAsCustomer(${index})" style="margin-left: 5px; background-color: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-right-to-bracket"></i> دخول</button>
-                            <button class="btn-blue" onclick="editCustomer(${index})" style="margin-left: 5px;">تعديل</button>
-                            <button class="btn-red" onclick="deleteCustomer(${index})">حذف</button>
-                        </td>
-                    </tr>
-                `;
-            });
+        async function ensureCustomerSupabase() {
+            if (customerSupabase) return customerSupabase;
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+            customerSupabase = createClient(CUSTOMER_SUPABASE_URL, CUSTOMER_SUPABASE_KEY);
+            return customerSupabase;
         }
 
-        function toggleCustomerReward(index, isChecked) {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            if (customers[index]) {
-                customers[index].rewardActive = isChecked;
-                if (isChecked) {
-                    customers[index].usageCount = (customers[index].usageCount || 0) + 1;
-                    let totalCompleted = customers[index].orders ? customers[index].orders.filter(o => o.status === "تم التسليم" || o.status === "تم التوصيل").length : 0;
-                    customers[index].lastRewardAtCompletedCount = totalCompleted;
-                    
-                    setTimeout(() => {
-                        customers[index].rewardActive = false;
-                        localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-                        loadCustomers();
-                    }, 500);
-                }
-                localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-                loadCustomers();
+        async function initDefaultCustomers() {
+            try {
+                await ensureCustomerSupabase();
+            } catch (error) {
+                console.error('Supabase init error:', error);
             }
         }
 
-        function saveCustomerData() {
+        async function loadCustomers() {
+            let tbody = document.getElementById('custTableBody');
+            if(!tbody) return;
+            let filterType = document.getElementById('customerFilterSelect').value;
+            tbody.innerHTML = '<tr><td colspan="11" style="color:#777; padding:20px;">جاري تحميل العملاء...</td></tr>';
+
+            try {
+                const supabase = await ensureCustomerSupabase();
+                const { data, error } = await supabase.from('customers').select('*');
+                if (error) throw error;
+
+                adminCustomersCloud = (data || []).map(cust => ({
+                    ...cust,
+                    rewardActive: cust.rewardActive ?? cust.reward_active ?? false,
+                    usageCount: cust.usageCount ?? cust.usage_count ?? 0,
+                    lastRewardAtCompletedCount: cust.lastRewardAtCompletedCount ?? cust.last_reward_at_completed_count ?? 0,
+                    rewardsLog: cust.rewardsLog ?? cust.rewards_log ?? [],
+                    orders: cust.orders ?? []
+                }));
+
+                tbody.innerHTML = '';
+                adminCustomersCloud.forEach((cust, index) => {
+                    let totalCompleted = cust.orders ? cust.orders.filter(o => o.status === "تم التسليم" || o.status === "تم التوصيل").length : 0;
+                    let lastBaseline = cust.lastRewardAtCompletedCount || 0;
+                    let currentCycleCount = totalCompleted - lastBaseline;
+                    let isEligible = currentCycleCount >= 5;
+                    if (filterType === 'eligible' && !isEligible) return;
+
+                    let isChecked = cust.rewardActive ? 'checked' : '';
+                    let usageCnt = cust.usageCount || 0;
+                    let rowBackground = isEligible ? '#eafaf1' : '#ffffff';
+                    let eligibilityBadge = isEligible ? 
+                        '<span style="background: #27ae60; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">مستحق (5/5) ⭐</span>' : 
+                        `<span style="background: #e0e0e0; color: #555; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${currentCycleCount} / 5 طلبات</span>`;
+
+                    let rewardsHtml = `<span style="color: #888; font-style: italic; font-size: 11px;">لا توجد مكافآت</span>`;
+                    if (cust.rewardsLog && cust.rewardsLog.length > 0) {
+                        rewardsHtml = `<ul class="rewards-list">`;
+                        cust.rewardsLog.forEach(rew => {
+                            rewardsHtml += `<li>🎁 <b>${rew.amount || ''}</b> - <span style="color: #555;">${rew.date || ''}</span></li>`;
+                        });
+                        rewardsHtml += `</ul>`;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr style="background-color: ${rowBackground};">
+                            <td><b style="color: #2980b9;">${cust.code || '---'}</b></td>
+                            <td style="font-weight: bold;">${cust.name || '---'}</td>
+                            <td dir="ltr" style="text-align: right;">${cust.phone || '---'}</td>
+                            <td>${cust.country || '---'} / ${cust.state || '---'}</td>
+                            <td>${cust.address || '---'}</td>
+                            <td><span style="background: #e1f5fe; color: #0288d1; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${totalCompleted} كلي (${currentCycleCount} للدورة)</span></td>
+                            <td>${eligibilityBadge}</td>
+                            <td><input type="checkbox" ${isChecked} onchange="toggleCustomerReward(${index}, this.checked)" style="width: 20px; height: 20px; cursor: pointer;"></td>
+                            <td><span style="background: #e8f8f5; color: #16a085; padding: 4px 10px; border-radius: 4px; font-weight: bold;">${usageCnt} مرة</span></td>
+                            <td>${rewardsHtml}</td>
+                            <td>
+                                <button class="btn-green" onclick="loginAsCustomer(${index})" style="margin-left: 5px; background-color: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-right-to-bracket"></i> دخول</button>
+                                <button class="btn-blue" onclick="editCustomer(${index})" style="margin-left: 5px;">تعديل</button>
+                                <button class="btn-red" onclick="deleteCustomer(${index})">حذف</button>
+                            </td>
+                        </tr>`;
+                });
+
+                if (!tbody.innerHTML.trim()) {
+                    tbody.innerHTML = '<tr><td colspan="11" style="color:#777; padding:20px;">لا توجد بيانات عملاء</td></tr>';
+                }
+            } catch (error) {
+                console.error('Load customers error:', error);
+                tbody.innerHTML = `<tr><td colspan="11" style="color:#c0392b; padding:20px;">تعذر تحميل العملاء من Supabase: ${error.message || error}</td></tr>`;
+            }
+        }
+
+        async function saveCustomerData() {
             let name = document.getElementById('custName').value.trim();
             let code = document.getElementById('custCode').value.trim();
             let email = document.getElementById('custEmail').value.trim();
@@ -675,42 +677,49 @@ function openOrderDetailsModalData(cIndex, oIndex) {
             let address = document.getElementById('custAddress').value.trim();
             let editIndex = parseInt(document.getElementById('editCustomerIndex').value);
 
-            if(!name || !password || !country || !phone || !address) { 
+            if(!name || !password || !country || !phone || !address) {
                 alert('الرجاء إدخال الحقول الإلزامية.');
                 return;
             }
 
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
+            try {
+                const supabase = await ensureCustomerSupabase();
+                const current = editIndex >= 0 ? adminCustomersCloud[editIndex] : null;
+                const payload = {
+                    code: code || current?.code || ('CUS-' + Math.floor(1000 + Math.random() * 9000)),
+                    name,
+                    email,
+                    password,
+                    country,
+                    phone,
+                    state,
+                    address
+                };
 
-            if (editIndex === -1) {
-                let newCode = code || ('CUS-' + Math.floor(1000 + Math.random() * 9000));
-                customers.push({
-                    code: newCode, name, email, password, country, phone, state, address,
-                    rewardActive: false, usageCount: 0, lastRewardAtCompletedCount: 0, rewardsLog: [], orders: []
-                });
-                alert('تمت إضافة العميل بنجاح');
-            } else {
-                customers[editIndex].name = name;
-                customers[editIndex].code = code || customers[editIndex].code;
-                customers[editIndex].email = email;
-                customers[editIndex].password = password;
-                customers[editIndex].country = country;
-                customers[editIndex].phone = phone;
-                customers[editIndex].state = state;
-                customers[editIndex].address = address;
-                alert('تم تحديث بيانات العميل بنجاح');
+                if (editIndex === -1) {
+                    const { error } = await supabase.from('customers').insert([payload]);
+                    if (error) throw error;
+                    alert('تمت إضافة العميل بنجاح إلى Supabase');
+                } else {
+                    if (!current) throw new Error('العميل المحدد غير موجود');
+                    let query = supabase.from('customers').update(payload);
+                    query = current.id != null ? query.eq('id', current.id) : query.eq('code', current.code);
+                    const { error } = await query;
+                    if (error) throw error;
+                    alert('تم تحديث بيانات العميل بنجاح في Supabase');
+                }
+
+                resetCustomerForm();
+                await loadCustomers();
+            } catch (error) {
+                console.error('Save customer error:', error);
+                alert('تعذر حفظ العميل في Supabase: ' + (error.message || error));
             }
-
-            localStorage.setItem('adminCustomersList', JSON.stringify(customers));
-            resetCustomerForm();
-            loadCustomers();
         }
 
         function editCustomer(index) {
-            let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-            let cust = customers[index];
+            let cust = adminCustomersCloud[index];
             if (!cust) return;
-
             document.getElementById('editCustomerIndex').value = index;
             document.getElementById('custName').value = cust.name || '';
             document.getElementById('custCode').value = cust.code || '';
@@ -720,19 +729,48 @@ function openOrderDetailsModalData(cIndex, oIndex) {
             document.getElementById('custPhone').value = cust.phone || '';
             document.getElementById('custState').value = cust.state || '';
             document.getElementById('custAddress').value = cust.address || '';
-
             document.getElementById('customerFormTitle').innerText = "تعديل بيانات العميل: " + cust.name;
             document.getElementById('saveCustomerBtn').innerText = "حفظ التعديلات";
             document.getElementById('cancelEditBtn').style.display = "inline-block";
             window.scrollTo({top: 400, behavior: 'smooth'});
         }
 
-        function deleteCustomer(index) {
-            if (confirm('هل أنت متأكد من حذف هذا العميل؟')) {
-                let customers = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-                customers.splice(index, 1);
-                localStorage.setItem('adminCustomersList', JSON.stringify(customers));
+        async function deleteCustomer(index) {
+            if (!confirm('هل أنت متأكد من حذف هذا العميل؟')) return;
+            const cust = adminCustomersCloud[index];
+            if (!cust) return;
+            try {
+                const supabase = await ensureCustomerSupabase();
+                let query = supabase.from('customers').delete();
+                query = cust.id != null ? query.eq('id', cust.id) : query.eq('code', cust.code);
+                const { error } = await query;
+                if (error) throw error;
+                await loadCustomers();
+            } catch (error) {
+                console.error('Delete customer error:', error);
+                alert('تعذر حذف العميل من Supabase: ' + (error.message || error));
+            }
+        }
+
+        async function toggleCustomerReward(index, isChecked) {
+            const cust = adminCustomersCloud[index];
+            if (!cust) return;
+            cust.rewardActive = isChecked;
+            const rewardField = Object.prototype.hasOwnProperty.call(cust, 'reward_active') ? 'reward_active' : (Object.prototype.hasOwnProperty.call(cust, 'rewardActive') ? 'rewardActive' : null);
+            if (!rewardField) {
                 loadCustomers();
+                return;
+            }
+            try {
+                const supabase = await ensureCustomerSupabase();
+                let query = supabase.from('customers').update({ [rewardField]: isChecked });
+                query = cust.id != null ? query.eq('id', cust.id) : query.eq('code', cust.code);
+                const { error } = await query;
+                if (error) throw error;
+                await loadCustomers();
+            } catch (error) {
+                console.error('Reward update error:', error);
+                alert('تعذر تحديث المكافأة في Supabase: ' + (error.message || error));
             }
         }
 
@@ -746,7 +784,6 @@ function openOrderDetailsModalData(cIndex, oIndex) {
             document.getElementById('custPhone').value = "";
             document.getElementById('custState').value = "";
             document.getElementById('custAddress').value = "";
-
             document.getElementById('customerFormTitle').innerText = "إضافة عميل جديد";
             document.getElementById('saveCustomerBtn').innerText = "+ حفظ وإضافة العميل";
             document.getElementById('cancelEditBtn').style.display = "none";
