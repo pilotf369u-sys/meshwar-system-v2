@@ -140,12 +140,15 @@
                 name: customer.name || '',
                 phone: customer.phone || '',
                 email: customer.email || '',
+                country: customer.country || '',
                 address: customer.address || ''
             }));
         }
 
         function renderCurrentCustomer(currentCustomer) {
-            document.getElementById('userName').innerText = currentCustomer.name || currentCustomer.username || 'عزيزي العميل';
+            const customerName = currentCustomer.name || currentCustomer.username || 'عزيزي العميل';
+            const customerCountry = currentCustomer.country ? ` - ${currentCustomer.country}` : '';
+            document.getElementById('userName').innerText = customerName + customerCountry;
             if (document.getElementById('userAddress')) document.getElementById('userAddress').value = currentCustomer.address || '';
 
             const backBtn = document.getElementById('backBtn');
