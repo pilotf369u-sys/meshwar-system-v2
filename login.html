@@ -15,17 +15,13 @@
     </style>
 </head>
 <body>
-
 <div class="box">
     <h2>تسجيل الدخول</h2>
     <input type="text" id="phone" placeholder="رقم الهاتف أو كود الدخول">
     <input type="password" id="password" placeholder="كلمة المرور">
     <button onclick="login()">دخول</button>
-    <p>
-        <a href="register.html">ليس لديك حساب؟ سجل الآن</a>
-    </p>
+    <p><a href="register.html">ليس لديك حساب؟ سجل الآن</a></p>
 </div>
-
 <script>
     const LOGIN_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
     const LOGIN_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
@@ -38,92 +34,76 @@
         return loginSupabase;
     }
 
+    function phoneCandidates(input) {
+        const raw = String(input || '').trim();
+        const digits = raw.replace(/[^0-9]/g, '');
+        return Array.from(new Set([raw, digits, digits ? '+' + digits : ''].filter(Boolean)));
+    }
+
+    async function findEmployeeInSupabase(inputId) {
+        const supabase = await ensureLoginSupabase();
+        for (const phoneValue of phoneCandidates(inputId)) {
+            const { data, error } = await supabase.from('employees').select('*').eq('phone', phoneValue).maybeSingle();
+            if (error) throw error;
+            if (data) return data;
+        }
+        return null;
+    }
+
     async function findCustomerInSupabase(inputId) {
         const supabase = await ensureLoginSupabase();
         const rawInput = String(inputId || '').trim();
-        const cleanInput = rawInput.replace(/[^0-9]/g, '');
-
         if (rawInput) {
-            const { data: byCode, error: codeError } = await supabase
-                .from('customers')
-                .select('*')
-                .eq('code', rawInput)
-                .maybeSingle();
+            const { data: byCode, error: codeError } = await supabase.from('customers').select('*').eq('code', rawInput).maybeSingle();
             if (codeError) throw codeError;
             if (byCode) return byCode;
         }
-
-        const phoneCandidates = Array.from(new Set([
-            rawInput,
-            cleanInput,
-            cleanInput ? '+' + cleanInput : ''
-        ].filter(Boolean)));
-
-        for (const phoneValue of phoneCandidates) {
-            const { data: byPhone, error: phoneError } = await supabase
-                .from('customers')
-                .select('*')
-                .eq('phone', phoneValue)
-                .maybeSingle();
+        for (const phoneValue of phoneCandidates(rawInput)) {
+            const { data: byPhone, error: phoneError } = await supabase.from('customers').select('*').eq('phone', phoneValue).maybeSingle();
             if (phoneError) throw phoneError;
             if (byPhone) return byPhone;
         }
-
         return null;
     }
 
     async function login() {
-        let inputId = document.getElementById('phone').value.trim();
+        const inputId = document.getElementById('phone').value.trim();
         const passwordInput = document.getElementById('password').value.trim();
+        if (!inputId || !passwordInput) return alert('الرجاء إدخال رقم الهاتف/الكود وكلمة المرور');
 
-        if (!inputId || !passwordInput) {
-            alert('الرجاء إدخال رقم الهاتف/الكود وكلمة المرور');
-            return;
-        }
-
-        const adminPhone = "123456";
-        const adminPass = "123";
-        if (inputId === adminPhone && passwordInput === adminPass) {
+        if (inputId === '123456' && passwordInput === '123') {
             window.location.href = 'admin-dashboard.html';
             return;
         }
 
-        let cleanInput = inputId.replace(/[^0-9]/g, '');
-
-        const employeesList = JSON.parse(localStorage.getItem('employeesList')) || [];
-        const employee = employeesList.find(emp => {
-            let empPhone = (emp.phone || '').toString().replace(/[^0-9]/g, '');
-            let empPass = emp.password || "123";
-            return empPhone === cleanInput && passwordInput === empPass;
-        });
-
-        if (employee) {
-            localStorage.setItem('loggedInEmployee', JSON.stringify(employee));
-            window.location.href = 'employee-dashboard.html';
+        try {
+            const employee = await findEmployeeInSupabase(inputId);
+            if (employee) {
+                const employeePassword = employee.password == null ? '' : String(employee.password);
+                const enabled = employee.is_active !== false && employee.active !== false && employee.disabled !== true;
+                if (!enabled) return alert('حساب الموظف معطل. راجع الإدارة.');
+                if (employeePassword !== passwordInput) return alert('كلمة المرور غير صحيحة.');
+                window.location.href = 'employee-dashboard.html?employeeId=' + encodeURIComponent(employee.id);
+                return;
+            }
+        } catch (error) {
+            console.error('Employee login Supabase error:', error);
+            alert('تعذر التحقق من حساب الموظف عبر Supabase: ' + (error.message || error));
             return;
         }
 
+        /* بقية أنواع الحسابات تبقى كما هي مؤقتاً إلى أن يحين دور تحويلها للسحابة. */
         const deliveryList = JSON.parse(localStorage.getItem('deliveryList')) || [];
-        const deliveryGuy = deliveryList.find(del => {
-            let delPhone = (del.phone || '').toString().replace(/[^0-9]/g, '');
-            let delPass = del.password || "123";
-            return delPhone === cleanInput && passwordInput === delPass;
-        });
-
+        const cleanInput = inputId.replace(/[^0-9]/g, '');
+        const deliveryGuy = deliveryList.find(del => (del.phone || '').toString().replace(/[^0-9]/g, '') === cleanInput && passwordInput === (del.password || '123'));
         if (deliveryGuy) {
             localStorage.setItem('loggedInDelivery', JSON.stringify(deliveryGuy));
             localStorage.setItem('loggedDeliveryName', deliveryGuy.name);
             window.location.href = 'delivery-dashboard.html';
             return;
         }
-
         const branchList = JSON.parse(localStorage.getItem('branchList')) || [];
-        const branchUser = branchList.find(br => {
-            let brPhone = (br.phone || '').toString().replace(/[^0-9]/g, '');
-            let brPass = br.password || "";
-            return brPhone === cleanInput && passwordInput === brPass;
-        });
-
+        const branchUser = branchList.find(br => (br.phone || '').toString().replace(/[^0-9]/g, '') === cleanInput && passwordInput === (br.password || ''));
         if (branchUser) {
             localStorage.setItem('loggedBranchName', branchUser.name);
             window.location.href = 'branch-dashboard.html';
@@ -132,50 +112,23 @@
 
         try {
             const user = await findCustomerInSupabase(inputId);
-
-            if (!user) {
-                alert('بيانات الدخول غير صحيحة، أو أن الحساب غير مسجل في النظام.');
-                return;
-            }
-
+            if (!user) return alert('بيانات الدخول غير صحيحة، أو أن الحساب غير مسجل في النظام.');
             const storedPassword = user.password == null ? '' : String(user.password).trim();
             if (!storedPassword) {
                 const supabase = await ensureLoginSupabase();
-                const { error: setPasswordError } = await supabase
-                    .from('customers')
-                    .update({ password: passwordInput })
-                    .eq('id', user.id);
-                if (setPasswordError) throw setPasswordError;
-                user.password = passwordInput;
+                const { error } = await supabase.from('customers').update({ password: passwordInput }).eq('id', user.id);
+                if (error) throw error;
             } else if (storedPassword !== passwordInput) {
-                alert('كلمة المرور غير صحيحة.');
-                return;
+                return alert('كلمة المرور غير صحيحة.');
             }
-
-            localStorage.removeItem('selectedCustomerPhone');
-            localStorage.removeItem('selectedCustomerName');
-            sessionStorage.removeItem('selectedCustomerPhone');
-            localStorage.removeItem('isEmployeeViewing');
-            localStorage.removeItem('viewedBy');
-
             localStorage.setItem('viewingCustomerId', String(user.id));
-            localStorage.setItem('loggedInUser', JSON.stringify({
-                id: user.id,
-                code: user.code || '',
-                name: user.name || '',
-                phone: user.phone || '',
-                email: user.email || '',
-                country: user.country || '',
-                address: user.address || ''
-            }));
-
+            localStorage.setItem('loggedInUser', JSON.stringify({id:user.id,code:user.code||'',name:user.name||'',phone:user.phone||'',email:user.email||'',country:user.country||'',address:user.address||''}));
             window.location.href = 'dashboard.html';
         } catch (error) {
             console.error('Customer login Supabase error:', error);
             alert('تعذر تسجيل الدخول عبر Supabase: ' + (error.message || error));
         }
     }
-
     window.login = login;
 </script>
 </body>
