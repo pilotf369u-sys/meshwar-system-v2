@@ -125,20 +125,31 @@
       }
 
       function getCloudCustomerById(customerId) { return adminCustomersCloud.find(cust => String(cust.id) === String(customerId)); }
-      function loginAsCloudCustomer(customerId) { const cust = getCloudCustomerById(customerId); if (!cust) return alert('العميل غير موجود'); localStorage.setItem('loggedInUser', JSON.stringify({id: cust.id, code: cust.code || '', name: cust.name || '', phone: cust.phone || '', email: cust.email || '', address: cust.address || ''})); localStorage.setItem('isEmployeeViewing', 'true'); localStorage.setItem('viewingCustomerId', String(cust.id)); localStorage.setItem('viewedBy', 'admin'); window.location.href = 'dashboard.html'; }
+      function loginAsCloudCustomer(customerId) { const cust = getCloudCustomerById(customerId); if (!cust) return alert('العميل غير موجود'); localStorage.setItem('loggedInUser', JSON.stringify({id: cust.id, code: cust.code || '', name: cust.name || '', phone: cust.phone || '', email: cust.email || '', country: cust.country || '', address: cust.address || ''})); localStorage.setItem('isEmployeeViewing', 'true'); localStorage.setItem('viewingCustomerId', String(cust.id)); localStorage.setItem('viewedBy', 'admin'); window.location.href = 'dashboard.html'; }
 
       async function saveCustomerData() {
         let name = document.getElementById('custName').value.trim();
         let code = document.getElementById('custCode').value.trim();
         let email = document.getElementById('custEmail').value.trim();
+        let password = document.getElementById('custPass').value.trim();
+        let country = document.getElementById('custCountry').value;
         let phone = document.getElementById('custPhone').value.trim();
         let address = document.getElementById('custAddress').value.trim();
         let editCustomerId = document.getElementById('editCustomerIndex').value;
-        if(!name || !phone || !address) { alert('الرجاء إدخال الاسم ورقم الهاتف والعنوان.'); return; }
+        if(!name || !phone || !address || !country) { alert('الرجاء إدخال الاسم ورقم الهاتف والدولة والعنوان.'); return; }
         try {
           const supabase = await ensureCustomerSupabase();
           const current = editCustomerId !== '-1' ? getCloudCustomerById(editCustomerId) : null;
-          const payload = { code: code || current?.code || ('CUS-' + Math.floor(1000 + Math.random() * 9000)), name, email, phone, address };
+          if (editCustomerId === '-1' && !password) { alert('الرجاء إدخال كلمة مرور للعميل الجديد.'); return; }
+          const payload = {
+            code: code || current?.code || ('CUS-' + Math.floor(1000 + Math.random() * 9000)),
+            name,
+            email,
+            phone,
+            country,
+            address,
+            password: password || current?.password || null
+          };
           if (editCustomerId === '-1') { const { error } = await supabase.from('customers').insert([payload]); if (error) throw error; alert('تمت إضافة العميل بنجاح إلى Supabase'); }
           else { if (!current) throw new Error('العميل المحدد غير موجود'); const { error } = await supabase.from('customers').update(payload).eq('id', current.id); if (error) throw error; alert('تم تحديث بيانات العميل بنجاح في Supabase'); }
           resetCustomerForm(); await loadCustomers();
