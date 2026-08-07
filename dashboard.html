@@ -5,288 +5,88 @@
     <title>لوحة تحكم العميل - MeshWar</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --primary-red: #cc0000; --dark-blue: #003366; --bg-light: #f4f6f9; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-light); margin: 0; padding: 20px; }
-        .dashboard-header { background: white; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .info-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .address-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; box-sizing: border-box; }
-        .btn-action { background: var(--dark-blue); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
-        .btn-wa { background: #25D366; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 12px; margin-left: 5px; display: inline-block; }
-        .btn-msg { background: var(--dark-blue); color: white; padding: 5px 10px; border-radius: 5px; border: none; font-size: 12px; cursor: pointer; }
-        .btn-cancel { background: #e53935; color: white; padding: 5px 10px; border-radius: 5px; border: none; font-size: 12px; cursor: pointer; }
-        .btn-details { background: #6366f1; color: white; padding: 5px 10px; border-radius: 5px; border: none; font-size: 12px; cursor: pointer; margin-left: 5px; }
-        .orders-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 1050px; }
-        th { background: #f8fafc; padding: 15px; text-align: right; border-bottom: 2px solid #edf2f7; }
-        td { padding: 18px 15px; border-bottom: 1px solid #edf2f7; text-align: center; }
-        th:first-child, td:first-child { text-align: right; }
-        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .section-box { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .chat-box-container { height: 180px; border: 1px solid #ddd; background: #fafafa; overflow-y: scroll; padding: 10px; margin-bottom: 10px; border-radius: 8px; text-align: right; }
-        .notifications-list { max-height: 180px; overflow-y: auto; font-size: 13px; text-align: right; }
-        .notification-item { padding: 6px 0; border-bottom: 1px solid #f1f5f9; color: #334155; }
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 500px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); text-align: right; animation: fadeIn 0.3s ease; }
-        .order-thumb { width: 70px; height: 70px; object-fit: cover; border-radius: 7px; border: 1px solid #ddd; }
-        .barcode-svg { max-width: 170px; height: 42px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        :root { --primary-red:#cc0000; --dark-blue:#003366; --bg-light:#f4f6f9; }
+        body { font-family:'Segoe UI',sans-serif; background-color:var(--bg-light); margin:0; padding:20px; }
+        .dashboard-header { background:white; padding:20px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; box-shadow:0 4px 15px rgba(0,0,0,.05); }
+        .grid-layout { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:25px; }
+        .info-card,.orders-container,.section-box { background:white; padding:20px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,.05); }
+        .orders-container { margin-bottom:25px; overflow-x:auto; padding:25px; }
+        .address-input { width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px; box-sizing:border-box; }
+        .btn-action { background:var(--dark-blue); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; }
+        .btn-cancel { background:#e53935; color:white; padding:5px 10px; border-radius:5px; border:none; font-size:12px; cursor:pointer; }
+        .btn-details { background:#6366f1; color:white; padding:5px 10px; border-radius:5px; border:none; font-size:12px; cursor:pointer; }
+        table { width:100%; border-collapse:collapse; min-width:1050px; }
+        th { background:#f8fafc; padding:15px; text-align:right; border-bottom:2px solid #edf2f7; }
+        td { padding:18px 15px; border-bottom:1px solid #edf2f7; text-align:center; }
+        .bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .chat-box-container { height:220px; border:1px solid #ddd; background:#fafafa; overflow-y:auto; padding:10px; margin-bottom:10px; border-radius:8px; text-align:right; }
+        .chat-line { margin:7px 0; padding:8px 10px; border-radius:8px; max-width:82%; }
+        .chat-line.employee { background:#d1e7dd; margin-right:auto; }
+        .chat-line.customer { background:#cfe2ff; margin-left:auto; }
+        .notifications-list { max-height:180px; overflow-y:auto; font-size:13px; text-align:right; }
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; justify-content:center; align-items:center; }
+        .modal-content { background:white; padding:25px; border-radius:15px; width:90%; max-width:500px; box-shadow:0 5px 20px rgba(0,0,0,.2); text-align:right; }
+        .order-thumb { width:70px; height:70px; object-fit:cover; border-radius:7px; border:1px solid #ddd; }
+        .barcode-svg { max-width:170px; height:42px; }
+        @media(max-width:800px){.grid-layout,.bottom-grid{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
     <div class="dashboard-header">
-        <div style="font-weight: 800; color: var(--primary-red); font-size: 20px;"><i class="fa-solid fa-gauge-high"></i> أهلاً بك يا <span id="userName">عزيزي العميل</span></div>
-       <a href="index.html" id="backBtn" style="color: #64748b; text-decoration: none; font-weight: bold;">العودة للرئيسية</a>
+        <div style="font-weight:800;color:var(--primary-red);font-size:20px;"><i class="fa-solid fa-gauge-high"></i> أهلاً بك يا <span id="userName">عزيزي العميل</span></div>
+        <a href="index.html" id="backBtn" style="color:#64748b;text-decoration:none;font-weight:bold;">العودة للرئيسية</a>
     </div>
 
     <div class="grid-layout">
-        <div class="info-card" style="border-right: 5px solid #25D366;">
-            <h3>🌟 نظام مكافآت MeshWar</h3>
-            <div id="rewardStatusBadge" style="margin: 10px 0; font-weight: bold; font-size: 14px; color: #2c3e50;">جاري تحميل تفاصيل المكافآت...</div>
-            <div style="background: #e2e8f0; height: 10px; border-radius: 5px; margin: 15px 0; overflow: hidden;"><div id="rewardProgressBar" style="background: #25D366; height: 100%; width: 0%; transition: width 0.4s ease;"></div></div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #555; margin-top: 10px;">
-                <span>عدد مرات أخذ المكافأة: <b id="customerUsageCount" style="color: #27ae60;">0</b></span>
-                <button onclick="openRewardsModal()" style="background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px;"><i class="fa-solid fa-gift"></i> عرض سجل ومبالغ المكافآت</button>
-            </div>
-        </div>
-        <div class="info-card" style="border-right: 5px solid var(--primary-red);">
-            <h3><i class="fa-solid fa-warehouse"></i> عنوان المستودع</h3>
-            <div style="background: #fff3f3; padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 10px; border: 1px dashed var(--primary-red);">Şenlik mahallesi ürgüp Sokak no:21A - Keçiören / Ankara<br><strong>Alıcı: OMAR AL JAMMAS</strong></div>
-        </div>
+        <div class="info-card" style="border-right:5px solid #25D366;"><h3>🌟 نظام مكافآت MeshWar</h3><div id="rewardStatusBadge" style="margin:10px 0;font-weight:bold;font-size:14px;color:#2c3e50;">جاري تحميل تفاصيل المكافآت...</div><div style="background:#e2e8f0;height:10px;border-radius:5px;margin:15px 0;overflow:hidden;"><div id="rewardProgressBar" style="background:#25D366;height:100%;width:0%;"></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#555;"><span>عدد مرات أخذ المكافأة: <b id="customerUsageCount">0</b></span><button onclick="openRewardsModal()" style="background:#27ae60;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">عرض سجل المكافآت</button></div></div>
+        <div class="info-card" style="border-right:5px solid var(--primary-red);"><h3><i class="fa-solid fa-warehouse"></i> عنوان المستودع</h3><div style="background:#fff3f3;padding:10px;border-radius:8px;font-size:13px;border:1px dashed var(--primary-red);">Şenlik mahallesi ürgüp Sokak no:21A - Keçiören / Ankara<br><strong>Alıcı: OMAR AL JAMMAS</strong></div></div>
     </div>
 
-    <div id="rewardsModal" class="modal-overlay"><div class="modal-content"><div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;"><h3 style="margin: 0; color: var(--dark-blue);"><i class="fa-solid fa-award"></i> سجل ومبالغ المكافآت المقدمة</h3><button onclick="closeRewardsModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #777;">&times;</button></div><div id="rewardsHistoryList" style="max-height: 250px; overflow-y: auto; font-size: 13px;"></div><div style="text-align: left; margin-top: 20px;"><button onclick="closeRewardsModal()" class="btn-action" style="background: #64748b; padding: 6px 15px;">إغلاق</button></div></div></div>
+    <div id="rewardsModal" class="modal-overlay"><div class="modal-content"><h3>سجل المكافآت</h3><div id="rewardsHistoryList"></div><button onclick="closeRewardsModal()" class="btn-action">إغلاق</button></div></div>
+    <div id="customerOrderDetailsModal" class="modal-overlay"><div class="modal-content"><h3>تفاصيل الطلب</h3><div id="customerOrderDetailsContent"></div><button onclick="closeCustomerOrderDetails()" class="btn-action">إغلاق</button></div></div>
 
-    <div id="customerOrderDetailsModal" class="modal-overlay"><div class="modal-content"><div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;"><h3 style="margin: 0; color: var(--dark-blue);"><i class="fa-solid fa-box"></i> تفاصيل الطلب الكاملة</h3><button onclick="closeCustomerOrderDetails()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #777;">&times;</button></div><div id="customerOrderDetailsContent" style="font-size: 14px; color: #333; line-height: 1.8;"></div><div style="text-align: left; margin-top: 20px;"><button onclick="closeCustomerOrderDetails()" class="btn-action" style="background: #64748b; padding: 6px 15px;">إغلاق</button></div></div></div>
+    <div class="info-card" style="margin-bottom:25px;"><h3><i class="fa-solid fa-house-user"></i> عنوانك الخاص</h3><input type="text" class="address-input" id="userAddress" style="width:70%;"><button class="btn-action" onclick="saveAddress()">حفظ العنوان</button></div>
 
-    <div class="info-card" style="margin-bottom: 25px;"><h3><i class="fa-solid fa-house-user"></i> عنوانك الخاص</h3><input type="text" class="address-input" id="userAddress" style="width: 70%;"><button class="btn-action" onclick="saveAddress()">حفظ العنوان</button></div>
-
-    <div class="orders-container"><h2><i class="fa-solid fa-box-open"></i> طلباتي النشطة</h2><table id="ordersTable"><thead><tr><th>رقم الطلب / الباركود</th><th>الصورة</th><th>التاريخ</th><th>الحالة</th><th>سبب الرفض</th><th>السعر</th><th>التفاصيل</th><th>الرابط</th><th>إلغاء</th></tr></thead><tbody id="customerOrdersTableBody"></tbody></table></div>
-
-    <div style="margin-bottom: 25px;"><button onclick="toggleArchive()" style="background: #f8fafc; border: 1px solid #ddd; padding: 12px 25px; cursor: pointer; border-radius: 8px; font-weight: bold;"><i class="fa-solid fa-clock-rotate-left"></i> عرض أرشيف الطلبات</button></div>
-    <div id="archiveContent" class="orders-container" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 25px;"><h2><i class="fa-solid fa-clock-rotate-left"></i> أرشيف الطلبات</h2><p>يعتمد الأرشيف على بيانات جدول الطلبات السحابي.</p></div>
+    <div class="orders-container"><h2><i class="fa-solid fa-box-open"></i> طلباتي النشطة</h2><table><thead><tr><th>رقم الطلب / الباركود</th><th>الصورة</th><th>التاريخ</th><th>الحالة</th><th>سبب الرفض</th><th>السعر</th><th>التفاصيل</th><th>الرابط</th><th>إلغاء</th></tr></thead><tbody id="customerOrdersTableBody"></tbody></table></div>
 
     <div class="bottom-grid">
-        <div class="section-box"><h3><i class="fa-solid fa-bell" style="color: var(--primary-red);"></i> آخر الإشعارات</h3><div id="notificationsContainer" class="notifications-list"><p style="color: #646f79;">• تتم مزامنة حالة الطلبات مباشرة من Supabase.</p></div></div>
-        <div class="section-box"><h3><i class="fa-solid fa-comment-dots" style="color: var(--dark-blue);"></i> رسائل الموظف</h3><div id="customerChatBox" class="chat-box-container"><p style="text-align: center; color: #888; font-size: 12px; margin-top: 50px;">اختر طلبك لمتابعة تفاصيله.</p></div><div style="display: flex; gap: 5px;"><input type="text" id="userMsg" placeholder="الرسائل ستربط سحابياً في مرحلة الرسائل" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px;" onkeypress="handleCustomerMsgEnter(event)"><button class="btn-action" onclick="sendCustomerMessage()">إرسال</button></div></div>
+        <div class="section-box"><h3><i class="fa-solid fa-bell" style="color:var(--primary-red);"></i> آخر الإشعارات</h3><div class="notifications-list"><p style="color:#646f79;">• تتم مزامنة الطلبات من Supabase.</p></div></div>
+        <div class="section-box"><h3><i class="fa-solid fa-comment-dots" style="color:var(--dark-blue);"></i> الدردشة المباشرة مع الموظف</h3><div id="customerChatBox" class="chat-box-container"><p style="color:#777;">جاري تحميل المحادثة...</p></div><div style="display:flex;gap:5px;"><input type="text" id="userMsg" placeholder="اكتب رسالتك..." style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px;" onkeydown="if(event.key==='Enter'){event.preventDefault();sendCustomerMessage();}"><button class="btn-action" onclick="sendCustomerMessage()">إرسال</button></div></div>
     </div>
 
     <script>
-        const CUSTOMER_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
-        const CUSTOMER_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
-        let customerPortalSupabase = null;
-        let activeSelectedOrderIndex = 0;
-        let currentCustomerOrdersGlobal = [];
-        let currentCustomerCloud = null;
+        const CUSTOMER_SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
+        const CUSTOMER_SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+        let customerPortalSupabase=null,currentCustomerCloud=null,currentCustomerOrdersGlobal=[],chatRealtimeChannel=null;
 
-        async function ensureCustomerPortalSupabase() {
-            if (customerPortalSupabase) return customerPortalSupabase;
-            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-            customerPortalSupabase = createClient(CUSTOMER_SUPABASE_URL, CUSTOMER_SUPABASE_KEY);
-            return customerPortalSupabase;
-        }
+        async function ensureCustomerPortalSupabase(){if(customerPortalSupabase)return customerPortalSupabase;const{createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');customerPortalSupabase=createClient(CUSTOMER_SUPABASE_URL,CUSTOMER_SUPABASE_KEY);return customerPortalSupabase;}
+        function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+        function getSessionCustomerId(){const p=new URLSearchParams(location.search),urlId=p.get('customerId')||p.get('id');if(urlId)return String(urlId);const viewing=localStorage.getItem('viewingCustomerId');if(viewing)return String(viewing);try{const u=JSON.parse(localStorage.getItem('loggedInUser')||'{}');if(u.id!=null)return String(u.id)}catch(e){}return'';}
+        async function fetchCurrentCustomerFromCloud(){const id=getSessionCustomerId(),sb=await ensureCustomerPortalSupabase();if(id){const{data,error}=await sb.from('customers').select('*').eq('id',id).maybeSingle();if(error)throw error;if(data)return data}return null;}
+        function normalizeCloudCustomer(c){if(!c)return null;return{...c,rewardsLog:c.rewardsLog??c.rewards_log??[],usageCount:c.usageCount??c.usage_count??0};}
 
-        async function ensureJsBarcode() {
-            if (window.JsBarcode) return;
-            await new Promise((resolve, reject) => {
-                const existing = document.getElementById('meshwar-jsbarcode');
-                if (existing) { existing.addEventListener('load', resolve, {once:true}); existing.addEventListener('error', reject, {once:true}); return; }
-                const script = document.createElement('script');
-                script.id = 'meshwar-jsbarcode';
-                script.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js';
-                script.onload = resolve;
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
-        }
+        async function ensureJsBarcode(){if(window.JsBarcode)return;await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
+        async function renderCustomerOrderBarcodes(){try{await ensureJsBarcode();document.querySelectorAll('svg[data-order-barcode]').forEach(svg=>{try{JsBarcode(svg,svg.dataset.orderBarcode,{format:'CODE128',displayValue:false,height:32,margin:2})}catch(e){}})}catch(e){console.warn(e)}}
+        function parseOrderDetails(d){if(!d)return{};if(typeof d==='object')return d;try{return JSON.parse(d)}catch(e){return{notes:String(d)}}}
+        function orderStatusStyle(s){if(s==='تم التسليم')return['#d4edda','#155724'];if(s==='رفض الطلب')return['#f8d7da','#721c24'];if(['تم الشحن','مخزن محلي','مندوب','توزيع داخلي'].includes(s))return['#cce5ff','#004085'];return['#e0f2fe','#0369a1'];}
 
-        async function renderCustomerOrderBarcodes() {
-            try {
-                await ensureJsBarcode();
-                document.querySelectorAll('svg[data-order-barcode]').forEach(svg => {
-                    try { JsBarcode(svg, svg.dataset.orderBarcode, {format:'CODE128', displayValue:false, height:32, margin:2}); } catch (e) { console.warn(e); }
-                });
-            } catch (e) { console.warn('JsBarcode load error:', e); }
-        }
+        function renderCurrentCustomer(c){document.getElementById('userName').innerText=(c.name||'عزيزي العميل')+(c.country?' - '+c.country:'');document.getElementById('userAddress').value=c.address||'';const params=new URLSearchParams(location.search),employeeId=params.get('employeeId'),viewedBy=params.get('viewedBy'),back=document.getElementById('backBtn');if(viewedBy==='employee'&&employeeId){back.innerText='العودة إلى لوحة الموظف';back.href='employee-dashboard.html?employeeId='+encodeURIComponent(employeeId)}else{back.href='index.html'}const hist=document.getElementById('rewardsHistoryList');hist.innerHTML='';(c.rewardsLog||[]).forEach((r,i)=>hist.innerHTML+=`<div style="padding:8px;border-bottom:1px solid #eee"><b>${i+1}.</b> ${escapeHtml(r.amount||0)} — ${escapeHtml(r.date||'')}</div>`);if(!hist.innerHTML)hist.innerHTML='<p>لا توجد مكافآت مسجلة.</p>';document.getElementById('customerUsageCount').innerText=c.usageCount||0;}
 
-        function getSessionCustomerId() {
-            const params = new URLSearchParams(window.location.search);
-            const urlId = params.get('id') || params.get('customerId');
-            if (urlId) return String(urlId);
-            const viewingId = localStorage.getItem('viewingCustomerId');
-            if (viewingId) return String(viewingId);
-            try {
-                const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || '{}');
-                if (loggedInUser.id != null) return String(loggedInUser.id);
-            } catch (e) {}
-            return '';
-        }
+        async function loadCustomerOrdersFromCloud(customerId){const body=document.getElementById('customerOrdersTableBody');body.innerHTML='<tr><td colspan="9">جاري تحميل الطلبات...</td></tr>';const sb=await ensureCustomerPortalSupabase();const{data,error}=await sb.from('orders').select('*').eq('customer_id',customerId).order('created_at',{ascending:false});if(error)throw error;currentCustomerOrdersGlobal=data||[];body.innerHTML='';let total=0;currentCustomerOrdersGlobal.forEach((o,i)=>{const code=o.order_code||String(o.id),status=o.status||'انتظار رد الموظف',[bg,color]=orderStatusStyle(status),price=o.price===null||o.price===undefined||o.price===''?null:Number(o.price),currency=o.currency||'$';if(price!==null)total+=price;const image=o.image_url?`<img src="${escapeHtml(o.image_url)}" class="order-thumb" onerror="this.style.display='none'">`:'---',link=o.order_url?`<a href="${escapeHtml(o.order_url)}" target="_blank">فتح الرابط</a>`:'---',reason=status==='رفض الطلب'?escapeHtml(o.rejection_reason||'لم يحدد سبب'):'---';body.innerHTML+=`<tr><td><b>${escapeHtml(code)}</b><br><svg class="barcode-svg" data-order-barcode="${escapeHtml(code)}"></svg></td><td>${image}</td><td>${o.created_at?new Date(o.created_at).toLocaleString('ar'):'---'}</td><td><span style="padding:5px 10px;background:${bg};color:${color};border-radius:4px">${escapeHtml(status)}</span></td><td>${reason}</td><td><b>${price===null?'---':price.toFixed(2)+' '+escapeHtml(currency)}</b></td><td><button class="btn-details" onclick="openCustomerOrderDetails(${i})">عرض التفاصيل</button></td><td>${link}</td><td><button class="btn-cancel" onclick="cancelOrder(${i})" ${['تم التسليم','رفض الطلب'].includes(status)?'disabled':''}>إلغاء</button></td></tr>`});if(!body.innerHTML)body.innerHTML='<tr><td colspan="9">لا توجد طلبات.</td></tr>';else body.innerHTML+=`<tr><td colspan="5" style="text-align:left;font-weight:bold">الإجمالي:</td><td colspan="4"><b>${total.toFixed(2)}</b></td></tr>`;await renderCustomerOrderBarcodes();}
 
-        async function fetchCurrentCustomerFromCloud() {
-            const customerId = getSessionCustomerId();
-            const supabase = await ensureCustomerPortalSupabase();
-            if (customerId) {
-                const { data, error } = await supabase.from('customers').select('*').eq('id', customerId).maybeSingle();
-                if (error) throw error;
-                if (data) return data;
-            }
-            let loggedInUser = {};
-            try { loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || '{}'); } catch (e) {}
-            if (loggedInUser.phone) {
-                const { data, error } = await supabase.from('customers').select('*').eq('phone', loggedInUser.phone).maybeSingle();
-                if (error) throw error;
-                if (data) return data;
-            }
-            return null;
-        }
+        function openCustomerOrderDetails(i){const o=currentCustomerOrdersGlobal[i];if(!o)return;const d=parseOrderDetails(o.details);document.getElementById('customerOrderDetailsContent').innerHTML=`<p><b>رقم الطلب:</b> ${escapeHtml(o.order_code||o.id)}</p><p><b>الحالة:</b> ${escapeHtml(o.status||'')}</p><p><b>السعر:</b> ${o.price==null?'---':escapeHtml(o.price)} ${escapeHtml(o.currency||'$')}</p><p><b>اللون:</b> ${escapeHtml(d.color||'---')}</p><p><b>المقاس:</b> ${escapeHtml(d.size||'---')}</p><p><b>العدد:</b> ${escapeHtml(d.quantity||1)}</p>`;document.getElementById('customerOrderDetailsModal').style.display='flex';}
+        function closeCustomerOrderDetails(){document.getElementById('customerOrderDetailsModal').style.display='none';}
+        function openRewardsModal(){document.getElementById('rewardsModal').style.display='flex';}function closeRewardsModal(){document.getElementById('rewardsModal').style.display='none';}
 
-        function normalizeCloudCustomer(customer) {
-            if (!customer) return null;
-            return {
-                ...customer,
-                rewardsLog: customer.rewardsLog ?? customer.rewards_log ?? [],
-                rewardActive: customer.rewardActive ?? customer.reward_active ?? false,
-                usageCount: customer.usageCount ?? customer.usage_count ?? 0,
-                lastRewardAtCompletedCount: customer.lastRewardAtCompletedCount ?? customer.last_reward_at_completed_count ?? 0
-            };
-        }
+        async function loadCustomerMessages(){const box=document.getElementById('customerChatBox');if(!currentCustomerCloud?.id)return;try{const sb=await ensureCustomerPortalSupabase();const{data,error}=await sb.from('messages').select('*').eq('customer_id',currentCustomerCloud.id).order('created_at',{ascending:true}).limit(500);if(error)throw error;box.innerHTML='';(data||[]).forEach(m=>{const type=m.sender_type==='employee'?'employee':'customer';box.innerHTML+=`<div class="chat-line ${type}"><b>${type==='employee'?'الموظف':'أنت'}:</b> ${escapeHtml(m.message||'')}<div style="font-size:10px;color:#777">${m.created_at?new Date(m.created_at).toLocaleString('ar'):''}</div></div>`});if(!box.innerHTML)box.innerHTML='<p style="color:#777">لا توجد رسائل بعد. ابدأ المحادثة الآن.</p>';box.scrollTop=box.scrollHeight}catch(e){console.error('Customer messages error:',e);box.innerHTML=`<p style="color:#c0392b">تعذر تحميل جدول messages: ${escapeHtml(e.message||e)}</p>`}}
+        async function sendCustomerMessage(){const input=document.getElementById('userMsg'),message=input.value.trim();if(!message||!currentCustomerCloud?.id)return;try{const sb=await ensureCustomerPortalSupabase();const{error}=await sb.from('messages').insert([{customer_id:currentCustomerCloud.id,sender_type:'customer',message}]);if(error)throw error;input.value='';await loadCustomerMessages()}catch(e){console.error('Customer message insert error:',e);alert('تعذر إرسال الرسالة: '+(e.message||e))}}
+        async function setupChatRealtime(){try{const sb=await ensureCustomerPortalSupabase();chatRealtimeChannel=sb.channel('customer-chat-'+currentCustomerCloud.id).on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:`customer_id=eq.${currentCustomerCloud.id}`},loadCustomerMessages).subscribe()}catch(e){console.warn('Chat realtime unavailable:',e)}}
 
-        function syncCustomerSession(customer) {
-            if (!customer) return;
-            localStorage.setItem('viewingCustomerId', String(customer.id));
-            localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, code: customer.code || '', name: customer.name || '', phone: customer.phone || '', email: customer.email || '', country: customer.country || '', address: customer.address || '' }));
-        }
+        async function cancelOrder(i){const o=currentCustomerOrdersGlobal[i];if(!o||['تم التسليم','رفض الطلب'].includes(o.status)||!confirm('هل أنت متأكد من إلغاء الطلب؟'))return;try{const sb=await ensureCustomerPortalSupabase();const{error}=await sb.from('orders').update({status:'رفض الطلب',rejection_reason:'ملغي من العميل'}).eq('id',o.id).eq('customer_id',currentCustomerCloud.id);if(error)throw error;await loadCustomerOrdersFromCloud(currentCustomerCloud.id)}catch(e){alert('تعذر إلغاء الطلب: '+(e.message||e))}}
+        async function saveAddress(){const address=document.getElementById('userAddress').value.trim();try{const sb=await ensureCustomerPortalSupabase();const{error}=await sb.from('customers').update({address}).eq('id',currentCustomerCloud.id);if(error)throw error;currentCustomerCloud.address=address;alert('تم حفظ العنوان في Supabase.')}catch(e){alert('تعذر حفظ العنوان: '+(e.message||e))}}
 
-        function renderCurrentCustomer(currentCustomer) {
-            const customerName = currentCustomer.name || currentCustomer.username || 'عزيزي العميل';
-            const customerCountry = currentCustomer.country ? ` - ${currentCustomer.country}` : '';
-            document.getElementById('userName').innerText = customerName + customerCountry;
-            if (document.getElementById('userAddress')) document.getElementById('userAddress').value = currentCustomer.address || '';
-
-            const backBtn = document.getElementById('backBtn');
-            if (backBtn) {
-                const isEmpView = sessionStorage.getItem('openedByEmployee') === 'true' || localStorage.getItem('isEmployeeViewing') === 'true';
-                const isAdminView = localStorage.getItem('isAdminViewing') === 'true';
-                if (isAdminView) { backBtn.innerText = 'العودة لوحة التحكم'; backBtn.href = 'admin-dashboard.html'; }
-                else if (isEmpView) { backBtn.innerText = 'العودة للخلف'; backBtn.href = '#'; backBtn.onclick = function(e) { e.preventDefault(); history.back(); }; }
-                else { backBtn.innerText = 'العودة للرئيسية'; backBtn.href = 'index.html'; }
-            }
-
-            let historyContainer = document.getElementById('rewardsHistoryList');
-            historyContainer.innerHTML = '';
-            if (currentCustomer.rewardsLog && currentCustomer.rewardsLog.length > 0) {
-                currentCustomer.rewardsLog.forEach((rev, idx) => { historyContainer.innerHTML += `<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:10px;border-radius:8px;margin-bottom:8px;"><b>المكافأة رقم (${idx + 1})</b> — <span style="color:#27ae60;">${rev.amount || '$0.00'}</span><div style="font-size:12px;color:#64748b;">${rev.date || 'غير محدد'}</div></div>`; });
-            } else historyContainer.innerHTML = `<p style="text-align:center;color:#777;padding:20px;">لا توجد مكافآت مسجلة في رصيدك حتى الآن.</p>`;
-        }
-
-        function parseOrderDetails(details) {
-            if (!details) return {};
-            if (typeof details === 'object') return details;
-            try { return JSON.parse(details); } catch (e) { return { notes: String(details) }; }
-        }
-
-        function orderStatusStyle(status) {
-            if (status === 'تم التسليم') return ['#d4edda','#155724'];
-            if (status === 'رفض الطلب') return ['#f8d7da','#721c24'];
-            if (['تم الشحن','مخزن محلي','مندوب','توزيع داخلي'].includes(status)) return ['#cce5ff','#004085'];
-            return ['#e0f2fe','#0369a1'];
-        }
-
-        async function loadCustomerOrdersFromCloud(customerId) {
-            const tbody = document.getElementById('customerOrdersTableBody');
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#777;">جاري تحميل طلباتك من Supabase...</td></tr>';
-            const supabase = await ensureCustomerPortalSupabase();
-            const { data, error } = await supabase.from('orders').select('*').eq('customer_id', customerId).order('created_at', {ascending:false});
-            if (error) throw error;
-            currentCustomerOrdersGlobal = data || [];
-            tbody.innerHTML = '';
-            let total = 0;
-
-            currentCustomerOrdersGlobal.forEach((order, index) => {
-                const code = order.order_code || String(order.id);
-                const created = order.created_at ? new Date(order.created_at).toLocaleString('ar') : 'غير محدد';
-                const status = order.status || 'انتظار رد الموظف';
-                const [statusBg, statusColor] = orderStatusStyle(status);
-                const price = Number(order.total_price || 0);
-                total += price;
-                const imageHtml = order.image_url ? `<img src="${order.image_url}" class="order-thumb" alt="صورة الطلب" onerror="this.style.display='none'">` : '<span style="color:#999;">---</span>';
-                const linkHtml = order.order_url ? `<a href="${order.order_url}" target="_blank" rel="noopener" style="color:#003366;">فتح الرابط</a>` : '---';
-                const reasonHtml = status === 'رفض الطلب' ? `<span style="color:#c0392b;font-weight:bold;">${order.rejection_reason || 'لم يحدد سبب'}</span>` : '---';
-                const cancelDisabled = ['تم التسليم','رفض الطلب'].includes(status) ? 'disabled style="opacity:.5;cursor:not-allowed;"' : '';
-                tbody.innerHTML += `<tr><td><b>${code}</b><br><svg class="barcode-svg" data-order-barcode="${code}"></svg></td><td>${imageHtml}</td><td style="font-size:12px;color:#555;">${created}</td><td><span style="padding:5px 10px;background:${statusBg};color:${statusColor};border-radius:4px;font-size:12px;font-weight:bold;display:inline-block;">${status}</span></td><td>${reasonHtml}</td><td><b style="color:#003366;">${price.toFixed(2)}</b></td><td><button class="btn-details" onclick="openCustomerOrderDetails(${index})"><i class="fa-solid fa-eye"></i> عرض التفاصيل</button></td><td>${linkHtml}</td><td><button class="btn-cancel" onclick="cancelOrder(${index})" ${cancelDisabled}>إلغاء</button></td></tr>`;
-            });
-
-            if (!tbody.innerHTML.trim()) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:#777;">لا توجد طلبات مسجلة حالياً.</td></tr>`;
-            else tbody.innerHTML += `<tr style="font-weight:bold;color:var(--primary-red);"><td colspan="5" style="text-align:left;">الإجمالي:</td><td colspan="4">${total.toFixed(2)}</td></tr>`;
-            renderCustomerOrderBarcodes();
-        }
-
-        window.onload = async function() {
-            try {
-                currentCustomerCloud = normalizeCloudCustomer(await fetchCurrentCustomerFromCloud());
-                if (!currentCustomerCloud) {
-                    document.getElementById('userName').innerText = 'خطأ في تحديد العميل';
-                    document.getElementById('customerOrdersTableBody').innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:#cc0000;">تعذر العثور على سجل العميل في Supabase.</td></tr>`;
-                    return;
-                }
-                syncCustomerSession(currentCustomerCloud);
-                renderCurrentCustomer(currentCustomerCloud);
-                await loadCustomerOrdersFromCloud(currentCustomerCloud.id);
-            } catch (error) {
-                console.error('Customer portal Supabase error:', error);
-                document.getElementById('userName').innerText = 'خطأ في تحميل العميل';
-                document.getElementById('customerOrdersTableBody').innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:#cc0000;">تعذر تحميل البيانات من Supabase: ${error.message || error}</td></tr>`;
-            }
-        };
-
-        function openRewardsModal() { document.getElementById('rewardsModal').style.display = 'flex'; }
-        function closeRewardsModal() { document.getElementById('rewardsModal').style.display = 'none'; }
-
-        function openCustomerOrderDetails(index) {
-            const order = currentCustomerOrdersGlobal[index]; if (!order) return;
-            const details = parseOrderDetails(order.details);
-            const productUrl = order.order_url || '';
-            const imageHtml = order.image_url ? `<img src="${order.image_url}" style="max-width:180px;max-height:180px;border-radius:8px;" alt="صورة الطلب">` : 'لا توجد صورة';
-            document.getElementById('customerOrderDetailsContent').innerHTML = `<p><strong>رقم الطلب:</strong> ${order.order_code || order.id}</p><p><strong>الحالة:</strong> ${order.status || 'انتظار رد الموظف'}</p>${order.status === 'رفض الطلب' ? `<p style="color:#c0392b;"><strong>سبب الرفض:</strong> ${order.rejection_reason || 'لم يحدد سبب'}</p>` : ''}<p><strong>اللون:</strong> ${details.color || 'غير محدد'}</p><p><strong>المقاس:</strong> ${details.size || 'غير محدد'}</p><p><strong>العدد:</strong> ${details.quantity || 1}</p><p><strong>الملاحظات:</strong> ${details.notes || '---'}</p><p><strong>الرابط:</strong> ${productUrl ? `<a href="${productUrl}" target="_blank" style="color:#003366;word-break:break-all;">${productUrl}</a>` : '---'}</p><div>${imageHtml}</div>`;
-            document.getElementById('customerOrderDetailsModal').style.display = 'flex';
-        }
-        function closeCustomerOrderDetails() { document.getElementById('customerOrderDetailsModal').style.display = 'none'; }
-
-        function selectOrderForChat(ordIndex) {
-            activeSelectedOrderIndex = ordIndex;
-            const order = currentCustomerOrdersGlobal[ordIndex];
-            document.getElementById('customerChatBox').innerHTML = `<p style="text-align:center;color:#777;margin-top:50px;">الطلب المحدد: ${order?.order_code || '---'} — ربط الرسائل السحابية سيتم في قسم الرسائل.</p>`;
-        }
-        function sendCustomerMessage() { alert('نظام الرسائل ليس ضمن تحويل جدول الطلبات الحالي.'); }
-        function handleCustomerMsgEnter(e) { if (e.key === 'Enter') sendCustomerMessage(); }
-
-        async function cancelOrder(index) {
-            const order = currentCustomerOrdersGlobal[index];
-            if (!order || ['تم التسليم','رفض الطلب'].includes(order.status)) return;
-            if (!confirm('هل أنت متأكد من إلغاء هذا الطلب؟')) return;
-            try {
-                const supabase = await ensureCustomerPortalSupabase();
-                const { error } = await supabase.from('orders').update({ status:'رفض الطلب', rejection_reason:'ملغي من العميل' }).eq('id', order.id).eq('customer_id', currentCustomerCloud.id);
-                if (error) throw error;
-                await loadCustomerOrdersFromCloud(currentCustomerCloud.id);
-                alert('تم إلغاء الطلب وتحديثه في Supabase.');
-            } catch (error) { alert('تعذر إلغاء الطلب: ' + (error.message || error)); }
-        }
-
-        async function saveAddress() {
-            let newAddress = document.getElementById('userAddress').value.trim();
-            if (!currentCustomerCloud?.id) return alert('خطأ: لم يتم التعرف على العميل لحفظ العنوان.');
-            try {
-                const supabase = await ensureCustomerPortalSupabase();
-                const { error } = await supabase.from('customers').update({ address: newAddress }).eq('id', currentCustomerCloud.id);
-                if (error) throw error;
-                currentCustomerCloud.address = newAddress;
-                syncCustomerSession(currentCustomerCloud);
-                alert('تم حفظ العنوان بنجاح وتحديثه في Supabase!');
-            } catch (error) { alert('تعذر حفظ العنوان في Supabase: ' + (error.message || error)); }
-        }
-
-        function toggleArchive() { var x = document.getElementById('archiveContent'); x.style.display = x.style.display === 'none' ? 'block' : 'none'; }
+        window.onload=async()=>{try{currentCustomerCloud=normalizeCloudCustomer(await fetchCurrentCustomerFromCloud());if(!currentCustomerCloud)throw new Error('تعذر العثور على العميل في Supabase');renderCurrentCustomer(currentCustomerCloud);await Promise.all([loadCustomerOrdersFromCloud(currentCustomerCloud.id),loadCustomerMessages()]);await setupChatRealtime()}catch(e){console.error(e);document.getElementById('userName').innerText='خطأ في تحميل العميل';document.getElementById('customerOrdersTableBody').innerHTML=`<tr><td colspan="9" style="color:#c0392b">${escapeHtml(e.message||e)}</td></tr>`}};
+        Object.assign(window,{openRewardsModal,closeRewardsModal,openCustomerOrderDetails,closeCustomerOrderDetails,cancelOrder,saveAddress,sendCustomerMessage});
     </script>
 </body>
 </html>
