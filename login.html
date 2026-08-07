@@ -138,8 +138,16 @@
                 return;
             }
 
-            const storedPassword = user.password == null ? '' : String(user.password);
-            if (!storedPassword || storedPassword !== passwordInput) {
+            const storedPassword = user.password == null ? '' : String(user.password).trim();
+            if (!storedPassword) {
+                const supabase = await ensureLoginSupabase();
+                const { error: setPasswordError } = await supabase
+                    .from('customers')
+                    .update({ password: passwordInput })
+                    .eq('id', user.id);
+                if (setPasswordError) throw setPasswordError;
+                user.password = passwordInput;
+            } else if (storedPassword !== passwordInput) {
                 alert('كلمة المرور غير صحيحة.');
                 return;
             }
@@ -157,6 +165,7 @@
                 name: user.name || '',
                 phone: user.phone || '',
                 email: user.email || '',
+                country: user.country || '',
                 address: user.address || ''
             }));
 
