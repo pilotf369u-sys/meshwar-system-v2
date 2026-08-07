@@ -66,7 +66,10 @@
         <div class="card" id="stores"><h3>إدارة المتاجر</h3><div><input type="text" id="storeName" placeholder="اسم المتجر"><input type="text" id="storeUrl" placeholder="رابط المتجر"><input type="text" id="storeImg" placeholder="مسار الصورة"><select id="storeCategory"><option value="comprehensive">المتاجر الشاملة</option><option value="fashion">الأزياء والملابس</option><option value="sports">الرياضة والأحذية</option><option value="beauty">التجميل والعناية</option><option value="home">المنزل والأطفال</option><option value="local">المتاجر المحلية</option></select><button class="btn-green" onclick="addStore()">+ إضافة متجر</button></div><table><thead><tr><th>اسم المتجر</th><th>القسم</th><th>الرابط</th><th>الإجراء</th></tr></thead><tbody id="storesTableBody"></tbody></table></div>
         <div class="card" id="customers">
             <h3>إدارة العملاء ونظام المكافآت</h3>
-            <div style="background: #eef2f3; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;"><div><label><b>تصفية العرض: </b></label><select id="customerFilterSelect" onchange="loadCustomers()" style="width: 220px; padding: 6px;"><option value="all">عرض كافة العملاء</option><option value="eligible">⭐ العملاء المستحقون للمكافأة فقط</option></select></div></div>
+            <div style="background: #eef2f3; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div><label><b>تصفية العرض: </b></label><select id="customerFilterSelect" onchange="loadCustomers()" style="width: 220px; padding: 6px;"><option value="all">عرض كافة العملاء</option><option value="eligible">⭐ العملاء المستحقون للمكافأة فقط</option></select></div>
+                <div style="display:flex; align-items:center; gap:6px; flex:1; justify-content:flex-end;"><label for="customerSearchInput"><b>بحث العملاء: </b></label><input type="text" id="customerSearchInput" oninput="scheduleCustomerSearch()" placeholder="الاسم، الهاتف، الكود أو البريد الإلكتروني" autocomplete="off" style="width: 320px; max-width: 100%; padding: 8px;"></div>
+            </div>
             <div style="background: #fdfdfd; padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px;"><h4 id="customerFormTitle" style="margin-top: 0; color: #2c3e50;">إضافة عميل جديد</h4><input type="hidden" id="editCustomerIndex" value="-1"><div style="display: flex; flex-wrap: wrap; gap: 10px;"><input type="text" id="custName" placeholder="اسم العميل الكامل" style="flex: 1; min-width: 200px;"><input type="text" id="custCode" placeholder="كود العميل (اختياري)" style="flex: 1; min-width: 150px;"><input type="email" id="custEmail" placeholder="البريد الإلكتروني" style="flex: 1; min-width: 200px;"><input type="password" id="custPass" placeholder="كلمة المرور" style="flex: 1; min-width: 150px;"><select id="custCountry" onchange="updateCountryCode()" style="flex: 1; min-width: 180px;"><option value="" disabled selected>اختر الدولة</option><option value="تركيا" data-code="+90">تركيا (+90)</option><option value="سوريا" data-code="+963">سوريا (+963)</option><option value="السعودية" data-code="+966">السعودية (+966)</option><option value="الإمارات" data-code="+971">الإمارات (+971)</option><option value="مصر" data-code="+20">مصر (+20)</option><option value="الأردن" data-code="+962">الأردن (+962)</option><option value="العراق" data-code="+964">العراق (+964)</option></select><input type="text" id="custPhone" placeholder="رقم الهاتف" style="flex: 1; min-width: 220px;" dir="ltr"><input type="text" id="custState" placeholder="المحافظة / المدينة" style="flex: 1; min-width: 150px;"><input type="text" id="custAddress" placeholder="العنوان التفصيلي" style="flex: 2; min-width: 250px;"></div><div style="margin-top: 15px; display: flex; gap: 10px;"><button class="btn-green" id="saveCustomerBtn" onclick="saveCustomerData()">+ حفظ وإضافة العميل</button><button class="btn-red" id="cancelEditBtn" onclick="resetCustomerForm()" style="display: none;">إلغاء التعديل</button></div></div>
             <table><thead><tr><th>الكود</th><th>اسم العميل</th><th>الهاتف</th><th>الدولة والمنطقة</th><th>العنوان</th><th>الطلبات المكتملة</th><th>حالة الاستحقاق</th><th>منح المكافأة</th><th>عدد الاستخدام</th><th>سجل المكافآت</th><th>الإجراءات</th></tr></thead><tbody id="custTableBody"></tbody></table>
         </div>
@@ -105,13 +108,35 @@
       const CUSTOMER_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
       let customerSupabase = null;
       let adminCustomersCloud = [];
+      let customerSearchTimer = null;
+      let customerSearchRequestId = 0;
       async function ensureCustomerSupabase() { if (customerSupabase) return customerSupabase; const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'); customerSupabase = createClient(CUSTOMER_SUPABASE_URL, CUSTOMER_SUPABASE_KEY); return customerSupabase; }
 
+      function scheduleCustomerSearch() {
+        clearTimeout(customerSearchTimer);
+        customerSearchTimer = setTimeout(() => loadCustomers(), 250);
+      }
+
+      function escapeSupabaseSearchTerm(value) {
+        return String(value || '').trim().replace(/[,%()]/g, ' ');
+      }
+
       async function loadCustomers() {
-        let tbody = document.getElementById('custTableBody'); if(!tbody) return; let filterType = document.getElementById('customerFilterSelect').value; tbody.innerHTML = '<tr><td colspan="11" style="color:#777; padding:20px;">جاري تحميل العملاء...</td></tr>';
+        let tbody = document.getElementById('custTableBody'); if(!tbody) return;
+        let filterType = document.getElementById('customerFilterSelect').value;
+        let searchInput = document.getElementById('customerSearchInput');
+        let searchTerm = escapeSupabaseSearchTerm(searchInput ? searchInput.value : '');
+        let requestId = ++customerSearchRequestId;
+        tbody.innerHTML = '<tr><td colspan="11" style="color:#777; padding:20px;">جاري تحميل العملاء...</td></tr>';
         try {
           const supabase = await ensureCustomerSupabase();
-          const { data, error } = await supabase.from('customers').select('*').order('id', { ascending: true });
+          let query = supabase.from('customers').select('*');
+          if (searchTerm) {
+            const pattern = `%${searchTerm}%`;
+            query = query.or(`name.ilike.${pattern},phone.ilike.${pattern},code.ilike.${pattern},email.ilike.${pattern}`);
+          }
+          const { data, error } = await query.order('id', { ascending: true });
+          if (requestId !== customerSearchRequestId) return;
           if (error) throw error;
           adminCustomersCloud = (data || []).map(cust => ({...cust, rewardActive: cust.rewardActive ?? cust.reward_active ?? false, usageCount: cust.usageCount ?? cust.usage_count ?? 0, lastRewardAtCompletedCount: cust.lastRewardAtCompletedCount ?? cust.last_reward_at_completed_count ?? 0, rewardsLog: cust.rewardsLog ?? cust.rewards_log ?? [], orders: cust.orders ?? []}));
           tbody.innerHTML = '';
@@ -120,8 +145,8 @@
             const customerIdArg = encodeURIComponent(String(cust.id));
             tbody.innerHTML += `<tr style="background-color: ${rowBackground};"><td><b style="color: #2980b9;">${cust.code || '---'}</b></td><td style="font-weight: bold;">${cust.name || '---'}</td><td dir="ltr" style="text-align: right;">${cust.phone || '---'}</td><td>${cust.country || '---'} / ${cust.state || '---'}</td><td>${cust.address || '---'}</td><td><span style="background: #e1f5fe; color: #0288d1; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${totalCompleted} كلي (${currentCycleCount} للدورة)</span></td><td>${eligibilityBadge}</td><td><input type="checkbox" ${isChecked} onchange="window.toggleCustomerRewardById(decodeURIComponent('${customerIdArg}'), this.checked)" style="width: 20px; height: 20px; cursor: pointer;"></td><td><span style="background: #e8f8f5; color: #16a085; padding: 4px 10px; border-radius: 4px; font-weight: bold;">${usageCnt} مرة</span></td><td>${rewardsHtml}</td><td><button class="btn-green" onclick="window.loginAsCloudCustomer(decodeURIComponent('${customerIdArg}'))" style="margin-left: 5px; background-color: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-right-to-bracket"></i> دخول</button><button class="btn-blue" onclick="window.editCustomer(decodeURIComponent('${customerIdArg}'))" style="margin-left: 5px;">تعديل</button><button class="btn-red" onclick="window.deleteCustomer(decodeURIComponent('${customerIdArg}'))">حذف</button></td></tr>`;
           });
-          if (!tbody.innerHTML.trim()) tbody.innerHTML = '<tr><td colspan="11" style="color:#777; padding:20px;">لا توجد بيانات عملاء</td></tr>';
-        } catch (error) { console.error('Load customers error:', error); tbody.innerHTML = `<tr><td colspan="11" style="color:#c0392b; padding:20px;">تعذر تحميل العملاء من Supabase: ${error.message || error}</td></tr>`; }
+          if (!tbody.innerHTML.trim()) tbody.innerHTML = `<tr><td colspan="11" style="color:#777; padding:20px;">${searchTerm ? 'لا توجد نتائج مطابقة للبحث' : 'لا توجد بيانات عملاء'}</td></tr>`;
+        } catch (error) { if (requestId !== customerSearchRequestId) return; console.error('Load customers error:', error); tbody.innerHTML = `<tr><td colspan="11" style="color:#c0392b; padding:20px;">تعذر تحميل العملاء من Supabase: ${error.message || error}</td></tr>`; }
       }
 
       function getCloudCustomerById(customerId) { return adminCustomersCloud.find(cust => String(cust.id) === String(customerId)); }
@@ -165,6 +190,7 @@
       window.editCustomer = editCustomer;
       window.deleteCustomer = deleteCustomer;
       window.toggleCustomerRewardById = toggleCustomerRewardById;
+      window.scheduleCustomerSearch = scheduleCustomerSearch;
     </script>
 </body>
 </html>
