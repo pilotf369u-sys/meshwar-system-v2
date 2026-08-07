@@ -27,7 +27,52 @@
 </div>
 
 <script>
-   function login() {
+    const LOGIN_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
+    const LOGIN_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+    let loginSupabase = null;
+
+    async function ensureLoginSupabase() {
+        if (loginSupabase) return loginSupabase;
+        const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+        loginSupabase = createClient(LOGIN_SUPABASE_URL, LOGIN_SUPABASE_KEY);
+        return loginSupabase;
+    }
+
+    async function findCustomerInSupabase(inputId) {
+        const supabase = await ensureLoginSupabase();
+        const rawInput = String(inputId || '').trim();
+        const cleanInput = rawInput.replace(/[^0-9]/g, '');
+
+        if (rawInput) {
+            const { data: byCode, error: codeError } = await supabase
+                .from('customers')
+                .select('*')
+                .eq('code', rawInput)
+                .maybeSingle();
+            if (codeError) throw codeError;
+            if (byCode) return byCode;
+        }
+
+        const phoneCandidates = Array.from(new Set([
+            rawInput,
+            cleanInput,
+            cleanInput ? '+' + cleanInput : ''
+        ].filter(Boolean)));
+
+        for (const phoneValue of phoneCandidates) {
+            const { data: byPhone, error: phoneError } = await supabase
+                .from('customers')
+                .select('*')
+                .eq('phone', phoneValue)
+                .maybeSingle();
+            if (phoneError) throw phoneError;
+            if (byPhone) return byPhone;
+        }
+
+        return null;
+    }
+
+    async function login() {
         let inputId = document.getElementById('phone').value.trim();
         const passwordInput = document.getElementById('password').value.trim();
 
@@ -36,9 +81,8 @@
             return;
         }
 
-        // --- الحالة الأولى: دخول الأدمن ---
-        const adminPhone = "123456"; 
-        const adminPass = "123";     
+        const adminPhone = "123456";
+        const adminPass = "123";
         if (inputId === adminPhone && passwordInput === adminPass) {
             window.location.href = 'admin-dashboard.html';
             return;
@@ -46,7 +90,6 @@
 
         let cleanInput = inputId.replace(/[^0-9]/g, '');
 
-        // --- الحالة الثانية: دخول الموظف (من قاعدة بيانات الموظفين) ---
         const employeesList = JSON.parse(localStorage.getItem('employeesList')) || [];
         const employee = employeesList.find(emp => {
             let empPhone = (emp.phone || '').toString().replace(/[^0-9]/g, '');
@@ -60,7 +103,6 @@
             return;
         }
 
-        // --- الحالة الثالثة: دخول المندوب (من قاعدة بيانات المندوبين) ---
         const deliveryList = JSON.parse(localStorage.getItem('deliveryList')) || [];
         const deliveryGuy = deliveryList.find(del => {
             let delPhone = (del.phone || '').toString().replace(/[^0-9]/g, '');
@@ -68,14 +110,13 @@
             return delPhone === cleanInput && passwordInput === delPass;
         });
 
-       if (deliveryGuy) {
+        if (deliveryGuy) {
             localStorage.setItem('loggedInDelivery', JSON.stringify(deliveryGuy));
-            localStorage.setItem('loggedDeliveryName', deliveryGuy.name); // <--- أضف هذا السطر فقط هنا
+            localStorage.setItem('loggedDeliveryName', deliveryGuy.name);
             window.location.href = 'delivery-dashboard.html';
             return;
         }
 
-        // --- الحالة الرابعة: دخول الفرع (من قاعدة بيانات الفروع) ---
         const branchList = JSON.parse(localStorage.getItem('branchList')) || [];
         const branchUser = branchList.find(br => {
             let brPhone = (br.phone || '').toString().replace(/[^0-9]/g, '');
@@ -85,31 +126,48 @@
 
         if (branchUser) {
             localStorage.setItem('loggedBranchName', branchUser.name);
-            window.location.href = 'branch-dashboard.html'; // توجيه الفرع إلى لوحة تحكمه الخاصة
+            window.location.href = 'branch-dashboard.html';
             return;
         }
 
-      // --- الحالة الخامسة: دخول العميل (من قاعدة بيانات العملاء) ---
-        const customersDB = JSON.parse(localStorage.getItem('adminCustomersList')) || [];
-        const user = customersDB.find(c => {
-            let custPhone = (c.phone || '').toString().replace(/[^0-9]/g, '');
-            let custCode = (c.code || '').toString().trim();
-            return (custPhone === cleanInput || custCode === inputId) && c.password.trim() === passwordInput;
-        });
+        try {
+            const user = await findCustomerInSupabase(inputId);
 
-        if (user) {
-            // 1. مسح أي مخلفات أو اختيار قديم من لوحة الموظف أو جلسات سابقة فوراً
+            if (!user) {
+                alert('بيانات الدخول غير صحيحة، أو أن الحساب غير مسجل في النظام.');
+                return;
+            }
+
+            const storedPassword = user.password == null ? '' : String(user.password);
+            if (!storedPassword || storedPassword !== passwordInput) {
+                alert('كلمة المرور غير صحيحة.');
+                return;
+            }
+
             localStorage.removeItem('selectedCustomerPhone');
             localStorage.removeItem('selectedCustomerName');
             sessionStorage.removeItem('selectedCustomerPhone');
-            
-            // 2. حفظ العميل الجديد والتوجه للوحة
-            localStorage.setItem('loggedInUser', JSON.stringify(user));
+            localStorage.removeItem('isEmployeeViewing');
+            localStorage.removeItem('viewedBy');
+
+            localStorage.setItem('viewingCustomerId', String(user.id));
+            localStorage.setItem('loggedInUser', JSON.stringify({
+                id: user.id,
+                code: user.code || '',
+                name: user.name || '',
+                phone: user.phone || '',
+                email: user.email || '',
+                address: user.address || ''
+            }));
+
             window.location.href = 'dashboard.html';
-        } else {
-            alert('بيانات الدخول غير صحيحة، أو أن الحساب غير مسجل في النظام.');
+        } catch (error) {
+            console.error('Customer login Supabase error:', error);
+            alert('تعذر تسجيل الدخول عبر Supabase: ' + (error.message || error));
         }
-   }
+    }
+
+    window.login = login;
 </script>
 </body>
 </html>
