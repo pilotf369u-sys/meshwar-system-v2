@@ -57,6 +57,30 @@
         return null;
     }
 
+    async function hasAdminAccount() {
+        const supabase = await ensureLoginSupabase();
+        const { data, error } = await supabase.from('employees').select('id,role').limit(1000);
+        if (error) throw error;
+        return (data || []).some(row => normalizeRole(row.role) === 'admin');
+    }
+
+    async function bootstrapFirstAdmin(inputId, passwordInput) {
+        if (inputId !== '123456' || passwordInput !== '123') return null;
+        if (await hasAdminAccount()) return null;
+        const supabase = await ensureLoginSupabase();
+        const permissions = { orders:true, branches:true, rewards:true, pricing:true };
+        const { data: existing, error: existingError } = await supabase.from('employees').select('*').eq('phone','123456').maybeSingle();
+        if (existingError) throw existingError;
+        if (existing) {
+            const { data, error } = await supabase.from('employees').update({ role:'admin', permissions }).eq('id', existing.id).select('*').single();
+            if (error) throw error;
+            return data;
+        }
+        const { data, error } = await supabase.from('employees').insert([{ name:'Admin', phone:'123456', password:'123', role:'admin', permissions }]).select('*').single();
+        if (error) throw error;
+        return data;
+    }
+
     async function findCustomerInSupabase(inputId) {
         const supabase = await ensureLoginSupabase();
         const rawInput = String(inputId || '').trim();
@@ -79,6 +103,12 @@
         if (!inputId || !passwordInput) return alert('الرجاء إدخال رقم الهاتف/الكود وكلمة المرور');
 
         try {
+            const bootstrappedAdmin = await bootstrapFirstAdmin(inputId, passwordInput);
+            if (bootstrappedAdmin) {
+                window.location.href = 'admin-dashboard.html?adminId=' + encodeURIComponent(bootstrappedAdmin.id);
+                return;
+            }
+
             const employee = await findEmployeeInSupabase(inputId);
             if (employee) {
                 const employeePassword = employee.password == null ? '' : String(employee.password);
