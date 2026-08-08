@@ -1,138 +1,80 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة الفروع والشركات الموزعة</title>
-    <style>
-        body { font-family: Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; display: flex; }
-        
-        .sidebar { width: 250px; background: #2c3e50; color: white; min-height: 100vh; padding: 20px; box-sizing: border-box; position: fixed; right: 0; top: 0; }
-        .sidebar h2 { font-size: 18px; border-bottom: 1px solid #4e6d8d; padding-bottom: 10px; margin-bottom: 20px; text-align: center; color: #fff; }
-        .sidebar a { display: block; color: #ecf0f1; text-decoration: none; padding: 10px 15px; margin-bottom: 8px; border-radius: 4px; transition: 0.2s; font-size: 14px; background: #34495e; border-right: 4px solid #1abc9c; }
-        .sidebar a:hover { background: #3d566e; color: #fff; }
-        .sidebar a.active { background: #1abc9c; color: #fff; border-right: 4px solid #fff; font-weight: bold; }
-        .btn-red-logout { background: #c0392b !important; text-align: center; margin-top: 30px; border-right: none !important; }
-
-        .main-content { margin-right: 250px; padding: 30px; width: calc(100% - 250px); box-sizing: border-box; }
-        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
-        h2, h3 { color: #2c3e50; }
-        form { background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; flex: 1; min-width: 180px; font-size: 14px; }
-        button.btn-add { background: #27ae60; color: white; border: none; padding: 9px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        table, th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        th { background: #f2f2f2; font-size: 13px; }
-        td { font-size: 13px; }
-        
-        .btn-delete { background: #c0392b; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>إدارة الفروع والمخازن</title>
+<style>
+body{font-family:Tahoma,sans-serif;background:#f4f7f6;margin:0;display:flex}.sidebar{width:250px;background:#2c3e50;color:#fff;min-height:100vh;padding:20px;box-sizing:border-box;position:fixed;right:0;top:0}.sidebar h2{text-align:center;font-size:18px;border-bottom:1px solid #4e6d8d;padding-bottom:10px}.sidebar a{display:block;color:#ecf0f1;text-decoration:none;padding:10px 15px;margin-bottom:8px;border-radius:4px;background:#34495e;border-right:4px solid #1abc9c}.sidebar a.active{background:#1abc9c;border-right-color:#fff;font-weight:bold}.btn-red-logout{background:#c0392b!important;text-align:center;margin-top:30px;border-right:none!important}.main-content{margin-right:250px;padding:30px;width:calc(100% - 250px);box-sizing:border-box}.container{background:#fff;padding:25px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,.1);margin-bottom:22px}h2,h3{color:#2c3e50}.toolbar,form{background:#f8fafc;padding:12px;border:1px solid #ddd;border-radius:7px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:15px}input,select{padding:8px 10px;border:1px solid #ccc;border-radius:5px;min-width:150px}button{border:0;border-radius:5px;padding:8px 13px;color:#fff;font-weight:bold;cursor:pointer}.btn-green{background:#27ae60}.btn-blue{background:#2980b9}.btn-red{background:#c0392b}.btn-orange{background:#e67e22}.btn-purple{background:#8e44ad}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ddd;padding:9px;text-align:center;font-size:13px}th{background:#f2f2f2}.muted{color:#64748b;font-size:12px}.ok{background:#ecfdf5;border:1px solid #a7f3d0;padding:10px;border-radius:6px}.warn{background:#fff7ed;border:1px solid #fed7aa;padding:10px;border-radius:6px}.error{color:#b91c1c}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.badge{padding:3px 7px;border-radius:12px;background:#e2e8f0;font-size:11px}.schema{white-space:pre-wrap;direction:ltr;text-align:left;background:#111827;color:#e5e7eb;padding:12px;border-radius:7px;max-height:320px;overflow:auto;font:12px Consolas,monospace}@media(max-width:900px){.grid{grid-template-columns:1fr}.sidebar{position:static;width:100%;min-height:auto}.main-content{margin-right:0;width:100%}body{display:block}}
+</style>
 </head>
 <body>
+<div class="sidebar"><h2>لوحة الإدارة</h2><a href="admin-dashboard.html">إدارة الطلبات</a><a href="admin-branches.html" class="active">إدارة الفروع والمخازن</a><a href="admin-branch-reports.html">تقارير وحسابات الفروع</a><a href="login.html" class="btn-red-logout">تسجيل الخروج</a></div>
+<div class="main-content">
+<div class="container"><h2>إدارة الفروع والمخازن — Supabase</h2><p class="muted">الفروع والمندوبون والطلبات الواردة تُقرأ وتُحدّث مباشرة من Supabase، دون أي localStorage.</p>
+<form id="branchForm" onsubmit="addBranch(event)"><input id="branchName" placeholder="اسم الفرع / الشركة" required><input id="branchPhone" placeholder="رقم الهاتف / اسم الدخول" required><input id="branchPassword" type="password" placeholder="كلمة المرور" required><input id="branchAddress" placeholder="العنوان / المدينة" required><button class="btn-green">➕ إضافة الفرع</button></form>
+<table><thead><tr><th>الفرع</th><th>الهاتف</th><th>العنوان</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="branchesTableBody"><tr><td colspan="5">جاري التحميل...</td></tr></tbody></table></div>
 
-    <div class="sidebar">
-        <h2>لوحة الإدارة</h2>
-        <a href="admin-dashboard.html">إدارة الطلبات</a>
-        <a href="admin-dashboard.html">إدارة الموظفين</a>
-        <a href="admin-dashboard.html">إدارة المندوبين</a>
-        <a href="admin-delivery-reports.html">تقرير ومتابعة المندوبين</a>
-        <a href="admin-branches.html" class="active">إدارة الفروع والمخازن</a>
-        <a href="admin-branch-reports.html">تقرير ومتابعة الفروع</a>
-        <a href="admin-dashboard.html">أسعار صرف العملات</a>
-        <a href="admin-dashboard.html">إدارة المتاجر</a>
-        <a href="admin-dashboard.html">إدارة العملاء</a>
-        <a href="admin-dashboard.html">إدارة المحتوى</a>
-        <a href="login.html" class="btn-red-logout">تسجيل الخروج</a>
-    </div>
+<div class="container"><h2>تشغيل الفرع: الطلبات الواردة والمندوبون</h2><div class="toolbar"><label><b>اختر الفرع:</b></label><select id="activeBranchSelect" onchange="selectBranch(this.value)"><option value="">اختر فرعاً</option></select><input id="branchOrderSearch" placeholder="رقم الطلب / الباركود / الهاتف / العميل" oninput="scheduleOrdersSearch()"><button class="btn-blue" onclick="loadBranchWorkspace()">تحديث</button></div><div id="workspaceHint" class="warn">اختر فرعاً لعرض الطلبات والمندوبين.</div>
+<div class="grid"><div><h3>مندوبي التوصيل الخاصون بالفرع</h3><form id="courierForm" onsubmit="addCourier(event)"><input id="courierName" placeholder="اسم المندوب" required><input id="courierPhone" placeholder="الهاتف" required><input id="courierPassword" type="password" placeholder="كلمة المرور" required><input id="courierFee" type="number" min="0" step="0.01" placeholder="أجرة التوصيل" required><button class="btn-green">إضافة مندوب</button></form><table><thead><tr><th>المندوب</th><th>الهاتف</th><th>أجرة التوصيل</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="couriersBody"><tr><td colspan="5">اختر فرعاً</td></tr></tbody></table></div>
+<div><h3>التقفيل المالي للمندوب ↔ الفرع</h3><p class="muted">يُحسب من الطلبات المسلّمة غير المقفلة: المقبوضات − أجرة التوصيل = صافي العهدة. إنشاء التقفيل يرسله بحالة انتظار اعتماد الأدمن.</p><table><thead><tr><th>المندوب</th><th>مقبوضات</th><th>أجرة</th><th>الصافي</th><th>إجراء</th></tr></thead><tbody id="courierSettlementBody"><tr><td colspan="5">اختر فرعاً</td></tr></tbody></table></div></div>
+<h3>الطلبات الواردة للفرع</h3><div style="overflow-x:auto"><table><thead><tr><th>رقم الطلب</th><th>العميل</th><th>الهاتف</th><th>المبلغ</th><th>الحالة</th><th>المندوب</th><th>التوجيه/التحديث</th></tr></thead><tbody id="branchOrdersBody"><tr><td colspan="7">اختر فرعاً</td></tr></tbody></table></div></div>
 
-    <div class="main-content">
-        <div class="container">
-            <h2>إدارة الفروع والشركات الموزعة</h2>
-            <p>أضف الفروع وكلمات المرور الخاصة بهم لتتمكن الفروع من تسجيل الدخول للنظام:</p>
-            
-            <form id="branchForm" onsubmit="addBranch(event)">
-                <input type="text" id="branchName" placeholder="اسم الفرع / الشركة الموزعة" required>
-                <input type="text" id="branchPhone" placeholder="رقم الهاتف (اسم المستخدم)" required>
-                <input type="password" id="branchPassword" placeholder="كلمة المرور للدخول" required>
-                <input type="text" id="branchAddress" placeholder="العنوان / المدينة" required>
-                <button type="submit" class="btn-add">➕ إضافة الفرع</button>
-            </form>
+<div class="container"><details><summary><b>مخطط Supabase المطلوب لهذه المرحلة</b></summary><p class="muted">إن ظهرت رسالة أن جدول/عمود غير موجود، نفّذ هذا SQL مرة واحدة من Supabase SQL Editor. لا يمكن لمفتاح Publishable إنشاء جداول PostgreSQL من المتصفح.</p><button class="btn-purple" onclick="copySchemaSql()">نسخ SQL</button><pre id="schemaSql" class="schema">alter table public.orders add column if not exists branch_id bigint;
+alter table public.orders add column if not exists branch_name text;
+alter table public.orders add column if not exists courier_id bigint;
+alter table public.orders add column if not exists courier_name text;
+alter table public.orders add column if not exists delivery_fee numeric default 0;
+alter table public.orders add column if not exists settlement_id bigint;
 
-            <h3>قائمة الفروع والشركات المسجلة</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>اسم الفرع / الشركة</th>
-                        <th>رقم الهاتف (حساب الدخول)</th>
-                        <th>كلمة المرور</th>
-                        <th>العنوان</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="branchesTableBody">
-                    <tr><td colspan="5">جاري التحميل...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+create table if not exists public.couriers (
+  id bigint generated by default as identity primary key,
+  branch_id bigint not null,
+  name text not null,
+  phone text not null,
+  password text not null,
+  delivery_fee numeric default 0,
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
 
-    <script>
-        function loadBranches() {
-            let branchList = JSON.parse(localStorage.getItem('branchList')) || [];
-            let tbody = document.getElementById('branchesTableBody');
-            tbody.innerHTML = '';
+create table if not exists public.settlements (
+  id bigint generated by default as identity primary key,
+  settlement_type text not null default 'courier',
+  branch_id bigint not null,
+  courier_id bigint,
+  gross_amount numeric default 0,
+  delivery_fee numeric default 0,
+  net_amount numeric default 0,
+  order_ids jsonb default '[]'::jsonb,
+  status text not null default 'pending_admin',
+  requested_by text,
+  requested_at timestamptz default now(),
+  approved_by bigint,
+  approved_at timestamptz
+);
 
-            if (branchList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5">لا توجد فروع مسجلة حالياً</td></tr>`;
-                return;
-            }
-
-            branchList.forEach((br, index) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${br.name}</b></td>
-                        <td dir="ltr">${br.phone}</td>
-                        <td><code>${br.password || 'غير محددة'}</code></td>
-                        <td>${br.address}</td>
-                        <td>
-                            <button class="btn-delete" onclick="deleteBranch(${index})">حذف</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function addBranch(e) {
-            e.preventDefault();
-            let name = document.getElementById('branchName').value.trim();
-            let phone = document.getElementById('branchPhone').value.trim();
-            let password = document.getElementById('branchPassword').value.trim();
-            let address = document.getElementById('branchAddress').value.trim();
-
-            let branchList = JSON.parse(localStorage.getItem('branchList')) || [];
-            
-            branchList.push({ name, phone, password, address });
-            localStorage.setItem('branchList', JSON.stringify(branchList));
-
-            document.getElementById('branchForm').reset();
-            loadBranches();
-            alert('تم إضافة الفرع وكلمة المرور بنجاح');
-        }
-
-        function deleteBranch(index) {
-            if (confirm('هل أنت متأكد من حذف هذا الفرع؟')) {
-                let branchList = JSON.parse(localStorage.getItem('branchList')) || [];
-                branchList.splice(index, 1);
-                localStorage.setItem('branchList', JSON.stringify(branchList));
-                loadBranches();
-            }
-        }
-
-        window.onload = function() {
-            loadBranches();
-        }
-    </script>
-</body>
-</html>
+create index if not exists idx_orders_branch_id on public.orders(branch_id);
+create index if not exists idx_orders_courier_id on public.orders(courier_id);
+create index if not exists idx_couriers_branch_id on public.couriers(branch_id);
+create index if not exists idx_settlements_branch_id on public.settlements(branch_id);</pre></details></div>
+</div>
+<script>
+const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co',SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';let sb=null,branches=[],couriers=[],branchOrders=[],activeBranchId='',searchTimer=null,realtime=null;
+async function getSb(){if(sb)return sb;const{createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');sb=createClient(SB_URL,SB_KEY);return sb}function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}function money(v,c='$'){return `${Number(v||0).toFixed(2)} ${esc(c||'$')}`}function extractOrderNumber(input){if(!input)return'';const m=String(input).match(/\d+/);return m?m[0]:''}function selectedBranch(){return branches.find(b=>String(b.id)===String(activeBranchId))}function statusOptions(current){return['مخزن محلي','جاري التوصيل مع المندوب','تم التسليم','رفض الطلب'].map(s=>`<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('')}
+async function loadBranches(){const body=document.getElementById('branchesTableBody'),sel=document.getElementById('activeBranchSelect');try{const client=await getSb(),{data,error}=await client.from('branches').select('*').order('id',{ascending:true});if(error)throw error;branches=data||[];body.innerHTML='';sel.innerHTML='<option value="">اختر فرعاً</option>';branches.forEach(b=>{const id=encodeURIComponent(String(b.id));body.innerHTML+=`<tr><td><b>${esc(b.name||b.branch_name||b.id)}</b></td><td dir="ltr">${esc(b.phone||'')}</td><td>${esc(b.address||'')}</td><td>${b.is_active===false?'معطل':'نشط'}</td><td><button class="btn-red" onclick="deleteBranch(decodeURIComponent('${id}'))">حذف</button></td></tr>`;sel.innerHTML+=`<option value="${esc(b.id)}">${esc(b.name||b.branch_name||b.id)}</option>`});if(!body.innerHTML)body.innerHTML='<tr><td colspan="5">لا توجد فروع مسجلة.</td></tr>';if(activeBranchId){sel.value=activeBranchId}}catch(e){console.error(e);body.innerHTML=`<tr><td colspan="5" class="error">${esc(e.message||e)}</td></tr>`}}
+async function addBranch(e){e.preventDefault();const payload={name:branchName.value.trim(),phone:branchPhone.value.trim(),password:branchPassword.value.trim(),address:branchAddress.value.trim()};try{const client=await getSb(),{error}=await client.from('branches').insert([payload]);if(error)throw error;branchForm.reset();await loadBranches();alert('تمت إضافة الفرع في Supabase.')}catch(e){console.error(e);alert('تعذر إضافة الفرع: '+(e.message||e))}}
+async function deleteBranch(id){if(!confirm('حذف الفرع؟'))return;try{const client=await getSb(),{error}=await client.from('branches').delete().eq('id',id);if(error)throw error;if(String(activeBranchId)===String(id))activeBranchId='';await loadBranches();await loadBranchWorkspace()}catch(e){alert('تعذر حذف الفرع: '+(e.message||e))}}
+function selectBranch(id){activeBranchId=String(id||'');loadBranchWorkspace()}function scheduleOrdersSearch(){clearTimeout(searchTimer);searchTimer=setTimeout(loadBranchOrders,160)}
+async function loadBranchWorkspace(){const hint=document.getElementById('workspaceHint');if(!activeBranchId){hint.style.display='block';couriersBody.innerHTML='<tr><td colspan="5">اختر فرعاً</td></tr>';branchOrdersBody.innerHTML='<tr><td colspan="7">اختر فرعاً</td></tr>';courierSettlementBody.innerHTML='<tr><td colspan="5">اختر فرعاً</td></tr>';return}hint.style.display='none';await Promise.all([loadCouriers(),loadBranchOrders()]);renderCourierSettlements()}
+async function loadCouriers(){const body=document.getElementById('couriersBody');body.innerHTML='<tr><td colspan="5">جاري التحميل...</td></tr>';try{const client=await getSb(),{data,error}=await client.from('couriers').select('*').eq('branch_id',activeBranchId).order('id',{ascending:true});if(error)throw error;couriers=data||[];body.innerHTML='';couriers.forEach(c=>{const id=encodeURIComponent(String(c.id));body.innerHTML+=`<tr><td><b>${esc(c.name)}</b></td><td dir="ltr">${esc(c.phone)}</td><td>${money(c.delivery_fee)}</td><td>${c.is_active===false?'معطل':'نشط'}</td><td><button class="btn-blue" onclick="toggleCourier(decodeURIComponent('${id}'))">${c.is_active===false?'تفعيل':'تعطيل'}</button> <button class="btn-red" onclick="deleteCourier(decodeURIComponent('${id}'))">حذف</button></td></tr>`});if(!body.innerHTML)body.innerHTML='<tr><td colspan="5">لا يوجد مندوبون لهذا الفرع.</td></tr>'}catch(e){console.error(e);body.innerHTML=`<tr><td colspan="5" class="error">${esc(e.message||e)} — إن كان جدول couriers غير موجود استخدم SQL أسفل الصفحة.</td></tr>`;couriers=[]}}
+async function addCourier(e){e.preventDefault();if(!activeBranchId)return alert('اختر الفرع أولاً');const payload={branch_id:activeBranchId,name:courierName.value.trim(),phone:courierPhone.value.trim(),password:courierPassword.value.trim(),delivery_fee:Number(courierFee.value||0),is_active:true};try{const client=await getSb(),{error}=await client.from('couriers').insert([payload]);if(error)throw error;courierForm.reset();await loadCouriers();await loadBranchOrders();renderCourierSettlements()}catch(e){console.error(e);alert('تعذر إضافة المندوب: '+(e.message||e))}}
+async function toggleCourier(id){const c=couriers.find(x=>String(x.id)===String(id));if(!c)return;const client=await getSb(),{error}=await client.from('couriers').update({is_active:c.is_active===false}).eq('id',id);if(error)return alert(error.message);loadCouriers()}async function deleteCourier(id){if(!confirm('حذف المندوب؟'))return;const client=await getSb(),{error}=await client.from('couriers').delete().eq('id',id);if(error)return alert(error.message);await loadCouriers();await loadBranchOrders();renderCourierSettlements()}
+function courierOptions(order){let h='<option value="">بدون مندوب</option>';couriers.filter(c=>c.is_active!==false).forEach(c=>h+=`<option value="${esc(c.id)}" ${String(order.courier_id||'')===String(c.id)?'selected':''}>${esc(c.name)}</option>`);return h}
+async function loadBranchOrders(){const body=document.getElementById('branchOrdersBody');if(!activeBranchId)return;body.innerHTML='<tr><td colspan="7">جاري تحميل الطلبات...</td></tr>';try{const client=await getSb(),raw=branchOrderSearch.value.trim(),digits=extractOrderNumber(raw);let q=client.from('orders').select('*').eq('branch_id',activeBranchId);if(raw){const p=`%${digits&&digits.length<=6?digits:raw.replace(/[,%()]/g,' ')}%`;q=q.or(`order_code.ilike.${p},customer_phone.ilike.${p},customer_name.ilike.${p}`)}const{data,error}=await q.order('created_at',{ascending:false}).limit(500);if(error)throw error;branchOrders=data||[];body.innerHTML='';branchOrders.forEach(o=>{const id=encodeURIComponent(String(o.id));body.innerHTML+=`<tr><td><b>${esc(o.order_code||o.id)}</b></td><td>${esc(o.customer_name||'---')}</td><td dir="ltr">${esc(o.customer_phone||'')}</td><td>${money(o.total_price,o.currency)}</td><td><select id="bst-${id}">${statusOptions(o.status||'مخزن محلي')}</select></td><td><select id="bcr-${id}">${courierOptions(o)}</select></td><td><button class="btn-blue" onclick="saveBranchOrder(decodeURIComponent('${id}'))">حفظ</button></td></tr>`});if(!body.innerHTML)body.innerHTML='<tr><td colspan="7">لا توجد طلبات واردة لهذا الفرع.</td></tr>';renderCourierSettlements()}catch(e){console.error(e);body.innerHTML=`<tr><td colspan="7" class="error">${esc(e.message||e)} — تأكد من وجود branch_id/courier_id في orders.</td></tr>`}}
+async function saveBranchOrder(id){const o=branchOrders.find(x=>String(x.id)===String(id));if(!o)return;const enc=encodeURIComponent(String(id)),courierId=document.getElementById('bcr-'+enc)?.value||'',status=document.getElementById('bst-'+enc)?.value||o.status,c=couriers.find(x=>String(x.id)===String(courierId));const payload={status,courier_id:courierId||null,courier_name:c?.name||null,delivery_fee:c?Number(c.delivery_fee||0):0};if(courierId&&status==='مخزن محلي')payload.status='جاري التوصيل مع المندوب';try{const client=await getSb(),{error}=await client.from('orders').update(payload).eq('id',id);if(error)throw error;await loadBranchOrders();alert('تم تحديث الطلب والمندوب في Supabase.')}catch(e){console.error(e);alert('تعذر تحديث الطلب: '+(e.message||e))}}
+function renderCourierSettlements(){const body=document.getElementById('courierSettlementBody');if(!activeBranchId)return;body.innerHTML='';couriers.forEach(c=>{const eligible=branchOrders.filter(o=>String(o.courier_id)===String(c.id)&&String(o.status)==='تم التسليم'&&!o.settlement_id),gross=eligible.reduce((s,o)=>s+Number(o.total_price||0),0),fee=eligible.reduce((s,o)=>s+Number(o.delivery_fee||c.delivery_fee||0),0),net=gross-fee,id=encodeURIComponent(String(c.id));body.innerHTML+=`<tr><td>${esc(c.name)}</td><td>${money(gross)}</td><td>${money(fee)}</td><td><b>${money(net)}</b></td><td><button class="btn-orange" ${eligible.length?'':'disabled'} onclick="requestCourierSettlement(decodeURIComponent('${id}'))">طلب تقفيل (${eligible.length})</button></td></tr>`});if(!body.innerHTML)body.innerHTML='<tr><td colspan="5">لا يوجد مندوبون.</td></tr>'}
+async function requestCourierSettlement(courierId){const c=couriers.find(x=>String(x.id)===String(courierId));if(!c)return;const eligible=branchOrders.filter(o=>String(o.courier_id)===String(courierId)&&String(o.status)==='تم التسليم'&&!o.settlement_id);if(!eligible.length)return alert('لا توجد طلبات مسلّمة غير مقفلة لهذا المندوب.');const gross=eligible.reduce((s,o)=>s+Number(o.total_price||0),0),fee=eligible.reduce((s,o)=>s+Number(o.delivery_fee||c.delivery_fee||0),0),payload={settlement_type:'courier',branch_id:activeBranchId,courier_id:courierId,gross_amount:gross,delivery_fee:fee,net_amount:gross-fee,order_ids:eligible.map(o=>o.id),status:'pending_admin',requested_by:'branch',requested_at:new Date().toISOString()};try{const client=await getSb(),{error}=await client.from('settlements').insert([payload]);if(error)throw error;alert('تم إرسال طلب التقفيل للأدمن لاعتماده النهائي.')}catch(e){console.error(e);alert('تعذر إنشاء التقفيل: '+(e.message||e))}}
+async function setupRealtime(){try{const client=await getSb();if(realtime)await client.removeChannel(realtime);realtime=client.channel('branches-cloud-live').on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{if(activeBranchId)loadBranchOrders()}).on('postgres_changes',{event:'*',schema:'public',table:'couriers'},()=>{if(activeBranchId)loadCouriers()}).subscribe()}catch(e){console.warn(e)}}function copySchemaSql(){navigator.clipboard.writeText(document.getElementById('schemaSql').innerText).then(()=>alert('تم نسخ SQL.'))}
+window.onload=async()=>{await loadBranches();await setupRealtime()};Object.assign(window,{addBranch,deleteBranch,selectBranch,loadBranchWorkspace,scheduleOrdersSearch,addCourier,toggleCourier,deleteCourier,saveBranchOrder,requestCourierSettlement,copySchemaSql,extractOrderNumber});
+</script>
+</body></html>
