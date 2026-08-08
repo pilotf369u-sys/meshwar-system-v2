@@ -132,6 +132,7 @@
         const MAIN_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
         const MAIN_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
         let mainSupabase = null;
+        let currentHomeCustomer = null;
 
         async function ensureMainSupabase() {
             if (mainSupabase) return mainSupabase;
@@ -140,37 +141,76 @@
             return mainSupabase;
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            const userDataString = localStorage.getItem('loggedInUser');
+        function getStoredCustomerId() {
+            const direct = String(localStorage.getItem('meshwar_customer_id') || '').trim();
+            if (direct) return direct;
+            const viewing = String(localStorage.getItem('viewingCustomerId') || '').trim();
+            if (viewing) return viewing;
+            try {
+                const user = JSON.parse(localStorage.getItem('loggedInUser') || '{}');
+                if (user && user.id != null) return String(user.id).trim();
+            } catch (e) {
+                console.warn('Invalid customer session object:', e);
+            }
+            return '';
+        }
+
+        async function restoreCustomerSession() {
             const authLink = document.getElementById('authLink');
             const authText = document.getElementById('authText');
             const logoutBtn = document.getElementById('logoutBtn');
-            if (userDataString) {
-                try {
-                    const userData = JSON.parse(userDataString);
-                    if (authText) authText.innerText = userData.name;
-                    if (authLink) authLink.href = "dashboard.html";
-                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
-                } catch (e) { console.error("خطأ", e); }
-            } else if (authLink) authLink.href = "login.html";
+            const customerId = getStoredCustomerId();
+            if (!customerId) {
+                currentHomeCustomer = null;
+                if (authText) authText.innerText = 'حسابي / تسجيل';
+                if (authLink) authLink.href = 'login.html';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                return null;
+            }
+            try {
+                const supabase = await ensureMainSupabase();
+                const { data: customer, error } = await supabase.from('customers').select('id,name,phone').eq('id', customerId).maybeSingle();
+                if (error) throw error;
+                if (!customer) throw new Error('العميل غير موجود');
+                currentHomeCustomer = customer;
+                localStorage.setItem('meshwar_customer_id', String(customer.id));
+                localStorage.setItem('viewingCustomerId', String(customer.id));
+                localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, name: customer.name || '' }));
+                if (authText) authText.innerText = 'أهلاً، ' + (customer.name || 'العميل') + ' | لوحتي';
+                if (authLink) authLink.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id));
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                return customer;
+            } catch (e) {
+                console.error('Customer session restore failed:', e);
+                currentHomeCustomer = null;
+                if (authText) authText.innerText = 'حسابي / تسجيل';
+                if (authLink) authLink.href = 'login.html';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                return null;
+            }
+        }
 
+        document.addEventListener('DOMContentLoaded', async function() {
+            await restoreCustomerSession();
             const nav = document.createElement('nav');
             nav.className = 'nav-container';
             const all = document.createElement('a');
-            all.innerText = "الكل";
-            all.href = "#";
+            all.innerText = 'الكل';
+            all.href = '#';
             nav.appendChild(all);
             document.querySelectorAll('.section-title').forEach((title, index) => {
-                title.id = "section-" + index;
+                title.id = 'section-' + index;
                 const link = document.createElement('a');
                 link.innerText = title.innerText;
-                link.href = "#section-" + index;
+                link.href = '#section-' + index;
                 nav.appendChild(link);
             });
             document.body.insertBefore(nav, document.body.firstChild);
         });
 
         function logout() {
+            currentHomeCustomer = null;
+            localStorage.removeItem('meshwar_customer_id');
             localStorage.removeItem('loggedInUser');
             localStorage.removeItem('viewingCustomerId');
             window.location.reload();
@@ -193,18 +233,10 @@
         }
 
         async function submitOrder() {
-            const userDataString = localStorage.getItem('loggedInUser');
-            if (!userDataString) {
+            const customerId = String(currentHomeCustomer?.id || getStoredCustomerId() || '').trim();
+            if (!customerId) {
                 alert('الرجاء تسجيل الدخول أولاً');
                 window.location.href = 'login.html';
-                return;
-            }
-
-            let userData;
-            try { userData = JSON.parse(userDataString); } catch (e) { userData = {}; }
-            const customerId = userData.id || localStorage.getItem('viewingCustomerId');
-            if (!customerId) {
-                alert('تعذر تحديد رقم العميل. يرجى تسجيل الدخول من جديد.');
                 return;
             }
 
@@ -233,6 +265,7 @@
                     throw customerError;
                 }
                 if (!customer) throw new Error('العميل غير موجود في Supabase');
+                currentHomeCustomer = customer;
 
                 const orderCode = await generateMainOrderCode(supabase);
                 const payload = {
@@ -287,7 +320,7 @@
                 if (orderModal) orderModal.style.display = 'none';
 
                 alert('تم حفظ الطلب في Supabase بنجاح. رقم الطلب: ' + orderCode);
-                window.location.href = 'dashboard.html';
+                window.location.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id));
             } catch (error) {
                 console.error('Supabase order submit aborted before WhatsApp:', error);
                 alert('لم يتم فتح واتساب لأن حفظ الطلب في Supabase فشل: ' + (error.message || error));
@@ -297,6 +330,7 @@
         }
 
         window.submitOrder = submitOrder;
+        window.logout = logout;
     </script>
 </body>
 </html>
