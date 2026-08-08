@@ -47,14 +47,30 @@
         return r;
     }
 
-    async function findEmployeeInSupabase(inputId) {
+    function cloudId(value) {
+        return value == null ? '' : String(value).trim();
+    }
+
+    async function findByPhone(table, inputId) {
         const supabase = await ensureLoginSupabase();
         for (const phoneValue of phoneCandidates(inputId)) {
-            const { data, error } = await supabase.from('employees').select('*').eq('phone', phoneValue).maybeSingle();
+            const { data, error } = await supabase.from(table).select('*').eq('phone', phoneValue).maybeSingle();
             if (error) throw error;
             if (data) return data;
         }
         return null;
+    }
+
+    async function findEmployeeInSupabase(inputId) {
+        return findByPhone('employees', inputId);
+    }
+
+    async function findBranchInSupabase(inputId) {
+        return findByPhone('branches', inputId);
+    }
+
+    async function findCourierInSupabase(inputId) {
+        return findByPhone('couriers', inputId);
     }
 
     async function hasAdminAccount() {
@@ -89,12 +105,15 @@
             if (codeError) throw codeError;
             if (byCode) return byCode;
         }
-        for (const phoneValue of phoneCandidates(rawInput)) {
-            const { data: byPhone, error: phoneError } = await supabase.from('customers').select('*').eq('phone', phoneValue).maybeSingle();
-            if (phoneError) throw phoneError;
-            if (byPhone) return byPhone;
-        }
-        return null;
+        return findByPhone('customers', rawInput);
+    }
+
+    function accountEnabled(account) {
+        return account && account.is_active !== false && account.active !== false && account.disabled !== true;
+    }
+
+    function passwordMatches(account, passwordInput) {
+        return String(account?.password ?? '') === String(passwordInput ?? '');
     }
 
     async function login() {
@@ -105,49 +124,49 @@
         try {
             const bootstrappedAdmin = await bootstrapFirstAdmin(inputId, passwordInput);
             if (bootstrappedAdmin) {
-                window.location.href = 'admin-dashboard.html?adminId=' + encodeURIComponent(bootstrappedAdmin.id);
+                window.location.href = 'admin-dashboard.html?adminId=' + encodeURIComponent(cloudId(bootstrappedAdmin.id));
                 return;
             }
 
             const employee = await findEmployeeInSupabase(inputId);
             if (employee) {
-                const employeePassword = employee.password == null ? '' : String(employee.password);
-                const enabled = employee.is_active !== false && employee.active !== false && employee.disabled !== true;
-                if (!enabled) return alert('الحساب معطل. راجع الإدارة.');
-                if (employeePassword !== passwordInput) return alert('كلمة المرور غير صحيحة.');
-
+                if (!accountEnabled(employee)) return alert('الحساب معطل. راجع الإدارة.');
+                if (!passwordMatches(employee, passwordInput)) return alert('كلمة المرور غير صحيحة.');
                 const role = normalizeRole(employee.role);
                 if (role === 'admin') {
-                    window.location.href = 'admin-dashboard.html?adminId=' + encodeURIComponent(employee.id);
+                    window.location.href = 'admin-dashboard.html?adminId=' + encodeURIComponent(cloudId(employee.id));
                     return;
                 }
                 if (role === 'employee') {
-                    window.location.href = 'employee-dashboard.html?employeeId=' + encodeURIComponent(employee.id);
+                    window.location.href = 'employee-dashboard.html?employeeId=' + encodeURIComponent(cloudId(employee.id));
                     return;
                 }
                 return alert('نوع الحساب غير محدد في Supabase. يجب ضبط role إلى admin أو employee.');
             }
-        } catch (error) {
-            console.error('Staff login Supabase error:', error);
-            alert('تعذر التحقق من حساب الإدارة/الموظف عبر Supabase: ' + (error.message || error));
-            return;
-        }
 
-        /* بقية أنواع الحسابات تبقى كما هي مؤقتاً إلى أن يحين دور تحويلها للسحابة. */
-        const deliveryList = JSON.parse(localStorage.getItem('deliveryList')) || [];
-        const cleanInput = inputId.replace(/[^0-9]/g, '');
-        const deliveryGuy = deliveryList.find(del => (del.phone || '').toString().replace(/[^0-9]/g, '') === cleanInput && passwordInput === (del.password || '123'));
-        if (deliveryGuy) {
-            localStorage.setItem('loggedInDelivery', JSON.stringify(deliveryGuy));
-            localStorage.setItem('loggedDeliveryName', deliveryGuy.name);
-            window.location.href = 'delivery-dashboard.html';
-            return;
-        }
-        const branchList = JSON.parse(localStorage.getItem('branchList')) || [];
-        const branchUser = branchList.find(br => (br.phone || '').toString().replace(/[^0-9]/g, '') === cleanInput && passwordInput === (br.password || ''));
-        if (branchUser) {
-            localStorage.setItem('loggedBranchName', branchUser.name);
-            window.location.href = 'branch-dashboard.html';
+            const branch = await findBranchInSupabase(inputId);
+            if (branch) {
+                if (!accountEnabled(branch)) return alert('حساب الفرع معطل. راجع الإدارة.');
+                if (!passwordMatches(branch, passwordInput)) return alert('كلمة المرور غير صحيحة.');
+                const branchId = cloudId(branch.id);
+                if (!branchId) return alert('معرف الفرع غير صالح في Supabase.');
+                window.location.href = 'branch-dashboard.html?branchId=' + encodeURIComponent(branchId);
+                return;
+            }
+
+            const courier = await findCourierInSupabase(inputId);
+            if (courier) {
+                if (!accountEnabled(courier)) return alert('حساب المندوب معطل. راجع الإدارة.');
+                if (!passwordMatches(courier, passwordInput)) return alert('كلمة المرور غير صحيحة.');
+                const courierId = cloudId(courier.id);
+                const branchId = cloudId(courier.branch_id);
+                if (!courierId || !branchId) return alert('معرف المندوب أو الفرع غير صالح في Supabase.');
+                window.location.href = 'delivery-dashboard.html?courierId=' + encodeURIComponent(courierId) + '&branchId=' + encodeURIComponent(branchId);
+                return;
+            }
+        } catch (error) {
+            console.error('Cloud account login Supabase error:', error);
+            alert('تعذر التحقق من حساب النظام عبر Supabase: ' + (error.message || error));
             return;
         }
 
@@ -162,9 +181,7 @@
             } else if (storedPassword !== passwordInput) {
                 return alert('كلمة المرور غير صحيحة.');
             }
-            localStorage.setItem('viewingCustomerId', String(user.id));
-            localStorage.setItem('loggedInUser', JSON.stringify({id:user.id,code:user.code||'',name:user.name||'',phone:user.phone||'',email:user.email||'',country:user.country||'',address:user.address||''}));
-            window.location.href = 'dashboard.html';
+            window.location.href = 'dashboard.html?customerId=' + encodeURIComponent(cloudId(user.id));
         } catch (error) {
             console.error('Customer login Supabase error:', error);
             alert('تعذر تسجيل الدخول عبر Supabase: ' + (error.message || error));
