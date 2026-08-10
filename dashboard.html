@@ -57,7 +57,7 @@ let customerPortalSupabase=null,currentCustomerCloud=null,currentCustomerOrdersG
 let chatPollingTimer=null,ordersPollingTimer=null,currentDraftField=null;
 
 async function ensureCustomerPortalSupabase(){if(customerPortalSupabase)return customerPortalSupabase;const{createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');customerPortalSupabase=createClient(CUSTOMER_SUPABASE_URL,CUSTOMER_SUPABASE_KEY);return customerPortalSupabase;}
-function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[c]));}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
 function getSessionCustomerId(){const p=new URLSearchParams(location.search),urlId=p.get('customerId')||p.get('id');if(urlId)return String(urlId);const viewing=localStorage.getItem('viewingCustomerId');if(viewing)return String(viewing);try{const u=JSON.parse(localStorage.getItem('loggedInUser')||'{}');if(u.id!=null)return String(u.id)}catch(e){}return'';}
 async function fetchCurrentCustomerFromCloud(){const id=getSessionCustomerId(),sb=await ensureCustomerPortalSupabase();if(!id)return null;const{data,error}=await sb.from('customers').select('*').eq('id',id).maybeSingle();if(error)throw error;return data||null;}
 function normalizeCloudCustomer(c){if(!c)return null;return{...c,rewardsLog:c.rewardsLog??c.rewards_log??[],usageCount:c.usageCount??c.usage_count??0};}
