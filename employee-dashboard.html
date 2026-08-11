@@ -238,3 +238,52 @@ switchPipeline=async function(key){
 function onBranchFilterChange(){pipelinePage=1;loadPipelineOrders()}
 Object.assign(window,{switchPipeline,onBranchFilterChange});
 </script>
+
+
+<style>
+/* BRANCH_EXPORT_BAR_FORCE_V2 */
+#branchTools.branch-manifest-visible{display:flex!important;visibility:visible!important;opacity:1!important;background:#f1f5f9!important;border:1px solid #cbd5e1!important;box-shadow:inset 0 1px 0 #fff!important;}
+</style>
+<script>
+/* BRANCH_EXPORT_BAR_FORCE_V2 */
+function syncEmployeeBranchManifestBar(){
+  const bar=document.getElementById('branchTools');
+  if(!bar)return;
+  const visible=activePipeline==='branch_transfer';
+  bar.classList.toggle('show',visible);
+  bar.classList.toggle('branch-manifest-visible',visible);
+  bar.hidden=false;
+  bar.style.display=visible?'flex':'none';
+}
+switchPipeline=async function(key){
+  if(!PIPELINES[key])return;
+  activePipeline=key;
+  pipelinePage=1;
+  setActivePipelineButton(key);
+  const p=PIPELINES[key];
+  document.getElementById('activePipelineLabel').innerText=p.label;
+  const reward=!!p.rewards;
+  document.getElementById('ordersPanel').classList.toggle('hidden',reward);
+  document.getElementById('rewardPanel').classList.toggle('show',reward);
+  syncEmployeeBranchManifestBar();
+  if(reward)await loadRewardsManagementTable();
+  else await loadPipelineOrders();
+  syncEmployeeBranchManifestBar();
+};
+buildPipelineQuery=function(sb,count=false){
+  const p=PIPELINES[activePipeline],term=normalizeSearch(document.getElementById('employeeOrderSearch')?.value||'');
+  let q=sb.from('orders').select('*',count?{count:'exact'}:{});
+  if(p.branchAny){
+    q=q.or('branch_id.not.is.null,branch_name.not.is.null');
+    const branch=cloudId(document.getElementById('branchFilter')?.value);
+    if(branch)q=q.eq('branch_id',branch);
+  }else if(!p.all&&Array.isArray(p.statuses)&&p.statuses.length){
+    q=q.in('status',p.statuses);
+  }
+  if(term){const pat=`%${term}%`;q=q.or(`order_code.ilike.${pat},reference_order_no.ilike.${pat},customer_name.ilike.${pat},customer_phone.ilike.${pat}`)}
+  return q;
+};
+function onBranchFilterChange(){pipelinePage=1;syncEmployeeBranchManifestBar();loadPipelineOrders()}
+setTimeout(syncEmployeeBranchManifestBar,0);
+Object.assign(window,{switchPipeline,buildPipelineQuery,onBranchFilterChange,syncEmployeeBranchManifestBar});
+</script>
