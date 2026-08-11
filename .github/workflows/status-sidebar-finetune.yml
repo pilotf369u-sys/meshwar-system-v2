@@ -1,0 +1,24 @@
+name: Status sidebar fine tune
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/status-sidebar-finetune.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply fine tuning
+        run: python .github/status-sidebar-finetune.py
+      - name: Commit and cleanup
+        run: |
+          git config user.name "meshwar-status-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/status-sidebar-finetune.py .github/workflows/status-sidebar-finetune.yml
+          git add employee-dashboard.html admin-dashboard.html
+          git commit -m "Fine tune vertical order status sidebars"
+          git push origin main
