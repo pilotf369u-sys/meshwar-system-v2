@@ -176,3 +176,18 @@ loadAdminOrders=async function(){const p=ADMIN_PIPELINES[activeAdminPipeline];if
 renderAdminPipelineTabs();setActiveAdminPipelineButton(activeAdminPipeline);refreshAdminPipelineCounts();
 Object.assign(window,{renderAdminPipelineTabs,refreshAdminPipelineCounts,loadAdminOrders});
 </script>
+
+<script>
+/* BRANCH_MANIFEST_TAB_ROUTE_V1 */
+const adminSwitchPipelineBeforeManifest=switchAdminPipeline;
+switchAdminPipeline=async function(key){
+  if(key==='branch_transfer'){
+    const adminId=String(currentAdminCloud?.id||getAdminId()||'').trim();
+    const url=`branch-manifest.html?adminId=${encodeURIComponent(adminId)}`;
+    location.href=url;
+    return;
+  }
+  return adminSwitchPipelineBeforeManifest(key);
+};
+Object.assign(window,{switchAdminPipeline});
+</script>

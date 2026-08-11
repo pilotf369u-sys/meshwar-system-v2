@@ -211,3 +211,18 @@ refreshPipelineCounts=async function(){try{const{customers,orders,by}=await empl
 renderPipelineTabs();setActivePipelineButton(activePipeline);refreshPipelineCounts();
 Object.assign(window,{renderPipelineTabs,refreshPipelineCounts});
 </script>
+
+<script>
+/* BRANCH_MANIFEST_TAB_ROUTE_V1 */
+const employeeSwitchPipelineBeforeManifest=switchPipeline;
+switchPipeline=async function(key){
+  if(key==='branch_transfer'){
+    const employeeId=cloudId(currentEmployee?.id||getEmployeeId());
+    const url=`branch-manifest.html?employeeId=${encodeURIComponent(employeeId)}`;
+    location.href=url;
+    return;
+  }
+  return employeeSwitchPipelineBeforeManifest(key);
+};
+Object.assign(window,{switchPipeline});
+</script>
