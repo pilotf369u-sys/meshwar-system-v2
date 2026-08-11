@@ -212,17 +212,29 @@ renderPipelineTabs();setActivePipelineButton(activePipeline);refreshPipelineCoun
 Object.assign(window,{renderPipelineTabs,refreshPipelineCounts});
 </script>
 
+
+<style>
+/* BRANCH_EXPORT_BAR_RESTORE_V1 */
+#branchTools{background:#f1f5f9!important;border:1px solid #cbd5e1!important;box-shadow:inset 0 1px 0 #fff;}
+#branchTools.show{display:flex!important;}
+</style>
 <script>
-/* BRANCH_MANIFEST_TAB_ROUTE_V1 */
-const employeeSwitchPipelineBeforeManifest=switchPipeline;
+/* BRANCH_EXPORT_BAR_RESTORE_V1 */
 switchPipeline=async function(key){
-  if(key==='branch_transfer'){
-    const employeeId=cloudId(currentEmployee?.id||getEmployeeId());
-    const url=`branch-manifest.html?employeeId=${encodeURIComponent(employeeId)}`;
-    location.href=url;
-    return;
-  }
-  return employeeSwitchPipelineBeforeManifest(key);
+  if(!PIPELINES[key])return;
+  activePipeline=key;
+  pipelinePage=1;
+  setActivePipelineButton(key);
+  const p=PIPELINES[key];
+  document.getElementById('activePipelineLabel').innerText=p.label;
+  const reward=!!p.rewards;
+  const manifestTools=key==='branch_transfer'||!!p.branch;
+  document.getElementById('ordersPanel').classList.toggle('hidden',reward);
+  document.getElementById('rewardPanel').classList.toggle('show',reward);
+  document.getElementById('branchTools').classList.toggle('show',manifestTools&&!reward);
+  if(reward)await loadRewardsManagementTable();
+  else await loadPipelineOrders();
 };
-Object.assign(window,{switchPipeline});
+function onBranchFilterChange(){pipelinePage=1;loadPipelineOrders()}
+Object.assign(window,{switchPipeline,onBranchFilterChange});
 </script>
