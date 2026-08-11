@@ -142,3 +142,11 @@ openRewardsModal=async function(){await refreshCustomerRewardProfile();renderCus
 window.addEventListener('beforeunload',async()=>{if(customerRewardProfileTimer)clearInterval(customerRewardProfileTimer);try{const sb=await ensureCustomerPortalSupabase();if(customerRewardProfileChannel)await sb.removeChannel(customerRewardProfileChannel)}catch(e){}});
 Object.assign(window,{renderCustomerRewardSummary,openRewardsModal,refreshCustomerRewardProfile});
 </script>
+
+<script>
+/* REWARD_UI_POLISH_V3 */
+function formatRewardDateTime(value){if(!value)return'—';const d=new Date(value);if(Number.isNaN(d.getTime()))return escapeHtml(value);const date=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}).format(d);const time=new Intl.DateTimeFormat('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}).format(d);return `${date} - ${time}`}
+renderCustomerRewardHistory=function(){const hist=document.getElementById('rewardsHistoryList');if(!hist)return;const log=customerRewardLog();hist.innerHTML=log.map((r,i)=>{const amount=Number(r?.amount||0),currency=escapeHtml(r?.currency||customerRewardCurrency()||''),type=String(r?.type||'').toLowerCase()==='withdraw'?'سحب':'مكافأة';return `<div style="padding:12px 10px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><div style="font-weight:800;color:#12335b">${escapeHtml(type)} #${i+1}</div><div style="margin-top:4px;font-size:16px;font-weight:900;color:${amount<0?'#b91c1c':'#15803d'}">${amount.toFixed(2)} ${currency}</div></div><div style="font-size:12px;color:#64748b;font-weight:700;direction:ltr">${formatRewardDateTime(r?.date)}</div></div>`}).join('')||'<p style="color:#64748b">لا توجد مكافآت مسجلة.</p>'};
+openRewardsModal=async function(){await refreshCustomerRewardProfile();renderCustomerRewardHistory();document.getElementById('rewardsModal').style.display='flex'};
+Object.assign(window,{openRewardsModal,renderCustomerRewardHistory});
+</script>
