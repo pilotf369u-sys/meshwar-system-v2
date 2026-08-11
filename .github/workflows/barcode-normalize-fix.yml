@@ -1,0 +1,31 @@
+name: Barcode scanner normalization
+on:
+  push:
+    paths:
+      - '.github/workflows/barcode-normalize-fix.yml'
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply barcode normalization
+        run: python .github/barcode-normalize-fix.py
+      - name: Commit application changes
+        run: |
+          git config user.name "meshwar-barcode-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add employee-dashboard.html admin-dashboard.html branch-dashboard.html branch-manifest.html
+          git commit -m "Normalize barcode scanner input across dashboards" || true
+          git push origin main
+      - name: Remove temporary automation files
+        run: |
+          git rm .github/barcode-normalize-fix.py .github/workflows/barcode-normalize-fix.yml
+          git commit -m "Remove temporary barcode normalization automation"
+          git push origin main
