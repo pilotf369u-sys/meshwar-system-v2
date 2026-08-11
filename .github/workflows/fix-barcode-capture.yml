@@ -1,0 +1,33 @@
+name: Barcode capture fix
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-barcode-capture.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply fix
+        run: python .github/scripts/fix_barcode_capture.py
+      - name: Commit dashboard changes
+        run: |
+          git config user.name "meshwar-barcode-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add employee-dashboard.html admin-dashboard.html branch-dashboard.html
+          if git diff --cached --quiet; then
+            echo "No dashboard changes"
+          else
+            git commit -m "Fix barcode scanner capture handling"
+            git push origin main
+          fi
+      - name: Remove temporary automation files
+        run: |
+          git pull --rebase origin main
+          git rm .github/scripts/fix_barcode_capture.py .github/workflows/fix-barcode-capture.yml
+          git commit -m "Remove temporary barcode capture automation"
+          git push origin main
