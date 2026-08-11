@@ -163,3 +163,62 @@ Object.assign(window,{viewBranchParcelImage,closeBranchParcelViewer});
 })();
 </script>
 
+
+
+
+<script>
+/* UNIFIED_ORDER_STATUS_DROPDOWN_V1 */
+(function(){
+  const statuses=[
+    'مستحق مكافأة',
+    'ملغية من قبل العميل',
+    'بانتظار رد الموظف',
+    'بانتظار موافقة العميل',
+    'بانتظار تأكيد الدفع',
+    'تم التسديد',
+    'قيد الطلب',
+    'مخزن الشركة',
+    'تجهيز شحن',
+    'محولة إلى الفرع',
+    'تم الشحن',
+    'مخزن محلي',
+    'مندوب',
+    'توزيع داخلي',
+    'تم التسليم',
+    'رفض التسليم',
+    'مرفوض'
+  ];
+  const legacyMap={
+    'انتظار رد الموظف':'بانتظار رد الموظف',
+    'بانتظار موافقة الزبون':'بانتظار موافقة العميل',
+    'بانتظار التسعير':'بانتظار موافقة العميل',
+    'تم التسعير / بانتظار موافقة العميل':'بانتظار موافقة العميل',
+    'تمت الموافقة - بانتظار الدفع':'بانتظار تأكيد الدفع',
+    'تمت الموافقة':'بانتظار تأكيد الدفع',
+    'مخزن شركة':'مخزن الشركة',
+    'جاري التوصيل مع المندوب':'مندوب',
+    'رفض الطلب':'رفض التسليم'
+  };
+  window.MESHWAR_UNIFIED_ORDER_STATUSES=statuses.slice();
+  window.normalizeMeshwarOrderStatus=function(value){const v=String(value||'').trim();return legacyMap[v]||v};
+  window.buildUnifiedOrderStatusOptions=function(current){
+    const selected=window.normalizeMeshwarOrderStatus(current);
+    const escapeValue=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    return statuses.map(s=>`<option value="${escapeValue(s)}" ${s===selected?'selected':''}>${escapeValue(s)}</option>`).join('');
+  };
+  try{statusOptions=function(current){return window.buildUnifiedOrderStatusOptions(current)}}catch(_){window.statusOptions=function(current){return window.buildUnifiedOrderStatusOptions(current)}}
+})();
+</script>
+
+<script>
+/* UNIFIED_ORDER_STATUS_DROPDOWN_V1_BRANCH */
+(function(){
+  const refillFilter=()=>{
+    const filter=document.getElementById('statusFilter');if(!filter)return;
+    const current=window.normalizeMeshwarOrderStatus(filter.value);
+    filter.innerHTML='<option value="">كل الحالات</option>'+window.MESHWAR_UNIFIED_ORDER_STATUSES.map(s=>`<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('');
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refillFilter);else refillFilter();
+})();
+</script>
+
