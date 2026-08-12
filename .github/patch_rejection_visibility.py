@@ -47,7 +47,7 @@ if 'REJECTION_REASON_BADGE_V1_EMPLOYEE' not in s:
   const rejectedStatuses=new Set(['رفض التسليم','رفض الطلب','مرفوض','راجع']);
   function reasonOf(o){const d=parseDetails(o?.details);return String(o?.rejection_reason||d.delivery_rejection_reason||d.rejection_reason||d.reject_reason||o?.notes||d.delivery_note||d.notes||'').trim();}
   function decorate(){
-    const rows=[...document.querySelectorAll('#ordersTableBody tr, #employeeOrdersTableBody tr')].filter(tr=>tr.querySelectorAll('td').length>1);
+    const rows=[...document.querySelectorAll('#ordersPanel tbody tr, #ordersTableBody tr, #employeeOrdersTableBody tr')].filter(tr=>tr.querySelectorAll('td').length>1);
     rows.forEach((tr,i)=>{const o=cloudOrders?.[i];if(!o||!rejectedStatuses.has(String(o.status||'').trim()))return;const cells=tr.querySelectorAll('td');let cell=[...cells].find(td=>td.querySelector(`select[id^="status-"]`))||cells[7]||cells[6];if(!cell||cell.querySelector('.rejection-reason-badge'))return;const reason=reasonOf(o);if(reason)cell.insertAdjacentHTML('beforeend',`<div class="rejection-reason-badge">سبب الرفض: ${escapeHtml(reason)}</div>`);});
   }
   const base=loadPipelineOrders;loadPipelineOrders=async function(...args){const r=await base(...args);decorate();return r};window.loadPipelineOrders=loadPipelineOrders;
@@ -78,3 +78,4 @@ if 'REJECTION_REASON_BADGE_V1_BRANCH' not in s:
     branch.write_text(s,encoding='utf-8')
 
 print('rejection visibility patch applied')
+# trigger
