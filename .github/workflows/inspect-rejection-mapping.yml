@@ -1,0 +1,15 @@
+name: Inspect rejection mapping
+on:
+  push:
+    paths:
+      - '.github/inspect_rejection_mapping.py'
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: python3 .github/inspect_rejection_mapping.py
