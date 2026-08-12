@@ -1,0 +1,29 @@
+name: Fix delivery workflow runner
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-delivery-workflow.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fix custom Python shell
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/delivery-restructure.yml')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('        shell: python\n','        shell: python {0}\n',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name "meshwar-delivery-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/fix-delivery-workflow.yml
+          git add .github/workflows/delivery-restructure.yml
+          git commit -m "Fix delivery restructure workflow shell"
+          git push origin main
