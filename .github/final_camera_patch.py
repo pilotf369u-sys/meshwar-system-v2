@@ -1,8 +1,7 @@
 from pathlib import Path
 p=Path('delivery-dashboard.html')
 s=p.read_text(encoding='utf-8')
-# Remove photo-fallback controls from scanner modal if present
-s=s.replace('<div id="scannerModal" class="scanner-wrap"><div class="scanner-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><b>مسح باركود مباشر بالكاميرا الخلفية</b><button class="btn btn-red" onclick="stopScanner()">إلغاء المسح</button></div><div id="reader"></div><div id="cameraHint" class="muted" style="margin-top:8px;text-align:center">وجّه الكاميرا نحو الباركود وسيتم التقاطه تلقائياً.</div></div></div>','<div id="scannerModal" class="scanner-wrap"><div class="scanner-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><b>مسح باركود مباشر بالكاميرا الخلفية</b><button class="btn btn-red" onclick="stopScanner()">إلغاء المسح</button></div><div id="reader"></div><div id="cameraHint" class="muted" style="margin-top:8px;text-align:center">وجّه الكاميرا نحو الباركود وسيتم التقاطه تلقائياً.</div></div></div>')
+# Final direct live camera patch trigger
 start=s.index('async function startCameraScanner(){')
 end=s.index('async function setupDeliveryRealtime()', start)
 new=r'''async function startCameraScanner(){
@@ -57,7 +56,6 @@ async function stopScanner(){
 '''
 s=s[:start]+new+s[end:]
 s=s.replace('Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,startCameraScanner,stopScanner,filterOrdersByBarcode,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});','Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,startCameraScanner,stopScanner,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});')
-# Ensure no barcode image fallback survived
 for bad in ['barcodePhotoFallbackInput','barcodePhotoFallbackBtn','scanBarcodePhotoFallback','openBarcodePhotoFallback','scanFile(file']:
     if bad in s:
         raise SystemExit('Unexpected scanner fallback remains: '+bad)
