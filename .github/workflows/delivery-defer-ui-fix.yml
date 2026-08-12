@@ -13,12 +13,12 @@ jobs:
         with:
           ref: main
       - name: Fix deferred date visibility
-        run: python -c "from pathlib import Path;p=Path('delivery-dashboard.html');s=p.read_text(encoding='utf-8');s=s.replace(\"style=\\\"display:${o.status==='مؤجل'?'block':'none'}\\\"\",\"style=\\\"display:${(d.delivery_state==='deferred'||d.delivery_deferred_until)?'block':'none'}\\\"\");p.write_text(s,encoding='utf-8')"
+        run: python .github/temp-defer-ui.py
       - name: Commit and cleanup
         run: |
           git config user.name "meshwar-delivery-bot"
           git config user.email "actions@users.noreply.github.com"
-          git rm .github/workflows/delivery-defer-ui-fix.yml
+          git rm .github/temp-defer-ui.py .github/workflows/delivery-defer-ui-fix.yml
           git add delivery-dashboard.html
           git commit -m "Fix deferred delivery date visibility"
           git push origin main
