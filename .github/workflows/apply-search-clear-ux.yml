@@ -1,0 +1,22 @@
+name: Apply search clear UX
+on:
+  push:
+    paths:
+      - '.github/apply_search_clear_ux.py'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: python3 .github/apply_search_clear_ux.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin-dashboard.html employee-dashboard.html branch-dashboard.html delivery-dashboard.html
+          git diff --cached --check
+          git commit -m "Improve barcode search clear UX across dashboards"
+          git push origin main
