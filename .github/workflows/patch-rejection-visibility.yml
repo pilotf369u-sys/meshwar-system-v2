@@ -1,0 +1,22 @@
+name: Patch rejection visibility
+on:
+  push:
+    paths:
+      - '.github/patch_rejection_visibility.py'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: python3 .github/patch_rejection_visibility.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin-dashboard.html employee-dashboard.html branch-dashboard.html
+          git diff --cached --check
+          git commit -m "Fix rejected shipment visibility and reasons"
+          git push origin main
