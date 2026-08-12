@@ -15,7 +15,7 @@
 <p class="mini">كل التبويبات والعدادات والتحديثات تقرأ مباشرة من Supabase.</p>
 <div id="pipelineTabs" class="pipeline-tabs"></div>
 <div id="ordersPanel" class="orders-panel">
-<div class="toolbar"><b>بحث / باركود:</b><input id="employeeOrderSearch" type="text" placeholder="MW / Sipariş No / العميل / الهاتف" oninput="employeeBarcodeSearchInput(event)" onkeyup="employeeBarcodeSearchKeyup(event)" onkeydown="handlePipelineSearchKeydown(event)" autocomplete="off"><button class="btn btn-blue" type="button" onclick="startCameraScanner()">📷 مسح بالكاميرا</button><b>عدد العناصر:</b><select id="employeeOrderPageSize" onchange="changePipelinePageSize(this.value)"><option value="20" selected>20</option><option value="40">40</option></select><span id="activePipelineLabel" class="employee-badge"></span></div>
+<div class="toolbar"><b>بحث / باركود:</b><input id="employeeOrderSearch" type="text" placeholder="MW / Sipariş No / العميل / الهاتف" oninput="employeeBarcodeSearchInput(event)" onkeyup="employeeBarcodeSearchKeyup(event)" onkeydown="prepareBarcodeScannerBurst(event);handlePipelineSearchKeydown(event)" autocomplete="off"><button type="button" data-clear-search="employeeOrderSearch" title="مسح البحث" aria-label="مسح البحث" onclick="clearBarcodeSearchInput()" style="width:36px;height:36px;padding:0;border-radius:50%;background:#64748b;color:#fff;font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">×</button><button class="btn btn-blue" type="button" onclick="startCameraScanner()">📷 مسح بالكاميرا</button><b>عدد العناصر:</b><select id="employeeOrderPageSize" onchange="changePipelinePageSize(this.value)"><option value="20" selected>20</option><option value="40">40</option></select><span id="activePipelineLabel" class="employee-badge"></span></div>
 <div id="branchTools" class="branch-tools"><b>الفرع:</b><select id="branchFilter" onchange="onBranchFilterChange()"><option value="">كل الفروع</option></select><button class="btn btn-green" onclick="exportSelectedBranchCsv()"><i class="fa-solid fa-file-excel"></i> تصدير Excel</button><button class="btn btn-blue" onclick="printSelectedBranchReport()"><i class="fa-solid fa-print"></i> طباعة / PDF</button></div>
 <div class="table-wrap"><table><thead><tr><th>رقم الطلب / Sipariş / باركود</th><th>العميل / الكود</th><th>الكمية</th><th>السعر / الدفع</th><th>الفرع</th><th>الحالة</th><th>التواصل</th><th>حفظ</th></tr></thead><tbody id="pipelineOrdersBody"><tr><td colspan="8">جاري التحميل...</td></tr></tbody></table></div>
 <div class="pagination-bar"><button id="pipelinePrev" onclick="changePipelinePage(-1)">السابق</button><span id="pipelinePages"></span><button id="pipelineNext" onclick="changePipelinePage(1)">التالي</button><span id="pipelineCountInfo" class="mini"></span></div>
@@ -37,9 +37,32 @@
 const DASHBOARD_BARCODE_SEARCH_ID='employeeOrderSearch';
 
 function dashboardArabicDigitsToLatin(s){const map={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};return String(s||'').replace(/[٠-٩۰-۹]/g,d=>map[d]||d)}
+let barcodeScannerLastKeyAt=0;
+function clearBarcodeSearchInput(){
+  const input=document.getElementById('employeeOrderSearch');
+  if(!input)return;
+  input.value='';
+  pipelinePage=1;
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.focus();
+}
+function prepareBarcodeScannerBurst(event){
+  const input=event?.target||document.getElementById('employeeOrderSearch');
+  if(!input||event.ctrlKey||event.metaKey||event.altKey||String(event.key||'').length!==1)return;
+  const now=Date.now();
+  const gap=now-barcodeScannerLastKeyAt;
+  barcodeScannerLastKeyAt=now;
+  if(input.value&&gap>180&&input.selectionStart===input.selectionEnd){
+    const existing=cleanBarcodeScannerInput(input.value);
+    if(existing&&/^(?:MW-?)?[A-Z0-9-]*\d[A-Z0-9-]*$/.test(existing))input.value='';
+  }
+}
 function cleanBarcodeScannerInput(value){let cleaned=dashboardArabicDigitsToLatin(value).normalize('NFKD').replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g,'').replace(/[\r\n\t\s]+/g,'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/-{2,}/g,'-');cleaned=cleaned.replace(/^-+/, '-').replace(/-+$/, '');if(/^-[0-9]+$/.test(cleaned))cleaned='MW'+cleaned;else if(/^MW[0-9]+$/.test(cleaned))cleaned='MW-'+cleaned.slice(2);return cleaned}
 let html5QrCode=null;
 async function startCameraScanner(){
+  const searchInput=document.getElementById('employeeOrderSearch');
+  if(searchInput&&searchInput.value){searchInput.value='';searchInput.dispatchEvent(new Event('input',{bubbles:true}));}
+
   const modal=document.getElementById('scannerModal');
   const reader=document.getElementById('reader');
   const hint=document.getElementById('cameraHint');

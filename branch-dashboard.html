@@ -10,7 +10,7 @@ body{font-family:Tahoma,sans-serif;background:#f4f7f6;margin:0;padding:20px}.con
 <div class="container">
 <div class="top"><div><h2 id="branchTitle">لوحة الفرع: جاري التحقق...</h2><div class="muted">الطلبات والمندوبون والتقفيلات مرتبطة مباشرة بـ Supabase.</div></div><div><a id="deliveryReportsLink" class="btn blue" href="admin-delivery-reports.html">📊 تقارير وتصفية المندوبين</a> <button class="purple" onclick="openSettlementHistoryModal()">📜 سجل التقفيلات</button> <button class="orange" onclick="requestBranchSettlement()">💰 طلب تقفيل عهدة الفرع</button> <a href="login.html" class="btn red">تسجيل الخروج</a></div></div>
 <div class="section-title">📦 إدارة شحنات الفرع</div>
-<div class="toolbar"><input id="orderSearch" placeholder="MW / Sipariş / الباركود / العميل / الهاتف / المندوب" oninput="branchBarcodeSearchInput(event)" onkeyup="branchBarcodeSearchKeyup(event)" onkeydown="handleSearchKeydown(event)" autocomplete="off"><button class="blue" type="button" onclick="startCameraScanner()">📷 مسح بالكاميرا</button><select id="statusFilter" onchange="resetPage()"><option value="">كل الحالات</option><option>مخزن محلي</option><option>جاري التوصيل مع المندوب</option><option>توزيع داخلي</option><option>تم التسليم</option><option>رفض الطلب</option></select><input id="dateFrom" type="date" onchange="resetPage()"><input id="dateTo" type="date" onchange="resetPage()"><select id="pageSize" onchange="changePageSize(this.value)"><option value="20" selected>20</option><option value="50">50</option></select><button class="blue" onclick="loadOrders()">تحديث</button><span style="border-right:1px solid #ccc;height:28px"></span><select id="bulkCourier"><option value="">اختر مندوباً للإسناد الجماعي</option></select><button class="green" onclick="bulkAssign()">إسناد الشحنات المحددة لمندوب</button><button class="purple" onclick="openCourierModal()">+ إضافة مندوب جديد</button></div>
+<div class="toolbar"><input id="orderSearch" placeholder="MW / Sipariş / الباركود / العميل / الهاتف / المندوب" oninput="branchBarcodeSearchInput(event)" onkeyup="branchBarcodeSearchKeyup(event)" onkeydown="prepareBarcodeScannerBurst(event);handleSearchKeydown(event)" autocomplete="off"><button type="button" data-clear-search="orderSearch" title="مسح البحث" aria-label="مسح البحث" onclick="clearBarcodeSearchInput()" style="width:36px;height:36px;padding:0;border-radius:50%;background:#64748b;color:#fff;font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">×</button><button class="blue" type="button" onclick="startCameraScanner()">📷 مسح بالكاميرا</button><select id="statusFilter" onchange="resetPage()"><option value="">كل الحالات</option><option>مخزن محلي</option><option>جاري التوصيل مع المندوب</option><option>توزيع داخلي</option><option>تم التسليم</option><option>رفض الطلب</option></select><input id="dateFrom" type="date" onchange="resetPage()"><input id="dateTo" type="date" onchange="resetPage()"><select id="pageSize" onchange="changePageSize(this.value)"><option value="20" selected>20</option><option value="50">50</option></select><button class="blue" onclick="loadOrders()">تحديث</button><span style="border-right:1px solid #ccc;height:28px"></span><select id="bulkCourier"><option value="">اختر مندوباً للإسناد الجماعي</option></select><button class="green" onclick="bulkAssign()">إسناد الشحنات المحددة لمندوب</button><button class="purple" onclick="openCourierModal()">+ إضافة مندوب جديد</button></div>
 <div id="scanResultCard" class="scan-card" aria-live="polite"></div>
 <div style="overflow:auto"><table><thead><tr><th><input id="selectAll" type="checkbox" onchange="toggleAll(this.checked)"></th><th>رقم الشحنة / Sipariş</th><th>العميل / الهاتف / الكود</th><th>السعر / الدفع / التحصيل</th><th>أجرة التوصيل</th><th>صافي العهدة</th><th>الحالة</th><th>المندوب</th><th>تحديث</th></tr></thead><tbody id="ordersBody"><tr><td colspan="9">جاري التحميل...</td></tr></tbody></table></div><div id="ordersPager" class="pager"></div>
 <div class="section-title">💰 محاسبة المندوبين والذمم المالية</div><div id="accountSummary" class="account-grid"></div><div style="overflow:auto"><table><thead><tr><th>المندوب</th><th>الهاتف</th><th>قيد التوصيل</th><th>المسلّم غير المقفل</th><th>التحصيل عند الباب</th><th>أجور التوصيل</th><th>صافي العهدة</th><th>الإجراءات</th></tr></thead><tbody id="accountingBody"><tr><td colspan="8">جاري حساب الذمم...</td></tr></tbody></table></div>
@@ -31,9 +31,32 @@ body{font-family:Tahoma,sans-serif;background:#f4f7f6;margin:0;padding:20px}.con
 const DASHBOARD_BARCODE_SEARCH_ID='orderSearch';
 
 function dashboardArabicDigitsToLatin(s){const map={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};return String(s||'').replace(/[٠-٩۰-۹]/g,d=>map[d]||d)}
+let barcodeScannerLastKeyAt=0;
+function clearBarcodeSearchInput(){
+  const input=document.getElementById('orderSearch');
+  if(!input)return;
+  input.value='';
+  page=1;barcodeScanPending=false;
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.focus();
+}
+function prepareBarcodeScannerBurst(event){
+  const input=event?.target||document.getElementById('orderSearch');
+  if(!input||event.ctrlKey||event.metaKey||event.altKey||String(event.key||'').length!==1)return;
+  const now=Date.now();
+  const gap=now-barcodeScannerLastKeyAt;
+  barcodeScannerLastKeyAt=now;
+  if(input.value&&gap>180&&input.selectionStart===input.selectionEnd){
+    const existing=cleanBarcodeScannerInput(input.value);
+    if(existing&&/^(?:MW-?)?[A-Z0-9-]*\d[A-Z0-9-]*$/.test(existing))input.value='';
+  }
+}
 function cleanBarcodeScannerInput(value){let cleaned=dashboardArabicDigitsToLatin(value).normalize('NFKD').replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g,'').replace(/[\r\n\t\s]+/g,'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/-{2,}/g,'-');cleaned=cleaned.replace(/^-+/, '-').replace(/-+$/, '');if(/^-[0-9]+$/.test(cleaned))cleaned='MW'+cleaned;else if(/^MW[0-9]+$/.test(cleaned))cleaned='MW-'+cleaned.slice(2);return cleaned}
 let html5QrCode=null;
 async function startCameraScanner(){
+  const searchInput=document.getElementById('orderSearch');
+  if(searchInput&&searchInput.value){searchInput.value='';searchInput.dispatchEvent(new Event('input',{bubbles:true}));}
+
   const modal=document.getElementById('scannerModal');
   const reader=document.getElementById('reader');
   const hint=document.getElementById('cameraHint');

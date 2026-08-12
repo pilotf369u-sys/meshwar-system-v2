@@ -14,7 +14,7 @@
 <div class="topbar"><div><h1 id="deliveryTitle">لوحة موظف التوصيل</h1><div id="identityMeta" class="muted">جاري التحقق من الحساب...</div></div><a class="btn btn-red" href="login.html">تسجيل الخروج</a></div>
 <div class="finance"><div class="finance-card"><div class="label">عدد الوصولات الحالية</div><div id="cardShipments" class="value">0</div></div><div class="finance-card"><div class="label">إجمالي المحصل</div><div id="cardCollected" class="value">0.00</div></div><div class="finance-card"><div class="label">أجرة التوصيل / العمولة</div><div id="cardFees" class="value">0.00</div></div><div class="finance-card"><div class="label">صافي الواجب تسليمه</div><div id="cardNet" class="value">0.00</div></div></div>
 <div class="delivery-layout"><aside class="tabs"><button class="tab active" data-tab="active" onclick="switchDeliveryTab('active')">🚚 قيد التنفيذ <span id="count-active" class="badge">0</span></button><button class="tab" data-tab="delivered" onclick="switchDeliveryTab('delivered')">✅ تم التسليم <span id="count-delivered" class="badge">0</span></button><button class="tab" data-tab="deferred" onclick="switchDeliveryTab('deferred')">⏰ مؤجل <span id="count-deferred" class="badge">0</span></button><button class="tab" data-tab="rejected" onclick="switchDeliveryTab('rejected')">❌ مرفوض / راجع <span id="count-rejected" class="badge">0</span></button></aside><main class="delivery-main">
-<div class="toolbar"><input id="deliverySearch" placeholder="MW / Sipariş / اسم العميل / الهاتف / امسح الباركود" autocomplete="off" oninput="deliverySearchInput(event)" onkeyup="deliverySearchKeyup(event)" onkeydown="deliverySearchKeydown(event)"><button class="btn btn-blue" onclick="toggleScanner(event)">📷 مسح بالكاميرا</button><button class="btn btn-gray" onclick="loadDeliveryOrders()">تحديث</button></div>
+<div class="toolbar"><input id="deliverySearch" placeholder="MW / Sipariş / اسم العميل / الهاتف / امسح الباركود" autocomplete="off" oninput="deliverySearchInput(event)" onkeyup="deliverySearchKeyup(event)" onkeydown="prepareBarcodeScannerBurst(event);deliverySearchKeydown(event)"><button type="button" data-clear-search="deliverySearch" title="مسح البحث" aria-label="مسح البحث" onclick="clearBarcodeSearchInput()" style="width:36px;height:36px;padding:0;border-radius:50%;background:#64748b;color:#fff;font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">×</button><button class="btn btn-blue" onclick="toggleScanner(event)">📷 مسح بالكاميرا</button><button class="btn btn-gray" onclick="loadDeliveryOrders()">تحديث</button></div>
 <div id="scannerModal" class="scanner-wrap"><div class="scanner-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><b>مسح باركود مباشر بالكاميرا الخلفية</b><button class="btn btn-red" onclick="stopScanner()">إلغاء المسح</button></div><div id="reader"></div><div id="cameraHint" class="muted" style="margin-top:8px;text-align:center">وجّه الكاميرا نحو الباركود وسيتم التقاطه تلقائياً.</div></div></div>
 <div id="scanResult" class="scan-result"></div><div id="deliveryImageOverlay" class="image-overlay" onclick="if(event.target===this)closeDeliveryImage()"><button class="btn btn-red" onclick="closeDeliveryImage()">إغلاق</button><img id="deliveryImageZoom" alt="صورة الشحنة"></div><input id="deliveryProofCamera" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDeliveryProofFile(this.files[0])"><input id="deliveryProofGallery" type="file" accept="image/*" style="display:none" onchange="handleDeliveryProofFile(this.files[0])">
 <div id="ordersGrid" class="orders"><div class="loading">جاري تحميل الشحنات...</div></div>
@@ -33,6 +33,26 @@ function params(){return new URLSearchParams(location.search)}
 function courierIdFromUrl(){return idText(params().get('courierId'))}
 function branchIdFromUrl(){return idText(params().get('branchId'))}
 function arabicDigitsToLatin(s){const map={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};return String(s||'').replace(/[٠-٩۰-۹]/g,d=>map[d]||d)}
+let barcodeScannerLastKeyAt=0;
+function clearBarcodeSearchInput(){
+  const input=document.getElementById('deliverySearch');
+  if(!input)return;
+  input.value='';
+  deliveryPage=1;
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.focus();
+}
+function prepareBarcodeScannerBurst(event){
+  const input=event?.target||document.getElementById('deliverySearch');
+  if(!input||event.ctrlKey||event.metaKey||event.altKey||String(event.key||'').length!==1)return;
+  const now=Date.now();
+  const gap=now-barcodeScannerLastKeyAt;
+  barcodeScannerLastKeyAt=now;
+  if(input.value&&gap>180&&input.selectionStart===input.selectionEnd){
+    const existing=cleanBarcodeScannerInput(input.value);
+    if(existing&&/^(?:MW-?)?[A-Z0-9-]*\d[A-Z0-9-]*$/.test(existing))input.value='';
+  }
+}
 function cleanBarcodeScannerInput(value){let cleaned=arabicDigitsToLatin(value).normalize('NFKD').replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g,'').replace(/[\r\n\t\s]+/g,'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/-{2,}/g,'-');cleaned=cleaned.replace(/^-+/, '-').replace(/-+$/, '');if(/^-[0-9]+$/.test(cleaned))cleaned='MW'+cleaned;else if(/^MW[0-9]+$/.test(cleaned))cleaned='MW-'+cleaned.slice(2);return cleaned}
 function cleanSearch(value){return arabicDigitsToLatin(value).replace(/[,%()'"`\r\n]/g,' ').trim()}
 function phoneDigits(v){return arabicDigitsToLatin(v).replace(/[^0-9]/g,'')}
@@ -78,6 +98,9 @@ function changeDeliveryPage(d){const pages=Math.max(1,Math.ceil(deliveryTotal/de
 function focusThisShipment(id){const raw=decodeURIComponent(id),el=document.querySelector(`.shipment[data-id="${CSS.escape(raw)}"]`);el?.scrollIntoView({behavior:'smooth',block:'center'});if(el){el.style.outline='3px solid #38bdf8';setTimeout(()=>el.style.outline='',1800)}}
 async function saveDeliveryOrder(encodedId){const id=decodeURIComponent(encodedId),o=deliveryOrders.find(x=>idText(x.id)===idText(id));if(!o)return;const selected=document.getElementById('st-'+encodedId).value,defer=document.getElementById('defer-'+encodedId).value,note=document.getElementById('note-'+encodedId).value.trim(),reason=document.getElementById('reason-'+encodedId).value.trim(),rating=Number(document.getElementById('rating-'+encodedId)?.value||0),isDeferred=selected==='__deferred__',status=isDeferred?(DELIVERY_TABS.active.includes(o.status)?o.status:'مندوب'):selected;if(isDeferred&&!defer)return alert('حدد تاريخ التأجيل.');if(DELIVERY_TABS.rejected.includes(status)&&!reason)return alert('اكتب سبب الرفض أو الراجع.');const details=parseDetails(o.details);details.delivery_state=isDeferred?'deferred':null;details.delivery_deferred_until=isDeferred?defer:null;details.delivery_note=note||null;details.delivery_rejection_reason=DELIVERY_TABS.rejected.includes(status)?reason:null;details.delivery_rating=rating>=1&&rating<=5?rating:null;details.delivery_updated_at=new Date().toISOString();const payload={status,details,rejection_reason:DELIVERY_TABS.rejected.includes(status)?reason:null};const sb=await getDeliverySb(),{error}=await sb.from('orders').update(payload).eq('id',id);if(error)return alert('تعذر تحديث الشحنة: '+error.message);alert('تم تحديث حالة الشحنة بنجاح.');await loadDeliveryOrders()}
 async function startCameraScanner(){
+  const searchInput=document.getElementById('deliverySearch');
+  if(searchInput&&searchInput.value){searchInput.value='';searchInput.dispatchEvent(new Event('input',{bubbles:true}));}
+
   const modal=document.getElementById('scannerModal');
   const hint=document.getElementById('cameraHint');
   modal.classList.add('show');
