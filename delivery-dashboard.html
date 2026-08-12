@@ -15,7 +15,7 @@
 <div class="finance"><div class="finance-card"><div class="label">عدد الوصولات الحالية</div><div id="cardShipments" class="value">0</div></div><div class="finance-card"><div class="label">إجمالي المحصل</div><div id="cardCollected" class="value">0.00</div></div><div class="finance-card"><div class="label">أجرة التوصيل / العمولة</div><div id="cardFees" class="value">0.00</div></div><div class="finance-card"><div class="label">صافي الواجب تسليمه</div><div id="cardNet" class="value">0.00</div></div></div>
 <div class="delivery-layout"><aside class="tabs"><button class="tab active" data-tab="active" onclick="switchDeliveryTab('active')">🚚 قيد التنفيذ <span id="count-active" class="badge">0</span></button><button class="tab" data-tab="delivered" onclick="switchDeliveryTab('delivered')">✅ تم التسليم <span id="count-delivered" class="badge">0</span></button><button class="tab" data-tab="deferred" onclick="switchDeliveryTab('deferred')">⏰ مؤجل <span id="count-deferred" class="badge">0</span></button><button class="tab" data-tab="rejected" onclick="switchDeliveryTab('rejected')">❌ مرفوض / راجع <span id="count-rejected" class="badge">0</span></button></aside><main class="delivery-main">
 <div class="toolbar"><input id="deliverySearch" placeholder="MW / Sipariş / اسم العميل / الهاتف / امسح الباركود" autocomplete="off" oninput="deliverySearchInput(event)" onkeyup="deliverySearchKeyup(event)" onkeydown="deliverySearchKeydown(event)"><button class="btn btn-blue" onclick="toggleScanner(event)">📷 مسح بالكاميرا</button><button class="btn btn-gray" onclick="loadDeliveryOrders()">تحديث</button></div>
-<div id="scannerModal" class="scanner-wrap"><div class="scanner-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><b>مسح باركود مباشر بالكاميرا الخلفية</b><button class="btn btn-red" onclick="stopScanner()">إلغاء المسح</button></div><div id="reader"></div><div id="cameraHint" class="muted" style="margin-top:8px;text-align:center">جاري طلب صلاحية الكاميرا وتشغيل البث الحي...</div><button id="barcodePhotoFallbackBtn" class="btn btn-blue" type="button" style="display:none;width:100%;margin-top:10px" onclick="openBarcodePhotoFallback()">📸 التقاط صورة للباركود للتحليل الفوري</button><input id="barcodePhotoFallbackInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="scanBarcodePhotoFallback(this.files[0])"></div></div>
+<div id="scannerModal" class="scanner-wrap"><div class="scanner-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><b>مسح باركود مباشر بالكاميرا الخلفية</b><button class="btn btn-red" onclick="stopScanner()">إلغاء المسح</button></div><div id="reader"></div><div id="cameraHint" class="muted" style="margin-top:8px;text-align:center">وجّه الكاميرا نحو الباركود وسيتم التقاطه تلقائياً.</div></div></div>
 <div id="scanResult" class="scan-result"></div><div id="deliveryImageOverlay" class="image-overlay" onclick="if(event.target===this)closeDeliveryImage()"><button class="btn btn-red" onclick="closeDeliveryImage()">إغلاق</button><img id="deliveryImageZoom" alt="صورة الشحنة"></div><input id="deliveryProofCamera" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDeliveryProofFile(this.files[0])"><input id="deliveryProofGallery" type="file" accept="image/*" style="display:none" onchange="handleDeliveryProofFile(this.files[0])">
 <div id="ordersGrid" class="orders"><div class="loading">جاري تحميل الشحنات...</div></div>
 <div class="pager"><button id="prevBtn" onclick="changeDeliveryPage(-1)">السابق</button><span id="pageInfo" class="muted"></span><button id="nextBtn" onclick="changeDeliveryPage(1)">التالي</button></div></main></div>
@@ -77,61 +77,74 @@ function deliverySearchKeydown(e){const cleaned=cleanBarcodeScannerInput(e?.targ
 function changeDeliveryPage(d){const pages=Math.max(1,Math.ceil(deliveryTotal/deliveryPageSize)),next=Math.max(1,Math.min(pages,deliveryPage+d));if(next!==deliveryPage){deliveryPage=next;loadDeliveryOrders()}}
 function focusThisShipment(id){const raw=decodeURIComponent(id),el=document.querySelector(`.shipment[data-id="${CSS.escape(raw)}"]`);el?.scrollIntoView({behavior:'smooth',block:'center'});if(el){el.style.outline='3px solid #38bdf8';setTimeout(()=>el.style.outline='',1800)}}
 async function saveDeliveryOrder(encodedId){const id=decodeURIComponent(encodedId),o=deliveryOrders.find(x=>idText(x.id)===idText(id));if(!o)return;const selected=document.getElementById('st-'+encodedId).value,defer=document.getElementById('defer-'+encodedId).value,note=document.getElementById('note-'+encodedId).value.trim(),reason=document.getElementById('reason-'+encodedId).value.trim(),rating=Number(document.getElementById('rating-'+encodedId)?.value||0),isDeferred=selected==='__deferred__',status=isDeferred?(DELIVERY_TABS.active.includes(o.status)?o.status:'مندوب'):selected;if(isDeferred&&!defer)return alert('حدد تاريخ التأجيل.');if(DELIVERY_TABS.rejected.includes(status)&&!reason)return alert('اكتب سبب الرفض أو الراجع.');const details=parseDetails(o.details);details.delivery_state=isDeferred?'deferred':null;details.delivery_deferred_until=isDeferred?defer:null;details.delivery_note=note||null;details.delivery_rejection_reason=DELIVERY_TABS.rejected.includes(status)?reason:null;details.delivery_rating=rating>=1&&rating<=5?rating:null;details.delivery_updated_at=new Date().toISOString();const payload={status,details,rejection_reason:DELIVERY_TABS.rejected.includes(status)?reason:null};const sb=await getDeliverySb(),{error}=await sb.from('orders').update(payload).eq('id',id);if(error)return alert('تعذر تحديث الشحنة: '+error.message);alert('تم تحديث حالة الشحنة بنجاح.');await loadDeliveryOrders()}
-async function requestDeliveryCameraPermission(){
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('mediaDevices unavailable');
-  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
-  stream.getTracks().forEach(track=>track.stop());
-}
-function showBarcodePhotoFallback(message='تعذر تشغيل البث الحي. يمكنك التقاط صورة للباركود ليتم تحليلها فوراً.'){
-  const hint=document.getElementById('cameraHint'),btn=document.getElementById('barcodePhotoFallbackBtn');
-  if(hint)hint.textContent=message;
-  if(btn)btn.style.display='inline-flex';
-}
-function hideBarcodePhotoFallback(){const btn=document.getElementById('barcodePhotoFallbackBtn');if(btn)btn.style.display='none'}
-function openBarcodePhotoFallback(){const input=document.getElementById('barcodePhotoFallbackInput');if(!input)return;input.value='';input.click()}
-async function scanBarcodePhotoFallback(file){
-  if(!file)return;
-  const hint=document.getElementById('cameraHint');
-  if(hint)hint.textContent='جاري تحليل صورة الباركود...';
-  let fileScanner=null;
-  try{
-    if(scanner){try{await scanner.stop()}catch{}try{await scanner.clear()}catch{}scanner=null}
-    fileScanner=new Html5Qrcode('reader');
-    const decodedText=await fileScanner.scanFile(file,true);
-    const clean=cleanBarcodeScannerInput(decodedText);
-    if(!clean)throw new Error('invalid barcode');
-    await handleCameraScan(clean);
-  }catch(e){console.error('Barcode photo fallback error:',e);showBarcodePhotoFallback('لم تتم قراءة الباركود من الصورة. حاول التقاط صورة أوضح أو أعد محاولة البث الحي.')}
-  finally{try{await fileScanner?.clear()}catch{}const input=document.getElementById('barcodePhotoFallbackInput');if(input)input.value=''}
-}
 async function startCameraScanner(){
   const modal=document.getElementById('scannerModal'),hint=document.getElementById('cameraHint');
   modal.classList.add('show');
-  hideBarcodePhotoFallback();
-  if(hint)hint.textContent='جاري طلب صلاحية الكاميرا...';
+  if(hint)hint.textContent='جاري تشغيل الكاميرا الخلفية...';
+  if(scanner){try{await scanner.stop()}catch{}try{await scanner.clear()}catch{}scanner=null}
+  scanner=new Html5Qrcode('reader');
+  const config={fps:15,qrbox:{width:280,height:160}};
+  const onSuccess=async decodedText=>{
+    const clean=cleanBarcodeScannerInput(decodedText);
+    if(!clean)return;
+    await handleCameraScan(clean);
+  };
+  const onError=()=>{};
   try{
-    await requestDeliveryCameraPermission();
-    if(hint)hint.textContent='تم السماح بالكاميرا. جاري تشغيل الكاميرا الخلفية...';
-    const cameras=await Html5Qrcode.getCameras();
-    if(!cameras||!cameras.length)throw new Error('no cameras');
-    const selected=cameras.find(c=>/back|rear|environment|traseira|trasera|arrière|خلف/i.test(c.label||''))||cameras[cameras.length-1];
-    scanner=new Html5Qrcode('reader');
-    const config={fps:10,qrbox:{width:250,height:150},aspectRatio:1.777778};
-    const onScanSuccess=async decodedText=>{const clean=cleanBarcodeScannerInput(decodedText);if(!clean)return;await handleCameraScan(clean)};
-    await scanner.start(selected.id,config,onScanSuccess,()=>{});
-    if(hint)hint.textContent='وجّه الكاميرا الخلفية نحو الباركود، وسيتم التقاطه تلقائياً.';
-  }catch(e){
-    console.error('Live camera scanner error:',e);
-    if(scanner){try{await scanner.stop()}catch{}try{await scanner.clear()}catch{}scanner=null}
-    showBarcodePhotoFallback();
+    await scanner.start({facingMode:{exact:'environment'}},config,onSuccess,onError);
+    if(hint)hint.textContent='وجّه الكاميرا نحو الباركود وسيتم التقاطه تلقائياً.';
+  }catch(firstError){
+    console.warn('Exact environment camera unavailable, retrying standard environment mode:',firstError);
+    try{
+      await scanner.start({facingMode:'environment'},config,onSuccess,onError);
+      if(hint)hint.textContent='وجّه الكاميرا نحو الباركود وسيتم التقاطه تلقائياً.';
+    }catch(secondError){
+      console.error('Live camera scanner error:',secondError);
+      if(hint)hint.textContent='تعذر تشغيل الكاميرا الحية. تحقق من صلاحية الكاميرا في المتصفح ثم أعد المحاولة.';
+    }
   }
 }
-async function toggleScanner(event){if(event&&event.isTrusted===false)return;if(scanner){await stopScanner();return}await startCameraScanner()}
-async function stopScanner(){if(scanner){try{await scanner.stop()}catch{}try{await scanner.clear()}catch{}scanner=null}hideBarcodePhotoFallback();document.getElementById('scannerModal')?.classList.remove('show')}
-async function handleCameraScan(decoded){const clean=cleanBarcodeScannerInput(decoded);if(!clean)return;await stopScanner();deliverySearch.value=clean;deliveryPage=1;await loadDeliveryOrders(clean);scanResult.classList.add('show');scanResult.textContent=deliveryOrders.length?`تم العثور على: ${deliveryOrders[0].order_code||deliveryOrders[0].id}`:`لم يتم العثور على شحنة بالباركود ${clean}`;setTimeout(()=>scanResult.classList.remove('show'),5000)}
+async function toggleScanner(event){
+  if(event&&event.isTrusted===false)return;
+  if(scanner){await stopScanner();return}
+  await startCameraScanner();
+}
+async function stopScanner(){
+  if(scanner){try{await scanner.stop()}catch{}try{await scanner.clear()}catch{}scanner=null}
+  document.getElementById('scannerModal')?.classList.remove('show');
+}
+function filterOrdersByBarcode(clean){
+  const normalized=cleanBarcodeScannerInput(clean);
+  if(!normalized)return;
+  deliverySearch.value=normalized;
+  deliveryPage=1;
+  clearTimeout(deliveryTimer);
+  const loaded=deliveryOrders.filter(o=>{
+    const values=[o.order_code,o.reference_order_no,o.id,o.customer_phone].map(v=>cleanBarcodeScannerInput(v));
+    return values.some(v=>v===normalized||v.includes(normalized)||normalized.includes(v));
+  });
+  if(loaded.length){
+    deliveryTotal=loaded.length;
+    deliveryOrders=loaded;
+    ordersGrid.innerHTML=loaded.map(renderOrderCard).join('');
+    renderPager();
+    scanResult.classList.add('show');
+    scanResult.textContent=`تم العثور على: ${loaded[0].order_code||loaded[0].id}`;
+    setTimeout(()=>scanResult.classList.remove('show'),3000);
+    return;
+  }
+  loadDeliveryOrders(normalized);
+}
+async function handleCameraScan(decoded){
+  const clean=cleanBarcodeScannerInput(decoded);
+  if(!clean)return;
+  await stopScanner();
+  deliverySearch.value=clean;
+  filterOrdersByBarcode(clean);
+}
 async function setupDeliveryRealtime(){const sb=await getDeliverySb();deliveryRealtime=sb.channel('delivery-orders-'+idText(currentCourier.id)).on('postgres_changes',{event:'*',schema:'public',table:'orders'},async payload=>{const row=payload.new||payload.old||{};if(orderBelongsToCourier(row))await loadDeliveryOrders()}).subscribe()}
 async function initDelivery(){try{await verifyCourier();await Promise.all([loadDeliveryOrders(),setupDeliveryRealtime()])}catch(e){console.error(e);alert(e.message||e);location.replace('login.html')}}
-window.addEventListener('beforeunload',async()=>{try{await stopScanner();if(deliveryRealtime){const sb=await getDeliverySb();await sb.removeChannel(deliveryRealtime)}}catch{}});Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,startCameraScanner,stopScanner,openBarcodePhotoFallback,scanBarcodePhotoFallback,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});window.onload=initDelivery;
+window.addEventListener('beforeunload',async()=>{try{await stopScanner();if(deliveryRealtime){const sb=await getDeliverySb();await sb.removeChannel(deliveryRealtime)}}catch{}});Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,startCameraScanner,stopScanner,filterOrdersByBarcode,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});window.onload=initDelivery;
 </script>
 </body>
 </html>
