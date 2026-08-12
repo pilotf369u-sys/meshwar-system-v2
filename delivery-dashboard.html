@@ -116,6 +116,7 @@ async function startCameraScanner(){
     modal.classList.remove('show');
     const input=document.getElementById('deliverySearch');
     if(input){
+      input.value='';
       input.value=clean;
       input.dispatchEvent(new Event('input',{bubbles:true}));
     }

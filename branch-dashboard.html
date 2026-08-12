@@ -75,6 +75,7 @@ async function startCameraScanner(){
     html5QrCode=null;
     modal.style.display='none';
     if(input){
+      input.value='';
       input.value=clean;
       input.dispatchEvent(new Event('input',{bubbles:true}));
     }
