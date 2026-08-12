@@ -54,26 +54,21 @@ async function closeCameraScanner(){
 '''
 for fn in files:
     p=Path(fn); s=p.read_text(encoding='utf-8')
-    # Explicit button binding.
     s=s.replace('onclick="startDashboardCameraScanner()"','onclick="startCameraScanner()"')
-    # Remove old scanner modal if a previous rollout happened to insert one.
     s=re.sub(r'\n?<div id="dashboardScannerModal"[\s\S]*?</div>\s*</div>\s*', '\n', s, count=1)
-    # Ensure the real modal exists immediately before the dashboard scanner script block.
     if 'id="scannerModal"' not in s:
         marker="<script>\nconst DASHBOARD_BARCODE_SEARCH_ID="
         if marker not in s:
             raise SystemExit(f'{fn}: dashboard scanner script marker not found')
         s=s.replace('<script>\nconst DASHBOARD_BARCODE_SEARCH_ID=',modal+'<script>\nconst DASHBOARD_BARCODE_SEARCH_ID=',1)
-    # Replace old dashboard-specific scanner implementation.
     pattern=r'let dashboardCameraScanner=null;[\s\S]*?async function stopDashboardCameraScanner\(\)\{[\s\S]*?\}\n'
     s2,n=re.subn(pattern,scanner_code,s,count=1)
     if n!=1:
         raise SystemExit(f'{fn}: old scanner implementation not found uniquely ({n})')
     s=s2
-    # Remove obsolete scanner CSS selectors only; harmless styles may remain but IDs must not be referenced.
     s=s.replace('#dashboardScannerReader','#reader')
-    # Sanity checks.
     if 'onclick="startCameraScanner()"' not in s: raise SystemExit(f'{fn}: button not rebound')
     if 'id="scannerModal"' not in s or 'id="reader"' not in s: raise SystemExit(f'{fn}: modal missing')
     if 'async function closeCameraScanner()' not in s: raise SystemExit(f'{fn}: close function missing')
     p.write_text(s,encoding='utf-8')
+# trigger
