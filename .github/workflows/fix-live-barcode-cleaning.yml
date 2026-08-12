@@ -1,0 +1,44 @@
+name: Fix live barcode cleaning
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-live-barcode-cleaning.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch delivery dashboard
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('delivery-dashboard.html')
+          s=p.read_text(encoding='utf-8')
+          old='<div class="toolbar"><input id="deliverySearch" placeholder="MW / Sipariş / اسم العميل / الهاتف / امسح الباركود" autocomplete="off" oninput="deliverySearchInput(event)" onkeydown="deliverySearchKeydown(event)"><button class="btn btn-blue" onclick="toggleScanner(event)">📷 مسح بالكاميرا</button>'
+          new='<div class="toolbar"><input id="deliverySearch" placeholder="MW / Sipariş / اسم العميل / الهاتف / امسح الباركود" autocomplete="off" oninput="deliverySearchInput(event)" onkeyup="deliverySearchKeyup(event)" onkeydown="deliverySearchKeydown(event)"><button class="btn btn-blue" onclick="toggleScanner(event)">📷 مسح بالكاميرا</button>'
+          if old not in s: raise SystemExit('search input block not found')
+          s=s.replace(old,new,1)
+          old_fn="function cleanBarcodeScannerInput(value){return arabicDigitsToLatin(value).replace(/[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\uFEFF]/g,'').replace(/[\\r\\n\\t]/g,'').trim().toUpperCase().replace(/\\s+/g,'')}"
+          new_fn="function cleanBarcodeScannerInput(value){let cleaned=arabicDigitsToLatin(value).normalize('NFKD').replace(/[\\u0610-\\u061A\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\u200B-\\u200F\\u202A-\\u202E\\u2060\\uFEFF]/g,'').replace(/[\\r\\n\\t\\s]+/g,'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/-{2,}/g,'-');cleaned=cleaned.replace(/^-+/, '-').replace(/-+$/, '');if(/^-[0-9]+$/.test(cleaned))cleaned='MW'+cleaned;else if(/^MW[0-9]+$/.test(cleaned))cleaned='MW-'+cleaned.slice(2);return cleaned}"
+          if old_fn not in s: raise SystemExit('clean barcode function not found')
+          s=s.replace(old_fn,new_fn,1)
+          old_input="function deliverySearchInput(e){const el=e?.target||deliverySearch,raw=String(el.value||''),cleaned=cleanBarcodeScannerInput(raw);if(el.value!==cleaned)el.value=cleaned;deliveryPage=1;clearTimeout(deliveryTimer);deliveryTimer=setTimeout(()=>loadDeliveryOrders(cleaned),250)}\nfunction deliverySearchKeydown(e){"
+          new_input="function deliverySearchInput(e){const el=e?.target||deliverySearch,raw=String(el.value||''),cleaned=cleanBarcodeScannerInput(raw);if(el.value!==cleaned)el.value=cleaned;deliveryPage=1;clearTimeout(deliveryTimer);deliveryTimer=setTimeout(()=>loadDeliveryOrders(cleaned),250)}\nfunction deliverySearchKeyup(e){const el=e?.target||deliverySearch,cleaned=cleanBarcodeScannerInput(el.value);if(el.value!==cleaned)el.value=cleaned;if(e?.key==='Enter')return;deliveryPage=1;clearTimeout(deliveryTimer);deliveryTimer=setTimeout(()=>loadDeliveryOrders(cleaned),180)}\nfunction deliverySearchKeydown(e){"
+          if old_input not in s: raise SystemExit('search handlers block not found')
+          s=s.replace(old_input,new_input,1)
+          old_obj="Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeydown,toggleScanner,handleNativeBarcodeFile,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});"
+          new_obj="Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,handleNativeBarcodeFile,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});"
+          if old_obj not in s: raise SystemExit('window export block not found')
+          s=s.replace(old_obj,new_obj,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Commit fix
+        run: |
+          git config user.name meshwar-delivery-bot
+          git config user.email actions@users.noreply.github.com
+          git add delivery-dashboard.html
+          git commit -m "Fix live barcode sanitization and camera scan input" || exit 0
+          git push origin main
