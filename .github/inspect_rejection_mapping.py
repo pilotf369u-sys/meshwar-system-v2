@@ -15,3 +15,4 @@ for fn in ['admin-dashboard.html','employee-dashboard.html','branch-dashboard.ht
                 print(f'\n--- {term} @ {i} ---\n{s[max(0,i-1200):min(len(s),i+2600)]}')
                 seen.append(key)
             start=i+len(term); count+=1
+print('\ninspection complete')
