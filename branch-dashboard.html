@@ -333,3 +333,20 @@ Object.assign(window,{viewBranchParcelImage,closeBranchParcelViewer});
   const base=loadOrders;loadOrders=async function(...args){const r=await base(...args);decorate();return r};window.loadOrders=loadOrders;
 })();
 </script>
+
+<style>
+.pod-view-btn{margin-top:6px;background:#0f766e;color:#fff;border:0;border-radius:7px;padding:6px 9px;font-weight:800;cursor:pointer}.pod-preview-full{max-width:100%;max-height:76vh;object-fit:contain;border-radius:10px;border:1px solid #cbd5e1}
+</style>
+<div id="branchPodViewer" class="modal"><div class="modal-content" style="max-width:900px;text-align:center"><span class="close" onclick="closeBranchPodViewer()">&times;</span><h3>🖼️ إثبات التسليم</h3><img id="branchPodViewerImg" class="pod-preview-full" alt="صورة إثبات التسليم"></div></div>
+<script>
+/* POD_VISIBILITY_V1_BRANCH */
+(function(){
+ function podUrl(o){const d=parseDetails(o?.details);return String(o?.delivery_proof_url||o?.pod_image_url||o?.proof_of_delivery_url||d.delivery_proof_url||d.proof_of_delivery_url||d.pod_image_url||'').trim()}
+ function btn(o){const u=podUrl(o);return u?`<button class="pod-view-btn" type="button" onclick="viewBranchPod('${esc(u)}')">🖼️ عرض صورة إثبات التسليم</button>`:''}
+ function view(u){if(!u)return;document.getElementById('branchPodViewerImg').src=u;document.getElementById('branchPodViewer').style.display='block'}
+ function close(){document.getElementById('branchPodViewer').style.display='none';document.getElementById('branchPodViewerImg').src=''}
+ function decorate(){const rows=[...document.querySelectorAll('#ordersBody tr')].filter(x=>x.querySelectorAll('td').length>1);rows.forEach((tr,i)=>{const o=orders?.[i],u=podUrl(o);if(!o||!u||tr.dataset.podDecorated==='1')return;tr.dataset.podDecorated='1';const cells=tr.querySelectorAll('td'),cell=cells[6]||cells[cells.length-1];if(cell)cell.insertAdjacentHTML('beforeend','<br>'+btn(o))})}
+ const loadBase=loadOrders;loadOrders=async function(...a){const r=await loadBase(...a);decorate();return r};window.loadOrders=loadOrders;
+ Object.assign(window,{viewBranchPod:view,closeBranchPodViewer:close});
+})();
+</script>

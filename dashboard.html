@@ -150,3 +150,21 @@ renderCustomerRewardHistory=function(){const hist=document.getElementById('rewar
 openRewardsModal=async function(){await refreshCustomerRewardProfile();renderCustomerRewardHistory();document.getElementById('rewardsModal').style.display='flex'};
 Object.assign(window,{openRewardsModal,renderCustomerRewardHistory});
 </script>
+
+<style>
+.customer-pod-btn{margin-top:7px;background:#0f766e;color:#fff;border:0;border-radius:9px;padding:8px 11px;font-weight:800;cursor:pointer}.customer-pod-full{max-width:100%;max-height:76vh;object-fit:contain;border-radius:10px;border:1px solid #cbd5e1}
+</style>
+<div id="customerPodViewer" class="modal-overlay"><div class="modal-content" style="max-width:900px;text-align:center"><button class="btn-cancel" onclick="closeCustomerPodViewer()" style="float:left">×</button><h3>🖼️ إثبات التسليم</h3><img id="customerPodViewerImg" class="customer-pod-full" alt="صورة إثبات التسليم"></div></div>
+<script>
+/* POD_VISIBILITY_V1_CUSTOMER */
+(function(){
+ function podUrl(o){const d=parseOrderDetails(o?.details);return String(o?.delivery_proof_url||o?.pod_image_url||o?.proof_of_delivery_url||d.delivery_proof_url||d.proof_of_delivery_url||d.pod_image_url||'').trim()}
+ function btn(o){const u=podUrl(o);return u?`<button class="customer-pod-btn" type="button" onclick="viewCustomerPod('${escapeHtml(u)}')">🖼️ عرض صورة إثبات التسليم</button>`:''}
+ function view(u){if(!u)return;document.getElementById('customerPodViewerImg').src=u;document.getElementById('customerPodViewer').style.display='flex'}
+ function close(){document.getElementById('customerPodViewer').style.display='none';document.getElementById('customerPodViewerImg').src=''}
+ function decorate(){const hist=currentCustomerOrdersGlobal.filter(o=>isHistoryStatus(o.status)),rows=[...document.querySelectorAll('#historyOrdersTableBody tr')].filter(x=>x.querySelectorAll('td').length>1);rows.forEach((tr,i)=>{const o=hist[i],u=podUrl(o);if(!o||!u||tr.dataset.podDecorated==='1')return;tr.dataset.podDecorated='1';const cells=tr.querySelectorAll('td'),cell=cells[cells.length-1];if(cell)cell.insertAdjacentHTML('beforeend','<br>'+btn(o))})}
+ const renderBase=renderOrdersPanels;renderOrdersPanels=function(...a){const r=renderBase(...a);decorate();return r};window.renderOrdersPanels=renderOrdersPanels;
+ const detailsBase=openCustomerOrderDetails;openCustomerOrderDetails=function(i){detailsBase(i);const o=currentCustomerOrdersGlobal[i],box=document.getElementById('customerOrderDetailsContent');if(box&&o&&podUrl(o)&&!box.querySelector('.customer-pod-box'))box.insertAdjacentHTML('beforeend',`<div class="customer-pod-box" style="margin-top:14px;padding:10px;border:1px solid #e5eaf1;border-radius:10px"><b>إثبات التسليم:</b><br>${btn(o)}</div>`)};window.openCustomerOrderDetails=openCustomerOrderDetails;
+ Object.assign(window,{viewCustomerPod:view,closeCustomerPodViewer:close});
+})();
+</script>
