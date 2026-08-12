@@ -5,6 +5,7 @@ on:
       - main
     paths:
       - native_camera_patch.py
+      - .github/workflows/run-native-camera-patch.yml
 permissions:
   contents: write
 jobs:
