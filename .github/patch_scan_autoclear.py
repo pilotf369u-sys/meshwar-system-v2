@@ -15,3 +15,4 @@ for fn in files:
             raise SystemExit(f'{fn}: scan success assignment not found')
     p.write_text(s,encoding='utf-8')
 print('patched', ', '.join(files))
+# trigger
