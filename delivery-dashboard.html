@@ -78,30 +78,43 @@ function changeDeliveryPage(d){const pages=Math.max(1,Math.ceil(deliveryTotal/de
 function focusThisShipment(id){const raw=decodeURIComponent(id),el=document.querySelector(`.shipment[data-id="${CSS.escape(raw)}"]`);el?.scrollIntoView({behavior:'smooth',block:'center'});if(el){el.style.outline='3px solid #38bdf8';setTimeout(()=>el.style.outline='',1800)}}
 async function saveDeliveryOrder(encodedId){const id=decodeURIComponent(encodedId),o=deliveryOrders.find(x=>idText(x.id)===idText(id));if(!o)return;const selected=document.getElementById('st-'+encodedId).value,defer=document.getElementById('defer-'+encodedId).value,note=document.getElementById('note-'+encodedId).value.trim(),reason=document.getElementById('reason-'+encodedId).value.trim(),rating=Number(document.getElementById('rating-'+encodedId)?.value||0),isDeferred=selected==='__deferred__',status=isDeferred?(DELIVERY_TABS.active.includes(o.status)?o.status:'مندوب'):selected;if(isDeferred&&!defer)return alert('حدد تاريخ التأجيل.');if(DELIVERY_TABS.rejected.includes(status)&&!reason)return alert('اكتب سبب الرفض أو الراجع.');const details=parseDetails(o.details);details.delivery_state=isDeferred?'deferred':null;details.delivery_deferred_until=isDeferred?defer:null;details.delivery_note=note||null;details.delivery_rejection_reason=DELIVERY_TABS.rejected.includes(status)?reason:null;details.delivery_rating=rating>=1&&rating<=5?rating:null;details.delivery_updated_at=new Date().toISOString();const payload={status,details,rejection_reason:DELIVERY_TABS.rejected.includes(status)?reason:null};const sb=await getDeliverySb(),{error}=await sb.from('orders').update(payload).eq('id',id);if(error)return alert('تعذر تحديث الشحنة: '+error.message);alert('تم تحديث حالة الشحنة بنجاح.');await loadDeliveryOrders()}
 async function startCameraScanner(){
-  const modal=document.getElementById('scannerModal'),hint=document.getElementById('cameraHint');
+  const modal=document.getElementById('scannerModal');
+  const hint=document.getElementById('cameraHint');
   modal.classList.add('show');
   if(hint)hint.textContent='جاري تشغيل الكاميرا الخلفية...';
   if(scanner){try{await scanner.stop()}catch{}try{await scanner.clear()}catch{}scanner=null}
   scanner=new Html5Qrcode('reader');
-  const config={fps:15,qrbox:{width:280,height:160}};
   const onSuccess=async decodedText=>{
     const clean=cleanBarcodeScannerInput(decodedText);
     if(!clean)return;
-    await handleCameraScan(clean);
+    try{await scanner.stop()}catch{}
+    try{await scanner.clear()}catch{}
+    scanner=null;
+    modal.classList.remove('show');
+    const input=document.getElementById('deliverySearch');
+    if(input){
+      input.value=clean;
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+    }
   };
   const onError=()=>{};
   try{
-    await scanner.start({facingMode:{exact:'environment'}},config,onSuccess,onError);
+    await scanner.start(
+      {facingMode:'environment'},
+      {fps:10,qrbox:{width:250,height:150}},
+      onSuccess,
+      onError
+    );
     if(hint)hint.textContent='وجّه الكاميرا نحو الباركود وسيتم التقاطه تلقائياً.';
-  }catch(firstError){
-    console.warn('Exact environment camera unavailable, retrying standard environment mode:',firstError);
-    try{
-      await scanner.start({facingMode:'environment'},config,onSuccess,onError);
-      if(hint)hint.textContent='وجّه الكاميرا نحو الباركود وسيتم التقاطه تلقائياً.';
-    }catch(secondError){
-      console.error('Live camera scanner error:',secondError);
-      if(hint)hint.textContent='تعذر تشغيل الكاميرا الحية. تحقق من صلاحية الكاميرا في المتصفح ثم أعد المحاولة.';
+  }catch(err){
+    console.error('Camera permission error:',err);
+    try{await scanner.clear()}catch{}
+    scanner=null;
+    const reader=document.getElementById('reader');
+    if(reader){
+      reader.innerHTML=`<div style="padding:20px;text-align:center;color:#e74c3c;"><p><b>تم حظر الوصول للكاميرا من إعدادات المتصفح.</b></p><p style="font-size:12px;color:#555;">يرجى الضغط على رمز القفل 🔒 بجانب رابط الموقع في أعلى المتصفح والسماح بـ "الكاميرا"، ثم تحديث الصفحة.</p></div>`;
     }
+    if(hint)hint.textContent='';
   }
 }
 async function toggleScanner(event){
@@ -113,38 +126,9 @@ async function stopScanner(){
   if(scanner){try{await scanner.stop()}catch{}try{await scanner.clear()}catch{}scanner=null}
   document.getElementById('scannerModal')?.classList.remove('show');
 }
-function filterOrdersByBarcode(clean){
-  const normalized=cleanBarcodeScannerInput(clean);
-  if(!normalized)return;
-  deliverySearch.value=normalized;
-  deliveryPage=1;
-  clearTimeout(deliveryTimer);
-  const loaded=deliveryOrders.filter(o=>{
-    const values=[o.order_code,o.reference_order_no,o.id,o.customer_phone].map(v=>cleanBarcodeScannerInput(v));
-    return values.some(v=>v===normalized||v.includes(normalized)||normalized.includes(v));
-  });
-  if(loaded.length){
-    deliveryTotal=loaded.length;
-    deliveryOrders=loaded;
-    ordersGrid.innerHTML=loaded.map(renderOrderCard).join('');
-    renderPager();
-    scanResult.classList.add('show');
-    scanResult.textContent=`تم العثور على: ${loaded[0].order_code||loaded[0].id}`;
-    setTimeout(()=>scanResult.classList.remove('show'),3000);
-    return;
-  }
-  loadDeliveryOrders(normalized);
-}
-async function handleCameraScan(decoded){
-  const clean=cleanBarcodeScannerInput(decoded);
-  if(!clean)return;
-  await stopScanner();
-  deliverySearch.value=clean;
-  filterOrdersByBarcode(clean);
-}
 async function setupDeliveryRealtime(){const sb=await getDeliverySb();deliveryRealtime=sb.channel('delivery-orders-'+idText(currentCourier.id)).on('postgres_changes',{event:'*',schema:'public',table:'orders'},async payload=>{const row=payload.new||payload.old||{};if(orderBelongsToCourier(row))await loadDeliveryOrders()}).subscribe()}
 async function initDelivery(){try{await verifyCourier();await Promise.all([loadDeliveryOrders(),setupDeliveryRealtime()])}catch(e){console.error(e);alert(e.message||e);location.replace('login.html')}}
-window.addEventListener('beforeunload',async()=>{try{await stopScanner();if(deliveryRealtime){const sb=await getDeliverySb();await sb.removeChannel(deliveryRealtime)}}catch{}});Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,startCameraScanner,stopScanner,filterOrdersByBarcode,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});window.onload=initDelivery;
+window.addEventListener('beforeunload',async()=>{try{await stopScanner();if(deliveryRealtime){const sb=await getDeliverySb();await sb.removeChannel(deliveryRealtime)}}catch{}});Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,startCameraScanner,stopScanner,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});window.onload=initDelivery;
 </script>
 </body>
 </html>
