@@ -317,3 +317,19 @@ Object.assign(window,{viewBranchParcelImage,closeBranchParcelViewer});
 /* DELIVERY_REPORT_LINK_V1 */
 (function(){function bindDeliveryReportLink(){const a=document.getElementById('deliveryReportsLink'),id=new URLSearchParams(location.search).get('branchId')||'';if(a&&id)a.href='admin-delivery-reports.html?branchId='+encodeURIComponent(id)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindDeliveryReportLink);else bindDeliveryReportLink()})();
 </script>
+
+<style>
+.branch-rejection-reason{margin-top:6px;padding:5px 7px;border-radius:7px;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;font-size:11px;font-weight:800;white-space:normal;text-align:right}
+</style>
+<script>
+/* REJECTION_REASON_BADGE_V1_BRANCH */
+(function(){
+  const rejectedStatuses=new Set(['رفض التسليم','رفض الطلب','مرفوض','راجع']);
+  function reasonOf(o){const d=parseDetails(o?.details);return String(o?.rejection_reason||d.delivery_rejection_reason||d.rejection_reason||d.reject_reason||o?.notes||d.delivery_note||d.notes||'').trim();}
+  function decorate(){
+    const rows=[...document.querySelectorAll('#ordersBody tr')].filter(tr=>tr.querySelectorAll('td').length>1);
+    rows.forEach((tr,i)=>{const o=orders?.[i];if(!o||!rejectedStatuses.has(String(o.status||'').trim()))return;const cells=tr.querySelectorAll('td'),cell=cells[6];if(!cell||cell.querySelector('.branch-rejection-reason'))return;const reason=reasonOf(o);if(reason)cell.insertAdjacentHTML('beforeend',`<div class="branch-rejection-reason">سبب الرفض: ${esc(reason)}</div>`);});
+  }
+  const base=loadOrders;loadOrders=async function(...args){const r=await base(...args);decorate();return r};window.loadOrders=loadOrders;
+})();
+</script>

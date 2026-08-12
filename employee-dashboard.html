@@ -249,7 +249,7 @@ Object.assign(window,{changeReward});
 <script>
 /* VERTICAL_STATUS_SIDEBAR_V1 */
 Object.keys(PIPELINES).forEach(k=>delete PIPELINES[k]);
-Object.assign(PIPELINES,{all:{label:'🌐 كل الطلبات',all:true},waiting_employee:{label:'📩 انتظار رد الموظف',statuses:['انتظار رد الموظف']},waiting_customer:{label:'⏳ بانتظار موافقة العميل',statuses:['بانتظار موافقة العميل','بانتظار موافقة الزبون','بانتظار التسعير','تم التسعير / بانتظار موافقة العميل']},in_order:{label:'🔄 قيد الطلب',statuses:['قيد الطلب']},company_store:{label:'🏬 مخزن الشركة',statuses:['مخزن شركة']},branch:{label:'🏢 محولة إلى الفرع',branch:true,statuses:['تجهيز شحن','مخزن محلي']},shipped:{label:'🚚 تم الشحن',statuses:['تم الشحن']},courier:{label:'🛵 مندوب',statuses:['مندوب']},internal_distribution:{label:'📍 توزيع داخلي',statuses:['توزيع داخلي']},waiting_payment:{label:'💳 بانتظار تأكيد الدفع',statuses:['تمت الموافقة - بانتظار الدفع','تمت الموافقة']},paid:{label:'💰 تم التسديد',statuses:['تم التسديد']},delivered:{label:'✅ تم التسليم',statuses:['تم التسليم']},cancelled:{label:'🚫 ملغية من قبل العميل',statuses:['ملغي من قبل العميل']},rejected:{label:'❌ رفض / مرفوض',statuses:['رفض الطلب','مرفوض']},rewards:{label:'🎁 مستحق مكافأة',rewards:true}});
+Object.assign(PIPELINES,{all:{label:'🌐 كل الطلبات',all:true},waiting_employee:{label:'📩 انتظار رد الموظف',statuses:['انتظار رد الموظف']},waiting_customer:{label:'⏳ بانتظار موافقة العميل',statuses:['بانتظار موافقة العميل','بانتظار موافقة الزبون','بانتظار التسعير','تم التسعير / بانتظار موافقة العميل']},in_order:{label:'🔄 قيد الطلب',statuses:['قيد الطلب']},company_store:{label:'🏬 مخزن الشركة',statuses:['مخزن شركة']},branch:{label:'🏢 محولة إلى الفرع',branch:true,statuses:['تجهيز شحن','مخزن محلي']},shipped:{label:'🚚 تم الشحن',statuses:['تم الشحن']},courier:{label:'🛵 مندوب',statuses:['مندوب']},internal_distribution:{label:'📍 توزيع داخلي',statuses:['توزيع داخلي']},waiting_payment:{label:'💳 بانتظار تأكيد الدفع',statuses:['تمت الموافقة - بانتظار الدفع','تمت الموافقة']},paid:{label:'💰 تم التسديد',statuses:['تم التسديد']},delivered:{label:'✅ تم التسليم',statuses:['تم التسليم']},cancelled:{label:'🚫 ملغية من قبل العميل',statuses:['ملغي من قبل العميل']},rejected:{label:'❌ رفض / مرفوض',statuses:['رفض التسليم','رفض الطلب','مرفوض','راجع']},rewards:{label:'🎁 مستحق مكافأة',rewards:true}});
 const EMPLOYEE_STATUS_GROUPS=[{title:'🌐 عرض شامل',keys:['all']},{title:'📦 الطلبات النشطة وقيد المعالجة',keys:['waiting_employee','waiting_customer','in_order','company_store','branch','shipped','courier','internal_distribution']},{title:'✅ الطلبات المكتملة والمالية',keys:['waiting_payment','paid','delivered']},{title:'❌ الطلبات الملغاة والمرفوضة',keys:['cancelled','rejected']},{title:'🎁 المكافآت',keys:['rewards']}];
 renderPipelineTabs=function(){const box=document.getElementById('pipelineTabs');if(!box)return;let html='<div class="status-sidebar-title">حالات الطلبات</div>';EMPLOYEE_STATUS_GROUPS.forEach(g=>{html+=`<div class="status-group-title">${g.title}</div>`;g.keys.forEach(k=>{const p=PIPELINES[k];if(p)html+=`<button class="pipeline-tab ${k===activePipeline?'active':''}" data-pipeline="${k}" onclick="switchPipeline('${k}')"><span>${p.label}</span><span id="count-${k}" class="pipeline-count">${globalPipelineCounts[k]??0}</span></button>`})});box.innerHTML=html};
 buildPipelineQuery=function(sb,count=false){const p=PIPELINES[activePipeline],term=normalizeSearch(document.getElementById('employeeOrderSearch')?.value||'');let q=sb.from('orders').select('*',count?{count:'exact'}:{});if(!p.all){if(p.branch){q=q.in('status',p.statuses).or('branch_id.not.is.null,branch_name.not.is.null');const branch=cloudId(document.getElementById('branchFilter')?.value);if(branch)q=q.eq('branch_id',branch)}else if(Array.isArray(p.statuses)&&p.statuses.length)q=q.in('status',p.statuses)}if(term){const pat=`%${term}%`;q=q.or(`order_code.ilike.${pat},reference_order_no.ilike.${pat},customer_name.ilike.${pat},customer_phone.ilike.${pat}`)}return q};
@@ -289,7 +289,7 @@ local_store:{label:'🏬 مخزن محلي',statuses:['مخزن محلي']},
 courier:{label:'🛵 مندوب',statuses:['مندوب']},
 internal_distribution:{label:'📍 توزيع داخلي',statuses:['توزيع داخلي']},
 delivered:{label:'✅ تم التسليم',statuses:['تم التسليم']},
-rejected:{label:'❌ رفض التسليم',statuses:['رفض الطلب','مرفوض']}
+rejected:{label:'❌ رفض التسليم',statuses:['رفض التسليم','رفض الطلب','مرفوض','راجع']}
 });
 const EMPLOYEE_STATUS_ORDER=[
 ['all','rewards','cancelled','waiting_employee','waiting_customer','waiting_payment','paid'],
@@ -559,9 +559,25 @@ Object.assign(window,{switchPipeline,buildPipelineQuery,onBranchFilterChange,syn
     if(PIPELINES.internal)PIPELINES.internal.statuses=['توزيع داخلي'];
     if(PIPELINES.delivered)PIPELINES.delivered.statuses=['تم التسليم'];
     if(PIPELINES.rejected_delivery)PIPELINES.rejected_delivery.statuses=['رفض التسليم','رفض الطلب'];
-    if(PIPELINES.rejected)PIPELINES.rejected.statuses=['مرفوض'];
+    if(PIPELINES.rejected)PIPELINES.rejected.statuses=['رفض التسليم','رفض الطلب','مرفوض','راجع'];
   }
   Object.assign(window,{saveOrderRow});
 })();
 </script>
 
+
+<style>
+.rejection-reason-badge{margin-top:7px;padding:6px 8px;border-radius:7px;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;font-size:11px;font-weight:800;white-space:normal;text-align:right;max-width:260px}
+</style>
+<script>
+/* REJECTION_REASON_BADGE_V1_EMPLOYEE */
+(function(){
+  const rejectedStatuses=new Set(['رفض التسليم','رفض الطلب','مرفوض','راجع']);
+  function reasonOf(o){const d=parseDetails(o?.details);return String(o?.rejection_reason||d.delivery_rejection_reason||d.rejection_reason||d.reject_reason||o?.notes||d.delivery_note||d.notes||'').trim();}
+  function decorate(){
+    const rows=[...document.querySelectorAll('#ordersPanel tbody tr, #ordersTableBody tr, #employeeOrdersTableBody tr')].filter(tr=>tr.querySelectorAll('td').length>1);
+    rows.forEach((tr,i)=>{const o=cloudOrders?.[i];if(!o||!rejectedStatuses.has(String(o.status||'').trim()))return;const cells=tr.querySelectorAll('td');let cell=[...cells].find(td=>td.querySelector(`select[id^="status-"]`))||cells[7]||cells[6];if(!cell||cell.querySelector('.rejection-reason-badge'))return;const reason=reasonOf(o);if(reason)cell.insertAdjacentHTML('beforeend',`<div class="rejection-reason-badge">سبب الرفض: ${escapeHtml(reason)}</div>`);});
+  }
+  const base=loadPipelineOrders;loadPipelineOrders=async function(...args){const r=await base(...args);decorate();return r};window.loadPipelineOrders=loadPipelineOrders;
+})();
+</script>

@@ -214,7 +214,7 @@ Object.assign(window,{loadCustomers});
 <script>
 /* VERTICAL_STATUS_SIDEBAR_V1 */
 Object.keys(ADMIN_PIPELINES).forEach(k=>delete ADMIN_PIPELINES[k]);
-Object.assign(ADMIN_PIPELINES,{all:{label:'🌐 كل الطلبات',all:true},waiting_employee:{label:'📩 انتظار رد الموظف',statuses:['انتظار رد الموظف']},waiting_customer:{label:'⏳ بانتظار موافقة العميل',statuses:['بانتظار موافقة العميل','بانتظار موافقة الزبون','بانتظار التسعير','تم التسعير / بانتظار موافقة العميل']},in_order:{label:'🔄 قيد الطلب',statuses:['قيد الطلب']},company_store:{label:'🏬 مخزن الشركة',statuses:['مخزن شركة']},branch:{label:'🏢 محولة إلى الفرع',branch:true,statuses:['تجهيز شحن','مخزن محلي']},shipped:{label:'🚚 تم الشحن',statuses:['تم الشحن']},courier:{label:'🛵 مندوب',statuses:['مندوب']},internal_distribution:{label:'📍 توزيع داخلي',statuses:['توزيع داخلي']},waiting_payment:{label:'💳 بانتظار تأكيد الدفع',statuses:['تمت الموافقة - بانتظار الدفع','تمت الموافقة']},paid:{label:'💰 تم التسديد',statuses:['تم التسديد']},delivered:{label:'✅ تم التسليم',statuses:['تم التسليم']},cancelled:{label:'🚫 ملغية من قبل العميل',statuses:['ملغي من قبل العميل']},rejected:{label:'❌ رفض / مرفوض',statuses:['رفض الطلب','مرفوض']},rewards:{label:'🎁 مستحق مكافأة',rewards:true}});
+Object.assign(ADMIN_PIPELINES,{all:{label:'🌐 كل الطلبات',all:true},waiting_employee:{label:'📩 انتظار رد الموظف',statuses:['انتظار رد الموظف']},waiting_customer:{label:'⏳ بانتظار موافقة العميل',statuses:['بانتظار موافقة العميل','بانتظار موافقة الزبون','بانتظار التسعير','تم التسعير / بانتظار موافقة العميل']},in_order:{label:'🔄 قيد الطلب',statuses:['قيد الطلب']},company_store:{label:'🏬 مخزن الشركة',statuses:['مخزن شركة']},branch:{label:'🏢 محولة إلى الفرع',branch:true,statuses:['تجهيز شحن','مخزن محلي']},shipped:{label:'🚚 تم الشحن',statuses:['تم الشحن']},courier:{label:'🛵 مندوب',statuses:['مندوب']},internal_distribution:{label:'📍 توزيع داخلي',statuses:['توزيع داخلي']},waiting_payment:{label:'💳 بانتظار تأكيد الدفع',statuses:['تمت الموافقة - بانتظار الدفع','تمت الموافقة']},paid:{label:'💰 تم التسديد',statuses:['تم التسديد']},delivered:{label:'✅ تم التسليم',statuses:['تم التسليم']},cancelled:{label:'🚫 ملغية من قبل العميل',statuses:['ملغي من قبل العميل']},rejected:{label:'❌ رفض / مرفوض',statuses:['رفض التسليم','رفض الطلب','مرفوض','راجع']},rewards:{label:'🎁 مستحق مكافأة',rewards:true}});
 const ADMIN_STATUS_GROUPS=[{title:'🌐 عرض شامل',keys:['all']},{title:'📦 الطلبات النشطة وقيد المعالجة',keys:['waiting_employee','waiting_customer','in_order','company_store','branch','shipped','courier','internal_distribution']},{title:'✅ الطلبات المكتملة والمالية',keys:['waiting_payment','paid','delivered']},{title:'❌ الطلبات الملغاة والمرفوضة',keys:['cancelled','rejected']},{title:'🎁 المكافآت',keys:['rewards']}];
 renderAdminPipelineTabs=function(){const box=document.getElementById('adminPipelineTabs');if(!box)return;let html='<div class="admin-status-sidebar-title">حالات الطلبات</div>';ADMIN_STATUS_GROUPS.forEach(g=>{html+=`<div class="admin-status-group-title">${g.title}</div>`;g.keys.forEach(k=>{const p=ADMIN_PIPELINES[k];if(p)html+=`<button class="pipeline-tab ${k===activeAdminPipeline?'active':''}" data-pipeline="${k}" onclick="switchAdminPipeline('${k}')"><span>${p.label}</span><span id="admin-count-${k}" class="pipeline-count">${globalAdminPipelineCounts[k]??0}</span></button>`})});box.innerHTML=html};
 refreshAdminPipelineCounts=async function(){try{const{customers,orders,by}=await adminRewardDataset(),next={};Object.entries(ADMIN_PIPELINES).forEach(([k,p])=>{if(p.all){next[k]=orders.length;return}if(p.rewards){next[k]=customers.filter(c=>adminRewardCycleOf(c,by.get(String(c.id))||[]).length>=ADMIN_REWARD_TARGET).length;return}if(p.branch){next[k]=orders.filter(o=>(p.statuses||[]).includes(o.status)&&(String(o.branch_id||'').trim()||String(o.branch_name||'').trim())).length;return}next[k]=orders.filter(o=>(p.statuses||[]).includes(o.status)).length});globalAdminPipelineCounts=next;Object.entries(next).forEach(([k,n])=>{const el=document.getElementById('admin-count-'+k);if(el)el.innerText=n})}catch(e){console.error('Vertical admin sidebar counters error:',e)}};
@@ -254,7 +254,7 @@ local_store:{label:'🏬 مخزن محلي',statuses:['مخزن محلي']},
 courier:{label:'🛵 مندوب',statuses:['مندوب']},
 internal_distribution:{label:'📍 توزيع داخلي',statuses:['توزيع داخلي']},
 delivered:{label:'✅ تم التسليم',statuses:['تم التسليم']},
-rejected:{label:'❌ رفض التسليم',statuses:['رفض الطلب','مرفوض']}
+rejected:{label:'❌ رفض التسليم',statuses:['رفض التسليم','رفض الطلب','مرفوض','راجع']}
 });
 const ADMIN_STATUS_ORDER=[
 ['all','rewards','cancelled','waiting_employee','waiting_customer','waiting_payment','paid'],
@@ -514,8 +514,27 @@ Object.assign(window,{switchAdminPipeline,adminBranchFilterChanged,syncAdminBran
     if(ADMIN_PIPELINES.internal)ADMIN_PIPELINES.internal.statuses=['توزيع داخلي'];
     if(ADMIN_PIPELINES.delivered)ADMIN_PIPELINES.delivered.statuses=['تم التسليم'];
     if(ADMIN_PIPELINES.rejected_delivery)ADMIN_PIPELINES.rejected_delivery.statuses=['رفض التسليم','رفض الطلب'];
-    if(ADMIN_PIPELINES.rejected)ADMIN_PIPELINES.rejected.statuses=['مرفوض'];
+    if(ADMIN_PIPELINES.rejected)ADMIN_PIPELINES.rejected.statuses=['رفض التسليم','رفض الطلب','مرفوض','راجع'];
   }
 })();
 </script>
 
+
+<style>
+.rejection-reason-badge{margin-top:7px;padding:6px 8px;border-radius:7px;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;font-size:11px;font-weight:800;white-space:normal;text-align:right;max-width:260px}
+</style>
+<script>
+/* REJECTION_REASON_BADGE_V1_ADMIN */
+(function(){
+  const rejectedStatuses=new Set(['رفض التسليم','رفض الطلب','مرفوض','راجع']);
+  function reasonOf(o){
+    let d={};try{d=typeof o?.details==='object'?(o.details||{}):JSON.parse(o?.details||'{}')}catch{d={notes:String(o?.details||'')}}
+    return String(o?.rejection_reason||d.delivery_rejection_reason||d.rejection_reason||d.reject_reason||o?.notes||d.delivery_note||d.notes||'').trim();
+  }
+  function decorate(){
+    const rows=[...document.querySelectorAll('#adminOrdersTableBody tr')];
+    rows.forEach((tr,i)=>{const o=adminOrdersCloud?.[i];if(!o||!rejectedStatuses.has(String(o.status||'').trim()))return;const cells=tr.querySelectorAll('td'),cell=cells[7];if(!cell||cell.querySelector('.rejection-reason-badge'))return;const reason=reasonOf(o);if(reason)cell.insertAdjacentHTML('beforeend',`<div class="rejection-reason-badge">سبب الرفض: ${esc(reason)}</div>`);});
+  }
+  const base=loadAdminOrders;loadAdminOrders=async function(...args){const r=await base(...args);decorate();return r};window.loadAdminOrders=loadAdminOrders;
+})();
+</script>
