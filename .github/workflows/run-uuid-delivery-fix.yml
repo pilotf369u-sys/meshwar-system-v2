@@ -1,0 +1,23 @@
+name: Run UUID delivery fix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/run-uuid-delivery-fix.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply UUID-safe delivery patch
+        run: python uuid_delivery_fix.py
+      - name: Commit fix
+        run: |
+          git config user.name "meshwar-delivery-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add delivery-dashboard.html employee-dashboard.html admin-dashboard.html
+          git commit -m "Fix UUID-safe courier queries and assignments"
+          git push origin main
