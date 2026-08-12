@@ -2,7 +2,7 @@ name: Run camera three tier patch
 on:
   push:
     branches: [main]
-    paths: ['camera_three_tier_patch.py']
+    paths: ['camera_three_tier_patch.py', '.github/workflows/run-camera-three-tier-patch.yml']
 permissions:
   contents: write
 jobs:
