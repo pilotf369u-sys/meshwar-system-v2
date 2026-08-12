@@ -7,3 +7,4 @@ for fn in ['admin-dashboard.html','employee-dashboard.html','branch-dashboard.ht
         i=s.find(term)
         if i>=0:
             print('\n--- '+term+' ---\n'+s[max(0,i-1200):min(len(s),i+4500)])
+# trigger
