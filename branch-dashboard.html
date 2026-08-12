@@ -7,7 +7,7 @@ body{font-family:Tahoma,sans-serif;background:#f4f7f6;margin:0;padding:20px}.con
 </style></head>
 <body>
 <div class="container">
-<div class="top"><div><h2 id="branchTitle">لوحة الفرع: جاري التحقق...</h2><div class="muted">الطلبات والمندوبون والتقفيلات مرتبطة مباشرة بـ Supabase.</div></div><div><button class="purple" onclick="openSettlementHistoryModal()">📜 سجل التقفيلات</button> <button class="orange" onclick="requestBranchSettlement()">💰 طلب تقفيل عهدة الفرع</button> <a href="login.html" class="btn red">تسجيل الخروج</a></div></div>
+<div class="top"><div><h2 id="branchTitle">لوحة الفرع: جاري التحقق...</h2><div class="muted">الطلبات والمندوبون والتقفيلات مرتبطة مباشرة بـ Supabase.</div></div><div><a id="deliveryReportsLink" class="btn blue" href="admin-delivery-reports.html">📊 تقارير وتصفية المندوبين</a> <button class="purple" onclick="openSettlementHistoryModal()">📜 سجل التقفيلات</button> <button class="orange" onclick="requestBranchSettlement()">💰 طلب تقفيل عهدة الفرع</button> <a href="login.html" class="btn red">تسجيل الخروج</a></div></div>
 <div class="section-title">📦 إدارة شحنات الفرع</div>
 <div class="toolbar"><input id="orderSearch" placeholder="MW / Sipariş / الباركود / العميل / الهاتف / المندوب" oninput="scheduleSearch()" onkeydown="handleSearchKeydown(event)" autocomplete="off"><select id="statusFilter" onchange="resetPage()"><option value="">كل الحالات</option><option>مخزن محلي</option><option>جاري التوصيل مع المندوب</option><option>توزيع داخلي</option><option>تم التسليم</option><option>رفض الطلب</option></select><input id="dateFrom" type="date" onchange="resetPage()"><input id="dateTo" type="date" onchange="resetPage()"><select id="pageSize" onchange="changePageSize(this.value)"><option value="20" selected>20</option><option value="50">50</option></select><button class="blue" onclick="loadOrders()">تحديث</button><span style="border-right:1px solid #ccc;height:28px"></span><select id="bulkCourier"><option value="">اختر مندوباً للإسناد الجماعي</option></select><button class="green" onclick="bulkAssign()">إسناد الشحنات المحددة لمندوب</button><button class="purple" onclick="openCourierModal()">+ إضافة مندوب جديد</button></div>
 <div id="scanResultCard" class="scan-card" aria-live="polite"></div>
@@ -222,3 +222,8 @@ Object.assign(window,{viewBranchParcelImage,closeBranchParcelViewer});
 })();
 </script>
 
+
+<script>
+/* DELIVERY_REPORT_LINK_V1 */
+(function(){function bindDeliveryReportLink(){const a=document.getElementById('deliveryReportsLink'),id=new URLSearchParams(location.search).get('branchId')||'';if(a&&id)a.href='admin-delivery-reports.html?branchId='+encodeURIComponent(id)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindDeliveryReportLink);else bindDeliveryReportLink()})();
+</script>
