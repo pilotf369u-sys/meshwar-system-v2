@@ -1,0 +1,61 @@
+name: Run native camera fallback fix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/run-native-camera-fallback.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch delivery dashboard
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('delivery-dashboard.html')
+          s=p.read_text(encoding='utf-8')
+
+          old='<div class="toolbar"><input id="deliverySearch" placeholder="MW / Sipariş / اسم العميل / الهاتف / امسح الباركود" autocomplete="off" oninput="scheduleDeliverySearch()" onkeydown="deliverySearchKeydown(event)"><button class="btn btn-blue" onclick="toggleScanner()">📷 مسح بالكاميرا</button><button class="btn btn-gray" onclick="loadDeliveryOrders()">تحديث</button></div>'
+          new='<div class="toolbar"><input id="deliverySearch" placeholder="MW / Sipariş / اسم العميل / الهاتف / امسح الباركود" autocomplete="off" oninput="deliverySearchInput(event)" onkeydown="deliverySearchKeydown(event)"><button class="btn btn-blue" onclick="toggleScanner(event)">📷 مسح بالكاميرا</button><button class="btn btn-gray" onclick="loadDeliveryOrders()">تحديث</button></div>'
+          if old not in s: raise SystemExit('toolbar block not found')
+          s=s.replace(old,new,1)
+
+          old='<div id="scanResult" class="scan-result"></div><div id="deliveryImageOverlay" class="image-overlay" onclick="if(event.target===this)closeDeliveryImage()"><button class="btn btn-red" onclick="closeDeliveryImage()">إغلاق</button><img id="deliveryImageZoom" alt="صورة الشحنة"></div><input id="deliveryProofCamera" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDeliveryProofFile(this.files[0])"><input id="deliveryProofGallery" type="file" accept="image/*" style="display:none" onchange="handleDeliveryProofFile(this.files[0])">'
+          new='<div id="scanResult" class="scan-result"></div><div id="deliveryImageOverlay" class="image-overlay" onclick="if(event.target===this)closeDeliveryImage()"><button class="btn btn-red" onclick="closeDeliveryImage()">إغلاق</button><img id="deliveryImageZoom" alt="صورة الشحنة"></div><input id="cameraFileInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleNativeBarcodeFile(this.files[0])"><input id="deliveryProofCamera" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDeliveryProofFile(this.files[0])"><input id="deliveryProofGallery" type="file" accept="image/*" style="display:none" onchange="handleDeliveryProofFile(this.files[0])">'
+          if old not in s: raise SystemExit('hidden inputs block not found')
+          s=s.replace(old,new,1)
+
+          old="function scheduleDeliverySearch(){deliveryPage=1;clearTimeout(deliveryTimer);deliveryTimer=setTimeout(()=>loadDeliveryOrders(),250)}\nfunction deliverySearchKeydown(e){if(e.key!=='Enter')return;e.preventDefault();clearTimeout(deliveryTimer);deliveryPage=1;const cleaned=cleanBarcodeScannerInput(deliverySearch.value);deliverySearch.value=cleaned;loadDeliveryOrders(cleaned)}"
+          new="""function scheduleDeliverySearch(){deliveryPage=1;clearTimeout(deliveryTimer);deliveryTimer=setTimeout(()=>loadDeliveryOrders(),250)}
+function deliverySearchInput(e){const el=e?.target||deliverySearch,raw=String(el.value||''),cleaned=cleanBarcodeScannerInput(raw);if(el.value!==cleaned)el.value=cleaned;deliveryPage=1;clearTimeout(deliveryTimer);deliveryTimer=setTimeout(()=>loadDeliveryOrders(cleaned),250)}
+function deliverySearchKeydown(e){const cleaned=cleanBarcodeScannerInput(e?.target?.value??deliverySearch.value);if(e?.target&&e.target.value!==cleaned)e.target.value=cleaned;if(e.key!=='Enter')return;e.preventDefault();clearTimeout(deliveryTimer);deliveryPage=1;deliverySearch.value=cleaned;loadDeliveryOrders(cleaned)}"""
+          if old not in s: raise SystemExit('search handlers block not found')
+          s=s.replace(old,new,1)
+
+          old="async function toggleScanner(){if(scanner){await stopScanner();return}scannerWrap.classList.add('show');scanner=new Html5Qrcode('reader');const config={fps:10,qrbox:(w,h)=>({width:Math.min(300,Math.floor(w*.82)),height:Math.min(170,Math.floor(h*.48))}),aspectRatio:1.777778};const ok=text=>handleCameraScan(text),fail=()=>{};let errors=[];try{const cameras=await Html5Qrcode.getCameras();const back=(cameras||[]).find(c=>/back|rear|environment|traseira|trasera|arrière|خلف/i.test(c.label||''))||(cameras||[]).slice(-1)[0];if(back){try{await scanner.start(back.id,config,ok,fail);return}catch(e){errors.push(e)}}try{await scanner.start({facingMode:{exact:'environment'}},config,ok,fail);return}catch(e){errors.push(e)}try{await scanner.start({facingMode:{ideal:'environment'}},config,ok,fail);return}catch(e){errors.push(e)}throw errors[errors.length-1]||new Error('لم يتم العثور على كاميرا متاحة')}catch(e){console.error('Mobile barcode camera error:',e);try{await scanner.clear()}catch{}scanner=null;scannerWrap.classList.remove('show');alert('تعذر فتح كاميرا الهاتف. تأكد من السماح بصلاحية الكاميرا واستخدام HTTPS ثم حاول مجدداً. '+(e.message||e))}}"
+          new="""function openNativeBarcodeCamera(){cameraFileInput.value='';cameraFileInput.click()}
+async function handleNativeBarcodeFile(file){if(!file)return;let fileScanner=null;try{scanResult.classList.add('show');scanResult.textContent='جاري تحليل صورة الباركود...';fileScanner=new Html5Qrcode('reader');const decoded=await fileScanner.scanFile(file,true);const cleaned=cleanBarcodeScannerInput(decoded);if(!cleaned)throw new Error('لم يتم العثور على باركود صالح في الصورة');await handleCameraScan(cleaned)}catch(e){console.error('Native barcode scan error:',e);scanResult.classList.add('show');scanResult.textContent='تعذر قراءة الباركود من الصورة. حاول التقاط صورة أوضح.';setTimeout(()=>scanResult.classList.remove('show'),5000)}finally{try{await fileScanner?.clear()}catch{}cameraFileInput.value=''}}
+async function toggleScanner(event){if(event&&event.isTrusted===false)return;if(scanner){await stopScanner();return}scannerWrap.classList.add('show');scanner=new Html5Qrcode('reader');const config={fps:10,qrbox:(w,h)=>({width:Math.min(300,Math.floor(w*.82)),height:Math.min(170,Math.floor(h*.48))}),aspectRatio:1.777778};const ok=text=>handleCameraScan(cleanBarcodeScannerInput(text)),fail=()=>{};let errors=[];try{const cameras=await Html5Qrcode.getCameras();const back=(cameras||[]).find(c=>/back|rear|environment|traseira|trasera|arrière|خلف/i.test(c.label||''))||(cameras||[]).slice(-1)[0];if(back){try{await scanner.start(back.id,config,ok,fail);return}catch(e){errors.push(e)}}try{await scanner.start({facingMode:{exact:'environment'}},config,ok,fail);return}catch(e){errors.push(e)}try{await scanner.start({facingMode:{ideal:'environment'}},config,ok,fail);return}catch(e){errors.push(e)}throw errors[errors.length-1]||new Error('لم يتم العثور على كاميرا متاحة')}catch(e){console.error('Mobile barcode camera error:',e);try{await scanner.clear()}catch{}scanner=null;scannerWrap.classList.remove('show');openNativeBarcodeCamera()}}"""
+          if old not in s: raise SystemExit('toggleScanner block not found')
+          s=s.replace(old,new,1)
+
+          old="async function handleCameraScan(decoded){const clean=cleanBarcodeScannerInput(decoded);if(!clean)return;await stopScanner();deliverySearch.value=clean;deliveryPage=1;await loadDeliveryOrders(clean);scanResult.classList.add('show');scanResult.textContent=deliveryOrders.length?`تم العثور على: ${deliveryOrders[0].order_code||deliveryOrders[0].id}`:`لم يتم العثور على شحنة بالباركود ${clean}`;setTimeout(()=>scanResult.classList.remove('show'),5000)}"
+          new="async function handleCameraScan(decoded){const clean=cleanBarcodeScannerInput(decoded);if(!clean)return;await stopScanner();deliverySearch.value=clean;deliveryPage=1;await loadDeliveryOrders(clean);scanResult.classList.add('show');scanResult.textContent=deliveryOrders.length?`تم العثور على: ${deliveryOrders[0].order_code||deliveryOrders[0].id}`:`لم يتم العثور على شحنة بالباركود ${clean}`;setTimeout(()=>scanResult.classList.remove('show'),5000)}"
+          if old not in s: raise SystemExit('handleCameraScan block not found')
+
+          old="Object.assign(window,{cleanBarcodeScannerInput,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});window.onload=initDelivery;"
+          new="Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeydown,toggleScanner,handleNativeBarcodeFile,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});window.onload=initDelivery;"
+          if old not in s: raise SystemExit('window exports block not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Commit fix
+        run: |
+          git config user.name meshwar-delivery-bot
+          git config user.email actions@users.noreply.github.com
+          git add delivery-dashboard.html
+          git commit -m "Add native camera fallback and instant barcode cleaning" || exit 0
+          git push origin main
