@@ -1,0 +1,76 @@
+name: Fix delivery live scanner only
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-live-stream-only.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch delivery live scanner
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('delivery-dashboard.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('<div id="scannerWrap" class="scanner-wrap"><div class="scanner-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><b>مسح باركود الشحنة بالكاميرا الخلفية</b><button class="btn btn-red" onclick="stopScanner()">إغلاق</button></div><div id="reader"></div><div id="cameraHint" class="muted" style="margin-top:8px;text-align:center">اسمح للمتصفح باستخدام الكاميرا ثم وجّه الكاميرا الخلفية نحو الباركود.</div></div></div>', '<div id="scannerModal" class="scanner-wrap"><div class="scanner-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><b>مسح باركود مباشر بالكاميرا الخلفية</b><button class="btn btn-red" onclick="stopScanner()">إلغاء المسح</button></div><div id="reader"></div><div id="cameraHint" class="muted" style="margin-top:8px;text-align:center">وجّه الكاميرا الخلفية نحو الباركود، وسيتم التقاطه تلقائياً دون تصوير صورة.</div></div></div>')
+          s=s.replace('<div id="scanResult" class="scan-result"></div><div id="deliveryImageOverlay" class="image-overlay" onclick="if(event.target===this)closeDeliveryImage()"><button class="btn btn-red" onclick="closeDeliveryImage()">إغلاق</button><img id="deliveryImageZoom" alt="صورة الشحنة"></div><input id="cameraFileInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleNativeBarcodeFile(this.files[0])"><input id="deliveryProofCamera" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDeliveryProofFile(this.files[0])">', '<div id="scanResult" class="scan-result"></div><div id="deliveryImageOverlay" class="image-overlay" onclick="if(event.target===this)closeDeliveryImage()"><button class="btn btn-red" onclick="closeDeliveryImage()">إغلاق</button><img id="deliveryImageZoom" alt="صورة الشحنة"></div><input id="deliveryProofCamera" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDeliveryProofFile(this.files[0])">')
+          start=s.find("function openNativeBarcodeCamera(){")
+          end=s.find("async function toggleScanner(event){", start)
+          if start<0 or end<0: raise SystemExit('native fallback functions not found')
+          s=s[:start]+s[end:]
+          old=s[s.find("async function toggleScanner(event){"):s.find("async function stopScanner(){")]
+          new="""async function toggleScanner(event){
+            if(event&&event.isTrusted===false)return;
+            if(scanner){await stopScanner();return;}
+            const modal=document.getElementById('scannerModal');
+            modal.classList.add('show');
+            scanner=new Html5Qrcode('reader');
+            const config={fps:10,qrbox:{width:250,height:150},aspectRatio:1.777778};
+            const onScanSuccess=async decodedText=>{
+              const clean=cleanBarcodeScannerInput(decodedText);
+              if(!clean)return;
+              await handleCameraScan(clean);
+            };
+            const onScanFailure=()=>{};
+            let firstError=null;
+            try{
+              await scanner.start({facingMode:'environment'},config,onScanSuccess,onScanFailure);
+              return;
+            }catch(e){
+              firstError=e;
+              console.warn('environment camera start failed, trying explicit rear camera',e);
+            }
+            try{
+              const cameras=await Html5Qrcode.getCameras();
+              const rear=(cameras||[]).find(c=>/back|rear|environment|traseira|trasera|arrière|خلف/i.test(c.label||''))||(cameras||[]).slice(-1)[0];
+              if(!rear)throw firstError||new Error('لم يتم العثور على كاميرا خلفية');
+              await scanner.start(rear.id,config,onScanSuccess,onScanFailure);
+            }catch(e){
+              console.error('Live mobile barcode camera error:',e);
+              try{await scanner.clear()}catch{}
+              scanner=null;
+              modal.classList.remove('show');
+              alert('تعذر تشغيل البث الحي للكاميرا. تأكد من السماح بصلاحية الكاميرا وأن الصفحة تعمل عبر HTTPS، ثم أعد المحاولة.');
+            }
+          }
+          """
+          if not old.strip(): raise SystemExit('toggle scanner function not found')
+          s=s.replace(old,new,1)
+          s=s.replace("async function stopScanner(){if(scanner){try{await scanner.stop()}catch{}try{await scanner.clear()}catch{}scanner=null}scannerWrap.classList.remove('show')}", "async function stopScanner(){if(scanner){try{await scanner.stop()}catch{}try{await scanner.clear()}catch{}scanner=null}document.getElementById('scannerModal')?.classList.remove('show')}")
+          s=s.replace("Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,handleNativeBarcodeFile,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});", "Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,stopScanner,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile});")
+          if 'cameraFileInput' in s or 'handleNativeBarcodeFile' in s or 'openNativeBarcodeCamera' in s:
+              raise SystemExit('native file barcode fallback still present')
+          p.write_text(s,encoding='utf-8')
+      - name: Commit live scanner fix
+        run: |
+          git config user.name meshwar-delivery-bot
+          git config user.email actions@users.noreply.github.com
+          git add delivery-dashboard.html
+          git commit -m "Use live video stream for delivery barcode scanner" || exit 0
+          git push origin main
