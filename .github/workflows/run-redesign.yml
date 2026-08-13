@@ -1,0 +1,25 @@
+name: Run verified index redesign
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-redesign.yml'
+permissions:
+  contents: write
+jobs:
+  redesign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - run: python .github/scripts/redesign_index.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/scripts/redesign_index.py .github/workflows/run-redesign.yml
+          git add -A -- index.html .github/scripts/redesign_index.py .github/workflows/run-redesign.yml
+          git diff --cached --check
+          git commit -m "Redesign customer index with modern Tailwind UI"
+          git push origin main
