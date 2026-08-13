@@ -1,0 +1,114 @@
+name: Emergency admin dashboard recovery
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/emergency-fix-local-stores.yml'
+permissions:
+  contents: write
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Restore stable admin and isolate local stores
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout 76ef82cb4687e2494b7e0bc85043d1ce9d82815d -- admin-dashboard.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('admin-dashboard.html')
+          s=p.read_text(encoding='utf-8')
+          sidebar="<a onclick=\"openLocalStoresAdmin()\">🏪 إدارة المتاجر المحلية</a>"
+          anchor="<a onclick=\"showSection('exchange')\">أسعار صرف العملات</a>"
+          if sidebar not in s:
+              if anchor not in s: raise SystemExit('sidebar anchor missing')
+              s=s.replace(anchor,sidebar+anchor,1)
+          card='''\n<div class="card" id="local-stores"><h3>إدارة المتاجر المحلية</h3><iframe id="localStoresFrame" title="إدارة المتاجر المحلية" style="width:100%;height:78vh;border:0;border-radius:12px;background:#0f172a" loading="lazy"></iframe></div>\n'''
+          marker='<div class="card" id="content"><h3>إدارة المحتوى والموقع</h3><p>تعديل نصوص وأقسام الموقع الرئيسية.</p></div></div>'
+          if 'id="local-stores"' not in s:
+              if marker not in s: raise SystemExit('main-content anchor missing')
+              s=s.replace(marker,marker.replace('</div></div>','</div>'+card+'</div>'),1)
+          bridge='''\n<script>\n/* LOCAL_STORES_ISOLATION_BRIDGE_V1 */\nfunction openLocalStoresAdmin(){\n  showSection('local-stores');\n  const f=document.getElementById('localStoresFrame');\n  if(!f)return;\n  const adminId=String(currentAdminCloud?.id||getAdminId?.()||'').trim();\n  const target='local-stores-admin.html'+(adminId?'?adminId='+encodeURIComponent(adminId):'');\n  if(!f.getAttribute('src'))f.setAttribute('src',target);\n}\nwindow.addEventListener('load',()=>{if(location.hash==='#local-stores')setTimeout(openLocalStoresAdmin,0)});\n</script>\n'''
+          if 'LOCAL_STORES_ISOLATION_BRIDGE_V1' not in s:
+              idx=s.rfind('</body>')
+              if idx<0: raise SystemExit('body close missing')
+              s=s[:idx]+bridge+s[idx:]
+          p.write_text(s,encoding='utf-8')
+          PY
+
+          cat > local-stores-admin.html <<'EOF'
+          <!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>إدارة المتاجر المحلية - MeshWar</title><script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={corePlugins:{preflight:true}}</script></head><body class="min-h-screen bg-slate-950 text-slate-100"><main class="mx-auto max-w-7xl p-4 md:p-6"><div class="mb-6 flex flex-wrap items-center justify-between gap-3"><div><h1 class="text-2xl font-black">إدارة المتاجر المحلية</h1><p class="text-sm text-slate-400">واجهة معزولة عن كود لوحة الأدمن القديمة.</p></div><button onclick="openStoreModal()" class="rounded-xl bg-emerald-500 px-4 py-2 font-black hover:bg-emerald-400">+ متجر جديد</button></div><div id="notice" class="mb-4 hidden rounded-xl border p-3 text-sm font-bold"></div><section class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><article class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur"><div class="text-xs text-slate-400">المتاجر النشطة</div><div id="statActive" class="mt-2 text-3xl font-black text-cyan-300">0</div></article><article class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur"><div class="text-xs text-slate-400">المبيعات</div><div id="statSales" class="mt-2 font-black text-emerald-300">—</div></article><article class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur"><div class="text-xs text-slate-400">عمولة MeshWar</div><div id="statCommission" class="mt-2 font-black text-violet-300">—</div></article><article class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur"><div class="text-xs text-slate-400">المرتجعات / الغرامات</div><div id="statReturns" class="mt-2 font-black text-rose-300">—</div></article></section><section class="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4"><div class="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 class="font-black">المتاجر</h2><input id="search" oninput="renderStores()" class="rounded-xl border border-white/10 bg-slate-900 px-3 py-2" placeholder="بحث..."></div><div class="overflow-x-auto"><table class="w-full min-w-[1000px] text-sm"><thead class="bg-slate-900"><tr><th class="p-3">الشعار</th><th>المتجر</th><th>النوع / التخصص</th><th>المحافظة</th><th>الهاتف</th><th>العمولة</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody id="storesBody"></tbody></table></div></section><section class="rounded-2xl border border-white/10 bg-white/5 p-4"><h2 class="mb-3 font-black">التقرير المالي</h2><div class="overflow-x-auto"><table class="w-full min-w-[1100px] text-sm"><thead class="bg-slate-900"><tr><th class="p-3">المتجر</th><th>العملة</th><th>الطلبات</th><th>المبيعات</th><th>العمولة</th><th>النقل</th><th>المصروفات</th><th>الغرامات</th><th>الصافي</th></tr></thead><tbody id="financeBody"></tbody></table></div></section></main><div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/80 p-4"><div class="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-3xl border border-white/10 bg-slate-900 p-5"><div class="mb-4 flex justify-between"><h2 id="modalTitle" class="text-xl font-black">تسجيل متجر</h2><button onclick="closeStoreModal()" class="rounded-lg bg-rose-500 px-3 py-1">×</button></div><input id="editId" type="hidden"><div class="grid gap-3 md:grid-cols-2"><input id="storeName" class="rounded-xl bg-slate-800 p-3" placeholder="اسم المتجر"><input id="logoUrl" class="rounded-xl bg-slate-800 p-3" placeholder="رابط الشعار"><input id="username" class="rounded-xl bg-slate-800 p-3" placeholder="اسم المستخدم"><input id="phone" class="rounded-xl bg-slate-800 p-3" placeholder="الهاتف"><input id="country" class="rounded-xl bg-slate-800 p-3" placeholder="الدولة"><input id="governorate" class="rounded-xl bg-slate-800 p-3" placeholder="المحافظة"><select id="storeType" class="rounded-xl bg-slate-800 p-3"><option>شامل</option><option>نسائي</option><option>رجالي</option><option>أطفال</option><option>منزلية</option><option>أثاث</option><option>إلكترونيات</option><option>مطاعم</option><option>غذائية</option><option>حيوانات</option><option>عدد إنشاءات</option><option>صيانة</option><option>قطع غيار</option><option>سيارات</option></select><select id="specialty" class="rounded-xl bg-slate-800 p-3"><option>شامل</option><option>كوزمتك</option><option>عطور</option><option>إكسسوارات</option><option>ألبسة</option><option>أحذية</option><option>سيارات</option><option>ماطورات</option><option>ألعاب</option></select><select id="currency" class="rounded-xl bg-slate-800 p-3"><option>USD</option><option>IQD</option><option>TL</option><option>SYP</option><option>EUR</option><option>SAR</option><option>AED</option><option>JOD</option></select><input id="commission" type="number" min="0" max="100" step="0.01" value="10" class="rounded-xl bg-slate-800 p-3" placeholder="العمولة %"><input id="password" type="password" class="rounded-xl bg-slate-800 p-3 md:col-span-2" placeholder="كلمة المرور (لن تحفظ كنص خام)"></div><div class="mt-4 flex gap-2"><button onclick="saveStore()" class="rounded-xl bg-emerald-500 px-5 py-2 font-black">حفظ</button><button onclick="closeStoreModal()" class="rounded-xl bg-slate-700 px-5 py-2">إلغاء</button></div></div></div><script type="module">
+          const SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co',SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+          const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');const sb=createClient(SUPABASE_URL,SUPABASE_KEY);let stores=[],finance=[],returns=[];const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));function money(v,c){return `${Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2})} ${c||''}`.trim()}function notice(msg,bad=false){const n=$('notice');n.textContent=msg;n.className=`mb-4 rounded-xl border p-3 text-sm font-bold ${bad?'border-rose-400/30 bg-rose-500/10 text-rose-200':'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'}`}
+          async function verifyAdmin(){const id=new URLSearchParams(location.search).get('adminId');if(!id)throw new Error('جلسة الأدمن مفقودة');const{data,error}=await sb.from('employees').select('id,role,is_active').eq('id',id).maybeSingle();if(error)throw error;if(!data||String(data.role).toLowerCase()!=='admin'||data.is_active===false)throw new Error('غير مصرح بالدخول')}
+          async function load(){try{const [a,b,c]=await Promise.all([sb.from('local_stores').select('*').order('created_at',{ascending:false}),sb.from('local_store_financial_summary').select('*'),sb.from('local_returns').select('store_id,penalty_amount,return_status')]);if(a.error)throw a.error;if(b.error)throw b.error;if(c.error)throw c.error;stores=a.data||[];finance=b.data||[];returns=c.data||[];renderStores();renderFinance();renderStats()}catch(e){notice(e.message||String(e),true)}}
+          function renderStores(){const q=$('search').value.trim().toLowerCase();const rows=stores.filter(s=>!q||[s.store_name,s.phone,s.governorate,s.store_type,s.specialty].some(v=>String(v||'').toLowerCase().includes(q)));$('storesBody').innerHTML=rows.map(s=>`<tr class="border-t border-white/10"><td class="p-2">${s.logo_url?`<img src="${esc(s.logo_url)}" class="mx-auto h-10 w-10 rounded-lg object-cover">`:'—'}</td><td class="font-bold">${esc(s.store_name)}</td><td>${esc(s.store_type)} / ${esc(s.specialty)}</td><td>${esc(s.governorate||'—')}</td><td dir="ltr">${esc(s.phone||'—')}</td><td>${Number(s.commission_rate||0).toFixed(2)}%</td><td>${s.status==='active'?'🟢 نشط':'🔴 معطل'}</td><td class="space-x-1"><button onclick="editStore('${s.id}')" class="rounded bg-cyan-600 px-2 py-1">تعديل</button><button onclick="toggleStore('${s.id}')" class="rounded bg-amber-600 px-2 py-1">${s.status==='active'?'تعطيل':'تفعيل'}</button><button onclick="reportStore('${s.id}')" class="rounded bg-violet-600 px-2 py-1">الحساب</button></td></tr>`).join('')||'<tr><td colspan="8" class="p-5 text-slate-400">لا توجد متاجر.</td></tr>'}
+          function renderFinance(filter=''){const rows=finance.filter(r=>!filter||String(r.store_id)===String(filter));$('financeBody').innerHTML=rows.map(r=>`<tr class="border-t border-white/10"><td class="p-2 font-bold">${esc(r.store_name)}</td><td>${esc(r.currency||'—')}</td><td>${r.completed_orders||0}</td><td>${money(r.completed_sales,r.currency)}</td><td>${money(r.total_commission,r.currency)}</td><td>${money(r.total_transport,r.currency)}</td><td>${money(r.total_expenses,r.currency)}</td><td>${money(r.total_return_penalties,r.currency)}</td><td class="font-black text-emerald-300">${money(r.net_store_amount,r.currency)}</td></tr>`).join('')||'<tr><td colspan="9" class="p-5 text-slate-400">لا توجد بيانات مالية.</td></tr>'}
+          function renderStats(){ $('statActive').textContent=stores.filter(s=>s.status==='active').length; const by=(field)=>{const m=new Map();finance.forEach(r=>m.set(r.currency,(m.get(r.currency)||0)+Number(r[field]||0)));return [...m].map(([c,v])=>money(v,c)).join(' + ')||'0'};$('statSales').textContent=by('completed_sales');$('statCommission').textContent=by('total_commission');const pm=new Map();returns.forEach(r=>pm.set('ALL',(pm.get('ALL')||0)+Number(r.penalty_amount||0)));$('statReturns').textContent=returns.length+' مرتجع / '+Number(pm.get('ALL')||0).toLocaleString('en-US')+' غرامات'}
+          function reset(){['editId','storeName','logoUrl','username','phone','country','governorate','password'].forEach(id=>$(id).value='');$('storeType').value='شامل';$('specialty').value='شامل';$('currency').value='USD';$('commission').value='10'}window.openStoreModal=(id='')=>{reset();$('modalTitle').textContent=id?'تعديل متجر':'تسجيل متجر';$('modal').classList.remove('hidden');$('modal').classList.add('flex')};window.closeStoreModal=()=>{$('modal').classList.add('hidden');$('modal').classList.remove('flex')};window.editStore=id=>{const s=stores.find(x=>x.id===id);if(!s)return;openStoreModal(id);$('editId').value=s.id;$('storeName').value=s.store_name||'';$('logoUrl').value=s.logo_url||'';$('username').value=s.username||'';$('phone').value=s.phone||'';$('country').value=s.country||'';$('governorate').value=s.governorate||'';$('storeType').value=s.store_type||'شامل';$('specialty').value=s.specialty||'شامل';$('currency').value=s.default_currency||'USD';$('commission').value=s.commission_rate??10};window.saveStore=async()=>{const id=$('editId').value,payload={store_name:$('storeName').value.trim(),logo_url:$('logoUrl').value.trim()||null,username:$('username').value.trim(),phone:$('phone').value.trim()||null,country:$('country').value.trim()||null,governorate:$('governorate').value.trim()||null,store_type:$('storeType').value,specialty:$('specialty').value,default_currency:$('currency').value,commission_rate:Number($('commission').value||10)};if(!payload.store_name||!payload.username)return notice('اسم المتجر واسم المستخدم مطلوبان.',true);const q=id?sb.from('local_stores').update(payload).eq('id',id):sb.from('local_stores').insert(payload);const{error}=await q;if(error)return notice(error.message,true);closeStoreModal();notice('تم الحفظ بنجاح.');await load()};window.toggleStore=async id=>{const s=stores.find(x=>x.id===id);if(!s)return;const{error}=await sb.from('local_stores').update({status:s.status==='active'?'inactive':'active'}).eq('id',id);if(error)return notice(error.message,true);await load()};window.reportStore=id=>{renderFinance(id);document.querySelector('section:last-of-type')?.scrollIntoView({behavior:'smooth'})};
+          try{await verifyAdmin();await load()}catch(e){notice(e.message||String(e),true)}
+          </script></body></html>
+          EOF
+
+          mkdir -p supabase
+          cat > supabase/local-stores-anon-policies.sql <<'EOF'
+          -- EMERGENCY permissive RLS policies for Local Stores.
+          -- WARNING: anon full access is intentionally broad and should be replaced by authenticated admin/store policies later.
+          ALTER TABLE public.local_stores ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE public.local_products ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE public.local_orders ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE public.local_returns ENABLE ROW LEVEL SECURITY;
+
+          DROP POLICY IF EXISTS "Allow anon full access" ON public.local_stores;
+          CREATE POLICY "Allow anon full access" ON public.local_stores FOR ALL TO anon USING (true) WITH CHECK (true);
+          DROP POLICY IF EXISTS "Allow anon full access" ON public.local_products;
+          CREATE POLICY "Allow anon full access" ON public.local_products FOR ALL TO anon USING (true) WITH CHECK (true);
+          DROP POLICY IF EXISTS "Allow anon full access" ON public.local_orders;
+          CREATE POLICY "Allow anon full access" ON public.local_orders FOR ALL TO anon USING (true) WITH CHECK (true);
+          DROP POLICY IF EXISTS "Allow anon full access" ON public.local_returns;
+          CREATE POLICY "Allow anon full access" ON public.local_returns FOR ALL TO anon USING (true) WITH CHECK (true);
+
+          GRANT SELECT, INSERT, UPDATE, DELETE ON public.local_stores TO anon;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON public.local_products TO anon;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON public.local_orders TO anon;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON public.local_returns TO anon;
+          GRANT SELECT ON public.local_store_financial_summary TO anon;
+          EOF
+
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('admin-dashboard.html').read_text(encoding='utf-8')
+          if 'function showSection(id)' not in s: raise SystemExit('showSection missing')
+          if 'loadAdminOrders=async function' not in s and 'async function loadAdminOrders' not in s: raise SystemExit('loadAdminOrders missing')
+          pos=s.find('function printAdminOrderBarcode')
+          end=s.find('function ',pos+20)
+          chunk=s[pos:end if end>pos else pos+12000]
+          if 'LOCAL_STORES' in chunk: raise SystemExit('local stores code leaked into barcode function')
+          if 'LOCAL_STORES_ISOLATION_BRIDGE_V1' not in s: raise SystemExit('bridge missing')
+          PY
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('local-stores-admin.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s+type="module")?[^>]*>(.*?)</script>',html,re.S)
+          # only local inline scripts; module with top-level await is checked as .mjs
+          for i,src in enumerate(scripts):
+              if not src.strip() or src.strip().startswith('tailwind.config'): continue
+              Path(f'/tmp/local-{i}.mjs').write_text(src,encoding='utf-8')
+          PY
+          for f in /tmp/local-*.mjs; do [ -e "$f" ] && node --check "$f"; done
+          rm -f .github/workflows/emergency-fix-local-stores.yml
+      - name: Commit recovery to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Recover admin dashboard and isolate local stores"
+          git push origin main
