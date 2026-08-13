@@ -1,0 +1,42 @@
+name: Final legacy cleanup
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/final-cleanup-legacy.yml'
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Remove remaining legacy files and references
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f home.html meshwar.html meshwar-app.js
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          lines=s.splitlines(True)
+          kept=[line for line in lines if 'href="home.html"' not in line and "href='home.html'" not in line]
+          p.write_text(''.join(kept),encoding='utf-8')
+          PY
+          refs='kids\.html|men\.html|women\.html|pets\.html|tech\.html|template\.html|viewer\.html|home\.html|meshwar\.html|meshwar-app\.js'
+          if grep -RInE "$refs" --include='*.html' --include='*.js' . --exclude-dir='.git'; then
+            echo 'Found remaining references to legacy files.' >&2
+            exit 1
+          fi
+          rm -- '.github/workflows/final-cleanup-legacy.yml'
+      - name: Commit directly to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- index.html home.html meshwar.html meshwar-app.js .github/workflows/final-cleanup-legacy.yml
+          git commit -m "Remove remaining legacy store files"
+          git push origin main
