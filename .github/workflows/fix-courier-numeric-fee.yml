@@ -1,0 +1,85 @@
+name: Fix courier numeric fee
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-courier-numeric-fee.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch courier numeric fee only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def one(s, old, new, label):
+              n=s.count(old)
+              if n!=1: raise SystemExit(f'{label}: expected 1 match, found {n}')
+              return s.replace(old,new,1)
+
+          p=Path('branch-dashboard.html')
+          s=p.read_text(encoding='utf-8')
+          s=one(s,
+            "async function loadCouriers(){const c=await getSb(),bid=cloudId(currentBranch.id),{data,error}=await c.from('couriers').select('*').eq('branch_id',bid).order('name');if(error)throw error;couriers=data||[];bulkCourier.innerHTML='<option value=\"\">اختر مندوباً للإسناد الجماعي</option>';courierManageBody.innerHTML='';couriers.forEach(x=>{const id=cloudId(x.id),enc=encodeURIComponent(id),cur=String(x.delivery_fee||'').trim().split(/\\s+/).slice(1).join(' ')||'$';",
+            "async function loadCouriers(){const c=await getSb(),bid=cloudId(currentBranch.id),{data,error}=await c.from('couriers').select('*').eq('branch_id',bid).order('name');if(error)throw error;couriers=data||[];bulkCourier.innerHTML='<option value=\"\">اختر مندوباً للإسناد الجماعي</option>';courierManageBody.innerHTML='';couriers.forEach(x=>{const id=cloudId(x.id),enc=encodeURIComponent(id),cur=localStorage.getItem('courierCurrency:'+id)||'$';",
+            'branch load currency visual')
+          s=one(s,"<td>${esc(String(x.delivery_fee||'0 $'))}</td>","<td>${money(x.delivery_fee,cur)}</td>",'branch render fee')
+          s=one(s,
+            "const feeParts=String(x.delivery_fee||'').trim().match(/^([0-9]+(?:\\.[0-9]+)?)\\s*(.*)$/);courierFee.value=feeParts?feeParts[1]:'';courierCurrency.value=feeParts&&feeParts[2]?feeParts[2]:'$'",
+            "courierFee.value=x.delivery_fee??'';courierCurrency.value=localStorage.getItem('courierCurrency:'+cloudId(x.id))||'$'",
+            'branch edit numeric')
+          s=one(s,
+            "selectedCurrency=String(courierCurrency.value||'$'),feeNumber=Number(courierFee.value||0),payload={branch_id:cloudId(currentBranch.id),name:courierName.value.trim(),phone:courierPhone.value.trim(),delivery_fee:`${feeNumber} ${selectedCurrency}`}",
+            "selectedCurrency=String(courierCurrency.value||'$'),feeNumber=Number(courierFee.value||0),payload={branch_id:cloudId(currentBranch.id),name:courierName.value.trim(),phone:courierPhone.value.trim(),delivery_fee:feeNumber}",
+            'branch numeric payload')
+          s=one(s,
+            "if(result.error)return alert(result.error.message);const savedId=cloudId(result.data?.id||editId);if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');resetCourierForm();courierModal.style.display='none';await Promise.all([loadCouriers(),loadOrders(),loadAccounting()])",
+            "if(result.error)return alert(result.error.message);const savedId=cloudId(result.data?.id||editId);if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');localStorage.setItem('courierCurrency:'+savedId,selectedCurrency);resetCourierForm();courierModal.style.display='none';await Promise.all([loadCouriers(),loadOrders(),loadAccounting()])",
+            'branch visual currency save')
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('admin-dashboard.html')
+          s=p.read_text(encoding='utf-8')
+          s=one(s,
+            "adminCouriersForOrders=data||[];b.innerHTML=adminCouriersForOrders.map(a=>{const id=encodeURIComponent(String(a.id)),cur=String(a.delivery_fee||'').trim().split(/\\s+/).slice(1).join(' ')||'$';",
+            "adminCouriersForOrders=data||[];b.innerHTML=adminCouriersForOrders.map(a=>{const id=encodeURIComponent(String(a.id)),cur=localStorage.getItem('courierCurrency:'+String(a.id))||'$';",
+            'admin load currency visual')
+          s=one(s,"<td>${esc(String(a.delivery_fee||'0 $'))}</td>","<td>${Number(a.delivery_fee||0).toFixed(2)} ${esc(cur)}</td>",'admin render fee')
+          s=one(s,
+            "const feeParts=String(a.delivery_fee||'').trim().match(/^([0-9]+(?:\\.[0-9]+)?)\\s*(.*)$/);delFee.value=feeParts?feeParts[1]:'';delCurrency.value=feeParts&&feeParts[2]?feeParts[2]:'$'",
+            "delFee.value=a.delivery_fee??'';delCurrency.value=localStorage.getItem('courierCurrency:'+String(a.id))||'$'",
+            'admin edit numeric')
+          s=one(s,
+            "selectedCurrency=String(delCurrency.value||'$'),feeNumber=Number(delFee.value||0),payload={branch_id:String(delBranch.value||'').trim(),name:delName.value.trim(),phone:delPhone.value.trim(),delivery_fee:`${feeNumber} ${selectedCurrency}`}",
+            "selectedCurrency=String(delCurrency.value||'$'),feeNumber=Number(delFee.value||0),payload={branch_id:String(delBranch.value||'').trim(),name:delName.value.trim(),phone:delPhone.value.trim(),delivery_fee:feeNumber}",
+            'admin numeric payload')
+          s=one(s,
+            "if(result.error)return alert(result.error.message);const savedId=String(result.data?.id||editId||'').trim();if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');resetDeliveryForm();await Promise.all([loadDelivery(),loadAdminCouriersForOrders()])",
+            "if(result.error)return alert(result.error.message);const savedId=String(result.data?.id||editId||'').trim();if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');localStorage.setItem('courierCurrency:'+savedId,selectedCurrency);resetDeliveryForm();await Promise.all([loadDelivery(),loadAdminCouriersForOrders()])",
+            'admin visual currency save')
+          p.write_text(s,encoding='utf-8')
+
+          Path('.github/workflows/fix-courier-numeric-fee.yml').unlink()
+          PY
+      - name: Validate surgical scope
+        run: |
+          test "$(git diff --name-only | sort | tr '\n' ' ')" = ".github/workflows/fix-courier-numeric-fee.yml admin-dashboard.html branch-dashboard.html "
+          grep -F 'delivery_fee:feeNumber' branch-dashboard.html
+          grep -F 'delivery_fee:feeNumber' admin-dashboard.html
+          ! grep -F 'delivery_fee:`${feeNumber} ${selectedCurrency}`' branch-dashboard.html
+          ! grep -F 'delivery_fee:`${feeNumber} ${selectedCurrency}`' admin-dashboard.html
+          grep -F "localStorage.setItem('courierCurrency:'" branch-dashboard.html
+          grep -F "localStorage.setItem('courierCurrency:'" admin-dashboard.html
+      - name: Commit directly to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add branch-dashboard.html admin-dashboard.html .github/workflows/fix-courier-numeric-fee.yml
+          git commit -m "Keep courier fee numeric and currency visual"
+          git push origin main
