@@ -1,0 +1,79 @@
+name: Fix inline courier fee currency
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-courier-fee-inline-currency.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch courier fee currency only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, found {count}')
+              return text.replace(old, new, 1)
+
+          def patch_branch(path):
+              s = path.read_text(encoding='utf-8')
+              # Remove settings-backed currency loading and render directly from delivery_fee text.
+              old = "const{data:currencyRows,error:currencyError}=await c.from('settings').select('key,value').like('key','courier_currency:%');if(currencyError)console.warn('Courier currency load warning:',currencyError);const currencyMap=Object.fromEntries((currencyRows||[]).map(r=>[String(r.key||'').replace('courier_currency:',''),String(r.value||'$')]));couriers=(data||[]).map(x=>({...x,_courier_currency:currencyMap[cloudId(x.id)]||'$'}));bulkCourier.innerHTML="
+              new = "couriers=data||[];bulkCourier.innerHTML="
+              s = replace_once(s, old, new, 'branch remove settings load')
+              s = replace_once(s, "cur=String(x._courier_currency||'$')", "cur=String(x.delivery_fee||'').trim().split(/\\s+/).slice(1).join(' ')||'$'", 'branch render currency')
+              s = replace_once(s, "money(x.delivery_fee,cur)", "esc(String(x.delivery_fee||'0 $'))", 'branch render combined fee')
+              s = replace_once(s, "courierFee.value=x.delivery_fee??'';courierCurrency.value=String(x._courier_currency||'$')", "const feeParts=String(x.delivery_fee||'').trim().match(/^([0-9]+(?:\\.[0-9]+)?)\\s*(.*)$/);courierFee.value=feeParts?feeParts[1]:'';courierCurrency.value=feeParts&&feeParts[2]?feeParts[2]:'$'", 'branch edit parse')
+              s = replace_once(s, "const c=await getSb(),editId=cloudId(courierEditId.value),selectedCurrency=String(courierCurrency.value||'$'),payload={branch_id:cloudId(currentBranch.id),name:courierName.value.trim(),phone:courierPhone.value.trim(),delivery_fee:Number(courierFee.value||0)}", "const c=await getSb(),editId=cloudId(courierEditId.value),selectedCurrency=String(courierCurrency.value||'$'),feeNumber=Number(courierFee.value||0),payload={branch_id:cloudId(currentBranch.id),name:courierName.value.trim(),phone:courierPhone.value.trim(),delivery_fee:`${feeNumber} ${selectedCurrency}`}", 'branch combined fee payload')
+              s = replace_once(s, "if(!Number.isFinite(payload.delivery_fee)||payload.delivery_fee<0)return alert('أجرة التوصيل غير صالحة.');", "if(!Number.isFinite(feeNumber)||feeNumber<0)return alert('أجرة التوصيل غير صالحة.');", 'branch fee validation')
+              old = "if(result.error)return alert(result.error.message);const savedId=cloudId(result.data?.id||editId);if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');const{error:currencySaveError}=await c.from('settings').upsert([{key:'courier_currency:'+savedId,value:selectedCurrency}],{onConflict:'key'});if(currencySaveError)return alert('تم حفظ بيانات المندوب، لكن تعذر حفظ العملة: '+currencySaveError.message);resetCourierForm();courierModal.style.display='none';await Promise.all([loadCouriers(),loadOrders(),loadAccounting()])"
+              new = "if(result.error)return alert(result.error.message);const savedId=cloudId(result.data?.id||editId);if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');resetCourierForm();courierModal.style.display='none';await Promise.all([loadCouriers(),loadOrders(),loadAccounting()])"
+              s = replace_once(s, old, new, 'branch remove settings save')
+              # Keep courier default fee numerically usable where it is copied into orders, without touching order-table logic.
+              s = s.replace("Number(courier.delivery_fee||0)", "parseFloat(String(courier.delivery_fee||0))||0")
+              s = s.replace("Number(s.courier.delivery_fee||0)", "parseFloat(String(s.courier.delivery_fee||0))||0")
+              path.write_text(s, encoding='utf-8')
+
+          def patch_admin(path):
+              s = path.read_text(encoding='utf-8')
+              old = "const{data:currencyRows,error:currencyError}=await sb.from('settings').select('key,value').like('key','courier_currency:%');if(currencyError)console.warn('Courier currency load warning:',currencyError);const currencyMap=Object.fromEntries((currencyRows||[]).map(r=>[String(r.key||'').replace('courier_currency:',''),String(r.value||'$')]));adminCouriersForOrders=(data||[]).map(a=>({...a,_courier_currency:currencyMap[String(a.id)]||'$'}));b.innerHTML=adminCouriersForOrders.map(a=>"
+              new = "adminCouriersForOrders=data||[];b.innerHTML=adminCouriersForOrders.map(a=>"
+              s = replace_once(s, old, new, 'admin remove settings load')
+              s = replace_once(s, "cur=String(a._courier_currency||'$')", "cur=String(a.delivery_fee||'').trim().split(/\\s+/).slice(1).join(' ')||'$'", 'admin render currency')
+              s = replace_once(s, "${Number(a.delivery_fee||0).toFixed(2)} ${esc(cur)}", "${esc(String(a.delivery_fee||'0 $'))}", 'admin render combined fee')
+              s = replace_once(s, "delFee.value=a.delivery_fee??'';delCurrency.value=String(a._courier_currency||'$')", "const feeParts=String(a.delivery_fee||'').trim().match(/^([0-9]+(?:\\.[0-9]+)?)\\s*(.*)$/);delFee.value=feeParts?feeParts[1]:'';delCurrency.value=feeParts&&feeParts[2]?feeParts[2]:'$'", 'admin edit parse')
+              s = replace_once(s, "const sb=await ensureCustomerSupabase(),editId=String(delEditId.value||'').trim(),selectedCurrency=String(delCurrency.value||'$'),payload={branch_id:String(delBranch.value||'').trim(),name:delName.value.trim(),phone:delPhone.value.trim(),delivery_fee:Number(delFee.value||0)}", "const sb=await ensureCustomerSupabase(),editId=String(delEditId.value||'').trim(),selectedCurrency=String(delCurrency.value||'$'),feeNumber=Number(delFee.value||0),payload={branch_id:String(delBranch.value||'').trim(),name:delName.value.trim(),phone:delPhone.value.trim(),delivery_fee:`${feeNumber} ${selectedCurrency}`}", 'admin combined fee payload')
+              s = replace_once(s, "if(!Number.isFinite(payload.delivery_fee)||payload.delivery_fee<0)return alert('أجرة التوصيل غير صالحة.');", "if(!Number.isFinite(feeNumber)||feeNumber<0)return alert('أجرة التوصيل غير صالحة.');", 'admin fee validation')
+              old = "if(result.error)return alert(result.error.message);const savedId=String(result.data?.id||editId||'').trim();if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');const{error:currencySaveError}=await sb.from('settings').upsert([{key:'courier_currency:'+savedId,value:selectedCurrency}],{onConflict:'key'});if(currencySaveError)return alert('تم حفظ بيانات المندوب، لكن تعذر حفظ العملة: '+currencySaveError.message);resetDeliveryForm();await Promise.all([loadDelivery(),loadAdminCouriersForOrders()])"
+              new = "if(result.error)return alert(result.error.message);const savedId=String(result.data?.id||editId||'').trim();if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');resetDeliveryForm();await Promise.all([loadDelivery(),loadAdminCouriersForOrders()])"
+              s = replace_once(s, old, new, 'admin remove settings save')
+              path.write_text(s, encoding='utf-8')
+
+          patch_branch(Path('branch-dashboard.html'))
+          patch_admin(Path('admin-dashboard.html'))
+          Path('.github/workflows/fix-courier-fee-inline-currency.yml').unlink()
+          PY
+      - name: Validate surgical scope
+        run: |
+          test "$(git diff --name-only | sort | tr '\n' ' ')" = ".github/workflows/fix-courier-fee-inline-currency.yml admin-dashboard.html branch-dashboard.html "
+          ! grep -F "from('settings')" branch-dashboard.html
+          ! grep -F "courier_currency:" branch-dashboard.html
+          ! grep -F "courier_currency:" admin-dashboard.html
+          grep -F 'delivery_fee:`${feeNumber} ${selectedCurrency}`' branch-dashboard.html
+          grep -F 'delivery_fee:`${feeNumber} ${selectedCurrency}`' admin-dashboard.html
+      - name: Commit directly to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add branch-dashboard.html admin-dashboard.html .github/workflows/fix-courier-fee-inline-currency.yml
+          git commit -m "Store courier currency inline with default fee"
+          git push origin main
