@@ -1,0 +1,48 @@
+name: Cleanup legacy section pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cleanup-legacy-sections.yml'
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Remove legacy section pages and validate references
+        shell: bash
+        run: |
+          set -euo pipefail
+          targets=(kids.html men.html women.html pets.html tech.html template.html viewer.html)
+          for f in "${targets[@]}"; do
+            if [ -f "$f" ]; then rm -- "$f"; fi
+          done
+
+          # Ensure no remaining HTML/JS file references any deleted page.
+          refs='kids\.html|men\.html|women\.html|pets\.html|tech\.html|template\.html|viewer\.html'
+          if grep -RInE "$refs" --include='*.html' --include='*.js' . \
+              --exclude='cleanup-legacy-sections.yml' \
+              --exclude-dir='.git'; then
+            echo 'Found remaining references to deleted legacy pages.' >&2
+            exit 1
+          fi
+
+          # This cleanup intentionally removes only the requested legacy HTML pages.
+          # Existing JS files are preserved unless actually tied to those pages.
+          rm -- '.github/workflows/cleanup-legacy-sections.yml'
+
+          changed=$(git diff --name-only | sort)
+          expected=$(printf '%s\n' '.github/workflows/cleanup-legacy-sections.yml' kids.html men.html pets.html tech.html template.html viewer.html women.html | sort)
+          test "$changed" = "$expected"
+      - name: Commit directly to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- kids.html men.html women.html pets.html tech.html template.html viewer.html .github/workflows/cleanup-legacy-sections.yml
+          git commit -m "Remove legacy store section pages"
+          git push origin main
