@@ -25,12 +25,22 @@
         .nav-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; padding: 25px; background: #ffffff; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .nav-container a { text-decoration: none; color: #495057; background: #f8f9fa; padding: 10px 22px; border-radius: 50px; font-size: 15px; font-weight: 600; border: 1px solid #dee2e6; transition: all 0.3s ease; }
         .nav-container a:hover { background: #ff6600; color: #ffffff; border-color: #ff6600; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(255, 102, 0, 0.3); }
+
+        /* LOCAL_STORES_PUBLIC_V1 */
+        .local-stores-shell{margin:36px auto 12px;max-width:1180px;padding:24px;border-radius:24px;background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.93));border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 50px rgba(15,23,42,.22);color:#fff}.local-stores-head{display:flex;align-items:end;justify-content:space-between;gap:14px;flex-wrap:wrap}.local-stores-head h2{margin:0;color:#fff;font-size:24px}.local-stores-head p{margin:6px 0 0;color:#94a3b8;font-size:13px}.local-specialty-filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.local-filter-btn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#cbd5e1;padding:8px 14px;border-radius:999px;cursor:pointer;font-weight:700;transition:.2s}.local-filter-btn:hover,.local-filter-btn.active{background:#ea580c;color:#fff;border-color:#fb923c;transform:translateY(-1px)}.local-stores-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:14px}.local-public-card{min-height:190px;border-radius:20px;padding:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(14px);box-shadow:inset 0 1px rgba(255,255,255,.05);transition:.25s;display:flex;flex-direction:column;align-items:center;text-align:center}.local-public-card:hover{transform:translateY(-4px);border-color:rgba(251,146,60,.45);background:rgba(255,255,255,.1)}.local-public-logo{width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.12);background:#1e293b;margin-bottom:10px}.local-public-name{font-size:16px;font-weight:900;color:#fff;margin:3px 0}.local-public-meta{color:#94a3b8;font-size:12px;line-height:1.7}.local-public-chip{margin-top:auto;padding-top:12px;color:#fdba74;font-size:11px;font-weight:800}.local-empty{grid-column:1/-1;text-align:center;padding:30px;color:#94a3b8}
     </style>
 </head>
 <body>
     <button class="fixed-order-btn" onclick="document.getElementById('orderModal').style.display='block'"><i class="fa-solid fa-cart-shopping"></i> طلب منتج</button>
     <div class="user-auth-zone" style="text-align: center;"><a href="#" id="authLink" class="account-btn"><i class="fa-solid fa-circle-user"></i> <span id="authText">حسابي / تسجيل</span></a><br><a href="#" id="logoutBtn" onclick="logout()" style="display:none; color: #cc0000; font-size: 13px; margin-top: 8px; text-decoration: none; font-weight: bold;">تسجيل خروج</a></div>
-    <div class="header-container"><img class="main-logo" src="images/meshwar-logo.png" alt="MeshWar Logo"><h1>منصة MeshWar</h1><p>دليلك الشامل للتسوق من الأسواق التركية والشحن الدولي.</p><a href="admin-dashboard.html#local-stores" class="account-btn" style="margin-top:12px;background:#0f172a;border:1px solid rgba(255,255,255,.12)"><i class="fa-solid fa-store"></i> إدارة المتاجر المحلية</a></div>
+    <div class="header-container"><img class="main-logo" src="images/meshwar-logo.png" alt="MeshWar Logo"><h1>منصة MeshWar</h1><p>دليلك الشامل للتسوق من الأسواق التركية والشحن الدولي.</p></div>
+
+
+    <section id="localStoresPublic" class="local-stores-shell">
+      <div class="local-stores-head"><div><h2>🏪 المتاجر المحلية</h2><p>متاجر محلية موثقة ومضافة مباشرة عبر منصة MeshWar.</p></div></div>
+      <div id="localSpecialtyFilters" class="local-specialty-filters"><button class="local-filter-btn active" data-specialty="الكل">الكل</button></div>
+      <div id="localStoresPublicGrid" class="local-stores-grid"><div class="local-empty">جاري تحميل المتاجر المحلية...</div></div>
+    </section>
 
     <h2 class="section-title">المتاجر الشاملة</h2>
     <div class="grid-container">
@@ -322,5 +332,20 @@
         window.submitOrder = submitOrder;
         window.logout = logout;
     </script>
+
+<script type="module">
+/* LOCAL_STORES_PUBLIC_DATA_V1 */
+const LOCAL_STORES_SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
+const LOCAL_STORES_SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+const {createClient:localStoresCreateClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+const localStoresSb=localStoresCreateClient(LOCAL_STORES_SUPABASE_URL,LOCAL_STORES_SUPABASE_KEY);
+const localPlaceholder='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><rect width="100%" height="100%" rx="80" fill="#1e293b"/><circle cx="80" cy="62" r="25" fill="#64748b"/><path d="M35 137c6-30 24-45 45-45s39 15 45 45" fill="#64748b"/><text x="80" y="153" text-anchor="middle" font-family="Arial" font-size="13" fill="#cbd5e1">STORE</text></svg>`);
+let localPublicStores=[],localActiveSpecialty='الكل';
+const localEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+function renderLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');if(!grid)return;const rows=localPublicStores.filter(s=>localActiveSpecialty==='الكل'||String(s.specialty||'شامل')===localActiveSpecialty);grid.innerHTML=rows.map(s=>`<article class="local-public-card"><img class="local-public-logo" src="${localEsc(s.logo_url||localPlaceholder)}" onerror="this.onerror=null;this.src='${localEsc(localPlaceholder)}'" alt="${localEsc(s.store_name||'متجر')}"><div class="local-public-name">${localEsc(s.store_name||'متجر محلي')}</div><div class="local-public-meta">${localEsc(s.store_type||'شامل')} · ${localEsc(s.specialty||'شامل')}<br>${localEsc(s.governorate||s.country||'')}</div><div class="local-public-chip">${localEsc(s.default_currency||'')} · متجر نشط</div></article>`).join('')||'<div class="local-empty">لا توجد متاجر ضمن هذا التخصص حالياً.</div>'}
+function renderLocalSpecialtyFilters(){const box=document.getElementById('localSpecialtyFilters');if(!box)return;const specs=['الكل',...new Set(localPublicStores.map(s=>String(s.specialty||'شامل').trim()).filter(Boolean))];box.innerHTML=specs.map(x=>`<button class="local-filter-btn ${x===localActiveSpecialty?'active':''}" data-specialty="${localEsc(x)}">${localEsc(x)}</button>`).join('');box.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{localActiveSpecialty=b.dataset.specialty||'الكل';renderLocalSpecialtyFilters();renderLocalPublicStores()}))}
+async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false});if(error)throw error;localPublicStores=data||[];renderLocalSpecialtyFilters();renderLocalPublicStores()}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class="local-empty">تعذر تحميل المتاجر المحلية حالياً.</div>'}}
+loadLocalPublicStores();
+</script>
 </body>
 </html>
