@@ -44,6 +44,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- index.html kids.html men.html women.html pets.html tech.html template.html viewer.html home.html meshwar.html meshwar-app.js gifts.html supermarket.html products.js scraping_test.html beauty.html .github/workflows/complete-cleanup.yml
+          git add -A
           git commit -m "Remove final legacy local store files"
           git push origin main
