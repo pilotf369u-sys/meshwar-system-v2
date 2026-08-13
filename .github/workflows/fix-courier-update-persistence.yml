@@ -2,7 +2,8 @@ name: Fix courier update persistence
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/fix-courier-update-persistence.yml']
+    paths:
+      - '.github/workflows/fix-courier-update-persistence.yml'
 permissions:
   contents: write
 jobs:
@@ -12,38 +13,65 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Patch courier update and list refresh only
-        shell: python
+      - name: Apply surgical courier persistence patch
         run: |
+          python - <<'PY'
           from pathlib import Path
-          import re
 
-          branch = Path('branch-dashboard.html')
-          s = branch.read_text(encoding='utf-8')
-          new_load = r'''async function loadCouriers(){const c=await getSb(),bid=cloudId(currentBranch.id),{data,error}=await c.from('couriers').select('*').eq('branch_id',bid).order('name');if(error)throw error;const{data:currencyRows,error:currencyError}=await c.from('settings').select('key,value').like('key','courier_currency:%');if(currencyError)console.warn('Courier currency load warning:',currencyError);const currencyMap=Object.fromEntries((currencyRows||[]).map(r=>[String(r.key||'').replace('courier_currency:',''),String(r.value||'$')]));couriers=(data||[]).map(x=>({...x,_courier_currency:currencyMap[cloudId(x.id)]||'$'}));bulkCourier.innerHTML='<option value="">اختر مندوباً للإسناد الجماعي</option>';courierManageBody.innerHTML='';couriers.forEach(x=>{const id=cloudId(x.id),enc=encodeURIComponent(id),cur=String(x._courier_currency||'$');if(x.is_active!==false)bulkCourier.innerHTML+=`<option value="${esc(id)}">${esc(x.name)}</option>`;courierManageBody.innerHTML+=`<tr><td>${esc(x.name)}</td><td>${esc(x.phone)}</td><td>${money(x.delivery_fee,cur)}</td><td>${x.is_active===false?'معطل':'نشط'}</td><td><button class="orange" onclick="editCourier(decodeURIComponent('${enc}'))">✏️ تعديل</button> <button class="blue" onclick="toggleCourier(decodeURIComponent('${enc}'))">${x.is_active===false?'تفعيل':'تعطيل'}</button> <button class="red" onclick="deleteCourier(decodeURIComponent('${enc}'))">🗑️ حذف</button></td></tr>`});if(!couriers.length)courierManageBody.innerHTML='<tr><td colspan="5">لا يوجد مندوبون.</td></tr>'}
-function courierOptions'''
-          s,n = re.subn(r"async function loadCouriers\(\)\{.*?\}\nfunction courierOptions", new_load, s, count=1, flags=re.S)
-          if n != 1: raise SystemExit(f'branch loadCouriers replacement count={n}')
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, found {count}')
+              return text.replace(old, new, 1)
 
-          new_manage = r'''function resetCourierForm(){courierEditId.value='';courierName.value='';courierPhone.value='';courierPassword.value='';courierFee.value='';courierCurrency.value='$';courierSaveBtn.textContent='حفظ المندوب';courierCancelEditBtn.style.display='none'}function openCourierModal(){resetCourierForm();courierModal.style.display='block'}function closeCourierModal(){courierModal.style.display='none';resetCourierForm()}function editCourier(id){const x=couriers.find(c=>cloudId(c.id)===cloudId(id));if(!x)return;courierEditId.value=cloudId(x.id);courierName.value=x.name||'';courierPhone.value=x.phone||'';courierPassword.value='';courierFee.value=x.delivery_fee??'';courierCurrency.value=String(x._courier_currency||'$');courierSaveBtn.textContent='حفظ التعديل';courierCancelEditBtn.style.display='inline-block';courierModal.style.display='block';courierName.focus()}async function addCourier(e){e.preventDefault();const c=await getSb(),editId=cloudId(courierEditId.value),selectedCurrency=String(courierCurrency.value||'$'),payload={branch_id:cloudId(currentBranch.id),name:courierName.value.trim(),phone:courierPhone.value.trim(),delivery_fee:Number(courierFee.value||0)};if(courierPassword.value)payload.password=courierPassword.value;if(!payload.name||!payload.phone||(!editId&&!payload.password))return alert('أكمل بيانات المندوب.');if(!Number.isFinite(payload.delivery_fee)||payload.delivery_fee<0)return alert('أجرة التوصيل غير صالحة.');let dq=c.from('couriers').select('id').eq('phone',payload.phone);if(editId)dq=dq.neq('id',editId);const{data:dup,error:de}=await dq.maybeSingle();if(de)return alert(de.message);if(dup)return alert('رقم الهاتف مستخدم لمندوب آخر.');let result;if(editId){result=await c.from('couriers').update(payload).eq('id',editId).select('id').maybeSingle()}else{payload.is_active=true;result=await c.from('couriers').insert([payload]).select('id').single()}if(result.error)return alert(result.error.message);const savedId=cloudId(result.data?.id||editId);if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');const{error:currencyError}=await c.from('settings').upsert([{key:'courier_currency:'+savedId,value:selectedCurrency}],{onConflict:'key'});if(currencyError)return alert('تم حفظ بيانات المندوب، لكن تعذر حفظ العملة: '+currencyError.message);resetCourierForm();courierModal.style.display='none';await Promise.all([loadCouriers(),loadOrders(),loadAccounting()])}async function toggleCourier(id){const x=couriers.find(c=>cloudId(c.id)===cloudId(id));if(!x)return;const c=await getSb(),{error}=await c.from('couriers').update({is_active:x.is_active===false}).eq('id',cloudId(id));if(error)return alert(error.message);await Promise.all([loadCouriers(),loadOrders()])}async function deleteCourier(id){const x=couriers.find(c=>cloudId(c.id)===cloudId(id));if(!x||!confirm(`حذف المندوب ${x.name||''}؟ إذا كانت لديه شحنات سابقة سيتم تعطيل الحساب بدلاً من حذف السجل.`))return;const c=await getSb(),cid=cloudId(id);const{data:linked,error:le}=await c.from('orders').select('id').eq('courier_id',cid).limit(1);if(le)return alert(le.message);if(linked&&linked.length){const{error}=await c.from('couriers').update({is_active:false}).eq('id',cid);if(error)return alert(error.message);alert('للمندوب شحنات مرتبطة، لذلك تم تعطيل الحساب مع الحفاظ على السجل السابق.')}else{const{error}=await c.from('couriers').delete().eq('id',cid);if(error)return alert(error.message)}resetCourierForm();await Promise.all([loadCouriers(),loadOrders(),loadAccounting()])}
-async function loadAccounting'''
-          s,n = re.subn(r"function resetCourierForm\(\).*?\nasync function loadAccounting", new_manage, s, count=1, flags=re.S)
-          if n != 1: raise SystemExit(f'branch courier management replacement count={n}')
-          branch.write_text(s,encoding='utf-8')
+          p = Path('branch-dashboard.html')
+          s = p.read_text(encoding='utf-8')
+          s = replace_once(s,
+              "couriers=data||[];bulkCourier.innerHTML=",
+              "const{data:currencyRows,error:currencyError}=await c.from('settings').select('key,value').like('key','courier_currency:%');if(currencyError)console.warn('Courier currency load warning:',currencyError);const currencyMap=Object.fromEntries((currencyRows||[]).map(r=>[String(r.key||'').replace('courier_currency:',''),String(r.value||'$')]));couriers=(data||[]).map(x=>({...x,_courier_currency:currencyMap[cloudId(x.id)]||'$'}));bulkCourier.innerHTML=",
+              'branch load currency map')
+          s = replace_once(s, "cur=String(x.currency||'$')", "cur=String(x._courier_currency||'$')", 'branch render currency')
+          s = replace_once(s, "courierCurrency.value=String(x.currency||'$')", "courierCurrency.value=String(x._courier_currency||'$')", 'branch edit currency')
+          s = replace_once(s,
+              "const c=await getSb(),editId=cloudId(courierEditId.value),payload=",
+              "const c=await getSb(),editId=cloudId(courierEditId.value),selectedCurrency=String(courierCurrency.value||'$'),payload=",
+              'branch selected currency')
+          s = replace_once(s,
+              "result=await c.from('couriers').update(payload).eq('id',editId)}else{payload.is_active=true;result=await c.from('couriers').insert([payload])}",
+              "result=await c.from('couriers').update(payload).eq('id',editId).select('id').maybeSingle()}else{payload.is_active=true;result=await c.from('couriers').insert([payload]).select('id').single()}",
+              'branch save confirmation')
+          s = replace_once(s,
+              "if(result.error)return alert(result.error.message);resetCourierForm();await Promise.all([loadCouriers(),loadOrders(),loadAccounting()])",
+              "if(result.error)return alert(result.error.message);const savedId=cloudId(result.data?.id||editId);if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');const{error:currencySaveError}=await c.from('settings').upsert([{key:'courier_currency:'+savedId,value:selectedCurrency}],{onConflict:'key'});if(currencySaveError)return alert('تم حفظ بيانات المندوب، لكن تعذر حفظ العملة: '+currencySaveError.message);resetCourierForm();courierModal.style.display='none';await Promise.all([loadCouriers(),loadOrders(),loadAccounting()])",
+              'branch refresh after save')
+          p.write_text(s, encoding='utf-8')
 
-          admin = Path('admin-dashboard.html')
-          s = admin.read_text(encoding='utf-8')
-          new_admin = r'''function adminCourierBranchName(id){const b=adminBranches.find(x=>String(x.id)===String(id));return b?.name||b?.branch_name||b?.code||b?.branch_code||id||'---'}function refreshDeliveryBranchOptions(){const el=document.getElementById('delBranch');if(!el)return;const cur=String(el.value||'');el.innerHTML='<option value="">اختر الفرع</option>'+adminBranches.map(b=>`<option value="${esc(String(b.id))}">${esc(b.name||b.branch_name||b.code||b.id)}</option>`).join('');if(cur&&adminBranches.some(b=>String(b.id)===cur))el.value=cur}function resetDeliveryForm(){delEditId.value='';delBranch.value='';delName.value='';delPhone.value='';delPass.value='';delFee.value='';delCurrency.value='$';delSaveBtn.textContent='+ إضافة';delCancelEditBtn.style.display='none'}async function loadDelivery(){const b=delTableBody,sb=await ensureCustomerSupabase();refreshDeliveryBranchOptions();const{data,error}=await sb.from('couriers').select('*').order('name',{ascending:true}).limit(2000);if(error){b.innerHTML=`<tr><td colspan="6" class="mini">تعذر تحميل couriers: ${esc(error.message)}</td></tr>`;return}const{data:currencyRows,error:currencyError}=await sb.from('settings').select('key,value').like('key','courier_currency:%');if(currencyError)console.warn('Courier currency load warning:',currencyError);const currencyMap=Object.fromEntries((currencyRows||[]).map(r=>[String(r.key||'').replace('courier_currency:',''),String(r.value||'$')]));adminCouriersForOrders=(data||[]).map(a=>({...a,_courier_currency:currencyMap[String(a.id)]||'$'}));b.innerHTML=adminCouriersForOrders.map(a=>{const id=encodeURIComponent(String(a.id)),cur=String(a._courier_currency||'$');return `<tr><td>${esc(adminCourierBranchName(a.branch_id))}</td><td>${esc(a.name)}</td><td>${esc(a.phone)}</td><td>${Number(a.delivery_fee||0).toFixed(2)} ${esc(cur)}</td><td>${a.is_active===false?'معطل':'نشط'}</td><td><button class="btn-orange" onclick="editDelivery('${id}')">✏️ تعديل</button> <button class="btn-blue" onclick="toggleDelivery('${id}')">${a.is_active===false?'تفعيل':'تعطيل'}</button> <button class="btn-red" onclick="deleteDelivery('${id}')">🗑️ حذف</button></td></tr>`}).join('')||'<tr><td colspan="6">لا يوجد مندوبون</td></tr>'}function editDelivery(encodedId){const id=decodeURIComponent(encodedId),a=adminCouriersForOrders.find(x=>String(x.id)===String(id));if(!a)return;delEditId.value=String(a.id);delBranch.value=String(a.branch_id||'');delName.value=a.name||'';delPhone.value=a.phone||'';delPass.value='';delFee.value=a.delivery_fee??'';delCurrency.value=String(a._courier_currency||'$');delSaveBtn.textContent='حفظ التعديل';delCancelEditBtn.style.display='inline-block';delName.focus()}async function addDelivery(){const sb=await ensureCustomerSupabase(),editId=String(delEditId.value||'').trim(),selectedCurrency=String(delCurrency.value||'$'),payload={branch_id:String(delBranch.value||'').trim(),name:delName.value.trim(),phone:delPhone.value.trim(),delivery_fee:Number(delFee.value||0)};if(delPass.value)payload.password=delPass.value;if(!payload.branch_id||!payload.name||!payload.phone||(!editId&&!payload.password))return alert('أكمل الفرع والاسم والهاتف وكلمة المرور للمندوب الجديد.');if(!Number.isFinite(payload.delivery_fee)||payload.delivery_fee<0)return alert('أجرة التوصيل غير صالحة.');let dq=sb.from('couriers').select('id').eq('phone',payload.phone);if(editId)dq=dq.neq('id',editId);const{data:dup,error:de}=await dq.maybeSingle();if(de)return alert(de.message);if(dup)return alert('رقم الهاتف مستخدم لمندوب آخر.');let result;if(editId){result=await sb.from('couriers').update(payload).eq('id',editId).select('id').maybeSingle()}else{payload.is_active=true;result=await sb.from('couriers').insert([payload]).select('id').single()}if(result.error)return alert(result.error.message);const savedId=String(result.data?.id||editId||'').trim();if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');const{error:currencyError}=await sb.from('settings').upsert([{key:'courier_currency:'+savedId,value:selectedCurrency}],{onConflict:'key'});if(currencyError)return alert('تم حفظ بيانات المندوب، لكن تعذر حفظ العملة: '+currencyError.message);resetDeliveryForm();await Promise.all([loadDelivery(),loadAdminCouriersForOrders()])}async function toggleDelivery(encodedId){const id=decodeURIComponent(encodedId),a=adminCouriersForOrders.find(x=>String(x.id)===String(id));if(!a)return;const sb=await ensureCustomerSupabase(),{error}=await sb.from('couriers').update({is_active:a.is_active===false}).eq('id',id);if(error)return alert(error.message);await Promise.all([loadDelivery(),loadAdminCouriersForOrders()])}async function deleteDelivery(encodedId){const id=decodeURIComponent(encodedId),a=adminCouriersForOrders.find(x=>String(x.id)===String(id));if(!a||!confirm(`حذف المندوب ${a.name||''}؟ إذا كانت لديه شحنات سابقة سيتم تعطيل الحساب بدلاً من حذف السجل.`))return;const sb=await ensureCustomerSupabase(),{data:linked,error:le}=await sb.from('orders').select('id').eq('courier_id',id).limit(1);if(le)return alert(le.message);if(linked&&linked.length){const{error}=await sb.from('couriers').update({is_active:false}).eq('id',id);if(error)return alert(error.message);alert('للمندوب شحنات مرتبطة، لذلك تم تعطيل الحساب مع الحفاظ على الشحنات السابقة.')}else{const{error}=await sb.from('couriers').delete().eq('id',id);if(error)return alert(error.message)}resetDeliveryForm();await Promise.all([loadDelivery(),loadAdminCouriersForOrders()])}
-async function loadCurrencies'''
-          s,n = re.subn(r"function adminCourierBranchName\(id\).*?\nasync function loadCurrencies", new_admin, s, count=1, flags=re.S)
-          if n != 1: raise SystemExit(f'admin courier management replacement count={n}')
-          admin.write_text(s,encoding='utf-8')
+          p = Path('admin-dashboard.html')
+          s = p.read_text(encoding='utf-8')
+          s = replace_once(s,
+              "adminCouriersForOrders=data||[];b.innerHTML=(data||[]).map(a=>",
+              "const{data:currencyRows,error:currencyError}=await sb.from('settings').select('key,value').like('key','courier_currency:%');if(currencyError)console.warn('Courier currency load warning:',currencyError);const currencyMap=Object.fromEntries((currencyRows||[]).map(r=>[String(r.key||'').replace('courier_currency:',''),String(r.value||'$')]));adminCouriersForOrders=(data||[]).map(a=>({...a,_courier_currency:currencyMap[String(a.id)]||'$'}));b.innerHTML=adminCouriersForOrders.map(a=>",
+              'admin load currency map')
+          s = replace_once(s, "cur=String(a.currency||'$')", "cur=String(a._courier_currency||'$')", 'admin render currency')
+          s = replace_once(s, "delCurrency.value=String(a.currency||'$')", "delCurrency.value=String(a._courier_currency||'$')", 'admin edit currency')
+          s = replace_once(s,
+              "const sb=await ensureCustomerSupabase(),editId=String(delEditId.value||'').trim(),payload=",
+              "const sb=await ensureCustomerSupabase(),editId=String(delEditId.value||'').trim(),selectedCurrency=String(delCurrency.value||'$'),payload=",
+              'admin selected currency')
+          s = replace_once(s,
+              "result=await sb.from('couriers').update(payload).eq('id',editId)}else{payload.is_active=true;result=await sb.from('couriers').insert([payload])}",
+              "result=await sb.from('couriers').update(payload).eq('id',editId).select('id').maybeSingle()}else{payload.is_active=true;result=await sb.from('couriers').insert([payload]).select('id').single()}",
+              'admin save confirmation')
+          s = replace_once(s,
+              "if(result.error)return alert(result.error.message);resetDeliveryForm();await Promise.all([loadDelivery(),loadAdminCouriersForOrders()])",
+              "if(result.error)return alert(result.error.message);const savedId=String(result.data?.id||editId||'').trim();if(!savedId)return alert('لم يتم تأكيد حفظ المندوب في Supabase.');const{error:currencySaveError}=await sb.from('settings').upsert([{key:'courier_currency:'+savedId,value:selectedCurrency}],{onConflict:'key'});if(currencySaveError)return alert('تم حفظ بيانات المندوب، لكن تعذر حفظ العملة: '+currencySaveError.message);resetDeliveryForm();await Promise.all([loadDelivery(),loadAdminCouriersForOrders()])",
+              'admin refresh after save')
+          p.write_text(s, encoding='utf-8')
 
           Path('.github/workflows/fix-courier-update-persistence.yml').unlink()
-      - name: Validate surgical scope
-        shell: bash
+          PY
+      - name: Validate scope
         run: |
-          git diff -- branch-dashboard.html admin-dashboard.html
           test "$(git diff --name-only | sort | tr '\n' ' ')" = ".github/workflows/fix-courier-update-persistence.yml admin-dashboard.html branch-dashboard.html "
           grep -F "courier_currency:" branch-dashboard.html
           grep -F "courier_currency:" admin-dashboard.html
