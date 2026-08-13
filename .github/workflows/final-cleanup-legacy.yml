@@ -23,8 +23,9 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
+          targets=('home.html','meshwar.html')
           lines=s.splitlines(True)
-          kept=[line for line in lines if 'href="home.html"' not in line and "href='home.html'" not in line]
+          kept=[line for line in lines if not any(f'href="{t}"' in line or f"href='{t}'" in line for t in targets)]
           p.write_text(''.join(kept),encoding='utf-8')
           PY
           refs='kids\.html|men\.html|women\.html|pets\.html|tech\.html|template\.html|viewer\.html|home\.html|meshwar\.html|meshwar-app\.js'
