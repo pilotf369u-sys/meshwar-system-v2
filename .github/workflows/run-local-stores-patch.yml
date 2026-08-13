@@ -1,0 +1,31 @@
+name: Run local stores integration patch
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-local-stores-patch.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Apply embedded patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -c "from pathlib import Path; t=Path('.github/workflows/add-local-stores-admin.yml').read_text(encoding='utf-8'); a=t.index(\"          python - <<'PY'\")+len(\"          python - <<'PY'\"); b=t.index(\"\n          PY\",a); code=t[a:b]; code='\\n'.join((ln[10:] if ln.startswith('          ') else ln) for ln in code.splitlines()); exec(compile(code,'local-stores-patch','exec'))"
+          rm -f .github/workflows/add-local-stores-admin.yml .github/workflows/run-local-stores-patch.yml
+      - name: Commit directly to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- admin-dashboard.html index.html .github/workflows/add-local-stores-admin.yml .github/workflows/run-local-stores-patch.yml
+          git commit -m "Add local stores admin management"
+          git push origin main
