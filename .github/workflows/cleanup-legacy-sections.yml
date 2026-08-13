@@ -14,7 +14,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 1
-      - name: Remove legacy section pages and validate references
+      - name: Remove legacy section pages and stale entry links
         shell: bash
         run: |
           set -euo pipefail
@@ -23,26 +23,34 @@ jobs:
             if [ -f "$f" ]; then rm -- "$f"; fi
           done
 
-          # Ensure no remaining HTML/JS file references any deleted page.
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          targets = ('pets.html','kids.html','men.html','women.html','tech.html')
+          lines = s.splitlines(True)
+          kept = [line for line in lines if not any(f'href="{t}"' in line or f"href='{t}'" in line for t in targets)]
+          if len(kept) == len(lines):
+              raise SystemExit('Expected stale legacy cards in index.html but none were removed')
+          p.write_text(''.join(kept), encoding='utf-8')
+          PY
+
           refs='kids\.html|men\.html|women\.html|pets\.html|tech\.html|template\.html|viewer\.html'
           if grep -RInE "$refs" --include='*.html' --include='*.js' . \
-              --exclude='cleanup-legacy-sections.yml' \
               --exclude-dir='.git'; then
             echo 'Found remaining references to deleted legacy pages.' >&2
             exit 1
           fi
 
-          # This cleanup intentionally removes only the requested legacy HTML pages.
-          # Existing JS files are preserved unless actually tied to those pages.
           rm -- '.github/workflows/cleanup-legacy-sections.yml'
 
           changed=$(git diff --name-only | sort)
-          expected=$(printf '%s\n' '.github/workflows/cleanup-legacy-sections.yml' kids.html men.html pets.html tech.html template.html viewer.html women.html | sort)
+          expected=$(printf '%s\n' '.github/workflows/cleanup-legacy-sections.yml' index.html kids.html men.html pets.html tech.html template.html viewer.html women.html | sort)
           test "$changed" = "$expected"
       - name: Commit directly to main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- kids.html men.html women.html pets.html tech.html template.html viewer.html .github/workflows/cleanup-legacy-sections.yml
+          git add -A -- index.html kids.html men.html women.html pets.html tech.html template.html viewer.html .github/workflows/cleanup-legacy-sections.yml
           git commit -m "Remove legacy store section pages"
           git push origin main
