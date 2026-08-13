@@ -1,0 +1,31 @@
+name: Fix local stores Tailwind scope
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-local-tailwind.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Fix Tailwind important mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -c "from pathlib import Path; p=Path('admin-dashboard.html'); s=p.read_text(encoding='utf-8'); old=\"tailwind.config={important:'#localStoresAdmin',corePlugins:{preflight:false}};\"; new=\"tailwind.config={important:true,corePlugins:{preflight:false}};\"; assert old in s; p.write_text(s.replace(old,new,1),encoding='utf-8')"
+          rm -f .github/workflows/fix-local-tailwind.yml
+      - name: Commit directly to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- admin-dashboard.html .github/workflows/fix-local-tailwind.yml
+          git commit -m "Fix local stores Tailwind rendering"
+          git push origin main
