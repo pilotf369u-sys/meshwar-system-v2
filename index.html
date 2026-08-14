@@ -72,6 +72,13 @@
 #meshwarStoreTabs>div{gap:14px!important;padding:10px!important}
 #meshwarVideoAd video{display:block;background:#020617}
 </style>
+
+<style id="meshwarLocalProductLayoutFix">
+#localStoreProductsGrid{grid-template-columns:repeat(1,minmax(0,1fr))!important;align-items:stretch!important;grid-auto-rows:auto!important;overflow:visible!important}
+#localStoreProductsGrid .meshwar-local-product-card{height:auto!important;max-height:none!important;min-height:0!important;overflow:hidden!important}
+@media(min-width:700px){#localStoreProductsGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(min-width:1100px){#localStoreProductsGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+</style>
 </head>
 <body>
 
@@ -438,6 +445,6 @@ loadLocalPublicStores();
 <script>/* MESHWAR_INDEX_UI_V3 */(function(){const r=document.documentElement,b=document.getElementById('meshwarThemeToggle');if(b)b.onclick=()=>{const d=!r.classList.contains('dark');r.classList.toggle('dark',d);try{localStorage.setItem('meshwar-theme',d?'dark':'light')}catch{};b.textContent=d?'☀':'☾'}})();function meshwarQuickTrack(){const a=document.getElementById('meshwarHeroTrackInput'),v=String(a?.value||'').trim();if(!v)return a?.focus();const x=[...document.querySelectorAll('input')].find(e=>e!==a&&/track|order|barcode|shipment|code|تتبع|طلب|باركود|شحنة/i.test([e.id,e.name,e.placeholder].filter(Boolean).join(' ')));if(x){x.value=v;x.dispatchEvent(new Event('input',{bubbles:true}));}if(typeof window.trackOrder==='function')return window.trackOrder(v);if(typeof window.trackShipment==='function')return window.trackShipment(v);const b=[...document.querySelectorAll('button,a')].find(e=>e.id!=='meshwarHeroTrackBtn'&&/تتبع|track/i.test(e.textContent||''));if(b){b.scrollIntoView({behavior:'smooth',block:'center'});if(b.tagName==='BUTTON')setTimeout(()=>b.click(),300)}}</script>
 
 <script>/* MESHWAR_COMPACT_SHOWCASE_UI_V6 */(function(){const intl=document.getElementById('internationalStoresSection'),loc=document.getElementById('localStoresPublic'),bi=document.getElementById('showInternationalStoresBtn'),bl=document.getElementById('showLocalStoresBtn');function paint(btn,active){if(!btn)return;btn.classList.toggle('bg-gradient-to-r',active);btn.classList.toggle('from-sky-600',active);btn.classList.toggle('to-indigo-600',active);btn.classList.toggle('border-amber-400/50',active);btn.classList.toggle('text-white',active);btn.classList.toggle('bg-white/5',!active);btn.classList.toggle('border-amber-400/25',!active);btn.classList.toggle('text-slate-100',!active);btn.setAttribute('aria-selected',active?'true':'false')}function show(k){const local=k==='local';if(intl)intl.style.display=local?'none':'';if(loc)loc.style.display=local?'':'none';paint(bi,!local);paint(bl,local)}window.showStoresTab=show;bi?.addEventListener('click',()=>show('international'));bl?.addEventListener('click',()=>show('local'));const selectedStoreId=new URLSearchParams(window.location.search).get('storeId');show(selectedStoreId?'local':'international');const v=document.getElementById('meshwarPromoVideo'),sb=document.getElementById('meshwarPromoSoundBtn'),pb=document.getElementById('meshwarPromoPlayBtn');sb?.addEventListener('click',()=>{if(!v)return;v.muted=!v.muted;sb.textContent=v.muted?'🔇 تشغيل الصوت':'🔊 كتم الصوت'});pb?.addEventListener('click',()=>{if(!v)return;v.paused?v.play().catch(()=>{}):v.pause()})})();</script>
-<script type="module" src="js/local-store-enhancements.js"></script>
+<script type="module" src="js/local-store-enhancements.js?v=20260814-1950"></script>
 </body>
 </html>
