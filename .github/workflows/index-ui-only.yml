@@ -17,55 +17,41 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
-          # Public store cards: fetch store_url and open it safely in a new tab.
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
           old="function localCountryFlag(country){const x=String(country||'').trim().toLowerCase();const m={'العراق':'🇮🇶','iraq':'🇮🇶','تركيا':'🇹🇷','turkey':'🇹🇷','türkiye':'🇹🇷','سوريا':'🇸🇾','syria':'🇸🇾','السعودية':'🇸🇦','saudi arabia':'🇸🇦','الإمارات':'🇦🇪','uae':'🇦🇪','الأردن':'🇯🇴','jordan':'🇯🇴'};return m[x]||'📍'}"
           new=old+"\nfunction openStore(storeUrl){const url=String(storeUrl||'').trim();if(!url){alert('رابط المتجر غير متوفر حالياً.');return}window.open(url,'_blank','noopener,noreferrer')}\nwindow.openStore=openStore;"
-          if old not in s: raise SystemExit('index country helper marker not found')
+          if old not in s: raise SystemExit('index helper marker not found')
           s=s.replace(old,new,1)
           old_button='<a class="local-public-open" href="index.html?storeId=${encodeURIComponent(String(s.id||\'\'))}#localStoresPublic">✨ فتح المتجر</a>'
           new_button='<button type="button" class="local-public-open" onclick="openStore(decodeURIComponent(\'${encodeURIComponent(String(s.store_url||\'\'))}\'))">✨ فتح المتجر</button>'
-          if old_button not in s: raise SystemExit('index local store button marker not found')
+          if old_button not in s: raise SystemExit('index button marker not found')
           s=s.replace(old_button,new_button,1)
           old_select="select('id,store_name,logo_url,country,governorate,store_type,specialty,default_currency,status')"
           new_select="select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status')"
-          if old_select not in s: raise SystemExit('index local stores select marker not found')
-          s=s.replace(old_select,new_select,1)
-          p.write_text(s,encoding='utf-8')
+          if old_select not in s: raise SystemExit('index select marker not found')
+          s=s.replace(old_select,new_select,1); p.write_text(s,encoding='utf-8')
 
-          # Isolated local-stores admin modal: edit and persist store_url through RPC.
-          p=Path('local-stores-admin.html')
-          s=p.read_text(encoding='utf-8')
+          p=Path('local-stores-admin.html'); s=p.read_text(encoding='utf-8')
           marker='      <input id="phone" class="rounded-xl bg-slate-800 p-3" placeholder="الهاتف">'
-          replacement=marker+'\n      <input id="storeUrl" type="url" dir="ltr" class="rounded-xl bg-slate-800 p-3 md:col-span-2" placeholder="رابط المتجر https://example.com">'
-          if marker not in s: raise SystemExit('admin phone input marker not found')
-          s=s.replace(marker,replacement,1)
-          old_reset="['editId','storeName','logoUrl','username','phone','country','governorate','password']"
-          new_reset="['editId','storeName','logoUrl','username','phone','storeUrl','country','governorate','password']"
-          if old_reset not in s: raise SystemExit('admin reset marker not found')
-          s=s.replace(old_reset,new_reset,1)
-          old_edit="$('phone').value=s.phone||'';$('country').value=s.country||'';"
-          new_edit="$('phone').value=s.phone||'';$('storeUrl').value=s.store_url||'';$('country').value=s.country||'';"
-          if old_edit not in s: raise SystemExit('admin edit marker not found')
-          s=s.replace(old_edit,new_edit,1)
-          old_rpc="p_phone:$('phone').value.trim()||null,p_password:password||null"
-          new_rpc="p_phone:$('phone').value.trim()||null,p_store_url:$('storeUrl').value.trim()||null,p_password:password||null"
-          if old_rpc not in s: raise SystemExit('admin rpc marker not found')
-          s=s.replace(old_rpc,new_rpc,1)
-          p.write_text(s,encoding='utf-8')
+          if marker not in s: raise SystemExit('admin input marker not found')
+          s=s.replace(marker,marker+'\n      <input id="storeUrl" type="url" dir="ltr" class="rounded-xl bg-slate-800 p-3 md:col-span-2" placeholder="رابط المتجر https://example.com">',1)
+          a="['editId','storeName','logoUrl','username','phone','country','governorate','password']"; b="['editId','storeName','logoUrl','username','phone','storeUrl','country','governorate','password']"
+          if a not in s: raise SystemExit('admin reset marker not found')
+          s=s.replace(a,b,1)
+          a="$('phone').value=s.phone||'';$('country').value=s.country||'';"; b="$('phone').value=s.phone||'';$('storeUrl').value=s.store_url||'';$('country').value=s.country||'';"
+          if a not in s: raise SystemExit('admin edit marker not found')
+          s=s.replace(a,b,1)
+          a="p_phone:$('phone').value.trim()||null,p_password:password||null"; b="p_phone:$('phone').value.trim()||null,p_store_url:$('storeUrl').value.trim()||null,p_password:password||null"
+          if a not in s: raise SystemExit('admin rpc marker not found')
+          s=s.replace(a,b,1); p.write_text(s,encoding='utf-8')
           PY
-      - name: Validate targeted changes
+      - name: Validate and commit
         run: |
           grep -q "p_store_url" local-stores-admin.html
           grep -q "store_url,country" index.html
           grep -q "window.open(url,'_blank','noopener,noreferrer')" index.html
-      - name: Commit integration
-        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout HEAD^ -- .github/workflows/index-ui-only.yml
-          git add index.html local-stores-admin.html .github/workflows/index-ui-only.yml
+          git add index.html local-stores-admin.html
           git commit -m "Connect local store URLs to admin and storefront"
           git push origin main
