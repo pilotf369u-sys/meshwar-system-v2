@@ -1,63 +1,22 @@
-name: Index internal store patch
+name: Index internal store validation
 on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
       - '.github/workflows/index-ui-only.yml'
 permissions:
-  contents: write
+  contents: read
 jobs:
-  patch:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-      - name: Patch internal store view
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-
-          old_panel='''      <div id="localStoresPublicGrid" class="local-stores-grid"><div class="local-empty">جاري تحميل المتاجر المحلية...</div></div>\n    </section>'''
-          new_panel='''      <div id="localStoresPublicGrid" class="local-stores-grid"><div class="local-empty">جاري تحميل المتاجر المحلية...</div></div>\n      <div id="localStoreProductsPanel" style="display:none;margin-top:22px">\n        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">\n          <div><h3 id="localStoreProductsTitle" style="margin:0;color:#fff">منتجات المتجر</h3><div id="localStoreProductsMeta" class="local-public-meta"></div></div>\n          <a href="index.html#localStoresPublic" class="local-public-open" style="width:auto;min-width:140px">← كل المتاجر</a>\n        </div>\n        <div id="localStoreProductsGrid" class="local-stores-grid"><div class="local-empty">جاري تحميل المنتجات...</div></div>\n      </div>\n    </section>'''
-          if 'id="localStoreProductsPanel"' not in s:
-              if old_panel not in s: raise SystemExit('local store panel marker not found')
-              s=s.replace(old_panel,new_panel,1)
-
-          marker="window.openStore=openStore;\n"
-          addition="""window.openStore=openStore;\nasync function loadStoreDetails(storeId){\n  const id=String(storeId||'').trim();if(!id)return;\n  const panel=document.getElementById('localStoreProductsPanel'),grid=document.getElementById('localStoreProductsGrid'),title=document.getElementById('localStoreProductsTitle'),meta=document.getElementById('localStoreProductsMeta');\n  if(panel)panel.style.display='block';\n  const store=localPublicStores.find(s=>String(s.id)===id);\n  if(title)title.textContent=store?.store_name?('منتجات '+store.store_name):'منتجات المتجر';\n  if(meta)meta.textContent=[store?.specialty||store?.store_type,store?.governorate||store?.country].filter(Boolean).join(' • ');\n  try{\n    const{data,error}=await localStoresSb.from('local_products').select('id,product_name,image_url,description,base_price,discount_price,currency,is_out_of_stock').eq('store_id',id).order('created_at',{ascending:false});\n    if(error)throw error;\n    const products=data||[];\n    if(grid)grid.innerHTML=products.map(p=>{const price=p.discount_price??p.base_price??'';const old=(p.discount_price!=null&&p.base_price!=null)?`<div style=\\"font-size:10px;color:#94a3b8;text-decoration:line-through\\">${localEsc(p.base_price)} ${localEsc(p.currency||store?.default_currency||'')}</div>`:'';return `<article class=\\"local-public-card\\"><img class=\\"local-public-logo\\" src=\\"${localEsc(p.image_url||localPlaceholder)}\\" onerror=\\"this.onerror=null;this.src='${localEsc(localPlaceholder)}'\\" alt=\\"${localEsc(p.product_name||'منتج')}\\"><div class=\\"local-public-name\\">${localEsc(p.product_name||'منتج')}</div><div class=\\"local-public-meta\\">${localEsc(p.description||'')}</div><div class=\\"local-public-chip\\">${p.is_out_of_stock?'غير متوفر':`${localEsc(price)} ${localEsc(p.currency||store?.default_currency||'')}`}</div>${old}</article>`}).join('')||'<div class=\\"local-empty\\">لا توجد منتجات مضافة لهذا المتجر حالياً.</div>';\n  }catch(e){console.error('Local store products load error:',e);if(grid)grid.innerHTML='<div class=\\"local-empty\\">تعذر تحميل منتجات المتجر حالياً.</div>'}\n}\nwindow.loadStoreDetails=loadStoreDetails;\n"""
-          if 'async function loadStoreDetails(storeId)' not in s:
-              if marker not in s: raise SystemExit('openStore export marker not found')
-              s=s.replace(marker,addition,1)
-
-          old_load="async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false});if(error)throw error;localPublicStores=data||[];renderLocalSpecialtyFilters();renderLocalPublicStores()}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class=\"local-empty\">تعذر تحميل المتاجر المحلية حالياً.</div>'}}"
-          new_load="async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false});if(error)throw error;localPublicStores=data||[];renderLocalSpecialtyFilters();renderLocalPublicStores();const storeId=new URLSearchParams(window.location.search).get('storeId');if(storeId){await loadStoreDetails(storeId);document.getElementById('localStoresPublic')?.scrollIntoView({behavior:'smooth',block:'start'})}}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class=\"local-empty\">تعذر تحميل المتاجر المحلية حالياً.</div>'}}"
-          if old_load in s:s=s.replace(old_load,new_load,1)
-          elif 'await loadStoreDetails(storeId)' not in s:raise SystemExit('loadLocalPublicStores marker not found')
-
-          old_show="show('international');const v=document.getElementById('meshwarPromoVideo')"
-          new_show="const selectedStoreId=new URLSearchParams(window.location.search).get('storeId');show(selectedStoreId?'local':'international');const v=document.getElementById('meshwarPromoVideo')"
-          if old_show in s:s=s.replace(old_show,new_show,1)
-          elif "show(selectedStoreId?'local':'international')" not in s:raise SystemExit('store tab init marker not found')
-
-          p.write_text(s,encoding='utf-8')
-          PY
-      - name: Validate and publish
+      - name: Validate local store details routing
         run: |
           grep -Fq 'async function loadStoreDetails(storeId)' index.html
           grep -Fq ".from('local_products')" index.html
           grep -Fq ".eq('store_id',id)" index.html
           grep -Fq "show(selectedStoreId?'local':'international')" index.html
           grep -Fq 'id="localStoreProductsPanel"' index.html
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          if git diff --cached --quiet; then
-            echo 'No index changes needed'
-          else
-            git commit -m "Show selected local store products by storeId"
-            git push origin main
-          fi
+          grep -Fq "new URLSearchParams(window.location.search).get('storeId')" index.html
