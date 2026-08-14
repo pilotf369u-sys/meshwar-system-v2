@@ -1,0 +1,68 @@
+name: Local product final polish
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/local-product-final-polish.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply product image discount and ceil fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('js/local-store-enhancements.js')
+          s=p.read_text()
+          replacements=[
+            ('object-fit:cover!important;','object-fit:contain!important;'),
+            ('background:#0f172a!important;','background:linear-gradient(135deg,#f8fafc,#e2e8f0)!important;\n  padding:10px!important;\n  box-sizing:border-box!important;'),
+            ('.meshwar-local-product-discount{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;flex-wrap:wrap!important;margin-bottom:7px!important;}','.meshwar-local-product-discount{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:7px!important;margin-bottom:12px!important;padding-bottom:9px!important;border-bottom:1px solid rgba(148,163,184,.16)!important;}'),
+            ('.meshwar-local-product-old{color:#94a3b8!important;font-size:12px!important;text-decoration:line-through!important;text-decoration-thickness:2px!important;text-decoration-color:#fb7185!important;}','.meshwar-local-product-old{display:block!important;color:#94a3b8!important;font-size:12px!important;line-height:1.6!important;margin:0 0 2px!important;text-decoration:line-through!important;text-decoration-thickness:2px!important;text-decoration-color:#fb7185!important;}'),
+            ('return Math.round(n/(1-commissionRate(store)/100))','return Math.ceil(n/(1-commissionRate(store)/100))'),
+            ("return targetCurrency(store)==='USD'?Math.round(n):Math.round(n*exchangeRate(store))","return targetCurrency(store)==='USD'?Math.ceil(n):Math.ceil(n*exchangeRate(store))"),
+            ("return Number.isFinite(n)?Math.round(n).toLocaleString('en-US'):'---'","return Number.isFinite(n)?Math.ceil(n).toLocaleString('en-US'):'---'")
+          ]
+          for old,new in replacements:
+            if old not in s:
+              raise SystemExit('local enhancement pattern not found: '+old[:80])
+            s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('vendor-dashboard.html')
+          s=p.read_text()
+          old="customerUsd=Math.round(vendorUsd/(1-(Number.isFinite(commission)&&commission>=0&&commission<100?commission:10)/100)),converted=(String(target||'').toUpperCase()==='USD'?customerUsd:Math.round(customerUsd*rate));"
+          new="customerUsd=Math.ceil(vendorUsd/(1-(Number.isFinite(commission)&&commission>=0&&commission<100?commission:10)/100)),converted=(String(target||'').toUpperCase()==='USD'?customerUsd:Math.ceil(customerUsd*rate));"
+          if old not in s:
+            raise SystemExit('vendor rounding expression not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('index.html')
+          s=p.read_text()
+          old='js/local-store-enhancements.js?v=20260814-2020'
+          new='js/local-store-enhancements.js?v=20260814-2030'
+          if old not in s:
+            raise SystemExit('cache version tag not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Validate
+        run: |
+          grep -F 'object-fit:contain!important' js/local-store-enhancements.js
+          grep -F 'margin-bottom:12px!important' js/local-store-enhancements.js
+          grep -F 'return Math.ceil(n/(1-commissionRate(store)/100))' js/local-store-enhancements.js
+          grep -F 'customerUsd=Math.ceil' vendor-dashboard.html
+          grep -F 'local-store-enhancements.js?v=20260814-2030' index.html
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/local-store-enhancements.js vendor-dashboard.html index.html
+          git commit -m 'Polish local product images discounts and ceil pricing'
+          git push origin main
