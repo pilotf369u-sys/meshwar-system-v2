@@ -1,20 +1,43 @@
-name: Index UI validation
+name: Index store button patch
 on:
   push:
     branches: [main]
     paths:
-      - 'index.html'
       - '.github/workflows/index-ui-only.yml'
 permissions:
-  contents: read
+  contents: write
 jobs:
-  validate:
+  patch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate index storefront wiring
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Patch store open button
         run: |
-          grep -q "function openStore(storeUrl,storeId)" index.html
-          grep -q "window.open(url,'_blank','noopener,noreferrer')" index.html
-          grep -q "index.html?storeId=" index.html
-          grep -q "store_url" index.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="function openStore(storeUrl,storeId){const url=String(storeUrl||'').trim();if(url){window.open(url,'_blank','noopener,noreferrer');return}const id=String(storeId||'').trim();if(id){window.location.href='index.html?storeId='+encodeURIComponent(id)+'#localStoresPublic';return}alert('تعذر فتح المتجر حالياً.')}"
+          new="function openStore(storeUrl,storeId){console.log('Opening store:',storeUrl,storeId);const url=String(storeUrl||'').trim();if(url){window.open(url,'_blank');return}const id=String(storeId||'').trim();if(id){window.location.href='index.html?storeId='+id;return}alert('تعذر فتح المتجر حالياً.')}"
+          if old not in s: raise SystemExit('openStore marker not found')
+          s=s.replace(old,new,1)
+          old_btn="<button type=\"button\" class=\"local-public-open\" onclick=\"openStore(decodeURIComponent('${encodeURIComponent(String(s.store_url||''))}'),decodeURIComponent('${encodeURIComponent(String(s.id||''))}'))\">✨ فتح المتجر</button>"
+          new_btn="<button type=\"button\" class=\"local-public-open\" style=\"pointer-events:auto;cursor:pointer\" onclick=\"openStore('${String(s.store_url||'').replace(/'/g,\"\\'\")}', '${String(s.id||'').replace(/'/g,\"\\'\")}')\">✨ فتح المتجر</button>"
+          if old_btn not in s: raise SystemExit('store button marker not found')
+          s=s.replace(old_btn,new_btn,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate and publish
+        run: |
+          grep -Fq "console.log('Opening store:',storeUrl,storeId)" index.html
+          grep -Fq 'type="button" class="local-public-open"' index.html
+          grep -Fq 'pointer-events:auto' index.html
+          grep -Fq "onclick=\"openStore('" index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix store open button click handling"
+          git push origin main
