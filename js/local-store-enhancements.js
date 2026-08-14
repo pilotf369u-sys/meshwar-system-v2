@@ -36,11 +36,13 @@ style.textContent=`
   width:100%!important;
   height:230px!important;
   max-width:none!important;
-  object-fit:cover!important;
+  object-fit:contain!important;
   border-radius:0!important;
   margin:0!important;
   flex:0 0 auto!important;
-  background:#0f172a!important;
+  background:linear-gradient(135deg,#f8fafc,#e2e8f0)!important;
+  padding:10px!important;
+  box-sizing:border-box!important;
 }
 .meshwar-local-product-body{
   display:flex!important;
@@ -52,8 +54,8 @@ style.textContent=`
 .meshwar-local-product-name{font-size:17px!important;font-weight:900!important;color:#fff!important;margin:0 0 5px!important;}
 .meshwar-local-product-desc{font-size:12px!important;color:#94a3b8!important;line-height:1.7!important;min-height:20px!important;}
 .meshwar-local-product-price{margin-top:12px!important;padding:12px!important;border-radius:12px!important;background:rgba(14,165,233,.10)!important;border:1px solid rgba(56,189,248,.24)!important;}
-.meshwar-local-product-discount{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;flex-wrap:wrap!important;margin-bottom:7px!important;}
-.meshwar-local-product-old{color:#94a3b8!important;font-size:12px!important;text-decoration:line-through!important;text-decoration-thickness:2px!important;text-decoration-color:#fb7185!important;}
+.meshwar-local-product-discount{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:7px!important;margin-bottom:12px!important;padding-bottom:9px!important;border-bottom:1px solid rgba(148,163,184,.16)!important;}
+.meshwar-local-product-old{display:block!important;color:#94a3b8!important;font-size:12px!important;line-height:1.6!important;margin:0 0 2px!important;text-decoration:line-through!important;text-decoration-thickness:2px!important;text-decoration-color:#fb7185!important;}
 .meshwar-local-product-save{display:inline-flex!important;align-items:center!important;border-radius:999px!important;padding:3px 8px!important;background:rgba(244,63,94,.14)!important;border:1px solid rgba(251,113,133,.28)!important;color:#fda4af!important;font-size:10px!important;font-weight:900!important;}
 .meshwar-local-product-price .usd{font-size:21px!important;font-weight:900!important;color:#67e8f9!important;line-height:1.35!important;}
 .meshwar-local-product-price .local{margin-top:3px!important;font-size:17px!important;font-weight:900!important;color:#fbbf24!important;line-height:1.35!important;}
@@ -84,13 +86,13 @@ document.head.appendChild(style);
 
 function vendorPriceUsd(product){const n=Number(product?.discount_price??product?.base_price);return Number.isFinite(n)&&n>=0?n:null}
 function commissionRate(store=currentStore){const n=Number(store?.commission_rate);return Number.isFinite(n)&&n>=0&&n<100?n:10}
-function priceWithCommission(vendorUsd,store=currentStore){const n=Number(vendorUsd);if(!Number.isFinite(n)||n<0)return null;return Math.round(n/(1-commissionRate(store)/100))}
+function priceWithCommission(vendorUsd,store=currentStore){const n=Number(vendorUsd);if(!Number.isFinite(n)||n<0)return null;return Math.ceil(n/(1-commissionRate(store)/100))}
 function customerPriceUsd(product,store=currentStore){return priceWithCommission(vendorPriceUsd(product),store)}
 function exchangeRate(store=currentStore){const n=Number(store?.exchange_rate??1);return Number.isFinite(n)&&n>0?n:1}
 function targetCurrency(store=currentStore){return String(store?.exchange_target_currency||store?.default_currency||'IQD').trim().toUpperCase()||'IQD'}
-function localFromUsd(usd,store=currentStore){const n=Number(usd);if(!Number.isFinite(n))return null;return targetCurrency(store)==='USD'?Math.round(n):Math.round(n*exchangeRate(store))}
+function localFromUsd(usd,store=currentStore){const n=Number(usd);if(!Number.isFinite(n))return null;return targetCurrency(store)==='USD'?Math.ceil(n):Math.ceil(n*exchangeRate(store))}
 function customerLocalPrice(product,store=currentStore){return localFromUsd(customerPriceUsd(product,store),store)}
-function formatInt(v){const n=Number(v);return Number.isFinite(n)?Math.round(n).toLocaleString('en-US'):'---'}
+function formatInt(v){const n=Number(v);return Number.isFinite(n)?Math.ceil(n).toLocaleString('en-US'):'---'}
 
 async function loadStoreContext(id){
   const storeId=String(id||'').trim();
