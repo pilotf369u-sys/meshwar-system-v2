@@ -27,7 +27,7 @@ const vendorUsd=p=>{const n=Number(p?.discount_price??p?.base_price);return Numb
 const customerUsd=(p,s)=>{const v=vendorUsd(p);return v===null?null:Math.ceil(v/(1-rateOf(s)/100))};
 const localPrice=(usd,s)=>usd===null?null:(curOf(s)==='USD'?Math.ceil(usd):Math.ceil(usd*fxOf(s)));
 const oldCustomerUsd=(p,s)=>p.discount_price!=null&&p.base_price!=null&&Number(p.discount_price)<Number(p.base_price)?Math.ceil(Number(p.base_price)/(1-rateOf(s)/100)):null;
-const moneyLabel=(value,currency)=>`${fmt(value)} ${String(currency||'').toUpperCase()}`;
+const moneyLabel=(value,currency)=>`${String(currency||'').toUpperCase()} ${fmt(value)}`;
 
 async function createOrder(product,store){
   const customerId=String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();
