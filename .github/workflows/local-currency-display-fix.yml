@@ -1,0 +1,61 @@
+name: Local currency display fix
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/local-currency-display-fix.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fix vendor currency direction and index script order
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('index.html')
+          s=p.read_text()
+          old='<script type="module" src="js/local-store-card-v2.js?v=20260814-2045"></script>'
+          new='<script type="module" src="js/local-store-card-v2.js?v=20260814-2055"></script>'
+          if old not in s:
+              raise SystemExit('local store card v2 cache tag not found')
+          s=s.replace(old,new,1)
+          duplicate='<script type="module" src="js/local-store-enhancements.js"></script>\n'
+          if duplicate in s:
+              s=s.replace(duplicate,'',1)
+          p.write_text(s)
+
+          p=Path('vendor-dashboard.html')
+          s=p.read_text()
+          old='''<td><div class="font-bold">${money(vendorUsd,'USD')}</div><div class="text-xs text-sky-300">سعر العميل: ${money(customerUsd,'USD')} / ${money(converted,target)}</div>${p.discount_price!=null?`<div class="vendor-muted text-xs text-slate-500 line-through">${money(p.base_price,'USD')}</div>`:''}</td>'''
+          new='''<td><div class="font-bold"><span dir="ltr" style="unicode-bidi:isolate;display:inline-block">${money(vendorUsd,'USD')}</span></div><div class="text-xs text-sky-300">سعر العميل: <span dir="ltr" style="unicode-bidi:isolate;display:inline-block">${money(customerUsd,'USD')} / ${money(converted,target)}</span></div>${p.discount_price!=null?`<div class="vendor-muted text-xs text-slate-500 line-through"><span dir="ltr" style="unicode-bidi:isolate;display:inline-block">${money(p.base_price,'USD')}</span></div>`:''}</td>'''
+          if old not in s:
+              raise SystemExit('vendor product price cell not found')
+          s=s.replace(old,new,1)
+
+          old="function renderExchangePreview(){const rate=Number($('exchangeRate').value||vendorStore?.exchange_rate||1),base=$('exchangeBase').value||'USD',target=$('exchangeTarget').value||'IQD';$('exchangePreview').textContent=`1 ${base} = ${rate.toLocaleString('en-US',{maximumFractionDigits:6})} ${target}`}"
+          new="function renderExchangePreview(){const rate=Number($('exchangeRate').value||vendorStore?.exchange_rate||1),base=$('exchangeBase').value||'USD',target=$('exchangeTarget').value||'IQD';const el=$('exchangePreview');el.dir='ltr';el.style.unicodeBidi='isolate';el.textContent=`1 ${base} = ${rate.toLocaleString('en-US',{maximumFractionDigits:6})} ${target}`}"
+          if old not in s:
+              raise SystemExit('exchange preview function not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Validate
+        run: |
+          grep -F 'local-store-card-v2.js?v=20260814-2055' index.html
+          ! grep -F '<script type="module" src="js/local-store-enhancements.js"></script>' index.html
+          grep -F 'unicode-bidi:isolate;display:inline-block' vendor-dashboard.html
+          grep -F "el.dir='ltr'" vendor-dashboard.html
+          grep -F 'Math.ceil(vendorUsd/' vendor-dashboard.html
+      - name: Commit fixes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html vendor-dashboard.html
+          git commit -m 'Fix local currency display and script ordering'
+          git push origin main
