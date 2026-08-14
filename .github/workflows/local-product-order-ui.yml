@@ -1,65 +1,27 @@
-name: Local product ordering UI
+name: Install local product enhancements
 on:
   push:
-    branches: [main]
-    paths: ['.github/workflows/local-product-order-ui.yml']
+    branches:
+      - main
+    paths:
+      - js/local-store-enhancements.js
+      - .github/workflows/local-product-order-ui.yml
 permissions:
   contents: write
 jobs:
-  patch:
+  install:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {ref: main}
-      - name: Patch local product cards and ordering
+        with:
+          ref: main
+      - name: Inject enhancement module
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('index.html'); s=p.read_text()
-          marker='</style>\n</head>'
-          css='''\n/* LOCAL_PRODUCT_CATALOG_V2 */\n.local-product-card{overflow:hidden!important;padding:0!important;text-align:right!important;min-height:0!important}\n.local-product-image{display:block;width:100%;height:220px;object-fit:cover;border-radius:16px 16px 0 0;background:#0f172a}\n.local-product-body{padding:14px}\n.local-product-card .local-public-name{font-size:16px!important;margin:0 0 6px}\n.local-product-card .local-public-meta{min-height:20px;line-height:1.6}\n.local-product-price{margin-top:10px;font-size:15px;font-weight:900;color:#67e8f9}\n.local-product-order{display:flex;width:100%;margin-top:12px;padding:10px 12px;align-items:center;justify-content:center;border-radius:12px;border:1px solid rgba(251,191,36,.55);background:linear-gradient(90deg,#0284c7,#4f46e5);color:#fff;font-weight:900;cursor:pointer}\n.local-product-order:disabled{opacity:.45;cursor:not-allowed}\n@media(max-width:640px){.local-product-image{height:180px}}\n'''
-          if marker not in s: raise SystemExit('style marker missing')
-          s=s.replace(marker,css+marker,1)
-          old="if(grid)grid.innerHTML=products.map(p=>{const price=p.discount_price??p.base_price??'';const old=(p.discount_price!=null&&p.base_price!=null)?`<div style=\\\"font-size:10px;color:#94a3b8;text-decoration:line-through\\\">${localEsc(p.base_price)} ${localEsc(p.currency||store?.default_currency||'')}</div>`:'';return `<article class=\\\"local-public-card\\\"><img class=\\\"local-public-logo\\\" src=\\\"${localEsc(p.image_url||localPlaceholder)}\\\" onerror=\\\"this.onerror=null;this.src='${localEsc(localPlaceholder)}'\\\" alt=\\\"${localEsc(p.product_name||'منتج')}\\\"><div class=\\\"local-public-name\\\">${localEsc(p.product_name||'منتج')}</div><div class=\\\"local-public-meta\\\">${localEsc(p.description||'')}</div><div class=\\\"local-public-chip\\\">${p.is_out_of_stock?'غير متوفر':`${localEsc(price)} ${localEsc(p.currency||store?.default_currency||'')}`}</div>${old}</article>`}).join('')||'<div class=\\\"local-empty\\\">لا توجد منتجات مضافة لهذا المتجر حالياً.</div>';"
-          new="if(grid)grid.innerHTML=products.map(p=>{const price=p.discount_price??p.base_price??'';const old=(p.discount_price!=null&&p.base_price!=null)?`<div style=\\\"font-size:11px;color:#94a3b8;text-decoration:line-through\\\">${localEsc(p.base_price)} ${localEsc(p.currency||store?.default_currency||'')}</div>`:'';return `<article class=\\\"local-public-card local-product-card\\\"><img class=\\\"local-product-image\\\" src=\\\"${localEsc(p.image_url||localPlaceholder)}\\\" onerror=\\\"this.onerror=null;this.src='${localEsc(localPlaceholder)}'\\\" alt=\\\"${localEsc(p.product_name||'منتج')}\\\"><div class=\\\"local-product-body\\\"><div class=\\\"local-public-name\\\">${localEsc(p.product_name||'منتج')}</div><div class=\\\"local-public-meta\\\">${localEsc(p.description||'')}</div><div class=\\\"local-product-price\\\">${p.is_out_of_stock?'غير متوفر':`${localEsc(price)} ${localEsc(p.currency||store?.default_currency||'')}`}</div>${old}<button type=\\\"button\\\" class=\\\"local-product-order\\\" ${p.is_out_of_stock?'disabled':''} onclick=\\\"orderLocalProduct('${localEsc(id)}','${localEsc(p.id)}')\\\">${p.is_out_of_stock?'غير متوفر حالياً':'🛒 اطلب الآن'}</button></div></article>`}).join('')||'<div class=\\\"local-empty\\\">لا توجد منتجات مضافة لهذا المتجر حالياً.</div>';"
-          if old not in s: raise SystemExit('product renderer not found')
-          s=s.replace(old,new,1)
-          anchor='window.loadStoreDetails=loadStoreDetails;'
-          fn=r'''async function orderLocalProduct(storeId,productId){
-  const customerId=String(window.currentHomeCustomer?.id||localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();
-  if(!customerId){alert('الرجاء تسجيل الدخول أولاً لإرسال الطلب.');window.location.href='login.html';return}
-  try{
-    const [{data:product,error:pe},{data:store,error:se},{data:customer,error:ce}]=await Promise.all([
-      localStoresSb.from('local_products').select('id,product_name,image_url,description,base_price,discount_price,currency').eq('id',productId).eq('store_id',storeId).single(),
-      localStoresSb.from('local_stores').select('id,store_name').eq('id',storeId).single(),
-      localStoresSb.from('customers').select('id,name,phone').eq('id',customerId).single()
-    ]);
-    if(pe)throw pe;if(se)throw se;if(ce)throw ce;
-    const orderCode=await window.generateMainOrderCode(localStoresSb);
-    const price=product.discount_price??product.base_price??null;
-    const payload={order_code:orderCode,customer_id:customer.id,customer_name:customer.name||'',customer_phone:customer.phone||'',details:{source:'local_store',store_id:String(storeId),store_name:store.store_name||'',product_id:String(productId),product_name:product.product_name||'',price:price,currency:product.currency||'',quantity:1},order_url:'index.html?storeId='+encodeURIComponent(String(storeId)),image_url:product.image_url||null,status:'انتظار رد الموظف'};
-    const{error}=await localStoresSb.from('orders').insert([payload]);if(error)throw error;
-    alert('تم إرسال طلب '+(product.product_name||'المنتج')+' إلى إدارة الطلبات بنجاح. رقم الطلب: '+orderCode);
-    window.location.href='dashboard.html?customerId='+encodeURIComponent(String(customer.id));
-  }catch(e){console.error('Local product order error:',e);alert('تعذر إرسال الطلب: '+(e.message||e))}
-}
-window.orderLocalProduct=orderLocalProduct;
-'''
-          if anchor not in s: raise SystemExit('loadStoreDetails anchor missing')
-          s=s.replace(anchor,anchor+'\n'+fn,1)
-          # expose existing generator/current customer to module script safely
-          s=s.replace('window.submitOrder = submitOrder;','window.generateMainOrderCode = generateMainOrderCode;\n        window.currentHomeCustomer = currentHomeCustomer;\n        window.submitOrder = submitOrder;',1)
-          p.write_text(s)
-          PY
-      - name: Validate
-        run: |
-          grep -F 'local-product-image' index.html
-          grep -F 'orderLocalProduct' index.html
-          grep -F "from('orders').insert" index.html
+          python3 -c "from pathlib import Path; p=Path('index.html'); s=p.read_text(); tag='<script type=\"module\" src=\"js/local-store-enhancements.js\"></script>'; s=s if tag in s else s.replace('</body>',tag+'\\n</body>',1); p.write_text(s)"
       - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Improve local product cards and add order flow'
+          git diff --cached --quiet || git commit -m 'Enable local product ordering enhancements'
           git push origin main
