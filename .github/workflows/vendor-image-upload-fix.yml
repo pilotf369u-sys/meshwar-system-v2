@@ -1,29 +1,30 @@
 name: Vendor image upload fix
+
 on:
   push:
-    branches: [main]
-    paths: ['.github/workflows/vendor-image-upload-fix.yml']
+    branches:
+      - main
+
 permissions:
   contents: write
+
 jobs:
   patch:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
       - name: Patch vendor dashboard
+        shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('vendor-dashboard.html')
           s=p.read_text()
-          old='accept="image/*"'
-          new='accept="image/jpeg, image/png, image/webp"'
-          if old not in s:
-              raise SystemExit('image accept field not found')
-          s=s.replace(old,new,1)
-          old_upload="""async function uploadProductImage(file){
+          s=s.replace('accept="image/*"','accept="image/jpeg, image/png, image/webp"',1)
+          old="""async function uploadProductImage(file){
   if(!file||!vendorStore?.id)return null;
   const ext=(String(file.name||'').split('.').pop()||'jpg').replace(/[^a-zA-Z0-9]/g,'').toLowerCase()||'jpg';
   const name=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2))+'.'+ext;
@@ -34,7 +35,7 @@ jobs:
   if(!data?.publicUrl)throw new Error('تعذر الحصول على رابط الصورة بعد الرفع.');
   return data.publicUrl;
 }"""
-          new_upload="""async function uploadProductImage(file){
+          new="""async function uploadProductImage(file){
   if(!file||!vendorStore?.id)throw new Error('تعذر تحديد المتجر أو ملف الصورة.');
   const allowed=['image/jpeg','image/png','image/webp'];
   if(!allowed.includes(file.type))throw new Error('صيغة الصورة غير مدعومة. استخدم JPG أو PNG أو WebP.');
@@ -52,24 +53,22 @@ jobs:
     throw new Error('فشل رفع الصورة إلى product-images: '+(error?.message||error));
   }
 }"""
-          if old_upload not in s:
+          if old not in s and 'Product image upload error:' not in s:
               raise SystemExit('uploadProductImage block not found')
-          s=s.replace(old_upload,new_upload,1)
-          old_catch="catch(e){console.error('Product save error:',e);showNotice('تعذر حفظ المنتج: '+(e.message||e),true)}}"
-          new_catch="catch(e){console.error('Product save error:',e);const message=e?.message||String(e);showNotice('تعذر حفظ المنتج: '+message,true);alert(message)}}"
-          if old_catch not in s:
-              raise SystemExit('saveProduct catch not found')
-          s=s.replace(old_catch,new_catch,1)
+          if old in s:s=s.replace(old,new,1)
+          oldcatch="catch(e){console.error('Product save error:',e);showNotice('تعذر حفظ المنتج: '+(e.message||e),true)}}"
+          newcatch="catch(e){console.error('Product save error:',e);const message=e?.message||String(e);showNotice('تعذر حفظ المنتج: '+message,true);alert(message)}}"
+          if oldcatch in s:s=s.replace(oldcatch,newcatch,1)
           p.write_text(s)
           PY
-      - name: Validate patch
+      - name: Validate
         run: |
           grep -F 'accept="image/jpeg, image/png, image/webp"' vendor-dashboard.html
-          grep -F "Product image upload error:" vendor-dashboard.html
+          grep -F 'Product image upload error:' vendor-dashboard.html
           grep -F 'alert(message)' vendor-dashboard.html
-          grep -F "PRODUCT_IMAGES_BUCKET='product-images'" vendor-dashboard.html
-      - name: Commit patch
+      - name: Commit
         run: |
+          if git diff --quiet -- vendor-dashboard.html; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add vendor-dashboard.html
