@@ -1,0 +1,121 @@
+name: Repair local product card
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/repair-local-product-card.yml']
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Restore full product card structure
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('js/local-store-enhancements.js')
+          s=p.read_text()
+
+          old='''.meshwar-local-product-image{
+  display:block!important;
+  width:100%!important;
+  height:230px!important;
+  max-width:none!important;
+  object-fit:contain!important;
+  border-radius:0!important;
+  margin:0!important;
+  flex:0 0 auto!important;
+  background:linear-gradient(135deg,#f8fafc,#e2e8f0)!important;
+  padding:10px!important;
+  box-sizing:border-box!important;
+}'''
+          new='''.meshwar-local-product-img-wrapper{
+  width:100%!important;
+  height:200px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 200px!important;
+  overflow:hidden!important;
+  background:rgba(255,255,255,.03)!important;
+  border-radius:18px 18px 0 0!important;
+  padding:10px!important;
+  box-sizing:border-box!important;
+}
+.meshwar-local-product-img-wrapper .meshwar-local-product-image{
+  display:block!important;
+  width:auto!important;
+  height:auto!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+  border-radius:0!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}'''
+          if old not in s: raise SystemExit('old product image CSS not found')
+          s=s.replace(old,new,1)
+
+          s=s.replace('@media(max-width:640px){.meshwar-local-product-image{height:190px!important;}.meshwar-local-product-body{min-height:200px!important;}}',
+                      '@media(max-width:640px){.meshwar-local-product-img-wrapper{height:180px!important;flex-basis:180px!important;}.meshwar-local-product-body{min-height:220px!important;}}',1)
+
+          old_markup='''    return `<article class="meshwar-local-product-card">\n      <img class="meshwar-local-product-image" src="${esc(p.image_url||placeholder)}" onerror="this.onerror=null;this.src='${esc(placeholder)}'" alt="${esc(p.product_name||'منتج')}">\n      <div class="meshwar-local-product-body">'''
+          new_markup='''    return `<article class="meshwar-local-product-card">\n      <div class="meshwar-local-product-img-wrapper"><img class="meshwar-local-product-image" src="${esc(p.image_url||placeholder)}" onerror="this.onerror=null;this.src='${esc(placeholder)}'" alt="${esc(p.product_name||'منتج')}"></div>\n      <div class="meshwar-local-product-body">'''
+          if old_markup not in s: raise SystemExit('product markup image block not found')
+          s=s.replace(old_markup,new_markup,1)
+
+          old_order='''  margin-top:auto!important;'''
+          new_order='''  margin-top:16px!important;'''
+          if old_order not in s: raise SystemExit('order button margin not found')
+          s=s.replace(old_order,new_order,1)
+
+          old_init="""const q=new URLSearchParams(location.search).get('storeId');
+if(q){
+  currentStoreId=q;
+  try{await loadStoreContext(q);setTimeout(renderEnhancedProductCards,500)}catch(e){console.error('Initial local store pricing load error:',e)}
+}
+"""
+          new_init="""const q=new URLSearchParams(location.search).get('storeId');
+if(q){
+  currentStoreId=q;
+  try{
+    await loadStoreContext(q);
+    requestAnimationFrame(()=>renderEnhancedProductCards());
+    setTimeout(renderEnhancedProductCards,300);
+    window.addEventListener('load',()=>setTimeout(renderEnhancedProductCards,50),{once:true});
+  }catch(e){console.error('Initial local store pricing load error:',e)}
+}
+"""
+          if old_init not in s: raise SystemExit('initial product render block not found')
+          s=s.replace(old_init,new_init,1)
+          p.write_text(s)
+
+          p=Path('index.html')
+          s=p.read_text()
+          old='js/local-store-enhancements.js?v=20260814-2030'
+          new='js/local-store-enhancements.js?v=20260814-2045'
+          if old not in s: raise SystemExit('cache tag 2030 not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Validate repair
+        run: |
+          node --check js/local-store-enhancements.js
+          grep -F 'meshwar-local-product-img-wrapper' js/local-store-enhancements.js
+          grep -F 'object-fit:contain!important' js/local-store-enhancements.js
+          grep -F '🛒 اطلب الآن' js/local-store-enhancements.js
+          grep -F 'customer_price_local' js/local-store-enhancements.js
+          grep -F 'local-store-enhancements.js?v=20260814-2045' index.html
+      - name: Commit repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/local-store-enhancements.js index.html
+          git commit -m 'Restore full local product card layout'
+          git push origin main
