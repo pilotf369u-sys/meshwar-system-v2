@@ -1,0 +1,55 @@
+name: Final local pricing UI fix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/final-local-price-ui-fix.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch index cache and vendor product pricing display
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('index.html')
+          s=p.read_text()
+          old='<script type="module" src="js/local-store-enhancements.js"></script>'
+          new='<script type="module" src="js/local-store-enhancements.js?v=20260814-1950"></script>'
+          if old not in s: raise SystemExit('local enhancement script tag not found')
+          s=s.replace(old,new,1)
+          css='''\n<style id="meshwarLocalProductLayoutFix">\n#localStoreProductsGrid{grid-template-columns:repeat(1,minmax(0,1fr))!important;align-items:stretch!important;grid-auto-rows:auto!important;overflow:visible!important}\n#localStoreProductsGrid .meshwar-local-product-card{height:auto!important;max-height:none!important;min-height:0!important;overflow:hidden!important}\n@media(min-width:700px){#localStoreProductsGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}\n@media(min-width:1100px){#localStoreProductsGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}\n</style>\n'''
+          marker='</head>'
+          if 'meshwarLocalProductLayoutFix' not in s:
+              s=s.replace(marker,css+marker,1)
+          p.write_text(s)
+
+          p=Path('vendor-dashboard.html')
+          s=p.read_text()
+          old="price=Number(p.discount_price??p.base_price??0),converted=price*rate;"
+          new="vendorUsd=Number(p.discount_price??p.base_price??0),commission=Number(vendorStore?.commission_rate??10),customerUsd=Math.ceil(vendorUsd/(1-(Number.isFinite(commission)&&commission>=0&&commission<100?commission:10)/100)),converted=(String(target||'').toUpperCase()==='USD'?customerUsd:Math.ceil(customerUsd*rate));"
+          if old not in s: raise SystemExit('vendor pricing calculation not found')
+          s=s.replace(old,new,1)
+          s=s.replace("${money(price,p.currency)}","${money(vendorUsd,'USD')}",1)
+          s=s.replace("≈ ${money(converted,target)}","سعر العميل: ${money(customerUsd,'USD')} / ${money(converted,target)}",1)
+          s=s.replace("${money(p.base_price,p.currency)}","${money(p.base_price,'USD')}",1)
+          p.write_text(s)
+          PY
+      - name: Validate
+        run: |
+          grep -F 'local-store-enhancements.js?v=20260814-1950' index.html
+          grep -F 'meshwarLocalProductLayoutFix' index.html
+          grep -F "money(vendorUsd,'USD')" vendor-dashboard.html
+          grep -F 'customerUsd=Math.ceil' vendor-dashboard.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html vendor-dashboard.html
+          git commit -m 'Finalize local product price display and card layout'
+          git push origin main
