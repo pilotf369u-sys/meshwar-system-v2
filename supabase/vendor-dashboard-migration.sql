@@ -25,8 +25,9 @@ alter table public.local_products
 create index if not exists idx_local_products_store_stock_qty
   on public.local_products(store_id, stock_quantity);
 
--- Vendor login RPC: prevents the dashboard from selecting password_hash directly.
--- Supports pgcrypto hashes, SHA-256 hex, and legacy plain-text values for compatibility.
+-- Vendor login RPC
+-- Identity can be either username or phone.
+-- Password compatibility: plain text first, then pgcrypto/bcrypt via crypt().
 create or replace function public.vendor_login(
   p_identity text,
   p_password text
@@ -54,36 +55,49 @@ set search_path = public
 as $$
 declare
   v_store public.local_stores%rowtype;
+  v_identity text := trim(coalesce(p_identity, ''));
+  v_password text := coalesce(p_password, '');
+  v_stored_password text;
   v_ok boolean := false;
 begin
-  if nullif(trim(p_identity), '') is null or coalesce(p_password, '') = '' then
+  if v_identity = '' or v_password = '' then
     return;
   end if;
 
-  select * into v_store
+  select *
+    into v_store
   from public.local_stores s
-  where lower(trim(s.username)) = lower(trim(p_identity))
-     or trim(s.phone) = trim(p_identity)
+  where lower(trim(coalesce(s.username, ''))) = lower(v_identity)
+     or trim(coalesce(s.phone, '')) = v_identity
+  order by s.created_at asc
   limit 1;
 
-  if v_store.id is null or v_store.status <> 'active' then
+  if v_store.id is null then
     return;
   end if;
 
-  if v_store.password_hash is not null then
+  if lower(trim(coalesce(v_store.status, ''))) <> 'active' then
+    return;
+  end if;
+
+  v_stored_password := coalesce(v_store.password_hash, '');
+
+  if v_stored_password = '' then
+    return;
+  end if;
+
+  -- Legacy/plain-text compatibility.
+  if v_stored_password = v_password then
+    v_ok := true;
+  end if;
+
+  -- bcrypt / pgcrypto compatibility.
+  if not v_ok then
     begin
-      v_ok := crypt(p_password, v_store.password_hash) = v_store.password_hash;
+      v_ok := crypt(v_password, v_stored_password) = v_stored_password;
     exception when others then
       v_ok := false;
     end;
-
-    if not v_ok then
-      v_ok := lower(v_store.password_hash) = encode(digest(p_password, 'sha256'), 'hex');
-    end if;
-
-    if not v_ok then
-      v_ok := v_store.password_hash = p_password;
-    end if;
   end if;
 
   if not v_ok then
