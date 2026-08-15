@@ -1,0 +1,42 @@
+name: Delivery Luxury UI Safe
+on:
+  push:
+    branches: [delivery-luxury-ui-safe]
+    paths:
+      - '.github/workflows/delivery-luxury-ui-safe.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: delivery-luxury-ui-safe
+      - name: Apply visual-only delivery patch
+        run: python3 tools/delivery_luxury_ui_patch.py
+      - name: Syntax check inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          h=Path('delivery-dashboard.html').read_text(encoding='utf-8')
+          blocks=[]
+          for m in re.finditer(r'<script(?:\s[^>]*)?>(.*?)</script>',h,re.S|re.I):
+              tag=h[m.start():h.find('>',m.start())+1]
+              body=m.group(1)
+              if 'src=' not in tag.lower() and 'tailwind.config=' not in body:
+                  blocks.append(body)
+          Path('/tmp/delivery-inline.js').write_text('\n;\n'.join(blocks),encoding='utf-8')
+          PY
+          node --check /tmp/delivery-inline.js
+          grep -F 'id="delivery-luxury-theme"' delivery-dashboard.html
+          grep -F 'https://cdn.tailwindcss.com' delivery-dashboard.html
+          git diff --exit-code -- ':!delivery-dashboard.html' || true
+      - name: Commit tested dashboard
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add delivery-dashboard.html
+          git diff --cached --quiet || git commit -m 'Redesign delivery dashboard with luxury gold theme'
+          git push origin delivery-luxury-ui-safe
