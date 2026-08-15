@@ -1,0 +1,34 @@
+name: Vendor product contrast
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/vendor-product-contrast.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Improve vendor product typography
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('vendor-dashboard.html')
+          s=p.read_text(encoding='utf-8')
+          old='<div class="vendor-text font-bold">${esc(p.product_name)}</div><div class="vendor-muted text-xs text-slate-400">${esc(p.description||\'\')}</div>'
+          new='<div class="vendor-text text-[1.05rem] font-black text-white">${esc(p.product_name)}</div><div class="text-sm leading-6 text-slate-100">${esc(p.description||\'\')}</div>'
+          if old not in s: raise SystemExit('vendor product typography block not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Verify
+        run: grep -F 'text-sm leading-6 text-slate-100' vendor-dashboard.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add vendor-dashboard.html
+          git commit -m 'Improve vendor product text contrast'
+          git push origin main
