@@ -1,0 +1,29 @@
+name: Force Strike 2026
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/force-strike-2026.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply exact strike patch
+        run: python3 tools/force_strike_2026.py
+      - name: Verify exact markup and cache bust
+        run: |
+          node --check js/local-store-card-v3.js
+          grep -F -- '-webkit-text-decoration-line: line-through !important' js/local-store-card-v3.js
+          grep -F 'js/local-store-card-v3.js?v=FORCE-STRIKE-2026' index.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/local-store-card-v3.js index.html
+          git diff --cached --quiet || git commit -m 'Force old price strike and cache bust 2026'
+          git push origin main
