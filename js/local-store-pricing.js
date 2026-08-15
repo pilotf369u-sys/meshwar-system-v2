@@ -23,5 +23,19 @@
     if(!Number.isFinite(base)||!Number.isFinite(discount)||base<=0||discount<0||discount>=base)return null;
     return Math.max(1,Math.min(99,Math.round(((base-discount)/base)*100)));
   }
-  window.MeshwarLocalPricing={ceilNumber,commissionFraction,customerPriceUSD,customerPriceLocal,discountPercent};
+  function pricingSnapshot(vendorPrice,commissionRate,exchangeRate,localCurrency='IQD'){
+    const vendor=Number(vendorPrice),rate=Number(exchangeRate),commission=Number(commissionRate);
+    const usd=customerPriceUSD(vendor,commission);
+    const local=customerPriceLocal(vendor,commission,rate);
+    if(usd===null||local===null)return null;
+    return {
+      vendor_price_usd:vendor,
+      commission_rate:Number.isFinite(commission)&&commission>=0&&commission<100?commission:10,
+      exchange_rate:rate,
+      customer_price_usd:ceilNumber(usd),
+      customer_price_local:ceilNumber(local),
+      local_currency:String(localCurrency||'IQD').toUpperCase()
+    };
+  }
+  window.MeshwarLocalPricing={ceilNumber,commissionFraction,customerPriceUSD,customerPriceLocal,discountPercent,pricingSnapshot};
 })();
