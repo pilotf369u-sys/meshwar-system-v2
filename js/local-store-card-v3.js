@@ -120,6 +120,7 @@ async function renderStoreProductsV3(storeIdOverride){
   }
 }
 
+window.loadLocalStoreProductsV3=renderStoreProductsV3;
 const originalLoadStoreDetails=window.loadStoreDetails;
 window.loadStoreDetails=async function(storeId){const result=typeof originalLoadStoreDetails==='function'?await originalLoadStoreDetails(storeId):undefined;await renderStoreProductsV3(storeId);return result};
 renderStoreProductsV3();
