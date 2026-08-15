@@ -1,0 +1,40 @@
+name: Customer Parcels Only Safe
+on:
+  push:
+    branches: [customer-parcels-only-safe]
+    paths:
+      - '.github/workflows/customer-parcels-only-safe.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: customer-parcels-only-safe
+      - name: Apply customer-only patch
+        run: python3 tools/customer_parcels_safe_patch.py
+      - name: Syntax check inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          h=Path('dashboard.html').read_text(encoding='utf-8')
+          blocks=[]
+          for m in re.finditer(r'<script(?:\s[^>]*)?>(.*?)</script>',h,re.S|re.I):
+              tag=h[m.start():h.find('>',m.start())+1]
+              if 'src=' not in tag.lower(): blocks.append(m.group(1))
+          Path('/tmp/customer-inline.js').write_text('\n;\n'.join(blocks),encoding='utf-8')
+          PY
+          node --check /tmp/customer-inline.js
+          grep -F 'function getOrderParcelsCount' dashboard.html
+          grep -F '📦 الطرود:' dashboard.html
+          grep -F "activeParcels" dashboard.html
+      - name: Commit tested customer dashboard
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add dashboard.html
+          git diff --cached --quiet || git commit -m 'Show parcels count in customer dashboard only'
+          git push origin customer-parcels-only-safe
