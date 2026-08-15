@@ -95,12 +95,12 @@ async function createOrder(product,store){
   const customerId=String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();
   if(!customerId){alert('الرجاء تسجيل الدخول أولاً لإرسال الطلب.');location.href='login.html';return}
   try{
-    const customerRows=await restRequest(`customers?select=id,name,phone&id=eq.${encodeURIComponent(customerId)}&limit=1`,{timeout:3000});
+    const customerRows=await restRequest(`customers?select=*&id=eq.${encodeURIComponent(customerId)}&limit=1`,{timeout:3000});
     const customer=Array.isArray(customerRows)?customerRows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل.');
     const rows=await restRequest('orders?select=order_code&order=created_at.desc&limit=1000',{timeout:3000});
     const vendor=vendorPrice(product),usd=customerPriceUsd(product,store),iqd=customerPriceIqd(product,store);if(vendor===null||usd===null||iqd===null)throw new Error('سعر المنتج غير صالح.');
     let max=1000;(rows||[]).forEach(r=>{const m=String(r.order_code||'').match(/^MW-(\d+)$/i);if(m)max=Math.max(max,Number(m[1]))});const orderCode='MW-'+(max+1);
-    const payload={order_code:orderCode,customer_id:customer.id,customer_name:customer.name||'',customer_phone:customer.phone||'',total_price:ceilPrice(iqd),currency:'IQD',details:{source:'local_store',store_id:store.id,store_name:store.store_name||'',product_id:String(product.id),product_name:product.product_name||'',vendor_price_usd:vendor,commission_rate:Number(store.commission_rate||10),customer_price_usd:ceilPrice(usd),exchange_rate:exchangeRate(store),customer_price_local:ceilPrice(iqd),local_currency:'IQD',quantity:1},order_url:'index.html?storeId='+encodeURIComponent(store.id),image_url:product.image_url||null,status:'انتظار رد الموظف'};
+    const payload={order_code:orderCode,customer_id:customer.id,customer_name:customer.name||'',customer_phone:customer.phone||'',total_price:ceilPrice(iqd),currency:'IQD',details:{source:'local_store',store_id:store.id,store_name:store.store_name||'',product_id:String(product.id),product_name:product.product_name||'',vendor_price_usd:vendor,commission_rate:Number(store.commission_rate||10),customer_price_usd:ceilPrice(usd),exchange_rate:exchangeRate(store),customer_price_local:ceilPrice(iqd),local_currency:'IQD',quantity:1,governorate:customer.governorate||customer.city||customer.province||''},order_url:'index.html?storeId='+encodeURIComponent(store.id),image_url:product.image_url||null,status:'انتظار رد الموظف'};
     await restRequest('orders',{method:'POST',body:[payload],timeout:5000});
     alert('تم إرسال الطلب بنجاح. السعر: '+iqdLabel(ceilPrice(iqd))+' — رقم الطلب: '+orderCode);location.href='dashboard.html?customerId='+encodeURIComponent(customer.id);
   }catch(e){console.error('Local order error:',e);alert('تعذر إرسال الطلب: '+(e.message||e))}
