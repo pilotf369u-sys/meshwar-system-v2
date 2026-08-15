@@ -1,0 +1,30 @@
+name: Clean Buy Button 2026
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/clean-buy-button-2026.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply clean button patch
+        run: python3 tools/clean_buy_button_2026.py
+      - name: Verify
+        run: |
+          node --check js/local-store-card-v3.js
+          grep -F '.local-v3-order::before,.local-v3-order::after{content:none!important;display:none!important}' js/local-store-card-v3.js
+          grep -F "${unavailable?'غير متوفر حالياً':'اطلب الآن'}" js/local-store-card-v3.js
+          grep -F 'js/local-store-card-v3.js?v=clean-btn-2026' index.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/local-store-card-v3.js index.html
+          git diff --cached --quiet || git commit -m 'Remove product order button icon overlap'
+          git push origin main
