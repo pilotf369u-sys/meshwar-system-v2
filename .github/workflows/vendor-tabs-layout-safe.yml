@@ -1,0 +1,41 @@
+name: Vendor Tabs Layout Safe
+on:
+  push:
+    branches: [vendor-tabs-layout-safe]
+    paths:
+      - '.github/workflows/vendor-tabs-layout-safe.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: vendor-tabs-layout-safe
+      - name: Apply vendor tabs layout patch
+        run: python3 tools/vendor_tabs_layout_patch.py
+      - name: Syntax check inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          h=Path('vendor-dashboard.html').read_text(encoding='utf-8')
+          blocks=[]
+          for m in re.finditer(r'<script(?:\s[^>]*)?>(.*?)</script>',h,re.S|re.I):
+              tag=h[m.start():h.find('>',m.start())+1]
+              if 'src=' not in tag.lower(): blocks.append(m.group(1))
+          Path('/tmp/vendor-inline.js').write_text('\n;\n'.join(blocks),encoding='utf-8')
+          PY
+          node --check /tmp/vendor-inline.js
+          grep -F 'id="vendorTab-orders"' vendor-dashboard.html
+          grep -F 'function setVendorOrderFilter' vendor-dashboard.html
+          grep -F 'function renderVendorOrders' vendor-dashboard.html
+          ! grep -F 'min-w-[820px]' vendor-dashboard.html
+      - name: Commit tested vendor file
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add vendor-dashboard.html
+          git diff --cached --quiet || git commit -m 'Reorganize vendor dashboard into responsive tabs'
+          git push origin vendor-tabs-layout-safe
