@@ -1,0 +1,40 @@
+name: Customer Luxury UI Safe
+on:
+  push:
+    branches: [customer-luxury-ui-safe]
+    paths:
+      - '.github/workflows/customer-luxury-ui-safe.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: customer-luxury-ui-safe
+      - name: Apply customer visual patch
+        run: python3 tools/customer_luxury_ui_patch.py
+      - name: Syntax check inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          h=Path('dashboard.html').read_text(encoding='utf-8')
+          blocks=[]
+          for m in re.finditer(r'<script(?:\s[^>]*)?>(.*?)</script>',h,re.S|re.I):
+              tag=h[m.start():h.find('>',m.start())+1]
+              if 'src=' not in tag.lower(): blocks.append(m.group(1))
+          Path('/tmp/customer-inline.js').write_text('\n;\n'.join(blocks),encoding='utf-8')
+          PY
+          node --check /tmp/customer-inline.js
+          grep -F 'id="customer-luxury-theme"' dashboard.html
+          grep -F 'https://cdn.tailwindcss.com' dashboard.html
+          grep -F 'min-width:0!important' dashboard.html
+      - name: Commit tested customer dashboard only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add dashboard.html
+          git diff --cached --quiet || git commit -m 'Redesign customer dashboard with luxury gold theme'
+          git push origin customer-luxury-ui-safe
