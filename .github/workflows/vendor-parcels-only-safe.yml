@@ -1,0 +1,32 @@
+name: Vendor Parcels Only Safe
+on:
+  push:
+    branches: [vendor-parcels-only-safe]
+    paths:
+      - '.github/workflows/vendor-parcels-only-safe.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: vendor-parcels-only-safe
+      - name: Apply vendor-only patch
+        run: python3 tools/vendor_parcels_only_patch.py
+      - name: Validate vendor script and scope
+        run: |
+          node -e "const fs=require('fs'),s=fs.readFileSync('vendor-dashboard.html','utf8'); const blocks=[...s.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(x=>!x.includes('tailwind.config')&&!x.includes('cdn.jsdelivr.net')); for(const b of blocks){new Function(b)}; console.log('vendor inline scripts parse OK')"
+          grep -F 'function orderParcelsCount' vendor-dashboard.html
+          grep -F '<th>عدد الطرود</th>' vendor-dashboard.html
+          grep -F "toLocaleDateString('en-US'" vendor-dashboard.html
+          git diff --name-only | grep -x 'vendor-dashboard.html'
+          test "$(git diff --name-only | wc -l)" -eq 1
+      - name: Commit vendor file only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add vendor-dashboard.html
+          git commit -m 'Show parcels count in vendor dashboard only'
+          git push origin vendor-parcels-only-safe
