@@ -1,0 +1,32 @@
+name: Add Parcels Count Step3
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-parcels-count-step3.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply parcels count patch
+        run: python3 tools/add_parcels_count_step3.py
+      - name: Verify parcels count changes
+        run: |
+          grep -F "function orderParcelsCount" employee-dashboard.html
+          grep -F "id=\"parcels-wrap-${id}\"" employee-dashboard.html
+          grep -F "parcels_count:parcelsCount" employee-dashboard.html
+          grep -F "<b>عدد الطرود:</b>" employee-dashboard.html
+          grep -F "function adminOrderParcelsCount" admin-dashboard.html
+          grep -F "<b>عدد الطرود:</b>" admin-dashboard.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add employee-dashboard.html admin-dashboard.html
+          git diff --cached --quiet || git commit -m 'Add parcels count to shipping preparation'
+          git push origin main
