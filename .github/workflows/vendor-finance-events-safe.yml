@@ -1,0 +1,39 @@
+name: Vendor Finance Events Safe
+on:
+  push:
+    branches: [vendor-finance-events-safe]
+    paths:
+      - '.github/workflows/vendor-finance-events-safe.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: vendor-finance-events-safe
+      - name: Apply vendor finance event patch
+        run: python3 tools/vendor_finance_events_patch.py
+      - name: Syntax check module JavaScript
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          h=Path('vendor-dashboard.html').read_text(encoding='utf-8')
+          blocks=[]
+          for m in re.finditer(r'<script(?:\s[^>]*)?>(.*?)</script>',h,re.S|re.I):
+              tag=h[m.start():h.find('>',m.start())+1]
+              if 'src=' not in tag.lower(): blocks.append(m.group(1))
+          Path('/tmp/vendor-inline.js').write_text('\n;\n'.join(blocks),encoding='utf-8')
+          PY
+          node --check /tmp/vendor-inline.js
+          grep -F 'setVendorFinanceFilter,exportVendorPaidStatement' vendor-dashboard.html
+          grep -F "document.querySelectorAll('[data-finance-filter]')" vendor-dashboard.html
+      - name: Commit tested vendor file
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add vendor-dashboard.html
+          git diff --cached --quiet || git commit -m 'Fix vendor finance filters and paid statement actions'
+          git push origin vendor-finance-events-safe
