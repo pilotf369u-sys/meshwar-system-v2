@@ -25,7 +25,10 @@
     .vendor-order-filter:hover{border-color:rgba(56,189,248,.35)}
     .vendor-order-filter.active{color:#fff;background:#2563eb;border-color:#3b82f6;box-shadow:0 6px 18px rgba(37,99,235,.22)}
     .vendor-responsive-table,.vendor-compact-table{width:100%;table-layout:fixed;border-collapse:collapse}
-    .vendor-responsive-table th,.vendor-responsive-table td,.vendor-compact-table th,.vendor-compact-table td{padding:.75rem .55rem;vertical-align:middle;overflow-wrap:anywhere;word-break:break-word}
+    .vendor-responsive-table{direction:rtl}
+    .vendor-responsive-table th,.vendor-responsive-table td{padding:.75rem .45rem;vertical-align:middle;text-align:center;overflow-wrap:anywhere;word-break:break-word}
+    .vendor-responsive-table th{font-size:.72rem;font-weight:900;white-space:normal}
+    .vendor-compact-table th,.vendor-compact-table td{padding:.75rem .55rem;vertical-align:middle;overflow-wrap:anywhere;word-break:break-word}
     .vendor-responsive-table th,.vendor-compact-table th{font-size:.72rem}
     .vendor-responsive-table td,.vendor-compact-table td{font-size:.8rem}
     .vendor-table-wrap{width:100%;overflow:hidden}
@@ -93,7 +96,7 @@
           <button type="button" class="vendor-order-filter" data-order-filter="returns" onclick="setVendorOrderFilter('returns')">المرتجعات</button>
         </div>
         <p class="vendor-muted mb-3 text-xs text-slate-400">تظهر هنا طلبات هذا المتجر فقط من دورة الطلبات الرئيسية، مع إخفاء هاتف العميل وعنوانه التفصيلي حفاظًا على الخصوصية.</p>
-        <div class="vendor-table-wrap"><table class="vendor-responsive-table text-sm"><thead class="border-b border-white/10 text-slate-400"><tr><th>رقم الطلب</th><th>المنتج</th><th>الكمية</th><th>عدد الطرود</th><th>المحافظة / المدينة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+        <div class="vendor-table-wrap"><table class="vendor-responsive-table text-sm"><colgroup><col style="width:16%"><col style="width:18%"><col style="width:8%"><col style="width:10%"><col style="width:17%"><col style="width:13%"><col style="width:18%"></colgroup><thead class="border-b border-white/10 text-slate-400"><tr><th>رقم الطلب</th><th>المنتج</th><th>الكمية</th><th>عدد الطرود</th><th>المحافظة / المدينة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
       </div>
     </section>
 
