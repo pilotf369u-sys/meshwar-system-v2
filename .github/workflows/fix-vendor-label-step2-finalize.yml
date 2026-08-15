@@ -1,0 +1,30 @@
+name: Fix Vendor Label Step2 Finalize
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-vendor-label-step2-finalize.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply print-only finalizer
+        run: python3 tools/fix_vendor_label_step2_finalize.py
+      - name: Verify final label
+        run: |
+          grep -F '@page{size:50mm 40mm;margin:0}' vendor-dashboard.html
+          grep -F "${qty} قطع" vendor-dashboard.html
+          grep -F "toLocaleDateString('en-CA'" vendor-dashboard.html
+          if grep -F '<div class="privacy">MeshWar Cargo</div>' vendor-dashboard.html; then exit 1; fi
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add vendor-dashboard.html
+          git diff --cached --quiet || git commit -m 'Finalize vendor thermal label 50x40 layout'
+          git push origin main
