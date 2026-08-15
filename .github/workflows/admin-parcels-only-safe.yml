@@ -1,0 +1,41 @@
+name: Admin Parcels Only Safe
+on:
+  push:
+    branches: [admin-parcels-only-safe]
+    paths:
+      - '.github/workflows/admin-parcels-only-safe.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: admin-parcels-only-safe
+      - name: Apply admin-only parcels patch
+        run: python3 tools/admin_parcels_only_safe.py
+      - name: Verify only admin dashboard changed
+        run: |
+          test "$(git diff --name-only | tr -d '\r')" = "admin-dashboard.html"
+          grep -F 'function adminOrderParcelsCount(o)' admin-dashboard.html
+          grep -F '📦 الطرود: ${esc(adminOrderParcelsCount(o))}' admin-dashboard.html
+          grep -F '<b>عدد الطرود:</b> <span class="qty-badge">${esc(adminOrderParcelsCount(o))}</span>' admin-dashboard.html
+      - name: Syntax check inline scripts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('admin-dashboard.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
+          code='\n'.join(x for x in scripts if x.strip() and 'src=' not in x[:100])
+          Path('/tmp/admin-inline.js').write_text(code,encoding='utf-8')
+          PY
+          node --check /tmp/admin-inline.js
+      - name: Commit admin dashboard only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin-dashboard.html
+          git diff --cached --quiet || git commit -m 'Show parcels count in admin dashboard only'
+          git push origin admin-parcels-only-safe
