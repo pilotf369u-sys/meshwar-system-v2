@@ -1,0 +1,40 @@
+name: Delivery Parcels Only Safe
+on:
+  push:
+    branches: [delivery-parcels-only-safe]
+    paths:
+      - '.github/workflows/delivery-parcels-only-safe.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: delivery-parcels-only-safe
+      - name: Apply delivery-only patch
+        run: python3 tools/delivery_parcels_safe_patch.py
+      - name: Syntax check inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          h=Path('delivery-dashboard.html').read_text(encoding='utf-8')
+          blocks=[]
+          for m in re.finditer(r'<script(?:\s[^>]*)?>(.*?)</script>',h,re.S|re.I):
+              tag=h[m.start():h.find('>',m.start())+1]
+              if 'src=' not in tag.lower(): blocks.append(m.group(1))
+          Path('/tmp/delivery-inline.js').write_text('\n;\n'.join(blocks),encoding='utf-8')
+          PY
+          node --check /tmp/delivery-inline.js
+          grep -F 'function deliveryParcelsCount' delivery-dashboard.html
+          grep -F 'عدد الطرود' delivery-dashboard.html
+          grep -F 'cardParcels' delivery-dashboard.html
+      - name: Commit tested delivery file
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add delivery-dashboard.html
+          git diff --cached --quiet || git commit -m 'Show parcels count in delivery dashboard only'
+          git push origin delivery-parcels-only-safe
