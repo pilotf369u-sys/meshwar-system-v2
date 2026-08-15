@@ -16,7 +16,8 @@
     const usd=customerPriceUSD(vendorPrice,commissionRate);
     const rate=Number(exchangeRate);
     if(usd===null||!Number.isFinite(rate)||rate<=0)return null;
-    return ceilNumber(usd*rate);
+    const rawLocalPrice=usd*rate;
+    return Math.ceil(rawLocalPrice/1000)*1000;
   }
   function discountPercent(basePrice,discountPrice){
     const base=Number(basePrice),discount=Number(discountPrice);
@@ -29,6 +30,7 @@
     const local=customerPriceLocal(vendor,commission,rate);
     if(usd===null||local===null)return null;
     return {
+      pricing_version:'iqd_ceil_1000_v1',
       vendor_price_usd:vendor,
       commission_rate:Number.isFinite(commission)&&commission>=0&&commission<100?commission:10,
       exchange_rate:rate,
