@@ -195,7 +195,7 @@ $('exchangeRate').addEventListener('input',renderExchangePreview);$('exchangeBas
 
 function normalizeOrderDetails(v){if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return v;try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}}
 function isDeliveredOrder(status){const s=String(status||'').trim().toLowerCase();return ['delivered','completed','complete','تم التسليم','تم التوصيل','مكتمل','مكتملة'].includes(s)}
-function orderCity(o){const d=normalizeOrderDetails(o?.details),c=(d.customer&&typeof d.customer==='object')?d.customer:{};return o?.governorate||o?.city||d.governorate||d.city||d.province||d.customer_city||c.governorate||c.city||c.province||'غير محددة'}
+function orderCity(o){const d=normalizeOrderDetails(o?.details),c=(d.customer&&typeof d.customer==='object')?d.customer:{};return o?.governorate||o?.city||d.governorate||d.state||d.city||d.province||d.customer_city||c.governorate||c.state||c.city||c.province||'غير محددة'}
 function orderPaymentStatus(o){const d=normalizeOrderDetails(o?.details),raw=String(d.payment_method||d.payment_status||o?.payment_status||'').trim(),v=raw.toLowerCase();if(/paid|prepaid|تم الدفع|مدفوع/.test(v))return 'تم الدفع مسبقاً';if(/cod|cash|عند الاستلام|نقد/.test(v))return 'الدفع عند الاستلام - COD';return raw||'الدفع عند الاستلام - COD'}
 function orderProductName(o){const d=normalizeOrderDetails(o?.details);return d.product_name||'منتج محلي'}
 function orderQuantity(o){const d=normalizeOrderDetails(o?.details);return Math.max(1,Number(d.quantity||1)||1)}
