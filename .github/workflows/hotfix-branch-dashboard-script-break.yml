@@ -1,0 +1,66 @@
+name: Hotfix branch dashboard script break
+on:
+  push:
+    branches:
+      - hotfix/branch-dashboard-script-break
+    paths:
+      - tools/hotfix_branch_dashboard_script_break.py
+      - .github/workflows/hotfix-branch-dashboard-script-break.yml
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/branch-dashboard-script-break
+      - name: Apply hotfix
+        run: python3 tools/hotfix_branch_dashboard_script_break.py
+      - name: Validate HTML regression markers
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('branch-dashboard.html').read_text(encoding='utf-8')
+          pos=s.rfind('BRANCH_LUXURY_UI_HELPERS_V1')
+          assert pos>0
+          assert pos>s.find('function openPrint')
+          assert pos>s.find('function branchPrintShippingLabel')
+          # Every literal w.document.write must belong to an inline script range.
+          ranges=[(m.start(),m.end()) for m in re.finditer(r'<script(?:\s+[^>]*)?>.*?</script>',s,re.S|re.I)]
+          for m in re.finditer(r'w\.document\.write',s):
+              assert any(a<=m.start()<b for a,b in ranges), f'w.document.write outside script at {m.start()}'
+          print('HTML regression checks OK')
+          PY
+      - name: Validate all inline JavaScript syntax
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile, os, sys
+          s=Path('branch-dashboard.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',s,re.S|re.I)
+          checked=0
+          for i,code in enumerate(blocks):
+              if not code.strip(): continue
+              fd,path=tempfile.mkstemp(suffix='.js')
+              os.close(fd)
+              Path(path).write_text(code,encoding='utf-8')
+              r=subprocess.run(['node','--check',path],capture_output=True,text=True)
+              os.unlink(path)
+              if r.returncode:
+                  print(f'Inline script #{i} failed syntax check')
+                  print(r.stderr)
+                  sys.exit(1)
+              checked+=1
+          print(f'JavaScript syntax OK for {checked} inline blocks')
+          PY
+      - name: Commit repaired dashboard
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add branch-dashboard.html
+          git commit -m 'Fix branch dashboard JavaScript break'
+          git push origin hotfix/branch-dashboard-script-break
