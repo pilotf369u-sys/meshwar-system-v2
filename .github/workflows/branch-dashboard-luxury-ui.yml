@@ -1,0 +1,50 @@
+name: Branch dashboard luxury UI
+on:
+  push:
+    branches:
+      - agent/branch-dashboard-luxury-ui
+    paths:
+      - .github/workflows/branch-dashboard-luxury-ui.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/branch-dashboard-luxury-ui
+      - name: Apply UI patch
+        run: python3 tools/patch_branch_dashboard_luxury.py
+      - name: Validate HTML markers
+        run: |
+          grep -F 'BRANCH_LUXURY_UI_V1' branch-dashboard.html
+          grep -F 'branchStatTotal' branch-dashboard.html
+          grep -F 'branchQuickCourier' branch-dashboard.html
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile, sys
+          text=Path('branch-dashboard.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s+[^>]*)?>(.*?)</script>',text,flags=re.S|re.I)
+          for i,code in enumerate(scripts):
+              if not code.strip():
+                  continue
+              suffix='.mjs' if ('type="module"' in text[max(0,text.find(code)-100):text.find(code)]) else '.js'
+              with tempfile.NamedTemporaryFile('w',suffix=suffix,delete=False,encoding='utf-8') as f:
+                  f.write(code); name=f.name
+              r=subprocess.run(['node','--check',name],capture_output=True,text=True)
+              if r.returncode:
+                  print(f'JS syntax failed in block {i}:',r.stderr)
+                  sys.exit(r.returncode)
+          print('JavaScript syntax OK')
+          PY
+      - name: Commit UI update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add branch-dashboard.html
+          git commit -m 'Redesign branch dashboard with luxury glass UI'
+          git push origin agent/branch-dashboard-luxury-ui
