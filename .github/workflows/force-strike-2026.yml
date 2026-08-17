@@ -1,7 +1,7 @@
-name: Force Strike 2026
+name: Employee shortcut cards test
 on:
   push:
-    branches: [main]
+    branches: [agent/employee-shortcut-cards]
     paths:
       - '.github/workflows/force-strike-2026.yml'
 permissions:
@@ -12,18 +12,48 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
-      - name: Apply exact strike patch
-        run: python3 tools/force_strike_2026.py
-      - name: Verify exact markup and cache bust
+          ref: agent/employee-shortcut-cards
+      - name: Apply shortcut card interaction patch
         run: |
-          node --check js/local-store-card-v3.js
-          grep -F -- '-webkit-text-decoration-line: line-through !important' js/local-store-card-v3.js
-          grep -F 'js/local-store-card-v3.js?v=FORCE-STRIKE-2026' index.html
-      - name: Commit
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('employee-dashboard.html')
+          s=p.read_text(encoding='utf-8')
+          old=".employee-workspace-tab:hover{transform:translateY(-2px);border-color:rgba(245,196,81,.38)}"
+          new=".employee-workspace-tab{cursor:pointer!important;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease!important;will-change:transform}.employee-workspace-tab:hover{transform:scale(1.05);border-color:rgba(245,196,81,.38);box-shadow:0 14px 34px rgba(0,0,0,.28),0 0 20px rgba(245,196,81,.08)}.employee-workspace-tab:active{transform:scale(1.02)}"
+          if old not in s:
+              raise SystemExit('workspace hover marker not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify shortcut mappings and JavaScript syntax
+        run: |
+          grep -F "onclick=\"switchEmployeeWorkspace('new')\"" employee-dashboard.html
+          grep -F "onclick=\"switchEmployeeWorkspace('process')\"" employee-dashboard.html
+          grep -F "onclick=\"switchEmployeeWorkspace('labels')\"" employee-dashboard.html
+          grep -F "onclick=\"switchEmployeeWorkspace('track')\"" employee-dashboard.html
+          grep -F "const map={new:'waiting_employee',process:'all',labels:'shipping_prep',track:'all'}" employee-dashboard.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          html=Path('employee-dashboard.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',html,re.I)
+          for i,src in enumerate(scripts):
+              if not src.strip():
+                  continue
+              with tempfile.NamedTemporaryFile('w',suffix='.js',delete=False,encoding='utf-8') as f:
+                  f.write(src)
+                  name=f.name
+              r=subprocess.run(['node','--check',name],capture_output=True,text=True)
+              if r.returncode:
+                  raise SystemExit(f'inline script {i} syntax failed:\n{r.stderr}')
+          print(f'checked {len(scripts)} inline scripts')
+          PY
+      - name: Restore workflow and commit only employee dashboard
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add js/local-store-card-v3.js index.html
-          git diff --cached --quiet || git commit -m 'Force old price strike and cache bust 2026'
-          git push origin main
+          git show origin/main:.github/workflows/force-strike-2026.yml > .github/workflows/force-strike-2026.yml
+          git add employee-dashboard.html .github/workflows/force-strike-2026.yml
+          git diff --cached --quiet || git commit -m 'Make employee workspace cards interactive shortcuts'
+          git push origin agent/employee-shortcut-cards
