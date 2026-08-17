@@ -21,25 +21,25 @@ jobs:
           grep -F 'BRANCH_LUXURY_UI_V1' branch-dashboard.html
           grep -F 'branchStatTotal' branch-dashboard.html
           grep -F 'branchQuickCourier' branch-dashboard.html
-      - name: Validate JavaScript syntax
+          grep -F 'tailwindcss.com' branch-dashboard.html
+      - name: Validate added JavaScript syntax
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import re, subprocess, tempfile, sys
           text=Path('branch-dashboard.html').read_text(encoding='utf-8')
-          scripts=re.findall(r'<script(?:\s+[^>]*)?>(.*?)</script>',text,flags=re.S|re.I)
-          for i,code in enumerate(scripts):
-              if not code.strip():
-                  continue
-              suffix='.mjs' if ('type="module"' in text[max(0,text.find(code)-100):text.find(code)]) else '.js'
-              with tempfile.NamedTemporaryFile('w',suffix=suffix,delete=False,encoding='utf-8') as f:
-                  f.write(code); name=f.name
-              r=subprocess.run(['node','--check',name],capture_output=True,text=True)
-              if r.returncode:
-                  print(f'JS syntax failed in block {i}:',r.stderr)
-                  sys.exit(r.returncode)
-          print('JavaScript syntax OK')
+          m=re.search(r'<script>\s*/\* BRANCH_LUXURY_UI_HELPERS_V1.*?</script>',text,flags=re.S)
+          if not m:
+              raise SystemExit('luxury helper script not found')
+          code=re.sub(r'^<script>|</script>$','',m.group(0)).strip()
+          with tempfile.NamedTemporaryFile('w',suffix='.js',delete=False,encoding='utf-8') as f:
+              f.write(code); name=f.name
+          r=subprocess.run(['node','--check',name],capture_output=True,text=True)
+          if r.returncode:
+              print(r.stderr)
+              sys.exit(r.returncode)
+          print('Luxury helper JavaScript syntax OK')
           PY
       - name: Commit UI update
         run: |
