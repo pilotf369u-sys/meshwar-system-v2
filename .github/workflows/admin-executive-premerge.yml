@@ -1,4 +1,4 @@
-name: Admin premerge smoke
+name: Admin executive premerge
 on:
   push:
     branches:
@@ -6,11 +6,43 @@ on:
 permissions:
   contents: write
 jobs:
-  smoke:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/admin-executive-gold
-      - name: Smoke
-        run: echo admin-premerge-ok
+          fetch-depth: 2
+      - name: Apply patch
+        run: python3 tools/admin_exec_patch.py
+      - name: Verify inline scripts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          for path in ['admin-dashboard.html','admin-branches.html']:
+              html=Path(path).read_text(encoding='utf-8')
+              scripts=re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',html,re.I)
+              checked=0
+              for i,src in enumerate(scripts):
+                  if not src.strip(): continue
+                  with tempfile.NamedTemporaryFile('w',suffix='.js',delete=False,encoding='utf-8') as f:
+                      f.write(src); name=f.name
+                  r=subprocess.run(['node','--check',name],capture_output=True,text=True)
+                  if r.returncode: raise SystemExit(f'{path} inline script {i} failed\n{r.stderr}')
+                  checked+=1
+              print(path,checked)
+          PY
+          grep -F 'data-admin-section="vendor-finance"' admin-branches.html
+          grep -F 'data-admin-section="delivery"' admin-branches.html
+          grep -F 'id="adminFinOther"' admin-dashboard.html
+          grep -F "adminVendorFinanceSummaryText(all,'other')" admin-dashboard.html
+          grep -F 'vendor_payment_status' admin-dashboard.html
+          grep -F 'exportAdminVendorPaidStatement' admin-dashboard.html
+      - name: Commit admin pages
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin-dashboard.html admin-branches.html
+          git diff --cached --quiet || git commit -m 'Unify admin navigation and add executive gold UI'
+          git push origin agent/admin-executive-gold
