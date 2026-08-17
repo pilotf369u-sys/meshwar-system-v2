@@ -159,45 +159,6 @@ async function createSettlements(list,type,courierId=null){if(!list.length)retur
 async function requestCourierSettlement(id){try{const list=await fetchSettlementOrders(id);if(!list.length)return alert('لا توجد شحنات مسلّمة غير مقفلة لهذا المندوب.');const n=await createSettlements(list,'courier',id);await Promise.all([loadOrders(),loadAccounting()]);alert(`تم إنشاء ${n} طلب تقفيل وبانتظار اعتماد الأدمن.`)}catch(e){alert(e.message||e)}}async function requestBranchSettlement(){try{const list=await fetchSettlementOrders();if(!list.length)return alert('لا توجد عهدة فرع مسلّمة غير مقفلة.');const n=await createSettlements(list,'branch',null);await Promise.all([loadOrders(),loadAccounting()]);alert(`تم إنشاء ${n} طلب تقفيل عهدة فرع وبانتظار اعتماد الأدمن.`)}catch(e){alert(e.message||e)}}
 async function printCourierStatement(id){const s=accountCache[cloudId(id)];if(!s)return;const rows=s.orders.map(o=>`<tr><td>${esc(o.order_code||o.id)}<br>${esc(o.reference_order_no||'')}</td><td>${esc(o.customer_name)}</td><td>${branchOrderQuantity(o)}</td><td>${branchParcelsCount(o)}</td><td>${money(doorCollection(o),o.currency)}</td><td>${money(o.delivery_fee,o.currency)}</td><td>${money(netCustody(o),o.currency)}</td><td>${esc(o.status)}</td></tr>`).join('');openPrint('كشف حساب المندوب - '+esc(s.courier.name),`<p>الفرع: ${esc(currentBranch.name||currentBranch.branch_name||'')}</p><p>التحصيل عند الباب: ${chips(s.gross)} | أجور التوصيل: ${chips(s.fees)} | صافي العهدة: ${chips(s.net)}</p><table><tr><th>الشحنة / Sipariş</th><th>العميل</th><th>القطع</th><th>الطرود</th><th>التحصيل</th><th>الأجرة</th><th>الصافي</th><th>الحالة</th></tr>${rows}</table>`)}function branchOpenOrderDetails(id){const o=orders.find(x=>cloudId(x.id)===cloudId(id));if(!o)return alert('تعذر العثور على الشحنة.');const d=parseDetails(o.details),qty=branchOrderQuantity(o),parcels=branchParcelsCount(o),city=branchOrderCity(o);let m=document.getElementById('branchOrderDetailsModal');if(!m){m=document.createElement('div');m.id='branchOrderDetailsModal';m.className='modal';m.innerHTML='<div class="modal-content"><span class="close" onclick="document.getElementById(\'branchOrderDetailsModal\').style.display=\'none\'">&times;</span><h3>تفاصيل الشحنة</h3><div id="branchOrderDetailsBody" class="account-grid"></div></div>';document.body.appendChild(m)}document.getElementById('branchOrderDetailsBody').innerHTML=`<div class="account-card"><b>رقم الطلب</b><div>${esc(o.order_code||o.id)}</div></div><div class="account-card"><b>الحالة</b><div>${esc(o.status||'---')}</div></div><div class="account-card"><b>عدد القطع</b><div>${qty}</div></div><div class="account-card"><b>عدد الطرود</b><div>${parcels}</div></div><div class="account-card"><b>المحافظة / المدينة</b><div>${esc(city)}</div></div><div class="account-card"><b>طريقة الدفع</b><div>${esc(branchPaymentStatus(o))}</div></div><div class="account-card"><b>المنتج</b><div>${esc(branchOrderProductName(o))}</div></div><div class="account-card"><b>ملاحظات</b><div>${esc(d.notes||'---')}</div></div>`;m.style.display='block'}
 function branchPrintShippingLabel(id){const o=orders.find(x=>cloudId(x.id)===cloudId(id));if(!o)return alert('تعذر العثور على الشحنة للطباعة.');const code=o.order_code||String(o.id).slice(0,8),product=branchOrderProductName(o),qty=branchOrderQuantity(o),parcels=branchParcelsCount(o),city=branchOrderCity(o),payment=branchPaymentStatus(o),date=new Date(o.created_at||Date.now()).toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'}),w=window.open('','_blank','width=420,height=360');if(!w)return alert('يرجى السماح بالنوافذ المنبثقة لطباعة الملصق.');w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>MeshWar Cargo - ${esc(code)}</title><style>*{box-sizing:border-box}html,body{width:50mm;height:40mm;margin:0;padding:1.5mm;font-family:Arial,sans-serif;color:#000;background:#fff;font-size:8px;overflow:hidden}.label-card{width:100%;height:100%;border:1px solid #000;padding:2px;display:flex;flex-direction:column;justify-content:space-between;gap:1px;overflow:hidden}.brand{text-align:center;border-bottom:1px solid #000;padding-bottom:1px;line-height:1}.brand h1{margin:0;font-size:9px;font-weight:900}.brand p{margin:0;font-size:6.5px}.order{text-align:center;font-size:9px;font-weight:900;line-height:1;direction:ltr}.barcode{height:22px;min-height:22px;display:flex;align-items:center;justify-content:center;overflow:hidden}.barcode svg{width:100%;height:22px}.grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #000;line-height:1.05}.cell{padding:1px;border:1px solid #cbd5e1;min-width:0}.label-title{font-size:6.5px;color:#475569}.value{font-size:7.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.product{grid-column:1/-1}@media print{@page{size:50mm 40mm;margin:0}html,body{width:50mm!important;height:40mm!important;margin:0!important;padding:1.5mm!important;overflow:hidden!important}.label-card{width:100%;height:100%;max-height:37mm;page-break-inside:avoid!important;page-break-after:avoid!important;overflow:hidden!important}}</style><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script></head><body><div class="label-card"><div class="brand"><h1>MeshWar Cargo</h1><p>ملصق شحنة الفرع</p></div><div class="order">${esc(code)}</div><div class="barcode"><svg id="barcode"></svg></div><div class="grid"><div class="cell product"><div class="label-title">المنتج</div><div class="value">${esc(product)}</div></div><div class="cell"><div class="label-title">عدد القطع</div><div class="value">${qty}</div></div><div class="cell"><div class="label-title">عدد الطرود</div><div class="value">${parcels}</div></div><div class="cell"><div class="label-title">التاريخ</div><div class="value">${esc(date)}</div></div><div class="cell"><div class="label-title">المحافظة / المدينة</div><div class="value">${esc(city)}</div></div><div class="cell"><div class="label-title">حالة الدفع</div><div class="value">${esc(payment)}</div></div></div></div><script>window.addEventListener('load',()=>{try{JsBarcode('#barcode',${JSON.stringify(String(code))},{format:'CODE128',displayValue:false,height:22,margin:0,width:1.25})}catch(e){console.error(e)}setTimeout(()=>window.print(),250)});<\/script>
-<script>
-/* BRANCH_LUXURY_UI_HELPERS_V1 — presentation helpers only; reuses existing Supabase/getSb/saveOrder APIs */
-(function(){
-  const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=Number(value||0).toLocaleString('en-US')};
-  async function refreshStats(){
-    try{
-      if(!currentBranch||typeof getSb!=='function')return;
-      const c=await getSb(),bid=cloudId(currentBranch.id);
-      const countFor=async statuses=>{let q=c.from('orders').select('id',{count:'exact',head:true}).eq('branch_id',bid);if(statuses?.length===1)q=q.eq('status',statuses[0]);else if(statuses?.length>1)q=q.in('status',statuses);const{count,error}=await q;if(error)throw error;return count||0};
-      const [all,incoming,outgoing,courier]=await Promise.all([
-        countFor(),countFor(['محولة إلى الفرع','تم الشحن']),countFor(['توزيع داخلي']),countFor(['مندوب','جاري التوصيل مع المندوب'])
-      ]);
-      setText('branchStatTotal',all);setText('branchStatIncoming',incoming);setText('branchStatOutgoing',outgoing);setText('branchStatCourier',courier);
-    }catch(e){console.warn('Branch luxury stats:',e)}
-  }
-  function activate(btn){document.querySelectorAll('.branch-tab').forEach(x=>x.classList.remove('active'));btn?.classList.add('active')}
-  window.branchLuxuryTab=function(kind,btn){
-    activate(btn);
-    if(kind==='history'){if(typeof openSettlementHistoryModal==='function')openSettlementHistoryModal();return}
-    const filter=document.getElementById('statusFilter');
-    if(filter){filter.value=kind==='branches'?'محولة إلى الفرع':kind==='couriers'?'مندوب':'';}
-    if(typeof resetPage==='function')resetPage();
-    document.getElementById(kind==='couriers'?'branchCourierSection':'branchOrdersSection')?.scrollIntoView({behavior:'smooth',block:'start'});
-  };
-  window.branchQuickReceive=function(id){const enc=encodeURIComponent(cloudId(id)),st=document.getElementById('st-'+enc);if(st){st.value='مخزن محلي';saveOrder(id)}};
-  window.branchQuickTransfer=function(id){const enc=encodeURIComponent(cloudId(id)),st=document.getElementById('st-'+enc);if(st){st.value='توزيع داخلي';saveOrder(id)}};
-  window.branchQuickCourier=function(id){const enc=encodeURIComponent(cloudId(id)),cr=document.getElementById('cr-'+enc),st=document.getElementById('st-'+enc);if(!cr?.value)return alert('اختر مندوباً أولاً من قائمة المندوب في نفس الصف.');if(st)st.value='مندوب';saveOrder(id)};
-  function decorateQuickActions(){
-    const rows=[...document.querySelectorAll('#ordersBody tr')].filter(tr=>tr.querySelectorAll('td').length>1);
-    rows.forEach((tr,i)=>{if(tr.dataset.luxuryActions==='1')return;const o=orders?.[i];if(!o)return;tr.dataset.luxuryActions='1';const cell=tr.querySelectorAll('td')[8];if(!cell)return;const id=cloudId(o.id),encoded=encodeURIComponent(id);cell.insertAdjacentHTML('beforeend',`<div class="branch-quick-actions"><button type="button" class="branch-action-receive" onclick="branchQuickReceive(decodeURIComponent('${encoded}'))">✓ استلام بالفرع</button><button type="button" class="branch-action-transfer" onclick="branchQuickTransfer(decodeURIComponent('${encoded}'))">⇄ تحويل لفرع آخر</button><button type="button" class="branch-action-courier" onclick="branchQuickCourier(decodeURIComponent('${encoded}'))">🚚 تسليم لمندوب</button></div>`)});
-  }
-  if(typeof loadOrders==='function'){
-    const baseLoadOrders=loadOrders;
-    loadOrders=async function(...args){const r=await baseLoadOrders(...args);decorateQuickActions();refreshStats();return r};window.loadOrders=loadOrders;
-  }
-  const start=()=>{decorateQuickActions();refreshStats();};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-})();
-</script>
 </body></html>`);w.document.close()}
 function openPrint(title,body){const w=window.open('','_blank','width=1000,height=750');if(!w)return alert('يرجى السماح بالنوافذ المنبثقة.');w.document.write(`<html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:Tahoma;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:7px;text-align:center}th{background:#eee}</style></head><body><h2>${title}</h2>${body}<script>window.onload=()=>window.print()<\/script>
 </div>
@@ -425,3 +386,43 @@ Object.assign(window,{viewBranchParcelImage,closeBranchParcelViewer});
  Object.assign(window,{viewBranchPod:view,closeBranchPodViewer:close});
 })();
 </script>
+<script>
+/* BRANCH_LUXURY_UI_HELPERS_V1 — presentation helpers only; reuses existing Supabase/getSb/saveOrder APIs */
+(function(){
+  const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=Number(value||0).toLocaleString('en-US')};
+  async function refreshStats(){
+    try{
+      if(!currentBranch||typeof getSb!=='function')return;
+      const c=await getSb(),bid=cloudId(currentBranch.id);
+      const countFor=async statuses=>{let q=c.from('orders').select('id',{count:'exact',head:true}).eq('branch_id',bid);if(statuses?.length===1)q=q.eq('status',statuses[0]);else if(statuses?.length>1)q=q.in('status',statuses);const{count,error}=await q;if(error)throw error;return count||0};
+      const [all,incoming,outgoing,courier]=await Promise.all([
+        countFor(),countFor(['محولة إلى الفرع','تم الشحن']),countFor(['توزيع داخلي']),countFor(['مندوب','جاري التوصيل مع المندوب'])
+      ]);
+      setText('branchStatTotal',all);setText('branchStatIncoming',incoming);setText('branchStatOutgoing',outgoing);setText('branchStatCourier',courier);
+    }catch(e){console.warn('Branch luxury stats:',e)}
+  }
+  function activate(btn){document.querySelectorAll('.branch-tab').forEach(x=>x.classList.remove('active'));btn?.classList.add('active')}
+  window.branchLuxuryTab=function(kind,btn){
+    activate(btn);
+    if(kind==='history'){if(typeof openSettlementHistoryModal==='function')openSettlementHistoryModal();return}
+    const filter=document.getElementById('statusFilter');
+    if(filter){filter.value=kind==='branches'?'محولة إلى الفرع':kind==='couriers'?'مندوب':'';}
+    if(typeof resetPage==='function')resetPage();
+    document.getElementById(kind==='couriers'?'branchCourierSection':'branchOrdersSection')?.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  window.branchQuickReceive=function(id){const enc=encodeURIComponent(cloudId(id)),st=document.getElementById('st-'+enc);if(st){st.value='مخزن محلي';saveOrder(id)}};
+  window.branchQuickTransfer=function(id){const enc=encodeURIComponent(cloudId(id)),st=document.getElementById('st-'+enc);if(st){st.value='توزيع داخلي';saveOrder(id)}};
+  window.branchQuickCourier=function(id){const enc=encodeURIComponent(cloudId(id)),cr=document.getElementById('cr-'+enc),st=document.getElementById('st-'+enc);if(!cr?.value)return alert('اختر مندوباً أولاً من قائمة المندوب في نفس الصف.');if(st)st.value='مندوب';saveOrder(id)};
+  function decorateQuickActions(){
+    const rows=[...document.querySelectorAll('#ordersBody tr')].filter(tr=>tr.querySelectorAll('td').length>1);
+    rows.forEach((tr,i)=>{if(tr.dataset.luxuryActions==='1')return;const o=orders?.[i];if(!o)return;tr.dataset.luxuryActions='1';const cell=tr.querySelectorAll('td')[8];if(!cell)return;const id=cloudId(o.id),encoded=encodeURIComponent(id);cell.insertAdjacentHTML('beforeend',`<div class="branch-quick-actions"><button type="button" class="branch-action-receive" onclick="branchQuickReceive(decodeURIComponent('${encoded}'))">✓ استلام بالفرع</button><button type="button" class="branch-action-transfer" onclick="branchQuickTransfer(decodeURIComponent('${encoded}'))">⇄ تحويل لفرع آخر</button><button type="button" class="branch-action-courier" onclick="branchQuickCourier(decodeURIComponent('${encoded}'))">🚚 تسليم لمندوب</button></div>`)});
+  }
+  if(typeof loadOrders==='function'){
+    const baseLoadOrders=loadOrders;
+    loadOrders=async function(...args){const r=await baseLoadOrders(...args);decorateQuickActions();refreshStats();return r};window.loadOrders=loadOrders;
+  }
+  const start=()=>{decorateQuickActions();refreshStats();};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+</script>
+
