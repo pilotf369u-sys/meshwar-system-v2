@@ -1,7 +1,7 @@
-name: Force Strike 2026
+name: Employee luxury and vendor realtime test
 on:
   push:
-    branches: [main]
+    branches: [agent/vendor-realtime-employee-luxury]
     paths:
       - '.github/workflows/force-strike-2026.yml'
 permissions:
@@ -12,18 +12,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
-      - name: Apply exact strike patch
+          ref: agent/vendor-realtime-employee-luxury
+      - name: Apply isolated patch
         run: python3 tools/force_strike_2026.py
-      - name: Verify exact markup and cache bust
+      - name: Syntax check
         run: |
-          node --check js/local-store-card-v3.js
-          grep -F -- '-webkit-text-decoration-line: line-through !important' js/local-store-card-v3.js
-          grep -F 'js/local-store-card-v3.js?v=FORCE-STRIKE-2026' index.html
-      - name: Commit
+          python3 - <<'PY'
+          import re,pathlib,subprocess,tempfile,sys
+          for name in ['vendor-dashboard.html','employee-dashboard.html']:
+              html=pathlib.Path(name).read_text(encoding='utf-8')
+              for i,(attrs,code) in enumerate(re.findall(r'<script([^>]*)>([\s\S]*?)</script>',html,re.I)):
+                  if 'src=' in attrs.lower() or not code.strip(): continue
+                  suffix='.mjs' if 'module' in attrs.lower() else '.js'
+                  f=pathlib.Path(tempfile.gettempdir())/f'{pathlib.Path(name).stem}-{i}{suffix}'
+                  f.write_text(code,encoding='utf-8')
+                  r=subprocess.run(['node','--check',str(f)],capture_output=True,text=True)
+                  if r.returncode:
+                      print(r.stderr);sys.exit(r.returncode)
+          PY
+          grep -F "postgres_changes" vendor-dashboard.html
+          grep -F "employeeWorkspaceTabs" employee-dashboard.html
+          grep -F "50mm × 40mm" employee-dashboard.html
+          grep -F "table-layout:fixed" employee-dashboard.html
+      - name: Commit target files
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add js/local-store-card-v3.js index.html
-          git diff --cached --quiet || git commit -m 'Force old price strike and cache bust 2026'
-          git push origin main
+          git add vendor-dashboard.html employee-dashboard.html
+          git diff --cached --quiet || git commit -m 'Add vendor realtime and luxury employee workspace'
+          git push origin HEAD:agent/vendor-realtime-employee-luxury
