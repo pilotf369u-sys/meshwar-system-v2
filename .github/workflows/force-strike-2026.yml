@@ -13,6 +13,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: agent/employee-shortcut-cards
+          fetch-depth: 0
       - name: Apply shortcut card interaction patch
         run: |
           python3 - <<'PY'
