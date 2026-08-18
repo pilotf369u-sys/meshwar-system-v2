@@ -3,21 +3,35 @@ on:
   push:
     branches:
       - fix/audit-security-and-bugs
-  pull_request:
-    branches:
-      - main
 permissions:
   contents: write
+  pull-requests: write
+  issues: write
 jobs:
   patch-and-validate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Apply surgical fixes
-        run: python3 tools/apply_audit_surgical_fixes.py
+        id: patch
+        shell: bash
+        run: |
+          set +e
+          python3 tools/apply_audit_surgical_fixes.py > /tmp/patch.log 2>&1
+          code=$?
+          cat /tmp/patch.log
+          if [ $code -ne 0 ]; then
+            printf '### Audit patch failed\n```text\n' > /tmp/comment.md
+            cat /tmp/patch.log >> /tmp/comment.md
+            printf '\n```\n' >> /tmp/comment.md
+            gh pr comment 8 --body-file /tmp/comment.md || true
+            exit $code
+          fi
       - name: Remove temporary patch machinery
         run: |
           rm -f tools/apply_audit_surgical_fixes.py
@@ -41,9 +55,7 @@ jobs:
               text=pathlib.Path(fn).read_text(encoding='utf-8')
               idx=0
               for attrs,body in re.findall(r'<script([^>]*)>(.*?)</script>',text,flags=re.S|re.I):
-                  if re.search(r'\bsrc\s*=',attrs,re.I):
-                      continue
-                  if not body.strip():
+                  if re.search(r'\bsrc\s*=',attrs,re.I) or not body.strip():
                       continue
                   idx+=1
                   ext='.mjs' if re.search(r'type\s*=\s*["\']module["\']',attrs,re.I) else '.js'
@@ -55,14 +67,17 @@ jobs:
         run: |
           git diff --check
           git status --short
-          git diff --stat
-          git diff -- login.html admin-dashboard.html branch-dashboard.html | sed -n '1,260p'
+          git diff --stat | tee /tmp/diff-stat.txt
       - name: Commit validated fixes
-        if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add login.html admin-dashboard.html dashboard.html branch-dashboard.html delivery-dashboard.html employee-dashboard.html admin-branches.html admin-branch-reports.html local-stores-admin.html tools/apply_audit_surgical_fixes.py .github/workflows/audit-surgical-fix.yml
+          git add -A
           git commit -m "Fix audit security and consistency issues"
           git push origin HEAD:fix/audit-security-and-bugs
-# retrigger synchronize
+      - name: Report success
+        run: |
+          printf '### Audit surgical fixes validated ✅\n\n`node --check` and `git diff --check` passed.\n\n```text\n' > /tmp/success.md
+          cat /tmp/diff-stat.txt >> /tmp/success.md
+          printf '\n```\n' >> /tmp/success.md
+          gh pr comment 8 --body-file /tmp/success.md || true
