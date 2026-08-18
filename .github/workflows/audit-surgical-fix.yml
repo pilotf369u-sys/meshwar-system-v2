@@ -65,3 +65,4 @@ jobs:
           git add login.html admin-dashboard.html dashboard.html branch-dashboard.html delivery-dashboard.html employee-dashboard.html admin-branches.html admin-branch-reports.html local-stores-admin.html tools/apply_audit_surgical_fixes.py .github/workflows/audit-surgical-fix.yml
           git commit -m "Fix audit security and consistency issues"
           git push origin HEAD:fix/audit-security-and-bugs
+# retrigger synchronize
