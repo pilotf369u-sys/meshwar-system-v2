@@ -35,9 +35,10 @@ def sidebar(page):
     return ''.join(out)
 
 def inject_style(s):
+    # Remove a previous trial marker wherever it landed, then inject into the document's real first </head>.
     s=re.sub(r'<style id="admin-master-sidebar-v2">[\s\S]*?</style>','',s,count=1)
-    pos=s.lower().rfind('</head>')
-    if pos<0: raise SystemExit('missing </head>')
+    pos=s.lower().find('</head>')
+    if pos<0: raise SystemExit('missing real </head>')
     return s[:pos]+MASTER_STYLE+s[pos:]
 
 def replace_sidebar(s,page,main_class):
@@ -50,25 +51,20 @@ def replace_sidebar(s,page,main_class):
 def patch_dashboard(s):
     s=replace_sidebar(s,'admin-dashboard.html','main-content')
     s=inject_style(s)
-    marker='</body>'
     nav=r'''<script id="admin-master-sidebar-nav-v2">
 function setAdminMasterActive(sectionId){document.querySelectorAll('.sidebar a[data-admin-section]').forEach(a=>a.classList.toggle('active',a.dataset.adminSection===sectionId))}
 function showAdminMasterSection(sectionId){showSection(sectionId);setAdminMasterActive(sectionId);if(sectionId==='vendor-finance'&&typeof loadAdminVendorFinance==='function')loadAdminVendorFinance()}
 window.addEventListener('load',()=>{const requested=new URLSearchParams(location.search).get('section');if(requested&&document.getElementById(requested)){showAdminMasterSection(requested)}else{setAdminMasterActive(document.querySelector('.card.active-section')?.id||'orders')}});
 </script>'''
     s=re.sub(r'<script id="admin-master-sidebar-nav-v2">[\s\S]*?</script>','',s,count=1)
-    pos=s.lower().rfind(marker)
+    pos=s.lower().rfind('</body>')
     if pos<0: raise SystemExit('dashboard missing body close')
     return s[:pos]+nav+s[pos:]
 
 def patch_secondary(s,page):
     s=replace_sidebar(s,page,'main')
     s=inject_style(s)
-    # Replace link updater with one shared behavior while preserving auth/session logic.
-    if page=='admin-branches.html':
-        old_re=r"function updateLinks\(\)\{[\s\S]*?\}async function authAdmin\(\)"
-    else:
-        old_re=r"function updateLinks\(\)\{[\s\S]*?\}async function authAdmin\(\)"
+    old_re=r"function updateLinks\(\)\{[\s\S]*?\}async function authAdmin\(\)"
     new="function updateLinks(){const id=encodeURIComponent(cloudId(currentAdmin.id)),q='adminId='+id;document.querySelectorAll('[data-admin-section]').forEach(a=>{a.href='admin-dashboard.html?'+q+'&section='+encodeURIComponent(a.dataset.adminSection)});document.querySelectorAll('[data-admin-page]').forEach(a=>{a.href=a.dataset.adminPage+'?'+q})}async function authAdmin()"
     s,n=re.subn(old_re,new,s,count=1)
     if n!=1: raise SystemExit(f'updateLinks patch failed {page}: {n}')
