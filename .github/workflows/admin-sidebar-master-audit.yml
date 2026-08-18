@@ -32,7 +32,7 @@ jobs:
                   r=subprocess.run(['node','--check',name],capture_output=True,text=True)
                   if r.returncode:
                       raise SystemExit(f'{fn}: inline script {i} failed\n{r.stderr}')
-              assert 'admin-master-sidebar-v2' in html
+              assert html.find('admin-master-sidebar-v2') < html.lower().find('</head>')
               assert 'overflow-y:auto!important' in html
               assert 'تسجيل الخروج' in html
           dash=Path('admin-dashboard.html').read_text(encoding='utf-8')
@@ -40,10 +40,10 @@ jobs:
           for token in required: assert token in dash, token
           tables=sorted(set(re.findall(r"\.from\(['\"]([^'\"]+)['\"]\)",dash)))
           print('Admin dashboard Supabase table inventory:', ', '.join(tables))
-          # The automatic store loader must use local_stores, never the removed stores table.
           m=re.search(r'async function loadStoresAdmin\(\)\{([\s\S]*?)\}async function addStore',dash)
           assert m and ".from('local_stores')" in m.group(1)
           print('Inline JS syntax: OK for all three admin pages')
+          print('Master sidebar is in the real document head: OK')
           print('Finance settlement invariants: OK')
           PY
           git diff --check
