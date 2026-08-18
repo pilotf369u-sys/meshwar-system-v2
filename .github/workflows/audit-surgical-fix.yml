@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - fix/audit-security-and-bugs
+  pull_request:
+    branches:
+      - main
 permissions:
   contents: write
 jobs:
@@ -55,6 +58,7 @@ jobs:
           git diff --stat
           git diff -- login.html admin-dashboard.html branch-dashboard.html | sed -n '1,260p'
       - name: Commit validated fixes
+        if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
