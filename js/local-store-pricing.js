@@ -116,3 +116,26 @@ html.dark .logo-container{background:rgba(255,255,255,.04)!important}
   function polish(){installStyles();removeHeroActions();document.querySelectorAll('.store-logo').forEach(logoFallback)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',polish,{once:true});else polish();
 })();
+
+/* MESHWAR_LUXURY_UI_POLISH_V2 */
+(function(){
+  const css=`
+@keyframes meshwarGoldPulse{0%,100%{box-shadow:0 12px 34px rgba(212,175,55,.34),0 0 0 0 rgba(255,223,115,.36)}50%{box-shadow:0 18px 48px rgba(212,175,55,.52),0 0 0 13px rgba(255,223,115,0)}}
+body{background:linear-gradient(145deg,#fbf8f0 0%,#f6f0e4 48%,#f3ead9 100%)!important;background-attachment:fixed!important}
+html.dark body{background:radial-gradient(circle at 18% 0%,rgba(212,175,55,.10),transparent 30%),linear-gradient(180deg,#07101f 0%,#0B132B 55%,#08101e 100%)!important}
+.fixed-order-btn{min-width:156px!important;min-height:58px!important;padding:17px 28px!important;font-size:17px!important;font-weight:900!important;letter-spacing:.1px!important;background:linear-gradient(135deg,#D4AF37 0%,#FFDF73 100%)!important;color:#0B132B!important;border:1px solid rgba(255,239,170,.92)!important;box-shadow:0 12px 34px rgba(212,175,55,.38)!important;animation:meshwarGoldPulse 2.35s ease-in-out infinite!important}
+.fixed-order-btn i{font-size:18px!important}.fixed-order-btn:hover{animation-play-state:paused!important;transform:translateY(-3px) scale(1.05)!important;box-shadow:0 20px 52px rgba(212,175,55,.52)!important}
+.store-card{border:1px solid rgba(212,175,55,.28)!important;background:linear-gradient(160deg,rgba(255,253,248,.96),rgba(249,244,234,.90))!important;box-shadow:0 14px 36px rgba(51,42,20,.08),inset 0 1px rgba(255,255,255,.75)!important}
+html.dark .store-card{border-color:rgba(212,175,55,.26)!important;background:linear-gradient(155deg,rgba(28,37,65,.90),rgba(11,19,43,.94))!important;box-shadow:0 15px 40px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.03)!important}
+.logo-container{height:78px!important;min-height:78px!important;border-radius:14px!important;border:1px solid rgba(212,175,55,.20)!important;background:linear-gradient(145deg,#fffdf8,#f7f0e3)!important;padding:10px!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important}
+html.dark .logo-container{background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025))!important;border-color:rgba(212,175,55,.24)!important}
+.store-logo{max-width:88%!important;max-height:58px!important;object-fit:contain!important}.meshwar-logo-fallback{min-height:56px!important;width:100%!important;border-radius:12px!important;background:linear-gradient(135deg,#0B132B,#1C2541)!important;color:#FFDF73!important;border:1px solid rgba(212,175,55,.56)!important;box-shadow:inset 0 1px rgba(255,255,255,.05),0 8px 20px rgba(11,19,43,.14)!important;font-size:14px!important;font-weight:900!important}
+@media(max-width:640px){.fixed-order-btn{right:14px!important;bottom:16px!important;min-width:142px!important;min-height:54px!important;padding:15px 20px!important;font-size:15px!important}.logo-container{height:70px!important;min-height:70px!important}.store-card{border-color:rgba(212,175,55,.30)!important}}
+@media(prefers-reduced-motion:reduce){.fixed-order-btn{animation:none!important}}
+`;
+  function install(){if(document.getElementById('meshwarLuxuryPolishV2'))return;const style=document.createElement('style');style.id='meshwarLuxuryPolishV2';style.textContent=css;document.head.appendChild(style)}
+  function replaceBrokenLogo(img){if(!img||img.dataset.mwPolishFallback==='1')return;img.dataset.mwPolishFallback='1';const replace=()=>{if(!img.isConnected)return;const box=img.closest('.logo-container');if(!box)return;const card=img.closest('.store-card');const name=String(card?.querySelector('h3')?.textContent||img.alt||'Store').trim();const badge=document.createElement('div');badge.className='meshwar-logo-fallback';badge.textContent=name||'Store';box.replaceChildren(badge)};img.addEventListener('error',replace,{once:true});if(img.complete&&img.naturalWidth===0)replace()}
+  function bindLogos(root=document){root.querySelectorAll?.('.store-logo').forEach(replaceBrokenLogo)}
+  function start(){install();bindLogos();const observer=new MutationObserver(mutations=>mutations.forEach(m=>m.addedNodes.forEach(node=>{if(node.nodeType!==1)return;if(node.matches?.('.store-logo'))replaceBrokenLogo(node);bindLogos(node)})));observer.observe(document.body,{childList:true,subtree:true})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
