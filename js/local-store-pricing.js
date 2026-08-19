@@ -78,3 +78,41 @@
   async function load(){try{const r=await fetch(`${SB_URL}/rest/v1/rpc/get_site_settings`,{method:'POST',cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json'},body:'{}'});if(!r.ok)throw new Error('site_settings RPC HTTP '+r.status);const value=await r.json();if(value==null)return;apply(parse(value))}catch(e){console.warn('MeshWar CMS settings were not applied; keeping page defaults.',e)}}
   window.loadPublicSiteSettings=load;if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
 })();
+
+/* MESHWAR_LUXURY_UI_V1 */
+(function(){
+  const css=`
+:root{--mw-navy:#0B132B;--mw-navy-2:#1C2541;--mw-gold:#D4AF37;--mw-gold-soft:#C5A059;--mw-cream:#F7F3EA}
+body{background:radial-gradient(circle at 15% 0%,rgba(197,160,89,.10),transparent 34%),var(--mw-cream)!important;color:#182033!important}
+html.dark body{background:radial-gradient(circle at 15% 0%,rgba(212,175,55,.10),transparent 34%),linear-gradient(180deg,#07101f 0%,var(--mw-navy) 52%,#08101f 100%)!important;color:#eef2f7!important}
+body>nav{background:rgba(11,19,43,.94)!important;border-color:rgba(212,175,55,.22)!important}
+body>nav a,body>nav button{border-color:rgba(212,175,55,.30)!important}
+body>nav a:hover,body>nav button:hover{border-color:var(--mw-gold)!important;color:#f3d878!important}
+body>nav+section>div:first-child{border-color:rgba(197,160,89,.30)!important;background:linear-gradient(135deg,rgba(255,252,245,.92),rgba(247,243,234,.82))!important;box-shadow:0 24px 70px rgba(11,19,43,.12)!important}
+html.dark body>nav+section>div:first-child{background:linear-gradient(135deg,rgba(11,19,43,.94),rgba(28,37,65,.88))!important;box-shadow:0 26px 75px rgba(0,0,0,.30),0 0 0 1px rgba(212,175,55,.05)!important}
+body>nav+section h2 span{background:none!important;color:var(--mw-gold)!important;-webkit-text-fill-color:var(--mw-gold)!important}
+body>nav+section>div:first-child>div:first-child>div:last-child{display:none!important}
+body>nav+section>div:first-child>div:last-child{border-color:rgba(212,175,55,.32)!important;background:linear-gradient(145deg,#111c36,#0B132B)!important}
+#meshwarHeroTrackBtn,.store-link,.local-public-open{background:linear-gradient(135deg,#C5A059,#D4AF37)!important;border-color:#e2c766!important;color:#0B132B!important;box-shadow:0 10px 28px rgba(212,175,55,.16)!important}
+.fixed-order-btn{background:linear-gradient(135deg,#C5A059,#D4AF37)!important;color:#0B132B!important;border:1px solid #efd976!important;box-shadow:0 14px 38px rgba(212,175,55,.30)!important;padding:14px 22px!important}
+.fixed-order-btn:hover{transform:translateY(-2px) scale(1.03)!important;box-shadow:0 18px 46px rgba(212,175,55,.38)!important}
+.header-container,.local-stores-shell{border-color:rgba(197,160,89,.28)!important;background:rgba(255,252,245,.82)!important}
+html.dark .header-container,html.dark .local-stores-shell{background:rgba(11,19,43,.76)!important;border-color:rgba(212,175,55,.22)!important}
+.header-container h1,.section-title{color:#8f6f19!important}html.dark .header-container h1,html.dark .section-title{color:#e1c45d!important}
+.store-card,.local-public-card{border-radius:20px!important;border-color:rgba(197,160,89,.24)!important;background:rgba(255,252,245,.86)!important;box-shadow:0 12px 34px rgba(11,19,43,.09)!important;overflow:hidden!important}
+html.dark .store-card,html.dark .local-public-card{background:linear-gradient(145deg,rgba(28,37,65,.78),rgba(11,19,43,.84))!important;border-color:rgba(212,175,55,.20)!important;box-shadow:0 14px 38px rgba(0,0,0,.22)!important}
+.store-card:hover,.local-public-card:hover{transform:translateY(-4px)!important;border-color:rgba(212,175,55,.58)!important;box-shadow:0 18px 46px rgba(212,175,55,.12)!important}
+.logo-container{position:relative!important;overflow:hidden!important;border:1px solid rgba(197,160,89,.14)!important;background:rgba(255,255,255,.58)!important}
+html.dark .logo-container{background:rgba(255,255,255,.04)!important}
+.meshwar-logo-fallback{display:flex;width:100%;height:100%;align-items:center;justify-content:center;border-radius:12px;background:linear-gradient(135deg,#0B132B,#1C2541);color:#e5c95f;font-weight:900;font-size:13px;letter-spacing:.2px;text-align:center;padding:6px;box-sizing:border-box;border:1px solid rgba(212,175,55,.28)}
+#meshwarTicker{border-color:rgba(212,175,55,.28)!important;background:rgba(11,19,43,.92)!important}.meshwar-ticker-track{color:#ead477!important}
+#meshwarStoreTabs>div{border-color:rgba(212,175,55,.22)!important;background:rgba(11,19,43,.90)!important}#showInternationalStoresBtn,#showLocalStoresBtn:hover{background:linear-gradient(135deg,#C5A059,#D4AF37)!important;color:#0B132B!important;border-color:#e6cd72!important}#showLocalStoresBtn{border-color:rgba(212,175,55,.32)!important}
+.local-filter-btn.active,.local-filter-btn:hover{background:linear-gradient(135deg,#C5A059,#D4AF37)!important;color:#0B132B!important;border-color:#e6cd72!important}.local-public-chip{color:#b88c20!important}html.dark .local-public-chip{color:#e6cd72!important}
+@media(max-width:640px){body{padding:10px!important}.fixed-order-btn{right:14px!important;bottom:16px!important;padding:12px 16px!important;font-size:14px!important}.user-auth-zone{left:12px!important;bottom:14px!important}.header-container{margin-top:18px!important;padding:22px 14px!important}.grid-container{gap:10px!important;padding-left:2px!important;padding-right:2px!important}.store-card{min-height:150px!important;padding:11px!important}.section-title{margin-top:36px!important;padding-right:4px!important;padding-left:4px!important}body>nav+section{padding-left:2px!important;padding-right:2px!important}body>nav+section>div:first-child{padding:20px 16px!important}body>nav+section h2{font-size:2rem!important;line-height:1.25!important}}
+`;
+  function installStyles(){if(document.getElementById('meshwarLuxuryUi'))return;const style=document.createElement('style');style.id='meshwarLuxuryUi';style.textContent=css;document.head.appendChild(style)}
+  function removeHeroActions(){const hero=document.querySelector('body > nav + section > div:first-child');const first=hero?.firstElementChild;if(!first)return;[...first.querySelectorAll('button,a')].filter(el=>/طلب منتج مباشر|المتاجر المحلية/.test(el.textContent||'')).forEach(el=>el.remove())}
+  function logoFallback(img){if(!img||img.dataset.mwFallback==='1')return;img.dataset.mwFallback='1';img.addEventListener('error',()=>{const box=img.closest('.logo-container');if(!box)return;const name=img.alt||img.closest('.store-card')?.querySelector('h3')?.textContent||'Store';const badge=document.createElement('div');badge.className='meshwar-logo-fallback';badge.textContent=name;img.remove();box.replaceChildren(badge)},{once:true})}
+  function polish(){installStyles();removeHeroActions();document.querySelectorAll('.store-logo').forEach(logoFallback)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',polish,{once:true});else polish();
+})();
