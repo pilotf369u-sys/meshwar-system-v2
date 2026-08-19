@@ -225,7 +225,7 @@ const ADMIN_REWARD_TARGET=6;
 let adminRewardOrdersByCustomer=new Map();
 function adminRewardLog(c){const v=c?.rewards_log??c?.rewardsLog??[];return Array.isArray(v)?v:[]}
 function adminRewardGrantsOf(c){return adminRewardLog(c).filter(r=>String(r?.type||'').toLowerCase()==='grant'&&Number(r?.amount||0)>0)}
-function adminRewardBalanceOf(c){return adminRewardLog(c).reduce((s,r)=>s+Number(r.amount||0),0)}
+function adminRewardBalanceOf(c){return adminRewardLog(c).reduce((s,r)=>s+Number(r?.amount||0),0)}
 function adminRewardUsageOf(c){const stored=Number(c?.usage_count??c?.usageCount??0),grants=adminRewardGrantsOf(c).length;return Math.max(Number.isFinite(stored)?stored:0,grants)}
 function adminRewardCycleOf(c,orders){const delivered=(orders||[]).filter(o=>o?.status==='تم التسليم').sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0)),grants=adminRewardGrantsOf(c),used=new Set();let explicit=0;grants.forEach(g=>{if(Array.isArray(g.order_ids)&&g.order_ids.length){explicit++;g.order_ids.forEach(x=>used.add(String(x)))}});let remaining=delivered.filter(o=>!used.has(String(o.id))),legacyCycles=Math.max(0,adminRewardUsageOf(c)-explicit);if(legacyCycles)remaining=remaining.slice(Math.min(remaining.length,legacyCycles*ADMIN_REWARD_TARGET));return remaining}
 function adminRewardTotalsOf(rows){const out={};(rows||[]).forEach(o=>{const cur=String(o.currency||'$'),v=Number(o.total_price||0);if(Number.isFinite(v))out[cur]=(out[cur]||0)+v});return out}
