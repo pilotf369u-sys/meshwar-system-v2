@@ -159,3 +159,22 @@ html.dark .logo-container{background:linear-gradient(145deg,rgba(255,255,255,.08
   function start(){install();scan();const observer=new MutationObserver(mutations=>mutations.forEach(m=>m.addedNodes.forEach(node=>{if(node.nodeType===1)scan(node)})));observer.observe(document.body,{childList:true,subtree:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+/* MESHWAR_STORE_LOGO_TEXT_FALLBACK_V4 */
+(function(){
+  const css=`
+.logo-container{width:100%!important;height:70px!important;min-height:70px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;background:rgba(255,255,255,.16)!important;border:1px solid rgba(212,175,55,.24)!important;box-sizing:border-box!important}
+html.dark .logo-container{background:rgba(255,255,255,.035)!important;border-color:rgba(212,175,55,.28)!important}
+.logo-container>.store-logo{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;padding:6px!important;box-sizing:border-box!important;background:transparent!important;border:0!important;border-radius:0!important}
+.logo-container>.meshwar-store-fallback{display:none!important}
+.meshwar-store-name-fallback{width:100%!important;height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:8px!important;box-sizing:border-box!important;color:#D4AF37!important;font-size:18px!important;font-weight:900!important;line-height:1.2!important;letter-spacing:.25px!important;text-align:center!important;background:transparent!important;text-shadow:0 1px 14px rgba(212,175,55,.16)!important}
+@media(max-width:640px){.meshwar-store-name-fallback{font-size:16px!important}.logo-container>.store-logo{padding:6px!important}}
+`;
+  function install(){if(document.getElementById('meshwarStoreLogoTextFallbackV4'))return;const style=document.createElement('style');style.id='meshwarStoreLogoTextFallbackV4';style.textContent=css;document.head.appendChild(style)}
+  function storeName(box,img){return String(box?.closest('.store-card')?.querySelector('h3')?.textContent||img?.alt||'Store').trim()||'Store'}
+  function showName(box,label){if(!box)return;const name=document.createElement('div');name.className='meshwar-store-name-fallback';name.textContent=label||'Store';name.setAttribute('role','img');name.setAttribute('aria-label',(label||'Store')+' logo unavailable');box.replaceChildren(name)}
+  function normalize(box){if(!box||box.querySelector('.meshwar-store-name-fallback'))return;const oldText=box.querySelector('.meshwar-logo-fallback');if(oldText){showName(box,String(oldText.textContent||'Store').trim());return}const oldSvg=box.querySelector('.meshwar-store-fallback');if(oldSvg){showName(box,storeName(box,oldSvg));return}const img=box.querySelector('.store-logo');if(!img)return;const label=storeName(box,img);const fail=()=>showName(box,label);img.addEventListener('error',fail,{once:true});if(img.complete&&img.naturalWidth===0)fail()}
+  function scan(root=document){if(root.matches?.('.logo-container'))normalize(root);root.querySelectorAll?.('.logo-container').forEach(normalize)}
+  function start(){install();scan();const observer=new MutationObserver(mutations=>mutations.forEach(m=>m.addedNodes.forEach(node=>{if(node.nodeType===1)scan(node)})));observer.observe(document.body,{childList:true,subtree:true})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
