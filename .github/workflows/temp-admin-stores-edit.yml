@@ -1,0 +1,48 @@
+name: temp-admin-stores-edit
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.head_ref == 'fix/admin-stores-edit-and-upload'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/admin-stores-edit-and-upload
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply surgical Admin stores patch
+        run: python3 tools/admin_stores_edit_patch.py
+      - name: Validate JavaScript and diff
+        shell: bash
+        run: |
+          node --check js/global-stores-defaults.js
+          python3 - <<'PY'
+          import re,subprocess,tempfile,pathlib
+          text=pathlib.Path('admin-dashboard.html').read_text(encoding='utf-8')
+          for i,(attrs,code) in enumerate(re.findall(r'<script\b([^>]*)>(.*?)</script>',text,re.S|re.I)):
+              if re.search(r'\bsrc\s*=',attrs,re.I):
+                  continue
+              p=pathlib.Path(tempfile.gettempdir())/f'admin-dashboard-{i}.js'
+              p.write_text(code,encoding='utf-8')
+              subprocess.run(['node','--check',str(p)],check=True)
+          PY
+          git diff --check
+          grep -F 'update_global_store' supabase/migrations/20260820_update_global_store_rpc.sql
+          grep -F 'images/N11.png' js/global-stores-defaults.js
+          grep -F 'images/KOTON.png' js/global-stores-defaults.js
+      - name: Commit final patch and remove temporary tooling
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/temp-admin-stores-edit.yml tools/admin_stores_edit_patch.py
+          git add admin-dashboard.html js/global-stores-defaults.js supabase/migrations/20260820_update_global_store_rpc.sql
+          git diff --cached --check
+          git commit -m 'fix: add global store edit and image selector'
+          git push origin HEAD:fix/admin-stores-edit-and-upload
