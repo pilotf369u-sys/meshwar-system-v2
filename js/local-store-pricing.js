@@ -183,7 +183,7 @@ html.dark .logo-container{background:rgba(255,255,255,.035)!important;border-col
 /* MESHWAR_GLOBAL_STORES_PUBLIC_V1 */
 (function(){
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co',SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
-  const categoryLabels={comprehensive:'المتاجر الشاملة',fashion:'الأزياء والملابس',sports:'الرياضة',beauty:'التجميل والعناية',home:'المنزل'};
+  const categoryLabels={comprehensive:'المتاجر الشاملة',fashion:'الأزياء والملابس',sports:'الرياضة والأحذية',beauty:'التجميل والعناية',home:'المنزل والأطفال والسوبر ماركت'};
   const css=`
 .logo-container{height:78px!important;min-height:78px!important;padding:0!important;background:transparent!important;border:1px solid rgba(212,175,55,.18)!important;box-shadow:none!important}
 html.dark .logo-container{background:transparent!important;border-color:rgba(212,175,55,.24)!important}
