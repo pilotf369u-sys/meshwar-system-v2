@@ -1,0 +1,54 @@
+name: temp-global-store-category-fix
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.head_ref == 'fix/admin-stores-and-logo-paths'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/admin-stores-and-logo-paths
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Correct category heading map and seed categories
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('js/local-store-pricing.js');s=p.read_text(encoding='utf-8')
+          old="sports:'الرياضة',beauty:'التجميل والعناية',home:'المنزل'"
+          new="sports:'الرياضة والأحذية',beauty:'التجميل والعناية',home:'المنزل والأطفال والسوبر ماركت'"
+          if old not in s: raise SystemExit('category label map not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          m=Path('supabase/migrations/20260820_create_global_stores.sql');t=m.read_text(encoding='utf-8')
+          sports=['Nike','Adidas','Puma','FLO','SuperStep','Luvi Shoes']
+          home=['Madame Coco','English Home','ebebek','Kanz','Toyzz Shop','Getir','Migros','A101','BİM','Şok Market']
+          for name in sports:
+              t=t.replace(f"('{name}',",f"('{name}',",1)
+              marker=f"('{name}',"
+              i=t.index(marker);j=t.index('),',i) if '),' in t[i:] else len(t)
+              row=t[i:j]
+              row2=row.replace("'comprehensive'","'sports'",1)
+              t=t[:i]+row2+t[j:]
+          for name in home:
+              marker=f"('{name}',";i=t.index(marker);j=t.index('),',i) if '),' in t[i:] else len(t)
+              row=t[i:j];row2=row.replace("'comprehensive'","'home'",1);t=t[:i]+row2+t[j:]
+          m.write_text(t,encoding='utf-8')
+          PY
+          node --check js/local-store-pricing.js
+          git diff --check
+      - name: Commit and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f .github/workflows/temp-global-store-category-fix.yml
+          git add -A
+          git diff --cached --check
+          git commit -m 'fix: align global store category mappings'
+          git push origin HEAD:fix/admin-stores-and-logo-paths
