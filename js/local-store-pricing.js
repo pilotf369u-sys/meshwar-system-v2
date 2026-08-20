@@ -194,6 +194,43 @@ html.dark .logo-container{background:transparent!important;border-color:rgba(212
   function safeUrl(v){const s=String(v||'').trim();return /^(https?:\/\/|images\/)/i.test(s)?s:''}
   function grids(){const root=document.getElementById('internationalStoresSection'),out={};if(!root)return out;root.querySelectorAll('.section-title').forEach(h=>{const key=Object.keys(categoryLabels).find(k=>String(h.textContent||'').trim()===categoryLabels[k]);const g=h.nextElementSibling;if(key&&g?.classList.contains('grid-container'))out[key]=g});return out}
   function card(store){const c=document.createElement('div');c.className='store-card';const box=document.createElement('div');box.className='logo-container';const logo=safeUrl(store.logo_url);if(logo){const img=document.createElement('img');img.className='store-logo';img.src=logo;img.alt=String(store.name||'Store');img.addEventListener('error',()=>{const n=document.createElement('div');n.className='meshwar-store-name-fallback';n.textContent=String(store.name||'Store');box.replaceChildren(n)},{once:true});box.appendChild(img)}else{const n=document.createElement('div');n.className='meshwar-store-name-fallback';n.textContent=String(store.name||'Store');box.appendChild(n)}const h=document.createElement('h3');h.textContent=String(store.name||'');const a=document.createElement('a');a.className='store-link';a.textContent='تصفح';const u=safeUrl(store.store_url);if(u){a.href=u;a.target='_blank';a.rel='noopener noreferrer'}else{a.href='#';a.addEventListener('click',e=>e.preventDefault())}c.append(box,h,a);return c}
-  async function load(){install();try{const r=await fetch(`${SB_URL}/rest/v1/global_stores?select=id,name,logo_url,category,store_url,sort_order,is_active&is_active=eq.true&order=sort_order.asc,id.asc`,{cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`}});if(!r.ok)return;const data=await r.json();if(!Array.isArray(data)||!data.length)return;const gs=grids();Object.values(gs).forEach(g=>g.replaceChildren());data.forEach(st=>{const g=gs[String(st.category||'comprehensive')]||gs.comprehensive;if(g)g.appendChild(card(st))})}catch(e){console.warn('Global stores cloud list unavailable; keeping static stores.',e)}}
+  async function load(){
+    install();
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/global_stores?select=id,name,logo_url,category,store_url,sort_order,is_active&is_active=eq.true&order=sort_order.asc,id.asc`,{cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`}});
+      if(!r.ok)return;
+      const data=await r.json();
+      if(!Array.isArray(data)||!data.length)return;
+      const gs=grids(),existing=new Map();
+      Object.values(gs).forEach(g=>g.querySelectorAll('.store-card').forEach(c=>{const n=String(c.querySelector('h3')?.textContent||'').trim().toLocaleLowerCase();if(n)existing.set(n,c)}));
+      data.forEach(st=>{
+        const target=gs[String(st.category||'comprehensive')]||gs.comprehensive;
+        if(!target)return;
+        const key=String(st.name||'').trim().toLocaleLowerCase();
+        const current=existing.get(key);
+        if(current){
+          const logo=safeUrl(st.logo_url),img=current.querySelector('.store-logo'),link=current.querySelector('.store-link'),url=safeUrl(st.store_url);
+          if(img&&logo&&img.getAttribute('src')!==logo)img.src=logo;
+          if(link&&url){link.href=url;link.target='_blank';link.rel='noopener noreferrer'}
+          return;
+        }
+        const node=card(st);target.appendChild(node);if(key)existing.set(key,node);
+      });
+    }catch(e){console.warn('Global stores cloud list unavailable; keeping static stores.',e)}
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
+})();
+
+
+/* MESHWAR_STORE_LOGO_POLISH_V5 */
+(function(){
+  const css=`
+.logo-container{height:82px!important;min-height:82px!important;width:100%!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:hidden!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.logo-container::before,.logo-container::after{display:none!important;content:none!important}
+.logo-container>.store-logo{display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center!important;padding:4px!important;margin:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;box-sizing:border-box!important;mix-blend-mode:multiply!important}
+html.dark .logo-container>.store-logo{mix-blend-mode:normal!important}
+.meshwar-store-name-fallback{width:100%!important;height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:8px!important;color:#D4AF37!important;background:transparent!important;border:0!important;font-size:18px!important;font-weight:900!important;letter-spacing:.02em!important;text-align:center!important}
+`;
+  function install(){if(document.getElementById('meshwarStoreLogoPolishV5'))return;const s=document.createElement('style');s.id='meshwarStoreLogoPolishV5';s.textContent=css;document.head.appendChild(s)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
