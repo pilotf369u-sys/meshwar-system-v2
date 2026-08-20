@@ -178,3 +178,22 @@ html.dark .logo-container{background:rgba(255,255,255,.035)!important;border-col
   function start(){install();scan();const observer=new MutationObserver(mutations=>mutations.forEach(m=>m.addedNodes.forEach(node=>{if(node.nodeType===1)scan(node)})));observer.observe(document.body,{childList:true,subtree:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+
+/* MESHWAR_GLOBAL_STORES_PUBLIC_V1 */
+(function(){
+  const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co',SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+  const categoryLabels={comprehensive:'المتاجر الشاملة',fashion:'الأزياء والملابس',sports:'الرياضة',beauty:'التجميل والعناية',home:'المنزل'};
+  const css=`
+.logo-container{height:78px!important;min-height:78px!important;padding:0!important;background:transparent!important;border:1px solid rgba(212,175,55,.18)!important;box-shadow:none!important}
+html.dark .logo-container{background:transparent!important;border-color:rgba(212,175,55,.24)!important}
+.logo-container>.store-logo{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;padding:2px!important;box-sizing:border-box!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+.store-card:hover .store-logo{transform:scale(1.06)!important}
+`;
+  function install(){if(document.getElementById('meshwarGlobalStoresPublicV1'))return;const s=document.createElement('style');s.id='meshwarGlobalStoresPublicV1';s.textContent=css;document.head.appendChild(s)}
+  function safeUrl(v){const s=String(v||'').trim();return /^(https?:\/\/|images\/)/i.test(s)?s:''}
+  function grids(){const root=document.getElementById('internationalStoresSection'),out={};if(!root)return out;root.querySelectorAll('.section-title').forEach(h=>{const key=Object.keys(categoryLabels).find(k=>String(h.textContent||'').trim()===categoryLabels[k]);const g=h.nextElementSibling;if(key&&g?.classList.contains('grid-container'))out[key]=g});return out}
+  function card(store){const c=document.createElement('div');c.className='store-card';const box=document.createElement('div');box.className='logo-container';const logo=safeUrl(store.logo_url);if(logo){const img=document.createElement('img');img.className='store-logo';img.src=logo;img.alt=String(store.name||'Store');img.addEventListener('error',()=>{const n=document.createElement('div');n.className='meshwar-store-name-fallback';n.textContent=String(store.name||'Store');box.replaceChildren(n)},{once:true});box.appendChild(img)}else{const n=document.createElement('div');n.className='meshwar-store-name-fallback';n.textContent=String(store.name||'Store');box.appendChild(n)}const h=document.createElement('h3');h.textContent=String(store.name||'');const a=document.createElement('a');a.className='store-link';a.textContent='تصفح';const u=safeUrl(store.store_url);if(u){a.href=u;a.target='_blank';a.rel='noopener noreferrer'}else{a.href='#';a.addEventListener('click',e=>e.preventDefault())}c.append(box,h,a);return c}
+  async function load(){install();try{const r=await fetch(`${SB_URL}/rest/v1/global_stores?select=id,name,logo_url,category,store_url,sort_order,is_active&is_active=eq.true&order=sort_order.asc,id.asc`,{cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`}});if(!r.ok)return;const data=await r.json();if(!Array.isArray(data)||!data.length)return;const gs=grids();Object.values(gs).forEach(g=>g.replaceChildren());data.forEach(st=>{const g=gs[String(st.category||'comprehensive')]||gs.comprehensive;if(g)g.appendChild(card(st))})}catch(e){console.warn('Global stores cloud list unavailable; keeping static stores.',e)}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
+})();
