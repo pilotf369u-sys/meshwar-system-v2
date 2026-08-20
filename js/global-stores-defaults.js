@@ -51,3 +51,9 @@ window.MeshwarGlobalStoreDefaults=[
 {name:'BİM',logo_url:'images/bim.png',category:'home',store_url:'https://www.bim.com.tr/',sort_order:49},
 {name:'Şok Market',logo_url:'images/sok.png',category:'home',store_url:'https://kurumsal.sokmarket.com.tr/',sort_order:50}
 ];
+(function(){
+  const s=document.createElement('script');
+  s.src='js/admin-store-logo-file-input.js';
+  s.defer=true;
+  document.head.appendChild(s);
+})();
