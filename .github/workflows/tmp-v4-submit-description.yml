@@ -1,0 +1,65 @@
+name: Temporary V4 submit and description patch
+on:
+  push:
+    branches: [fix/local-store-v4-submit-handler-and-description]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/local-store-v4-submit-handler-and-description
+          fetch-depth: 0
+      - name: Apply submit handler and full description patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # V3: expose the proven createOrder path and return an explicit result.
+          p=Path('js/local-store-card-v3.js')
+          s=p.read_text()
+          old="""    await restRequest('orders',{method:'POST',body:[payload],timeout:5000});alert('تم إرسال الطلب بنجاح. الكمية: '+requestedQuantity+' — الإجمالي: '+iqdLabel(totalIqd)+' — رقم الطلب: '+orderCode);location.href='dashboard.html?customerId='+encodeURIComponent(customer.id);\n  }catch(e){if(reservation?.managed)await rollbackStock(product.id,reservation);console.error('Local order error:',e);alert('تعذر إرسال الطلب: '+(e.message||e));await renderStoreProductsV3(store.id)}\n}\n\nasync function renderStoreProductsV3"""
+          new="""    await restRequest('orders',{method:'POST',body:[payload],timeout:5000});alert('تم إرسال الطلب بنجاح. الكمية: '+requestedQuantity+' — الإجمالي: '+iqdLabel(totalIqd)+' — رقم الطلب: '+orderCode);location.href='dashboard.html?customerId='+encodeURIComponent(customer.id);return{ok:true,orderCode,customerId:customer.id};\n  }catch(e){if(reservation?.managed)await rollbackStock(product.id,reservation);console.error('Local order error:',e);alert('تعذر إرسال الطلب: '+(e.message||e));await renderStoreProductsV3(store.id);return{ok:false,error:e}}\n}\nwindow.createLocalStoreOrder=createOrder;\n\nasync function renderStoreProductsV3"""
+          if old not in s: raise SystemExit('V3 createOrder target not found')
+          p.write_text(s.replace(old,new,1))
+
+          # V4: full description box + direct awaitable submit + loading state.
+          p=Path('js/local-store-product-details-v4.js')
+          s=p.read_text()
+          css_old=".mw-detail-desc{color:#64748b;line-height:1.65;margin-bottom:12px}.dark .mw-detail-desc{color:#cbd5e1}.mw-detail-price"
+          css_new=".mw-detail-desc{color:#64748b;line-height:1.65;margin-bottom:12px}.dark .mw-detail-desc{color:#cbd5e1}.mw-detail-description-box{margin:12px 0 14px;padding:13px 14px;border-radius:14px;border:1px solid rgba(212,175,55,.24);background:rgba(255,255,255,.38)}.dark .mw-detail-description-box{background:rgba(255,255,255,.035)}.mw-detail-description-label{display:block;margin-bottom:7px;font-size:12px;font-weight:900;color:#9a7415}.dark .mw-detail-description-label{color:#fbbf24}.mw-detail-description-text{white-space:pre-wrap;overflow-wrap:anywhere;color:#475569;line-height:1.8;font-size:.94rem}.dark .mw-detail-description-text{color:#dbe5f1}.mw-modal-confirm.is-loading{position:relative;cursor:wait;opacity:.9}.mw-modal-confirm.is-loading::before{content:'';width:18px;height:18px;border-radius:50%;border:2px solid rgba(17,24,39,.28);border-top-color:#111827;display:inline-block;margin-inline-end:9px;vertical-align:-4px;animation:mwSubmitSpin .7s linear infinite}@keyframes mwSubmitSpin{to{transform:rotate(360deg)}}.mw-detail-price"
+          if css_old not in s: raise SystemExit('V4 CSS target not found')
+          s=s.replace(css_old,css_new,1)
+
+          old_markup="<h3 class=\"mw-detail-title\">${esc(p.product_name||'منتج')}</h3><div class=\"mw-detail-desc\">${esc(p.description||'')}</div><div class=\"mw-detail-price\">${esc(price)}</div>"
+          new_markup="<h3 class=\"mw-detail-title\">${esc(p.product_name||'منتج')}</h3><div class=\"mw-detail-price\">${esc(price)}</div><div class=\"mw-detail-description-box\"><span class=\"mw-detail-description-label\">وصف المنتج</span><div class=\"mw-detail-description-text\">${esc(p.description||'لا يوجد وصف إضافي لهذا المنتج.')}</div></div>"
+          if old_markup not in s: raise SystemExit('V4 description markup target not found')
+          s=s.replace(old_markup,new_markup,1)
+
+          old_handler="""    body.querySelector('.mw-modal-confirm')?.addEventListener('click',()=>{\n      const selection={color:'',size:'',volume:''};\n      for(const [key,label] of [['color','اللون'],['size','المقاس'],['volume','الحجم']]){const g=body.querySelector(`[data-group=\"${key}\"]`);if(!g)continue;const active=g.querySelector('.mw-option-btn.active');if(!active)return alert('يرجى اختيار '+label);selection[key]=String(active.dataset.value||'').trim()}\n      const qty=Math.max(1,Math.floor(Number(body.querySelector('[data-q-value]')?.textContent)||1));injectHiddenSelection(card,selection,qty);button.dataset.mwV4Confirmed='1';modal.classList.remove('open');button.click();\n    });"""
+          new_handler="""    body.querySelector('.mw-modal-confirm')?.addEventListener('click',async()=>{\n      const confirmBtn=body.querySelector('.mw-modal-confirm');if(!confirmBtn||confirmBtn.disabled||confirmBtn.dataset.submitting==='1')return;\n      const selection={color:'',size:'',volume:''};\n      for(const [key,label] of [['color','اللون'],['size','المقاس'],['volume','الحجم']]){const g=body.querySelector(`[data-group=\"${key}\"]`);if(!g)continue;const active=g.querySelector('.mw-option-btn.active');if(!active)return alert('يرجى اختيار '+label);selection[key]=String(active.dataset.value||'').trim()}\n      const qty=Math.max(1,Math.floor(Number(body.querySelector('[data-q-value]')?.textContent)||1));\n      if(typeof window.createLocalStoreOrder!=='function')return alert('نظام إرسال الطلب لم يكتمل تحميله بعد. يرجى المحاولة بعد لحظة.');\n      const originalText=confirmBtn.textContent;confirmBtn.dataset.submitting='1';confirmBtn.disabled=true;confirmBtn.classList.add('is-loading');confirmBtn.textContent='جاري إرسال الطلب...';\n      try{\n        const context=window.MeshwarLocalStoreV4Context||{};let store=context.store||null;\n        if(!store){const storeId=String(new URLSearchParams(location.search).get('storeId')||'').trim();if(storeId){const stores=await rest(`local_stores?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(storeId)}&limit=1`);store=Array.isArray(stores)?stores[0]:null}}\n        if(!store)throw new Error('تعذر تحميل بيانات المتجر.');\n        const result=await window.createLocalStoreOrder(p,store,selection,qty);\n        if(result?.ok){modal.classList.remove('open');return}\n      }catch(err){console.error('V4 submit failed',err);alert('تعذر إرسال الطلب: '+(err?.message||err))}\n      finally{if(document.body.contains(confirmBtn)){confirmBtn.dataset.submitting='0';confirmBtn.disabled=unavailable;confirmBtn.classList.remove('is-loading');confirmBtn.textContent=originalText}}\n    });"""
+          if old_handler not in s: raise SystemExit('V4 submit handler target not found')
+          p.write_text(s.replace(old_handler,new_handler,1))
+          PY
+
+          node --check js/local-store-card-v3.js
+          node --check js/local-store-product-details-v4.js
+          git diff --check
+          grep -Fq 'window.createLocalStoreOrder=createOrder' js/local-store-card-v3.js
+          grep -Fq "جاري إرسال الطلب..." js/local-store-product-details-v4.js
+          grep -Fq 'mw-detail-description-box' js/local-store-product-details-v4.js
+      - name: Commit clean patch and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-v4-submit-description.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/local-store-card-v3.js js/local-store-product-details-v4.js .github/workflows/tmp-v4-submit-description.yml
+          git commit -m 'fix: wire V4 submit handler and full product description'
+          git push origin HEAD:fix/local-store-v4-submit-handler-and-description
