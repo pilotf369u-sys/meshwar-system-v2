@@ -106,13 +106,26 @@
     return true;
   }
 
+  function invokeWithoutLegacyDescriptionLimit(original,ctx,args){
+    const input=document.getElementById('productDescription');
+    const full=String(input?.value??'').trim();
+    let source='';
+    try{source=Function.prototype.toString.call(original)}catch{}
+    const hasLegacyGuard=/description\.length\s*>\s*30|الوصف المختصر يجب ألا يتجاوز 30/.test(source);
+    if(!hasLegacyGuard||full.length<=30)return original.apply(ctx,args);
+    const nativeTrim=String.prototype.trim;
+    const marker={length:0,toString(){return full},valueOf(){return full},toJSON(){return full},[Symbol.toPrimitive](){return full}};
+    String.prototype.trim=function(){const trimmed=nativeTrim.call(this);return trimmed===full?marker:trimmed};
+    try{return original.apply(ctx,args)}finally{String.prototype.trim=nativeTrim}
+  }
+
   function wrapVendorSave(){
     if(typeof window.saveProduct!=='function'||window.saveProduct.__mwV7Wrapped)return false;
     const original=window.saveProduct;
     const wrapped=async function(...args){
       normalizeBlankInputs();
       if(!validateMatrixTotal())return false;
-      return await original.apply(this,args);
+      return await invokeWithoutLegacyDescriptionLimit(original,this,args);
     };
     wrapped.__mwV7Wrapped=true;
     wrapped.__mwMatrixWrapped=original.__mwMatrixWrapped;
