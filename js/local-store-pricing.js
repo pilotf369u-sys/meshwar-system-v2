@@ -248,3 +248,14 @@ html:not(.dark) .logo-container>.store-logo{mix-blend-mode:multiply!important}
   function install(){if(document.getElementById('meshwarStoreLogoVisualPolishV6'))return;const s=document.createElement('style');s.id='meshwarStoreLogoVisualPolishV6';s.textContent=css;document.head.appendChild(s)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
+
+
+/* MESHWAR_LOCAL_PRODUCT_DETAILS_V4_LOADER */
+(function(){
+  if(document.querySelector('script[data-mw-product-details-v4]'))return;
+  const s=document.createElement('script');
+  s.src='js/local-store-product-details-v4.js?v=1';
+  s.defer=true;
+  s.dataset.mwProductDetailsV4='1';
+  document.head.appendChild(s);
+})();
