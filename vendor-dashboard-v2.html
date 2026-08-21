@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>لوحة صاحب المتجر - MeshWar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{boxShadow:{glass:'0 20px 60px rgba(2,6,23,.35)'}}}}
+  </script>
+  <style>
+    body{background-image:radial-gradient(circle at 15% 10%,rgba(14,165,233,.14),transparent 28%),radial-gradient(circle at 85% 8%,rgba(99,102,241,.13),transparent 26%),linear-gradient(135deg,#020617,#0f172a 48%,#020617)}
+    .glass{background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(18px)}
+    .field{width:100%;border-radius:.9rem;border:1px solid rgba(255,255,255,.1);background:rgba(15,23,42,.9);padding:.75rem .9rem;color:#f8fafc;outline:none}
+    .field:focus{border-color:rgba(56,189,248,.6);box-shadow:0 0 0 3px rgba(56,189,248,.1)}
+    .light body{background:#f8fafc}.light .glass{background:rgba(255,255,255,.86);border-color:#e2e8f0}.light .field{background:#fff;color:#0f172a;border-color:#cbd5e1}.light .vendor-muted{color:#64748b!important}.light .vendor-text{color:#0f172a!important}
+
+    .vendor-main-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin-bottom:1rem}
+    .vendor-main-tab{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#cbd5e1;border-radius:1rem;padding:.9rem 1rem;font-weight:900;transition:.2s ease;cursor:pointer}
+    .vendor-main-tab:hover{transform:translateY(-1px);border-color:rgba(56,189,248,.35);background:rgba(56,189,248,.08)}
+    .vendor-main-tab.active{color:#fff;border-color:rgba(56,189,248,.55);background:linear-gradient(135deg,rgba(14,165,233,.28),rgba(79,70,229,.24));box-shadow:0 10px 30px rgba(14,165,233,.12)}
+    .vendor-tab-panel{display:none}.vendor-tab-panel.active{display:block}
+    .vendor-order-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin:.85rem 0 1rem}
+    .vendor-order-filter{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#cbd5e1;border-radius:999px;padding:.55rem .85rem;font-size:.78rem;font-weight:800;cursor:pointer;transition:.2s ease}
+    .vendor-order-filter:hover{border-color:rgba(56,189,248,.35)}
+    .vendor-order-filter.active{color:#fff;background:#2563eb;border-color:#3b82f6;box-shadow:0 6px 18px rgba(37,99,235,.22)}
+    .vendor-responsive-table,.vendor-compact-table{width:100%;table-layout:fixed;border-collapse:collapse}
+    .vendor-responsive-table{direction:rtl}
+    .vendor-responsive-table th,.vendor-responsive-table td{padding:.75rem .45rem;vertical-align:middle;text-align:center;overflow-wrap:anywhere;word-break:break-word}
+    .vendor-responsive-table th{font-size:.72rem;font-weight:900;white-space:normal}
+    .vendor-compact-table th,.vendor-compact-table td{padding:.75rem .55rem;vertical-align:middle;overflow-wrap:anywhere;word-break:break-word}
+    .vendor-responsive-table th,.vendor-compact-table th{font-size:.72rem}
+    .vendor-responsive-table td,.vendor-compact-table td{font-size:.8rem}
+    .vendor-table-wrap{width:100%;overflow:hidden}
+    .light .vendor-main-tab,.light .vendor-order-filter{border-color:#cbd5e1;background:#fff;color:#475569}.light .vendor-main-tab.active,.light .vendor-order-filter.active{color:#fff}
+    @media(max-width:900px){.vendor-main-tabs{grid-template-columns:1fr}.vendor-responsive-table thead{display:none}.vendor-responsive-table,.vendor-responsive-table tbody,.vendor-responsive-table tr{display:block;width:100%}.vendor-responsive-table tr{margin-bottom:.8rem;border:1px solid rgba(255,255,255,.09);border-radius:1rem;background:rgba(255,255,255,.03);overflow:hidden}.vendor-responsive-table td{display:grid;grid-template-columns:105px minmax(0,1fr);gap:.65rem;align-items:center;width:100%;text-align:right;border-bottom:1px solid rgba(255,255,255,.06);padding:.7rem}.vendor-responsive-table td::before{content:attr(data-label);font-size:.72rem;font-weight:900;color:#94a3b8}.vendor-responsive-table td:last-child{border-bottom:0}.vendor-compact-table th,.vendor-compact-table td{padding:.55rem .3rem;font-size:.7rem}.vendor-compact-table th{font-size:.66rem}}
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 transition-colors duration-300">
+
+<section id="loginView" class="flex min-h-screen items-center justify-center p-4">
+  <div class="glass w-full max-w-md rounded-3xl p-6 shadow-glass md:p-8">
+    <div class="mb-7 text-center">
+      <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-sky-400/30 bg-sky-400/10 text-3xl">🏪</div>
+      <h1 class="vendor-text text-2xl font-black">لوحة صاحب المتجر</h1>
+      <p class="vendor-muted mt-2 text-sm text-slate-400">دخول موحد باسم المستخدم أو رقم الهاتف</p>
+    </div>
+    <div class="space-y-3">
+      <input id="loginIdentity" class="field" autocomplete="username" placeholder="اسم المستخدم أو رقم الهاتف">
+      <input id="loginPassword" class="field" type="password" autocomplete="current-password" placeholder="كلمة المرور">
+      <button id="loginBtn" type="button" onclick="vendorLogin()" class="w-full rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 px-5 py-3 font-black shadow-lg shadow-sky-500/15 transition hover:scale-[1.01] hover:shadow-sky-500/25">دخول إلى المتجر</button>
+      <p id="loginNotice" class="min-h-5 text-center text-xs text-rose-300"></p>
+    </div>
+  </div>
+</section>
+
+<div id="dashboardView" class="hidden min-h-screen">
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-[1500px] items-center justify-between gap-3 px-4 py-3 md:px-6">
+      <div class="flex min-w-0 items-center gap-3">
+        <img id="storeLogo" class="h-11 w-11 rounded-full border border-white/10 object-cover" alt="شعار المتجر">
+        <div class="min-w-0"><div id="storeName" class="vendor-text truncate font-black">المتجر</div><div id="storeMeta" class="vendor-muted truncate text-xs text-slate-400"></div></div>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="toggleTheme()" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm">◐</button>
+        <button type="button" onclick="vendorLogout()" class="rounded-xl border border-rose-400/20 bg-rose-500/10 px-3 py-2 text-sm font-bold text-rose-200">تسجيل الخروج</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-[1500px] p-4 md:p-6">
+    <div id="globalNotice" class="mb-4 hidden rounded-2xl border p-3 text-sm font-bold"></div>
+
+    <section class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <article class="glass rounded-2xl p-4"><div class="vendor-muted text-xs text-slate-400">إجمالي المبيعات الكلية</div><div id="statSales" class="mt-2 text-lg font-black text-emerald-300">0</div></article>
+      <article class="glass rounded-2xl p-4"><div class="vendor-muted text-xs text-slate-400">عمولة MeshWar</div><div id="statCommission" class="mt-2 text-lg font-black text-sky-300">0</div></article>
+      <article class="glass rounded-2xl p-4"><div class="vendor-muted text-xs text-slate-400">إجمالي الخصومات / أخرى</div><div id="statOther" class="mt-2 text-lg font-black text-rose-300">0</div></article>
+      <article class="glass rounded-2xl p-4"><div class="vendor-muted text-xs text-slate-400">المبلغ المعلق</div><div id="statPending" class="mt-2 text-lg font-black text-amber-300">0</div></article>
+      <article class="glass rounded-2xl p-4"><div class="vendor-muted text-xs text-slate-400">المبلغ المدفوع</div><div id="statPaid" class="mt-2 text-lg font-black text-indigo-300">0</div></article>
+      <article class="glass rounded-2xl p-4"><div class="vendor-muted text-xs text-slate-400">صافي حساب التاجر</div><div id="statNet" class="mt-2 text-lg font-black text-violet-300">0</div></article>
+    </section>
+
+    <nav class="vendor-main-tabs" aria-label="أقسام لوحة التاجر">
+      <button id="vendorTabBtn-orders" type="button" class="vendor-main-tab active" onclick="setVendorTab('orders')">📦 إدارة الطلبات</button>
+      <button id="vendorTabBtn-finance" type="button" class="vendor-main-tab" onclick="setVendorTab('finance')">💰 الحساب المالي</button>
+      <button id="vendorTabBtn-products" type="button" class="vendor-main-tab" onclick="setVendorTab('products')">🛍️ المنتجات والمخزون</button>
+    </nav>
+
+    <section id="vendorTab-orders" class="vendor-tab-panel active">
+      <div class="glass rounded-3xl p-4 md:p-5">
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-2"><div><h2 class="vendor-text text-lg font-black">إدارة الطلبات</h2><p class="vendor-muted mt-1 text-xs text-slate-400">عرض كامل للطلبات مع فلاتر سريعة حسب الحالة، بدون تمرير أفقي.</p></div><button onclick="loadOrders()" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-black">تحديث الطلبات</button></div>
+        <div class="vendor-order-filters" aria-label="فلترة الطلبات">
+          <button type="button" class="vendor-order-filter active" data-order-filter="all" onclick="setVendorOrderFilter('all')">الكل</button>
+          <button type="button" class="vendor-order-filter" data-order-filter="pending" onclick="setVendorOrderFilter('pending')">بانتظار الموافقة</button>
+          <button type="button" class="vendor-order-filter" data-order-filter="delivery" onclick="setVendorOrderFilter('delivery')">قيد التوصيل</button>
+          <button type="button" class="vendor-order-filter" data-order-filter="delivered" onclick="setVendorOrderFilter('delivered')">تم التسليم</button>
+          <button type="button" class="vendor-order-filter" data-order-filter="returns" onclick="setVendorOrderFilter('returns')">المرتجعات</button>
+        </div>
+        <p class="vendor-muted mb-3 text-xs text-slate-400">تظهر هنا طلبات هذا المتجر فقط من دورة الطلبات الرئيسية، مع إخفاء هاتف العميل وعنوانه التفصيلي حفاظًا على الخصوصية.</p>
+        <div class="vendor-table-wrap"><table class="vendor-responsive-table text-sm"><colgroup><col style="width:16%"><col style="width:18%"><col style="width:8%"><col style="width:10%"><col style="width:17%"><col style="width:13%"><col style="width:18%"></colgroup><thead class="border-b border-white/10 text-slate-400"><tr><th>رقم الطلب</th><th>المنتج</th><th>الكمية</th><th>عدد الطرود</th><th>المحافظة / المدينة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="vendorTab-finance" class="vendor-tab-panel">
+      <div class="glass rounded-3xl p-4 md:p-6">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div><h2 class="vendor-text text-xl font-black">الحساب المالي</h2><p class="vendor-muted mt-1 text-xs text-slate-400">كشف تسويات الطلبات المسلّمة. حالة الدفع قراءة فقط وتُحدَّث من لوحة الأدمن.</p></div>
+          <button type="button" onclick="exportVendorPaidStatement()" class="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm font-black text-white">📄 سحب كشف حساب / PDF</button>
+        </div>
+        <div class="vendor-order-filters" aria-label="فلترة الحساب المالي">
+          <button type="button" class="vendor-order-filter active" data-finance-filter="all" onclick="setVendorFinanceFilter('all')">الكل</button>
+          <button type="button" class="vendor-order-filter" data-finance-filter="pending" onclick="setVendorFinanceFilter('pending')">المعلق</button>
+          <button type="button" class="vendor-order-filter" data-finance-filter="paid" onclick="setVendorFinanceFilter('paid')">المدفوع</button>
+        </div>
+        <div class="vendor-table-wrap"><table class="vendor-responsive-table text-sm"><colgroup><col style="width:18%"><col style="width:18%"><col style="width:15%"><col style="width:14%"><col style="width:18%"><col style="width:17%"></colgroup><thead class="border-b border-white/10 text-slate-400"><tr><th>رقم الطلب</th><th>المبلغ الكلي</th><th>العمولة (%)</th><th>أخرى</th><th>المبلغ الصافي</th><th>حالة الدفع</th></tr></thead><tbody id="vendorFinanceBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="vendorTab-products" class="vendor-tab-panel">
+      <div class="grid gap-4 xl:grid-cols-[1.45fr_.55fr]">
+        <div class="glass rounded-3xl p-4 md:p-5">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2"><div><h2 class="vendor-text text-lg font-black">إدارة المنتجات والمخزون</h2><p class="vendor-muted text-xs text-slate-400">الوصف المختصر بحد أقصى 30 حرفًا.</p></div><button type="button" onclick="openProductModal()" class="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-black transition hover:bg-emerald-400">+ منتج جديد</button></div>
+          <div id="lowStockBanner" class="mb-3 hidden rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-sm font-bold text-amber-200"></div>
+          <div class="vendor-table-wrap"><table class="vendor-compact-table text-sm"><thead class="border-b border-white/10 text-slate-400"><tr><th>المنتج</th><th>السعر</th><th>المخزون</th><th>الخيارات</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="productsBody"></tbody></table></div>
+        </div>
+        <div class="glass rounded-3xl p-4 md:p-5">
+          <h2 class="vendor-text text-lg font-black">سعر الصرف المركزي</h2>
+          <p class="vendor-muted mt-1 text-xs leading-6 text-slate-400">يُحفظ السعر على مستوى المتجر وتُعرض جميع أسعار المنتجات بالقيمة المحولة فورًا دون إتلاف السعر الأصلي.</p>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <select id="exchangeBase" class="field"><option>USD</option><option>IQD</option><option>TRY</option><option>SYP</option><option>EUR</option><option>SAR</option><option>AED</option><option>JOD</option></select>
+            <select id="exchangeTarget" class="field"><option>IQD</option><option>USD</option><option>TRY</option><option>SYP</option><option>EUR</option><option>SAR</option><option>AED</option><option>JOD</option></select>
+            <input id="exchangeRate" class="field col-span-2" type="number" min="0.000001" step="0.000001" placeholder="مثال: 1500">
+            <button type="button" onclick="saveExchangeRate()" class="col-span-2 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 px-5 py-3 font-black transition hover:scale-[1.01]">تطبيق سعر الصرف على العرض</button>
+          </div>
+          <div id="exchangePreview" class="vendor-muted mt-4 rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-slate-300">—</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="productModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+  <div class="glass max-h-[92vh] w-full max-w-3xl overflow-auto rounded-3xl p-5 shadow-glass">
+    <div class="mb-4 flex items-center justify-between"><h2 id="productModalTitle" class="vendor-text text-xl font-black">إضافة منتج</h2><button onclick="closeProductModal()" class="rounded-lg bg-rose-500 px-3 py-1 font-black">×</button></div>
+    <input id="productId" type="hidden">
+    <div class="grid gap-3 md:grid-cols-2">
+      <input id="productName" class="field" placeholder="اسم المنتج">
+      <div class="md:col-span-2">
+        <input id="productImageFile" class="field" type="file" accept="image/jpeg, image/png, image/webp">
+        <input id="productImage" type="hidden">
+        <div class="mt-2 flex items-center gap-3">
+          <img id="productImagePreview" class="hidden h-24 w-24 rounded-2xl border border-white/10 object-cover" alt="معاينة صورة المنتج">
+          <span class="vendor-muted text-xs text-slate-400">اختر صورة من الجهاز وسيتم رفعها مباشرة إلى Supabase Storage.</span>
+        </div>
+      </div>
+      <input id="productDescription" class="field md:col-span-2" placeholder="وصف المنتج (اختياري)...">
+      <input id="productBasePrice" class="field" type="number" min="0" step="0.01" placeholder="السعر الأصلي ($ USD)">
+      <input id="productDiscountPrice" class="field" type="number" min="0" step="0.01" placeholder="سعر الخصم ($ USD) - اختياري">
+      <input id="productStock" class="field" type="number" min="0" step="1" placeholder="الكمية المتوفرة">
+      <input id="productLowThreshold" class="field" type="number" min="0" step="1" value="3" placeholder="حد تنبيه المخزون">
+      <input id="productColors" class="field" placeholder="الألوان: أسود، أبيض، أزرق">
+      <input id="productSizes" class="field" placeholder="المقاسات: S, M, L, XL">
+      <input id="productVolumes" class="field md:col-span-2" placeholder="الأحجام: 250ml, 500ml ...">
+    </div>
+    <div class="mt-4 flex gap-2"><button onclick="saveProduct()" class="rounded-xl bg-emerald-500 px-5 py-2 font-black">حفظ المنتج</button><button onclick="closeProductModal()" class="rounded-xl bg-slate-700 px-5 py-2">إلغاء</button></div>
+  </div>
+</div>
+
+<script src="js/local-store-pricing.js?v=iqd-thousand-v1"></script>
+<script type="module">
+const SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
+const SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const PLACEHOLDER='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" rx="24" fill="#1e293b"/><path d="M30 80l18-20 14 14 12-13 18 19" fill="none" stroke="#64748b" stroke-width="6"/><circle cx="42" cy="38" r="9" fill="#64748b"/></svg>`);
+let vendorStore=null,products=[],orders=[],finance=[];
+function showNotice(msg,bad=false){const n=$('globalNotice');n.textContent=msg;n.className=`mb-4 rounded-2xl border p-3 text-sm font-bold ${bad?'border-rose-400/20 bg-rose-500/10 text-rose-200':'border-emerald-400/20 bg-emerald-500/10 text-emerald-200'}`;n.classList.remove('hidden');setTimeout(()=>n.classList.add('hidden'),4500)}
+function money(v,c){return `${Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2})} ${c||''}`.trim()}
+function optionsArray(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean)}
+function safeOptions(v){if(!v)return{colors:[],sizes:[],volumes:[]};if(typeof v==='object')return{colors:Array.isArray(v.colors)?v.colors:[],sizes:Array.isArray(v.sizes)?v.sizes:[],volumes:Array.isArray(v.volumes)?v.volumes:[]};try{return safeOptions(JSON.parse(v))}catch{return{colors:[],sizes:[],volumes:[]}}}
+function rawOptions(v){if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return{...v};try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?{...x}:{}}catch{return{}}}
+function productPricingSnapshot(product){const pricing=window.MeshwarLocalPricing,vendorUsd=Number(product?.discount_price??product?.base_price);if(!pricing||!Number.isFinite(vendorUsd)||vendorUsd<0)return null;return pricing.pricingSnapshot(vendorUsd,vendorStore?.commission_rate??10,vendorStore?.exchange_rate||1,vendorStore?.exchange_target_currency||vendorStore?.default_currency||'IQD')}
+async function syncProductPricingSnapshots(){if(!vendorStore||!products.length||!window.MeshwarLocalPricing)return;await Promise.allSettled(products.map(async p=>{const options=rawOptions(p.options),snapshot=productPricingSnapshot(p);if(!snapshot)return;const current=options.pricing||null;if(current&&JSON.stringify(current)===JSON.stringify(snapshot))return;options.pricing=snapshot;const{error}=await sb.from('local_products').update({options,updated_at:new Date().toISOString()}).eq('id',p.id).eq('store_id',vendorStore.id);if(error){console.warn('Pricing snapshot sync failed:',p.id,error.message);return}p.options=options}))}
+function storeSession(){try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_store')||'null')}catch{return null}}
+function saveStoreSession(s){sessionStorage.setItem('meshwar_vendor_store',JSON.stringify(s))}
+
+async function vendorLogin(){const identity=$('loginIdentity').value.trim(),password=$('loginPassword').value,notice=$('loginNotice');notice.textContent='';if(!identity||!password){notice.textContent='أدخل اسم المستخدم/الهاتف وكلمة المرور.';return}const btn=$('loginBtn');btn.disabled=true;btn.textContent='جاري التحقق...';try{const{data,error}=await sb.rpc('vendor_login',{p_identity:identity,p_password:password});if(error)throw error;const store=Array.isArray(data)?data[0]:data;if(!store)throw new Error('بيانات الدخول غير صحيحة أو المتجر غير نشط.');vendorStore=store;saveStoreSession(store);openDashboard()}catch(e){console.error('Vendor login error:',e);notice.textContent=e.message||String(e)}finally{btn.disabled=false;btn.textContent='دخول إلى المتجر'}}
+function vendorLogout(){try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime cleanup:',e)}sessionStorage.removeItem('meshwar_vendor_store');vendorStore=null;location.reload()}
+async function openDashboard(){if(!vendorStore)return;$('loginView').classList.add('hidden');$('dashboardView').classList.remove('hidden');$('storeName').textContent=vendorStore.store_name||'المتجر';$('storeMeta').textContent=[vendorStore.specialty,vendorStore.governorate].filter(Boolean).join(' • ');$('storeLogo').src=vendorStore.logo_url||PLACEHOLDER;$('storeLogo').onerror=()=>{$('storeLogo').src=PLACEHOLDER};$('exchangeRate').value=vendorStore.exchange_rate||1;$('exchangeBase').value='USD';$('exchangeTarget').value=vendorStore.exchange_target_currency||'IQD';renderExchangePreview();await Promise.all([loadProducts(),loadOrders(),loadFinance()]);await setupVendorOrdersRealtime()}
+function toggleTheme(){document.documentElement.classList.toggle('dark');document.documentElement.classList.toggle('light')}
+
+async function loadProducts(){if(!vendorStore)return;const{data,error}=await sb.from('local_products').select('*').eq('store_id',vendorStore.id).order('created_at',{ascending:false});if(error){showNotice('تعذر تحميل المنتجات: '+error.message,true);return}products=data||[];await syncProductPricingSnapshots();renderProducts();renderStats()}
+function renderProducts(){const rate=Number(vendorStore?.exchange_rate||1),target=vendorStore?.exchange_target_currency||vendorStore?.default_currency||'',rows=products.map(p=>{const opt=safeOptions(p.options),stock=Number(p.stock_quantity||0),threshold=Number(p.low_stock_threshold||0),low=stock<=threshold,vendorUsd=Number(p.discount_price??p.base_price??0),commission=Number(vendorStore?.commission_rate??10),pricing=window.MeshwarLocalPricing,customerUsd=pricing.customerPriceUSD(vendorUsd,commission),converted=(String(target||'').toUpperCase()==='USD'?customerUsd:pricing.customerPriceLocal(vendorUsd,commission,rate));return `<tr class="border-b border-white/5 ${low?'bg-amber-500/5':''}"><td class="p-3"><div class="flex items-center gap-3"><img class="h-12 w-12 rounded-xl object-cover" src="${esc(p.image_url||PLACEHOLDER)}" onerror="this.src='${esc(PLACEHOLDER)}'"><div><div class="vendor-text text-[1.1rem] font-black text-white">${esc(p.product_name)}</div><div style="color:#ffffff;font-size:.95rem;font-weight:500;line-height:1.5">${esc(p.description||'')}</div></div></div></td><td><div class="font-bold"><span dir="ltr" style="display:inline-block;direction:ltr;unicode-bidi:isolate">${money(vendorUsd,'USD')}</span></div><div class="text-xs text-sky-300">سعر العميل: <span dir="ltr" style="display:inline-block;direction:ltr;unicode-bidi:isolate">${money(customerUsd,'USD')} / ${money(converted,target)}</span></div>${p.discount_price!=null?`<div class="vendor-muted text-xs text-slate-500 line-through"><span dir="ltr" style="display:inline-block;direction:ltr;unicode-bidi:isolate">${money(p.base_price,'USD')}</span></div>`:''}</td><td><span class="rounded-full px-2 py-1 text-xs font-black ${stock===0?'bg-rose-500/15 text-rose-300':low?'bg-amber-500/15 text-amber-300':'bg-emerald-500/15 text-emerald-300'}">${stock}</span></td><td class="max-w-[260px] text-xs text-slate-300">${[opt.colors.join(' / '),opt.sizes.join(' / '),opt.volumes.join(' / ')].filter(Boolean).map(esc).join('<br>')||'—'}</td><td>${p.is_out_of_stock||stock===0?'<span class="text-rose-300">نفد</span>':low?'<span class="text-amber-300">منخفض</span>':'<span class="text-emerald-300">متوفر</span>'}</td><td><div class="flex gap-1"><button onclick="editProduct('${p.id}')" class="rounded-lg bg-sky-600 px-2 py-1 text-xs font-bold">تعديل</button><button onclick="deleteProduct('${p.id}')" class="rounded-lg bg-rose-600 px-2 py-1 text-xs font-bold">حذف</button></div></td></tr>`}).join('');$('productsBody').innerHTML=rows||'<tr><td colspan="6" class="p-6 text-center text-slate-400">لا توجد منتجات بعد.</td></tr>';const low=products.filter(p=>Number(p.stock_quantity||0)<=Number(p.low_stock_threshold||0));const b=$('lowStockBanner');if(low.length){b.textContent=`⚠️ ${low.length} منتج وصل إلى حد المخزون المنخفض أو نفد.`;b.classList.remove('hidden')}else b.classList.add('hidden')}
+
+const PRODUCT_IMAGES_BUCKET='product-images';
+async function uploadProductImage(file){
+  if(!file||!vendorStore?.id)return null;
+  const ext=(String(file.name||'').split('.').pop()||'jpg').replace(/[^a-zA-Z0-9]/g,'').toLowerCase()||'jpg';
+  const name=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2))+'.'+ext;
+  const path=vendorStore.id+'/'+name;
+  const{error}=await sb.storage.from(PRODUCT_IMAGES_BUCKET).upload(path,file,{cacheControl:'31536000',upsert:false,contentType:file.type||undefined});
+  if(error)throw error;
+  const{data}=sb.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path);
+  if(!data?.publicUrl)throw new Error('تعذر الحصول على رابط الصورة بعد الرفع.');
+  return data.publicUrl;
+}
+function previewSelectedProductImage(){
+  const file=$('productImageFile')?.files?.[0],preview=$('productImagePreview');
+  if(!preview)return;
+  if(!file){const current=$('productImage')?.value||'';if(current){preview.src=current;preview.classList.remove('hidden')}else{preview.src='';preview.classList.add('hidden')}return}
+  const url=URL.createObjectURL(file);preview.src=url;preview.classList.remove('hidden');preview.onload=()=>URL.revokeObjectURL(url);
+}
+function openProductModal(){resetProductForm();$('productModal').classList.remove('hidden');$('productModal').classList.add('flex')}
+function closeProductModal(){$('productModal').classList.add('hidden');$('productModal').classList.remove('flex')}
+function resetProductForm(){['productId','productName','productImage','productDescription','productBasePrice','productDiscountPrice','productStock','productColors','productSizes','productVolumes'].forEach(id=>$(id).value='');$('productImageFile').value='';$('productImagePreview').src='';$('productImagePreview').classList.add('hidden');$('productLowThreshold').value='3';$('productModalTitle').textContent='إضافة منتج'}
+function editProduct(id){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const o=safeOptions(p.options);$('productId').value=p.id;$('productName').value=p.product_name||'';$('productImage').value=p.image_url||'';$('productImageFile').value='';$('productDescription').value=p.description||'';$('productBasePrice').value=p.base_price??'';$('productDiscountPrice').value=p.discount_price??'';$('productStock').value=p.stock_quantity??0;$('productLowThreshold').value=p.low_stock_threshold??3;$('productColors').value=o.colors.join(', ');$('productSizes').value=o.sizes.join(', ');$('productVolumes').value=o.volumes.join(', ');$('productModalTitle').textContent='تعديل المنتج';previewSelectedProductImage();$('productModal').classList.remove('hidden');$('productModal').classList.add('flex')}
+async function saveProduct(){if(!vendorStore)return;const id=$('productId').value.trim(),description=$('productDescription').value.trim();const base=Number($('productBasePrice').value),discount=$('productDiscountPrice').value.trim()===''?null:Number($('productDiscountPrice').value),stock=Math.max(0,Math.floor(Number($('productStock').value||0))),threshold=Math.max(0,Math.floor(Number($('productLowThreshold').value||0)));if(!$('productName').value.trim()||!Number.isFinite(base)||base<0)return showNotice('أدخل اسم المنتج وسعرًا صحيحًا.',true);if(discount!=null&&(!Number.isFinite(discount)||discount<0||discount>base))return showNotice('سعر الخصم يجب أن يكون بين 0 والسعر الأصلي.',true);try{let imageUrl=$('productImage').value.trim()||null;const file=$('productImageFile')?.files?.[0];if(file){showNotice('جاري رفع صورة المنتج...');imageUrl=await uploadProductImage(file)}const payload={store_id:vendorStore.id,product_name:$('productName').value.trim(),image_url:imageUrl,description,base_price:base,discount_price:discount,currency:'USD',stock_quantity:stock,low_stock_threshold:threshold,is_out_of_stock:stock===0,options:{colors:optionsArray($('productColors').value),sizes:optionsArray($('productSizes').value),volumes:optionsArray($('productVolumes').value),pricing:window.MeshwarLocalPricing?.pricingSnapshot(discount??base,vendorStore?.commission_rate??10,vendorStore?.exchange_rate||1,vendorStore?.exchange_target_currency||vendorStore?.default_currency||'IQD')||null},updated_at:new Date().toISOString()};const q=id?sb.from('local_products').update(payload).eq('id',id).eq('store_id',vendorStore.id):sb.from('local_products').insert([payload]);const{error}=await q;if(error)throw error;closeProductModal();showNotice(id?'تم تحديث المنتج.':'تمت إضافة المنتج.');await loadProducts()}catch(e){console.error('Product save error:',e);const message=e?.message||String(e);showNotice('تعذر حفظ المنتج: '+message,true);alert(message)}}
+async function deleteProduct(id){if(!confirm('حذف المنتج؟'))return;const{error}=await sb.from('local_products').delete().eq('id',id).eq('store_id',vendorStore.id);if(error)return showNotice(error.message,true);await loadProducts()}
+
+async function saveExchangeRate(){const rate=Number($('exchangeRate').value),base='USD',target=$('exchangeTarget').value;if(!Number.isFinite(rate)||rate<=0)return showNotice('أدخل سعر صرف صحيحًا أكبر من صفر.',true);try{const{error}=await sb.rpc('vendor_set_exchange_rate',{p_store_id:vendorStore.id,p_rate:rate,p_base_currency:base,p_target_currency:target});if(error)throw error;vendorStore.exchange_rate=rate;vendorStore.exchange_base_currency=base;vendorStore.exchange_target_currency=target;saveStoreSession(vendorStore);await syncProductPricingSnapshots();renderExchangePreview();renderProducts();showNotice('تم تطبيق سعر الصرف وحفظ الأسعار المقربة لجميع المنتجات.')}catch(e){showNotice('تعذر حفظ سعر الصرف: '+(e.message||e),true)}}
+function renderExchangePreview(){const rate=Number($('exchangeRate').value||vendorStore?.exchange_rate||1),base=$('exchangeBase').value||'USD',target=$('exchangeTarget').value||'IQD';const el=$('exchangePreview');el.dir='ltr';el.style.unicodeBidi='isolate';el.textContent=`1 ${base} = ${rate.toLocaleString('en-US',{maximumFractionDigits:6})} ${target}`}
+$('productImageFile')?.addEventListener('change',previewSelectedProductImage);
+$('exchangeRate').addEventListener('input',renderExchangePreview);$('exchangeBase').addEventListener('change',renderExchangePreview);$('exchangeTarget').addEventListener('change',renderExchangePreview);
+
+function normalizeOrderDetails(v){if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return v;try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}}
+function isDeliveredOrder(status){const s=String(status||'').trim().toLowerCase();return ['delivered','completed','complete','تم التسليم','تم التوصيل','مكتمل','مكتملة'].includes(s)}
+function orderCity(o){const d=normalizeOrderDetails(o?.details),c=(d.customer&&typeof d.customer==='object')?d.customer:{};return o?.governorate||o?.city||d.governorate||d.state||d.city||d.province||d.customer_city||c.governorate||c.state||c.city||c.province||'غير محددة'}
+function orderPaymentStatus(o){const d=normalizeOrderDetails(o?.details),raw=String(d.payment_method||d.payment_status||o?.payment_status||'').trim(),v=raw.toLowerCase();if(/paid|prepaid|تم الدفع|مدفوع/.test(v))return 'تم الدفع مسبقاً';if(/cod|cash|عند الاستلام|نقد/.test(v))return 'الدفع عند الاستلام - COD';return raw||'الدفع عند الاستلام - COD'}
+function orderProductName(o){const d=normalizeOrderDetails(o?.details);return d.product_name||'منتج محلي'}
+function orderQuantity(o){const d=normalizeOrderDetails(o?.details);return Math.max(1,Number(d.quantity||1)||1)}
+function orderParcelsCount(o){const d=normalizeOrderDetails(o?.details),n=Number(d.parcels_count??1);return Number.isFinite(n)&&n>=1?Math.max(1,Math.floor(n)):1}
+function orderCommissionRate(o){const d=normalizeOrderDetails(o?.details);const n=Number(d.commission_rate);return Number.isFinite(n)&&n>=0&&n<100?n:Number(vendorStore?.commission_rate||10)}
+function orderExtra(o,...keys){const d=normalizeOrderDetails(o?.details);for(const k of keys){const n=Number(d[k]);if(Number.isFinite(n))return n}return 0}
+function vendorFinanceOther(o){const d=normalizeOrderDetails(o?.details),n=Number(d.vendor_other_deductions??d.other_deductions??d.store_deductions??d.deductions??0);return Number.isFinite(n)&&n>0?n:0}
+function vendorFinancePaymentStatus(o){const d=normalizeOrderDetails(o?.details),v=String(d.vendor_payment_status||d.vendor_settlement_status||'pending').trim().toLowerCase();return ['paid','مدفوع','settled'].includes(v)?'paid':'pending'}
+function vendorFinanceSnapshot(o){const totalRaw=Number(o?.total_price||0),total=Number.isFinite(totalRaw)&&totalRaw>0?totalRaw:0,rate=orderCommissionRate(o),commission=total*(rate/100),other=vendorFinanceOther(o),net=total-commission-other;return{order:o,total,rate,commission,other,net,paymentStatus:vendorFinancePaymentStatus(o)}}
+function vendorFinancialRows(){return orders.filter(o=>isDeliveredOrder(o.status)).map(vendorFinanceSnapshot)}
+function financialTotals(){return vendorFinancialRows().reduce((a,r)=>{a.sales+=r.total;a.commission+=r.commission;a.other+=r.other;a.net+=r.net;if(r.paymentStatus==='paid')a.paid+=r.net;else a.pending+=r.net;return a},{sales:0,commission:0,other:0,pending:0,paid:0,net:0})}
+let activeVendorFinanceFilter='all';
+function setVendorFinanceFilter(filter){activeVendorFinanceFilter=['all','pending','paid'].includes(filter)?filter:'all';document.querySelectorAll('[data-finance-filter]').forEach(btn=>btn.classList.toggle('active',btn.dataset.financeFilter===activeVendorFinanceFilter));renderVendorFinanceTable()}
+function renderVendorFinanceTable(){const body=$('vendorFinanceBody');if(!body)return;const cur=financeCurrency(),rows=vendorFinancialRows().filter(r=>activeVendorFinanceFilter==='all'||r.paymentStatus===activeVendorFinanceFilter);body.innerHTML=rows.map(r=>{const o=r.order,d=normalizeOrderDetails(o.details),paid=r.paymentStatus==='paid';return `<tr class="border-b border-white/5"><td data-label="رقم الطلب"><b>${esc(o.order_code||String(o.id).slice(0,8))}</b><div class="vendor-muted text-xs text-slate-500">${new Date(o.created_at).toLocaleDateString('en-US')}</div></td><td data-label="المبلغ الكلي">${money(r.total,o.currency||cur)}</td><td data-label="العمولة (%)">${Number(r.rate||0).toLocaleString('en-US',{maximumFractionDigits:2})}%<div class="vendor-muted text-xs text-slate-500">${money(r.commission,o.currency||cur)}</div></td><td data-label="أخرى">${money(r.other,o.currency||cur)}</td><td data-label="المبلغ الصافي"><b>${money(r.net,o.currency||cur)}</b></td><td data-label="حالة الدفع"><span class="rounded-full border px-2 py-1 text-xs font-black ${paid?'border-emerald-400/30 bg-emerald-500/10 text-emerald-200':'border-amber-400/30 bg-amber-500/10 text-amber-200'}">${paid?'مدفوع':'معلق'}</span>${paid&&d.vendor_paid_at?`<div class="vendor-muted mt-1 text-[10px] text-slate-500">${esc(new Date(d.vendor_paid_at).toLocaleString('en-US'))}</div>`:''}</td></tr>`}).join('')||'<tr><td colspan="6" class="p-6 text-center text-slate-400">لا توجد حركات مالية ضمن هذا التصنيف.</td></tr>'}
+function exportVendorPaidStatement(){
+  const rows=vendorFinancialRows().filter(r=>r.paymentStatus==='paid'),cur=financeCurrency();
+  if(!rows.length)return showNotice('لا توجد طلبات مدفوعة لإصدار كشف حساب.',true);
+  const totals=rows.reduce((a,r)=>{a.sales+=r.total;a.commission+=r.commission;a.other+=r.other;a.net+=r.net;return a},{sales:0,commission:0,other:0,net:0});
+  const statementWindow=window.open('','_blank','width=1000,height=760');
+  if(!statementWindow)return showNotice('يرجى السماح بالنوافذ المنبثقة لإصدار الكشف.',true);
+  const table=rows.map(r=>{const o=r.order,d=normalizeOrderDetails(o.details),paidAt=d.vendor_paid_at?new Date(d.vendor_paid_at).toLocaleDateString('en-US'):'—';return `<tr><td>${esc(o.order_code||o.id)}</td><td>${new Date(o.created_at).toLocaleDateString('en-US')}</td><td>${money(r.total,o.currency||cur)}</td><td>${money(r.commission,o.currency||cur)} (${Number(r.rate||0).toLocaleString('en-US',{maximumFractionDigits:2})}%)</td><td>${money(r.other,o.currency||cur)}</td><td><b>${money(r.net,o.currency||cur)}</b></td><td>${esc(paidAt)}</td></tr>`}).join('');
+  statementWindow.document.open();
+  statementWindow.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>كشف حساب ${esc(vendorStore?.store_name||'المتجر')}</title><style>*{box-sizing:border-box}body{font-family:Tahoma,Arial,sans-serif;margin:0;padding:28px;color:#111827;background:#fff}.sheet{max-width:1100px;margin:auto}.head{text-align:center;border-bottom:2px solid #111827;padding-bottom:14px;margin-bottom:16px}.head h1{margin:4px 0;font-size:24px}.head h2{margin:0;font-size:16px}.meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;margin-bottom:14px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}.summary div{border:1px solid #d1d5db;border-radius:8px;padding:10px;text-align:center}.summary span{display:block;font-size:11px;color:#6b7280}.summary b{display:block;margin-top:5px;font-size:14px}table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px}th,td{border:1px solid #cbd5e1;padding:8px;text-align:center}th{background:#f1f5f9;font-weight:900}.foot{margin-top:14px;font-size:11px;color:#4b5563}.print-btn{display:block;margin:18px auto 0;border:0;border-radius:8px;background:#4f46e5;color:#fff;padding:10px 18px;font-weight:900;cursor:pointer}@page{size:A4 landscape;margin:10mm}@media print{body{padding:0}.sheet{max-width:none}.print-btn{display:none}.summary div{break-inside:avoid}thead{display:table-header-group}tr{break-inside:avoid}}</style></head><body><main class="sheet"><div class="head"><h2>MeshWar — كشف حساب التاجر</h2><h1>${esc(vendorStore?.store_name||'المتجر')}</h1></div><div class="meta"><span>تاريخ الإصدار: ${new Date().toLocaleString('en-US')}</span><span>عدد الطلبات المدفوعة: ${rows.length}</span></div><section class="summary"><div><span>إجمالي المبيعات</span><b>${money(totals.sales,cur)}</b></div><div><span>إجمالي العمولة</span><b>${money(totals.commission,cur)}</b></div><div><span>إجمالي الخصومات / أخرى</span><b>${money(totals.other,cur)}</b></div><div><span>إجمالي الصافي المدفوع</span><b>${money(totals.net,cur)}</b></div></section><table><thead><tr><th>رقم الطلب</th><th>تاريخ الطلب</th><th>المبلغ الكلي</th><th>العمولة</th><th>أخرى</th><th>الصافي المدفوع</th><th>تاريخ الدفع</th></tr></thead><tbody>${table}</tbody></table><p class="foot">هذا الكشف مخصص للطلبات التي تم تعليمها كمدفوعة فقط، ويعرض صافي كل طلب بعد العمولة والخصومات / أخرى.</p><button class="print-btn" type="button" onclick="window.print()">طباعة / حفظ PDF</button></main></body></html>`);
+  statementWindow.document.close();
+  statementWindow.focus();
+  setTimeout(()=>{try{statementWindow.print()}catch(e){console.warn('Statement print failed:',e)}},350);
+}
+let activeVendorTab='orders',activeVendorOrderFilter='all';
+function setVendorTab(tab){const allowed=['orders','finance','products'];if(!allowed.includes(tab))tab='orders';activeVendorTab=tab;allowed.forEach(name=>{document.getElementById('vendorTab-'+name)?.classList.toggle('active',name===tab);document.getElementById('vendorTabBtn-'+name)?.classList.toggle('active',name===tab)});if(tab==='orders')renderVendorOrders();if(tab==='finance')renderFinance()}
+function setVendorOrderFilter(filter){activeVendorOrderFilter=filter||'all';document.querySelectorAll('[data-order-filter]').forEach(btn=>btn.classList.toggle('active',btn.dataset.orderFilter===activeVendorOrderFilter));renderVendorOrders()}
+function vendorOrderMatchesFilter(o){const status=String(o?.status||'').trim();if(activeVendorOrderFilter==='all')return true;if(activeVendorOrderFilter==='delivered')return isDeliveredOrder(status);if(activeVendorOrderFilter==='returns')return /مرتجع|ارجاع|إرجاع|مرفوض|رفض|ملغي|ملغى|return/i.test(status);if(activeVendorOrderFilter==='delivery')return /مندوب|قيد التوصيل|تم الشحن|شحن|توزيع|فرع|delivery|courier/i.test(status)&&!isDeliveredOrder(status);if(activeVendorOrderFilter==='pending')return /انتظار|بانتظار|موافقة|تدقيق|جديد|pending|approval/i.test(status);return true}
+function renderVendorOrders(){const body=$('ordersBody');if(!body)return;const visible=orders.filter(vendorOrderMatchesFilter);body.innerHTML=visible.map(o=>`<tr class="border-b border-white/5"><td data-label="رقم الطلب"><div class="font-bold">${esc(o.order_code||String(o.id).slice(0,8))}</div><div class="vendor-muted text-xs text-slate-500">${new Date(o.created_at).toLocaleString('ar')}</div></td><td data-label="المنتج">${esc(orderProductName(o))}</td><td data-label="الكمية">${orderQuantity(o)}</td><td data-label="عدد الطرود"><span class="rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-1 text-xs font-black text-amber-200">${orderParcelsCount(o)}</span></td><td data-label="المحافظة / المدينة">${esc(orderCity(o))}</td><td data-label="الحالة"><span class="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs">${esc(o.status||'انتظار رد الموظف')}</span></td><td data-label="الإجراء"><div class="flex flex-wrap gap-2"><button type="button" onclick="printShippingLabel('${esc(o.id)}')" class="rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs font-black text-sky-200 transition hover:bg-sky-500/20">🖨️ طباعة الملصق</button><button type="button" onclick="openVendorOrderDetails('${esc(o.id)}')" class="rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-xs font-black text-violet-200 transition hover:bg-violet-500/20">تفاصيل</button></div></td></tr>`).join('')||'<tr><td colspan="7" class="p-6 text-center text-slate-400">لا توجد طلبات ضمن هذا التصنيف.</td></tr>'}
+async function loadOrders(){if(!vendorStore)return;try{const currentStoreId=String(vendorStore.id||'').trim();if(!currentStoreId)throw new Error('معرّف المتجر الحالي غير صالح.');const{data,error}=await sb.from('orders').select('id,order_code,total_price,currency,status,created_at,details').order('created_at',{ascending:false}).limit(500);if(error)throw error;orders=(data||[]).filter(o=>{const d=normalizeOrderDetails(o?.details);return String(d?.source||'')==='local_store'&&String(d?.store_id||'').trim()===currentStoreId});renderVendorOrders();renderFinance();renderStats()}catch(e){console.error('Vendor orders load error:',e);showNotice('تعذر تحميل الطلبات: '+(e.message||e),true)}}
+function openVendorOrderDetails(orderId){const o=orders.find(x=>String(x.id)===String(orderId));if(!o)return showNotice('تعذر العثور على الطلب.',true);let modal=document.getElementById('vendorOrderDetailsModal');if(!modal){modal=document.createElement('div');modal.id='vendorOrderDetailsModal';modal.className='fixed inset-0 z-[80] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm';modal.innerHTML='<div class="glass w-full max-w-lg rounded-3xl p-5"><div class="mb-4 flex items-center justify-between"><h3 class="vendor-text text-lg font-black">تفاصيل الطلب</h3><button type="button" class="rounded-lg bg-rose-500 px-3 py-1 font-black" onclick="closeVendorOrderDetails()">×</button></div><div id="vendorOrderDetailsBody" class="grid gap-3 sm:grid-cols-2"></div></div>';document.body.appendChild(modal)}const body=document.getElementById('vendorOrderDetailsBody');body.innerHTML=`<div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">رقم الطلب</div><div class="mt-1 font-black">${esc(o.order_code||o.id)}</div></div><div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">الحالة</div><div class="mt-1 font-black">${esc(o.status||'')}</div></div><div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">المنتج</div><div class="mt-1 font-black">${esc(orderProductName(o))}</div></div><div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">المحافظة / المدينة</div><div class="mt-1 font-black">${esc(orderCity(o))}</div></div><div class="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-3"><div class="vendor-muted text-xs text-slate-400">عدد القطع</div><div class="mt-1 text-xl font-black text-sky-200">${orderQuantity(o)}</div></div><div class="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3"><div class="vendor-muted text-xs text-slate-400">عدد الطرود</div><div class="mt-1 text-xl font-black text-amber-200">${orderParcelsCount(o)}</div></div>`;modal.classList.remove('hidden');modal.classList.add('flex')}
+function closeVendorOrderDetails(){const modal=document.getElementById('vendorOrderDetailsModal');if(!modal)return;modal.classList.add('hidden');modal.classList.remove('flex')}
+async function loadFinance(){renderFinance();renderStats()}
+function financeCurrency(){const x=[...new Set(orders.map(r=>r.currency).filter(Boolean))];return x.length===1?x[0]:(vendorStore?.exchange_target_currency||vendorStore?.default_currency||'IQD')}
+function renderFinance(){const t=financialTotals(),cur=financeCurrency();if($('statSales'))$('statSales').textContent=money(t.sales,cur);if($('statCommission'))$('statCommission').textContent=money(t.commission,cur);if($('statOther'))$('statOther').textContent=money(t.other,cur);if($('statPending'))$('statPending').textContent=money(t.pending,cur);if($('statPaid'))$('statPaid').textContent=money(t.paid,cur);if($('statNet'))$('statNet').textContent=money(t.net,cur);renderVendorFinanceTable()}
+function renderStats(){renderFinance()}
+function printShippingLabel(orderId){const o=orders.find(x=>String(x.id)===String(orderId));if(!o)return showNotice('تعذر العثور على الطلب للطباعة.',true);const code=o.order_code||String(o.id).slice(0,8),product=orderProductName(o),qty=orderQuantity(o),parcels=orderParcelsCount(o),city=orderCity(o),payment=orderPaymentStatus(o),date=new Date(o.created_at).toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'});const w=window.open('','_blank','width=420,height=360');if(!w)return showNotice('يرجى السماح بالنوافذ المنبثقة لطباعة الملصق.',true);w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>MeshWar Cargo - ${esc(code)}</title><style>*{box-sizing:border-box}html,body{width:50mm;height:40mm;margin:0;padding:0;font-family:Arial,sans-serif;color:#000;background:#fff;font-size:8px;overflow:hidden}.label-card{position:absolute;inset:.8mm;width:auto;height:auto;max-height:38.4mm;box-sizing:border-box;border:1px solid #000;padding:1.5px;display:flex;flex-direction:column;justify-content:space-between;gap:.5px;overflow:hidden}.brand{text-align:center;border-bottom:1px solid #000;padding-bottom:.5px;line-height:1}.brand h1{margin:0;font-size:9px;font-weight:900}.brand p{margin:0;font-size:6.5px}.order{text-align:center;font-size:9px;font-weight:900;line-height:1;direction:ltr}.barcode{height:22px;min-height:22px;display:flex;align-items:center;justify-content:center;overflow:hidden}.barcode svg{width:100%;max-width:100%;height:22px}.grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #000;line-height:1.02}.cell{padding:.75px;border:1px solid #cbd5e1;min-width:0}.label-title{font-size:6.5px;color:#475569;margin-bottom:0}.value{font-size:7.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.product{grid-column:1/-1}@media print{@page{size:50mm 40mm;margin:0}html,body{width:50mm!important;height:40mm!important;min-height:40mm!important;max-height:40mm!important;margin:0!important;padding:0!important;box-sizing:border-box!important;overflow:hidden!important}.label-card{position:fixed!important;inset:.8mm!important;width:auto!important;height:auto!important;max-height:38.4mm!important;box-sizing:border-box!important;border:1px solid #000;padding:1.5px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;gap:.5px!important;page-break-inside:avoid!important;page-break-before:avoid!important;page-break-after:avoid!important;break-inside:avoid!important;break-before:avoid!important;break-after:avoid!important;overflow:hidden!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script></head><body><div class="label-card"><div class="brand"><h1>MeshWar Cargo</h1><p>ملصق شحن متجر محلي</p></div><div class="order">${esc(code)}</div><div class="barcode"><svg id="barcode"></svg></div><div class="grid"><div class="cell product"><div class="label-title">المنتج</div><div class="value">${esc(product)}</div></div><div class="cell"><div class="label-title">عدد القطع</div><div class="value">${qty}</div></div><div class="cell"><div class="label-title">عدد الطرود</div><div class="value">${parcels}</div></div><div class="cell"><div class="label-title">التاريخ</div><div class="value">${esc(date)}</div></div><div class="cell"><div class="label-title">المحافظة / المدينة</div><div class="value">${esc(city)}</div></div><div class="cell"><div class="label-title">حالة الدفع</div><div class="value">${esc(payment)}</div></div></div></div><script>window.addEventListener('load',()=>{try{JsBarcode('#barcode',${JSON.stringify(String(code))},{format:'CODE128',displayValue:false,height:22,margin:0,width:1.25})}catch(e){console.error(e)}setTimeout(()=>window.print(),250)});<\/script></body></html>`);w.document.close()}
+
+let vendorOrdersRealtime=null,vendorRealtimeRefreshTimer=null;
+function scheduleVendorRealtimeRefresh(){clearTimeout(vendorRealtimeRefreshTimer);vendorRealtimeRefreshTimer=setTimeout(()=>{loadOrders().catch(e=>console.warn('Vendor realtime refresh failed:',e))},180)}
+async function setupVendorOrdersRealtime(){
+  if(!vendorStore?.id)return;
+  try{if(vendorOrdersRealtime){await sb.removeChannel(vendorOrdersRealtime);vendorOrdersRealtime=null}}catch(e){console.warn('Vendor realtime previous channel cleanup:',e)}
+  const storeId=String(vendorStore.id);
+  vendorOrdersRealtime=sb.channel('vendor-orders-'+storeId)
+    .on('postgres_changes',{event:'*',schema:'public',table:'orders'},payload=>{
+      try{
+        const row=payload?.new||payload?.old||{},details=normalizeOrderDetails(row?.details),source=String(details?.source||''),rowStoreId=String(details?.store_id||'');
+        if(rowStoreId&&rowStoreId!==storeId)return;
+        if(source&&source!=='local_store')return;
+        scheduleVendorRealtimeRefresh();
+      }catch(e){console.warn('Vendor realtime event parse:',e);scheduleVendorRealtimeRefresh()}
+    })
+    .subscribe(status=>{if(['CHANNEL_ERROR','TIMED_OUT'].includes(status))console.warn('Vendor realtime status:',status)});
+}
+window.addEventListener('beforeunload',()=>{try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime unload cleanup:',e)}});
+Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct,saveExchangeRate,loadOrders,printShippingLabel,openVendorOrderDetails,closeVendorOrderDetails,setVendorTab,setVendorOrderFilter,setVendorFinanceFilter,exportVendorPaidStatement});
+document.querySelectorAll('[data-finance-filter]').forEach(btn=>{btn.addEventListener('click',()=>setVendorFinanceFilter(btn.dataset.financeFilter||'all'))});
+const vendorPaidStatementBtn=document.querySelector('button[onclick="exportVendorPaidStatement()"]');if(vendorPaidStatementBtn){vendorPaidStatementBtn.removeAttribute('onclick');vendorPaidStatementBtn.addEventListener('click',exportVendorPaidStatement)}
+const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
+</script>
+</body>
+</html>
