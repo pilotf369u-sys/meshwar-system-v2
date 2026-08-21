@@ -42,25 +42,33 @@
       await window.MeshwarVariantStock?.enhanceModal?.(btn.dataset.pid);
       await window.MeshwarMatrixStock?.enhanceModal?.(btn.dataset.pid);
       window.MeshwarLocalStoreV7?.enhanceModal?.(btn.dataset.pid);
+      await window.MeshwarDetailedDescriptionV8?.applyModalDetailedDescription?.(btn.dataset.pid);
     }catch(err){console.error('V4 store context error',err);alert('تعذر فتح أو إرسال الطلب: '+(err?.message||err))}
   },true);
 
   const script=document.createElement('script');
-  script.src='js/local-store-product-details-v4-core.js?v=desc-unlimit-v8-1';
+  script.src='js/local-store-product-details-v4-core.js?v=detailed-desc-v8';
   script.dataset.mwProductDetailsV4Core='1';
   script.onload=()=>{
     const variant=document.createElement('script');
-    variant.src='js/local-store-variant-stock-v5.js?v=desc-unlimit-v8-1';
+    variant.src='js/local-store-variant-stock-v5.js?v=detailed-desc-v8';
     variant.dataset.mwVariantStockV5='1';
     variant.onload=()=>{
       const matrix=document.createElement('script');
-      matrix.src='js/local-store-matrix-stock-v6.js?v=desc-unlimit-v8-1';
+      matrix.src='js/local-store-matrix-stock-v6.js?v=detailed-desc-v8';
       matrix.dataset.mwMatrixStockV6='1';
       matrix.onload=()=>{
         const v7=document.createElement('script');
-        v7.src='js/local-store-ui-stock-v7.js?v=desc-unlimit-v8-1';
+        v7.src='js/local-store-ui-stock-v7.js?v=detailed-desc-v8';
         v7.dataset.mwUiStockV7='1';
-        v7.onload=()=>resolveCore();
+        v7.onload=()=>{
+          const detailed=document.createElement('script');
+          detailed.src='js/local-store-detailed-description-v8.js?v=detailed-desc-v8';
+          detailed.dataset.mwDetailedDescriptionV8='1';
+          detailed.onload=()=>resolveCore();
+          detailed.onerror=()=>rejectCore(new Error('تعذر تحميل الوصف التفصيلي.'));
+          document.head.appendChild(detailed);
+        };
         v7.onerror=()=>rejectCore(new Error('تعذر تحميل تحسينات V7.'));
         document.head.appendChild(v7);
       };
