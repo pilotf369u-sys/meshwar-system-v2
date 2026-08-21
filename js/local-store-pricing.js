@@ -254,7 +254,7 @@ html:not(.dark) .logo-container>.store-logo{mix-blend-mode:multiply!important}
 (function(){
   if(document.querySelector('script[data-mw-product-details-v4]'))return;
   const s=document.createElement('script');
-  s.src='js/local-store-product-details-v4.js?v=1';
+  s.src='js/local-store-product-details-v4.js?v=local-modal-v4-2';
   s.defer=true;
   s.dataset.mwProductDetailsV4='1';
   document.head.appendChild(s);
