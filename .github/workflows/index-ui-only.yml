@@ -8,6 +8,8 @@ on:
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
       - 'js/local-store-variant-stock-v5.js'
+      - 'js/local-store-matrix-stock-v6.js'
+      - 'supabase/migrations/20260821_local_store_matrix_combination_stock.sql'
       - '.github/workflows/index-ui-only.yml'
   pull_request:
     branches: [main]
@@ -17,6 +19,8 @@ on:
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
       - 'js/local-store-variant-stock-v5.js'
+      - 'js/local-store-matrix-stock-v6.js'
+      - 'supabase/migrations/20260821_local_store_matrix_combination_stock.sql'
       - '.github/workflows/index-ui-only.yml'
 permissions:
   contents: read
@@ -31,6 +35,7 @@ jobs:
           node --check js/local-store-pricing.js
           node --check js/local-store-product-details-v4.js
           node --check js/local-store-variant-stock-v5.js
+          node --check js/local-store-matrix-stock-v6.js
       - name: Validate current local store routing
         run: |
           grep -Fq 'id="localStoreProductsPanel"' index.html
@@ -38,13 +43,17 @@ jobs:
           grep -Fq "new URLSearchParams(window.location.search).get('storeId')" index.html
           grep -Fq 'window.loadStoreDetails=async function(storeId)' js/local-store-card-v3.js
           grep -Fq 'local_products?select=' js/local-store-card-v3.js
-      - name: Validate V4 modal integration and cache bust
+      - name: Validate V4 V5 V6 stock integration
         run: |
           grep -Fq '<script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>' index.html
           grep -Fq '<script type="module" src="js/local-store-card-v3.js?v=local-modal-v4-2"></script>' index.html
           grep -Fq '<script src="js/local-store-product-details-v4.js?v=local-modal-v4-2" data-mw-product-details-v4></script>' index.html
           grep -Fq "s.src='js/local-store-product-details-v4.js?v=local-modal-v4-2';" js/local-store-pricing.js
           grep -Fq "btn.textContent='عرض التفاصيل والطلب'" js/local-store-product-details-v4.js
-          grep -Fq "local-store-variant-stock-v5.js?v=variant-stock-1" js/local-store-product-details-v4.js
+          grep -Fq "local-store-variant-stock-v5.js?v=matrix-stock-1" js/local-store-product-details-v4.js
+          grep -Fq "local-store-matrix-stock-v6.js?v=matrix-stock-1" js/local-store-product-details-v4.js
           grep -Fq 'variant_stock' js/local-store-variant-stock-v5.js
-          grep -Fq 'mw-variant-disabled' js/local-store-variant-stock-v5.js
+          grep -Fq 'matrix_stock' js/local-store-matrix-stock-v6.js
+          grep -Fq 'MeshwarMatrixStock' js/local-store-matrix-stock-v6.js
+          grep -Fq 'meshwar_adjust_matrix_stock' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
+          grep -Fq 'for update' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
