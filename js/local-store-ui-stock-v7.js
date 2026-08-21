@@ -76,6 +76,36 @@
     clearValidationError();return true;
   }
 
+  function resetVendorProductForm(){
+    const ids=['productId','productName','productImage','productDescription','productBasePrice','productDiscountPrice','productStock','productColors','productSizes','productVolumes'];
+    for(const id of ids){const el=document.getElementById(id);if(el)el.value=''}
+    const file=document.getElementById('productImageFile');if(file)file.value='';
+    const preview=document.getElementById('productImagePreview');if(preview){preview.src='';preview.classList.add('hidden')}
+    const threshold=document.getElementById('productLowThreshold');if(threshold)threshold.value='3';
+    const title=document.getElementById('productModalTitle');if(title)title.textContent='إضافة منتج';
+    document.querySelector('#mwMatrixStockEditor .mw-v7-stock-error')?.remove();
+  }
+  function openAddProductModal(){
+    const modal=document.getElementById('productModal');if(!modal)return false;
+    resetVendorProductForm();
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    return true;
+  }
+  function bindAddProductButton(){
+    const btn=document.getElementById('addNewProductBtn')||document.querySelector('button[onclick="openProductModal()"]');
+    if(!btn||btn.dataset.mwV7AddBound==='1')return false;
+    btn.dataset.mwV7AddBound='1';
+    document.addEventListener('click',e=>{
+      const target=e.target.closest?.('#addNewProductBtn,button[onclick="openProductModal()"]');
+      if(target!==btn)return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      openAddProductModal();
+    },true);
+    return true;
+  }
+
   function wrapVendorSave(){
     if(typeof window.saveProduct!=='function'||window.saveProduct.__mwV7Wrapped)return false;
     const original=window.saveProduct;
@@ -92,11 +122,13 @@
     return true;
   }
   function startVendor(){
+    bindAddProductButton();
     let tries=0;
-    const timer=setInterval(()=>{tries++;if(wrapVendorSave()||tries>120)clearInterval(timer)},100);
+    const timer=setInterval(()=>{tries++;bindAddProductButton();if((wrapVendorSave()&&bindAddProductButton())||tries>120)clearInterval(timer)},100);
     document.addEventListener('input',e=>{if(e.target.matches?.('#mwMatrixStockEditor [data-matrix-key],#productModal input[type="number"]'))queueMicrotask(validateMatrixTotal)},true);
   }
   function start(){if(document.getElementById('productModal')||/vendor-dashboard\.html$/i.test(location.pathname))startVendor()}
-  window.MeshwarLocalStoreV7={enhanceModal,validateMatrixTotal,normalizeBlankInputs};
+  window.openAddProductModal=openAddProductModal;
+  window.MeshwarLocalStoreV7={enhanceModal,validateMatrixTotal,normalizeBlankInputs,openAddProductModal};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

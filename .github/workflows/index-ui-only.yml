@@ -62,5 +62,10 @@ jobs:
           grep -Fq 'line-clamp:2' js/local-store-ui-stock-v7.js
           grep -Fq 'validateMatrixTotal' js/local-store-ui-stock-v7.js
           grep -Fq 'normalizeBlankInputs' js/local-store-ui-stock-v7.js
+          grep -Fq 'openAddProductModal' js/local-store-ui-stock-v7.js
+          grep -Fq 'button[onclick="openProductModal()"]' js/local-store-ui-stock-v7.js
+          grep -Fq "onclick=\"editProduct('" vendor-dashboard.html
+          grep -Fq "onclick=\"deleteProduct('" vendor-dashboard.html
+          grep -Fq 'Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct' vendor-dashboard.html
           grep -Fq 'meshwar_adjust_matrix_stock' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
           grep -Fq 'for update' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
