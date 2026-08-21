@@ -1,9 +1,20 @@
-name: Index internal store validation
+name: Index and local store V4 validation
 on:
   push:
     branches: [main]
     paths:
       - 'index.html'
+      - 'js/local-store-card-v3.js'
+      - 'js/local-store-pricing.js'
+      - 'js/local-store-product-details-v4.js'
+      - '.github/workflows/index-ui-only.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'js/local-store-card-v3.js'
+      - 'js/local-store-pricing.js'
+      - 'js/local-store-product-details-v4.js'
       - '.github/workflows/index-ui-only.yml'
 permissions:
   contents: read
@@ -12,11 +23,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate local store details routing
+      - name: Validate JavaScript syntax
         run: |
-          grep -Fq 'async function loadStoreDetails(storeId)' index.html
-          grep -Fq ".from('local_products')" index.html
-          grep -Fq ".eq('store_id',id)" index.html
-          grep -Fq "show(selectedStoreId?'local':'international')" index.html
+          node --check js/local-store-card-v3.js
+          node --check js/local-store-pricing.js
+          node --check js/local-store-product-details-v4.js
+      - name: Validate current local store routing
+        run: |
           grep -Fq 'id="localStoreProductsPanel"' index.html
+          grep -Fq "show(selectedStoreId?'local':'international')" index.html
           grep -Fq "new URLSearchParams(window.location.search).get('storeId')" index.html
+          grep -Fq 'window.loadStoreDetails=async function(storeId)' js/local-store-card-v3.js
+          grep -Fq 'local_products?select=' js/local-store-card-v3.js
+      - name: Validate V4 modal integration and cache bust
+        run: |
+          grep -Fq '<script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>' index.html
+          grep -Fq '<script type="module" src="js/local-store-card-v3.js?v=local-modal-v4-2"></script>' index.html
+          grep -Fq '<script src="js/local-store-product-details-v4.js?v=local-modal-v4-2" data-mw-product-details-v4></script>' index.html
+          grep -Fq "s.src='js/local-store-product-details-v4.js?v=local-modal-v4-2';" js/local-store-pricing.js
+          grep -Fq "btn.textContent='عرض التفاصيل والطلب'" js/local-store-product-details-v4.js
