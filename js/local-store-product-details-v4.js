@@ -47,19 +47,19 @@
   },true);
 
   const script=document.createElement('script');
-  script.src='js/local-store-product-details-v4-core.js?v=detailed-desc-v8';
+  script.src='js/local-store-product-details-v4-core.js?v=desc-unlimit-v8-1';
   script.dataset.mwProductDetailsV4Core='1';
   script.onload=()=>{
     const variant=document.createElement('script');
-    variant.src='js/local-store-variant-stock-v5.js?v=detailed-desc-v8';
+    variant.src='js/local-store-variant-stock-v5.js?v=desc-unlimit-v8-1';
     variant.dataset.mwVariantStockV5='1';
     variant.onload=()=>{
       const matrix=document.createElement('script');
-      matrix.src='js/local-store-matrix-stock-v6.js?v=detailed-desc-v8';
+      matrix.src='js/local-store-matrix-stock-v6.js?v=desc-unlimit-v8-1';
       matrix.dataset.mwMatrixStockV6='1';
       matrix.onload=()=>{
         const v7=document.createElement('script');
-        v7.src='js/local-store-ui-stock-v7.js?v=detailed-desc-v8';
+        v7.src='js/local-store-ui-stock-v7.js?v=desc-unlimit-v8-1';
         v7.dataset.mwUiStockV7='1';
         v7.onload=()=>{
           const detailed=document.createElement('script');
