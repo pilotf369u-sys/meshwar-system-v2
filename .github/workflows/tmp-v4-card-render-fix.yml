@@ -2,6 +2,8 @@ name: Temporary V4 card renderer fix
 on:
   push:
     branches: [fix/local-store-v4-card-render-and-modal-trigger]
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
 jobs:
@@ -45,9 +47,6 @@ jobs:
 '''
           s2,n=re.subn(r'function renderCards\(grid,store,products,\{fromCache=false\}=\{\}\)\{.*?\n\}\n\nasync function reserveStock',new_render+'\nasync function reserveStock',s,flags=re.S)
           if n!=1: raise SystemExit(f'renderCards replacement count={n}')
-          marker='async function createOrder(product,store,selection={},requestedQuantity=1){'
-          if marker not in s2: raise SystemExit('createOrder marker missing')
-          s2=s2.replace(marker,marker,1)
           expose='\nwindow.createLocalStoreOrder=createOrder;\n'
           target='\nasync function renderStoreProductsV3(storeIdOverride){'
           if expose.strip() not in s2:
@@ -63,7 +62,7 @@ jobs:
     const context=window.MeshwarLocalStoreV4Context||{};let store=context.store||null;
     if(!store){const storeId=String(new URLSearchParams(location.search).get('storeId')||'').trim();if(storeId){const stores=await rest(`local_stores?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(storeId)}&limit=1`);store=Array.isArray(stores)?stores[0]:null}}
     if(!store)return alert('تعذر تحميل بيانات المتجر.');
-    const card=document.querySelector(`[data-product-card="${CSS.escape(pid)}"]`);const modal=ensureModal(),body=modal.querySelector('#mwDetailBody'),imgs=imagesFor(p),opts=productOpts(p),stockManaged=p.stock_quantity!==null&&p.stock_quantity!==undefined&&p.stock_quantity!=='';const stock=stockManaged?Math.max(0,Math.floor(Number(p.stock_quantity)||0)):99,unavailable=!!p.is_out_of_stock||(stockManaged&&stock===0);const price=card?.querySelector('.local-v3-local')?.textContent?.trim()||card?.querySelector('.local-v3-price')?.textContent?.trim()||'';
+    const safePid=window.CSS&&CSS.escape?CSS.escape(pid):pid.replace(/["\\]/g,'\\$&');const card=document.querySelector(`[data-product-card="${safePid}"]`);const modal=ensureModal(),body=modal.querySelector('#mwDetailBody'),imgs=imagesFor(p),opts=productOpts(p),stockManaged=p.stock_quantity!==null&&p.stock_quantity!==undefined&&p.stock_quantity!=='';const stock=stockManaged?Math.max(0,Math.floor(Number(p.stock_quantity)||0)):99,unavailable=!!p.is_out_of_stock||(stockManaged&&stock===0);const price=card?.querySelector('.local-v3-local')?.textContent?.trim()||card?.querySelector('.local-v3-price')?.textContent?.trim()||'';
     body.innerHTML=`<div class="mw-detail-grid"><section><div class="mw-gallery-main"><img src="${esc(imgs[0]||p.image_url||'')}" alt="${esc(p.product_name||'منتج')}"></div><div class="mw-gallery-thumbs">${imgs.map((u,i)=>`<button type="button" class="mw-gallery-thumb ${i===0?'active':''}" data-src="${esc(u)}"><img src="${esc(u)}" alt="صورة ${i+1}"></button>`).join('')}</div></section><section><h3 class="mw-detail-title">${esc(p.product_name||'منتج')}</h3><div class="mw-detail-desc">${esc(p.description||'')}</div><div class="mw-detail-price">${esc(price)}</div>${stockManaged&&stock>0&&stock<=3?`<div class="mw-stock-note mw-stock-low">🔥 سارع بالطلب، متبقي ${stock} قطع فقط!</div>`:''}${optionGroup('color','اللون',opts.colors)}${optionGroup('size','المقاس',opts.sizes)}${optionGroup('volume','الحجم',opts.volumes)}<div class="mw-modal-qty"><b>الكمية</b><div class="mw-modal-qty-controls"><button type="button" data-q="minus">−</button><strong data-q-value>1</strong><button type="button" data-q="plus">+</button></div></div><button type="button" class="mw-modal-confirm" ${unavailable?'disabled':''}>${unavailable?'نفذت الكمية':'تأكيد الطلب'}</button></section></div>`;
     body.querySelectorAll('.mw-gallery-thumb').forEach(t=>t.addEventListener('click',()=>{body.querySelector('.mw-gallery-main img').src=t.dataset.src;body.querySelectorAll('.mw-gallery-thumb').forEach(x=>x.classList.toggle('active',x===t))}));
     body.querySelectorAll('.mw-option-btn').forEach(b=>b.addEventListener('click',()=>{const group=b.closest('[data-group]');group.querySelectorAll('.mw-option-btn').forEach(x=>x.classList.toggle('active',x===b))}));
