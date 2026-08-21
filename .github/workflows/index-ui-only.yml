@@ -5,6 +5,7 @@ on:
     paths:
       - 'index.html'
       - 'vendor-dashboard.html'
+      - 'vendor-dashboard-v2.html'
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
@@ -18,6 +19,7 @@ on:
     paths:
       - 'index.html'
       - 'vendor-dashboard.html'
+      - 'vendor-dashboard-v2.html'
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
@@ -66,14 +68,15 @@ jobs:
           grep -Fq 'normalizeBlankInputs' js/local-store-ui-stock-v7.js
           grep -Fq 'openAddProductModal' js/local-store-ui-stock-v7.js
           grep -Fq 'button[onclick="openProductModal()"]' js/local-store-ui-stock-v7.js
-          grep -Fq "onclick=\"editProduct('" vendor-dashboard.html
-          grep -Fq "onclick=\"deleteProduct('" vendor-dashboard.html
-          grep -Fq 'Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct' vendor-dashboard.html
+          grep -Fq "onclick=\"editProduct('" vendor-dashboard-v2.html
+          grep -Fq "onclick=\"deleteProduct('" vendor-dashboard-v2.html
+          grep -Fq 'Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct' vendor-dashboard-v2.html
           grep -Fq 'meshwar_adjust_matrix_stock' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
           grep -Fq 'for update' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
-      - name: Validate unrestricted product description
+      - name: Validate vendor V2 routing and unrestricted product description
         run: |
-          grep -Fq 'placeholder="وصف المنتج (اختياري)..."' vendor-dashboard.html
-          ! grep -Fq 'الوصف المختصر يجب ألا يتجاوز 30 حرفًا' vendor-dashboard.html
-          ! grep -Fq 'maxlength="30"' vendor-dashboard.html
-          ! grep -Eq 'description\.length[[:space:]]*>[[:space:]]*30' vendor-dashboard.html
+          grep -Fq "location.replace('vendor-dashboard-v2.html?v=20260821-hard-v2')" vendor-dashboard.html
+          grep -Fq 'placeholder="وصف المنتج (اختياري)..."' vendor-dashboard-v2.html
+          ! grep -Fq 'الوصف المختصر يجب ألا يتجاوز 30 حرفًا' vendor-dashboard-v2.html
+          ! grep -Fq 'maxlength="30"' vendor-dashboard-v2.html
+          ! grep -Eq 'description\.length[[:space:]]*>[[:space:]]*30' vendor-dashboard-v2.html
