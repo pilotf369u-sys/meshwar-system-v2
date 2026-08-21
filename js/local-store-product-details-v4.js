@@ -39,13 +39,21 @@
       await hydrateStoreContext(btn.dataset.pid);
       if(typeof window.openProductModal!=='function')throw new Error('نافذة تفاصيل المنتج لم تكتمل تهيئتها.');
       await window.openProductModal(btn.dataset.pid);
+      await window.MeshwarVariantStock?.enhanceModal?.(btn.dataset.pid);
     }catch(err){console.error('V4 store context error',err);alert('تعذر فتح أو إرسال الطلب: '+(err?.message||err))}
   },true);
 
   const script=document.createElement('script');
-  script.src='js/local-store-product-details-v4-core.js?v=store-context-1';
+  script.src='js/local-store-product-details-v4-core.js?v=variant-stock-1';
   script.dataset.mwProductDetailsV4Core='1';
-  script.onload=()=>resolveCore();
+  script.onload=()=>{
+    const variant=document.createElement('script');
+    variant.src='js/local-store-variant-stock-v5.js?v=variant-stock-1';
+    variant.dataset.mwVariantStockV5='1';
+    variant.onload=()=>resolveCore();
+    variant.onerror=()=>rejectCore(new Error('تعذر تحميل مكون مخزون الخيارات.'));
+    document.head.appendChild(variant);
+  };
   script.onerror=()=>rejectCore(new Error('تعذر تحميل مكون تفاصيل المنتج.'));
   document.head.appendChild(script);
 })();
