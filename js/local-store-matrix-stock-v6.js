@@ -43,9 +43,10 @@
     if(activeDimensions(lists).length<2)return;
     let note=modal.querySelector('.mw-matrix-availability');if(!note){note=document.createElement('div');note.className='mw-matrix-availability';modal.querySelector('.mw-modal-qty')?.insertAdjacentElement('beforebegin',note)}
     const refresh=()=>{
-      const selection=currentSelection(modal);
-      for(const key of DIMENSIONS){modal.querySelectorAll(`[data-group="${key}"] .mw-option-btn`).forEach(btn=>{const val=String(btn.dataset.value||''),matrixDisabled=shouldDisableCandidate(key,val,selection,lists,matrix),variantDisabled=btn.classList.contains('mw-variant-disabled');btn.classList.toggle('mw-matrix-disabled',matrixDisabled);btn.disabled=variantDisabled||matrixDisabled;if(matrixDisabled)btn.title='هذه التركيبة غير متوفرة حاليًا'})}
-      const max=effectiveLimit(selection,lists,matrix,variantStock,total),value=modal.querySelector('[data-q-value]');if(value){const cur=Math.max(1,Math.floor(Number(value.textContent)||1);value.textContent=String(max>0?Math.min(cur,max):1)}
+      let selection=currentSelection(modal);
+      for(const key of DIMENSIONS){modal.querySelectorAll(`[data-group="${key}"] .mw-option-btn`).forEach(btn=>{const val=String(btn.dataset.value||''),matrixDisabled=shouldDisableCandidate(key,val,selection,lists,matrix),variantDisabled=btn.classList.contains('mw-variant-disabled');btn.classList.toggle('mw-matrix-disabled',matrixDisabled);btn.disabled=variantDisabled||matrixDisabled;if(matrixDisabled&&btn.classList.contains('active'))btn.classList.remove('active');if(matrixDisabled)btn.title='هذه التركيبة غير متوفرة حاليًا'})}
+      selection=currentSelection(modal);
+      const max=effectiveLimit(selection,lists,matrix,variantStock,total),value=modal.querySelector('[data-q-value]');if(value){const cur=Math.max(1,Math.floor(Number(value.textContent)||1));value.textContent=String(max>0?Math.min(cur,max):1)}
       if(note){const mq=exactMatrixQty(selection,matrix,lists);note.textContent=mq===null?'اختر بقية الخيارات لعرض مخزون التركيبة المحددة':(max>0?`المتاح لهذه التركيبة: ${max}`:'هذه التركيبة غير متوفرة حاليًا')}
       return max;
     };
