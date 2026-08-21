@@ -1,0 +1,29 @@
+name: temporary-feature-check
+on:
+  push:
+    branches:
+      - feat/local-store-product-details-modal-and-multi-images
+permissions:
+  contents: write
+jobs:
+  check:
+    if: ${{ !contains(github.event.head_commit.message, '[feature-check-cleanup]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/local-store-product-details-modal-and-multi-images
+          fetch-depth: 0
+      - name: Validate JavaScript and diff
+        run: |
+          node --check js/local-store-pricing.js
+          node --check js/local-store-product-details-v4.js
+          git diff origin/main...HEAD --check
+      - name: Remove temporary checker
+        run: |
+          rm .github/workflows/_tmp_feature_check.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/_tmp_feature_check.yml
+          git commit -m 'chore: remove temporary feature checker [feature-check-cleanup]'
+          git push origin HEAD:feat/local-store-product-details-modal-and-multi-images
