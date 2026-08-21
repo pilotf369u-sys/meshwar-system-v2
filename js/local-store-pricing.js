@@ -234,3 +234,17 @@ html.dark .logo-container>.store-logo{mix-blend-mode:normal!important}
   function install(){if(document.getElementById('meshwarStoreLogoPolishV5'))return;const s=document.createElement('style');s.id='meshwarStoreLogoPolishV5';s.textContent=css;document.head.appendChild(s)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
+
+/* MESHWAR_STORE_LOGO_VISUAL_POLISH_V6 */
+(function(){
+  const css=`
+.logo-container{height:86px!important;min-height:86px!important;width:100%!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:hidden!important}
+.logo-container>.store-logo{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center!important;padding:0!important;margin:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;transform:scale(1.10)!important;transform-origin:center!important;filter:saturate(1.04) contrast(1.03)!important}
+html:not(.dark) .logo-container>.store-logo{mix-blend-mode:multiply!important}
+.store-card:hover .logo-container>.store-logo{transform:scale(1.15)!important}
+.meshwar-store-name-fallback{transform:none!important;mix-blend-mode:normal!important}
+@media(max-width:640px){.logo-container{height:78px!important;min-height:78px!important}.logo-container>.store-logo{transform:scale(1.08)!important}.store-card:hover .logo-container>.store-logo{transform:scale(1.12)!important}}
+`;
+  function install(){if(document.getElementById('meshwarStoreLogoVisualPolishV6'))return;const s=document.createElement('style');s.id='meshwarStoreLogoVisualPolishV6';s.textContent=css;document.head.appendChild(s)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+})();
