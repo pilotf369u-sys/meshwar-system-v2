@@ -1,0 +1,34 @@
+name: temporary-feature-loader-patch
+on:
+  push:
+    branches:
+      - feat/local-store-product-details-modal-and-multi-images
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[feature-loader-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/local-store-product-details-modal-and-multi-images
+          fetch-depth: 0
+      - name: Append product details feature loader safely
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('js/local-store-pricing.js')
+          s=p.read_text()
+          marker='MESHWAR_LOCAL_PRODUCT_DETAILS_V4_LOADER'
+          if marker not in s:
+              s += '''\n\n/* MESHWAR_LOCAL_PRODUCT_DETAILS_V4_LOADER */\n(function(){\n  if(document.querySelector('script[data-mw-product-details-v4]'))return;\n  const s=document.createElement('script');\n  s.src='js/local-store-product-details-v4.js?v=1';\n  s.defer=true;\n  s.dataset.mwProductDetailsV4='1';\n  document.head.appendChild(s);\n})();\n'''
+              p.write_text(s)
+          Path('.github/workflows/_tmp_feature_patch.yml').unlink(missing_ok=True)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add js/local-store-pricing.js .github/workflows/_tmp_feature_patch.yml
+          git diff --cached --check
+          git commit -m 'feat: wire product details and multi-image feature [feature-loader-applied]'
+          git push origin HEAD:feat/local-store-product-details-modal-and-multi-images
