@@ -89,9 +89,14 @@
   document.head.appendChild(script);
 
   /* MESHWAR_LOCAL_STORE_ACTIVE_PANEL_BRIDGE_V1 */
-  async function bindActiveStore(storeId){
+  function setActiveStoreUrl(storeId){
     const sid=String(storeId||'').trim();if(!sid)return;
     const url=new URL(location.href);url.searchParams.set('storeId',sid);history.replaceState(history.state,'',url);
+  }
+
+  async function bindActiveStore(storeId){
+    const sid=String(storeId||'').trim();if(!sid)return;
+    setActiveStoreUrl(sid);
     try{
       const rows=await rest(`local_stores?select=id,store_name,specialty,store_type,country,governorate&id=eq.${encodeURIComponent(sid)}&limit=1`);
       const store=Array.isArray(rows)?rows[0]:null;
@@ -109,8 +114,8 @@
     const grid=document.getElementById('localStoreProductsGrid');
     if(panel&&grid){
       panel.style.position=panel.style.position||'relative';
-      let host=document.getElementById('mwActiveStoreCategoryHost');
-      if(!host){host=document.createElement('div');host.id='mwActiveStoreCategoryHost';host.style.cssText='position:sticky;top:0;z-index:50;background:rgba(7,17,31,.96);backdrop-filter:blur(14px);padding:6px 0 8px;margin-bottom:8px';grid.parentElement?.insertBefore(host,grid)}
+      const oldHost=document.getElementById('mwActiveStoreCategoryHost');
+      if(oldHost)oldHost.remove();
     }
     const rerun=document.createElement('script');
     rerun.src='js/local-store-categories-v9.js?v=active-store-'+Date.now();
@@ -121,8 +126,11 @@
   function wrapOpenStore(){
     const original=window.openStore;if(typeof original!=='function'||original.__mwActiveStoreBridge)return false;
     const wrapped=async function(storeUrl,storeId){
-      const sid=String(storeId||'').trim();if(sid)await bindActiveStore(sid);
-      return original.apply(this,arguments);
+      const sid=String(storeId||'').trim();
+      if(sid)setActiveStoreUrl(sid);
+      const result=await original.apply(this,arguments);
+      if(sid)await bindActiveStore(sid);
+      return result;
     };
     wrapped.__mwActiveStoreBridge=true;window.openStore=wrapped;return true;
   }
