@@ -23,7 +23,7 @@
       storeId=String(product?.store_id||storeId).trim();
     }
     if(!storeId)throw new Error('تعذر تحديد المتجر المرتبط بالمنتج.');
-    const stores=await rest(`local_stores?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(storeId)}&limit=1`);
+    const stores=await rest(`local_stores?select=id,store_name,logo_url,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(storeId)}&limit=1`);
     const store=Array.isArray(stores)?stores[0]:null;
     if(!store)throw new Error('تعذر تحميل بيانات المتجر المرتبط بالمنتج.');
     window.MeshwarLocalStoreV4Context={...context,store};
@@ -67,9 +67,16 @@
           detailed.dataset.mwDetailedDescriptionV8='1';
           detailed.onload=()=>{
             const categories=document.createElement('script');
-            categories.src='js/local-store-categories-v9.js?v=store-categories-v9-emergency-1';
+            categories.src='js/local-store-categories-v9.js?v=store-categories-v9-taxonomy-fix';
             categories.dataset.mwStoreCategoriesV9='1';
-            categories.onload=()=>resolveCore();
+            categories.onload=()=>{
+              const taxonomy=document.createElement('script');
+              taxonomy.src='js/local-store-taxonomy-persistence-v10.js?v=taxonomy-persistence-v10';
+              taxonomy.dataset.mwTaxonomyPersistenceV10='1';
+              taxonomy.onload=()=>resolveCore();
+              taxonomy.onerror=()=>rejectCore(new Error('تعذر تحميل تثبيت تصنيفات المنتجات.'));
+              document.head.appendChild(taxonomy);
+            };
             categories.onerror=()=>rejectCore(new Error('تعذر تحميل نظام تصنيفات المتجر.'));
             document.head.appendChild(categories);
           };
@@ -88,10 +95,27 @@
   script.onerror=()=>rejectCore(new Error('تعذر تحميل مكون تفاصيل المنتج.'));
   document.head.appendChild(script);
 
-  /* MESHWAR_LOCAL_STORE_ACTIVE_PANEL_BRIDGE_V2 */
+  /* MESHWAR_LOCAL_STORE_ACTIVE_PANEL_BRIDGE_V3 */
   function setActiveStoreUrl(storeId){
     const sid=String(storeId||'').trim();if(!sid)return;
     const url=new URL(location.href);url.searchParams.set('storeId',sid);history.replaceState(history.state,'',url);
+  }
+
+  function bindStoreIdentity(store){
+    const title=document.getElementById('localStoreProductsTitle');
+    const meta=document.getElementById('localStoreProductsMeta');
+    if(title)title.textContent=String(store.store_name||store.name||'متجر محلي');
+    if(meta)meta.textContent=[store.specialty||store.store_type,store.governorate||store.country].filter(Boolean).join(' · ');
+    const head=title?.parentElement;
+    if(head){
+      let logo=document.getElementById('localStoreProductsLogo');
+      if(!logo){
+        logo=document.createElement('img');logo.id='localStoreProductsLogo';logo.alt='شعار المتجر';
+        logo.style.cssText='width:52px;height:52px;border-radius:14px;object-fit:cover;border:1px solid rgba(212,175,55,.38);box-shadow:0 8px 24px rgba(15,23,42,.16);margin-inline-end:10px;vertical-align:middle;';
+        head.style.display='flex';head.style.alignItems='center';head.prepend(logo);
+      }
+      if(store.logo_url||store.logo){logo.src=String(store.logo_url||store.logo);logo.style.display='block'}else logo.style.display='none';
+    }
   }
 
   async function bindActiveStore(storeId){
@@ -100,19 +124,16 @@
     try{
       await coreReady;
       if(typeof window.MeshwarStoreCategoriesV9?.initStorefront==='function')await window.MeshwarStoreCategoriesV9.initStorefront(sid);
-      const rows=await rest(`local_stores?select=id,store_name,specialty,store_type,country,governorate,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(sid)}&limit=1`);
+      const rows=await rest(`local_stores?select=id,store_name,logo_url,specialty,store_type,country,governorate,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(sid)}&limit=1`);
       const store=Array.isArray(rows)?rows[0]:null;
       if(!store)return;
       window.MeshwarLocalStoreV4Context={...(window.MeshwarLocalStoreV4Context||{}),store:{...(window.MeshwarLocalStoreV4Context?.store||{}),...store}};
-      const title=document.getElementById('localStoreProductsTitle');
-      const meta=document.getElementById('localStoreProductsMeta');
-      if(title)title.textContent=String(store.store_name||'متجر محلي');
-      if(meta)meta.textContent=[store.specialty||store.store_type,store.governorate||store.country].filter(Boolean).join(' · ');
+      bindStoreIdentity(store);
     }catch(err){console.warn('Active store bridge failed',err)}
   }
 
   function wrapOpenStore(){
-    const original=window.openStore;if(typeof original!=='function'||original.__mwActiveStoreBridgeV2)return false;
+    const original=window.openStore;if(typeof original!=='function'||original.__mwActiveStoreBridgeV3)return false;
     const wrapped=async function(storeUrl,storeId){
       const sid=String(storeId||'').trim();
       if(sid)setActiveStoreUrl(sid);
@@ -120,7 +141,7 @@
       if(sid)await bindActiveStore(sid);
       return result;
     };
-    wrapped.__mwActiveStoreBridgeV2=true;window.openStore=wrapped;return true;
+    wrapped.__mwActiveStoreBridgeV3=true;window.openStore=wrapped;return true;
   }
 
   if(!wrapOpenStore()){
