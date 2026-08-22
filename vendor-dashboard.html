@@ -13,6 +13,7 @@
   <script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1910"></script>
   <script src="js/vendor-theme-pagination-v16.js?v=20260822-1910"></script>
   <script src="js/vendor-order-status-contrast-v18.js?v=20260822-1910"></script>
+  <script src="js/vendor-financial-kpi-icons-v19.js?v=20260822-1934"></script>
 </head>
 <body>
   <iframe id="vendorFrame" src="vendor-dashboard-v2.html?v=20260822-1910" title="لوحة صاحب المتجر"></iframe>
@@ -28,6 +29,8 @@
         catch(e){console.error('Vendor theme/pagination install failed',e)}
         try{window.MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)}
         catch(e){console.error('Vendor order status contrast install failed',e)}
+        try{window.MeshwarVendorFinancialKpiIconsV19?.install(frame.contentWindow)}
+        catch(e){console.error('Vendor financial KPI icons install failed',e)}
       }
       frame.addEventListener('load',()=>{install();setTimeout(install,250);setTimeout(install,900)});
     })();
