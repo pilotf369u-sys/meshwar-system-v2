@@ -80,12 +80,13 @@ jobs:
           grep -Fq 'Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct' vendor-dashboard-v2.html
           grep -Fq 'meshwar_adjust_matrix_stock' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
           grep -Fq 'for update' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
-      - name: Validate vendor barcode routing and unrestricted product description
+      - name: Validate direct vendor barcode entry and unrestricted product description
         run: |
-          grep -Fq "location.replace('vendor-dashboard-barcode-shell.html?v=20260822-barcode-v11')" vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=barcode-v11"></script>' vendor-dashboard-barcode-shell.html
-          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-barcode-v11"' vendor-dashboard-barcode-shell.html
-          grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard-barcode-shell.html
+          ! grep -Fq 'location.replace(' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=barcode-v11-direct"></script>' vendor-dashboard.html
+          grep -Fq 'id="vendorFrame"' vendor-dashboard.html
+          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-barcode-v11-direct"' vendor-dashboard.html
+          grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'barcode' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'add column if not exists barcode text null' supabase/migrations/20260822_local_product_barcode.sql
           grep -Fq 'idx_local_products_barcode' supabase/migrations/20260822_local_product_barcode.sql
