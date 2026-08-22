@@ -5,7 +5,7 @@
   const STORE_KEY='meshwar_vendor_store';
   const state={categories:[],storeId:'',editingId:'',frontStoreId:'',frontProducts:new Map(),frontCategories:new Map(),frontObserver:null};
 
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[c]));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const q=v=>encodeURIComponent(String(v??''));
   const parseSession=()=>{try{return JSON.parse(sessionStorage.getItem(STORE_KEY)||'null')}catch{return null}};
   const slugify=v=>String(v||'').trim().toLowerCase().replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,80)||'category';
@@ -263,6 +263,8 @@
     s.textContent=`
       #localStoreProductsPanel,#local-store-products-container{overflow:visible!important;contain:none!important}
       #local-store-products-container{position:relative!important;width:100%;min-width:0}
+      #localStoreProductsTitle{color:#0f172a!important;font-weight:800!important;font-size:1.25rem!important;line-height:1.35!important;opacity:1!important}
+      html.dark #localStoreProductsTitle{color:#f8fafc!important}
       #mwCategoryShell{position:sticky!important;top:0!important;z-index:50!important;margin:0 0 14px;padding:10px;border:1px solid rgba(212,175,55,.28);border-radius:16px;background:rgba(11,19,43,.96);box-shadow:0 12px 30px rgba(2,6,23,.22);backdrop-filter:blur(14px);isolation:isolate}
       #mwCategoryShell .mw-category-bar,#mwCategoryShell .mw-subcategory-bar{display:flex;gap:8px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:thin;-webkit-overflow-scrolling:touch;padding:2px 1px}
       #mwCategoryShell .mw-subcategory-bar{margin-top:8px;padding-top:8px;border-top:1px solid rgba(212,175,55,.14)}
@@ -286,18 +288,28 @@
   function frontChildren(parentId){return[...state.frontCategories.values()].filter(c=>c.parent_id!=null&&String(c.parent_id)===String(parentId)&&c.is_visible!==false).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}
 
   function productMatches(meta,filter){
-    if(!meta)return filter==='all';if(!visibleFrontCategory(meta.category_id))return false;if(filter==='all')return true;if(filter==='featured')return!!meta.is_featured;if(filter==='general')return!meta.category_id;
-    if(filter.startsWith('cat:'))return String(meta.category_id||'')===filter.slice(4);
-    const root=frontRoots().find(c=>String(c.slug)===String(filter));if(!root)return true;
-    if(String(meta.category_id||'')===String(root.id))return true;
-    const c=state.frontCategories.get(String(meta.category_id||''));return String(c?.parent_id||'')===String(root.id);
+    const selected=String(filter||'all');
+    if(selected==='all')return true;
+    if(!meta||meta.category_id==null||String(meta.category_id).trim()==='')return true;
+    if(!visibleFrontCategory(meta.category_id))return false;
+    if(selected==='featured')return!!meta.is_featured;
+    if(selected==='general')return!meta.category_id;
+    if(selected.startsWith('cat:'))return String(meta.category_id)===String(selected.slice(4));
+    const root=frontRoots().find(c=>String(c.slug)===selected);if(!root)return true;
+    if(String(meta.category_id)===String(root.id))return true;
+    const c=state.frontCategories.get(String(meta.category_id));return String(c?.parent_id||'')===String(root.id);
   }
 
   function applyFrontFilter(filter,{updateUrl=true}={}){
     const grid=document.getElementById('localStoreProductsGrid');if(!grid)return;
-    grid.querySelectorAll('.local-v3-card[data-product-card]').forEach(card=>{const meta=state.frontProducts.get(String(card.dataset.productCard));card.style.display=productMatches(meta,filter)?'':'none'});
-    document.querySelectorAll('#mwCategoryShell [data-cat-filter]').forEach(b=>b.classList.toggle('active',String(b.dataset.catFilter)===String(filter)));
-    if(updateUrl)updateCategoryUrl(filter);
+    const selected=String(filter||'all');
+    grid.querySelectorAll('.local-v3-card[data-product-card]').forEach(card=>{
+      const meta=state.frontProducts.get(String(card.dataset.productCard));
+      const show=productMatches(meta,selected);
+      card.style.setProperty('display',show?'flex':'none','important');
+    });
+    document.querySelectorAll('#mwCategoryShell [data-cat-filter]').forEach(b=>b.classList.toggle('active',String(b.dataset.catFilter)===selected));
+    if(updateUrl)updateCategoryUrl(selected);
   }
 
   function renderCategoryShell(){
