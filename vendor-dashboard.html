@@ -6,7 +6,7 @@
   <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="pragma" content="no-cache">
   <meta http-equiv="expires" content="0">
-  <meta name="meshwar-build" content="vendor-order-status-contrast-v18-pages-20260822-1910">
+  <meta name="meshwar-build" content="vendor-financial-periods-v24-20260823-0210">
   <title>لوحة صاحب المتجر - MeshWar</title>
   <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617}#vendorFrame{width:100%;height:100%;border:0;display:block}</style>
   <script src="js/vendor-barcode-smart-search-v11.js?v=20260822-1910"></script>
@@ -18,6 +18,7 @@
   <script src="js/vendor-finance-cost-save-guard-v21.js?v=20260822-2316"></script>
   <script src="js/vendor-barcode-margin-autopricing-v22.js?v=20260822-2352"></script>
   <script src="js/vendor-pl-expense-hotfix-v23.js?v=20260823-0135"></script>
+  <script src="js/vendor-financial-periods-v24.js?v=20260823-0210"></script>
 </head>
 <body>
   <iframe id="vendorFrame" src="vendor-dashboard-v2.html?v=20260822-1910" title="لوحة صاحب المتجر"></iframe>
@@ -25,24 +26,16 @@
     (function(){
       const frame=document.getElementById('vendorFrame');
       function install(){
-        try{window.MeshwarVendorBarcodeV11?.install(frame.contentWindow)}
-        catch(e){console.error('Vendor barcode install failed',e)}
-        try{window.MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)}
-        catch(e){console.error('Vendor order smart search install failed',e)}
-        try{window.MeshwarVendorThemePaginationV16?.install(frame.contentWindow)}
-        catch(e){console.error('Vendor theme/pagination install failed',e)}
-        try{window.MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)}
-        catch(e){console.error('Vendor order status contrast install failed',e)}
-        try{window.MeshwarVendorFinancialKpiIconsV19?.install(frame.contentWindow)}
-        catch(e){console.error('Vendor financial KPI icons install failed',e)}
-        try{window.MeshwarVendorFinanceV21?.install(frame.contentWindow)}
-        catch(e){console.error('Vendor finance V21 install failed',e)}
-        try{window.MeshwarVendorFinanceCostSaveGuardV21?.install(frame.contentWindow)}
-        catch(e){console.error('Vendor finance cost guard V21 install failed',e)}
-        try{window.MeshwarVendorBarcodeMarginV22?.install(frame.contentWindow)}
-        catch(e){console.error('Vendor barcode/margin V22 install failed',e)}
-        try{window.MeshwarVendorPlExpenseV23?.install(frame.contentWindow)}
-        catch(e){console.error('Vendor P&L expense V23 install failed',e)}
+        try{window.MeshwarVendorBarcodeV11?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode install failed',e)}
+        try{window.MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)}catch(e){console.error('Vendor order smart search install failed',e)}
+        try{window.MeshwarVendorThemePaginationV16?.install(frame.contentWindow)}catch(e){console.error('Vendor theme/pagination install failed',e)}
+        try{window.MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)}catch(e){console.error('Vendor order status contrast install failed',e)}
+        try{window.MeshwarVendorFinancialKpiIconsV19?.install(frame.contentWindow)}catch(e){console.error('Vendor financial KPI icons install failed',e)}
+        try{window.MeshwarVendorFinanceV21?.install(frame.contentWindow)}catch(e){console.error('Vendor finance V21 install failed',e)}
+        try{window.MeshwarVendorFinanceCostSaveGuardV21?.install(frame.contentWindow)}catch(e){console.error('Vendor finance cost guard V21 install failed',e)}
+        try{window.MeshwarVendorBarcodeMarginV22?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode/margin V22 install failed',e)}
+        try{window.MeshwarVendorPlExpenseV23?.install(frame.contentWindow)}catch(e){console.error('Vendor P&L expense V23 install failed',e)}
+        try{window.MeshwarVendorFinancialPeriodsV24?.install(frame.contentWindow)}catch(e){console.error('Vendor financial periods V24 install failed',e)}
       }
       frame.addEventListener('load',()=>{install();setTimeout(install,250);setTimeout(install,900)});
     })();
