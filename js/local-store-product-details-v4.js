@@ -67,7 +67,7 @@
           detailed.dataset.mwDetailedDescriptionV8='1';
           detailed.onload=()=>{
             const categories=document.createElement('script');
-            categories.src='js/local-store-categories-v9.js?v=store-categories-v9';
+            categories.src='js/local-store-categories-v9.js?v=store-categories-v9-emergency-1';
             categories.dataset.mwStoreCategoriesV9='1';
             categories.onload=()=>resolveCore();
             categories.onerror=()=>rejectCore(new Error('تعذر تحميل نظام تصنيفات المتجر.'));
@@ -88,7 +88,7 @@
   script.onerror=()=>rejectCore(new Error('تعذر تحميل مكون تفاصيل المنتج.'));
   document.head.appendChild(script);
 
-  /* MESHWAR_LOCAL_STORE_ACTIVE_PANEL_BRIDGE_V1 */
+  /* MESHWAR_LOCAL_STORE_ACTIVE_PANEL_BRIDGE_V2 */
   function setActiveStoreUrl(storeId){
     const sid=String(storeId||'').trim();if(!sid)return;
     const url=new URL(location.href);url.searchParams.set('storeId',sid);history.replaceState(history.state,'',url);
@@ -98,33 +98,21 @@
     const sid=String(storeId||'').trim();if(!sid)return;
     setActiveStoreUrl(sid);
     try{
-      const rows=await rest(`local_stores?select=id,store_name,specialty,store_type,country,governorate&id=eq.${encodeURIComponent(sid)}&limit=1`);
+      await coreReady;
+      if(typeof window.MeshwarStoreCategoriesV9?.initStorefront==='function')await window.MeshwarStoreCategoriesV9.initStorefront(sid);
+      const rows=await rest(`local_stores?select=id,store_name,specialty,store_type,country,governorate,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(sid)}&limit=1`);
       const store=Array.isArray(rows)?rows[0]:null;
-      if(store){
-        const title=document.getElementById('localStoreProductsTitle');
-        const meta=document.getElementById('localStoreProductsMeta');
-        if(title)title.textContent=String(store.store_name||'متجر محلي');
-        if(meta)meta.textContent=[store.specialty||store.store_type,store.governorate||store.country].filter(Boolean).join(' · ');
-        window.MeshwarLocalStoreV4Context={...(window.MeshwarLocalStoreV4Context||{}),store};
-      }
-    }catch(err){console.warn('Active store header bridge failed',err)}
-    document.getElementById('mwCategoryShell')?.remove();
-    document.getElementById('mwCategoryBar')?.remove();
-    const panel=document.getElementById('localStoreProductsPanel');
-    const grid=document.getElementById('localStoreProductsGrid');
-    if(panel&&grid){
-      panel.style.position=panel.style.position||'relative';
-      const oldHost=document.getElementById('mwActiveStoreCategoryHost');
-      if(oldHost)oldHost.remove();
-    }
-    const rerun=document.createElement('script');
-    rerun.src='js/local-store-categories-v9.js?v=active-store-'+Date.now();
-    rerun.dataset.mwStoreCategoriesV9Active='1';
-    document.head.appendChild(rerun);
+      if(!store)return;
+      window.MeshwarLocalStoreV4Context={...(window.MeshwarLocalStoreV4Context||{}),store:{...(window.MeshwarLocalStoreV4Context?.store||{}),...store}};
+      const title=document.getElementById('localStoreProductsTitle');
+      const meta=document.getElementById('localStoreProductsMeta');
+      if(title)title.textContent=String(store.store_name||'متجر محلي');
+      if(meta)meta.textContent=[store.specialty||store.store_type,store.governorate||store.country].filter(Boolean).join(' · ');
+    }catch(err){console.warn('Active store bridge failed',err)}
   }
 
   function wrapOpenStore(){
-    const original=window.openStore;if(typeof original!=='function'||original.__mwActiveStoreBridge)return false;
+    const original=window.openStore;if(typeof original!=='function'||original.__mwActiveStoreBridgeV2)return false;
     const wrapped=async function(storeUrl,storeId){
       const sid=String(storeId||'').trim();
       if(sid)setActiveStoreUrl(sid);
@@ -132,8 +120,9 @@
       if(sid)await bindActiveStore(sid);
       return result;
     };
-    wrapped.__mwActiveStoreBridge=true;window.openStore=wrapped;return true;
+    wrapped.__mwActiveStoreBridgeV2=true;window.openStore=wrapped;return true;
   }
+
   if(!wrapOpenStore()){
     let attempts=0;const timer=setInterval(()=>{attempts++;if(wrapOpenStore()||attempts>80)clearInterval(timer)},50);
   }
