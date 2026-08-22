@@ -1,0 +1,47 @@
+name: Vendor barcode and margin V22 validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'vendor-dashboard.html'
+      - 'js/vendor-barcode-margin-autopricing-v22.js'
+      - 'supabase/migrations/20260822_vendor_profit_margin_v22.sql'
+      - 'tests/e2e/vendor-dashboard.e2e.spec.mjs'
+      - '.github/workflows/vendor-barcode-margin-v22.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'vendor-dashboard.html'
+      - 'js/vendor-barcode-margin-autopricing-v22.js'
+      - 'supabase/migrations/20260822_vendor_profit_margin_v22.sql'
+      - 'tests/e2e/vendor-dashboard.e2e.spec.mjs'
+      - '.github/workflows/vendor-barcode-margin-v22.yml'
+permissions:
+  contents: read
+jobs:
+  validate-v22:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate V22 syntax and shell wiring
+        run: |
+          node --check js/vendor-barcode-margin-autopricing-v22.js
+          grep -Fq '<script src="js/vendor-barcode-margin-autopricing-v22.js?v=20260822-2352"></script>' vendor-dashboard.html
+          grep -Fq 'MeshwarVendorBarcodeMarginV22?.install(frame.contentWindow)' vendor-dashboard.html
+          grep -Fq "p?.barcode||p?.sku" js/vendor-barcode-margin-autopricing-v22.js
+          grep -Fq 'sku=eq.' js/vendor-barcode-margin-autopricing-v22.js
+          grep -Fq 'mwGlobalProfitMargin' js/vendor-barcode-margin-autopricing-v22.js
+          grep -Fq 'Math.ceil(cost*(1+margin/100))' js/vendor-barcode-margin-autopricing-v22.js
+          grep -Fq '__mwV22ManualBase' js/vendor-barcode-margin-autopricing-v22.js
+      - name: Validate isolated profit-margin migration
+        run: |
+          grep -Fiq 'add column if not exists profit_margin_percent numeric(7,3) null' supabase/migrations/20260822_vendor_profit_margin_v22.sql
+          grep -Fq 'vendor_get_profit_margin' supabase/migrations/20260822_vendor_profit_margin_v22.sql
+          grep -Fq 'vendor_set_profit_margin' supabase/migrations/20260822_vendor_profit_margin_v22.sql
+          ! grep -Eqi 'alter table public\.local_products|alter table public\.orders' supabase/migrations/20260822_vendor_profit_margin_v22.sql
+          ! grep -Eqi 'update[[:space:]]+public\.local_products|update[[:space:]]+public\.orders' supabase/migrations/20260822_vendor_profit_margin_v22.sql
+      - name: Prove exchange-rate path and stable layers are untouched
+        run: |
+          git diff --exit-code origin/main -- vendor-dashboard-v2.html js/local-store-taxonomy-persistence-v10.js js/vendor-order-smart-search-scanner-v13.js js/vendor-order-status-contrast-v18.js js/vendor-financial-kpi-icons-v19.js js/vendor-finance-pl-invoices-v21.js js/vendor-finance-cost-save-guard-v21.js || exit 1
+          ! grep -Fq 'vendor_set_exchange_rate' js/vendor-barcode-margin-autopricing-v22.js
+          ! grep -Fq 'exchangeRate.value' js/vendor-barcode-margin-autopricing-v22.js
