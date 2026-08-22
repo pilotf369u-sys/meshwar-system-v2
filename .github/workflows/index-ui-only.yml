@@ -101,8 +101,8 @@ jobs:
           grep -Fq '#mwCategoryShell [data-cat-filter]' js/local-store-global-search-v12.js
       - name: Validate vendor order smart search and employee camera parity
         run: |
-          grep -Fq '<meta name="meshwar-build" content="vendor-theme-pagination-v16-pages-20260822-1821">' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1821"></script>' vendor-dashboard.html
+          grep -Fq '<meta name="meshwar-build" content="vendor-lux-light-tab-fix-v17-pages-20260822-1857">' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1857"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'vendorOrderSmartSearch' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'Html5Qrcode' js/vendor-order-smart-search-scanner-v13.js
@@ -120,18 +120,21 @@ jobs:
           ! grep -Fq 'scanFile' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'MW-' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'ordersBody' js/vendor-order-smart-search-scanner-v13.js
-      - name: Validate vendor theme contrast and pagination isolation
+      - name: Validate vendor lux theme tab isolation and pagination
         run: |
-          grep -Fq '<script src="js/vendor-theme-pagination-v16.js?v=20260822-1821"></script>' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-theme-pagination-v16.js?v=20260822-1857"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorThemePaginationV16?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq "orders:{container:'#ordersBody'" js/vendor-theme-pagination-v16.js
           grep -Fq "products:{container:'#productsBody'" js/vendor-theme-pagination-v16.js
           grep -Fq "categories:{container:'#mwCatList'" js/vendor-theme-pagination-v16.js
           grep -Fq "sizes:{orders:10,products:10,categories:10}" js/vendor-theme-pagination-v16.js
           grep -Fq '<option value="10">10</option><option value="20">20</option>' js/vendor-theme-pagination-v16.js
-          grep -Fq 'mw-page-hidden' js/vendor-theme-pagination-v16.js
-          grep -Fq 'html.light body' js/vendor-theme-pagination-v16.js
+          grep -Fq '.vendor-tab-panel{display:none!important}.vendor-tab-panel.active{display:block!important}' js/vendor-theme-pagination-v16.js
+          grep -Fq 'enforceSingleTab' js/vendor-theme-pagination-v16.js
+          grep -Fq 'html.light body{background:#f2efe8!important' js/vendor-theme-pagination-v16.js
+          grep -Fq 'background:linear-gradient(135deg,#b98b17,#e0bc53)!important' js/vendor-theme-pagination-v16.js
           grep -Fq 'html.dark .field' js/vendor-theme-pagination-v16.js
+          grep -Fq 'mw-page-hidden' js/vendor-theme-pagination-v16.js
           grep -Fq "e.target?.id==='vendorOrderSmartSearch'" js/vendor-theme-pagination-v16.js
           grep -Fq "e.target?.id==='vendorSmartProductSearch'" js/vendor-theme-pagination-v16.js
           ! grep -Fq "sb.from('orders')" js/vendor-theme-pagination-v16.js
@@ -139,9 +142,9 @@ jobs:
       - name: Validate direct vendor barcode entry and unrestricted product description
         run: |
           ! grep -Fq 'location.replace(' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260822-1821"></script>' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260822-1857"></script>' vendor-dashboard.html
           grep -Fq 'id="vendorFrame"' vendor-dashboard.html
-          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-1821"' vendor-dashboard.html
+          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-1857"' vendor-dashboard.html
           grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'local_products?select=id,product_name,barcode,stock_quantity' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'data-mw-barcode-label' js/vendor-barcode-smart-search-v11.js
