@@ -105,8 +105,13 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await expect(vendor.locator('#statPaid')).toHaveText('85 USD');
     await expect(vendor.locator('#statNet')).toHaveText('245 USD');
     await expect(vendor.locator('#vendorFinanceBody tr')).toHaveCount(2);
-    const calculated=await frameWindow(page,()=>window.financialTotals());
-    expect(calculated).toEqual({sales:300,commission:40,other:15,pending:160,paid:85,net:245});
+    const rows=await vendor.locator('#vendorFinanceBody tr').evaluateAll(list=>list.map(row=>{
+      const num=label=>Number((row.querySelector(`td[data-label="${label}"]`)?.textContent||'0').replace(/[^0-9.-]/g,''))||0;
+      const commission=Number((row.querySelector('td[data-label="العمولة (%)"] .vendor-muted')?.textContent||'0').replace(/[^0-9.-]/g,''))||0;
+      return{total:num('المبلغ الكلي'),commission,other:num('أخرى'),net:num('المبلغ الصافي'),paid:/مدفوع/.test(row.querySelector('td[data-label="حالة الدفع"]')?.textContent||'')};
+    }));
+    const reconciled=rows.reduce((a,r)=>{a.sales+=r.total;a.commission+=r.commission;a.other+=r.other;a.net+=r.net;if(r.paid)a.paid+=r.net;else a.pending+=r.net;return a},{sales:0,commission:0,other:0,pending:0,paid:0,net:0});
+    expect(reconciled).toEqual({sales:300,commission:40,other:15,pending:160,paid:85,net:245});
     await expect(vendor.locator('[data-mw-kpi-icon]')).toHaveCount(6);
   });
 
