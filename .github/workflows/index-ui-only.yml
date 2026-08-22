@@ -96,22 +96,26 @@ jobs:
           grep -Fq '#mwCategoryShell [data-cat-filter]' js/local-store-global-search-v12.js
       - name: Validate vendor order smart search and camera scanner
         run: |
-          grep -Fq '<meta name="meshwar-build" content="vendor-order-search-v13-pages-20260822-1706">' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1706"></script>' vendor-dashboard.html
+          grep -Fq '<meta name="meshwar-build" content="vendor-order-search-v13-pages-20260822-1726">' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1726"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'vendorOrderSmartSearch' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'Html5Qrcode' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'html5-qrcode@2.3.8' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'data-mw-order-highlight' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq "row.style.setProperty('display',show?'':'none','important')" js/vendor-order-smart-search-scanner-v13.js
+          grep -Fq 'sanitizeInput(win)' js/vendor-order-smart-search-scanner-v13.js
+          grep -Fq "facingMode:{exact:'environment'}" js/vendor-order-smart-search-scanner-v13.js
+          grep -Fq "facingMode:'environment'" js/vendor-order-smart-search-scanner-v13.js
+          ! grep -Fq 'getDisplayMedia' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'MW-' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'ordersBody' js/vendor-order-smart-search-scanner-v13.js
       - name: Validate direct vendor barcode entry and unrestricted product description
         run: |
           ! grep -Fq 'location.replace(' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260822-1706"></script>' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260822-1726"></script>' vendor-dashboard.html
           grep -Fq 'id="vendorFrame"' vendor-dashboard.html
-          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-1706"' vendor-dashboard.html
+          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-1726"' vendor-dashboard.html
           grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'local_products?select=id,product_name,barcode,stock_quantity' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'data-mw-barcode-label' js/vendor-barcode-smart-search-v11.js
