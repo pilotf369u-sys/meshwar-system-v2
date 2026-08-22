@@ -46,6 +46,9 @@
     catch{rows=await rest(win,`local_products?select=id,barcode&id=eq.${q(id)}&store_id=eq.${q(sid)}&limit=1`)||[]}
     const el=win.document.getElementById('productBarcode');if(el)el.value=productCode(rows[0]);
   }
+  function scheduleBarcodeHydrate(win,id){
+    [0,120,450,900].forEach(ms=>setTimeout(()=>hydrateBarcode(win,id).catch(e=>console.warn('V22 barcode hydrate failed',e)),ms));
+  }
 
   async function findByCode(win,value){
     const sid=String(store(win)?.id||'').trim();if(!sid)return null;
@@ -61,9 +64,9 @@
     try{
       const sid=String(store(win)?.id||'').trim();if(!sid)throw new Error('تعذر تحديد المتجر الحالي.');
       const exact=await findByCode(win,value);
-      if(exact){input.value='';win.editProduct?.(exact.id);return}
+      if(exact){input.value='';win.editProduct?.(exact.id);scheduleBarcodeHydrate(win,exact.id);return}
       const byName=await rest(win,`local_products?select=id,product_name,barcode,stock_quantity&store_id=eq.${q(sid)}&product_name=ilike.${q('%'+value+'%')}&limit=5`)||[];
-      if(byName.length===1){input.value='';win.editProduct?.(byName[0].id);return}
+      if(byName.length===1){input.value='';win.editProduct?.(byName[0].id);scheduleBarcodeHydrate(win,byName[0].id);return}
       if(/^[A-Za-z0-9._-]{4,80}$/.test(value)){
         input.value='';win.openProductModal?.();setTimeout(()=>{const el=win.document.getElementById('productBarcode');if(el){el.value=value;el.focus()}},0);return;
       }
@@ -74,6 +77,14 @@
   function bindSearch(win){
     const input=win.document.getElementById('vendorSmartProductSearch');if(!input||input.__mwV22Search)return;
     input.addEventListener('keydown',e=>handleSmartSearch(win,e),true);input.__mwV22Search=true;
+  }
+  function bindEditCapture(win){
+    if(win.__mwV22EditCapture)return;
+    win.document.addEventListener('click',e=>{
+      const btn=e.target?.closest?.('button[onclick*="editProduct("]');if(!btn)return;
+      const code=String(btn.getAttribute('onclick')||'');const id=code.match(/editProduct\(['"]([^'"]+)['"]\)/)?.[1]||'';if(id)scheduleBarcodeHydrate(win,id);
+    },true);
+    win.__mwV22EditCapture=true;
   }
 
   function autoPrice(win,{force=false}={}){
@@ -120,16 +131,16 @@
   }
 
   function wrapProductFunctions(win){
-    const edit=win.editProduct;if(typeof edit==='function'&&!edit.__mwV22){const wrapped=function(id){win.__mwV22ManualBase=false;const r=edit.apply(this,arguments);setTimeout(()=>hydrateBarcode(win,id),520);setTimeout(()=>hydrateBarcode(win,id),900);return r};wrapped.__mwV22=true;wrapped.__mwBarcode=edit.__mwBarcode;wrapped.__mwTaxonomyV10=edit.__mwTaxonomyV10;wrapped.__mwFinanceV21=edit.__mwFinanceV21;win.editProduct=wrapped}
+    const edit=win.editProduct;if(typeof edit==='function'&&!edit.__mwV22){const wrapped=function(id){win.__mwV22ManualBase=false;const r=edit.apply(this,arguments);scheduleBarcodeHydrate(win,id);return r};wrapped.__mwV22=true;wrapped.__mwBarcode=edit.__mwBarcode;wrapped.__mwTaxonomyV10=edit.__mwTaxonomyV10;wrapped.__mwFinanceV21=edit.__mwFinanceV21;win.editProduct=wrapped}
     const open=win.openProductModal;if(typeof open==='function'&&!open.__mwV22){const wrapped=function(){win.__mwV22ManualBase=false;const r=open.apply(this,arguments);setTimeout(()=>{bindProductPricing(win);autoPrice(win)},0);return r};wrapped.__mwV22=true;wrapped.__mwBarcode=open.__mwBarcode;wrapped.__mwTaxonomyV10=open.__mwTaxonomyV10;wrapped.__mwFinanceV21=open.__mwFinanceV21;win.openProductModal=wrapped}
     const load=win.loadProducts;if(typeof load==='function'&&!load.__mwV22){const wrapped=async function(){const r=await load.apply(this,arguments);setTimeout(()=>decorateBarcodes(win).catch(()=>{}),180);return r};wrapped.__mwV22=true;wrapped.__mwBarcode=load.__mwBarcode;win.loadProducts=wrapped}
   }
 
   function boot(win){
-    injectMarginUi(win);bindSearch(win);bindProductPricing(win);wrapProductFunctions(win);decorateBarcodes(win).catch(()=>{});
+    injectMarginUi(win);bindSearch(win);bindEditCapture(win);bindProductPricing(win);wrapProductFunctions(win);decorateBarcodes(win).catch(()=>{});
     if(!win.__mwV22Observer){const ob=new win.MutationObserver(()=>{injectMarginUi(win);bindSearch(win);bindProductPricing(win);wrapProductFunctions(win)});ob.observe(win.document.documentElement,{childList:true,subtree:true});win.__mwV22Observer=ob}
     win.__mwVendorBarcodeMarginV22=true;
   }
   function install(win){if(!win)return;if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',()=>boot(win),{once:true});else boot(win)}
-  window.MeshwarVendorBarcodeMarginV22={install,autoPrice,decorateBarcodes,VERSION};
+  window.MeshwarVendorBarcodeMarginV22={install,autoPrice,decorateBarcodes,hydrateBarcode,VERSION};
 })();
