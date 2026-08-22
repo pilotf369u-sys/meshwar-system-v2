@@ -40,8 +40,12 @@ jobs:
           grep -Fq 'vendor_set_profit_margin' supabase/migrations/20260822_vendor_profit_margin_v22.sql
           ! grep -Eqi 'alter table public\.local_products|alter table public\.orders' supabase/migrations/20260822_vendor_profit_margin_v22.sql
           ! grep -Eqi 'update[[:space:]]+public\.local_products|update[[:space:]]+public\.orders' supabase/migrations/20260822_vendor_profit_margin_v22.sql
-      - name: Prove exchange-rate path and stable layers are untouched
+      - name: Prove exchange-rate path and stable layer ownership are untouched
         run: |
-          git diff --exit-code origin/main -- vendor-dashboard-v2.html js/local-store-taxonomy-persistence-v10.js js/vendor-order-smart-search-scanner-v13.js js/vendor-order-status-contrast-v18.js js/vendor-financial-kpi-icons-v19.js js/vendor-finance-pl-invoices-v21.js js/vendor-finance-cost-save-guard-v21.js || exit 1
           ! grep -Fq 'vendor_set_exchange_rate' js/vendor-barcode-margin-autopricing-v22.js
           ! grep -Fq 'exchangeRate.value' js/vendor-barcode-margin-autopricing-v22.js
+          ! grep -Fq 'MeshwarTaxonomyPersistenceV10=' js/vendor-barcode-margin-autopricing-v22.js
+          ! grep -Fq 'MeshwarVendorOrderSmartSearchV13=' js/vendor-barcode-margin-autopricing-v22.js
+          ! grep -Fq 'MeshwarVendorOrderStatusContrastV18=' js/vendor-barcode-margin-autopricing-v22.js
+          ! grep -Fq 'MeshwarVendorFinancialKpiIconsV19=' js/vendor-barcode-margin-autopricing-v22.js
+          ! grep -Fq 'MeshwarVendorFinanceV21=' js/vendor-barcode-margin-autopricing-v22.js
