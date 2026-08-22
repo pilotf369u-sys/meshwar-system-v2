@@ -24,10 +24,7 @@
   async function fetchBarcodeRows(win){
     const sid=String(store(win)?.id||'').trim();if(!sid)return[];
     try{return await rest(win,`local_products?select=id,product_name,barcode,sku,stock_quantity&store_id=eq.${q(sid)}&order=created_at.desc`)||[]}
-    catch(e){
-      // Some installations never had a sku column; barcode remains the canonical field.
-      return await rest(win,`local_products?select=id,product_name,barcode,stock_quantity&store_id=eq.${q(sid)}&order=created_at.desc`)||[];
-    }
+    catch(e){return await rest(win,`local_products?select=id,product_name,barcode,stock_quantity&store_id=eq.${q(sid)}&order=created_at.desc`)||[]}
   }
 
   async function decorateBarcodes(win){
@@ -100,8 +97,9 @@
     const st=store(win),el=win.document.getElementById('mwGlobalProfitMargin');if(!st?.id||!el)return;
     if(st.profit_margin_percent!=null&&el.value==='')el.value=String(st.profit_margin_percent);
     try{
-      const value=await rpc(win,'vendor_get_profit_margin',{p_store_id:String(st.id)});
-      const margin=Array.isArray(value)?value[0]:value;if(margin!=null){el.value=String(margin);st.profit_margin_percent=Number(margin);saveStore(win,st)}
+      const value=await rpc(win,'vendor_get_profit_margin',{p_store_id:String(st.id)});const candidate=Array.isArray(value)?value[0]:value;
+      const margin=typeof candidate==='number'?candidate:(typeof candidate==='string'&&candidate.trim()!==''?Number(candidate):NaN);
+      if(Number.isFinite(margin)){el.value=String(margin);st.profit_margin_percent=margin;saveStore(win,st)}
     }catch(e){console.warn('V22 profit margin hydrate failed',e)}
   }
 
@@ -117,7 +115,7 @@
     const d=win.document;if(d.getElementById('mwGlobalProfitMargin'))return;
     const heading=[...d.querySelectorAll('h1,h2,h3')].find(x=>String(x.textContent||'').includes('سعر الصرف المركزي'));const card=heading?.closest('.glass');const grid=card?.querySelector('.grid');if(!grid)return;
     const wrap=d.createElement('div');wrap.className='col-span-2 grid grid-cols-[1fr_auto] gap-2';wrap.innerHTML='<input id="mwGlobalProfitMargin" class="field" type="number" min="0" max="10000" step="0.01" placeholder="نسبة الربح العامة %"><button id="mwSaveProfitMargin" type="button" class="rounded-2xl border border-amber-400/40 bg-amber-500/15 px-4 font-black text-amber-200 transition hover:bg-amber-500/25">حفظ نسبة الربح</button>';
-    const preview=d.getElementById('exchangePreview');if(preview)grid.insertBefore(wrap,preview);else grid.appendChild(wrap);
+    grid.appendChild(wrap);
     d.getElementById('mwSaveProfitMargin')?.addEventListener('click',()=>saveMargin(win));d.getElementById('mwGlobalProfitMargin')?.addEventListener('input',()=>autoPrice(win,{force:!win.__mwV22ManualBase}));loadMargin(win);
   }
 
