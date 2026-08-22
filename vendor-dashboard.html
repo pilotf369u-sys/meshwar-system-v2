@@ -17,6 +17,7 @@
   <script src="js/vendor-finance-pl-invoices-v21.js?v=20260822-2316"></script>
   <script src="js/vendor-finance-cost-save-guard-v21.js?v=20260822-2316"></script>
   <script src="js/vendor-barcode-margin-autopricing-v22.js?v=20260822-2352"></script>
+  <script src="js/vendor-pl-expense-hotfix-v23.js?v=20260823-0015"></script>
 </head>
 <body>
   <iframe id="vendorFrame" src="vendor-dashboard-v2.html?v=20260822-1910" title="لوحة صاحب المتجر"></iframe>
@@ -40,6 +41,8 @@
         catch(e){console.error('Vendor finance cost guard V21 install failed',e)}
         try{window.MeshwarVendorBarcodeMarginV22?.install(frame.contentWindow)}
         catch(e){console.error('Vendor barcode/margin V22 install failed',e)}
+        try{window.MeshwarVendorPlExpenseV23?.install(frame.contentWindow)}
+        catch(e){console.error('Vendor P&L expense V23 install failed',e)}
       }
       frame.addEventListener('load',()=>{install();setTimeout(install,250);setTimeout(install,900)});
     })();
