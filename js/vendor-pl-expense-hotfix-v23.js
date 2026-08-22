@@ -4,9 +4,13 @@
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const STORE_KEY='meshwar_vendor_store';
-  const VERSION='20260823-0015';
+  const VERSION='20260823-0135';
+  const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const money=(v,c='')=>`${num(v).toLocaleString('en-US',{maximumFractionDigits:2})} ${c||''}`.trim();
+  const q=v=>encodeURIComponent(String(v??''));
   function store(win){try{return JSON.parse(win.sessionStorage.getItem(STORE_KEY)||'null')}catch{return null}}
-  async function post(win,path,body){const r=await win.fetch(`${SB_URL}/rest/v1/${path}`,{method:'POST',cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',Prefer:'return=representation'},body:JSON.stringify(body)});const t=await r.text();if(!r.ok)throw new Error(t||`HTTP ${r.status}`);return t?JSON.parse(t):null}
+  async function request(win,path,{method='GET',body=null,prefer='return=representation'}={}){const r=await win.fetch(`${SB_URL}/rest/v1/${path}`,{method,cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',...(method!=='GET'?{Prefer:prefer}:{})},body:body==null?null:JSON.stringify(body)});const t=await r.text();if(!r.ok)throw new Error(t||`HTTP ${r.status}`);return t?JSON.parse(t):null}
   function injectStyle(win){if(win.document.getElementById('mwExpenseV23Style'))return;const s=win.document.createElement('style');s.id='mwExpenseV23Style';s.textContent=`
     #vendorTab-pl .mw-pl-kpis{position:relative;z-index:1;clear:both}
     #vendorTab-pl .mw-expense-v23-card{position:relative!important;z-index:2!important;clear:both!important;margin-top:1rem!important;padding:1rem!important;border:1px solid rgba(212,175,55,.28)!important;border-radius:1rem!important;background:rgba(15,23,42,.42)!important;overflow:visible!important}
@@ -20,10 +24,35 @@
   function arrange(win){const d=win.document,amount=d.getElementById('mwExpenseAmount');if(!amount)return;const grid=amount.closest('.grid');if(!grid||grid.dataset.mwExpenseV23)return;grid.dataset.mwExpenseV23='1';grid.classList.add('mw-expense-v23-grid');const card=d.createElement('section');card.className='mw-expense-v23-card';card.innerHTML='<div class="vendor-text mb-3 font-black">➕ إضافة مصروف تشغيلي</div>';grid.parentNode.insertBefore(card,grid);card.appendChild(grid);const status=d.createElement('div');status.id='mwExpenseStatus';status.setAttribute('aria-live','polite');card.appendChild(status)}
   function status(win,text,tone=''){const el=win.document.getElementById('mwExpenseStatus');if(el){el.textContent=text||'';el.dataset.tone=tone}}
   async function saveExpense(win,payload){
-    try{return await post(win,'vendor_operating_expenses',payload)}catch(directErr){
+    try{return await request(win,'vendor_operating_expenses',{method:'POST',body:payload})}catch(directErr){
       console.warn('V23 direct expense insert failed; using RPC fallback',directErr);
-      return post(win,'rpc/vendor_add_operating_expense',{p_store_id:String(payload.store_id),p_amount:payload.amount,p_currency:payload.currency,p_category:payload.category,p_note:payload.note,p_expense_date:payload.expense_date});
+      return request(win,'rpc/vendor_add_operating_expense',{method:'POST',body:{p_store_id:String(payload.store_id),p_amount:payload.amount,p_currency:payload.currency,p_category:payload.category,p_note:payload.note,p_expense_date:payload.expense_date}});
     }
+  }
+  async function fetchOperatingExpenses(win){
+    const st=store(win);if(!st?.id)return[];const sid=String(st.id);
+    try{
+      const rpcRows=await request(win,'rpc/vendor_get_operating_expenses',{method:'POST',body:{p_store_id:sid}});
+      if(Array.isArray(rpcRows))return rpcRows;
+      if(rpcRows&&typeof rpcRows==='object')return[rpcRows];
+    }catch(rpcErr){console.warn('V23 expense read RPC unavailable; falling back to direct read',rpcErr)}
+    const rows=await request(win,`vendor_operating_expenses?select=*&store_id=eq.${q(sid)}&order=expense_date.desc,created_at.desc`);
+    return Array.isArray(rows)?rows:[];
+  }
+  function renderExpenseState(win,expenses){
+    const d=win.document,st=store(win),cur=st?.exchange_target_currency||st?.default_currency||'USD',rows=Array.isArray(expenses)?expenses:[];
+    const total=rows.reduce((sum,x)=>sum+num(x.amount),0),last=win.__mwFinanceV21Last||{},baseProfit=num(last.net)+num(last.expenses),net=baseProfit-total;
+    const expenseEl=d.getElementById('mwPlExpenses'),netEl=d.getElementById('mwPlNet'),list=d.getElementById('mwExpenseList');
+    if(expenseEl)expenseEl.textContent=money(total,cur);if(netEl)netEl.textContent=money(net,cur);
+    if(list)list.innerHTML=rows.length?rows.map(x=>`<div class="flex justify-between border-b border-white/10 py-2"><span>${esc(x.category||'مصروف')} — ${esc(x.note||'')}</span><strong>${money(x.amount,x.currency||cur)}</strong></div>`).join(''):'<div class="vendor-muted">لا توجد مصاريف تشغيلية مسجلة.</div>';
+    win.__mwFinanceV21Last={...last,expenses:total,net};
+    if(win.__mwFinanceV21Data)win.__mwFinanceV21Data.expenses=rows;
+    return{total,net,rows};
+  }
+  async function refreshExpenseUi(win){
+    const api=win.parent?.MeshwarVendorFinanceV21||win.MeshwarVendorFinanceV21;
+    if(api?.refresh){try{await api.refresh(win,true)}catch(e){console.warn('V23 V21 refresh failed; continuing with expense-specific refresh',e)}}
+    const expenses=await fetchOperatingExpenses(win);return renderExpenseState(win,expenses);
   }
   async function submit(win,e){
     e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
@@ -35,14 +64,14 @@
       const cur=st.exchange_target_currency||st.default_currency||'USD';
       await saveExpense(win,{store_id:String(st.id),amount,currency:cur,category:category||'تشغيلي',note:note||null,expense_date:new Date().toISOString().slice(0,10)});
       ['mwExpenseAmount','mwExpenseCategory','mwExpenseNote'].forEach(id=>{const el=d.getElementById(id);if(el)el.value=''});
-      status(win,'تمت إضافة المصروف وتحديث الأرباح والخسائر.','ok');
-      if(win.parent?.MeshwarVendorFinanceV21?.refresh)await win.parent.MeshwarVendorFinanceV21.refresh(win,true);
-      else if(win.MeshwarVendorFinanceV21?.refresh)await win.MeshwarVendorFinanceV21.refresh(win,true);
-    }catch(err){console.error('V23 expense submit failed',err);status(win,'تعذر حفظ المصروف: '+(err?.message||err),'error')}
+      status(win,'تم الحفظ، جارٍ تحديث المصاريف…','busy');
+      const refreshed=await refreshExpenseUi(win);
+      status(win,`تمت إضافة المصروف وتحديث الإجمالي (${money(refreshed.total,cur)}).`,'ok');
+    }catch(err){console.error('V23 expense submit failed',err);status(win,'تعذر حفظ أو تحديث المصروف: '+(err?.message||err),'error')}
     finally{if(btn){btn.dataset.busy='0';btn.disabled=false;btn.textContent=old}}
   }
   function bind(win){const btn=win.document.getElementById('mwExpenseAdd');if(!btn||btn.dataset.mwExpenseV23)return;btn.addEventListener('click',e=>submit(win,e),true);btn.dataset.mwExpenseV23='1'}
   function boot(win){injectStyle(win);arrange(win);bind(win);if(!win.__mwExpenseV23Observer){const ob=new win.MutationObserver(()=>{arrange(win);bind(win)});ob.observe(win.document.documentElement,{childList:true,subtree:true});win.__mwExpenseV23Observer=ob}win.__mwVendorPlExpenseV23=true}
   function install(win){if(!win)return;if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',()=>boot(win),{once:true});else boot(win)}
-  window.MeshwarVendorPlExpenseV23={install,submit,saveExpense,VERSION};
+  window.MeshwarVendorPlExpenseV23={install,submit,saveExpense,fetchOperatingExpenses,refreshExpenseUi,renderExpenseState,VERSION};
 })();
