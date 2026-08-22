@@ -5,9 +5,16 @@ export function fixtureDb(){
     id:`p-${i+1}`,store_id:STORE.id,product_name:`Test Product ${String(i+1).padStart(2,'0')}`,
     description:`E2E product ${i+1}`,base_price:10+i,discount_price:null,currency:'USD',
     stock_quantity:20+i,low_stock_threshold:3,is_out_of_stock:false,barcode:`900000${String(i+1).padStart(2,'0')}`,
-    category_id:i<12?'cat-a':'cat-b',subcategory_id:i<12?'sub-a':'sub-b',options:{colors:[],sizes:[],volumes:[]},
+    category_id:i<12?'sub-a':'sub-b',subcategory_id:i<12?'sub-a':'sub-b',options:{colors:[],sizes:[],volumes:[]},
     created_at:new Date(Date.UTC(2026,7,22,12,0,i)).toISOString(),updated_at:new Date().toISOString()
   }));
+  const categories=[
+    {id:'cat-a',store_id:STORE.id,parent_id:null,name:'Main A',slug:'main-a',sort_order:1,is_visible:true},
+    {id:'sub-a',store_id:STORE.id,parent_id:'cat-a',name:'Sub A',slug:'sub-a',sort_order:1,is_visible:true},
+    {id:'cat-b',store_id:STORE.id,parent_id:null,name:'Main B',slug:'main-b',sort_order:2,is_visible:true},
+    {id:'sub-b',store_id:STORE.id,parent_id:'cat-b',name:'Sub B',slug:'sub-b',sort_order:1,is_visible:true},
+    ...Array.from({length:19},(_,i)=>({id:`cat-${i+3}`,store_id:STORE.id,parent_id:null,name:`Main ${i+3}`,slug:`main-${i+3}`,sort_order:i+3,is_visible:true}))
+  ];
   const mk=(id,code,status,total,details)=>({id,order_code:code,status,total_price:total,currency:'USD',created_at:new Date().toISOString(),details:{source:'local_store',store_id:STORE.id,product_name:'Test Product 01',quantity:2,parcels_count:1,city:'Baghdad',...details}});
   const orders=[
     mk('o-pending','MW-5664','بانتظار الموافقة',120,{commission_rate:10,vendor_payment_status:'pending'}),
@@ -18,7 +25,7 @@ export function fixtureDb(){
     mk('o-cancel','MW-5669','ملغي من قبل العميل',55,{commission_rate:10,vendor_payment_status:'pending'})
   ];
   for(let i=0;i<9;i++)orders.push(mk(`o-extra-${i}`,`MW-${5700+i}`,'بانتظار الموافقة',25+i,{commission_rate:10,vendor_payment_status:'pending',product_name:`Extra Product ${i+1}`}));
-  return {local_products:products,orders,store_categories:[]};
+  return {local_products:products,orders,store_categories:categories};
 }
 
 const mockSupabaseModule=String.raw`
@@ -104,6 +111,7 @@ export async function openVendor(page){
   const frame=page.frameLocator('#vendorFrame');
   await frame.locator('#dashboardView').waitFor({state:'visible'});
   await frame.locator('#vendorOrderSmartSearch').waitFor();
+  await frame.locator('#vendorTabBtn-categories').waitFor();
   return frame;
 }
 
