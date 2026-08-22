@@ -1,0 +1,29 @@
+name: Vendor financial KPI icons V19 validation
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'vendor-dashboard.html'
+      - 'js/vendor-financial-kpi-icons-v19.js'
+      - '.github/workflows/vendor-financial-kpi-icons-v19.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate V19 syntax and integration
+        run: |
+          node --check js/vendor-financial-kpi-icons-v19.js
+          grep -Fq '<script src="js/vendor-financial-kpi-icons-v19.js?v=20260822-1934"></script>' vendor-dashboard.html
+          grep -Fq 'MeshwarVendorFinancialKpiIconsV19?.install(frame.contentWindow)' vendor-dashboard.html
+          grep -Fq "{id:'statSales',icon:'🛒'" js/vendor-financial-kpi-icons-v19.js
+          grep -Fq "{id:'statCommission',icon:'🎖️'" js/vendor-financial-kpi-icons-v19.js
+          grep -Fq "{id:'statOther',icon:'🏷️'" js/vendor-financial-kpi-icons-v19.js
+          grep -Fq "{id:'statPending',icon:'🪙'" js/vendor-financial-kpi-icons-v19.js
+          grep -Fq "{id:'statPaid',icon:'💳'" js/vendor-financial-kpi-icons-v19.js
+          grep -Fq "{id:'statNet',icon:'👛'" js/vendor-financial-kpi-icons-v19.js
+          grep -Fq 'closest('"'"'article'"'"')' js/vendor-financial-kpi-icons-v19.js
+          ! grep -Fq "sb.from(" js/vendor-financial-kpi-icons-v19.js
+          ! grep -Fq '/rest/v1/' js/vendor-financial-kpi-icons-v19.js
