@@ -1,0 +1,41 @@
+name: Vendor order status contrast V18 validation
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'vendor-dashboard.html'
+      - 'js/vendor-order-status-contrast-v18.js'
+      - '.github/workflows/vendor-order-status-contrast-v18.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'vendor-dashboard.html'
+      - 'js/vendor-order-status-contrast-v18.js'
+      - '.github/workflows/vendor-order-status-contrast-v18.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JavaScript syntax
+        run: node --check js/vendor-order-status-contrast-v18.js
+      - name: Validate V18 shell integration
+        run: |
+          grep -Fq 'vendor-order-status-contrast-v18.js?v=20260822-1910' vendor-dashboard.html
+          grep -Fq 'MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)' vendor-dashboard.html
+          grep -Fq 'vendor-order-status-contrast-v18-pages-20260822-1910' vendor-dashboard.html
+      - name: Validate visual status mapping and isolation
+        run: |
+          grep -Fq 'data-mw-order-status-tone' js/vendor-order-status-contrast-v18.js
+          grep -Fq "return'success'" js/vendor-order-status-contrast-v18.js
+          grep -Fq "return'danger'" js/vendor-order-status-contrast-v18.js
+          grep -Fq "return'transit'" js/vendor-order-status-contrast-v18.js
+          grep -Fq "return'pending'" js/vendor-order-status-contrast-v18.js
+          grep -Fq '#vendorOrderCameraBtn' js/vendor-order-status-contrast-v18.js
+          grep -Fq 'openVendorOrderDetails' js/vendor-order-status-contrast-v18.js
+          grep -Fq '#f3f4f6' js/vendor-order-status-contrast-v18.js
+          grep -Fq '#e5e7eb' js/vendor-order-status-contrast-v18.js
+          ! grep -Fq "sb.from(" js/vendor-order-status-contrast-v18.js
+          ! grep -Fq '/rest/v1/' js/vendor-order-status-contrast-v18.js
