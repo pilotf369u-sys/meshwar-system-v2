@@ -1,4 +1,4 @@
-export const STORE={id:'store-e2e-1',store_name:'MeshWar E2E Store',specialty:'Testing',governorate:'Baghdad',commission_rate:10,exchange_rate:1,exchange_target_currency:'USD',default_currency:'USD',logo_url:''};
+export const STORE={id:'store-e2e-1',store_name:'MeshWar E2E Store',specialty:'Testing',governorate:'Baghdad',commission_rate:10,exchange_rate:1,exchange_target_currency:'USD',default_currency:'USD',profit_margin_percent:25,logo_url:''};
 
 export function fixtureDb(){
   const products=Array.from({length:23},(_,i)=>({id:`p-${i+1}`,store_id:STORE.id,product_name:`Test Product ${String(i+1).padStart(2,'0')}`,description:`E2E product ${i+1}`,base_price:10+i,discount_price:null,currency:'USD',stock_quantity:20+i,low_stock_threshold:3,is_out_of_stock:false,barcode:`900000${String(i+1).padStart(2,'0')}`,category_id:i<12?'sub-a':'sub-b',subcategory_id:i<12?'sub-a':'sub-b',options:{colors:[],sizes:[],volumes:[]},created_at:new Date(Date.UTC(2026,7,22,12,0,i)).toISOString(),updated_at:new Date().toISOString()}));
@@ -50,7 +50,7 @@ function initBrowserFixture({db,store}){
   if(!root.__MESH_E2E_SHARED_STORE)root.__MESH_E2E_SHARED_STORE=JSON.parse(JSON.stringify(store));
   window.__MESH_E2E_DB=root.__MESH_E2E_SHARED_DB;
   window.__MESH_E2E_STORE=root.__MESH_E2E_SHARED_STORE;
-  try{sessionStorage.setItem('meshwar_vendor_store',JSON.stringify(store))}catch{}
+  try{sessionStorage.setItem('meshwar_vendor_store',JSON.stringify(window.__MESH_E2E_STORE))}catch{}
   const nativeFetch=window.fetch.bind(window),SB='https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/';
   const applyFilters=(rows,sp)=>{
     let out=[...rows];
@@ -64,7 +64,14 @@ function initBrowserFixture({db,store}){
   };
   window.fetch=async(input,init={})=>{
     const url=typeof input==='string'?input:String(input?.url||'');if(!url.startsWith(SB))return nativeFetch(input,init);
-    const u=new URL(url),table=u.pathname.split('/').pop(),method=String(init.method||'GET').toUpperCase();const rows=window.__MESH_E2E_DB[table]||(window.__MESH_E2E_DB[table]=[]);let selected=applyFilters(rows,u.searchParams);
+    const u=new URL(url),table=u.pathname.split('/').pop(),method=String(init.method||'GET').toUpperCase();
+    if(table==='vendor_get_profit_margin'&&method==='POST')return new Response(JSON.stringify(window.__MESH_E2E_STORE.profit_margin_percent??null),{status:200,headers:{'content-type':'application/json'}});
+    if(table==='vendor_set_profit_margin'&&method==='POST'){
+      const body=JSON.parse(init.body||'{}'),margin=Number(body.p_margin);window.__MESH_E2E_STORE.profit_margin_percent=margin;
+      try{sessionStorage.setItem('meshwar_vendor_store',JSON.stringify(window.__MESH_E2E_STORE))}catch{}
+      return new Response(JSON.stringify(margin),{status:200,headers:{'content-type':'application/json'}});
+    }
+    const rows=window.__MESH_E2E_DB[table]||(window.__MESH_E2E_DB[table]=[]);let selected=applyFilters(rows,u.searchParams);
     if(method==='PATCH'){const body=JSON.parse(init.body||'{}');selected.forEach(r=>Object.assign(r,body));return new Response(JSON.stringify(selected),{status:200,headers:{'content-type':'application/json'}})}
     if(method==='POST'){let body=JSON.parse(init.body||'[]');body=Array.isArray(body)?body:[body];const now=new Date().toISOString();body=body.map((r,i)=>({...r,id:r.id||'rest-'+Date.now()+'-'+i,created_at:r.created_at||now,updated_at:r.updated_at||now}));rows.push(...body);return new Response(JSON.stringify(body),{status:201,headers:{'content-type':'application/json'}})}
     if(method==='DELETE'){for(let i=rows.length-1;i>=0;i--)if(selected.includes(rows[i]))rows.splice(i,1);return new Response('[]',{status:200,headers:{'content-type':'application/json'}})}
