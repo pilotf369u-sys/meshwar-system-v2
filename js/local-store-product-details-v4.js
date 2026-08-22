@@ -73,7 +73,14 @@
               const taxonomy=document.createElement('script');
               taxonomy.src='js/local-store-taxonomy-persistence-v10.js?v=taxonomy-persistence-v10';
               taxonomy.dataset.mwTaxonomyPersistenceV10='1';
-              taxonomy.onload=()=>resolveCore();
+              taxonomy.onload=()=>{
+                const globalSearch=document.createElement('script');
+                globalSearch.src='js/local-store-global-search-v12.js?v=customer-global-search-v12';
+                globalSearch.dataset.mwGlobalStoreSearchV12='1';
+                globalSearch.onload=()=>resolveCore();
+                globalSearch.onerror=()=>{console.warn('تعذر تحميل البحث الشامل للمتجر.');resolveCore()};
+                document.head.appendChild(globalSearch);
+              };
               taxonomy.onerror=()=>rejectCore(new Error('تعذر تحميل تثبيت تصنيفات المنتجات.'));
               document.head.appendChild(taxonomy);
             };
@@ -124,6 +131,7 @@
     try{
       await coreReady;
       if(typeof window.MeshwarStoreCategoriesV9?.initStorefront==='function')await window.MeshwarStoreCategoriesV9.initStorefront(sid);
+      if(typeof window.MeshwarLocalStoreGlobalSearchV12?.init==='function')await window.MeshwarLocalStoreGlobalSearchV12.init(sid);
       const rows=await rest(`local_stores?select=id,store_name,logo_url,specialty,store_type,country,governorate,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(sid)}&limit=1`);
       const store=Array.isArray(rows)?rows[0]:null;
       if(!store)return;
