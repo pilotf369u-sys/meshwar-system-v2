@@ -29,8 +29,14 @@
   }
 
   function categoryById(id){return state.categories.find(c=>String(c.id)===String(id))||null}
-  function roots(){return state.categories.filter(c=>!c.parent_id).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}
-  function children(parentId){return state.categories.filter(c=>String(c.parent_id||'')===String(parentId)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}
+  function roots(){return state.categories.filter(c=>c.parent_id==null).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}
+  function children(parentId){return state.categories.filter(c=>c.parent_id!=null&&String(c.parent_id)===String(parentId)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}
+  function validRootParentId(value){
+    const id=String(value||'').trim();if(!id)return null;
+    const parent=categoryById(id);
+    if(!parent||parent.parent_id!=null||String(parent.id)===String(state.editingId))return null;
+    return String(parent.id);
+  }
 
   function injectCss(){
     if(document.getElementById('mwCategoriesV9Css'))return;
@@ -103,17 +109,25 @@
 
   async function saveCategory(){
     const name=String(document.getElementById('mwCatName')?.value||'').trim();
-    const parentId=String(document.getElementById('mwCatParent')?.value||'').trim()||null;
+    const selectedParent=String(document.getElementById('mwCatParent')?.value||'').trim();
+    const parentId=validRootParentId(selectedParent);
     const sort=Math.floor(Number(document.getElementById('mwCatSort')?.value)||0);
     if(!name)return alert('أدخل اسم القسم.');
+    if(selectedParent&&!parentId)return alert('القسم الأب المحدد غير صالح. اختر قسمًا رئيسيًا فقط.');
     const payload={store_id:state.storeId,parent_id:parentId,name,slug:uniqueSlug(name,state.editingId),sort_order:sort,is_visible:true,updated_at:new Date().toISOString()};
+    let saved;
     if(state.editingId){
       delete payload.store_id;
       const old=categoryById(state.editingId);payload.is_visible=old?.is_visible!==false;
-      await rest(`store_categories?id=eq.${q(state.editingId)}&store_id=eq.${q(state.storeId)}`,{method:'PATCH',body:payload,prefer:'return=minimal'});
+      saved=await rest(`store_categories?id=eq.${q(state.editingId)}&store_id=eq.${q(state.storeId)}`,{method:'PATCH',body:payload,prefer:'return=representation'});
     }else{
-      await rest('store_categories',{method:'POST',body:payload,prefer:'return=minimal'});
+      saved=await rest('store_categories',{method:'POST',body:payload,prefer:'return=representation'});
     }
+    const row=Array.isArray(saved)?saved[0]:saved;
+    if(!row)throw new Error('لم يرجع Supabase القسم المحفوظ للتحقق من parent_id.');
+    const actual=row.parent_id==null?null:String(row.parent_id);
+    const expected=parentId==null?null:String(parentId);
+    if(actual!==expected)throw new Error('تعذر تثبيت ربط القسم الأب (parent_id) في Supabase.');
     await loadVendorCategories();resetCategoryForm();refreshProductCategoryFields();
   }
 
@@ -160,7 +174,7 @@
     const wrap=document.createElement('div');wrap.id='mwProductTaxonomy';wrap.className='mw-product-taxonomy';
     wrap.innerHTML=`<label>القسم الرئيسي<select id="mwProductMainCategory" class="field"><option value="">عام</option></select></label><label>القسم الفرعي<select id="mwProductSubCategory" class="field" disabled><option value="">بدون قسم فرعي</option></select></label><label class="mw-featured"><input id="mwProductFeatured" type="checkbox"> <span>⭐ منتج مميز</span></label>`;
     const anchor=document.getElementById('productDetailedDescription')||short;anchor.insertAdjacentElement('afterend',wrap);
-    document.getElementById('mwProductMainCategory').addEventListener('change',()=>fillSubcategorySelect());
+    document.getElementById('mwProductMainCategory').addEventListener('change',()=>fillSubcategorySelect(''));
     refreshProductCategoryFields();
   }
 
@@ -175,14 +189,16 @@
 
   function fillSubcategorySelect(selected=''){
     const main=document.getElementById('mwProductMainCategory'),sub=document.getElementById('mwProductSubCategory');if(!main||!sub)return;
-    const kids=main.value?children(main.value):[];
+    const mainId=String(main.value||'').trim();
+    const kids=mainId?children(mainId):[];
     sub.innerHTML='<option value="">بدون قسم فرعي</option>'+kids.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.is_visible?'':' (مخفي)'}</option>`).join('');
-    sub.disabled=!kids.length;
-    if(selected&&[...sub.options].some(o=>o.value===selected))sub.value=selected;
+    const wanted=String(selected||'').trim();
+    sub.value=wanted&&kids.some(c=>String(c.id)===wanted)?wanted:'';
+    sub.disabled=!mainId||!kids.length;
   }
 
   async function loadProductTaxonomy(productId){
-    injectProductFields();const main=document.getElementById('mwProductMainCategory'),sub=document.getElementById('mwProductSubCategory'),featured=document.getElementById('mwProductFeatured');
+    injectProductFields();refreshProductCategoryFields();const main=document.getElementById('mwProductMainCategory'),sub=document.getElementById('mwProductSubCategory'),featured=document.getElementById('mwProductFeatured');
     if(main)main.value='';if(sub){sub.innerHTML='<option value="">بدون قسم فرعي</option>';sub.disabled=true}if(featured)featured.checked=false;
     const id=String(productId||'').trim();if(!id)return;
     const rows=await rest(`local_products?select=id,category_id,is_featured&id=eq.${q(id)}&store_id=eq.${q(state.storeId)}&limit=1`),p=Array.isArray(rows)?rows[0]:null;if(!p)return;
