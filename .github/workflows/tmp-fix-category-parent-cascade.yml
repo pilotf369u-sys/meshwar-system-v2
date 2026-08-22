@@ -1,0 +1,67 @@
+name: Temporary category parent cascade patch
+on:
+  push:
+    branches: [fix/local-store-category-parent-cascade]
+    paths:
+      - '.github/workflows/tmp-fix-category-parent-cascade.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/local-store-category-parent-cascade
+          fetch-depth: 0
+      - name: Apply surgical category hierarchy fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('js/local-store-categories-v9.js')
+          s=p.read_text()
+
+          old="""  function categoryById(id){return state.categories.find(c=>String(c.id)===String(id))||null}\n  function roots(){return state.categories.filter(c=>!c.parent_id).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}\n  function children(parentId){return state.categories.filter(c=>String(c.parent_id||'')===String(parentId)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}\n"""
+          new="""  function categoryById(id){return state.categories.find(c=>String(c.id)===String(id))||null}\n  function roots(){return state.categories.filter(c=>c.parent_id==null).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}\n  function children(parentId){return state.categories.filter(c=>c.parent_id!=null&&String(c.parent_id)===String(parentId)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}\n  function validRootParentId(value){\n    const id=String(value||'').trim();if(!id)return null;\n    const parent=categoryById(id);\n    if(!parent||parent.parent_id!=null||String(parent.id)===String(state.editingId))return null;\n    return String(parent.id);\n  }\n"""
+          if old not in s: raise SystemExit('category helpers block not found')
+          s=s.replace(old,new,1)
+
+          old="""  async function saveCategory(){\n    const name=String(document.getElementById('mwCatName')?.value||'').trim();\n    const parentId=String(document.getElementById('mwCatParent')?.value||'').trim()||null;\n    const sort=Math.floor(Number(document.getElementById('mwCatSort')?.value)||0);\n    if(!name)return alert('أدخل اسم القسم.');\n    const payload={store_id:state.storeId,parent_id:parentId,name,slug:uniqueSlug(name,state.editingId),sort_order:sort,is_visible:true,updated_at:new Date().toISOString()};\n    if(state.editingId){\n      delete payload.store_id;\n      const old=categoryById(state.editingId);payload.is_visible=old?.is_visible!==false;\n      await rest(`store_categories?id=eq.${q(state.editingId)}&store_id=eq.${q(state.storeId)}`,{method:'PATCH',body:payload,prefer:'return=minimal'});\n    }else{\n      await rest('store_categories',{method:'POST',body:payload,prefer:'return=minimal'});\n    }\n    await loadVendorCategories();resetCategoryForm();refreshProductCategoryFields();\n  }\n"""
+          new="""  async function saveCategory(){\n    const name=String(document.getElementById('mwCatName')?.value||'').trim();\n    const selectedParent=String(document.getElementById('mwCatParent')?.value||'').trim();\n    const parentId=validRootParentId(selectedParent);\n    const sort=Math.floor(Number(document.getElementById('mwCatSort')?.value)||0);\n    if(!name)return alert('أدخل اسم القسم.');\n    if(selectedParent&&!parentId)return alert('القسم الأب المحدد غير صالح. اختر قسمًا رئيسيًا فقط.');\n    const payload={store_id:state.storeId,parent_id:parentId,name,slug:uniqueSlug(name,state.editingId),sort_order:sort,is_visible:true,updated_at:new Date().toISOString()};\n    let saved;\n    if(state.editingId){\n      delete payload.store_id;\n      const old=categoryById(state.editingId);payload.is_visible=old?.is_visible!==false;\n      saved=await rest(`store_categories?id=eq.${q(state.editingId)}&store_id=eq.${q(state.storeId)}`,{method:'PATCH',body:payload,prefer:'return=representation'});\n    }else{\n      saved=await rest('store_categories',{method:'POST',body:payload,prefer:'return=representation'});\n    }\n    const row=Array.isArray(saved)?saved[0]:saved;\n    if(!row)throw new Error('لم يرجع Supabase القسم المحفوظ للتحقق من parent_id.');\n    const actual=row.parent_id==null?null:String(row.parent_id);\n    const expected=parentId==null?null:String(parentId);\n    if(actual!==expected)throw new Error('تعذر تثبيت ربط القسم الأب (parent_id) في Supabase.');\n    await loadVendorCategories();resetCategoryForm();refreshProductCategoryFields();\n  }\n"""
+          if old not in s: raise SystemExit('saveCategory block not found')
+          s=s.replace(old,new,1)
+
+          old="""    document.getElementById('mwProductMainCategory').addEventListener('change',()=>fillSubcategorySelect());\n"""
+          new="""    document.getElementById('mwProductMainCategory').addEventListener('change',()=>fillSubcategorySelect(''));\n"""
+          if old not in s: raise SystemExit('main category change binding not found')
+          s=s.replace(old,new,1)
+
+          old="""  function fillSubcategorySelect(selected=''){\n    const main=document.getElementById('mwProductMainCategory'),sub=document.getElementById('mwProductSubCategory');if(!main||!sub)return;\n    const kids=main.value?children(main.value):[];\n    sub.innerHTML='<option value="">بدون قسم فرعي</option>'+kids.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.is_visible?'':' (مخفي)'}</option>`).join('');\n    sub.disabled=!kids.length;\n    if(selected&&[...sub.options].some(o=>o.value===selected))sub.value=selected;\n  }\n"""
+          new="""  function fillSubcategorySelect(selected=''){\n    const main=document.getElementById('mwProductMainCategory'),sub=document.getElementById('mwProductSubCategory');if(!main||!sub)return;\n    const mainId=String(main.value||'').trim();\n    const kids=mainId?children(mainId):[];\n    sub.innerHTML='<option value="">بدون قسم فرعي</option>'+kids.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.is_visible?'':' (مخفي)'}</option>`).join('');\n    const wanted=String(selected||'').trim();\n    sub.value=wanted&&kids.some(c=>String(c.id)===wanted)?wanted:'';\n    sub.disabled=!mainId||!kids.length;\n  }\n"""
+          if old not in s: raise SystemExit('fillSubcategorySelect block not found')
+          s=s.replace(old,new,1)
+
+          old="""  async function loadProductTaxonomy(productId){\n    injectProductFields();const main=document.getElementById('mwProductMainCategory'),sub=document.getElementById('mwProductSubCategory'),featured=document.getElementById('mwProductFeatured');\n"""
+          new="""  async function loadProductTaxonomy(productId){\n    injectProductFields();refreshProductCategoryFields();const main=document.getElementById('mwProductMainCategory'),sub=document.getElementById('mwProductSubCategory'),featured=document.getElementById('mwProductFeatured');\n"""
+          if old not in s: raise SystemExit('loadProductTaxonomy header not found')
+          s=s.replace(old,new,1)
+
+          p.write_text(s)
+          PY
+          node --check js/local-store-categories-v9.js
+          git diff --check
+          grep -F "function roots(){return state.categories.filter(c=>c.parent_id==null)" js/local-store-categories-v9.js
+          grep -F "prefer:'return=representation'" js/local-store-categories-v9.js
+          grep -F "fillSubcategorySelect('')" js/local-store-categories-v9.js
+      - name: Commit fix and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-fix-category-parent-cascade.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/local-store-categories-v9.js .github/workflows/tmp-fix-category-parent-cascade.yml
+          git commit -m 'fix: persist category parent and cascade product taxonomy'
+          git push origin HEAD:fix/local-store-category-parent-cascade
