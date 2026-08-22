@@ -65,7 +65,14 @@
           const detailed=document.createElement('script');
           detailed.src='js/local-store-detailed-description-v8.js?v=detailed-desc-v8';
           detailed.dataset.mwDetailedDescriptionV8='1';
-          detailed.onload=()=>resolveCore();
+          detailed.onload=()=>{
+            const categories=document.createElement('script');
+            categories.src='js/local-store-categories-v9.js?v=store-categories-v9';
+            categories.dataset.mwStoreCategoriesV9='1';
+            categories.onload=()=>resolveCore();
+            categories.onerror=()=>rejectCore(new Error('تعذر تحميل نظام تصنيفات المتجر.'));
+            document.head.appendChild(categories);
+          };
           detailed.onerror=()=>rejectCore(new Error('تعذر تحميل الوصف التفصيلي.'));
           document.head.appendChild(detailed);
         };
