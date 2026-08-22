@@ -5,6 +5,7 @@ on:
     paths:
       - 'vendor-dashboard.html'
       - 'js/vendor-finance-pl-invoices-v21.js'
+      - 'js/vendor-finance-cost-save-guard-v21.js'
       - 'supabase/migrations/20260822_vendor_cost_pl_invoices_v21.sql'
       - '.github/workflows/vendor-finance-v21.yml'
   pull_request:
@@ -12,6 +13,7 @@ on:
     paths:
       - 'vendor-dashboard.html'
       - 'js/vendor-finance-pl-invoices-v21.js'
+      - 'js/vendor-finance-cost-save-guard-v21.js'
       - 'supabase/migrations/20260822_vendor_cost_pl_invoices_v21.sql'
       - '.github/workflows/vendor-finance-v21.yml'
 permissions:
@@ -24,12 +26,17 @@ jobs:
       - name: Validate V21 JavaScript syntax and shell wiring
         run: |
           node --check js/vendor-finance-pl-invoices-v21.js
+          node --check js/vendor-finance-cost-save-guard-v21.js
           grep -Fq '<script src="js/vendor-finance-pl-invoices-v21.js?v=20260822-2316"></script>' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-finance-cost-save-guard-v21.js?v=20260822-2316"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceV21?.install(frame.contentWindow)' vendor-dashboard.html
+          grep -Fq 'MeshwarVendorFinanceCostSaveGuardV21?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'vendorTabBtn-pl' js/vendor-finance-pl-invoices-v21.js
           grep -Fq 'mwProductCostPrice' js/vendor-finance-pl-invoices-v21.js
           grep -Fq 'contenteditable="true"' js/vendor-finance-pl-invoices-v21.js
           grep -Fq 'طباعة / حفظ PDF' js/vendor-finance-pl-invoices-v21.js
+          grep -Fq 'persistAfterSuccessfulSave' js/vendor-finance-cost-save-guard-v21.js
+          grep -Fq 'button[onclick*="saveProduct"]' js/vendor-finance-cost-save-guard-v21.js
       - name: Validate DB migration is nullable and snapshot-safe
         run: |
           grep -Fiq 'add column if not exists cost_price numeric(14,2) null' supabase/migrations/20260822_vendor_cost_pl_invoices_v21.sql
@@ -44,3 +51,5 @@ jobs:
           ! grep -Fq 'MeshwarVendorOrderSmartSearchV13=' js/vendor-finance-pl-invoices-v21.js
           ! grep -Fq 'MeshwarVendorOrderStatusContrastV18=' js/vendor-finance-pl-invoices-v21.js
           ! grep -Fq 'MeshwarVendorFinancialKpiIconsV19=' js/vendor-finance-pl-invoices-v21.js
+          ! grep -Fq 'MeshwarTaxonomyPersistenceV10=' js/vendor-finance-cost-save-guard-v21.js
+          ! grep -Fq 'MeshwarVendorOrderSmartSearchV13=' js/vendor-finance-cost-save-guard-v21.js
