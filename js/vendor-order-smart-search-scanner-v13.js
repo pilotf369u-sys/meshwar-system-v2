@@ -29,8 +29,9 @@
   }
 
   function rowOrderCode(row){
-    const first=row?.querySelector('td[data-label="رقم الطلب"] .font-bold,td[data-label="رقم الطلب"]');
-    return clean(first?.textContent||'');
+    const cell=row?.querySelector('td[data-label="رقم الطلب"]');
+    const primary=cell?.querySelector('.font-black,.font-bold')||cell?.firstElementChild||cell;
+    return clean(primary?.textContent||'');
   }
 
   function clearHighlight(win){
@@ -63,7 +64,7 @@
       exactRow.style.setProperty('box-shadow','0 0 0 5px rgba(251,191,36,.18),0 14px 36px rgba(2,6,23,.32)','important');
       exactRow.style.setProperty('background','rgba(251,191,36,.12)','important');
       exactRow.scrollIntoView({behavior:'smooth',block:'center'});
-      const code=exactRow.querySelector('td[data-label="رقم الطلب"] .font-bold')?.textContent?.trim()||raw;
+      const code=exactRow.querySelector('td[data-label="رقم الطلب"] .font-bold,td[data-label="رقم الطلب"] .font-black')?.textContent?.trim()||raw;
       if(hint)hint.textContent=`تم تحديد الطلب ${code}`;
     }
     return exactRow;
