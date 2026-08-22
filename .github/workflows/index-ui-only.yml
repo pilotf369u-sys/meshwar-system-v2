@@ -147,8 +147,8 @@ jobs:
           grep -Fq '<script src="js/vendor-order-status-contrast-v18.js?v=20260822-1910"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'data-mw-order-status-tone' js/vendor-order-status-contrast-v18.js
-          grep -Fq '#F3F4F6' js/vendor-order-status-contrast-v18.js
-          grep -Fq '#E5E7EB' js/vendor-order-status-contrast-v18.js
+          grep -Fiq '#f3f4f6' js/vendor-order-status-contrast-v18.js
+          grep -Fiq '#e5e7eb' js/vendor-order-status-contrast-v18.js
           ! grep -Fq "sb.from(" js/vendor-order-status-contrast-v18.js
           ! grep -Fq '/rest/v1/' js/vendor-order-status-contrast-v18.js
       - name: Validate direct vendor barcode entry and unrestricted product description
