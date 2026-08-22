@@ -19,7 +19,7 @@ export function fixtureDb(){
     mk('o-cancel','MW-5669','ملغي من قبل العميل',55,{commission_rate:10,vendor_payment_status:'pending'})
   ];
   for(let i=0;i<9;i++)orders.push(mk(`o-extra-${i}`,`MW-${5700+i}`,'بانتظار الموافقة',25+i,{commission_rate:10,vendor_payment_status:'pending',product_name:`Extra Product ${i+1}`}));
-  return{local_products:products,orders,store_categories:categories};
+  return{local_products:products,orders,store_categories:categories,vendor_operating_expenses:[]};
 }
 
 const mockSupabaseModule=String.raw`
@@ -70,6 +70,16 @@ function initBrowserFixture({db,store}){
       const body=JSON.parse(init.body||'{}'),margin=Number(body.p_margin);window.__MESH_E2E_STORE.profit_margin_percent=margin;
       try{sessionStorage.setItem('meshwar_vendor_store',JSON.stringify(window.__MESH_E2E_STORE))}catch{}
       return new Response(JSON.stringify(margin),{status:200,headers:{'content-type':'application/json'}});
+    }
+    if(table==='vendor_get_operating_expenses'&&method==='POST'){
+      const body=JSON.parse(init.body||'{}'),sid=String(body.p_store_id||'').trim();
+      const expenses=(window.__MESH_E2E_DB.vendor_operating_expenses||[]).filter(x=>String(x.store_id)===sid).sort((a,b)=>String(b.expense_date||'').localeCompare(String(a.expense_date||''))||String(b.created_at||'').localeCompare(String(a.created_at||'')));
+      return new Response(JSON.stringify(expenses),{status:200,headers:{'content-type':'application/json'}});
+    }
+    if(table==='vendor_add_operating_expense'&&method==='POST'){
+      const body=JSON.parse(init.body||'{}'),rows=window.__MESH_E2E_DB.vendor_operating_expenses||(window.__MESH_E2E_DB.vendor_operating_expenses=[]),now=new Date().toISOString();
+      const row={id:'rpc-'+Date.now(),store_id:String(body.p_store_id||''),amount:Number(body.p_amount),currency:body.p_currency||null,category:body.p_category||'تشغيلي',note:body.p_note||null,expense_date:body.p_expense_date||now.slice(0,10),created_at:now,updated_at:now};rows.push(row);
+      return new Response(JSON.stringify(row),{status:200,headers:{'content-type':'application/json'}});
     }
     const rows=window.__MESH_E2E_DB[table]||(window.__MESH_E2E_DB[table]=[]);let selected=applyFilters(rows,u.searchParams);
     if(method==='PATCH'){const body=JSON.parse(init.body||'{}');selected.forEach(r=>Object.assign(r,body));return new Response(JSON.stringify(selected),{status:200,headers:{'content-type':'application/json'}})}
