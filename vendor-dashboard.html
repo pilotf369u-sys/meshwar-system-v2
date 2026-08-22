@@ -6,15 +6,16 @@
   <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="pragma" content="no-cache">
   <meta http-equiv="expires" content="0">
-  <meta name="meshwar-build" content="vendor-lux-light-tab-fix-v17-pages-20260822-1857">
+  <meta name="meshwar-build" content="vendor-order-status-contrast-v18-pages-20260822-1910">
   <title>لوحة صاحب المتجر - MeshWar</title>
   <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617}#vendorFrame{width:100%;height:100%;border:0;display:block}</style>
-  <script src="js/vendor-barcode-smart-search-v11.js?v=20260822-1857"></script>
-  <script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1857"></script>
-  <script src="js/vendor-theme-pagination-v16.js?v=20260822-1857"></script>
+  <script src="js/vendor-barcode-smart-search-v11.js?v=20260822-1910"></script>
+  <script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1910"></script>
+  <script src="js/vendor-theme-pagination-v16.js?v=20260822-1910"></script>
+  <script src="js/vendor-order-status-contrast-v18.js?v=20260822-1910"></script>
 </head>
 <body>
-  <iframe id="vendorFrame" src="vendor-dashboard-v2.html?v=20260822-1857" title="لوحة صاحب المتجر"></iframe>
+  <iframe id="vendorFrame" src="vendor-dashboard-v2.html?v=20260822-1910" title="لوحة صاحب المتجر"></iframe>
   <script>
     (function(){
       const frame=document.getElementById('vendorFrame');
@@ -25,6 +26,8 @@
         catch(e){console.error('Vendor order smart search install failed',e)}
         try{window.MeshwarVendorThemePaginationV16?.install(frame.contentWindow)}
         catch(e){console.error('Vendor theme/pagination install failed',e)}
+        try{window.MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)}
+        catch(e){console.error('Vendor order status contrast install failed',e)}
       }
       frame.addEventListener('load',()=>{install();setTimeout(install,250);setTimeout(install,900)});
     })();
