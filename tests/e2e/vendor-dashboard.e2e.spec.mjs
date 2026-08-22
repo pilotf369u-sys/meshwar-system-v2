@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { installMocks, openVendor, frameWindow } from './helpers.mjs';
 
+async function shellOrderFilter(page,{highlightExact=false}={}){
+  return page.evaluate(({highlightExact})=>window.MeshwarVendorOrderSmartSearchV13.filterRows(document.getElementById('vendorFrame').contentWindow,{highlightExact}),{highlightExact});
+}
+async function shellStopCamera(page){return page.evaluate(()=>window.MeshwarVendorOrderSmartSearchV13.stopCamera(document.getElementById('vendorFrame').contentWindow));}
+
 test.describe('MeshWar vendor E2E integration gate',()=>{
   test.beforeEach(async({page})=>{await installMocks(page)});
 
@@ -22,7 +27,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     const target=vendor.locator('#ordersBody tr').filter({hasText:'MW-5664'});
     await expect(target).toHaveCount(1);
     await expect(target).toBeVisible();
-    await frameWindow(page,()=>window.MeshwarVendorOrderSmartSearchV13.filterRows(window,{highlightExact:true}));
+    await shellOrderFilter(page,{highlightExact:true});
     await expect(vendor.locator('#ordersBody tr[data-mw-order-highlight="1"]')).toHaveCount(1);
     await expect(vendor.locator('#ordersBody tr[data-mw-order-highlight="1"]')).toContainText('MW-5664');
 
@@ -31,7 +36,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     const camera=await frameWindow(page,()=>window.__E2E_CAMERA_START);
     expect(camera.camera).toEqual({facingMode:'environment'});
     expect(camera.config).toEqual({fps:10,qrbox:{width:250,height:150}});
-    await frameWindow(page,()=>window.MeshwarVendorOrderSmartSearchV13.stopCamera(window));
+    await shellStopCamera(page);
 
     await vendor.locator('#vendorOrderSearchClear').click();
     const row=vendor.locator('#ordersBody tr').filter({hasText:'MW-5664'});
@@ -54,7 +59,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     for(const [status,tone] of tones){
       await frameWindow(page,async s=>{const o=window.__MESH_E2E_DB.orders.find(x=>x.id==='o-pending');o.status=s;await window.loadOrders()},status);
       await search.fill('MW-5664');
-      await frameWindow(page,()=>window.MeshwarVendorOrderSmartSearchV13.filterRows(window,{highlightExact:true}));
+      await shellOrderFilter(page,{highlightExact:true});
       await expect.poll(()=>frameWindow(page,()=>document.querySelector('#ordersBody tr[data-mw-order-highlight] td[data-label="الحالة"] span')?.dataset.mwOrderStatusTone||'' )).toBe(tone);
       await vendor.locator('#vendorOrderSearchClear').click();
     }
@@ -72,7 +77,8 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await expect(vendor.locator('#mwProductSubCategory')).toBeAttached();
     await expect.poll(()=>frameWindow(page,()=>Boolean(window.MeshwarTaxonomyPersistenceV10))).toBe(true);
 
-    await frameWindow(page,()=>window.openProductModal());
+    await vendor.getByRole('button',{name:/منتج جديد/}).click();
+    await expect(vendor.locator('#productModal')).toHaveClass(/flex/);
     await vendor.locator('#productName').fill('E2E Added Product');
     await vendor.locator('#productBasePrice').fill('44');
     await vendor.locator('#productStock').fill('17');
