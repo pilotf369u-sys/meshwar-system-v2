@@ -17,6 +17,17 @@
 
   function normalizeText(value){return String(value??'').trim().toLowerCase()}
 
+  function sanitizeInput(win,{preserveCaret=true}={}){
+    const input=win.document.getElementById('vendorOrderSmartSearch');if(!input)return'';
+    const before=String(input.value||''),after=clean(before);
+    if(before!==after){
+      const pos=preserveCaret?Math.min(after.length,input.selectionStart??after.length):after.length;
+      input.value=after;
+      try{input.setSelectionRange(pos,pos)}catch{}
+    }
+    return after;
+  }
+
   function rowOrderCode(row){
     const first=row?.querySelector('td[data-label="رقم الطلب"] .font-bold,td[data-label="رقم الطلب"]');
     return clean(first?.textContent||'');
@@ -73,7 +84,7 @@
     const d=win.document;if(d.getElementById('vendorOrderScannerModal'))return;
     const modal=d.createElement('div');modal.id='vendorOrderScannerModal';
     modal.style.cssText='display:none;position:fixed;inset:0;z-index:12000;background:rgba(2,6,23,.9);padding:16px;align-items:center;justify-content:center;';
-    modal.innerHTML='<div style="width:min(96vw,620px);background:#0f172a;color:#f8fafc;border:1px solid rgba(251,191,36,.28);border-radius:20px;padding:14px;box-shadow:0 24px 70px rgba(0,0,0,.55)"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px"><b>📷 مسح باركود الطلب</b><button type="button" id="vendorOrderScannerClose" style="border:0;border-radius:10px;background:#be123c;color:#fff;padding:7px 11px;font-weight:900;cursor:pointer">إغلاق</button></div><div id="vendorOrderScannerReader" style="width:100%;min-height:280px"></div><div style="margin-top:9px;text-align:center;color:#94a3b8;font-size:12px">وجّه الكاميرا نحو باركود الملصق المطبوع. عند القراءة سيتم تحديد الطلب فورًا.</div></div>';
+    modal.innerHTML='<div style="width:min(96vw,620px);background:#0f172a;color:#f8fafc;border:1px solid rgba(251,191,36,.28);border-radius:20px;padding:14px;box-shadow:0 24px 70px rgba(0,0,0,.55)"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px"><b>📷 مسح باركود الطلب</b><button type="button" id="vendorOrderScannerClose" style="border:0;border-radius:10px;background:#be123c;color:#fff;padding:7px 11px;font-weight:900;cursor:pointer">إغلاق</button></div><div id="vendorOrderScannerReader" style="width:100%;min-height:280px"></div><div style="margin-top:9px;text-align:center;color:#94a3b8;font-size:12px">وجّه الكاميرا الخلفية نحو باركود الملصق المطبوع. عند القراءة سيتم تحديد الطلب فورًا.</div></div>';
     d.body.appendChild(modal);
     d.getElementById('vendorOrderScannerClose')?.addEventListener('click',()=>stopCamera(win));
   }
@@ -88,8 +99,15 @@
 
   function applyScannedValue(win,value){
     const input=win.document.getElementById('vendorOrderSmartSearch');if(!input)return;
-    const cleaned=clean(value),finalValue=cleaned||String(value||'').trim();
-    input.value=finalValue;filterRows(win,{highlightExact:true});
+    input.value=clean(value);filterRows(win,{highlightExact:true});
+  }
+
+  async function startRearCamera(scanner,config,onSuccess){
+    try{
+      return await scanner.start({facingMode:{exact:'environment'}},config,onSuccess,()=>{});
+    }catch(exactError){
+      return scanner.start({facingMode:'environment'},config,onSuccess,()=>{});
+    }
   }
 
   async function startCamera(win){
@@ -98,10 +116,11 @@
     const st=state.get(win)||{};
     if(st.scanner){await stopCamera(win);if(modal)modal.style.display='flex'}
     const scanner=new win.Html5Qrcode('vendorOrderScannerReader');st.scanner=scanner;state.set(win,st);
+    const config={fps:10,qrbox:{width:280,height:150},aspectRatio:1.777};
     try{
-      await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:280,height:150},aspectRatio:1.777},async decoded=>{
+      await startRearCamera(scanner,config,async decoded=>{
         applyScannedValue(win,decoded);await stopCamera(win);
-      },()=>{});
+      });
     }catch(e){await stopCamera(win);throw e}
   }
 
@@ -112,10 +131,11 @@
     box.innerHTML='<div class="mb-2 flex flex-wrap items-center justify-between gap-2"><div class="text-xs font-black text-sky-200">🔎 بحث الطلبات / ماسح الباركود</div><button id="vendorOrderCameraBtn" type="button" class="rounded-xl border border-sky-400/30 bg-sky-500/15 px-3 py-2 text-xs font-black text-sky-100">📷 مسح بالكاميرا</button></div><div style="display:flex;gap:8px;align-items:center"><input id="vendorOrderSmartSearch" class="field" placeholder="MW-5664 / اسم المنتج / المحافظة / المدينة / الحالة" autocomplete="off"><button id="vendorOrderSearchClear" type="button" title="مسح البحث" style="width:42px;height:42px;flex:0 0 auto;border:0;border-radius:50%;background:#64748b;color:white;font-size:22px;font-weight:900;cursor:pointer">×</button></div><div id="vendorOrderSmartSearchHint" class="vendor-muted mt-2 text-xs text-slate-400">ابحث برقم الطلب، اسم المنتج، المحافظة/المدينة أو الحالة. يمكنك أيضًا مسح باركود الملصق.</div>';
     filters.parentElement?.insertBefore(box,filters);
     const input=d.getElementById('vendorOrderSmartSearch');
-    input?.addEventListener('input',()=>filterRows(win));
-    input?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();filterRows(win,{highlightExact:true});input.select()}});
+    input?.addEventListener('input',()=>{sanitizeInput(win);filterRows(win)});
+    input?.addEventListener('paste',()=>setTimeout(()=>{sanitizeInput(win,{preserveCaret:false});filterRows(win)},0));
+    input?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sanitizeInput(win,{preserveCaret:false});filterRows(win,{highlightExact:true});input.select()}});
     d.getElementById('vendorOrderSearchClear')?.addEventListener('click',()=>{if(input){input.value='';filterRows(win);input.focus()}});
-    d.getElementById('vendorOrderCameraBtn')?.addEventListener('click',()=>startCamera(win).catch(err=>{console.error('Vendor order scanner failed',err);win.alert('تعذر تشغيل الكاميرا: '+(err?.message||err))}));
+    d.getElementById('vendorOrderCameraBtn')?.addEventListener('click',()=>startCamera(win).catch(err=>{console.error('Vendor order scanner failed',err);win.alert('تعذر تشغيل الكاميرا الخلفية: '+(err?.message||err))}));
   }
 
   function install(win){
@@ -135,5 +155,5 @@
     if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   }
 
-  window.MeshwarVendorOrderSmartSearchV13={install,filterRows,startCamera,stopCamera,clean};
+  window.MeshwarVendorOrderSmartSearchV13={install,filterRows,startCamera,stopCamera,clean,sanitizeInput};
 })();
