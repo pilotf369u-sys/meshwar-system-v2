@@ -113,11 +113,12 @@
   }
 
   function startVendor(){
-    let attempts=0;const timer=setInterval(()=>{
+    let attempts=0;
+    const timer=setInterval(()=>{
       attempts++;
-      const saveReady=wrapSaveProduct();
-      const editReady=wrapEditProduct();
-      if((saveReady||window.saveProduct?.__mwTaxonomyV10)&&(editReady||window.editProduct?.__mwTaxonomyV10)||attempts>120)clearInterval(timer);
+      wrapSaveProduct();
+      wrapEditProduct();
+      if(attempts>=120)clearInterval(timer);
     },50);
   }
 
