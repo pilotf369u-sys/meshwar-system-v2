@@ -315,3 +315,72 @@
   window.MeshwarStoreCategoriesV9={initStorefront,loadVendorCategories,refreshProductCategoryFields};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+/* MESHWAR_LOCAL_STORE_CATEGORY_BAR_V9_STICKY_PATCH */
+(function(){
+  const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
+  const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const q=v=>encodeURIComponent(String(v??''));
+  let categories=new Map(),products=new Map(),observer=null,storeId='';
+
+  function injectStyle(){
+    if(document.getElementById('mwCategoryStickyPatchCss'))return;
+    const s=document.createElement('style');s.id='mwCategoryStickyPatchCss';s.textContent=`
+      #mwCategoryShell{position:sticky;top:0;z-index:50;margin:0 0 14px;padding:10px;border:1px solid rgba(212,175,55,.28);border-radius:16px;background:rgba(11,19,43,.94);box-shadow:0 12px 30px rgba(2,6,23,.22);backdrop-filter:blur(14px)}
+      #mwCategoryShell .mw-category-bar,#mwCategoryShell .mw-subcategory-bar{display:flex;gap:8px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:thin;-webkit-overflow-scrolling:touch;padding:2px 1px}
+      #mwCategoryShell .mw-subcategory-bar{margin-top:8px;padding-top:8px;border-top:1px solid rgba(212,175,55,.14)}#mwCategoryShell .mw-subcategory-bar:empty{display:none}
+      #mwCategoryShell button{flex:0 0 auto;border-radius:999px;border:1px solid rgba(212,175,55,.34);background:rgba(255,255,255,.06);color:#f8fafc;padding:9px 14px;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap;transition:.2s}
+      #mwCategoryShell button:hover{border-color:#D4AF37;background:rgba(212,175,55,.14)}#mwCategoryShell button.active{background:linear-gradient(135deg,#D4AF37,#FFDF73);color:#111827;border-color:#D4AF37;box-shadow:0 6px 18px rgba(212,175,55,.22)}
+      @media(max-width:720px){#mwCategoryShell{border-radius:12px;padding:8px;margin-inline:-2px}#mwCategoryShell button{font-size:13px;padding:8px 12px}}
+    `;document.head.appendChild(s);
+  }
+
+  async function rest(path){
+    const r=await fetch(`${SB_URL}/rest/v1/${path}`,{cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,Accept:'application/json'}});
+    if(!r.ok)throw new Error(await r.text()||`HTTP ${r.status}`);return r.json();
+  }
+
+  function currentFilter(){return String(new URLSearchParams(location.search).get('category')||'all').trim()||'all'}
+  function setFilterUrl(value){const u=new URL(location.href);if(value==='all')u.searchParams.delete('category');else u.searchParams.set('category',value);history.replaceState(null,'',u.toString())}
+  function roots(){return[...categories.values()].filter(c=>c.parent_id==null&&c.is_visible!==false).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}
+  function kids(parentId){return[...categories.values()].filter(c=>c.parent_id!=null&&String(c.parent_id)===String(parentId)&&c.is_visible!==false).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'ar'))}
+  function visible(id){if(!id)return true;const c=categories.get(String(id));if(!c||c.is_visible===false)return false;if(c.parent_id){const p=categories.get(String(c.parent_id));if(!p||p.is_visible===false)return false}return true}
+  function match(meta,filter){
+    if(!meta)return filter==='all';if(!visible(meta.category_id))return false;if(filter==='all')return true;if(filter==='featured')return!!meta.is_featured;if(filter==='general')return!meta.category_id;
+    if(filter.startsWith('cat:'))return String(meta.category_id||'')===filter.slice(4);
+    const root=roots().find(c=>String(c.slug)===filter);if(!root)return true;if(String(meta.category_id||'')===String(root.id))return true;const c=categories.get(String(meta.category_id||''));return String(c?.parent_id||'')===String(root.id)
+  }
+  function apply(filter,{url=true}={}){
+    const grid=document.getElementById('localStoreProductsGrid');if(!grid)return;
+    grid.querySelectorAll('.local-v3-card[data-product-card]').forEach(card=>{card.style.display=match(products.get(String(card.dataset.productCard)),filter)?'':'none'});
+    document.querySelectorAll('#mwCategoryShell [data-cat-filter]').forEach(b=>b.classList.toggle('active',String(b.dataset.catFilter)===String(filter)));
+    if(url)setFilterUrl(filter)
+  }
+  function render(){
+    const grid=document.getElementById('localStoreProductsGrid');if(!grid)return;
+    document.getElementById('mwCategoryBar')?.remove();
+    let shell=document.getElementById('mwCategoryShell');if(!shell){shell=document.createElement('div');shell.id='mwCategoryShell';shell.innerHTML='<div class="mw-category-bar" data-main-row></div><div class="mw-subcategory-bar" data-sub-row></div>';grid.parentElement?.insertBefore(shell,grid)}
+    const main=shell.querySelector('[data-main-row]'),sub=shell.querySelector('[data-sub-row]');
+    const rs=roots(),hasGeneral=[...products.values()].some(p=>!p.category_id),tabs=[['all','الكل'],['featured','⭐ المميزة'],...(hasGeneral?[['general','عام']]:[]),...rs.map(c=>[c.slug,c.name])];
+    main.innerHTML=tabs.map(([v,l])=>`<button type="button" data-cat-filter="${esc(v)}">${esc(l)}</button>`).join('');
+    function showSubs(filter,selected=''){
+      const root=rs.find(c=>String(c.slug)===String(filter));if(!root){sub.innerHTML='';return}
+      const list=kids(root.id);if(!list.length){sub.innerHTML='';return}
+      sub.innerHTML=`<button type="button" data-cat-filter="${esc(root.slug)}">كل ${esc(root.name)}</button>`+list.map(c=>`<button type="button" data-cat-filter="cat:${esc(c.id)}">${esc(c.name)}</button>`).join('');
+      [...sub.querySelectorAll('[data-cat-filter]')].forEach(b=>b.classList.toggle('active',String(b.dataset.catFilter)===String(selected||filter)))
+    }
+    shell.onclick=e=>{const b=e.target.closest?.('[data-cat-filter]');if(!b)return;const f=String(b.dataset.catFilter||'all');if(b.closest('[data-main-row]'))showSubs(f);apply(f)};
+    const wanted=currentFilter();let valid=tabs.some(([v])=>String(v)===wanted)?wanted:'';
+    if(!valid&&wanted.startsWith('cat:')){const child=categories.get(wanted.slice(4));if(child?.parent_id){const root=categories.get(String(child.parent_id));if(root&&root.is_visible!==false){valid=wanted;showSubs(root.slug,wanted)}}}
+    if(!valid)valid='all';if(!wanted.startsWith('cat:'))showSubs(valid);apply(valid,{url:false})
+  }
+  async function load(){
+    const sid=String(new URLSearchParams(location.search).get('storeId')||'').trim();if(!sid)return;storeId=sid;
+    const [cs,ps]=await Promise.all([rest(`store_categories?select=id,parent_id,name,slug,sort_order,is_visible&store_id=eq.${q(sid)}&order=sort_order.asc,name.asc`),rest(`local_products?select=id,category_id,is_featured&store_id=eq.${q(sid)}`)]);
+    categories=new Map((Array.isArray(cs)?cs:[]).map(c=>[String(c.id),c]));products=new Map((Array.isArray(ps)?ps:[]).map(p=>[String(p.id),p]));render();
+    const grid=document.getElementById('localStoreProductsGrid');if(grid&&!observer){observer=new MutationObserver(()=>setTimeout(()=>apply(currentFilter(),{url:false}),0));observer.observe(grid,{childList:true})}
+  }
+  function start(){if(/vendor-dashboard(?:-v2)?\.html$/i.test(location.pathname)||document.getElementById('productModal'))return;injectStyle();setTimeout(()=>load().catch(e=>console.warn('Sticky category bar failed',e)),180)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
