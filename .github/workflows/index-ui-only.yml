@@ -11,6 +11,7 @@ on:
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
+      - 'js/local-store-global-search-v12.js'
       - 'js/local-store-variant-stock-v5.js'
       - 'js/local-store-matrix-stock-v6.js'
       - 'js/local-store-ui-stock-v7.js'
@@ -28,6 +29,7 @@ on:
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
+      - 'js/local-store-global-search-v12.js'
       - 'js/local-store-variant-stock-v5.js'
       - 'js/local-store-matrix-stock-v6.js'
       - 'js/local-store-ui-stock-v7.js'
@@ -46,6 +48,7 @@ jobs:
           node --check js/local-store-card-v3.js
           node --check js/local-store-pricing.js
           node --check js/local-store-product-details-v4.js
+          node --check js/local-store-global-search-v12.js
           node --check js/local-store-variant-stock-v5.js
           node --check js/local-store-matrix-stock-v6.js
           node --check js/local-store-ui-stock-v7.js
@@ -80,6 +83,14 @@ jobs:
           grep -Fq 'Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct' vendor-dashboard-v2.html
           grep -Fq 'meshwar_adjust_matrix_stock' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
           grep -Fq 'for update' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
+      - name: Validate customer storefront global search isolation
+        run: |
+          grep -Fq "local-store-global-search-v12.js?v=customer-global-search-v12" js/local-store-product-details-v4.js
+          grep -Fq 'MeshwarLocalStoreGlobalSearchV12' js/local-store-global-search-v12.js
+          grep -Fq 'product_name,barcode,stock_quantity,is_out_of_stock' js/local-store-global-search-v12.js
+          grep -Fq "card.style.setProperty('display',show?'flex':'none','important')" js/local-store-global-search-v12.js
+          grep -Fq 'MeshwarStoreCategoriesV9.initStorefront' js/local-store-global-search-v12.js
+          grep -Fq '#mwCategoryShell [data-cat-filter]' js/local-store-global-search-v12.js
       - name: Validate direct vendor barcode entry and unrestricted product description
         run: |
           ! grep -Fq 'location.replace(' vendor-dashboard.html
