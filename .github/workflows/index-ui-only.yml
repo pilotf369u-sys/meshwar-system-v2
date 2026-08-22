@@ -83,12 +83,14 @@ jobs:
       - name: Validate direct vendor barcode entry and unrestricted product description
         run: |
           ! grep -Fq 'location.replace(' vendor-dashboard.html
-          grep -Fq '<meta name="meshwar-build" content="vendor-barcode-v11-pages-20260822-1600">' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260822-1600"></script>' vendor-dashboard.html
+          grep -Fq '<meta name="meshwar-build" content="vendor-barcode-v11-pages-20260822-1618">' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260822-1618"></script>' vendor-dashboard.html
           grep -Fq 'id="vendorFrame"' vendor-dashboard.html
-          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-1600"' vendor-dashboard.html
+          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-1618"' vendor-dashboard.html
           grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard.html
-          grep -Fq 'barcode' js/vendor-barcode-smart-search-v11.js
+          grep -Fq 'local_products?select=id,product_name,barcode,stock_quantity' js/vendor-barcode-smart-search-v11.js
+          grep -Fq 'data-mw-barcode-label' js/vendor-barcode-smart-search-v11.js
+          grep -Fq 'filterExistingRows' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'add column if not exists barcode text null' supabase/migrations/20260822_local_product_barcode.sql
           grep -Fq 'idx_local_products_barcode' supabase/migrations/20260822_local_product_barcode.sql
           grep -Fq 'placeholder="وصف المنتج (اختياري)..."' vendor-dashboard-v2.html
