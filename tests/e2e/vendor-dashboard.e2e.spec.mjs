@@ -3,6 +3,7 @@ import { installMocks, openVendor, frameWindow } from './helpers.mjs';
 
 async function shellOrderFilter(page,{highlightExact=false}={}){return page.evaluate(({highlightExact})=>window.MeshwarVendorOrderSmartSearchV13.filterRows(document.getElementById('vendorFrame').contentWindow,{highlightExact}),{highlightExact})}
 async function shellStopCamera(page){return page.evaluate(()=>window.MeshwarVendorOrderSmartSearchV13.stopCamera(document.getElementById('vendorFrame').contentWindow))}
+async function shellDecorateProducts(page){return page.evaluate(()=>window.MeshwarVendorBarcodeMarginV22.decorateBarcodes(document.getElementById('vendorFrame').contentWindow))}
 
 test.describe('MeshWar vendor E2E integration gate',()=>{
   test.beforeEach(async({page})=>{await installMocks(page)});
@@ -36,7 +37,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await vendor.locator('#mwGlobalProfitMargin').fill('25');await vendor.locator('#mwSaveProfitMargin').click();await expect(vendor.locator('#exchangeRate')).toHaveValue('1');
     await expect.poll(()=>frameWindow(page,()=>Boolean(window.MeshwarTaxonomyPersistenceV10))).toBe(true);await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwTaxonomyV10))).toBe(true);await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwFinanceV21))).toBe(true);
 
-    await frameWindow(page,async()=>{const p=window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1');p.barcode=null;p.sku='LEGACY-SKU-01';await window.loadProducts()});
+    await frameWindow(page,()=>{const p=window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1');p.barcode=null;p.sku='LEGACY-SKU-01'});await shellDecorateProducts(page);
     await expect(vendor.locator('#productsBody tr').filter({hasText:'Test Product 01'}).locator('[data-mw-barcode-label]')).toContainText('LEGACY-SKU-01');
     const productSearch=vendor.locator('#vendorSmartProductSearch');await productSearch.fill('LEGACY-SKU-01');await productSearch.press('Enter');await expect(vendor.locator('#productModal')).toHaveClass(/flex/);await expect(vendor.locator('#productBarcode')).toHaveValue('LEGACY-SKU-01');await frameWindow(page,()=>window.closeProductModal());
 
