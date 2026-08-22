@@ -6,6 +6,8 @@ on:
       - 'index.html'
       - 'vendor-dashboard.html'
       - 'vendor-dashboard-v2.html'
+      - 'vendor-dashboard-barcode-shell.html'
+      - 'js/vendor-barcode-smart-search-v11.js'
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
@@ -13,6 +15,7 @@ on:
       - 'js/local-store-matrix-stock-v6.js'
       - 'js/local-store-ui-stock-v7.js'
       - 'supabase/migrations/20260821_local_store_matrix_combination_stock.sql'
+      - 'supabase/migrations/20260822_local_product_barcode.sql'
       - '.github/workflows/index-ui-only.yml'
   pull_request:
     branches: [main]
@@ -20,6 +23,8 @@ on:
       - 'index.html'
       - 'vendor-dashboard.html'
       - 'vendor-dashboard-v2.html'
+      - 'vendor-dashboard-barcode-shell.html'
+      - 'js/vendor-barcode-smart-search-v11.js'
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
@@ -27,6 +32,7 @@ on:
       - 'js/local-store-matrix-stock-v6.js'
       - 'js/local-store-ui-stock-v7.js'
       - 'supabase/migrations/20260821_local_store_matrix_combination_stock.sql'
+      - 'supabase/migrations/20260822_local_product_barcode.sql'
       - '.github/workflows/index-ui-only.yml'
 permissions:
   contents: read
@@ -43,6 +49,7 @@ jobs:
           node --check js/local-store-variant-stock-v5.js
           node --check js/local-store-matrix-stock-v6.js
           node --check js/local-store-ui-stock-v7.js
+          node --check js/vendor-barcode-smart-search-v11.js
       - name: Validate current local store routing
         run: |
           grep -Fq 'id="localStoreProductsPanel"' index.html
@@ -73,9 +80,15 @@ jobs:
           grep -Fq 'Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct' vendor-dashboard-v2.html
           grep -Fq 'meshwar_adjust_matrix_stock' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
           grep -Fq 'for update' supabase/migrations/20260821_local_store_matrix_combination_stock.sql
-      - name: Validate vendor V2 routing and unrestricted product description
+      - name: Validate vendor barcode routing and unrestricted product description
         run: |
-          grep -Fq "location.replace('vendor-dashboard-v2.html?v=20260821-hard-v2')" vendor-dashboard.html
+          grep -Fq "location.replace('vendor-dashboard-barcode-shell.html?v=20260822-barcode-v11')" vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=barcode-v11"></script>' vendor-dashboard-barcode-shell.html
+          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-barcode-v11"' vendor-dashboard-barcode-shell.html
+          grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard-barcode-shell.html
+          grep -Fq 'barcode' js/vendor-barcode-smart-search-v11.js
+          grep -Fq 'add column if not exists barcode text null' supabase/migrations/20260822_local_product_barcode.sql
+          grep -Fq 'idx_local_products_barcode' supabase/migrations/20260822_local_product_barcode.sql
           grep -Fq 'placeholder="وصف المنتج (اختياري)..."' vendor-dashboard-v2.html
           ! grep -Fq 'الوصف المختصر يجب ألا يتجاوز 30 حرفًا' vendor-dashboard-v2.html
           ! grep -Fq 'maxlength="30"' vendor-dashboard-v2.html
