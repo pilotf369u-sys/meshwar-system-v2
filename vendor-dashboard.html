@@ -24,6 +24,30 @@
   <script>
     (function(){
       const frame=document.getElementById('vendorFrame');
+      const ACTIVE_TAB_KEY='meshwar_vendor_active_tab';
+
+      function bindActiveTabPersistence(){
+        const win=frame.contentWindow,d=win?.document;
+        if(!d||win.__mwActiveTabPersistenceBound)return;
+        d.addEventListener('click',e=>{
+          const btn=e.target?.closest?.('.vendor-main-tab,[id^="vendorTabBtn-"]');
+          if(btn?.id){
+            try{win.localStorage.setItem(ACTIVE_TAB_KEY,btn.id)}catch(err){console.warn('Vendor active tab save failed',err)}
+          }
+        },true);
+        win.__mwActiveTabPersistenceBound=true;
+      }
+
+      function restoreActiveTab(){
+        const win=frame.contentWindow,d=win?.document;
+        if(!d)return;
+        let saved='';
+        try{saved=win.localStorage.getItem(ACTIVE_TAB_KEY)||''}catch(err){console.warn('Vendor active tab read failed',err)}
+        if(!saved)return;
+        const btn=d.getElementById(saved);
+        if(btn&&typeof btn.click==='function'&&!btn.classList.contains('active'))btn.click();
+      }
+
       function install(){
         try{window.MeshwarVendorBarcodeV11?.install(frame.contentWindow)}
         catch(e){console.error('Vendor barcode install failed',e)}
@@ -43,6 +67,8 @@
         catch(e){console.error('Vendor barcode/margin V22 install failed',e)}
         try{window.MeshwarVendorPlExpenseV23?.install(frame.contentWindow)}
         catch(e){console.error('Vendor P&L expense V23 install failed',e)}
+        bindActiveTabPersistence();
+        restoreActiveTab();
       }
       frame.addEventListener('load',()=>{install();setTimeout(install,250);setTimeout(install,900)});
     })();
