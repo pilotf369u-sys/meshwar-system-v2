@@ -3,7 +3,7 @@
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
 
-  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[c]))}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
   function storeId(win){try{return String(JSON.parse(win.sessionStorage.getItem('meshwar_vendor_store')||'null')?.id||'').trim()}catch{return''}}
 
   async function rest(win,path){
@@ -41,8 +41,10 @@
         if(first)first.insertAdjacentElement('afterend',td);else row.appendChild(td);
       }
     });
-    const empty=d.querySelector('#productsBody tr:not(:has(button[onclick*="editProduct("])) td[colspan]');
-    if(empty)empty.colSpan=7;
+    d.querySelectorAll('#productsBody tr td[colspan]').forEach(td=>{
+      const row=td.closest('tr');
+      if(row&&!row.querySelector('button[onclick*="editProduct("]'))td.colSpan=7;
+    });
   }
 
   function filterExistingRows(win){
@@ -252,5 +254,5 @@
     if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   }
 
-  window.MeshwarVendorBarcodeV11={install};
+  window.MeshwarVendorBarcodeV11={install,refreshProductDecorations};
 })();
