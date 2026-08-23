@@ -1,0 +1,29 @@
+name: Catalog price and barcode V25 validation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - 'fix/catalog-price-barcode-v25'
+
+jobs:
+  catalog-consistency-v25:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax check V25
+        run: node --check js/catalog-price-barcode-consistency-v25.js
+      - name: Verify vendor and storefront wiring
+        run: |
+          grep -q "catalog-price-barcode-consistency-v25.js?v=20260823-0240" vendor-dashboard.html
+          grep -q "MeshwarCatalogConsistencyV25.*installVendor" vendor-dashboard.html
+          grep -q "catalog-price-barcode-consistency-v25.js?v=20260823-0240" js/local-store-product-details-v4.js
+          grep -q "installStorefront" js/local-store-product-details-v4.js
+      - name: Verify canonical pricing and barcode guards
+        run: |
+          grep -q "local_products?select=id,base_price,discount_price,updated_at" js/catalog-price-barcode-consistency-v25.js
+          grep -q "customerPriceLocal" js/catalog-price-barcode-consistency-v25.js
+          grep -q "clearStaleStoreCache" js/catalog-price-barcode-consistency-v25.js
+          grep -q "body:{barcode:code||null}" js/catalog-price-barcode-consistency-v25.js
+          grep -q "select=id,product_name,barcode,sku" js/catalog-price-barcode-consistency-v25.js
