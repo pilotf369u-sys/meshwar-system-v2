@@ -143,16 +143,11 @@
       try{
         const url=typeof input==='string'?input:String(input?.url||'');
         const method=String(init?.method||input?.method||'GET').toUpperCase();
-        if(/\/rest\/v1\/local_products(?:\?|$)/.test(url)&&['POST','PATCH'].includes(method)&&init?.body){
-          const barcode=String(win.document.getElementById('productBarcode')?.value||'').trim()||null;
-          let body=JSON.parse(init.body);
-          const merge=x=>x&&typeof x==='object'&&!Array.isArray(x)?{...x,barcode}:x;
-          body=Array.isArray(body)?body.map(merge):merge(body);
-          init={...init,body:JSON.stringify(body)};
+        if(/\/rest\/v1\/local_products(?:\?|$)/.test(url)&&['POST','PATCH'].includes(method)){
           win.__mwBarcodeProductsCacheAt=0;
           scheduleRefresh(win,true);
         }
-      }catch(e){console.warn('Barcode payload bridge skipped',e)}
+      }catch(e){console.warn('Barcode cache refresh bridge skipped',e)}
       return originalFetch(input,init);
     };
     win.__mwBarcodeFetchBridge=true;
