@@ -155,14 +155,4 @@
   if(!wrapOpenStore()){
     let attempts=0;const timer=setInterval(()=>{attempts++;if(wrapOpenStore()||attempts>80)clearInterval(timer)},50);
   }
-
-  /* MESHWAR_CATALOG_CONSISTENCY_V25_LOADER */
-  if(!document.querySelector('script[data-mw-catalog-consistency-v25]')){
-    const catalog=document.createElement('script');
-    catalog.src='js/catalog-price-barcode-consistency-v25.js?v=20260823-0240';
-    catalog.dataset.mwCatalogConsistencyV25='1';
-    catalog.onload=()=>window.MeshwarCatalogConsistencyV25?.installStorefront?.();
-    catalog.onerror=()=>console.warn('تعذر تحميل طبقة توحيد أسعار الكتالوج V25.');
-    document.head.appendChild(catalog);
-  }
 })();
