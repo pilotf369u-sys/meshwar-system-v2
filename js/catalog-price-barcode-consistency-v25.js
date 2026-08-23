@@ -49,7 +49,9 @@
   }
   function decorateVendorRows(win){
     const st=vendorStore(win);if(!st?.id)return Promise.resolve();
-    return request(win,`local_products?select=id,product_name,barcode&store_id=eq.${q(st.id)}&order=created_at.desc`).then(items=>{
+    let loadItems=request(win,`local_products?select=id,product_name,barcode,sku&store_id=eq.${q(st.id)}&order=created_at.desc`)
+      .catch(()=>request(win,`local_products?select=id,product_name,barcode&store_id=eq.${q(st.id)}&order=created_at.desc`));
+    return loadItems.then(items=>{
       const map=new Map((items||[]).map(p=>[String(p.id),p]));
       win.document.querySelectorAll('#productsBody tr').forEach(row=>{
         const code=String(row.querySelector('button[onclick*="editProduct("]')?.getAttribute('onclick')||'');
