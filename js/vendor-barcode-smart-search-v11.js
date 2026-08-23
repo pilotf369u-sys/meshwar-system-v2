@@ -3,7 +3,7 @@
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
 
-  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[c]))}
   function storeId(win){try{return String(JSON.parse(win.sessionStorage.getItem('meshwar_vendor_store')||'null')?.id||'').trim()}catch{return''}}
 
   async function rest(win,path){
@@ -16,6 +16,33 @@
     const btn=row?.querySelector('button[onclick*="editProduct("]');
     const code=String(btn?.getAttribute('onclick')||'');
     return code.match(/editProduct\(['"]([^'"]+)['"]\)/)?.[1]||'';
+  }
+
+  function ensureBarcodeColumn(win){
+    const d=win.document,table=d.querySelector('#productsBody')?.closest('table');
+    if(!table)return;
+    const headRow=table.querySelector('thead tr');
+    if(headRow&&!headRow.querySelector('[data-mw-barcode-head]')){
+      const th=d.createElement('th');
+      th.dataset.mwBarcodeHead='1';
+      th.textContent='الباركود';
+      const first=headRow.children[0];
+      if(first)first.insertAdjacentElement('afterend',th);else headRow.appendChild(th);
+    }
+    d.querySelectorAll('#productsBody tr').forEach(row=>{
+      if(!row.querySelector('button[onclick*="editProduct("]'))return;
+      row.querySelector('[data-mw-barcode-label]')?.remove();
+      if(!row.querySelector('[data-mw-barcode-cell]')){
+        const td=d.createElement('td');
+        td.dataset.mwBarcodeCell='1';
+        td.className='text-center text-xs font-bold text-amber-200';
+        td.setAttribute('dir','ltr');
+        const first=row.children[0];
+        if(first)first.insertAdjacentElement('afterend',td);else row.appendChild(td);
+      }
+    });
+    const empty=d.querySelector('#productsBody tr:not(:has(button[onclick*="editProduct("])) td[colspan]');
+    if(empty)empty.colSpan=7;
   }
 
   function filterExistingRows(win){
@@ -46,20 +73,15 @@
 
   function decorateRows(win,items){
     const d=win.document,map=new Map((items||[]).map(p=>[String(p.id),p]));
+    ensureBarcodeColumn(win);
     d.querySelectorAll('#productsBody tr').forEach(row=>{
       const id=productIdFromRow(row),p=map.get(String(id));if(!p)return;
       const barcode=String(p.barcode||'').trim();
       row.dataset.mwSearch=[p.product_name,barcode].filter(Boolean).join(' ').toLowerCase();
-      let label=row.querySelector('[data-mw-barcode-label]');
-      if(!label){
-        label=d.createElement('div');
-        label.dataset.mwBarcodeLabel='1';
-        label.className='mt-1 text-[11px] font-bold text-amber-300';
-        row.querySelector('td')?.appendChild(label);
-      }
-      if(label){
-        label.textContent=barcode?`باركود: ${barcode}`:'بدون باركود';
-        label.style.opacity=barcode?'1':'.6';
+      const cell=row.querySelector('[data-mw-barcode-cell]');
+      if(cell){
+        cell.textContent=barcode||'بدون باركود';
+        cell.style.opacity=barcode?'1':'.6';
       }
     });
     filterExistingRows(win);
@@ -99,6 +121,7 @@
         name.insertAdjacentElement('afterend',input);
       }
     }
+    ensureBarcodeColumn(win);
     const productsPanel=d.getElementById('vendorTab-products');
     const tableWrap=productsPanel?.querySelector('.vendor-table-wrap');
     if(tableWrap&&!d.getElementById('vendorSmartProductSearch')){
