@@ -4,7 +4,7 @@
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const STORE_KEY='meshwar_vendor_store';
-  const VERSION='20260823-0135';
+  const VERSION='20260823-1324';
   const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const money=(v,c='')=>`${num(v).toLocaleString('en-US',{maximumFractionDigits:2})} ${c||''}`.trim();
@@ -54,6 +54,10 @@
     if(api?.refresh){try{await api.refresh(win,true)}catch(e){console.warn('V23 V21 refresh failed; continuing with expense-specific refresh',e)}}
     const expenses=await fetchOperatingExpenses(win);return renderExpenseState(win,expenses);
   }
+  function schedulePersistentRefresh(win,delay=80){
+    clearTimeout(win.__mwExpenseV23RefreshTimer);
+    win.__mwExpenseV23RefreshTimer=setTimeout(()=>refreshExpenseUi(win).catch(e=>{console.error('V23 persistent expense refresh failed',e);status(win,'تعذر تحميل المصاريف المحفوظة: '+(e?.message||e),'error')}),delay);
+  }
   async function submit(win,e){
     e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
     const d=win.document,st=store(win),btn=d.getElementById('mwExpenseAdd');if(!st?.id){status(win,'تعذر تحديد المتجر الحالي.','error');return}
@@ -70,8 +74,15 @@
     }catch(err){console.error('V23 expense submit failed',err);status(win,'تعذر حفظ أو تحديث المصروف: '+(err?.message||err),'error')}
     finally{if(btn){btn.dataset.busy='0';btn.disabled=false;btn.textContent=old}}
   }
-  function bind(win){const btn=win.document.getElementById('mwExpenseAdd');if(!btn||btn.dataset.mwExpenseV23)return;btn.addEventListener('click',e=>submit(win,e),true);btn.dataset.mwExpenseV23='1'}
-  function boot(win){injectStyle(win);arrange(win);bind(win);if(!win.__mwExpenseV23Observer){const ob=new win.MutationObserver(()=>{arrange(win);bind(win)});ob.observe(win.document.documentElement,{childList:true,subtree:true});win.__mwExpenseV23Observer=ob}win.__mwVendorPlExpenseV23=true}
+  function bind(win){
+    const d=win.document,btn=d.getElementById('mwExpenseAdd');
+    if(btn&&!btn.dataset.mwExpenseV23){btn.addEventListener('click',e=>submit(win,e),true);btn.dataset.mwExpenseV23='1'}
+    const refresh=d.getElementById('mwPlRefresh');
+    if(refresh&&!refresh.dataset.mwExpenseV23){refresh.addEventListener('click',()=>schedulePersistentRefresh(win,120),false);refresh.dataset.mwExpenseV23='1'}
+    const tab=d.getElementById('vendorTabBtn-pl');
+    if(tab&&!tab.dataset.mwExpenseV23){tab.addEventListener('click',()=>schedulePersistentRefresh(win,140),false);tab.dataset.mwExpenseV23='1'}
+  }
+  function boot(win){injectStyle(win);arrange(win);bind(win);if(!win.__mwExpenseV23Observer){const ob=new win.MutationObserver(()=>{arrange(win);bind(win)});ob.observe(win.document.documentElement,{childList:true,subtree:true});win.__mwExpenseV23Observer=ob}win.__mwVendorPlExpenseV23=true;if(win.document.getElementById('vendorTab-pl')?.classList.contains('active'))schedulePersistentRefresh(win,160)}
   function install(win){if(!win)return;if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',()=>boot(win),{once:true});else boot(win)}
   window.MeshwarVendorPlExpenseV23={install,submit,saveExpense,fetchOperatingExpenses,refreshExpenseUi,renderExpenseState,VERSION};
 })();
