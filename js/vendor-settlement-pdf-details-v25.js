@@ -23,22 +23,43 @@
     return{orders,expenses};
   }
 
-  function wrapSettlementPost(win){
-    if(win.__mwSettlementV25FetchWrapped)return;
-    const original=win.fetch.bind(win);
-    win.fetch=async function(input,init={}){
-      const url=typeof input==='string'?input:String(input?.url||'');
-      const method=String(init?.method||'GET').toUpperCase();
+  function enrichSettlementBody(win,body){
+    const raw=JSON.parse(body),rows=Array.isArray(raw)?raw:[raw],details=snapshotDetails(win);
+    rows.forEach(row=>{row.snapshot={...(row.snapshot||{}),detail_version:VERSION,orders:details.orders,expenses:details.expenses}});
+    return JSON.stringify(Array.isArray(raw)?rows:rows[0]);
+  }
+
+  function armSettlementPost(win){
+    if(win.__mwSettlementV25FetchArmed)return;
+    const previous=win.fetch,wrapped=async function(input,init={}){
+      const url=typeof input==='string'?input:String(input?.url||''),method=String(init?.method||input?.method||'GET').toUpperCase();
       if(method==='POST'&&/\/rest\/v1\/financial_settlements(?:\?|$)/.test(url)&&init?.body){
-        try{
-          const raw=JSON.parse(init.body),rows=Array.isArray(raw)?raw:[raw],details=snapshotDetails(win);
-          rows.forEach(row=>{row.snapshot={...(row.snapshot||{}),detail_version:VERSION,orders:details.orders,expenses:details.expenses}});
-          init={...init,body:JSON.stringify(Array.isArray(raw)?rows:rows[0])};
-        }catch(e){console.error('V25 settlement snapshot enrichment failed',e)}
+        if(win.fetch===wrapped)win.fetch=previous;win.__mwSettlementV25FetchArmed=false;
+        try{init={...init,body:enrichSettlementBody(win,init.body)}}catch(e){console.error('V25 settlement snapshot enrichment failed',e)}
+        return previous.call(win,input,init);
       }
-      return original(input,init);
+      return previous.call(win,input,init);
     };
-    win.__mwSettlementV25FetchWrapped=true;
+    win.fetch=wrapped;win.__mwSettlementV25FetchArmed=true;
+    win.setTimeout(()=>{if(win.fetch===wrapped)win.fetch=previous;win.__mwSettlementV25FetchArmed=false},15000);
+  }
+
+  function bindCloseEnrichment(win){
+    if(win.__mwSettlementV25CloseBound)return;
+    win.document.addEventListener('click',e=>{
+      if(!e.target?.closest?.('#mwPlClosePeriod'))return;
+      if(win.__mwSettlementV25ConfirmArmed)return;
+      const previousConfirm=win.confirm;
+      win.confirm=function(){
+        const result=typeof previousConfirm==='function'?previousConfirm.apply(win,arguments):true;
+        win.confirm=previousConfirm;win.__mwSettlementV25ConfirmArmed=false;
+        if(result!==false)armSettlementPost(win);
+        return result;
+      };
+      win.__mwSettlementV25ConfirmArmed=true;
+      win.setTimeout(()=>{if(win.__mwSettlementV25ConfirmArmed){win.confirm=previousConfirm;win.__mwSettlementV25ConfirmArmed=false}},15000);
+    },true);
+    win.__mwSettlementV25CloseBound=true;
   }
 
   function orderTable(rows,cur){
@@ -67,6 +88,6 @@
     },true);
     win.__mwSettlementV25PrintBound=true;
   }
-  function install(win){if(!win)return;const boot=()=>{wrapSettlementPost(win);bindPrintOverride(win);win.__mwVendorSettlementPdfDetailsV25=true};if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',boot,{once:true});else boot()}
-  window.MeshwarVendorSettlementPdfDetailsV25={install,snapshotDetails,printDetailed,VERSION};
+  function install(win){if(!win)return;const boot=()=>{bindCloseEnrichment(win);bindPrintOverride(win);win.__mwVendorSettlementPdfDetailsV25=true};if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',boot,{once:true});else boot()}
+  window.MeshwarVendorSettlementPdfDetailsV25={install,snapshotDetails,enrichSettlementBody,printDetailed,VERSION};
 })();
