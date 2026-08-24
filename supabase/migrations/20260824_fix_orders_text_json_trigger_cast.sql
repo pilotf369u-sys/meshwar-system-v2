@@ -1,7 +1,7 @@
 -- Repair orders triggers for deployments where public.orders.details is TEXT.
 -- Safe/idempotent: keeps the current trigger names and stock lifecycle behavior,
--- but JSON operators are applied only to a local JSONB value created with an
--- explicit NEW.details::jsonb cast. Assignments back to NEW.details are explicit TEXT.
+-- but JSON operators are applied only to JSONB values created with explicit casts.
+-- Assignments back to NEW.details are explicit TEXT.
 
 create or replace function public.meshwar_normalize_local_order_details()
 returns trigger
@@ -174,6 +174,47 @@ before update of status on public.orders
 for each row
 when (old.status is distinct from new.status)
 execute function public.meshwar_local_stock_status_lifecycle();
+
+-- The cost-snapshot trigger exists in some live deployments but was never captured
+-- in repository migrations. Preserve its exact live definition and patch only unsafe
+-- direct JSON operators on the TEXT-backed NEW.details column.
+do $$
+declare
+  fn_oid oid;
+  fn_sql text;
+  patched_sql text;
+begin
+  select p.oid
+    into fn_oid
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public'
+     and p.proname = 'meshwar_lock_order_cost_snapshot'
+     and p.pronargs = 0
+   limit 1;
+
+  if fn_oid is not null then
+    fn_sql := pg_get_functiondef(fn_oid);
+
+    patched_sql := regexp_replace(
+      fn_sql,
+      'new\s*\.\s*details\s*->>',
+      '(new.details::jsonb)->>',
+      'gi'
+    );
+    patched_sql := regexp_replace(
+      patched_sql,
+      'new\s*\.\s*details\s*->',
+      '(new.details::jsonb)->',
+      'gi'
+    );
+
+    if patched_sql is distinct from fn_sql then
+      execute patched_sql;
+    end if;
+  end if;
+end;
+$$;
 
 -- Post-migration guard: fail loudly if any trigger function currently attached to
 -- public.orders still contains a direct NEW.details -> / ->> expression.
