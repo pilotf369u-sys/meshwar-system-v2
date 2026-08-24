@@ -98,7 +98,27 @@ export async function installMocks(page){
   await page.context().route('https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',r=>r.fulfill({status:200,contentType:'text/javascript',body:"window.JsBarcode=function(){return true};window.print=function(){};"}));return db;
 }
 
-export async function openVendor(page){await page.goto('/vendor-dashboard.html');const frame=page.frameLocator('#vendorFrame');await frame.locator('#dashboardView').waitFor({state:'visible'});await frame.locator('#vendorOrderSmartSearch').waitFor();await frame.locator('#vendorTabBtn-categories').waitFor();return frame;}
+export async function openVendor(page){
+  await page.goto('/vendor-dashboard.html');
+  const frame=page.frameLocator('#vendorFrame');
+  await frame.locator('#dashboardView').waitFor({state:'visible'});
+  await frame.locator('#vendorOrderSmartSearch').waitFor();
+  await frame.locator('#vendorTabBtn-categories').waitFor();
+  for(let i=0;i<120;i++){
+    const ready=await frameWindow(page,()=>Boolean(
+      window.MeshwarVendorBarcodeMarginV22&&
+      document.getElementById('vendorSmartProductSearch')?.__mwV22Search&&
+      window.__mwV22BarcodeSaveGuard&&
+      window.__mwFinanceCostSaveGuardV21&&
+      window.MeshwarTaxonomyPersistenceV10&&
+      window.saveProduct?.__mwTaxonomyV10&&
+      window.saveProduct?.__mwFinanceV21
+    )).catch(()=>false);
+    if(ready)return frame;
+    await page.waitForTimeout(50);
+  }
+  throw new Error('Vendor catalog layers did not become ready for E2E');
+}
 
 export async function frameWindow(page,fn,arg){
   let last;
