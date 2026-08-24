@@ -11,12 +11,21 @@
   <style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617}
     #vendorFrame{width:100%;height:100%;border:0;display:block;visibility:hidden}
-    #vendorBootLoader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#020617;color:#e2e8f0;font-family:Tahoma,Arial,sans-serif;transition:opacity .18s ease}
+    #vendorBootLoader{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#020617,#0f172a 48%,#020617);color:#e2e8f0;font-family:Tahoma,Arial,sans-serif;transition:opacity .18s ease;overflow:hidden}
     #vendorBootLoader.vendor-loader-hidden{opacity:0;pointer-events:none}
-    .vendor-loader-box{display:flex;align-items:center;gap:12px;border:1px solid rgba(148,163,184,.16);background:rgba(15,23,42,.72);padding:14px 18px;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+    .vendor-loader-shell{position:absolute;inset:0;padding:18px;box-sizing:border-box;opacity:.9}
+    .vendor-loader-top{height:62px;border:1px solid rgba(148,163,184,.12);border-radius:18px;background:rgba(15,23,42,.72);margin-bottom:16px}
+    .vendor-loader-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+    .vendor-loader-stat,.vendor-loader-panel{border:1px solid rgba(148,163,184,.1);background:rgba(15,23,42,.58);border-radius:16px;overflow:hidden;position:relative}
+    .vendor-loader-stat{height:70px}.vendor-loader-panel{height:52vh}
+    .vendor-loader-shimmer:after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(148,163,184,.06),transparent);animation:vendor-shimmer 1.4s infinite}
+    .vendor-loader-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.18);backdrop-filter:blur(1px)}
+    .vendor-loader-box{display:flex;align-items:center;gap:12px;border:1px solid rgba(148,163,184,.18);background:rgba(15,23,42,.92);padding:13px 17px;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
     .vendor-loader-spinner{width:20px;height:20px;border:2px solid rgba(148,163,184,.25);border-top-color:#38bdf8;border-radius:50%;animation:vendor-spin .7s linear infinite}
-    .vendor-loader-text{font-size:13px;font-weight:800}
+    .vendor-loader-text{font-size:13px;font-weight:800;white-space:nowrap}
     @keyframes vendor-spin{to{transform:rotate(360deg)}}
+    @keyframes vendor-shimmer{100%{transform:translateX(100%)}}
+    @media(max-width:700px){.vendor-loader-shell{padding:12px}.vendor-loader-stats{grid-template-columns:repeat(2,1fr)}.vendor-loader-stat:nth-child(3){display:none}.vendor-loader-panel{height:58vh}.vendor-loader-top{height:54px}}
   </style>
   <script src="js/vendor-barcode-smart-search-v11.js?v=20260823-1301"></script>
   <script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1910"></script>
@@ -31,11 +40,20 @@
   <script src="js/vendor-settlement-pdf-details-v25.js?v=20260824-1435"></script>
   <script src="js/vendor-product-edit-fields-v26.js?v=20260824-v27-payloadfix1"></script>
   <script src="js/vendor-product-save-snapshot-v27.js?v=20260824-v27-snapshotbridge1"></script>
-  <script src="js/vendor-ux-realtime-v28.js?v=20260824-v28-ux-realtime2"></script>
+  <script src="js/vendor-ux-realtime-v28.js?v=20260824-v30-loader-polish1"></script>
 </head>
 <body>
   <div id="vendorBootLoader" role="status" aria-live="polite">
-    <div class="vendor-loader-box"><span class="vendor-loader-spinner" aria-hidden="true"></span><span class="vendor-loader-text">جاري التحقق من جلسة المتجر...</span></div>
+    <div class="vendor-loader-shell" aria-hidden="true">
+      <div class="vendor-loader-top vendor-loader-shimmer"></div>
+      <div class="vendor-loader-stats">
+        <div class="vendor-loader-stat vendor-loader-shimmer"></div>
+        <div class="vendor-loader-stat vendor-loader-shimmer"></div>
+        <div class="vendor-loader-stat vendor-loader-shimmer"></div>
+      </div>
+      <div class="vendor-loader-panel vendor-loader-shimmer"></div>
+    </div>
+    <div class="vendor-loader-center"><div class="vendor-loader-box"><span class="vendor-loader-spinner" aria-hidden="true"></span><span class="vendor-loader-text">جاري تجهيز لوحة المتجر...</span></div></div>
   </div>
   <iframe id="vendorFrame" aria-busy="true" src="vendor-dashboard-v2.html?v=20260822-1910" title="لوحة صاحب المتجر"></iframe>
   <script>
