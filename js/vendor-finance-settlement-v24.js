@@ -98,7 +98,7 @@
   function renderPeriod(win,calc){
     if(!calc)return;const d=win.document,cur=calc.st.exchange_target_currency||calc.st.default_currency||'USD',set=(id,v)=>{const el=d.getElementById(id);if(el)el.textContent=money(v,cur)};
     set('mwPlSales',calc.sales);set('mwPlCogs',calc.cogs);set('mwPlFees',calc.fees);set('mwPlExpenses',calc.op);set('mwPlNet',calc.net);
-    const body=d.getElementById('mwPlOrdersBody');if(body){body.innerHTML=calc.orderRows.map(({o,m})=>`<tr><td>${esc(o.order_code||o.id)}</td><td>${money(m.sales,cur)}</td><td>${money(m.cogs,cur)}</td><td>${money(m.commission+m.other,cur)}</td><td>${money(m.profit,cur)}</td><td><button class="mw-pl-action" data-mw-v24-invoice="${esc(o.id)}">فاتورة</button></td></tr>`).join('')||'<tr><td colspan="6">لا توجد طلبات مسلّمة ضمن هذه الفترة.</td></tr>';body.querySelectorAll('[data-mw-v24-invoice]').forEach(b=>b.addEventListener('click',()=>financeApi(win)?.openInvoice?.(win,calc.orders.find(o=>String(o.id)===String(b.dataset.mwV24Invoice)),calc.st?win.__mwFinanceV21Data?.products||[]:[],calc.st)))}
+    const body=d.getElementById('mwPlOrdersBody');if(body){body.innerHTML=calc.orderRows.map(({o,m})=>`<tr><td>${esc(o.order_code||o.id)}</td><td>${money(m.sales,cur)}</td><td>${money(m.cogs,cur)}</td><td>${money(m.commission+m.other,cur)}</td><td>${money(m.profit,cur)}</td><td><button class="mw-pl-action" data-mw-invoice="${esc(o.id)}" data-mw-v24-invoice="${esc(o.id)}">فاتورة</button></td></tr>`).join('')||'<tr><td colspan="6">لا توجد طلبات مسلّمة ضمن هذه الفترة.</td></tr>';body.querySelectorAll('[data-mw-v24-invoice]').forEach(b=>b.addEventListener('click',()=>financeApi(win)?.openInvoice?.(win,calc.orders.find(o=>String(o.id)===String(b.dataset.mwV24Invoice)),calc.st?win.__mwFinanceV21Data?.products||[]:[],calc.st)))}
     const list=d.getElementById('mwExpenseList');if(list)list.innerHTML=calc.expenses.length?calc.expenses.map(x=>`<div class="flex justify-between border-b border-white/10 py-2"><span>${esc(x.category||'مصروف')} — ${esc(x.note||'')}</span><strong>${money(x.amount,x.currency||cur)}</strong></div>`).join(''):'<div class="vendor-muted">لا توجد مصاريف تشغيلية ضمن هذه الفترة.</div>';
     const warning=d.getElementById('mwPlWarning');if(warning){const msgs=[];if(calc.estimated)msgs.push(`${calc.estimated} طلب يستخدم تكلفة حالية كتقدير.`);if(calc.missing)msgs.push(`${calc.missing} طلب بدون تكلفة مثبتة.`);warning.textContent=msgs.join(' ');warning.classList.toggle('hidden',!msgs.length)}
     win.__mwSettlementV24Current=calc;
@@ -141,7 +141,7 @@
   function renderHistory(win,rows){
     const body=win.document.getElementById('mwSettlementBody');if(!body)return;
     body.innerHTML=(rows||[]).map(x=>`<tr><td>${esc(dateOnly(x.period_start))} → ${esc(dateOnly(x.period_end))}</td><td>${money(x.total_sales,x.currency)}</td><td>${money(x.total_cogs,x.currency)}</td><td>${money(x.total_commission_fees,x.currency)}</td><td>${money(x.total_operating_expenses,x.currency)}</td><td><strong>${money(x.net_profit,x.currency)}</strong></td><td>${esc(x.status==='settled'?'مغلق':'Settled')}</td><td><button type="button" class="mw-settle-btn" data-mw-settlement-print="${esc(x.id)}">🖨️ كشف</button></td></tr>`).join('')||'<tr><td colspan="8">لا توجد دورات مالية مغلقة بعد.</td></tr>';
-    body.querySelectorAll('[data-mw-settlement-print]').forEach(b=>b.addEventListener('click',()=>printSettlement(win,(rows||[]).find(x=>String(x.id)===String(b.dataset.mwSettlementPrint)))));
+    body.querySelectorAll('[data-mw-settlement-print]').forEach(b=>b.addEventListener('click',()=>printSettlement(win,(rows||[]).find(x=>String(x.id)===String(b.dataset.mwSettlementPrint))));
   }
 
   function printSettlement(win,x){
@@ -177,8 +177,9 @@
   function observePlDom(win){
     if(win.__mwSettlementV24Observer)return;
     const ob=new win.MutationObserver(()=>{
-      if(!win.document.querySelector('#vendorTab-pl .mw-pl-kpis'))return;
-      ensureUi(win,{refresh:win.document.getElementById('vendorTab-pl')?.classList.contains('active')});
+      const d=win.document;if(!d.querySelector('#vendorTab-pl .mw-pl-kpis'))return;
+      if(d.getElementById('mwSettlementToolbar')&&d.getElementById('mwSettlementHistory'))return;
+      ensureUi(win,{refresh:d.getElementById('vendorTab-pl')?.classList.contains('active')});
     });
     ob.observe(win.document.documentElement,{childList:true,subtree:true});
     win.__mwSettlementV24Observer=ob;
