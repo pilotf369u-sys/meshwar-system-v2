@@ -19,6 +19,7 @@
   <script src="js/vendor-barcode-margin-autopricing-v22.js?v=20260822-2352"></script>
   <script src="js/vendor-pl-expense-hotfix-v23.js?v=20260823-1324"></script>
   <script src="js/vendor-finance-settlement-v24.js?v=20260824-1253"></script>
+  <script src="js/vendor-settlement-pdf-details-v25.js?v=20260824-1435"></script>
 </head>
 <body>
   <iframe id="vendorFrame" src="vendor-dashboard-v2.html?v=20260822-1910" title="لوحة صاحب المتجر"></iframe>
@@ -83,6 +84,8 @@
         catch(e){console.error('Vendor P&L expense V23 install failed',e)}
         try{window.MeshwarVendorFinanceSettlementV24?.install(frame.contentWindow)}
         catch(e){console.error('Vendor P&L settlement V24 install failed',e)}
+        try{window.MeshwarVendorSettlementPdfDetailsV25?.install(frame.contentWindow)}
+        catch(e){console.error('Vendor settlement PDF details V25 install failed',e)}
         bindActiveTabPersistence();
         bindV24PlNavigation();
         restoreActiveTab();
