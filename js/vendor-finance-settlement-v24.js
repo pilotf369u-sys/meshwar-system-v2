@@ -141,7 +141,7 @@
   function renderHistory(win,rows){
     const body=win.document.getElementById('mwSettlementBody');if(!body)return;
     body.innerHTML=(rows||[]).map(x=>`<tr><td>${esc(dateOnly(x.period_start))} → ${esc(dateOnly(x.period_end))}</td><td>${money(x.total_sales,x.currency)}</td><td>${money(x.total_cogs,x.currency)}</td><td>${money(x.total_commission_fees,x.currency)}</td><td>${money(x.total_operating_expenses,x.currency)}</td><td><strong>${money(x.net_profit,x.currency)}</strong></td><td>${esc(x.status==='settled'?'مغلق':'Settled')}</td><td><button type="button" class="mw-settle-btn" data-mw-settlement-print="${esc(x.id)}">🖨️ كشف</button></td></tr>`).join('')||'<tr><td colspan="8">لا توجد دورات مالية مغلقة بعد.</td></tr>';
-    body.querySelectorAll('[data-mw-settlement-print]').forEach(b=>b.addEventListener('click',()=>printSettlement(win,(rows||[]).find(x=>String(x.id)===String(b.dataset.mwSettlementPrint))));
+    body.querySelectorAll('[data-mw-settlement-print]').forEach(b=>b.addEventListener('click',()=>printSettlement(win,(rows||[]).find(x=>String(x.id)===String(b.dataset.mwSettlementPrint)))));
   }
 
   function printSettlement(win,x){
