@@ -31,7 +31,6 @@
     }
     d.querySelectorAll('#productsBody tr').forEach(row=>{
       if(!row.querySelector('button[onclick*="editProduct("]'))return;
-      row.querySelector('[data-mw-barcode-label]')?.remove();
       if(!row.querySelector('[data-mw-barcode-cell]')){
         const td=d.createElement('td');
         td.dataset.mwBarcodeCell='1';
