@@ -1,7 +1,7 @@
 /* MESHWAR_VENDOR_PRODUCT_EDIT_FIELDS_V26 */
 (function(){
   'use strict';
-  const VERSION='20260824-1658';
+  const VERSION='20260824-1712';
   const deps=[
     ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=vendor-edit-v26'],
     ['MeshwarStoreCategoriesV9','js/local-store-categories-v9.js?v=vendor-edit-v26'],
@@ -36,6 +36,14 @@
   function refreshInjectedFields(win){
     try{win.MeshwarDetailedDescriptionV8?.ensureField?.()}catch(e){console.warn('V26 detailed description field refresh failed',e)}
     try{win.MeshwarStoreCategoriesV9?.refreshProductCategoryFields?.()}catch(e){console.warn('V26 taxonomy field refresh failed',e)}
+  }
+
+  function fieldsReady(win){
+    return Boolean(
+      win.document.getElementById('productDetailedDescription')&&
+      win.document.getElementById('mwProductMainCategory')&&
+      win.document.getElementById('mwProductSubCategory')
+    );
   }
 
   function hydrateEdit(win,id){
@@ -138,11 +146,13 @@
     let attempts=0;
     const timer=setInterval(()=>{
       attempts++;
-      refreshInjectedFields(win);
+      // Only inject/rebuild taxonomy until the fields exist. Rebuilding an already
+      // rendered select can reset the user's selected subcategory between change/save.
+      if(!fieldsReady(win))refreshInjectedFields(win);
       wrapEditProduct(win);
       wrapSaveProduct(win);
       bindTaxonomyTouch(win);
-      if(attempts>=120)clearInterval(timer);
+      if((fieldsReady(win)&&typeof win.saveProduct==='function'&&typeof win.editProduct==='function')||attempts>=120)clearInterval(timer);
     },50);
     win.__mwVendorProductEditFieldsV26=true;
   }
