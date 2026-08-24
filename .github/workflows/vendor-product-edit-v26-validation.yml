@@ -27,10 +27,12 @@ jobs:
           grep -q "local-store-taxonomy-persistence-v10.js" js/vendor-product-edit-fields-v26.js
           grep -q "hydrateTaxonomyForEdit" js/vendor-product-edit-fields-v26.js
           grep -q "fillDetailedDescription" js/vendor-product-edit-fields-v26.js
+          grep -q "taxonomySnapshot" js/vendor-product-edit-fields-v26.js
+          grep -q "wrapSaveProduct" js/vendor-product-edit-fields-v26.js
           grep -q "persistTaxonomy" js/vendor-product-edit-fields-v26.js
-          grep -q "persistDetailedDescription" js/vendor-product-edit-fields-v26.js
+          grep -q "subcategory_id" js/local-store-taxonomy-persistence-v10.js
           grep -q "mwProductSubCategory" js/vendor-product-edit-fields-v26.js
-          grep -q "vendor-product-edit-fields-v26.js?v=20260824-1648" vendor-dashboard.html
+          grep -q "vendor-product-edit-fields-v26.js?v=20260824-1658" vendor-dashboard.html
           grep -q "MeshwarVendorProductEditFieldsV26?.install" vendor-dashboard.html
       - name: Protect barcode and finance layers
         run: |
