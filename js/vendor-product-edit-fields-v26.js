@@ -1,15 +1,15 @@
 /* MESHWAR_VENDOR_PRODUCT_EDIT_FIELDS_V26 */
 (function(){
   'use strict';
-  const VERSION='20260824-v27-racefix2';
+  const VERSION='20260824-v27-payloadfix1';
   const deps=[
-    ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=vendor-edit-v27-racefix2'],
-    ['MeshwarStoreCategoriesV9','js/local-store-categories-v9.js?v=vendor-edit-v27-racefix2'],
-    ['MeshwarTaxonomyPersistenceV10','js/local-store-taxonomy-persistence-v10.js?v=vendor-edit-v27-racefix2']
+    ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=vendor-edit-v27-payloadfix1'],
+    ['MeshwarStoreCategoriesV9','js/local-store-categories-v9.js?v=vendor-edit-v27-payloadfix1'],
+    ['MeshwarTaxonomyPersistenceV10','js/local-store-taxonomy-persistence-v10.js?v=vendor-edit-v27-payloadfix1']
   ];
   function dependencyReady(win,name){
     if(name==='MeshwarDetailedDescriptionV8')return typeof win.MeshwarDetailedDescriptionV8?.persistDetailedDescriptionSnapshot==='function';
-    if(name==='MeshwarTaxonomyPersistenceV10')return typeof win.MeshwarTaxonomyPersistenceV10?.taxonomySnapshot==='function';
+    if(name==='MeshwarTaxonomyPersistenceV10')return win.MeshwarTaxonomyPersistenceV10?.VERSION==='20260824-v27-payloadfix1'&&typeof win.MeshwarTaxonomyPersistenceV10?.taxonomySnapshot==='function';
     return Boolean(win[name]);
   }
   function appendScript(win,src,resolve,reject){
