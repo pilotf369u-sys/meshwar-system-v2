@@ -1,5 +1,6 @@
 /* MESHWAR_LOCAL_STORE_TAXONOMY_PERSISTENCE_V10 */
 (function(){
+  const VERSION='20260824-v27-payloadfix1';
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const STORE_KEY='meshwar_vendor_store';
@@ -21,6 +22,12 @@
     const s=window.__mwTaxonomySelectionV10;if(!window.__mwTaxonomyTouchedV10||!s)return domTaxonomy();
     const main=String(s.main||'').trim(),sub=String(s.sub||'').trim();return{main,sub,effective:sub||main||null};
   }
+  function saveTaxonomySnapshot(){
+    const dom=domTaxonomy(),shadow=window.__mwTaxonomySelectionV10||{};
+    const main=String(dom.main||shadow.main||'').trim();
+    const sub=String(dom.sub||shadow.sub||'').trim();
+    return{main,sub,effective:sub||main||null};
+  }
   async function resolveSavedProductId({id,name,storeId}){
     if(id)return id;if(!name||!storeId)return'';
     const rows=await rest(`local_products?select=id&store_id=eq.${q(storeId)}&product_name=eq.${q(name)}&order=created_at.desc&limit=1`);
@@ -28,13 +35,16 @@
   }
   async function persistTaxonomy({id,name,storeId,taxonomy}){
     const productId=await resolveSavedProductId({id,name,storeId});if(!productId)throw new Error('تعذر تحديد المنتج المحفوظ لتثبيت التصنيف.');
-    const payload={category_id:taxonomy.effective,subcategory_id:taxonomy.sub||null,updated_at:new Date().toISOString()};
+    const subcategoryId=String(taxonomy?.sub||'').trim();
+    const effectiveId=String(taxonomy?.effective||subcategoryId||taxonomy?.main||'').trim()||null;
+    const payload={category_id:effectiveId,subcategory_id:subcategoryId||null,updated_at:new Date().toISOString()};
+    window.__mwTaxonomyV10LastPayload={...payload,id:productId,at:Date.now()};
     let saved;
     try{saved=await rest(`local_products?id=eq.${q(productId)}&store_id=eq.${q(storeId)}`,{method:'PATCH',body:payload,prefer:'return=representation'})}
     catch(err){if(/subcategory_id/i.test(String(err?.message||err)))throw new Error('حقل subcategory_id غير مطبق في Supabase بعد. شغّل migration 20260822_local_product_subcategory_persistence.sql ثم أعد المحاولة.');throw err}
     const row=Array.isArray(saved)?saved[0]:saved;if(!row)throw new Error('لم يرجع Supabase المنتج بعد حفظ التصنيف.');
     const verify=await rest(`local_products?select=id,category_id,subcategory_id&id=eq.${q(productId)}&store_id=eq.${q(storeId)}&limit=1`),actual=Array.isArray(verify)?verify[0]:null;if(!actual)throw new Error('تعذر التحقق من التصنيف المحفوظ.');
-    const expectedCategory=String(taxonomy.effective||''),expectedSub=String(taxonomy.sub||'');
+    const expectedCategory=String(effectiveId||''),expectedSub=subcategoryId;
     if(String(actual.category_id||'')!==expectedCategory||String(actual.subcategory_id||'')!==expectedSub)throw new Error('فشل التحقق من category_id / subcategory_id بعد الحفظ.');
     window.__mwTaxonomyV10Last={id:productId,category_id:actual.category_id,subcategory_id:actual.subcategory_id,at:Date.now()};return actual;
   }
@@ -55,8 +65,8 @@
     if(sub&&s.sub&&[...sub.options].some(o=>o.value===s.sub)&&sub.value!==s.sub)sub.value=s.sub;
   }
   function installSelectionStabilizer(){
-    if(window.__mwTaxonomySelectionObserverV10)return;
-    const boot=()=>{const wrap=document.getElementById('mwProductTaxonomy');if(!wrap)return false;const ob=new MutationObserver(()=>queueMicrotask(restoreShadowSelection));ob.observe(wrap,{childList:true,subtree:true});window.__mwTaxonomySelectionObserverV10=ob;return true};
+    if(window.__mwTaxonomySelectionObserverV10PayloadFix)return;
+    const boot=()=>{const wrap=document.getElementById('mwProductTaxonomy');if(!wrap)return false;const ob=new MutationObserver(()=>queueMicrotask(restoreShadowSelection));ob.observe(wrap,{childList:true,subtree:true});window.__mwTaxonomySelectionObserverV10PayloadFix=ob;return true};
     if(!boot()){let n=0;const t=setInterval(()=>{if(boot()||++n>=80)clearInterval(t)},50)}
   }
   async function persistAfterSuccessfulSave(snapshot){
@@ -69,30 +79,36 @@
       try{await persistTaxonomy(snapshot);return}catch(err){if(i===31)throw err}
     }
   }
-  function markSaveFunction(){if(typeof window.saveProduct==='function')window.saveProduct.__mwTaxonomyV10=true}
+  function markSaveFunction(){if(typeof window.saveProduct==='function'){window.saveProduct.__mwTaxonomyV10=true;window.saveProduct.__mwTaxonomyV10Version=VERSION}}
+  function captureSelection(e){
+    if(e.target?.id==='mwProductMainCategory'){
+      window.__mwTaxonomyTouchedV10=true;
+      const existingSub=String(document.getElementById('mwProductSubCategory')?.value||'').trim();
+      window.__mwTaxonomySelectionV10={main:String(e.target.value||'').trim(),sub:existingSub};return;
+    }
+    if(e.target?.id==='mwProductSubCategory'){
+      window.__mwTaxonomyTouchedV10=true;const old=window.__mwTaxonomySelectionV10||{};
+      window.__mwTaxonomySelectionV10={main:String(document.getElementById('mwProductMainCategory')?.value||old.main||'').trim(),sub:String(e.target.value||'').trim()};
+    }
+  }
   function bindSaveGuard(){
-    if(window.__mwTaxonomySaveGuardV10)return;
-    document.addEventListener('change',e=>{
-      if(e.target?.id==='mwProductMainCategory'){
-        window.__mwTaxonomyTouchedV10=true;window.__mwTaxonomySelectionV10={main:String(e.target.value||'').trim(),sub:''};return;
-      }
-      if(e.target?.id==='mwProductSubCategory'){
-        window.__mwTaxonomyTouchedV10=true;const old=window.__mwTaxonomySelectionV10||{};window.__mwTaxonomySelectionV10={main:String(document.getElementById('mwProductMainCategory')?.value||old.main||'').trim(),sub:String(e.target.value||'').trim()};
-      }
-    },true);
+    if(window.__mwTaxonomySaveGuardV10PayloadFix)return;
+    document.addEventListener('input',captureSelection,true);
+    document.addEventListener('change',captureSelection,true);
     document.addEventListener('click',e=>{
       if(e.target?.closest?.('#addNewProductBtn,button[onclick="openProductModal()"]')){window.__mwTaxonomyTouchedV10=true;window.__mwTaxonomySelectionV10={main:'',sub:''}}
       if(e.target?.closest?.('button[onclick^="editProduct("]')){window.__mwTaxonomyTouchedV10=false;window.__mwTaxonomySelectionV10=null}
       const save=e.target?.closest?.('button[onclick*="saveProduct"]');if(!save)return;
-      const store=sessionStore(),id=String(document.getElementById('productId')?.value||'').trim(),name=String(document.getElementById('productName')?.value||'').trim(),taxonomy=shadowTaxonomy();
+      const store=sessionStore(),id=String(document.getElementById('productId')?.value||'').trim(),name=String(document.getElementById('productName')?.value||'').trim(),taxonomy=saveTaxonomySnapshot();
       const skip=Boolean(id&&!window.__mwTaxonomyTouchedV10&&!taxonomy.effective);
-      persistAfterSuccessfulSave({id,name,storeId:String(store?.id||''),taxonomy,skip}).catch(err=>{console.error('V10 taxonomy persistence error',err);const message='تم حفظ بيانات المنتج الأساسية، لكن تعذر تثبيت التصنيف: '+(err?.message||err);if(typeof window.showNotice==='function')window.showNotice(message,true);alert(message)})
+      window.__mwTaxonomyV10SaveSnapshot={id,name,storeId:String(store?.id||''),taxonomy,skip,at:Date.now()};
+      persistAfterSuccessfulSave(window.__mwTaxonomyV10SaveSnapshot).catch(err=>{console.error('V10 taxonomy persistence error',err);const message='تم حفظ بيانات المنتج الأساسية، لكن تعذر تثبيت التصنيف: '+(err?.message||err);if(typeof window.showNotice==='function')window.showNotice(message,true);alert(message)})
     },true);
-    window.__mwTaxonomySaveGuardV10=true;
+    window.__mwTaxonomySaveGuardV10PayloadFix=true;
   }
   function startVendor(){
     bindSaveGuard();installSelectionStabilizer();markSaveFunction();let tries=0;const timer=setInterval(()=>{markSaveFunction();if(++tries>=120)clearInterval(timer)},50);
   }
   if(vendorPage)startVendor();
-  window.MeshwarTaxonomyPersistenceV10={persistTaxonomy,hydrateTaxonomyForEdit,taxonomySnapshot:shadowTaxonomy};
+  window.MeshwarTaxonomyPersistenceV10={VERSION,persistTaxonomy,hydrateTaxonomyForEdit,taxonomySnapshot:saveTaxonomySnapshot};
 })();
