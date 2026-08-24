@@ -41,6 +41,7 @@
   <script src="js/vendor-product-edit-fields-v26.js?v=20260824-v27-payloadfix1"></script>
   <script src="js/vendor-product-save-snapshot-v27.js?v=20260824-v27-snapshotbridge1"></script>
   <script src="js/vendor-ux-realtime-v28.js?v=20260824-v31-edit-read-hydration1"></script>
+  <script src="js/vendor-edit-direct-dom-v32.js?v=20260825-v33-complete-edit-hydration1"></script>
 </head>
 <body>
   <div id="vendorBootLoader" role="status" aria-live="polite">
@@ -109,6 +110,7 @@
         try{window.MeshwarVendorSettlementPdfDetailsV25?.install(frame.contentWindow)}catch(e){console.error('Vendor settlement PDF details V25 install failed',e)}
         try{window.MeshwarVendorProductEditFieldsV26?.install(frame.contentWindow)}catch(e){console.error('Vendor product edit fields V26 install failed',e)}
         try{window.MeshwarVendorProductSaveSnapshotV27?.install(frame.contentWindow)}catch(e){console.error('Vendor product save snapshot V27 install failed',e)}
+        try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor complete edit hydration V33 install failed',e)}
         try{
           const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);
           if(boot&&typeof boot.then==='function')boot.catch(revealFallback);
