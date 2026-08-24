@@ -2,7 +2,7 @@
 (function(){
   'use strict';
 
-  const VERSION='20260824-v30-loader-polish1';
+  const VERSION='20260824-v31-edit-read-hydration1';
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const ACTIVE_TAB_KEY='meshwar_vendor_active_tab';
@@ -27,7 +27,7 @@
       }
       await new Promise(resolve=>setTimeout(resolve,25));
     }
-    console.warn('Vendor V30 auth view resolution timed out; revealing current UI safely.');
+    console.warn('Vendor V31 auth view resolution timed out; revealing current UI safely.');
     return false;
   }
 
@@ -61,7 +61,7 @@
       frame.style.visibility='visible';
       loader.style.display='flex';
       loader.dataset.active='1';
-    }catch(err){console.warn('Vendor V30 save transition start failed',err)}
+    }catch(err){console.warn('Vendor V31 save transition start failed',err)}
   }
 
   function endSaveTransition(frame){
@@ -70,12 +70,12 @@
       frame.style.visibility='visible';
       frame.setAttribute('aria-busy','false');
       if(loader){loader.style.display='none';loader.dataset.active='0'}
-    }catch(err){console.warn('Vendor V30 save transition end failed',err)}
+    }catch(err){console.warn('Vendor V31 save transition end failed',err)}
   }
 
   function preserveProductTab(win){
     try{win.localStorage.setItem(ACTIVE_TAB_KEY,'vendorTabBtn-products')}catch{}
-    try{win.setVendorTab?.('products')}catch(err){console.warn('Vendor V30 product tab restore failed',err)}
+    try{win.setVendorTab?.('products')}catch(err){console.warn('Vendor V31 product tab restore failed',err)}
   }
 
   function installSaveTabGuard(frame,win){
@@ -103,11 +103,89 @@
     win.__mwVendorSaveTabGuardV29=true;
   }
 
+  function parseObject(value){
+    if(!value)return{};
+    if(typeof value==='object'&&!Array.isArray(value))return value;
+    try{const parsed=JSON.parse(value);return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{}}catch{return{}}
+  }
+
+  function asList(value){
+    if(Array.isArray(value))return value.map(v=>String(v??'').trim()).filter(Boolean);
+    if(value==null||value==='')return[];
+    if(typeof value==='string')return value.split(',').map(v=>v.trim()).filter(Boolean);
+    return[];
+  }
+
+  function firstList(...values){
+    for(const value of values){const list=asList(value);if(list.length)return list}
+    return[];
+  }
+
+  async function fetchProductForEdit(win,productId){
+    const store=currentStore(win),storeId=String(store?.id||'').trim(),id=String(productId||'').trim();
+    if(!storeId||!id)return null;
+    const url=`${SB_URL}/rest/v1/local_products?select=*&id=eq.${encodeURIComponent(id)}&store_id=eq.${encodeURIComponent(storeId)}&limit=1`;
+    const response=await win.fetch(url,{cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,Accept:'application/json'}});
+    if(!response.ok)throw new Error(await response.text()||`HTTP ${response.status}`);
+    const rows=await response.json();
+    return Array.isArray(rows)?rows[0]||null:null;
+  }
+
+  async function waitForEditFields(win){
+    for(let i=0;i<40;i++){
+      try{win.MeshwarDetailedDescriptionV8?.ensureField?.()}catch{}
+      const d=win.document;
+      if(d.getElementById('productSizes')&&d.getElementById('productVolumes')&&d.getElementById('productDetailedDescription'))return true;
+      await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    return false;
+  }
+
+  async function populateEditReadFields(win,productId){
+    const id=String(productId||'').trim();if(!id)return;
+    try{
+      const product=await fetchProductForEdit(win,id);if(!product)return;
+      await waitForEditFields(win);
+      const d=win.document,options=parseObject(product.options),dimensions=parseObject(product.dimensions),nestedDimensions=parseObject(options.dimensions);
+      const detailed=String(product.detailed_description??options.detailed_description??nestedDimensions.detailed_description??'').trim();
+      const colors=firstList(options.colors,dimensions.colors,nestedDimensions.colors);
+      const sizes=firstList(options.sizes,dimensions.sizes,dimensions.size,nestedDimensions.sizes,nestedDimensions.size);
+      const volumes=firstList(options.volumes,dimensions.volumes,dimensions.volume,nestedDimensions.volumes,nestedDimensions.volume);
+      const area=d.getElementById('productDetailedDescription');
+      const colorsField=d.getElementById('productColors'),sizesField=d.getElementById('productSizes'),volumesField=d.getElementById('productVolumes');
+      if(area&&detailed)area.value=detailed;
+      if(colorsField&&colors.length)colorsField.value=colors.join(', ');
+      if(sizesField&&sizes.length)sizesField.value=sizes.join(', ');
+      if(volumesField&&volumes.length)volumesField.value=volumes.join(', ');
+      win.__mwVendorEditReadHydrationV31={id,detailed:Boolean(detailed),colors:colors.length,sizes:sizes.length,volumes:volumes.length,at:Date.now()};
+    }catch(err){console.warn('Vendor V31 edit read hydration failed',err)}
+  }
+
+  function installEditReadHydration(win){
+    if(!win||win.__mwVendorEditReadHydrationBoundV31)return;
+    const bind=()=>{
+      const original=win.editProduct;
+      if(typeof original!=='function'||original.__mwEditReadHydrationV31)return false;
+      const wrapped=function(productId,...args){
+        const result=original.call(this,productId,...args);
+        Promise.resolve(result).finally(()=>populateEditReadFields(win,productId));
+        return result;
+      };
+      wrapped.__mwEditReadHydrationV31=true;
+      win.editProduct=wrapped;
+      return true;
+    };
+    if(!bind()){
+      let tries=0;const timer=setInterval(()=>{if(bind()||++tries>=120)clearInterval(timer)},50);
+    }
+    win.__mwVendorEditReadHydrationBoundV31=true;
+  }
+
   function scheduleOrdersRefresh(win){
     clearTimeout(realtimeRefreshTimer);
     realtimeRefreshTimer=setTimeout(()=>{
-      try{Promise.resolve(win.loadOrders?.()).catch(err=>console.warn('Vendor V30 realtime refresh failed',err))}
-      catch(err){console.warn('Vendor V30 realtime refresh failed',err)}
+      try{Promise.resolve(win.loadOrders?.()).catch(err=>console.warn('Vendor V31 realtime refresh failed',err))}
+      catch(err){console.warn('Vendor V31 realtime refresh failed',err)}
     },120);
   }
 
@@ -131,13 +209,13 @@
         .subscribe(status=>{
           if(status==='SUBSCRIBED')return;
           if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)){
-            console.warn('Vendor V30 realtime status:',status);
+            console.warn('Vendor V31 realtime status:',status);
             clearTimeout(realtimeRetryTimer);
-            realtimeRetryTimer=setTimeout(()=>{realtimeChannel=null;realtimeStoreId='';startRealtime(win).catch(err=>console.warn('Vendor V30 realtime retry failed',err))},1500);
+            realtimeRetryTimer=setTimeout(()=>{realtimeChannel=null;realtimeStoreId='';startRealtime(win).catch(err=>console.warn('Vendor V31 realtime retry failed',err))},1500);
           }
         });
     }catch(err){
-      console.error('Vendor V30 realtime bootstrap failed',err);
+      console.error('Vendor V31 realtime bootstrap failed',err);
       realtimeChannel=null;realtimeStoreId='';
       clearTimeout(realtimeRetryTimer);
       realtimeRetryTimer=setTimeout(()=>startRealtime(win).catch(()=>{}),2500);
@@ -152,7 +230,7 @@
       const storeId=String(currentStore(win)?.id||'');
       if(storeId!==lastStoreId||(!isHidden(dashboard)&&storeId&&(!realtimeChannel||realtimeStoreId!==storeId))){
         lastStoreId=storeId;
-        startRealtime(win).catch(err=>console.warn('Vendor V30 session realtime sync failed',err));
+        startRealtime(win).catch(err=>console.warn('Vendor V31 session realtime sync failed',err));
       }
     };
     new MutationObserver(sync).observe(dashboard,{attributes:true,attributeFilter:['class']});
@@ -164,17 +242,18 @@
   async function install(frame){
     if(!frame?.contentWindow)return;
     const win=frame.contentWindow;
-    try{installSaveTabGuard(frame,win)}catch(err){console.error('Vendor V30 save-tab/flash guard failed',err)}
-    try{watchSessionLifecycle(win)}catch(err){console.error('Vendor V30 session watcher failed',err)}
+    try{installSaveTabGuard(frame,win)}catch(err){console.error('Vendor V31 save-tab/flash guard failed',err)}
+    try{installEditReadHydration(win)}catch(err){console.error('Vendor V31 edit read hydration install failed',err)}
+    try{watchSessionLifecycle(win)}catch(err){console.error('Vendor V31 session watcher failed',err)}
     await waitForResolvedView(frame);
     showFrame(frame);
     if(document.getElementById(SAVE_LOADER_ID)?.dataset.active==='1'){
       try{preserveProductTab(win)}catch{}
       endSaveTransition(frame);
     }
-    startRealtime(win).catch(err=>console.error('Vendor V30 realtime install failed',err));
+    startRealtime(win).catch(err=>console.error('Vendor V31 realtime install failed',err));
   }
 
   window.addEventListener('beforeunload',()=>{stopRealtime().catch(()=>{})});
-  window.MeshwarVendorUxRealtimeV28={install,VERSION};
+  window.MeshwarVendorUxRealtimeV28={install,VERSION,populateEditReadFields};
 })();
