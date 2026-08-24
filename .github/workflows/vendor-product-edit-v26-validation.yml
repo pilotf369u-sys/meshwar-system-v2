@@ -1,0 +1,43 @@
+name: Vendor Product Edit V26 Validation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check V26
+        run: node --check js/vendor-product-edit-fields-v26.js
+      - name: Validate restored edit-field dependencies and ownership
+        run: |
+          grep -q "local-store-detailed-description-v8.js" js/vendor-product-edit-fields-v26.js
+          grep -q "local-store-categories-v9.js" js/vendor-product-edit-fields-v26.js
+          grep -q "local-store-taxonomy-persistence-v10.js" js/vendor-product-edit-fields-v26.js
+          grep -q "fieldsReady" js/vendor-product-edit-fields-v26.js
+          grep -q "ensureFields" js/vendor-product-edit-fields-v26.js
+          grep -q "MutationObserver" js/vendor-product-edit-fields-v26.js
+          grep -q "if(!fieldsReady(win))ensureFields(win)" js/vendor-product-edit-fields-v26.js
+          grep -q "subcategory_id" js/local-store-taxonomy-persistence-v10.js
+          grep -q "hydrateTaxonomyForEdit" js/local-store-taxonomy-persistence-v10.js
+          grep -q "persistTaxonomy" js/local-store-taxonomy-persistence-v10.js
+          grep -q "vendor-product-edit-fields-v26.js?v=20260824-1730" vendor-dashboard.html
+          grep -q "MeshwarVendorProductEditFieldsV26?.install" vendor-dashboard.html
+          ! grep -q "wrapSaveProduct" js/vendor-product-edit-fields-v26.js
+          ! grep -q "wrapEditProduct" js/vendor-product-edit-fields-v26.js
+          ! grep -q "win.saveProduct=" js/vendor-product-edit-fields-v26.js
+          ! grep -q "win.editProduct=" js/vendor-product-edit-fields-v26.js
+      - name: Protect barcode and finance layers
+        run: |
+          git diff --exit-code "${{ github.event.pull_request.base.sha }}" -- js/vendor-barcode-smart-search-v11.js js/vendor-barcode-margin-autopricing-v22.js js/vendor-finance-cost-save-guard-v21.js js/vendor-finance-pl-invoices-v21.js
