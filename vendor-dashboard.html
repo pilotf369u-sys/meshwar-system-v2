@@ -45,17 +45,57 @@
 </head>
 <body>
   <div id="vendorBootLoader" role="status" aria-live="polite">
-    <div class="vendor-loader-shell" aria-hidden="true"><div class="vendor-loader-top vendor-loader-shimmer"></div><div class="vendor-loader-stats"><div class="vendor-loader-stat vendor-loader-shimmer"></div><div class="vendor-loader-stat vendor-loader-shimmer"></div><div class="vendor-loader-stat vendor-loader-shimmer"></div></div><div class="vendor-loader-panel vendor-loader-shimmer"></div></div>
+    <div class="vendor-loader-shell" aria-hidden="true">
+      <div class="vendor-loader-top vendor-loader-shimmer"></div>
+      <div class="vendor-loader-stats">
+        <div class="vendor-loader-stat vendor-loader-shimmer"></div>
+        <div class="vendor-loader-stat vendor-loader-shimmer"></div>
+        <div class="vendor-loader-stat vendor-loader-shimmer"></div>
+      </div>
+      <div class="vendor-loader-panel vendor-loader-shimmer"></div>
+    </div>
     <div class="vendor-loader-center"><div class="vendor-loader-box"><span class="vendor-loader-spinner" aria-hidden="true"></span><span class="vendor-loader-text">جاري تجهيز لوحة المتجر...</span></div></div>
   </div>
   <iframe id="vendorFrame" aria-busy="true" src="vendor-dashboard-v2.html?v=20260822-1910" title="لوحة صاحب المتجر"></iframe>
   <script>
     (function(){
-      const frame=document.getElementById('vendorFrame');const ACTIVE_TAB_KEY='meshwar_vendor_active_tab';
-      function bindActiveTabPersistence(){const win=frame.contentWindow,d=win?.document;if(!d||win.__mwActiveTabPersistenceBound)return;d.addEventListener('click',e=>{const btn=e.target?.closest?.('.vendor-main-tab,[id^="vendorTabBtn-"]');if(btn?.id){try{win.localStorage.setItem(ACTIVE_TAB_KEY,btn.id)}catch(err){console.warn('Vendor active tab save failed',err)}}},true);win.__mwActiveTabPersistenceBound=true}
-      function bindV24PlNavigation(){const win=frame.contentWindow,d=win?.document;if(!d||win.__mwV24PlNavigationBound)return;d.addEventListener('click',e=>{if(!e.target?.closest?.('#vendorTabBtn-pl'))return;win.requestAnimationFrame(()=>{try{window.MeshwarVendorFinanceSettlementV24?.ensureUi(win,{refresh:true})}catch(err){console.error('Vendor P&L V24 direct injection failed',err)}})},true);win.__mwV24PlNavigationBound=true}
-      function restoreActiveTab(){const win=frame.contentWindow,d=win?.document;if(!d)return;let saved='';try{saved=win.localStorage.getItem(ACTIVE_TAB_KEY)||''}catch(err){console.warn('Vendor active tab read failed',err)}if(!saved)return;const btn=d.getElementById(saved);if(btn&&typeof btn.click==='function'&&!btn.classList.contains('active'))btn.click()}
-      function revealFallback(error){console.error('Vendor UX/realtime V28 install failed',error);frame.style.visibility='visible';frame.setAttribute('aria-busy','false');document.getElementById('vendorBootLoader')?.remove()}
+      const frame=document.getElementById('vendorFrame');
+      const ACTIVE_TAB_KEY='meshwar_vendor_active_tab';
+
+      function bindActiveTabPersistence(){
+        const win=frame.contentWindow,d=win?.document;
+        if(!d||win.__mwActiveTabPersistenceBound)return;
+        d.addEventListener('click',e=>{
+          const btn=e.target?.closest?.('.vendor-main-tab,[id^="vendorTabBtn-"]');
+          if(btn?.id){try{win.localStorage.setItem(ACTIVE_TAB_KEY,btn.id)}catch(err){console.warn('Vendor active tab save failed',err)}}
+        },true);
+        win.__mwActiveTabPersistenceBound=true;
+      }
+
+      function bindV24PlNavigation(){
+        const win=frame.contentWindow,d=win?.document;
+        if(!d||win.__mwV24PlNavigationBound)return;
+        d.addEventListener('click',e=>{
+          if(!e.target?.closest?.('#vendorTabBtn-pl'))return;
+          win.requestAnimationFrame(()=>{
+            try{window.MeshwarVendorFinanceSettlementV24?.ensureUi(win,{refresh:true})}
+            catch(err){console.error('Vendor P&L V24 direct injection failed',err)}
+          });
+        },true);
+        win.__mwV24PlNavigationBound=true;
+      }
+
+      function restoreActiveTab(){
+        const win=frame.contentWindow,d=win?.document;if(!d)return;let saved='';
+        try{saved=win.localStorage.getItem(ACTIVE_TAB_KEY)||''}catch(err){console.warn('Vendor active tab read failed',err)}
+        if(!saved)return;const btn=d.getElementById(saved);if(btn&&typeof btn.click==='function'&&!btn.classList.contains('active'))btn.click();
+      }
+
+      function revealFallback(error){
+        console.error('Vendor UX/realtime V28 install failed',error);
+        frame.style.visibility='visible';frame.setAttribute('aria-busy','false');document.getElementById('vendorBootLoader')?.remove();
+      }
+
       function install(){
         try{window.MeshwarVendorBarcodeV11?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode install failed',e)}
         try{window.MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)}catch(e){console.error('Vendor order smart search install failed',e)}
@@ -63,7 +103,7 @@
         try{window.MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)}catch(e){console.error('Vendor order status contrast install failed',e)}
         try{window.MeshwarVendorFinancialKpiIconsV19?.install(frame.contentWindow)}catch(e){console.error('Vendor financial KPI icons install failed',e)}
         try{window.MeshwarVendorFinanceV21?.install(frame.contentWindow)}catch(e){console.error('Vendor finance V21 install failed',e)}
-        try{window.MeshwarVendorFinanceCostSaveGuardV21?.install(frame.contentWindow)}catch(e){console.error('Vendor finance cost guard V21 failed',e)}
+        try{window.MeshwarVendorFinanceCostSaveGuardV21?.install(frame.contentWindow)}catch(e){console.error('Vendor finance cost guard V21 install failed',e)}
         try{window.MeshwarVendorBarcodeMarginV22?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode/margin V22 install failed',e)}
         try{window.MeshwarVendorPlExpenseV23?.install(frame.contentWindow)}catch(e){console.error('Vendor P&L expense V23 install failed',e)}
         try{window.MeshwarVendorFinanceSettlementV24?.install(frame.contentWindow)}catch(e){console.error('Vendor P&L settlement V24 install failed',e)}
@@ -71,7 +111,11 @@
         try{window.MeshwarVendorProductEditFieldsV26?.install(frame.contentWindow)}catch(e){console.error('Vendor product edit fields V26 install failed',e)}
         try{window.MeshwarVendorProductSaveSnapshotV27?.install(frame.contentWindow)}catch(e){console.error('Vendor product save snapshot V27 install failed',e)}
         try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor complete edit hydration V33 install failed',e)}
-        try{const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);if(boot&&typeof boot.then==='function')boot.catch(revealFallback);else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V28 module unavailable'))}catch(e){revealFallback(e)}
+        try{
+          const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);
+          if(boot&&typeof boot.then==='function')boot.catch(revealFallback);
+          else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V28 module unavailable'));
+        }catch(e){revealFallback(e)}
         bindActiveTabPersistence();bindV24PlNavigation();restoreActiveTab();
       }
       frame.addEventListener('load',install);
