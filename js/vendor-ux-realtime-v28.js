@@ -2,7 +2,7 @@
 (function(){
   'use strict';
 
-  const VERSION='20260824-v29-product-save-flash-guard1';
+  const VERSION='20260824-v30-loader-polish1';
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const ACTIVE_TAB_KEY='meshwar_vendor_active_tab';
@@ -27,7 +27,7 @@
       }
       await new Promise(resolve=>setTimeout(resolve,25));
     }
-    console.warn('Vendor V29 auth view resolution timed out; revealing current UI safely.');
+    console.warn('Vendor V30 auth view resolution timed out; revealing current UI safely.');
     return false;
   }
 
@@ -45,8 +45,8 @@
     loader.id=SAVE_LOADER_ID;
     loader.setAttribute('role','status');
     loader.setAttribute('aria-live','polite');
-    loader.style.cssText='position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:#020617;color:#e2e8f0;font-family:Tahoma,Arial,sans-serif;';
-    loader.innerHTML='<div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(148,163,184,.16);background:rgba(15,23,42,.82);padding:14px 18px;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.28)"><span style="width:20px;height:20px;border:2px solid rgba(148,163,184,.25);border-top-color:#38bdf8;border-radius:50%;animation:vendor-save-spin-v29 .7s linear infinite"></span><span style="font-size:13px;font-weight:800">جاري حفظ المنتج...</span></div>';
+    loader.style.cssText='position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.38);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);color:#e2e8f0;font-family:Tahoma,Arial,sans-serif;';
+    loader.innerHTML='<div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(148,163,184,.2);background:rgba(15,23,42,.92);padding:13px 17px;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.3)"><span style="width:20px;height:20px;border:2px solid rgba(148,163,184,.25);border-top-color:#38bdf8;border-radius:50%;animation:vendor-save-spin-v29 .7s linear infinite"></span><span style="font-size:13px;font-weight:800">جاري حفظ المنتج...</span></div>';
     const style=document.createElement('style');
     style.textContent='@keyframes vendor-save-spin-v29{to{transform:rotate(360deg)}}';
     document.head.appendChild(style);
@@ -58,10 +58,10 @@
     try{
       const loader=ensureSaveLoader();
       frame.setAttribute('aria-busy','true');
-      frame.style.visibility='hidden';
+      frame.style.visibility='visible';
       loader.style.display='flex';
       loader.dataset.active='1';
-    }catch(err){console.warn('Vendor V29 save transition start failed',err)}
+    }catch(err){console.warn('Vendor V30 save transition start failed',err)}
   }
 
   function endSaveTransition(frame){
@@ -70,12 +70,12 @@
       frame.style.visibility='visible';
       frame.setAttribute('aria-busy','false');
       if(loader){loader.style.display='none';loader.dataset.active='0'}
-    }catch(err){console.warn('Vendor V29 save transition end failed',err)}
+    }catch(err){console.warn('Vendor V30 save transition end failed',err)}
   }
 
   function preserveProductTab(win){
     try{win.localStorage.setItem(ACTIVE_TAB_KEY,'vendorTabBtn-products')}catch{}
-    try{win.setVendorTab?.('products')}catch(err){console.warn('Vendor V29 product tab restore failed',err)}
+    try{win.setVendorTab?.('products')}catch(err){console.warn('Vendor V30 product tab restore failed',err)}
   }
 
   function installSaveTabGuard(frame,win){
@@ -106,8 +106,8 @@
   function scheduleOrdersRefresh(win){
     clearTimeout(realtimeRefreshTimer);
     realtimeRefreshTimer=setTimeout(()=>{
-      try{Promise.resolve(win.loadOrders?.()).catch(err=>console.warn('Vendor V29 realtime refresh failed',err))}
-      catch(err){console.warn('Vendor V29 realtime refresh failed',err)}
+      try{Promise.resolve(win.loadOrders?.()).catch(err=>console.warn('Vendor V30 realtime refresh failed',err))}
+      catch(err){console.warn('Vendor V30 realtime refresh failed',err)}
     },120);
   }
 
@@ -131,13 +131,13 @@
         .subscribe(status=>{
           if(status==='SUBSCRIBED')return;
           if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)){
-            console.warn('Vendor V29 realtime status:',status);
+            console.warn('Vendor V30 realtime status:',status);
             clearTimeout(realtimeRetryTimer);
-            realtimeRetryTimer=setTimeout(()=>{realtimeChannel=null;realtimeStoreId='';startRealtime(win).catch(err=>console.warn('Vendor V29 realtime retry failed',err))},1500);
+            realtimeRetryTimer=setTimeout(()=>{realtimeChannel=null;realtimeStoreId='';startRealtime(win).catch(err=>console.warn('Vendor V30 realtime retry failed',err))},1500);
           }
         });
     }catch(err){
-      console.error('Vendor V29 realtime bootstrap failed',err);
+      console.error('Vendor V30 realtime bootstrap failed',err);
       realtimeChannel=null;realtimeStoreId='';
       clearTimeout(realtimeRetryTimer);
       realtimeRetryTimer=setTimeout(()=>startRealtime(win).catch(()=>{}),2500);
@@ -152,7 +152,7 @@
       const storeId=String(currentStore(win)?.id||'');
       if(storeId!==lastStoreId||(!isHidden(dashboard)&&storeId&&(!realtimeChannel||realtimeStoreId!==storeId))){
         lastStoreId=storeId;
-        startRealtime(win).catch(err=>console.warn('Vendor V29 session realtime sync failed',err));
+        startRealtime(win).catch(err=>console.warn('Vendor V30 session realtime sync failed',err));
       }
     };
     new MutationObserver(sync).observe(dashboard,{attributes:true,attributeFilter:['class']});
@@ -164,15 +164,15 @@
   async function install(frame){
     if(!frame?.contentWindow)return;
     const win=frame.contentWindow;
-    try{installSaveTabGuard(frame,win)}catch(err){console.error('Vendor V29 save-tab/flash guard failed',err)}
-    try{watchSessionLifecycle(win)}catch(err){console.error('Vendor V29 session watcher failed',err)}
+    try{installSaveTabGuard(frame,win)}catch(err){console.error('Vendor V30 save-tab/flash guard failed',err)}
+    try{watchSessionLifecycle(win)}catch(err){console.error('Vendor V30 session watcher failed',err)}
     await waitForResolvedView(frame);
     showFrame(frame);
     if(document.getElementById(SAVE_LOADER_ID)?.dataset.active==='1'){
       try{preserveProductTab(win)}catch{}
       endSaveTransition(frame);
     }
-    startRealtime(win).catch(err=>console.error('Vendor V29 realtime install failed',err));
+    startRealtime(win).catch(err=>console.error('Vendor V30 realtime install failed',err));
   }
 
   window.addEventListener('beforeunload',()=>{stopRealtime().catch(()=>{})});
