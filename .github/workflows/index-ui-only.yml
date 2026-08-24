@@ -178,7 +178,9 @@ jobs:
           grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-1910"' vendor-dashboard.html
           grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'local_products?select=id,product_name,barcode,stock_quantity' js/vendor-barcode-smart-search-v11.js
-          grep -Fq 'data-mw-barcode-label' js/vendor-barcode-smart-search-v11.js
+          grep -Fq 'data-mw-barcode-cell' js/vendor-barcode-smart-search-v11.js
+          grep -Fq 'data-mw-barcode-label' js/vendor-barcode-margin-autopricing-v22.js
+          ! grep -Fq "row.querySelector('[data-mw-barcode-label]')?.remove()" js/vendor-barcode-smart-search-v11.js
           grep -Fq 'filterExistingRows' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'resetSearchInput(win)' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'resetSearchInput(win,{focus:true})' js/vendor-barcode-smart-search-v11.js
