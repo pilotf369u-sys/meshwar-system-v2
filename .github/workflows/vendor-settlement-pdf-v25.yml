@@ -26,8 +26,11 @@ jobs:
           node --check js/vendor-settlement-pdf-details-v25.js
           grep -Fq '<script src="js/vendor-settlement-pdf-details-v25.js?v=20260824-1435"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorSettlementPdfDetailsV25?.install(frame.contentWindow)' vendor-dashboard.html
-          grep -Fq "detail_version:VERSION" js/vendor-settlement-pdf-details-v25.js
-          grep -Fq "orders:details.orders,expenses:details.expenses" js/vendor-settlement-pdf-details-v25.js
+          grep -Fq 'detail_version:VERSION' js/vendor-settlement-pdf-details-v25.js
+          grep -Fq 'orders:details.orders,expenses:details.expenses' js/vendor-settlement-pdf-details-v25.js
+          grep -Fq 'bindCloseEnrichment' js/vendor-settlement-pdf-details-v25.js
+          grep -Fq 'armSettlementPost' js/vendor-settlement-pdf-details-v25.js
+          ! grep -Fq 'wrapSettlementPost' js/vendor-settlement-pdf-details-v25.js
           grep -Fq 'data-mw-settlement-print' js/vendor-settlement-pdf-details-v25.js
           grep -Fq 'الطلبات المسلّمة الداخلة في الدورة' js/vendor-settlement-pdf-details-v25.js
           grep -Fq 'المصاريف التشغيلية الداخلة في الدورة' js/vendor-settlement-pdf-details-v25.js
