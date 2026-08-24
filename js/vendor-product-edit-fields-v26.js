@@ -1,7 +1,7 @@
 /* MESHWAR_VENDOR_PRODUCT_EDIT_FIELDS_V26 */
 (function(){
   'use strict';
-  const VERSION='20260824-1648';
+  const VERSION='20260824-1658';
   const deps=[
     ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=vendor-edit-v26'],
     ['MeshwarStoreCategoriesV9','js/local-store-categories-v9.js?v=vendor-edit-v26'],
@@ -77,59 +77,73 @@
     win.__mwV26TaxonomyTouchBound=true;
   }
 
-  async function persistAfterSuccessfulSave(win,s){
-    for(let i=0;i<18;i++){
-      await new Promise(r=>setTimeout(r,i?120:180));
-      const modal=win.document.getElementById('productModal');
-      if(modal&&!modal.classList.contains('hidden'))continue;
-      try{
-        if(s.persistTaxonomy){
-          await win.MeshwarTaxonomyPersistenceV10?.persistTaxonomy?.({
-            id:s.id,
-            name:s.name,
-            storeId:s.storeId,
-            taxonomy:{main:s.main,sub:s.sub,effective:s.sub||s.main||null}
-          });
-        }
-        await win.MeshwarDetailedDescriptionV8?.persistDetailedDescription?.();
-        win.__mwV26LastPersist={id:s.id,name:s.name,main:s.main,sub:s.sub,at:Date.now()};
-        return;
-      }catch(e){
-        if(i===17)console.error('V26 product edit persistence recovery failed',e);
-      }
-    }
+  function taxonomySnapshot(win){
+    const main=val(win,'mwProductMainCategory');
+    const sub=val(win,'mwProductSubCategory');
+    return {main,sub,effective:sub||main||null};
   }
 
-  function bindSaveRecovery(win){
-    if(win.__mwV26SaveRecoveryBound)return;
-    win.document.addEventListener('click',e=>{
-      const btn=e.target?.closest?.('button[onclick*="saveProduct"],button');
-      if(!btn)return;
-      const onclick=String(btn.getAttribute('onclick')||''),text=String(btn.textContent||'');
-      if(!onclick.includes('saveProduct')&&!text.includes('حفظ المنتج'))return;
-      const st=store(win),id=val(win,'productId'),name=val(win,'productName'),main=val(win,'mwProductMainCategory'),sub=val(win,'mwProductSubCategory');
-      if(!st?.id||!name)return;
-      const persistTaxonomy=!id||win.__mwV26TaxonomyTouched||Boolean(main||sub);
-      persistAfterSuccessfulSave(win,{id,name,storeId:String(st.id),main,sub,persistTaxonomy}).catch(err=>console.warn('V26 save recovery skipped',err));
-    },true);
-    win.__mwV26SaveRecoveryBound=true;
+  function wrapSaveProduct(win){
+    const original=win.saveProduct;
+    if(typeof original!=='function'||original.__mwEditFieldsV26Save)return false;
+    const wrapped=async function(){
+      const st=store(win);
+      const id=val(win,'productId');
+      const name=val(win,'productName');
+      const taxonomy=taxonomySnapshot(win);
+      const detailed=val(win,'productDetailedDescription');
+      const persistTaxonomy=!id||win.__mwV26TaxonomyTouched||Boolean(taxonomy.main||taxonomy.sub);
+      const result=await original.apply(this,arguments);
+      if(st?.id&&name&&persistTaxonomy){
+        try{
+          await win.MeshwarTaxonomyPersistenceV10?.persistTaxonomy?.({
+            id,
+            name,
+            storeId:String(st.id),
+            taxonomy
+          });
+          win.__mwV26LastTaxonomyPersist={id,name,main:taxonomy.main,sub:taxonomy.sub,at:Date.now()};
+        }catch(e){
+          console.error('V26 taxonomy persistence failed',e);
+          const message='تم حفظ بيانات المنتج الأساسية، لكن تعذر تثبيت التصنيف: '+(e?.message||e);
+          if(typeof win.showNotice==='function')win.showNotice(message,true);
+        }
+      }
+      if(st?.id&&name&&win.document.getElementById('productDetailedDescription')){
+        try{
+          const area=win.document.getElementById('productDetailedDescription');
+          if(area)area.value=detailed;
+          await win.MeshwarDetailedDescriptionV8?.persistDetailedDescription?.();
+        }catch(e){console.error('V26 detailed description persistence failed',e)}
+      }
+      return result;
+    };
+    Object.assign(wrapped,{
+      __mwEditFieldsV26Save:true,
+      __mwBarcode:original.__mwBarcode,
+      __mwV22:original.__mwV22,
+      __mwTaxonomyV10:original.__mwTaxonomyV10,
+      __mwFinanceV21:original.__mwFinanceV21
+    });
+    win.saveProduct=wrapped;
+    return true;
   }
 
   async function boot(win){
     await loadDependencies(win);
     refreshInjectedFields(win);
     bindTaxonomyTouch(win);
-    bindSaveRecovery(win);
+    wrapEditProduct(win);
+    wrapSaveProduct(win);
     let attempts=0;
     const timer=setInterval(()=>{
       attempts++;
       refreshInjectedFields(win);
       wrapEditProduct(win);
+      wrapSaveProduct(win);
       bindTaxonomyTouch(win);
-      bindSaveRecovery(win);
-      if(attempts>=80)clearInterval(timer);
+      if(attempts>=120)clearInterval(timer);
     },50);
-    wrapEditProduct(win);
     win.__mwVendorProductEditFieldsV26=true;
   }
 
