@@ -41,7 +41,7 @@
   <script src="js/vendor-product-edit-fields-v26.js?v=20260824-v27-payloadfix1"></script>
   <script src="js/vendor-product-save-snapshot-v27.js?v=20260824-v27-snapshotbridge1"></script>
   <script src="js/vendor-ux-realtime-v28.js?v=20260824-v31-edit-read-hydration1"></script>
-  <script src="js/vendor-edit-direct-dom-v32.js?v=20260824-v32-direct-dom1"></script>
+  <script src="js/vendor-edit-direct-dom-v32.js?v=20260825-v33-complete-edit-hydration1"></script>
 </head>
 <body>
   <div id="vendorBootLoader" role="status" aria-live="polite">
@@ -63,14 +63,14 @@
         try{window.MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)}catch(e){console.error('Vendor order status contrast install failed',e)}
         try{window.MeshwarVendorFinancialKpiIconsV19?.install(frame.contentWindow)}catch(e){console.error('Vendor financial KPI icons install failed',e)}
         try{window.MeshwarVendorFinanceV21?.install(frame.contentWindow)}catch(e){console.error('Vendor finance V21 install failed',e)}
-        try{window.MeshwarVendorFinanceCostSaveGuardV21?.install(frame.contentWindow)}catch(e){console.error('Vendor finance cost guard V21 install failed',e)}
+        try{window.MeshwarVendorFinanceCostSaveGuardV21?.install(frame.contentWindow)}catch(e){console.error('Vendor finance cost guard V21 failed',e)}
         try{window.MeshwarVendorBarcodeMarginV22?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode/margin V22 install failed',e)}
         try{window.MeshwarVendorPlExpenseV23?.install(frame.contentWindow)}catch(e){console.error('Vendor P&L expense V23 install failed',e)}
         try{window.MeshwarVendorFinanceSettlementV24?.install(frame.contentWindow)}catch(e){console.error('Vendor P&L settlement V24 install failed',e)}
         try{window.MeshwarVendorSettlementPdfDetailsV25?.install(frame.contentWindow)}catch(e){console.error('Vendor settlement PDF details V25 install failed',e)}
         try{window.MeshwarVendorProductEditFieldsV26?.install(frame.contentWindow)}catch(e){console.error('Vendor product edit fields V26 install failed',e)}
         try{window.MeshwarVendorProductSaveSnapshotV27?.install(frame.contentWindow)}catch(e){console.error('Vendor product save snapshot V27 install failed',e)}
-        try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor direct DOM V32 install failed',e)}
+        try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor complete edit hydration V33 install failed',e)}
         try{const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);if(boot&&typeof boot.then==='function')boot.catch(revealFallback);else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V28 module unavailable'))}catch(e){revealFallback(e)}
         bindActiveTabPersistence();bindV24PlNavigation();restoreActiveTab();
       }
