@@ -4,7 +4,7 @@
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const STORE_KEY='meshwar_vendor_store';
-  const VERSION='20260823-1321';
+  const VERSION='20260824-1253';
   const q=v=>encodeURIComponent(String(v??''));
   const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -41,6 +41,7 @@
 
   function injectUi(win){
     const d=win.document,panel=d.getElementById('vendorTab-pl');if(!panel)return false;
+    const kpis=panel.querySelector('.mw-pl-kpis');if(!kpis)return false;
     if(!d.getElementById('mwSettlementToolbar')){
       const toolbar=d.createElement('section');toolbar.id='mwSettlementToolbar';toolbar.className='mw-settle-toolbar';toolbar.innerHTML=`
         <div class="vendor-text mb-3 font-black">🗓️ الفترة المالية وتقفيل الحساب</div>
@@ -50,13 +51,13 @@
           <button id="mwPlApplyPeriod" type="button" class="mw-settle-btn">تطبيق الفترة</button>
           <button id="mwPlClosePeriod" type="button" class="mw-settle-btn primary">🔒 تقفيل الفترة الحالية</button>
         </div><div id="mwSettlementStatus" aria-live="polite"></div>`;
-      const kpis=panel.querySelector('.mw-pl-kpis');if(kpis)kpis.parentNode.insertBefore(toolbar,kpis);else panel.prepend(toolbar);
+      kpis.parentNode.insertBefore(toolbar,kpis);
     }
     if(!d.getElementById('mwSettlementHistory')){
       const history=d.createElement('section');history.id='mwSettlementHistory';history.className='mw-settlement-history';history.innerHTML=`<div class="vendor-text mb-2 font-black">📚 سجل الدورات المالية المغلقة</div><div class="vendor-table-wrap"><table class="mw-settlement-table"><thead><tr><th>الفترة</th><th>المبيعات</th><th>COGS</th><th>العمولات/الخصومات</th><th>المصاريف</th><th>صافي الربح</th><th>الحالة</th><th>كشف الحساب</th></tr></thead><tbody id="mwSettlementBody"><tr><td colspan="8">جارٍ التحميل…</td></tr></tbody></table></div>`;
       panel.appendChild(history);
     }
-    bind(win);return true;
+    bindControls(win);return true;
   }
 
   function status(win,text,tone=''){const el=win.document.getElementById('mwSettlementStatus');if(el){el.textContent=text||'';el.dataset.tone=tone}}
@@ -148,15 +149,44 @@
     const snap=x.snapshot||{};w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كشف دورة مالية</title><style>body{font-family:Arial,sans-serif;margin:0;padding:28px;background:#f3f4f6;color:#111827}.sheet{max-width:900px;margin:auto;background:#fff;border:1px solid #d1d5db;border-radius:18px;padding:28px}.head{text-align:center;border-bottom:2px solid #d4af37;padding-bottom:14px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}.card{border:1px solid #d1d5db;border-radius:10px;padding:12px}.card span{display:block;color:#6b7280;font-size:12px}.card b{display:block;margin-top:5px;font-size:17px}.net{grid-column:1/-1;border-color:#d4af37}.meta{margin-top:18px;font-size:12px;color:#4b5563}.actions{text-align:center;margin-bottom:14px}.actions button{border:0;border-radius:10px;background:#111827;color:#fff;padding:10px 18px;font-weight:800}@media print{body{background:#fff;padding:0}.sheet{border:0}.actions{display:none}}</style></head><body><div class="actions"><button onclick="window.print()">طباعة / حفظ PDF</button></div><main class="sheet"><div class="head"><h2>MeshWar — كشف حساب دورة مالية مغلقة</h2><h1>${esc(st?.store_name||'المتجر')}</h1><div>${esc(dateOnly(x.period_start))} → ${esc(dateOnly(x.period_end))}</div></div><section class="grid"><div class="card"><span>إجمالي المبيعات</span><b>${money(x.total_sales,x.currency)}</b></div><div class="card"><span>تكلفة البضاعة COGS</span><b>${money(x.total_cogs,x.currency)}</b></div><div class="card"><span>العمولات والخصومات</span><b>${money(x.total_commission_fees,x.currency)}</b></div><div class="card"><span>المصاريف التشغيلية</span><b>${money(x.total_operating_expenses,x.currency)}</b></div><div class="card net"><span>صافي الربح</span><b>${money(x.net_profit,x.currency)}</b></div></section><div class="meta">الحالة: مغلق / Settled<br>تاريخ التقفيل: ${esc(new Date(x.closed_at).toLocaleString('en-US'))}<br>عدد الطلبات: ${esc(snap.order_count??'—')} — عدد المصاريف: ${esc(snap.expense_count??'—')}</div></main></body></html>`);w.document.close();
   }
 
-  function bind(win){
-    const d=win.document,apply=d.getElementById('mwPlApplyPeriod'),close=d.getElementById('mwPlClosePeriod'),refresh=d.getElementById('mwPlRefresh'),tab=d.getElementById('vendorTabBtn-pl');
+  function bindControls(win){
+    const d=win.document,apply=d.getElementById('mwPlApplyPeriod'),close=d.getElementById('mwPlClosePeriod'),refresh=d.getElementById('mwPlRefresh');
     if(apply&&!apply.dataset.mwV24){apply.addEventListener('click',()=>refreshPeriod(win));apply.dataset.mwV24='1'}
     if(close&&!close.dataset.mwV24){close.addEventListener('click',()=>closePeriod(win));close.dataset.mwV24='1'}
-    if(refresh&&!refresh.dataset.mwV24){refresh.addEventListener('click',()=>setTimeout(()=>refreshPeriod(win,{quiet:true}),260));refresh.dataset.mwV24='1'}
-    if(tab&&!tab.dataset.mwV24){tab.addEventListener('click',()=>setTimeout(()=>refreshPeriod(win,{quiet:true}),320));tab.dataset.mwV24='1'}
+    if(refresh&&!refresh.dataset.mwV24){refresh.addEventListener('click',()=>refreshPeriod(win,{quiet:true}).catch(()=>{}));refresh.dataset.mwV24='1'}
   }
 
-  function boot(win){injectStyle(win);injectUi(win);if(!win.__mwSettlementV24Observer){const ob=new win.MutationObserver(()=>{if(injectUi(win)&&win.document.getElementById('vendorTab-pl')?.classList.contains('active')&&!win.__mwSettlementV24BootRefresh){win.__mwSettlementV24BootRefresh=true;setTimeout(()=>refreshPeriod(win,{quiet:true}).catch(()=>{}),380)}});ob.observe(win.document.documentElement,{childList:true,subtree:true});win.__mwSettlementV24Observer=ob}if(win.document.getElementById('vendorTab-pl')?.classList.contains('active'))setTimeout(()=>refreshPeriod(win,{quiet:true}).catch(()=>{}),420);win.__mwVendorFinanceSettlementV24=true}
+  function ensureUi(win,{refresh=false}={}){
+    injectStyle(win);
+    const ready=injectUi(win);
+    if(ready&&refresh&&win.document.getElementById('vendorTab-pl')?.classList.contains('active')){
+      refreshPeriod(win,{quiet:true}).catch(err=>console.warn('V24 P&L refresh failed',err));
+    }
+    return ready;
+  }
+
+  function bindPlTab(win){
+    if(win.__mwSettlementV24TabBound)return;
+    win.document.addEventListener('click',e=>{
+      const tab=e.target?.closest?.('#vendorTabBtn-pl');if(!tab)return;
+      win.requestAnimationFrame(()=>ensureUi(win,{refresh:true}));
+    },true);
+    win.__mwSettlementV24TabBound=true;
+  }
+
+  function observePlDom(win){
+    if(win.__mwSettlementV24Observer)return;
+    const ob=new win.MutationObserver(()=>{
+      if(!win.document.querySelector('#vendorTab-pl .mw-pl-kpis'))return;
+      ensureUi(win,{refresh:win.document.getElementById('vendorTab-pl')?.classList.contains('active')});
+    });
+    ob.observe(win.document.documentElement,{childList:true,subtree:true});
+    win.__mwSettlementV24Observer=ob;
+  }
+
+  function boot(win){
+    injectStyle(win);bindPlTab(win);observePlDom(win);ensureUi(win,{refresh:win.document.getElementById('vendorTab-pl')?.classList.contains('active')});win.__mwVendorFinanceSettlementV24=true;
+  }
   function install(win){if(!win)return;if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',()=>boot(win),{once:true});else boot(win)}
-  window.MeshwarVendorFinanceSettlementV24={install,refreshPeriod,closePeriod,loadSettlements,calculate,VERSION};
+  window.MeshwarVendorFinanceSettlementV24={install,ensureUi,injectUi,refreshPeriod,closePeriod,loadSettlements,calculate,VERSION};
 })();
