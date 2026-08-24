@@ -1,11 +1,11 @@
 /* MESHWAR_VENDOR_PRODUCT_EDIT_FIELDS_V26 */
 (function(){
   'use strict';
-  const VERSION='20260824-1730';
+  const VERSION='20260824-v27-racefix';
   const deps=[
-    ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=vendor-edit-v26'],
-    ['MeshwarStoreCategoriesV9','js/local-store-categories-v9.js?v=vendor-edit-v26'],
-    ['MeshwarTaxonomyPersistenceV10','js/local-store-taxonomy-persistence-v10.js?v=vendor-edit-v26']
+    ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=vendor-edit-v27-racefix'],
+    ['MeshwarStoreCategoriesV9','js/local-store-categories-v9.js?v=vendor-edit-v27-racefix'],
+    ['MeshwarTaxonomyPersistenceV10','js/local-store-taxonomy-persistence-v10.js?v=vendor-edit-v27-racefix']
   ];
 
   function loadScript(win,globalName,src){
@@ -31,52 +31,24 @@
     });
   }
 
-  async function loadDependencies(win){
-    for(const [name,src] of deps)await loadScript(win,name,src);
-  }
-
-  function fieldsReady(win){
-    const d=win.document;
-    return Boolean(
-      d.getElementById('productDetailedDescription')&&
-      d.getElementById('mwProductMainCategory')&&
-      d.getElementById('mwProductSubCategory')
-    );
-  }
-
+  async function loadDependencies(win){for(const [name,src] of deps)await loadScript(win,name,src)}
+  function fieldsReady(win){const d=win.document;return Boolean(d.getElementById('productDetailedDescription')&&d.getElementById('mwProductMainCategory')&&d.getElementById('mwProductSubCategory'))}
   function ensureFields(win){
     if(fieldsReady(win))return true;
     try{win.MeshwarDetailedDescriptionV8?.ensureField?.()}catch(e){console.warn('V26 detailed description field ensure failed',e)}
     try{win.MeshwarStoreCategoriesV9?.refreshProductCategoryFields?.()}catch(e){console.warn('V26 taxonomy field ensure failed',e)}
     return fieldsReady(win);
   }
-
   function installMissingFieldObserver(win){
     if(win.__mwV26MissingFieldObserver)return;
-    const observer=new win.MutationObserver(()=>{
-      // V26 is deliberately non-invasive: never rebuild populated selects.
-      // It only restores missing dynamic fields and leaves edit/save ownership to
-      // V8/V10, barcode ownership to V11 and cost ownership to V21/V22.
-      if(!fieldsReady(win))ensureFields(win);
-    });
-    observer.observe(win.document.documentElement,{childList:true,subtree:true});
-    win.__mwV26MissingFieldObserver=observer;
+    const observer=new win.MutationObserver(()=>{if(!fieldsReady(win))ensureFields(win)});
+    observer.observe(win.document.documentElement,{childList:true,subtree:true});win.__mwV26MissingFieldObserver=observer;
   }
-
-  async function boot(win){
-    await loadDependencies(win);
-    ensureFields(win);
-    installMissingFieldObserver(win);
-    win.__mwVendorProductEditFieldsV26=true;
-  }
-
+  async function boot(win){await loadDependencies(win);ensureFields(win);installMissingFieldObserver(win);win.__mwVendorProductEditFieldsV26=true}
   function install(win){
     if(!win||win.__mwVendorProductEditFieldsV26Installing||win.__mwVendorProductEditFieldsV26)return;
     win.__mwVendorProductEditFieldsV26Installing=true;
-    boot(win)
-      .catch(e=>console.error('Vendor product edit V26 install failed',e))
-      .finally(()=>{win.__mwVendorProductEditFieldsV26Installing=false});
+    boot(win).catch(e=>console.error('Vendor product edit V26 install failed',e)).finally(()=>{win.__mwVendorProductEditFieldsV26Installing=false});
   }
-
   window.MeshwarVendorProductEditFieldsV26={install,VERSION};
 })();
