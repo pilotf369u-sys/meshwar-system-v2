@@ -1,0 +1,32 @@
+name: Vendor Product Edit V26 Validation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check V26
+        run: node --check js/vendor-product-edit-fields-v26.js
+      - name: Validate restored edit-field dependencies
+        run: |
+          grep -q "local-store-detailed-description-v8.js" js/vendor-product-edit-fields-v26.js
+          grep -q "local-store-categories-v9.js" js/vendor-product-edit-fields-v26.js
+          grep -q "local-store-taxonomy-persistence-v10.js" js/vendor-product-edit-fields-v26.js
+          grep -q "hydrateTaxonomyForEdit" js/vendor-product-edit-fields-v26.js
+          grep -q "fillDetailedDescription" js/vendor-product-edit-fields-v26.js
+          grep -q "vendor-product-edit-fields-v26.js?v=20260824-1630" vendor-dashboard.html
+          grep -q "MeshwarVendorProductEditFieldsV26?.install" vendor-dashboard.html
+      - name: Protect barcode and finance layers
+        run: |
+          git diff --exit-code origin/main -- js/vendor-barcode-smart-search-v11.js js/vendor-barcode-margin-autopricing-v22.js js/vendor-finance-cost-save-guard-v21.js js/vendor-finance-pl-invoices-v21.js
