@@ -27,10 +27,10 @@
         polish.dataset.meshwarScreen=screen;
         polish.onload=()=>{
           if(screen!=='employee'&&screen!=='admin')return;
-          const grid=d.createElement('script');
-          grid.src='js/external-shipping-ui-grid-v4.js?v=20260825-v4';
-          grid.dataset.meshwarScreen=screen;
-          d.head.appendChild(grid);
+          const layout=d.createElement('script');
+          layout.src='js/external-shipping-table-layout-v5.js?v=20260825-v5';
+          layout.dataset.meshwarScreen=screen;
+          d.head.appendChild(layout);
         };
         d.head.appendChild(polish);
       };
