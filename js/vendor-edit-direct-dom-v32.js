@@ -1,7 +1,7 @@
 /* MESHWAR_VENDOR_EDIT_DIRECT_DOM_V32 */
 (function(){
   'use strict';
-  const VERSION='20260825-v33-complete-edit-hydration1';
+  const VERSION='20260825-v33-stale-hydration-guard2';
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const STORE_KEY='meshwar_vendor_store';
@@ -109,10 +109,18 @@
   async function hydrate(win,productId){
     const id=String(productId||'').trim();if(!id)return false;
     const [product,categories]=await Promise.all([fetchProduct(win,id),fetchCategories(win)]);if(!product)return false;
-    let complete=false;
+    let complete=false,matchedOnce=false;
     for(let attempt=0;attempt<18;attempt++){
-      const modal=win.document.getElementById('productModal');
-      if(modal&&!modal.classList.contains('hidden'))complete=applyVisibleFields(win,product,categories)||complete;
+      const d=win.document,modal=d.getElementById('productModal');
+      const currentId=String(d.getElementById('productId')?.value||'').trim();
+      const visible=Boolean(modal&&!modal.classList.contains('hidden'));
+      if(visible&&currentId===id){
+        matchedOnce=true;
+        complete=applyVisibleFields(win,product,categories)||complete;
+      }else if(matchedOnce){
+        // The user closed this edit or opened a fresh Add modal. Never hydrate stale product data into it.
+        return complete;
+      }
       await sleep(attempt<6?60:120);
     }
     if(!complete)console.warn('Vendor V33 complete edit hydration could not resolve all visible fields',id);
