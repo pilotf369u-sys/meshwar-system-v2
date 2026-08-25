@@ -152,6 +152,7 @@
           <img id="productImagePreview" class="hidden h-24 w-24 rounded-2xl border border-white/10 object-cover" alt="معاينة صورة المنتج">
           <span class="vendor-muted text-xs text-slate-400">اختر صورة من الجهاز وسيتم رفعها مباشرة إلى Supabase Storage.</span>
         </div>
+        <div id="imagePreviewContainer" class="mt-2 flex flex-wrap gap-2"></div>
       </div>
       <input id="productDescription" class="field md:col-span-2" placeholder="وصف المنتج (اختياري)...">
       <input id="productBasePrice" class="field" type="number" min="0" step="0.01" placeholder="السعر الأصلي ($ USD)">
@@ -177,6 +178,8 @@ const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const PLACEHOLDER='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" rx="24" fill="#1e293b"/><path d="M30 80l18-20 14 14 12-13 18 19" fill="none" stroke="#64748b" stroke-width="6"/><circle cx="42" cy="38" r="9" fill="#64748b"/></svg>`);
 let vendorStore=null,products=[],orders=[],finance=[];
+window.currentProduct=null;
+window.__mwProductModalMode='closed';
 function showNotice(msg,bad=false){const n=$('globalNotice');n.textContent=msg;n.className=`mb-4 rounded-2xl border p-3 text-sm font-bold ${bad?'border-rose-400/20 bg-rose-500/10 text-rose-200':'border-emerald-400/20 bg-emerald-500/10 text-emerald-200'}`;n.classList.remove('hidden');setTimeout(()=>n.classList.add('hidden'),4500)}
 function money(v,c){return `${Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2})} ${c||''}`.trim()}
 function optionsArray(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean)}
@@ -214,9 +217,24 @@ function previewSelectedProductImage(){
   const url=URL.createObjectURL(file);preview.src=url;preview.classList.remove('hidden');preview.onload=()=>URL.revokeObjectURL(url);
 }
 function openProductModal(){resetProductForm();$('productModal').classList.remove('hidden');$('productModal').classList.add('flex')}
-function closeProductModal(){$('productModal').classList.add('hidden');$('productModal').classList.remove('flex')}
-function resetProductForm(){['productId','productName','productImage','productDescription','productBasePrice','mwProductCostPrice','productDiscountPrice','productStock','productColors','productSizes','productVolumes'].forEach(id=>$(id).value='');$('productImageFile').value='';$('productImagePreview').src='';$('productImagePreview').classList.add('hidden');$('productLowThreshold').value='3';$('productModalTitle').textContent='إضافة منتج'}
-function editProduct(id){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const o=safeOptions(p.options);$('productId').value=p.id;$('productName').value=p.product_name||'';$('productImage').value=p.image_url||'';$('productImageFile').value='';$('productDescription').value=p.description||'';$('productBasePrice').value=p.base_price??'';$('mwProductCostPrice').value=p.cost_price??'';$('productDiscountPrice').value=p.discount_price??'';$('productStock').value=p.stock_quantity??0;$('productLowThreshold').value=p.low_stock_threshold??3;$('productColors').value=o.colors.join(', ');$('productSizes').value=o.sizes.join(', ');$('productVolumes').value=o.volumes.join(', ');$('productModalTitle').textContent='تعديل المنتج';previewSelectedProductImage();$('productModal').classList.remove('hidden');$('productModal').classList.add('flex')}
+function closeProductModal(){window.__mwProductModalMode='closed';$('productModal').classList.add('hidden');$('productModal').classList.remove('flex')}
+function resetProductForm(){
+  window.currentProduct=null;
+  window.__mwProductModalMode='add';
+  window.__mwTaxonomyTouchedV10=false;
+  window.__mwTaxonomySelectionV10={main:'',sub:''};
+  ['productId','productName','productImage','productDescription','productBasePrice','mwProductCostPrice','productDiscountPrice','productStock','productColors','productSizes','productVolumes'].forEach(id=>{const el=$(id);if(el)el.value=''});
+  const barcode=$('productBarcode');if(barcode)barcode.value='';
+  const detailed=$('productDetailedDescription');if(detailed)detailed.value='';
+  const main=$('mwProductMainCategory');if(main){main.selectedIndex=0;main.value=''}
+  const sub=$('mwProductSubCategory');if(sub){sub.innerHTML='<option value="">بدون قسم فرعي</option>';sub.value='';sub.disabled=true}
+  const featured=$('mwProductFeatured');if(featured)featured.checked=false;
+  const file=$('productImageFile');if(file)file.value='';
+  const gallery=$('imagePreviewContainer');if(gallery)gallery.innerHTML='';
+  const preview=$('productImagePreview');if(preview){preview.removeAttribute('src');preview.src='';preview.classList.add('hidden')}
+  $('productLowThreshold').value='3';$('productModalTitle').textContent='إضافة منتج';
+}
+function editProduct(id){const p=products.find(x=>String(x.id)===String(id));if(!p)return;window.currentProduct=p;window.__mwProductModalMode='edit';const o=safeOptions(p.options);$('productId').value=p.id;$('productName').value=p.product_name||'';$('productImage').value=p.image_url||'';$('productImageFile').value='';$('productDescription').value=p.description||'';$('productBasePrice').value=p.base_price??'';$('mwProductCostPrice').value=p.cost_price??'';$('productDiscountPrice').value=p.discount_price??'';$('productStock').value=p.stock_quantity??0;$('productLowThreshold').value=p.low_stock_threshold??3;$('productColors').value=o.colors.join(', ');$('productSizes').value=o.sizes.join(', ');$('productVolumes').value=o.volumes.join(', ');$('productModalTitle').textContent='تعديل المنتج';previewSelectedProductImage();$('productModal').classList.remove('hidden');$('productModal').classList.add('flex')}
 async function saveProduct(){if(!vendorStore)return;const id=$('productId').value.trim(),description=$('productDescription').value.trim(),barcodeValue=String($('productBarcode')?.value||'').trim()||null;const base=Number($('productBasePrice').value),costRaw=$('mwProductCostPrice').value.trim(),cost=costRaw===''?NaN:Number(costRaw),discount=$('productDiscountPrice').value.trim()===''?null:Number($('productDiscountPrice').value),stock=Math.max(0,Math.floor(Number($('productStock').value||0))),threshold=Math.max(0,Math.floor(Number($('productLowThreshold').value||0)));if(!$('productName').value.trim()||!Number.isFinite(base)||base<0)return showNotice('أدخل اسم المنتج وسعرًا صحيحًا.',true);if(discount!=null&&(!Number.isFinite(discount)||discount<0||discount>base))return showNotice('سعر الخصم يجب أن يكون بين 0 والسعر الأصلي.',true);if(!costRaw||!Number.isFinite(cost)||cost<0){$('mwProductCostPrice').focus();$('mwProductCostPrice').reportValidity?.();return showNotice('سعر التكلفة (Cost Price) مطلوب ويجب أن يكون رقمًا صحيحًا أكبر من أو يساوي صفر.',true)}try{let imageUrl=$('productImage').value.trim()||null;const file=$('productImageFile')?.files?.[0];if(file){showNotice('جاري رفع صورة المنتج...');imageUrl=await uploadProductImage(file)}const payload={store_id:vendorStore.id,product_name:$('productName').value.trim(),barcode:barcodeValue,image_url:imageUrl,description,base_price:base,discount_price:discount,cost_price:cost,currency:'USD',stock_quantity:stock,low_stock_threshold:threshold,is_out_of_stock:stock===0,options:{colors:optionsArray($('productColors').value),sizes:optionsArray($('productSizes').value),volumes:optionsArray($('productVolumes').value),pricing:window.MeshwarLocalPricing?.pricingSnapshot(discount??base,vendorStore?.commission_rate??10,vendorStore?.exchange_rate||1,vendorStore?.exchange_target_currency||vendorStore?.default_currency||'IQD')||null},updated_at:new Date().toISOString()};const q=id?sb.from('local_products').update(payload).eq('id',id).eq('store_id',vendorStore.id):sb.from('local_products').insert([payload]);const{error}=await q;if(error)throw error;closeProductModal();showNotice(id?'تم تحديث المنتج.':'تمت إضافة المنتج.');await loadProducts()}catch(e){console.error('Product save error:',e);const message=e?.message||String(e);showNotice('تعذر حفظ المنتج: '+message,true);alert(message)}}
 async function deleteProduct(id){if(!confirm('حذف المنتج؟'))return;const{error}=await sb.from('local_products').delete().eq('id',id).eq('store_id',vendorStore.id);if(error)return showNotice(error.message,true);await loadProducts()}
 
