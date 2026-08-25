@@ -19,7 +19,7 @@
   frame.addEventListener('load',()=>{
     try{
       const d=frame.contentDocument,s=d.createElement('script');
-      s.src='js/external-shipping-fee-v1.js?v=20260825-v1';
+      s.src='js/external-shipping-fee-v2.js?v=20260825-v2';
       s.dataset.meshwarScreen=screen;
       d.head.appendChild(s);
     }catch(e){console.error('External shipping bridge injection failed',e)}
