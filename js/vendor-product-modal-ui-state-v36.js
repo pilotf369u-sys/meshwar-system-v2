@@ -1,11 +1,44 @@
 /* MESHWAR_VENDOR_PRODUCT_MODAL_UI_STATE_V36 */
 (function(){
   'use strict';
-  const VERSION='20260825-v36-fresh-add-modal3';
+  const VERSION='20260825-v36-edit-cost-field4';
 
   function install(win){
     if(!win||win.__mwVendorProductModalUiStateV36)return;
     const d=win.document,$=id=>d.getElementById(id);
+
+    function ensureEditCostField(){
+      let input=$('mwProductCostPrice');
+      if(!input){
+        const base=$('productBasePrice');
+        if(!base)return null;
+        input=d.createElement('input');
+        input.id='mwProductCostPrice';
+        input.name='cost_price';
+        input.className='field';
+        input.type='number';
+        input.min='0';
+        input.step='0.01';
+        input.required=true;
+        input.setAttribute('aria-required','true');
+        input.placeholder='سعر التكلفة (Cost Price) *';
+        base.insertAdjacentElement('afterend',input);
+      }
+      input.name='cost_price';
+      input.type='number';
+      input.min='0';
+      input.step='0.01';
+      input.required=true;
+      input.hidden=false;
+      input.removeAttribute('hidden');
+      input.setAttribute('aria-required','true');
+      input.placeholder='سعر التكلفة (Cost Price) *';
+      input.classList.remove('hidden');
+      input.style.removeProperty('display');
+      input.style.removeProperty('visibility');
+      input.style.removeProperty('opacity');
+      return input;
+    }
 
     function clearImagePreviews(){
       const file=$('productImageFile');if(file)file.value='';
@@ -37,7 +70,7 @@
       const threshold=$('productLowThreshold');if(threshold)threshold.value='3';
       const id=$('productId');if(id)id.value='';
       const barcode=$('productBarcode');if(barcode)barcode.value='';
-      const cost=$('mwProductCostPrice');if(cost)cost.value='';
+      const cost=ensureEditCostField();if(cost)cost.value='';
       const main=$('mwProductMainCategory');if(main){main.selectedIndex=0;main.value=''}
       const sub=$('mwProductSubCategory');if(sub){sub.innerHTML='<option value="">بدون قسم فرعي</option>';sub.value='';sub.disabled=true}
       const featured=$('mwProductFeatured');if(featured)featured.checked=false;
@@ -57,13 +90,14 @@
     }
 
     function hydrateCostFromCurrentProduct(){
-      const id=String($('productId')?.value||'').trim(),input=$('mwProductCostPrice');
-      if(!id||!input)return;
+      const id=String($('productId')?.value||'').trim();
+      if(!id)return;
+      const input=ensureEditCostField();if(!input)return;
       const product=(Array.isArray(win.products)?win.products:[]).find(p=>String(p.id)===id);
       if(product)input.value=product.cost_price==null?'':String(product.cost_price);
     }
 
-    // Replace the legacy add opener with a single deterministic fresh-state opener.
+    // Replace only the add opener. saveProduct()/payload remain untouched.
     win.openProductModal=openFreshProductModal;
     win.openProductModal.__mwFreshAddModal=true;
 
@@ -71,12 +105,24 @@
       const edit=e.target?.closest?.('button[onclick^="editProduct("],button[data-product-id][data-action="edit-product"]');
       if(edit){
         win.__mwProductModalMode='edit';
+        ensureEditCostField();
         win.requestAnimationFrame(hydrateCostFromCurrentProduct);
         setTimeout(hydrateCostFromCurrentProduct,80);
         setTimeout(hydrateCostFromCurrentProduct,220);
       }
     },true);
 
+    const modal=$('productModal');
+    if(modal){
+      new win.MutationObserver(()=>{
+        if(modal.classList.contains('hidden'))return;
+        const id=String($('productId')?.value||'').trim();
+        if(id)hydrateCostFromCurrentProduct();
+        else ensureEditCostField();
+      }).observe(modal,{attributes:true,attributeFilter:['class']});
+    }
+
+    ensureEditCostField();
     win.__mwVendorProductModalUiStateV36=true;
   }
 
