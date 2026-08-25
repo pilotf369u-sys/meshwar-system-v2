@@ -9,6 +9,7 @@ on:
       - 'vendor-dashboard-barcode-shell.html'
       - 'employee-dashboard.html'
       - 'js/vendor-barcode-smart-search-v11.js'
+      - 'js/vendor-product-modal-ui-state-v36.js'
       - 'js/vendor-order-smart-search-scanner-v13.js'
       - 'js/vendor-theme-pagination-v16.js'
       - 'js/vendor-order-status-contrast-v18.js'
@@ -32,6 +33,7 @@ on:
       - 'vendor-dashboard-barcode-shell.html'
       - 'employee-dashboard.html'
       - 'js/vendor-barcode-smart-search-v11.js'
+      - 'js/vendor-product-modal-ui-state-v36.js'
       - 'js/vendor-order-smart-search-scanner-v13.js'
       - 'js/vendor-theme-pagination-v16.js'
       - 'js/vendor-order-status-contrast-v18.js'
@@ -63,6 +65,7 @@ jobs:
           node --check js/local-store-matrix-stock-v6.js
           node --check js/local-store-ui-stock-v7.js
           node --check js/vendor-barcode-smart-search-v11.js
+          node --check js/vendor-product-modal-ui-state-v36.js
           node --check js/vendor-order-smart-search-scanner-v13.js
           node --check js/vendor-theme-pagination-v16.js
           node --check js/vendor-order-status-contrast-v18.js
@@ -170,13 +173,15 @@ jobs:
           ! grep -Fq 'setTimeout(install,250)' vendor-dashboard.html
           ! grep -Fq 'setTimeout(install,900)' vendor-dashboard.html
           test ! -e js/vendor-financial-periods-v24.js
-      - name: Validate direct vendor barcode entry and unrestricted product description
+      - name: Validate direct vendor barcode entry, required cost field and unrestricted product description
         run: |
           ! grep -Fq 'location.replace(' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260823-1301"></script>' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260825-v11-stale-edit-guard2"></script>' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-product-modal-ui-state-v36.js?v=20260825-v36-edit-cost-field4"></script>' vendor-dashboard.html
           grep -Fq 'id="vendorFrame"' vendor-dashboard.html
           grep -Fq 'src="vendor-dashboard-v2.html?v=' vendor-dashboard.html
           grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard.html
+          grep -Fq 'MeshwarVendorProductModalUiStateV36?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'local_products?select=id,product_name,barcode,stock_quantity' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'data-mw-barcode-cell' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'data-mw-barcode-label' js/vendor-barcode-margin-autopricing-v22.js
@@ -187,6 +192,11 @@ jobs:
           grep -Fq 'refocusSearchInput(win)' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'add column if not exists barcode text null' supabase/migrations/20260822_local_product_barcode.sql
           grep -Fq 'idx_local_products_barcode' supabase/migrations/20260822_local_product_barcode.sql
+          grep -Fq 'id="mwProductCostPrice" name="cost_price"' vendor-dashboard-v2.html
+          grep -Fq 'required aria-required="true" placeholder="سعر التكلفة (Cost Price) *"' vendor-dashboard-v2.html
+          grep -Fq "$('mwProductCostPrice').value=p.cost_price??''" vendor-dashboard-v2.html
+          grep -Fq 'function ensureEditCostField()' js/vendor-product-modal-ui-state-v36.js
+          grep -Fq "input.value=product.cost_price==null?'':String(product.cost_price)" js/vendor-product-modal-ui-state-v36.js
           grep -Fq 'placeholder="وصف المنتج (اختياري)..."' vendor-dashboard-v2.html
           ! grep -Fq 'الوصف المختصر يجب ألا يتجاوز 30 حرفًا' vendor-dashboard-v2.html
           ! grep -Fq 'maxlength="30"' vendor-dashboard-v2.html
