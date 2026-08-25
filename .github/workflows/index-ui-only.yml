@@ -160,7 +160,7 @@ jobs:
         run: |
           grep -Fq '<meta name="meshwar-build"' vendor-dashboard.html
           grep -Fq '<script src="js/vendor-finance-settlement-v24.js?v=20260824-1253"></script>' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-finance-delivered-orders-v35.js?v=20260825-v35-pl-dynamic-fx1"></script>' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-finance-delivered-orders-v35.js?v=20260825-v35-pl-dynamic-fx2"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceSettlementV24?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceDeliveredV35?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceSettlementV24?.ensureUi(win,{refresh:true})' vendor-dashboard.html
@@ -171,9 +171,10 @@ jobs:
           grep -Fq "closest?.('#vendorTabBtn-pl')" js/vendor-finance-settlement-v24.js
           grep -Fq 'new win.MutationObserver' js/vendor-finance-settlement-v24.js
           grep -Fq "querySelector('#vendorTab-pl .mw-pl-kpis')" js/vendor-finance-settlement-v24.js
-          grep -Fq 'currentExchangeRate' js/vendor-finance-delivered-orders-v35.js
-          grep -Fq "convertCostToLocal=cur==='IQD'" js/vendor-finance-delivered-orders-v35.js
-          grep -Fq 'reportCogs=convertCostToLocal?base.cogs*fxRate:base.cogs' js/vendor-finance-delivered-orders-v35.js
+          grep -Fq "d.getElementById('exchangeRate')?.value" js/vendor-finance-delivered-orders-v35.js
+          grep -Fq "itemCostIQD=convertCostToLocal?itemCostUSD*currentExchangeRate:itemCostUSD" js/vendor-finance-delivered-orders-v35.js
+          grep -Fq "totalCogsIQD=convertCostToLocal?totalCogsUSD*currentExchangeRate:totalCogsUSD" js/vendor-finance-delivered-orders-v35.js
+          grep -Fq 'net=sales-totalCogsIQD-fees' js/vendor-finance-delivered-orders-v35.js
           grep -Fq "frame.addEventListener('load',install)" vendor-dashboard.html
           ! grep -Fq 'setTimeout(install,250)' vendor-dashboard.html
           ! grep -Fq 'setTimeout(install,900)' vendor-dashboard.html
