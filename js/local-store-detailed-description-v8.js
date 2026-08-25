@@ -14,8 +14,13 @@
   }
   async function fillDetailedDescription(){
     ensureField();const area=document.getElementById(FIELD_ID),id=String(document.getElementById('productId')?.value||'').trim();if(!area)return;
-    area.value='';if(!id)return;
-    try{const rows=await rest(`local_products?select=id,options&id=eq.${encodeURIComponent(id)}&limit=1`);const p=Array.isArray(rows)?rows[0]:null;area.value=String(parse(p?.options).detailed_description||'')}catch(e){console.warn('Detailed description load failed',e)}
+    area.value='';if(!id||window.__mwProductModalMode==='add')return;
+    try{
+      const rows=await rest(`local_products?select=id,options&id=eq.${encodeURIComponent(id)}&limit=1`),p=Array.isArray(rows)?rows[0]:null;
+      const currentId=String(document.getElementById('productId')?.value||'').trim();
+      if(window.__mwProductModalMode==='add'||currentId!==id)return;
+      area.value=String(parse(p?.options).detailed_description||'');
+    }catch(e){console.warn('Detailed description load failed',e)}
   }
   function snapshotDetailedDescription(){
     ensureField();return{id:String(document.getElementById('productId')?.value||'').trim(),name:String(document.getElementById('productName')?.value||'').trim(),storeId:storeId(),detailed:String(document.getElementById(FIELD_ID)?.value||'').trim()};
