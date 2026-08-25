@@ -198,10 +198,13 @@
   }
 
   async function loadProductTaxonomy(productId){
-    injectProductFields();refreshProductCategoryFields();const main=document.getElementById('mwProductMainCategory'),sub=document.getElementById('mwProductSubCategory'),featured=document.getElementById('mwProductFeatured');
+    injectProductFields();refreshProductCategoryFields();
+    const main=document.getElementById('mwProductMainCategory'),sub=document.getElementById('mwProductSubCategory'),featured=document.getElementById('mwProductFeatured');
     if(main)main.value='';if(sub){sub.innerHTML='<option value="">بدون قسم فرعي</option>';sub.disabled=true}if(featured)featured.checked=false;
     const id=String(productId||'').trim();if(!id)return;
     const rows=await rest(`local_products?select=id,category_id,is_featured&id=eq.${q(id)}&store_id=eq.${q(state.storeId)}&limit=1`),p=Array.isArray(rows)?rows[0]:null;if(!p)return;
+    const currentId=String(document.getElementById('productId')?.value||'').trim();
+    if(window.__mwProductModalMode==='add'||currentId!==id)return;
     if(featured)featured.checked=!!p.is_featured;
     const cat=categoryById(p.category_id);if(!cat)return;
     if(cat.parent_id){if(main)main.value=cat.parent_id;fillSubcategorySelect(cat.id)}else{if(main)main.value=cat.id;fillSubcategorySelect()}
