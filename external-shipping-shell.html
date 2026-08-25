@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MeshWar</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617}#app{width:100%;height:100%;border:0;display:block}</style>
+</head>
+<body>
+<iframe id="app" title="MeshWar"></iframe>
+<script>
+(function(){
+  const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
+  const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
+  if(!target){location.replace('login.html');return}
+  params.delete('screen');
+  const qs=params.toString(),frame=document.getElementById('app');
+  frame.src=target+(qs?'?'+qs:'');
+  frame.addEventListener('load',()=>{
+    try{
+      const d=frame.contentDocument,base=d.createElement('script');
+      base.src='js/external-shipping-fee-v2.js?v=20260825-v2';
+      base.dataset.meshwarScreen=screen;
+      base.onload=()=>{
+        const polish=d.createElement('script');
+        polish.src='js/external-shipping-ui-polish-v3.js?v=20260825-v3';
+        polish.dataset.meshwarScreen=screen;
+        polish.onload=()=>{
+          if(screen!=='employee'&&screen!=='admin')return;
+          const layout=d.createElement('script');
+          layout.src='js/external-shipping-table-layout-v6.js?v=20260825-v6-compact';
+          layout.dataset.meshwarScreen=screen;
+          layout.onload=()=>{
+            const finalPolish=d.createElement('script');
+            finalPolish.src='js/external-shipping-final-polish-v7.js?v=20260825-v7';
+            finalPolish.dataset.meshwarScreen=screen;
+            d.head.appendChild(finalPolish);
+          };
+          d.head.appendChild(layout);
+        };
+        d.head.appendChild(polish);
+      };
+      d.head.appendChild(base);
+    }catch(e){console.error('External shipping bridge injection failed',e)}
+  });
+})();
+</script>
+</body>
+</html>
