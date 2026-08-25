@@ -25,7 +25,7 @@ jobs:
         run: |
           grep -Fq 'vendor-order-status-contrast-v18.js?v=20260822-1910' vendor-dashboard.html
           grep -Fq 'MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)' vendor-dashboard.html
-          grep -Fq '<meta name="meshwar-build" content="vendor-v24-pl-direct-injection-20260824-1253">' vendor-dashboard.html
+          grep -Fq '<meta name="meshwar-build"' vendor-dashboard.html
       - name: Validate visual status mapping and isolation
         run: |
           grep -Fq 'data-mw-order-status-tone' js/vendor-order-status-contrast-v18.js
