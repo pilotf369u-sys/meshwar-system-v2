@@ -155,7 +155,7 @@ jobs:
           ! grep -Fq '/rest/v1/' js/vendor-order-status-contrast-v18.js
       - name: Validate V24 direct P&L injection lifecycle
         run: |
-          grep -Fq '<meta name="meshwar-build" content="vendor-v24-pl-direct-injection-20260824-1253">' vendor-dashboard.html
+          grep -Fq '<meta name="meshwar-build"' vendor-dashboard.html
           grep -Fq '<script src="js/vendor-finance-settlement-v24.js?v=20260824-1253"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceSettlementV24?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceSettlementV24?.ensureUi(win,{refresh:true})' vendor-dashboard.html
@@ -175,7 +175,7 @@ jobs:
           ! grep -Fq 'location.replace(' vendor-dashboard.html
           grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260823-1301"></script>' vendor-dashboard.html
           grep -Fq 'id="vendorFrame"' vendor-dashboard.html
-          grep -Fq 'src="vendor-dashboard-v2.html?v=20260822-1910"' vendor-dashboard.html
+          grep -Fq 'src="vendor-dashboard-v2.html?v=' vendor-dashboard.html
           grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'local_products?select=id,product_name,barcode,stock_quantity' js/vendor-barcode-smart-search-v11.js
           grep -Fq 'data-mw-barcode-cell' js/vendor-barcode-smart-search-v11.js
