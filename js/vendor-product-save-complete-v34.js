@@ -1,7 +1,7 @@
 /* MESHWAR_VENDOR_PRODUCT_SAVE_COMPLETE_V34 */
 (function(){
   'use strict';
-  const VERSION='20260825-v34-cost-price2';
+  const VERSION='20260825-v34-required-cost3';
   const arr=v=>Array.isArray(v)?v.map(x=>String(x??'').trim()).filter(Boolean):[];
   const parse=v=>{if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return{...v};try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?{...x}:{}}catch{return{}}};
   const uniq=v=>[...new Set(v.filter(Boolean))];
@@ -13,9 +13,9 @@
 
     function ensureCostField(){
       let input=$('mwProductCostPrice');
-      if(input){input.type='number';input.min='0';input.step='0.01';input.placeholder='سعر التكلفة (اختياري)';input.setAttribute('aria-label','سعر التكلفة');return input}
+      if(input){input.type='number';input.min='0';input.step='0.01';input.required=true;input.name='cost_price';input.placeholder='سعر التكلفة (Cost Price) *';input.setAttribute('aria-label','سعر التكلفة (Cost Price)');input.setAttribute('aria-required','true');return input}
       const base=$('productBasePrice');if(!base)return null;
-      input=d.createElement('input');input.id='mwProductCostPrice';input.className='field';input.type='number';input.min='0';input.step='0.01';input.placeholder='سعر التكلفة (اختياري)';input.setAttribute('aria-label','سعر التكلفة');
+      input=d.createElement('input');input.id='mwProductCostPrice';input.name='cost_price';input.className='field';input.type='number';input.min='0';input.step='0.01';input.required=true;input.placeholder='سعر التكلفة (Cost Price) *';input.setAttribute('aria-label','سعر التكلفة (Cost Price)');input.setAttribute('aria-required','true');
       base.insertAdjacentElement('afterend',input);return input;
     }
     function hydrateCostField(){
@@ -35,7 +35,7 @@
 
     win.saveProduct=async function saveProduct(){
       if(!win.vendorStore)return;
-      ensureCostField();
+      const costInput=ensureCostField();
       const id=String($('productId')?.value||'').trim();
       const name=String($('productName')?.value||'').trim();
       const description=String($('productDescription')?.value||'').trim();
@@ -43,13 +43,13 @@
       const barcodeValue=String($('productBarcode')?.value||'').trim()||null;
       const base=Number($('productBasePrice')?.value);
       const discount=String($('productDiscountPrice')?.value||'').trim()===''?null:Number($('productDiscountPrice')?.value);
-      const costRaw=String($('mwProductCostPrice')?.value||'').trim();
-      const cost=costRaw===''?null:Number(costRaw);
+      const costRaw=String(costInput?.value||'').trim();
+      const cost=costRaw===''?NaN:Number(costRaw);
       const stock=Math.max(0,Math.floor(Number($('productStock')?.value||0)));
       const threshold=Math.max(0,Math.floor(Number($('productLowThreshold')?.value||0)));
       if(!name||!Number.isFinite(base)||base<0)return win.showNotice('أدخل اسم المنتج وسعرًا صحيحًا.',true);
       if(discount!=null&&(!Number.isFinite(discount)||discount<0||discount>base))return win.showNotice('سعر الخصم يجب أن يكون بين 0 والسعر الأصلي.',true);
-      if(cost!=null&&(!Number.isFinite(cost)||cost<0))return win.showNotice('سعر التكلفة يجب أن يكون رقمًا صحيحًا أكبر من أو يساوي صفر.',true);
+      if(!costRaw||!Number.isFinite(cost)||cost<0){costInput?.focus?.();costInput?.reportValidity?.();return win.showNotice('سعر التكلفة (Cost Price) مطلوب ويجب أن يكون رقمًا صحيحًا أكبر من أو يساوي صفر.',true)}
 
       try{
         const existing=(Array.isArray(win.products)?win.products:[]).find(p=>String(p.id)===id)||{};
