@@ -10,10 +10,12 @@
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
+  const BUILD='20260826-light-v8';
   const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
-  if(!target){location.replace('login.html');return}
+  if(!target){location.replace('login.html?v='+BUILD);return}
   params.delete('screen');
+  params.set('_v',BUILD);
   const qs=params.toString(),frame=document.getElementById('app');
   frame.src=target+(qs?'?'+qs:'');
   frame.addEventListener('load',()=>{
@@ -32,7 +34,7 @@
           layout.dataset.meshwarScreen=screen;
           layout.onload=()=>{
             const finalPolish=d.createElement('script');
-            finalPolish.src='js/external-shipping-final-polish-v7.js?v=20260826-v7.2';
+            finalPolish.src='js/external-shipping-final-polish-v7.js?v=20260826-v7.3';
             finalPolish.dataset.meshwarScreen=screen;
             d.head.appendChild(finalPolish);
           };
