@@ -1,11 +1,11 @@
-/* MESHWAR_CUSTOMER_LIGHT_POLISH_V1 — CSS only, no DOM restructuring */
+/* MESHWAR_CUSTOMER_LIGHT_POLISH_V1 — customer-light-v16 — CSS only, no DOM restructuring */
 (function(){
 'use strict';
 if(document.getElementById('mw-customer-light-polish-v1')) return;
 const s=document.createElement('style');
 s.id='mw-customer-light-polish-v1';
 s.textContent=`
-/* Customer Light Mode only */
+/* Customer Light Mode only — build: customer-light-v16 */
 html[data-mw-global-theme="light"] .panel-head > span,
 html[data-mw-global-theme="light"] .panel-head .mini,
 html[data-mw-global-theme="light"] .panel-head .muted{
