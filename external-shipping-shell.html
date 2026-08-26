@@ -10,7 +10,7 @@
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
-  const BUILD='20260826-layout-v9';
+  const BUILD='20260826-emergency-stable-v10';
   const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
@@ -27,19 +27,6 @@
         const polish=d.createElement('script');
         polish.src='js/external-shipping-ui-polish-v3.js?v=20260825-v3';
         polish.dataset.meshwarScreen=screen;
-        polish.onload=()=>{
-          if(screen!=='employee'&&screen!=='admin')return;
-          const layout=d.createElement('script');
-          layout.src='js/external-shipping-table-layout-v6.js?v=20260826-v6.1-customer-cell';
-          layout.dataset.meshwarScreen=screen;
-          layout.onload=()=>{
-            const finalPolish=d.createElement('script');
-            finalPolish.src='js/external-shipping-final-polish-v7.js?v=20260826-v7.3';
-            finalPolish.dataset.meshwarScreen=screen;
-            d.head.appendChild(finalPolish);
-          };
-          d.head.appendChild(layout);
-        };
         d.head.appendChild(polish);
       };
       d.head.appendChild(base);
