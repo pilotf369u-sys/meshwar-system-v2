@@ -18,51 +18,65 @@ html[data-mw-theme="light"] ${tableSelector}{background:#fff!important;color:#17
 html[data-mw-theme="light"] ${tableSelector} th{background:#e8edf4!important;color:#172033!important;border-color:#cbd5e1!important}
 html[data-mw-theme="light"] ${tableSelector} td{background:#fff!important;color:#172033!important;border-color:#dbe3ea!important}
 html[data-mw-theme="light"] ${tableSelector} tr:nth-child(even) td{background:#f8fafc!important}
-html[data-mw-theme="light"] ${tableSelector} input,html[data-mw-theme="light"] ${tableSelector} select{background:#fff!important;color:#172033!important;border-color:#94a3b8!important}
 
-/* Light-mode refinement: product price + external shipping only */
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${productCol}) input,
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${productCol}) select,
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${externalCol}) input,
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${externalCol}) select{
-  height:34px!important;
-  min-height:34px!important;
-  padding:0 8px!important;
+/* Hard light-mode override for all operational table form controls. */
+html[data-mw-theme="light"] ${tableSelector} input,
+html[data-mw-theme="light"] ${tableSelector} select{
+  border:1px solid #cbd5e1!important;
+  background-color:#ffffff!important;
+  color:#0f172a!important;
+  height:36px!important;
+  min-height:36px!important;
+  border-radius:6px!important;
+  padding:0 7px!important;
   margin:0!important;
-  border:1px solid #d1d5db!important;
-  border-radius:7px!important;
-  background:#f9fafb!important;
-  color:#111827!important;
   font-size:13px!important;
   font-weight:600!important;
-  line-height:32px!important;
+  line-height:34px!important;
   text-align:center!important;
   vertical-align:middle!important;
-  box-shadow:inset 0 1px 2px rgba(15,23,42,.04)!important;
-  outline:none!important;
   box-sizing:border-box!important;
+  box-shadow:0 1px 2px rgba(15,23,42,.05)!important;
+  outline:none!important;
 }
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${productCol}) input:focus,
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${productCol}) select:focus,
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${externalCol}) input:focus,
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${externalCol}) select:focus{
-  border-color:#9ca3af!important;
-  background:#fff!important;
-  box-shadow:0 0 0 2px rgba(148,163,184,.14)!important;
-}
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${productCol}) select,
-html[data-mw-theme="light"] ${tableSelector} tbody td:nth-child(${externalCol}) select{
-  text-align-last:center!important;
+html[data-mw-theme="light"] ${tableSelector} select{text-align-last:center!important}
+html[data-mw-theme="light"] ${tableSelector} input:focus,
+html[data-mw-theme="light"] ${tableSelector} select:focus{
+  border-color:#94a3b8!important;
+  background-color:#ffffff!important;
+  box-shadow:0 0 0 2px rgba(148,163,184,.16)!important;
 }
 
 html[data-mw-theme="light"] ${tableSelector} .collect-due{background:#fff7ed!important;color:#9a3412!important;border-color:#fdba74!important}
 #mw-theme-toggle{position:fixed;left:14px;bottom:14px;z-index:5000;border:1px solid rgba(148,163,184,.28);border-radius:999px;padding:8px 11px;font-size:12px;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18);background:#0f172a;color:#f8fafc}
 html[data-mw-theme="light"] #mw-theme-toggle{background:#fff;color:#172033;border-color:#cbd5e1}
 `;document.head.appendChild(s)}
-function applyTheme(theme){const next=theme==='light'?'light':'dark';document.documentElement.dataset.mwTheme=next;localStorage.setItem(storageKey,next);const b=document.getElementById('mw-theme-toggle');if(b)b.textContent=next==='light'?'🌙 الوضع الداكن':'☀️ الوضع المضيء'}
+function forceLightControls(){
+  if(document.documentElement.dataset.mwTheme!=='light')return;
+  const table=document.querySelector(tableSelector);if(!table)return;
+  table.querySelectorAll('input,select').forEach(el=>{
+    el.style.setProperty('border','1px solid #cbd5e1','important');
+    el.style.setProperty('background-color','#ffffff','important');
+    el.style.setProperty('color','#0f172a','important');
+    el.style.setProperty('height','36px','important');
+    el.style.setProperty('min-height','36px','important');
+    el.style.setProperty('border-radius','6px','important');
+    el.style.setProperty('padding','0 7px','important');
+    el.style.setProperty('margin','0','important');
+    el.style.setProperty('font-size','13px','important');
+    el.style.setProperty('font-weight','600','important');
+    el.style.setProperty('line-height','34px','important');
+    el.style.setProperty('text-align','center','important');
+    el.style.setProperty('vertical-align','middle','important');
+    el.style.setProperty('box-sizing','border-box','important');
+    el.style.setProperty('box-shadow','0 1px 2px rgba(15,23,42,.05)','important');
+    if(el.tagName==='SELECT')el.style.setProperty('text-align-last','center','important');
+  });
+}
+function applyTheme(theme){const next=theme==='light'?'light':'dark';document.documentElement.dataset.mwTheme=next;localStorage.setItem(storageKey,next);const b=document.getElementById('mw-theme-toggle');if(b)b.textContent=next==='light'?'🌙 الوضع الداكن':'☀️ الوضع المضيء';if(next==='light')requestAnimationFrame(forceLightControls)}
 function installToggle(){if(document.getElementById('mw-theme-toggle'))return;const b=document.createElement('button');b.id='mw-theme-toggle';b.type='button';b.setAttribute('aria-label','تبديل الوضع المضيء والداكن');b.onclick=()=>applyTheme(document.documentElement.dataset.mwTheme==='light'?'dark':'light');document.body.appendChild(b);applyTheme(localStorage.getItem(storageKey)||'dark')}
 function centerHeaders(){const table=document.querySelector(tableSelector),head=table?.tHead?.rows?.[0];if(!head)return;[...head.cells].forEach(th=>{th.style.setProperty('text-align','center','important');th.style.setProperty('vertical-align','middle','important')})}
-installStyles();installToggle();centerHeaders();
-new MutationObserver(centerHeaders).observe(document.documentElement,{childList:true,subtree:true});
-window.MeshwarExternalShippingFinalPolishV7={version:'20260826-v7.1',applyTheme,centerHeaders};
+installStyles();installToggle();centerHeaders();forceLightControls();
+new MutationObserver(()=>{centerHeaders();forceLightControls()}).observe(document.documentElement,{childList:true,subtree:true});
+window.MeshwarExternalShippingFinalPolishV7={version:'20260826-v7.2',applyTheme,centerHeaders,forceLightControls};
 })();
