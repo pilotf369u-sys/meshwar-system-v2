@@ -13,14 +13,21 @@ html[data-mw-global-theme="light"] .panel-head .muted{
   background:#f8fafc!important;
   border-color:#e2e8f0!important;
 }
-html[data-mw-global-theme="light"] .siparis-no:not(.missing){
+/* All Siparis badges, including the missing / غير محدد state */
+html[data-mw-global-theme="light"] .siparis-no,
+html[data-mw-global-theme="light"] .siparis-no.missing{
+  display:inline-block!important;
+  margin-top:5px!important;
+  padding:4px 7px!important;
+  border-radius:7px!important;
   background:#f1f5f9!important;
   color:#475569!important;
   border:1px solid #cbd5e1!important;
+  font-weight:800!important;
   box-shadow:none!important;
 }
 html[data-mw-global-theme="light"] .tab-btn.active{
-  box-shadow:0 4px 12px rgba(15,23,42,.14)!important;
+  box-shadow:0 5px 14px rgba(15,23,42,.16)!important;
 }
 html[data-mw-global-theme="light"] .summary-grid .info-card,
 html[data-mw-global-theme="light"] .warehouse-card{
