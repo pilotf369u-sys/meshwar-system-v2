@@ -10,7 +10,7 @@
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
-  const BUILD='20260826-native-render-theme-v12';
+  const BUILD='20260826-global-theme-v13';
   const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
@@ -21,16 +21,15 @@
   frame.addEventListener('load',()=>{
     try{
       const d=frame.contentDocument;
+      const theme=d.createElement('script');
+      theme.src='js/global-theme-toggle-v1.js?v=20260826-global-theme-v1';
+      theme.dataset.meshwarScreen=screen;
+      d.head.appendChild(theme);
       if(screen==='employee'||screen==='admin'){
         const nativeRender=d.createElement('script');
         nativeRender.src='js/external-shipping-native-order-render-v1.js?v=20260826-native-render-v1';
         nativeRender.dataset.meshwarScreen=screen;
         d.head.appendChild(nativeRender);
-        if(screen==='employee'){
-          const theme=d.createElement('script');
-          theme.src='js/employee-theme-toggle-v1.js?v=20260826-theme-v1';
-          d.head.appendChild(theme);
-        }
         return;
       }
       const base=d.createElement('script');
