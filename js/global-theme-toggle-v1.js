@@ -81,6 +81,36 @@ html[data-mw-global-theme="light"] .sidebar{background:#f8fafc!important;backgro
 html[data-mw-global-theme="light"] .sidebar a{background:#fff!important;color:#334155!important;border-color:var(--mw-light-line)!important}
 html[data-mw-global-theme="light"] .sidebar a.active{background:#f6c85f!important;color:#17130a!important;border-color:#d7a62e!important}
 html[data-mw-global-theme="light"] #mwGlobalThemeToggle{background:#fff!important;color:#172033!important;border-color:#cbd5e1!important}
+
+/* Customer dashboard: high-contrast light mode only. */
+html[data-mw-global-theme="light"] .dashboard-header .welcome,
+html[data-mw-global-theme="light"] .dashboard-header .welcome i,
+html[data-mw-global-theme="light"] .identity-chips .chip,
+html[data-mw-global-theme="light"] .identity-chips .chip *,
+html[data-mw-global-theme="light"] .warehouse-text,
+html[data-mw-global-theme="light"] .warehouse-text *,
+html[data-mw-global-theme="light"] .info-card,
+html[data-mw-global-theme="light"] .info-card h3,
+html[data-mw-global-theme="light"] #rewardStatusBadge,
+html[data-mw-global-theme="light"] #rewardStatusBadge *{color:#0f172a!important;text-shadow:none!important}
+html[data-mw-global-theme="light"] .identity-chips .chip{background:#e2e8f0!important;border:1px solid #cbd5e1!important;color:#0f172a!important}
+html[data-mw-global-theme="light"] .warehouse-text{color:#1e293b!important}
+html[data-mw-global-theme="light"] .customer-code,
+html[data-mw-global-theme="light"] .qty-badge,
+html[data-mw-global-theme="light"] .siparis-no{background:#fef3c7!important;color:#78350f!important;border-color:#f59e0b!important;font-weight:900!important}
+html[data-mw-global-theme="light"] .tab-badge{background:#dc2626!important;color:#fff!important;border-color:#fff!important}
+html[data-mw-global-theme="light"] .btn-details{background:#dbeafe!important;color:#1e3a8a!important;border:1px solid #93c5fd!important;font-weight:900!important}
+html[data-mw-global-theme="light"] .decision-box,
+html[data-mw-global-theme="light"] .payment-box{box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow:hidden!important;overflow-wrap:anywhere!important;word-break:normal!important;white-space:normal!important}
+html[data-mw-global-theme="light"] td .decision-box,
+html[data-mw-global-theme="light"] td .payment-box{margin:0!important;padding:8px!important}
+html[data-mw-global-theme="light"] .decision-box>*{max-width:100%!important;box-sizing:border-box!important;white-space:normal!important;overflow-wrap:anywhere!important}
+html[data-mw-global-theme="light"] .decision-box .btn-approve,
+html[data-mw-global-theme="light"] .decision-box .btn-cancel{display:inline-flex!important;align-items:center!important;justify-content:center!important;max-width:100%!important;min-height:34px!important;padding:7px 9px!important;margin:3px 2px!important;white-space:normal!important;line-height:1.25!important;font-weight:900!important;border:1px solid transparent!important}
+html[data-mw-global-theme="light"] .decision-box .btn-approve{background:#dcfce7!important;color:#14532d!important;border-color:#86efac!important}
+html[data-mw-global-theme="light"] .decision-box .btn-cancel{background:#fee2e2!important;color:#991b1b!important;border-color:#fca5a5!important}
+html[data-mw-global-theme="light"] .payment-box{background:#ecfdf5!important;color:#14532d!important;border:1px solid #86efac!important}
+html[data-mw-global-theme="light"] .payment-box *{color:#14532d!important}
 html[data-mw-global-theme="dark"]{color-scheme:dark}
 `;
   document.head.appendChild(s);
@@ -99,5 +129,5 @@ function installButton(){
 }
 installStyles();applyTheme(readTheme());
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installButton,{once:true});else installButton();
-window.MeshwarGlobalTheme={version:'20260826-global-theme-v1',applyTheme,toggleTheme};
+window.MeshwarGlobalTheme={version:'20260826-global-theme-v1.1',applyTheme,toggleTheme};
 })();
