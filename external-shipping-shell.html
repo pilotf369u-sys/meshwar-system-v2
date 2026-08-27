@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MeshWar</title>
-<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617}#app{width:100%;height:100%;border:0;display:block}</style>
+<style>html,body{margin:0!important;padding:0!important;width:100%!important;max-width:100%!important;height:100%!important;overflow:hidden;background:#020617}#app{position:fixed!important;inset:0!important;width:100vw!important;max-width:none!important;height:100vh!important;margin:0!important;padding:0!important;border:0;display:block}</style>
 </head>
 <body>
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
-  const BUILD='20260827-customer-landing-v21.1';
+  const BUILD='20260827-customer-landing-v21.2';
   const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
@@ -44,7 +44,7 @@
       if(screen==='customer'){
         const landingResponsive=d.createElement('link');
         landingResponsive.rel='stylesheet';
-        landingResponsive.href='css/customer-landing-responsive-v1.css?v=20260827-v1.1';
+        landingResponsive.href='css/customer-landing-responsive-v1.css?v=20260827-v1.2';
         d.head.appendChild(landingResponsive);
         const customerPolish=d.createElement('script');
         customerPolish.src='js/customer-light-polish-v1.js?v=20260826-customer-polish-v1.1-final';
