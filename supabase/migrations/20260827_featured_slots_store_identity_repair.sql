@@ -8,7 +8,6 @@ alter table public.merchant_featured_slots
 
 alter table public.merchant_featured_slots
   alter column merchant_id drop not null;
-
 do $$
 begin
   if not exists (
@@ -48,12 +47,13 @@ $$;
 revoke all on function public.list_featured_merchants(uuid) from public;
 grant execute on function public.list_featured_merchants(uuid) to anon, authenticated;
 
--- Canonical approval contract used by admin-featured-requests-v2.js:
--- p_request_id, p_store_id, p_start_date, p_end_date, p_admin_note.
--- Admin identity is taken from auth.uid() and verified server-side.
+-- Canonical approval contract used by admin-featured-requests-v2.js.
+-- Admin Dashboard uses its own application session, so p_admin_id is explicitly
+-- supplied and verified server-side through meshwar_is_admin(p_admin_id).
 drop function if exists public.admin_approve_featured_request(uuid,uuid,uuid,timestamptz,timestamptz,text);
 drop function if exists public.admin_approve_featured_request(uuid,uuid,timestamptz,timestamptz,text);
 create function public.admin_approve_featured_request(
+  p_admin_id uuid,
   p_request_id uuid,
   p_store_id uuid,
   p_start_date timestamptz,
@@ -68,10 +68,8 @@ as $$
 declare
   r public.merchant_featured_requests%rowtype;
   v_slot uuid;
-  v_admin_id uuid;
 begin
-  v_admin_id := auth.uid();
-  if v_admin_id is null or not public.meshwar_is_admin(v_admin_id) then
+  if p_admin_id is null or not public.meshwar_is_admin(p_admin_id) then
     raise exception 'not authorized';
   end if;
   if p_end_date<=p_start_date then raise exception 'end_date must be after start_date'; end if;
@@ -98,15 +96,15 @@ begin
   ) returning id into v_slot;
 
   update public.merchant_featured_requests
-  set store_id=p_store_id,status='approved',approved_slot_id=v_slot,reviewed_by=v_admin_id,reviewed_at=now(),
+  set store_id=p_store_id,status='approved',approved_slot_id=v_slot,reviewed_by=p_admin_id,reviewed_at=now(),
       admin_note=nullif(trim(p_admin_note),''),updated_at=now()
   where id=p_request_id;
 
   return v_slot;
 end;
 $$;
-revoke all on function public.admin_approve_featured_request(uuid,uuid,timestamptz,timestamptz,text) from public;
-grant execute on function public.admin_approve_featured_request(uuid,uuid,timestamptz,timestamptz,text) to authenticated;
+revoke all on function public.admin_approve_featured_request(uuid,uuid,uuid,timestamptz,timestamptz,text) from public;
+grant execute on function public.admin_approve_featured_request(uuid,uuid,uuid,timestamptz,timestamptz,text) to anon, authenticated;
 
 -- Active view includes store identity automatically through SELECT *.
 create or replace view public.active_merchant_slots_view as
