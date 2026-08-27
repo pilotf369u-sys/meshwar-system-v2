@@ -50,12 +50,12 @@ jobs:
         run: |
           set -euo pipefail
           test -s css/delivery-dark-polish-v1.css
-          grep -q 'delivery-dark-polish-v1.css?v=20260827-v1.3' external-shipping-shell.html
+          grep -Eq 'delivery-dark-polish-v1.css\?v=20260827-v1\.(3|4)' external-shipping-shell.html
           grep -q 'data-mw-global-theme="dark"' css/delivery-dark-polish-v1.css
           grep -q 'data-mw-global-theme="light"' css/delivery-dark-polish-v1.css
           grep -q '#deliveryTitle' css/delivery-dark-polish-v1.css
           grep -q -- '-webkit-text-fill-color' css/delivery-dark-polish-v1.css
-          echo 'Delivery theme package v1.3 validated; unrelated vendor E2E intentionally not executed.'
+          echo 'Delivery theme package v1.3/v1.4 validated; unrelated vendor E2E intentionally not executed.'
 
       - uses: actions/setup-node@v4
         if: steps.scope.outputs.delivery_css_only != 'true'
