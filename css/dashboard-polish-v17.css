@@ -84,15 +84,7 @@ html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .contact-mini 
 html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .contact-mini a:hover{background:#bae6fd!important;color:#082f49!important;border-color:#38bdf8!important}
 
 /* Branch customer contact hierarchy v17.1 — direct cell targeting */
-#ordersBody > tr[id^="row-"] > td:nth-child(3){
-  display:flex!important;
-  flex-direction:column!important;
-  align-items:flex-start!important;
-  justify-content:flex-start!important;
-  flex-wrap:nowrap!important;
-  gap:4px!important;
-  text-align:right!important;
-}
+#ordersBody > tr[id^="row-"] > td:nth-child(3){display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:flex-start!important;flex-wrap:nowrap!important;gap:4px!important;text-align:right!important}
 #ordersBody > tr[id^="row-"] > td:nth-child(3) > br{display:none!important}
 #ordersBody > tr[id^="row-"] > td:nth-child(3) > b{order:10!important;display:block!important}
 #ordersBody > tr[id^="row-"] > td:nth-child(3) > span.muted{order:20!important;display:block!important;margin:0!important}
@@ -101,9 +93,35 @@ html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .contact-mini 
 #ordersBody > tr[id^="row-"] > td:nth-child(3) > span.secondary-phone{order:40!important;display:block!important;margin:7px 0 0!important}
 #ordersBody > tr[id^="row-"] > td:nth-child(3) > span.contact-mini:not(.mw-branch-whatsapp-primary){order:41!important;display:flex!important;margin:0!important}
 
+/* Branch shipment table compact layout v17.2 — CSS only */
+#ordersBody{font-size:12px!important}
+#ordersBody > tr[id^="row-"] > td{padding:6px 5px!important;vertical-align:middle!important;line-height:1.25!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(1){width:34px!important;min-width:34px!important;max-width:34px!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(2){width:15%!important;min-width:120px!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(3){width:22%!important;min-width:180px!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(4){width:15%!important;min-width:145px!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(5){width:10%!important;min-width:100px!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(6){width:10%!important;min-width:100px!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(7){width:12%!important;min-width:125px!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(8){width:12%!important;min-width:125px!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(9){width:18%!important;min-width:210px!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:center!important;gap:4px!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button{margin:0!important;padding:5px 7px!important;min-height:28px!important;height:auto!important;line-height:1.1!important;font-size:10px!important;border-radius:7px!important;white-space:nowrap!important;flex:1 1 calc(50% - 4px)!important;max-width:110px!important;box-shadow:none!important}
+#ordersBody > tr[id^="row-"] select{min-width:0!important;width:100%!important;max-width:100%!important;padding:5px 6px!important;min-height:30px!important;font-size:11px!important}
+#ordersBody > tr[id^="row-"] input[type="number"]{min-width:0!important;max-width:100%!important;padding:5px 6px!important;min-height:30px!important;font-size:11px!important}
+#ordersBody > tr[id^="row-"] .collect{margin-top:3px!important;padding:3px 5px!important;font-size:11px!important}
+#ordersBody > tr[id^="row-"] .customer-code{padding:2px 5px!important;font-size:10px!important}
+#ordersBody > tr[id^="row-"] .contact-mini{gap:3px!important}
+#ordersBody > tr[id^="row-"] .contact-mini a{padding:3px 5px!important;font-size:9px!important}
+
+@media(max-width:1100px){
+  #ordersBody > tr[id^="row-"] > td:nth-child(9){min-width:170px!important}
+  #ordersBody > tr[id^="row-"] > td:nth-child(9) > button{flex:1 1 100%!important;max-width:none!important}
+}
 @media(max-width:850px){
   html[data-mw-global-theme="light"] .chat-line{max-width:90%!important}
   html[data-mw-global-theme="light"] body:has(.chat-layout) .dashboard-header,
   html[data-mw-global-theme="light"] body:has(.chat-layout) .panel-card,
   html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .container{border-radius:14px!important}
+  #ordersBody > tr[id^="row-"] > td{padding:5px 4px!important}
+  #ordersBody > tr[id^="row-"] > td:nth-child(9){min-width:150px!important}
 }
