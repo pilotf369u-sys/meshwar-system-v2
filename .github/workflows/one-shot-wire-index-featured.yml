@@ -38,3 +38,4 @@ jobs:
           git add -A
           git commit -m 'feat: wire public featured campaigns loader'
           git push origin HEAD:main
+# one-shot trigger
