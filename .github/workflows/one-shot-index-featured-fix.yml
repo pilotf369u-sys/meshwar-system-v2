@@ -31,10 +31,7 @@ jobs:
           elif featured not in s:
               s=s.replace(responsive,responsive+'\n'+featured,1)
 
-          # Remove the obsolete standalone MeshWar branding card from source.
           s=re.sub(r'\n\s*<div class="header-container"><img class="main-logo"[^>]*>\s*<h1>منصة MeshWar</h1><p>.*?</p></div>\s*\n', '\n', s, count=1, flags=re.S)
-
-          # Force refresh of the existing CMS reader that loads settings.site_settings/video_url.
           s=s.replace('js/local-store-pricing.js?v=local-modal-v4-2','js/local-store-pricing.js?v=20260827-site-cms-v4-3')
 
           hub_script='<script src="js/customer-featured-hub-v1.js?v=20260827-v1.1"></script>'
@@ -54,6 +51,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html .github/workflows/one-shot-index-featured-fix.yml
+          git add -A
           git commit -m "fix: wire dynamic hero video and featured hub on index" || exit 0
           git push origin HEAD:main
