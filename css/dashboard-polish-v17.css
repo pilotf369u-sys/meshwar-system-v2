@@ -177,5 +177,66 @@ html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .contact-mini 
 .branch-quick-actions .branch-action-receive:hover{background:#d1fae5!important;border-color:#34d399!important}
 .branch-quick-actions .branch-action-transfer:hover{background:#ffedd5!important;border-color:#fb923c!important}
 .branch-quick-actions .branch-action-courier:hover{background:#dbeafe!important;border-color:#60a5fa!important}
-
 html[data-mw-global-theme="light"] .branch-quick-actions{border-top-color:#e2e8f0!important}
+
+/* Branch button fit + light warmth v17.6 — CSS only */
+#ordersBody > tr[id^="row-"] > td:nth-child(9){
+  width:auto!important;
+  min-width:150px!important;
+  max-width:none!important;
+  padding:5px 6px!important;
+}
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button{
+  width:auto!important;
+  min-width:max-content!important;
+  max-width:none!important;
+  padding:4px 8px!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button.green{
+  padding:5px 10px!important;
+  min-width:max-content!important;
+}
+.branch-quick-actions button{
+  flex:0 1 auto!important;
+  width:auto!important;
+  min-width:max-content!important;
+  max-width:none!important;
+  padding:4px 8px!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) table{
+  background:#f4f6f9!important;
+  border-color:#d7dee7!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"] > td{
+  background:#f8fafc!important;
+  color:#27364a!important;
+  border-color:#e2e8f0!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"]:nth-child(even) > td{
+  background:#f4f6f9!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"]:hover > td{
+  background:#eef2f6!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) th{
+  background:#e9eef4!important;
+  color:#1f2937!important;
+  border-color:#d7dee7!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .container,
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .top,
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .toolbar{
+  background:#f8fafc!important;
+}
+@media(max-width:1100px){
+  #ordersBody > tr[id^="row-"] > td:nth-child(9){min-width:145px!important;max-width:none!important}
+  #ordersBody > tr[id^="row-"] > td:nth-child(9) > button{font-size:9px!important;padding:4px 7px!important}
+}
