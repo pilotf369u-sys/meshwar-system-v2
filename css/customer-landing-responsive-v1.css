@@ -1,6 +1,6 @@
-/* Customer landing responsive polish v1.2 / v21.2 — CSS-only visual layer.
-   Purpose: remove root/shell width constraints and make the landing app-ready on desktop/mobile.
-   No functional DOM, links, JavaScript, Supabase, or event-handler changes. */
+/* Customer landing responsive polish v1.3 — stable landing visual layer.
+   Restores the original promo media, keeps v21.2 full-width canvas, and adds calm spacing.
+   No business logic, Supabase, links, or event-handler changes. */
 
 /* ==================== ROOT CANVAS ==================== */
 html:has(#meshwarVideoAd),
@@ -16,7 +16,6 @@ body:has(#meshwarVideoAd){
   padding-inline:clamp(8px,1.25vw,18px)!important;
 }
 
-/* Remove boxed constraints from known root wrappers only. */
 body:has(#meshwarVideoAd) #shell-root,
 body:has(#meshwarVideoAd) .shell-container,
 body:has(#meshwarVideoAd) .app-wrapper,
@@ -30,7 +29,7 @@ body:has(#meshwarVideoAd) main{
   box-sizing:border-box!important;
 }
 
-/* Main landing canvas: broad but still comfortably centered on very large screens. */
+/* Main v21.2 canvas. */
 body:has(#meshwarVideoAd) > nav > div,
 body:has(#meshwarVideoAd) > section,
 body:has(#meshwarVideoAd) .customer-landing-container,
@@ -51,7 +50,6 @@ body:has(#meshwarVideoAd) #internationalStoresSection{
   box-sizing:border-box!important;
 }
 
-/* Hero wrapper: stretch to the same application canvas. */
 body:has(#meshwarVideoAd) > section:first-of-type{
   width:96%!important;
   max-width:1400px!important;
@@ -65,35 +63,33 @@ body:has(#meshwarVideoAd) > section:first-of-type > div:first-child{
   min-width:0!important;
 }
 
-/* ==================== PROMO MEDIA ==================== */
-/* Keep the canonical MeshWar promo player only. Any duplicate media injected beside it is hidden. */
+/* ==================== ORIGINAL PROMO VIDEO ==================== */
+/* Keep only the canonical original player visible. */
 body:has(#meshwarVideoAd) #meshwarVideoAd video:not(#meshwarPromoVideo),
-body:has(#meshwarVideoAd) #meshwarVideoAd iframe{
+body:has(#meshwarVideoAd) #meshwarVideoAd iframe:not([data-mw-primary-promo]){
   display:none!important;
-  width:0!important;
-  height:0!important;
-  min-height:0!important;
-  margin:0!important;
-  padding:0!important;
 }
 body:has(#meshwarVideoAd) #meshwarVideoAd{
-  width:min(68%,760px)!important;
-  max-width:760px!important;
+  display:block!important;
+  width:min(100%,650px)!important;
+  max-width:650px!important;
   min-width:0!important;
-  margin:18px auto!important;
+  margin:22px auto 44px!important;
   padding:0!important;
   box-sizing:border-box!important;
 }
 body:has(#meshwarVideoAd) #meshwarVideoAd > div{
+  display:block!important;
   width:100%!important;
-  max-width:760px!important;
+  max-width:650px!important;
   min-width:0!important;
   margin:0 auto!important;
   border-radius:12px!important;
   overflow:hidden!important;
   box-shadow:0 10px 25px rgba(0,0,0,.15)!important;
 }
-body:has(#meshwarVideoAd) #meshwarPromoVideo{
+body:has(#meshwarVideoAd) #meshwarPromoVideo,
+body:has(#meshwarVideoAd) #meshwarVideoAd iframe[data-mw-primary-promo]{
   display:block!important;
   width:100%!important;
   max-width:100%!important;
@@ -104,6 +100,18 @@ body:has(#meshwarVideoAd) #meshwarPromoVideo{
   object-position:center center!important;
   border:0!important;
   margin:0!important;
+}
+
+/* No campaign-empty/status panel in the stable landing. */
+body:has(#meshwarVideoAd) #meshwarFeaturedHub,
+body:has(#meshwarVideoAd) .mw-featured-empty,
+body:has(#meshwarVideoAd) .mw-featured-error{
+  display:none!important;
+}
+
+/* Calm breathing room before the MeshWar offers ticker. */
+body:has(#meshwarVideoAd) #meshwarTicker{
+  margin-top:28px!important;
 }
 
 /* ==================== STRETCHED LANDING SURFACES ==================== */
@@ -153,18 +161,11 @@ body:has(#meshwarVideoAd) .local-public-card{
   box-sizing:border-box!important;
 }
 
-/* ==================== TABLET / MOBILE APP VIEW ==================== */
+/* ==================== TABLET / MOBILE ==================== */
 @media(max-width:768px){
   html:has(#meshwarVideoAd),
-  body:has(#meshwarVideoAd){
-    width:100%!important;
-    max-width:100%!important;
-    margin:0!important;
-  }
-  body:has(#meshwarVideoAd){
-    padding:0 10px!important;
-    box-sizing:border-box!important;
-  }
+  body:has(#meshwarVideoAd){width:100%!important;max-width:100%!important;margin:0!important}
+  body:has(#meshwarVideoAd){padding:0 10px!important;box-sizing:border-box!important}
   body:has(#meshwarVideoAd) #shell-root,
   body:has(#meshwarVideoAd) .shell-container,
   body:has(#meshwarVideoAd) .app-wrapper,
@@ -192,12 +193,10 @@ body:has(#meshwarVideoAd) .local-public-card{
   }
   body:has(#meshwarVideoAd) #meshwarVideoAd{
     width:100%!important;
-    max-width:680px!important;
-    margin:14px auto!important;
+    max-width:650px!important;
+    margin:16px auto 34px!important;
   }
-  body:has(#meshwarVideoAd) #meshwarStoreTabs > div{
-    grid-template-columns:1fr!important;
-  }
+  body:has(#meshwarVideoAd) #meshwarStoreTabs > div{grid-template-columns:1fr!important}
   body:has(#meshwarVideoAd) .grid-container,
   body:has(#meshwarVideoAd) .local-stores-grid{
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
@@ -208,10 +207,6 @@ body:has(#meshwarVideoAd) .local-public-card{
 @media(max-width:480px){
   body:has(#meshwarVideoAd){padding:0 8px!important}
   body:has(#meshwarVideoAd) .grid-container,
-  body:has(#meshwarVideoAd) .local-stores-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  }
-  body:has(#meshwarVideoAd) .header-container{
-    padding-inline:14px!important;
-  }
+  body:has(#meshwarVideoAd) .local-stores-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body:has(#meshwarVideoAd) .header-container{padding-inline:14px!important}
 }
