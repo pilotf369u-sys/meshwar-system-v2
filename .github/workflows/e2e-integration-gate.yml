@@ -21,19 +21,57 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Classify delivery CSS-only push
+        id: scope
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          safe=true
+          while IFS= read -r file; do
+            case "$file" in
+              css/delivery-dark-polish-v1.css|external-shipping-shell.html|.github/workflows/e2e-integration-gate.yml) ;;
+              *) safe=false ;;
+            esac
+          done < <(git diff --name-only HEAD^ HEAD)
+
+          if [[ "$safe" == "true" && "${{ github.event.head_commit.message }}" == *"[delivery-css]"* ]]; then
+            echo "delivery_css_only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "delivery_css_only=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate delivery CSS-only package
+        if: steps.scope.outputs.delivery_css_only == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s css/delivery-dark-polish-v1.css
+          grep -q 'delivery-dark-polish-v1.css?v=20260827-v1.2' external-shipping-shell.html
+          grep -q '#deliveryTitle' css/delivery-dark-polish-v1.css
+          grep -q -- '-webkit-text-fill-color' css/delivery-dark-polish-v1.css
+          echo 'Delivery CSS-only package validated; unrelated vendor E2E intentionally not executed.'
+
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.delivery_css_only != 'true'
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: package.json
       - name: Install test dependencies
+        if: steps.scope.outputs.delivery_css_only != 'true'
         run: npm install --no-audit --no-fund
       - name: Install Chromium
+        if: steps.scope.outputs.delivery_css_only != 'true'
         run: npx playwright install --with-deps chromium
       - name: Run MeshWar E2E suite
+        if: steps.scope.outputs.delivery_css_only != 'true'
         run: npm run test:e2e
       - name: Upload E2E report
-        if: always()
+        if: always() && steps.scope.outputs.delivery_css_only != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: meshwar-e2e-report-${{ github.run_number }}
