@@ -46,7 +46,7 @@ async function loadSiteSettings(){try{status('جاري التحقق وتحميل
 async function saveSiteSettings(){const btn=document.getElementById('cmsSaveBtn');try{btn.disabled=true;status('جاري حفظ إعدادات الموقع...');await verifyAdmin();const next=validate(collect()),sb=await getSb(),{error}=await sb.rpc('save_site_settings',{p_admin_id:adminId(),p_value:next});if(error)throw error;fillForm(next);status('تم حفظ site_settings بنجاح. ستظهر التغييرات في الواجهة الرئيسية عند التحديث.','ok')}catch(e){console.error(e);if(migrationMissing(e))migrationNotice();else status(e.message||String(e),'err')}finally{btn.disabled=false}}
 window.loadSiteSettings=loadSiteSettings;window.saveSiteSettings=saveSiteSettings;window.addEventListener('DOMContentLoaded',()=>{syncEmbeddedViewport();bindVideoPasteGuard();loadSiteSettings()});
 </script>
-<script src="js/admin-featured-campaigns-v1.js?v=20260827-v1.0"></script>
-<script src="js/admin-featured-requests-v2.js?v=20260827-v2.2-approve-wire"></script>
+<script src="js/admin-featured-campaigns-v1.js?v=20260827-v1.1-approval-refresh"></script>
+<script src="js/admin-featured-requests-v2.js?v=20260827-v2.3-pending-products"></script>
 </body>
 </html>
