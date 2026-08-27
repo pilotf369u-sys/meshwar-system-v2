@@ -160,7 +160,7 @@ jobs:
         run: |
           grep -Fq '<meta name="meshwar-build"' vendor-dashboard.html
           grep -Fq '<script src="js/vendor-finance-settlement-v24.js?v=20260824-1253"></script>' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-finance-delivered-orders-v35.js?v=20260825-v35-pl-dynamic-fx2"></script>' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-finance-delivered-orders-v35.js?v=20260825-v35-pl-backend-fx3"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceSettlementV24?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceDeliveredV35?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceSettlementV24?.ensureUi(win,{refresh:true})' vendor-dashboard.html
