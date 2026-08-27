@@ -10,7 +10,7 @@
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
-  const BUILD='20260827-customer-landing-v21.2';
+  const BUILD='20260827-customer-featured-v22.0';
   const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
@@ -46,6 +46,14 @@
         landingResponsive.rel='stylesheet';
         landingResponsive.href='css/customer-landing-responsive-v1.css?v=20260827-v1.2';
         d.head.appendChild(landingResponsive);
+        const featuredCss=d.createElement('link');
+        featuredCss.rel='stylesheet';
+        featuredCss.href='css/customer-featured-hub-v1.css?v=20260827-v1.0';
+        d.head.appendChild(featuredCss);
+        const featuredHub=d.createElement('script');
+        featuredHub.src='js/customer-featured-hub-v1.js?v=20260827-v1.0';
+        featuredHub.defer=true;
+        d.head.appendChild(featuredHub);
         const customerPolish=d.createElement('script');
         customerPolish.src='js/customer-light-polish-v1.js?v=20260826-customer-polish-v1.1-final';
         d.head.appendChild(customerPolish);
