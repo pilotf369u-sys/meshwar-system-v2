@@ -78,6 +78,27 @@ html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .dashboard-sca
 html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .scan-item{background:#f8fafc!important;color:#172033!important;border-color:#dbe3ea!important}
 html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .scan-code{background:#fff!important;color:#334155!important;border-color:#94a3b8!important}
 
+/* Branch light-mode contrast hotfix — CSS only */
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .collect{
+  background:#fff7ed!important;
+  color:#7c2d12!important;
+  border:1px solid #fdba74!important;
+  font-weight:900!important;
+  text-shadow:none!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .contact-mini a{
+  background:#e0f2fe!important;
+  color:#0c4a6e!important;
+  border:1px solid #7dd3fc!important;
+  font-weight:900!important;
+  text-shadow:none!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .contact-mini a:hover{
+  background:#bae6fd!important;
+  color:#082f49!important;
+  border-color:#38bdf8!important;
+}
+
 @media(max-width:850px){
   html[data-mw-global-theme="light"] .chat-line{max-width:90%!important}
   html[data-mw-global-theme="light"] body:has(.chat-layout) .dashboard-header,
