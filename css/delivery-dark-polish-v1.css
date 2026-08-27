@@ -1,4 +1,4 @@
-/* Delivery dashboard dark polish v1.0 — CSS-only visual override.
+/* Delivery dashboard dark polish v1.1 — CSS-only visual override.
    No DOM, Supabase, event-handler, or delivery-logic changes. */
 
 html[data-mw-global-theme="dark"] body{
@@ -6,14 +6,34 @@ html[data-mw-global-theme="dark"] body{
   color:#f8fafc!important;
 }
 
-/* Header & identity */
-html[data-mw-global-theme="dark"] #deliveryTitle{
+/* Header & identity — force high contrast against any legacy/inline rules. */
+html[data-mw-global-theme="dark"] .topbar,
+html[data-mw-global-theme="dark"] header,
+html[data-mw-global-theme="dark"] .delivery-header,
+html[data-mw-global-theme="dark"] #deliveryHeader{
+  color:#f8fafc!important;
+}
+html[data-mw-global-theme="dark"] .topbar *,
+html[data-mw-global-theme="dark"] header *,
+html[data-mw-global-theme="dark"] .delivery-header *,
+html[data-mw-global-theme="dark"] #deliveryHeader *,
+html[data-mw-global-theme="dark"] .header-title,
+html[data-mw-global-theme="dark"] span[id*="title"],
+html[data-mw-global-theme="dark"] div[class*="header"]{
+  color:#f8fafc!important;
+}
+html[data-mw-global-theme="dark"] #deliveryTitle,
+html[data-mw-global-theme="dark"] .topbar #deliveryTitle{
   color:#f8fafc!important;
   font-weight:900!important;
   text-shadow:0 1px 0 rgba(0,0,0,.35)!important;
 }
 html[data-mw-global-theme="dark"] #identityMeta,
-html[data-mw-global-theme="dark"] .topbar .muted{
+html[data-mw-global-theme="dark"] .topbar #identityMeta,
+html[data-mw-global-theme="dark"] .topbar .muted,
+html[data-mw-global-theme="dark"] .delivery-courier-name,
+html[data-mw-global-theme="dark"] span[id*="courier"],
+html[data-mw-global-theme="dark"] span[class*="courier"]{
   color:#fbbf24!important;
   font-weight:800!important;
 }
@@ -21,6 +41,11 @@ html[data-mw-global-theme="dark"] .topbar{
   background:#0f172a!important;
   border:1px solid #334155!important;
   box-shadow:0 14px 34px rgba(0,0,0,.30)!important;
+}
+/* Keep logout/action buttons readable after the broad header force. */
+html[data-mw-global-theme="dark"] .topbar .btn,
+html[data-mw-global-theme="dark"] .topbar .btn *{
+  color:#fff!important;
 }
 
 /* Finance / stats cards */
