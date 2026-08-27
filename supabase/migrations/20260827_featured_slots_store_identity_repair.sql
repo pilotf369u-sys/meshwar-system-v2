@@ -48,13 +48,14 @@ $$;
 revoke all on function public.list_featured_merchants(uuid) from public;
 grant execute on function public.list_featured_merchants(uuid) to anon, authenticated;
 
--- Approval now uses the selected local store id. The p_merchant_id parameter name is retained
--- only so the currently deployed Admin JS remains wire-compatible.
+-- Canonical approval contract used by admin-featured-requests-v2.js:
+-- p_request_id, p_store_id, p_start_date, p_end_date, p_admin_note.
+-- Admin identity is taken from auth.uid() and verified server-side.
 drop function if exists public.admin_approve_featured_request(uuid,uuid,uuid,timestamptz,timestamptz,text);
+drop function if exists public.admin_approve_featured_request(uuid,uuid,timestamptz,timestamptz,text);
 create function public.admin_approve_featured_request(
-  p_admin_id uuid,
   p_request_id uuid,
-  p_merchant_id uuid,
+  p_store_id uuid,
   p_start_date timestamptz,
   p_end_date timestamptz,
   p_admin_note text default null
@@ -67,9 +68,12 @@ as $$
 declare
   r public.merchant_featured_requests%rowtype;
   v_slot uuid;
-  v_store_id uuid;
+  v_admin_id uuid;
 begin
-  if not public.meshwar_is_admin(p_admin_id) then raise exception 'not authorized'; end if;
+  v_admin_id := auth.uid();
+  if v_admin_id is null or not public.meshwar_is_admin(v_admin_id) then
+    raise exception 'not authorized';
+  end if;
   if p_end_date<=p_start_date then raise exception 'end_date must be after start_date'; end if;
 
   select * into r
@@ -79,33 +83,30 @@ begin
 
   if not found then raise exception 'request not found'; end if;
   if r.status<>'pending' then raise exception 'request already reviewed'; end if;
-
-  -- Prefer the request's own store identity. The selected value must match it when supplied.
-  v_store_id := r.store_id;
-  if p_merchant_id is not null and p_merchant_id <> v_store_id then
+  if p_store_id is null then raise exception 'store_id is required'; end if;
+  if r.store_id is not null and p_store_id<>r.store_id then
     raise exception 'selected store does not match request store';
   end if;
-
-  if not exists(select 1 from public.local_stores s where s.id=v_store_id and coalesce(s.is_active,true)=true) then
+  if not exists(select 1 from public.local_stores s where s.id=p_store_id and coalesce(s.is_active,true)=true) then
     raise exception 'store not found or inactive';
   end if;
 
   insert into public.merchant_featured_slots(
     store_id,merchant_id,slot_type,banner_url,store_logo,store_name,item_ids,start_date,end_date,is_active
   ) values (
-    v_store_id,null,r.slot_type,r.banner_url,r.store_logo,r.store_name,r.item_ids,p_start_date,p_end_date,true
+    p_store_id,null,r.slot_type,r.banner_url,r.store_logo,r.store_name,r.item_ids,p_start_date,p_end_date,true
   ) returning id into v_slot;
 
   update public.merchant_featured_requests
-  set status='approved',approved_slot_id=v_slot,reviewed_by=p_admin_id,reviewed_at=now(),
+  set store_id=p_store_id,status='approved',approved_slot_id=v_slot,reviewed_by=v_admin_id,reviewed_at=now(),
       admin_note=nullif(trim(p_admin_note),''),updated_at=now()
   where id=p_request_id;
 
   return v_slot;
 end;
 $$;
-revoke all on function public.admin_approve_featured_request(uuid,uuid,uuid,timestamptz,timestamptz,text) from public;
-grant execute on function public.admin_approve_featured_request(uuid,uuid,uuid,timestamptz,timestamptz,text) to anon, authenticated;
+revoke all on function public.admin_approve_featured_request(uuid,uuid,timestamptz,timestamptz,text) from public;
+grant execute on function public.admin_approve_featured_request(uuid,uuid,timestamptz,timestamptz,text) to authenticated;
 
 -- Active view includes store identity automatically through SELECT *.
 create or replace view public.active_merchant_slots_view as
