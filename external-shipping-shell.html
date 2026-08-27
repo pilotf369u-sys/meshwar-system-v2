@@ -10,7 +10,7 @@
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
-  const BUILD='20260827-employee-light-v19.0';
+  const BUILD='20260827-delivery-dark-v20.0';
   const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
@@ -34,6 +34,12 @@
         employeeContrast.rel='stylesheet';
         employeeContrast.href='css/employee-light-contrast-v1.css?v=20260827-v1.1';
         d.head.appendChild(employeeContrast);
+      }
+      if(screen==='delivery'){
+        const deliveryDark=d.createElement('link');
+        deliveryDark.rel='stylesheet';
+        deliveryDark.href='css/delivery-dark-polish-v1.css?v=20260827-v1.0';
+        d.head.appendChild(deliveryDark);
       }
       if(screen==='customer'){
         const customerPolish=d.createElement('script');
