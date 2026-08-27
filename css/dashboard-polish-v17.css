@@ -145,3 +145,37 @@ html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .contact-mini 
   html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .container{border-radius:14px!important}
   #ordersBody > tr[id^="row-"] > td{padding:5px 4px!important}
 }
+
+/* Branch action identity refresh v17.5 — CSS only */
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button.green{
+  min-height:32px!important;height:32px!important;padding:5px 8px!important;font-size:13px!important;font-weight:800!important;
+  background:#10b981!important;color:#fff!important;border:1px solid #059669!important;border-radius:6px!important;
+  box-shadow:0 2px 6px rgba(16,185,129,.20)!important;text-shadow:none!important;
+}
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button.green:hover{background:#059669!important;border-color:#047857!important;filter:none!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button.purple,
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button.blue{
+  min-height:27px!important;height:27px!important;padding:4px 7px!important;font-size:10.5px!important;font-weight:800!important;
+  border-radius:6px!important;box-shadow:none!important;text-shadow:none!important;
+}
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button.purple{background:#f3e8ff!important;color:#581c87!important;border:1px solid #c4b5fd!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button.blue{background:#e0f2fe!important;color:#0c4a6e!important;border:1px solid #7dd3fc!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button.purple:hover{background:#ede9fe!important;border-color:#a78bfa!important;filter:none!important}
+#ordersBody > tr[id^="row-"] > td:nth-child(9) > button.blue:hover{background:#bae6fd!important;border-color:#38bdf8!important;filter:none!important}
+
+.branch-quick-actions{
+  display:flex!important;gap:4px!important;flex-wrap:wrap!important;justify-content:center!important;align-items:center!important;
+  margin-top:5px!important;padding-top:5px!important;border-top:1px solid rgba(148,163,184,.18)!important;
+}
+.branch-quick-actions button{
+  flex:1 1 92px!important;min-width:0!important;min-height:27px!important;height:27px!important;margin:0!important;padding:4px 7px!important;
+  font-size:10px!important;font-weight:800!important;line-height:1!important;border-radius:6px!important;box-shadow:none!important;transform:none!important;white-space:nowrap!important;text-shadow:none!important;
+}
+.branch-quick-actions .branch-action-receive{background:#ecfdf5!important;color:#065f46!important;border:1px solid #6ee7b7!important}
+.branch-quick-actions .branch-action-transfer{background:#fff7ed!important;color:#9a3412!important;border:1px solid #fdba74!important}
+.branch-quick-actions .branch-action-courier{background:#eff6ff!important;color:#1e3a8a!important;border:1px solid #93c5fd!important}
+.branch-quick-actions .branch-action-receive:hover{background:#d1fae5!important;border-color:#34d399!important}
+.branch-quick-actions .branch-action-transfer:hover{background:#ffedd5!important;border-color:#fb923c!important}
+.branch-quick-actions .branch-action-courier:hover{background:#dbeafe!important;border-color:#60a5fa!important}
+
+html[data-mw-global-theme="light"] .branch-quick-actions{border-top-color:#e2e8f0!important}
