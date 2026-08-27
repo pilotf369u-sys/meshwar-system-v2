@@ -1,4 +1,4 @@
-/* Delivery dashboard dark polish v1.1 — CSS-only visual override.
+/* Delivery dashboard dark polish v1.2 — CSS-only visual override.
    No DOM, Supabase, event-handler, or delivery-logic changes. */
 
 html[data-mw-global-theme="dark"] body{
@@ -6,12 +6,29 @@ html[data-mw-global-theme="dark"] body{
   color:#f8fafc!important;
 }
 
-/* Header & identity — force high contrast against any legacy/inline rules. */
+/* Header & identity */
+html[data-mw-global-theme="dark"] .topbar,
+html[data-mw-global-theme="dark"] header,
+html[data-mw-global-theme="dark"] .delivery-header,
+html[data-mw-global-theme="dark"] #deliveryHeader,
+html[data-mw-global-theme="dark"] #deliveryTitle,
+html[data-mw-global-theme="dark"] #identityMeta{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  line-height:1.5!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
 html[data-mw-global-theme="dark"] .topbar,
 html[data-mw-global-theme="dark"] header,
 html[data-mw-global-theme="dark"] .delivery-header,
 html[data-mw-global-theme="dark"] #deliveryHeader{
   color:#f8fafc!important;
+  background:#0f172a!important;
+  border:1px solid #334155!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.30)!important;
 }
 html[data-mw-global-theme="dark"] .topbar *,
 html[data-mw-global-theme="dark"] header *,
@@ -20,12 +37,20 @@ html[data-mw-global-theme="dark"] #deliveryHeader *,
 html[data-mw-global-theme="dark"] .header-title,
 html[data-mw-global-theme="dark"] span[id*="title"],
 html[data-mw-global-theme="dark"] div[class*="header"]{
-  color:#f8fafc!important;
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  opacity:1!important;
+  visibility:visible!important;
 }
 html[data-mw-global-theme="dark"] #deliveryTitle,
 html[data-mw-global-theme="dark"] .topbar #deliveryTitle{
-  color:#f8fafc!important;
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
   font-weight:900!important;
+  line-height:1.5!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
   text-shadow:0 1px 0 rgba(0,0,0,.35)!important;
 }
 html[data-mw-global-theme="dark"] #identityMeta,
@@ -35,17 +60,17 @@ html[data-mw-global-theme="dark"] .delivery-courier-name,
 html[data-mw-global-theme="dark"] span[id*="courier"],
 html[data-mw-global-theme="dark"] span[class*="courier"]{
   color:#fbbf24!important;
+  -webkit-text-fill-color:#fbbf24!important;
   font-weight:800!important;
+  line-height:1.45!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
 }
-html[data-mw-global-theme="dark"] .topbar{
-  background:#0f172a!important;
-  border:1px solid #334155!important;
-  box-shadow:0 14px 34px rgba(0,0,0,.30)!important;
-}
-/* Keep logout/action buttons readable after the broad header force. */
 html[data-mw-global-theme="dark"] .topbar .btn,
 html[data-mw-global-theme="dark"] .topbar .btn *{
   color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
 }
 
 /* Finance / stats cards */
@@ -56,6 +81,7 @@ html[data-mw-global-theme="dark"] .finance-card{
 }
 html[data-mw-global-theme="dark"] .finance-card .label{
   color:#cbd5e1!important;
+  -webkit-text-fill-color:#cbd5e1!important;
   font-weight:800!important;
 }
 html[data-mw-global-theme="dark"] .finance-card .value,
@@ -66,6 +92,7 @@ html[data-mw-global-theme="dark"] .finance-card:nth-child(4) .value,
 html[data-mw-global-theme="dark"] .finance-card:nth-child(5) .value,
 html[data-mw-global-theme="dark"] .finance-card:nth-child(6) .value{
   color:#f8fafc!important;
+  -webkit-text-fill-color:#f8fafc!important;
   font-size:25px!important;
   font-weight:950!important;
   text-shadow:0 0 16px rgba(248,250,252,.08)!important;
@@ -74,9 +101,10 @@ html[data-mw-global-theme="dark"] #cardCollected,
 html[data-mw-global-theme="dark"] #cardFees,
 html[data-mw-global-theme="dark"] #cardNet{
   color:#fbbf24!important;
+  -webkit-text-fill-color:#fbbf24!important;
 }
 
-/* Shipment cards and summary data */
+/* Shipment cards and summary data — force visibility over inline legacy colors. */
 html[data-mw-global-theme="dark"] .shipment{
   background:linear-gradient(145deg,#172033,#0f172a)!important;
   border:1px solid #334155!important;
@@ -85,28 +113,36 @@ html[data-mw-global-theme="dark"] .shipment{
 html[data-mw-global-theme="dark"] .shipment-summary,
 html[data-mw-global-theme="dark"] .shipment-summary > div,
 html[data-mw-global-theme="dark"] .shipment-summary b,
+html[data-mw-global-theme="dark"] .shipment-summary span:not(.money):not(.chevron),
 html[data-mw-global-theme="dark"] .summary-address,
 html[data-mw-global-theme="dark"] .shipment-details,
 html[data-mw-global-theme="dark"] .shipment-head{
   color:#f1f5f9!important;
+  -webkit-text-fill-color:#f1f5f9!important;
+  opacity:1!important;
+  visibility:visible!important;
 }
 html[data-mw-global-theme="dark"] .shipment-summary .muted,
 html[data-mw-global-theme="dark"] .shipment-details .muted{
   color:#cbd5e1!important;
+  -webkit-text-fill-color:#cbd5e1!important;
   font-weight:700!important;
 }
 html[data-mw-global-theme="dark"] .code{
   color:#fbbf24!important;
+  -webkit-text-fill-color:#fbbf24!important;
   font-weight:950!important;
 }
 html[data-mw-global-theme="dark"] .summary-address{
   color:#e2e8f0!important;
+  -webkit-text-fill-color:#e2e8f0!important;
   font-weight:800!important;
 }
 html[data-mw-global-theme="dark"] .money,
 html[data-mw-global-theme="dark"] .shipment-summary .money,
 html[data-mw-global-theme="dark"] .item .money{
   color:#f59e0b!important;
+  -webkit-text-fill-color:#f59e0b!important;
   font-weight:950!important;
   text-shadow:0 0 12px rgba(245,158,11,.12)!important;
 }
@@ -114,14 +150,17 @@ html[data-mw-global-theme="dark"] .item{
   background:#111827!important;
   border:1px solid #334155!important;
   color:#f1f5f9!important;
+  -webkit-text-fill-color:#f1f5f9!important;
 }
 html[data-mw-global-theme="dark"] .item b,
 html[data-mw-global-theme="dark"] .delivery-image-box b{
   color:#e2e8f0!important;
+  -webkit-text-fill-color:#e2e8f0!important;
   font-weight:800!important;
 }
 html[data-mw-global-theme="dark"] .secondary{
   color:#fbbf24!important;
+  -webkit-text-fill-color:#fbbf24!important;
   font-weight:800!important;
 }
 
@@ -134,23 +173,27 @@ html[data-mw-global-theme="dark"] .tabs{
 html[data-mw-global-theme="dark"] .tab{
   background:#1e293b!important;
   color:#e2e8f0!important;
+  -webkit-text-fill-color:#e2e8f0!important;
   border:1px solid #334155!important;
   font-weight:900!important;
 }
 html[data-mw-global-theme="dark"] .tab:hover{
   background:#26364d!important;
   color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
   border-color:#64748b!important;
 }
 html[data-mw-global-theme="dark"] .tab.active{
   background:#f59e0b!important;
   color:#111827!important;
+  -webkit-text-fill-color:#111827!important;
   border-color:#fbbf24!important;
   box-shadow:0 8px 20px rgba(245,158,11,.22)!important;
 }
 html[data-mw-global-theme="dark"] .tab.active .badge{
   background:#111827!important;
   color:#fbbf24!important;
+  -webkit-text-fill-color:#fbbf24!important;
   font-weight:900!important;
 }
 
@@ -168,10 +211,12 @@ html[data-mw-global-theme="dark"] .edit-box textarea,
 html[data-mw-global-theme="dark"] .toolbar input{
   background:#020617!important;
   color:#f8fafc!important;
+  -webkit-text-fill-color:#f8fafc!important;
   border-color:#475569!important;
 }
 html[data-mw-global-theme="dark"] .proof-status,
 html[data-mw-global-theme="dark"] .loading,
 html[data-mw-global-theme="dark"] .empty{
   color:#cbd5e1!important;
+  -webkit-text-fill-color:#cbd5e1!important;
 }
