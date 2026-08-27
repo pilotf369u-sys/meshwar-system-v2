@@ -240,3 +240,34 @@ html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .toolbar{
   #ordersBody > tr[id^="row-"] > td:nth-child(9){min-width:145px!important;max-width:none!important}
   #ordersBody > tr[id^="row-"] > td:nth-child(9) > button{font-size:9px!important;padding:4px 7px!important}
 }
+
+/* Branch darker slate rows + premium separators v17.7 — CSS only */
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) table{
+  background:#dbe2ea!important;
+  border-color:#c5ced9!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"] > td{
+  background:#e2e8f0!important;
+  color:#1e293b!important;
+  border-bottom:3px solid #c59b27!important;
+  padding-top:8px!important;
+  padding-bottom:10px!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"]:nth-child(even) > td{
+  background:#dbe2ef!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"]:hover > td{
+  background:#d3dce8!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"]:last-child > td{
+  border-bottom-color:#b88919!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) th{
+  background:#cfd8e3!important;
+  color:#172033!important;
+  border-color:#b8c3d0!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .selected-row td{
+  background:#f4e7b6!important;
+  color:#3b2f12!important;
+}
