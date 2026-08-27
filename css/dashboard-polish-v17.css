@@ -99,6 +99,23 @@ html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .contact-mini 
   border-color:#38bdf8!important;
 }
 
+/* Branch customer contact hierarchy — Flexbox only, no DOM/function changes */
+body:has(.branch-luxury-stats) #ordersBody > tr > td:nth-child(3){
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:flex-start!important;
+  gap:4px!important;
+  text-align:right!important;
+}
+body:has(.branch-luxury-stats) #ordersBody > tr > td:nth-child(3) > br{display:none!important}
+body:has(.branch-luxury-stats) #ordersBody > tr > td:nth-child(3) > b{order:10!important}
+body:has(.branch-luxury-stats) #ordersBody > tr > td:nth-child(3) > .muted{order:20!important;margin:0!important}
+body:has(.branch-luxury-stats) #ordersBody > tr > td:nth-child(3) > .customer-code{order:30!important;margin-top:4px!important}
+body:has(.branch-luxury-stats) #ordersBody > tr > td:nth-child(3) > .mw-branch-whatsapp-primary{order:31!important;margin:0!important}
+body:has(.branch-luxury-stats) #ordersBody > tr > td:nth-child(3) > .secondary-phone{order:40!important;margin-top:7px!important}
+body:has(.branch-luxury-stats) #ordersBody > tr > td:nth-child(3) > .contact-mini:not(.mw-branch-whatsapp-primary){order:41!important;margin:0!important}
+
 @media(max-width:850px){
   html[data-mw-global-theme="light"] .chat-line{max-width:90%!important}
   html[data-mw-global-theme="light"] body:has(.chat-layout) .dashboard-header,
