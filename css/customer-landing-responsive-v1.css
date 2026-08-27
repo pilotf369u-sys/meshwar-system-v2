@@ -1,16 +1,40 @@
-/* Customer landing responsive polish v1.1 / v21.1 — CSS-only visual layer.
-   Purpose: app-ready full-width landing layout, duplicate media suppression, responsive cards/store flow.
+/* Customer landing responsive polish v1.2 / v21.2 — CSS-only visual layer.
+   Purpose: remove root/shell width constraints and make the landing app-ready on desktop/mobile.
    No functional DOM, links, JavaScript, Supabase, or event-handler changes. */
 
-/* ==================== APP CANVAS ==================== */
+/* ==================== ROOT CANVAS ==================== */
+html:has(#meshwarVideoAd),
 body:has(#meshwarVideoAd){
-  padding-inline:clamp(8px,1.5vw,20px)!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  box-sizing:border-box!important;
   overflow-x:hidden!important;
 }
+body:has(#meshwarVideoAd){
+  padding-inline:clamp(8px,1.25vw,18px)!important;
+}
 
-/* Use the available screen width consistently across all landing sections. */
+/* Remove boxed constraints from known root wrappers only. */
+body:has(#meshwarVideoAd) #shell-root,
+body:has(#meshwarVideoAd) .shell-container,
+body:has(#meshwarVideoAd) .app-wrapper,
+body:has(#meshwarVideoAd) .app-shell,
+body:has(#meshwarVideoAd) main{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  box-sizing:border-box!important;
+}
+
+/* Main landing canvas: broad but still comfortably centered on very large screens. */
 body:has(#meshwarVideoAd) > nav > div,
 body:has(#meshwarVideoAd) > section,
+body:has(#meshwarVideoAd) .customer-landing-container,
+body:has(#meshwarVideoAd) .landing-content,
 body:has(#meshwarVideoAd) .header-container,
 body:has(#meshwarVideoAd) .nav-container,
 body:has(#meshwarVideoAd) .section-title,
@@ -21,6 +45,7 @@ body:has(#meshwarVideoAd) #meshwarStoreTabs,
 body:has(#meshwarVideoAd) #internationalStoresSection{
   width:96%!important;
   max-width:1400px!important;
+  min-width:0!important;
   margin-left:auto!important;
   margin-right:auto!important;
   box-sizing:border-box!important;
@@ -30,16 +55,18 @@ body:has(#meshwarVideoAd) #internationalStoresSection{
 body:has(#meshwarVideoAd) > section:first-of-type{
   width:96%!important;
   max-width:1400px!important;
+  min-width:0!important;
   margin-inline:auto!important;
   padding-inline:0!important;
 }
 body:has(#meshwarVideoAd) > section:first-of-type > div:first-child{
   width:100%!important;
   max-width:none!important;
+  min-width:0!important;
 }
 
 /* ==================== PROMO MEDIA ==================== */
-/* Keep the canonical MeshWar promo player only. Any duplicate generated video/iframe is hidden. */
+/* Keep the canonical MeshWar promo player only. Any duplicate media injected beside it is hidden. */
 body:has(#meshwarVideoAd) #meshwarVideoAd video:not(#meshwarPromoVideo),
 body:has(#meshwarVideoAd) #meshwarVideoAd iframe{
   display:none!important;
@@ -49,17 +76,18 @@ body:has(#meshwarVideoAd) #meshwarVideoAd iframe{
   margin:0!important;
   padding:0!important;
 }
-
 body:has(#meshwarVideoAd) #meshwarVideoAd{
-  width:min(72%,760px)!important;
+  width:min(68%,760px)!important;
   max-width:760px!important;
-  margin:20px auto!important;
+  min-width:0!important;
+  margin:18px auto!important;
   padding:0!important;
   box-sizing:border-box!important;
 }
 body:has(#meshwarVideoAd) #meshwarVideoAd > div{
   width:100%!important;
   max-width:760px!important;
+  min-width:0!important;
   margin:0 auto!important;
   border-radius:12px!important;
   overflow:hidden!important;
@@ -86,13 +114,12 @@ body:has(#meshwarVideoAd) #meshwarStoreTabs,
 body:has(#meshwarVideoAd) #internationalStoresSection{
   align-self:stretch!important;
 }
-
 body:has(#meshwarVideoAd) .header-container{
   padding-inline:clamp(20px,4vw,56px)!important;
 }
-
 body:has(#meshwarVideoAd) #meshwarStoreTabs > div{
   width:100%!important;
+  max-width:none!important;
   display:grid!important;
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
   gap:12px!important;
@@ -101,7 +128,6 @@ body:has(#meshwarVideoAd) #meshwarStoreTabs button{
   width:100%!important;
   min-width:0!important;
 }
-
 body:has(#meshwarVideoAd) .grid-container{
   display:grid!important;
   grid-template-columns:repeat(auto-fit,minmax(170px,1fr))!important;
@@ -117,6 +143,7 @@ body:has(#meshwarVideoAd) .store-card{
 }
 body:has(#meshwarVideoAd) .local-stores-grid{
   width:100%!important;
+  max-width:none!important;
   grid-template-columns:repeat(auto-fit,minmax(180px,1fr))!important;
   align-items:stretch!important;
 }
@@ -128,15 +155,25 @@ body:has(#meshwarVideoAd) .local-public-card{
 
 /* ==================== TABLET / MOBILE APP VIEW ==================== */
 @media(max-width:768px){
+  html:has(#meshwarVideoAd),
   body:has(#meshwarVideoAd){
     width:100%!important;
-    padding:0 10px!important;
+    max-width:100%!important;
     margin:0!important;
+  }
+  body:has(#meshwarVideoAd){
+    padding:0 10px!important;
     box-sizing:border-box!important;
   }
-
+  body:has(#meshwarVideoAd) #shell-root,
+  body:has(#meshwarVideoAd) .shell-container,
+  body:has(#meshwarVideoAd) .app-wrapper,
+  body:has(#meshwarVideoAd) .app-shell,
+  body:has(#meshwarVideoAd) main,
   body:has(#meshwarVideoAd) > nav > div,
   body:has(#meshwarVideoAd) > section,
+  body:has(#meshwarVideoAd) .customer-landing-container,
+  body:has(#meshwarVideoAd) .landing-content,
   body:has(#meshwarVideoAd) .header-container,
   body:has(#meshwarVideoAd) .nav-container,
   body:has(#meshwarVideoAd) .section-title,
@@ -148,26 +185,20 @@ body:has(#meshwarVideoAd) .local-public-card{
   body:has(#meshwarVideoAd) > section:first-of-type{
     width:100%!important;
     max-width:none!important;
+    min-width:0!important;
     margin-left:0!important;
     margin-right:0!important;
     box-sizing:border-box!important;
   }
-
   body:has(#meshwarVideoAd) #meshwarVideoAd{
     width:100%!important;
     max-width:680px!important;
     margin:14px auto!important;
   }
-
   body:has(#meshwarVideoAd) #meshwarStoreTabs > div{
     grid-template-columns:1fr!important;
   }
-
-  body:has(#meshwarVideoAd) .grid-container{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:10px!important;
-  }
-
+  body:has(#meshwarVideoAd) .grid-container,
   body:has(#meshwarVideoAd) .local-stores-grid{
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
     gap:10px!important;
