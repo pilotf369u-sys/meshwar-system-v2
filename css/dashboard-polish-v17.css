@@ -271,3 +271,24 @@ html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) .selected-row 
   background:#f4e7b6!important;
   color:#3b2f12!important;
 }
+
+/* Branch full-width separators + strong hover v17.8 — CSS only */
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"] > td,
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"] > td:first-child,
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"] > td:last-child{
+  border-bottom:3px solid #c59b27!important;
+  border-bottom-color:#c59b27!important;
+  border-bottom-style:solid!important;
+  border-bottom-width:3px!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"]:hover{
+  background:#b0bece!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"]:hover > td{
+  background:#b0bece!important;
+  color:#132033!important;
+  border-bottom:3px solid #b88919!important;
+}
+html[data-mw-global-theme="light"] body:has(.branch-luxury-stats) #ordersBody > tr[id^="row-"]:hover > td:nth-child(3) .muted{
+  color:#334155!important;
+}
