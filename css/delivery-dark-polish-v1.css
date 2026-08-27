@@ -1,0 +1,152 @@
+/* Delivery dashboard dark polish v1.0 — CSS-only visual override.
+   No DOM, Supabase, event-handler, or delivery-logic changes. */
+
+html[data-mw-global-theme="dark"] body{
+  background:radial-gradient(circle at 12% 0%,rgba(245,196,81,.10),transparent 24%),radial-gradient(circle at 88% 5%,rgba(37,99,235,.16),transparent 30%),linear-gradient(145deg,#030712 0%,#07111f 48%,#0b1424 100%)!important;
+  color:#f8fafc!important;
+}
+
+/* Header & identity */
+html[data-mw-global-theme="dark"] #deliveryTitle{
+  color:#f8fafc!important;
+  font-weight:900!important;
+  text-shadow:0 1px 0 rgba(0,0,0,.35)!important;
+}
+html[data-mw-global-theme="dark"] #identityMeta,
+html[data-mw-global-theme="dark"] .topbar .muted{
+  color:#fbbf24!important;
+  font-weight:800!important;
+}
+html[data-mw-global-theme="dark"] .topbar{
+  background:#0f172a!important;
+  border:1px solid #334155!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.30)!important;
+}
+
+/* Finance / stats cards */
+html[data-mw-global-theme="dark"] .finance-card{
+  background:linear-gradient(145deg,#1e293b,#0f172a)!important;
+  border:1px solid #334155!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.24)!important;
+}
+html[data-mw-global-theme="dark"] .finance-card .label{
+  color:#cbd5e1!important;
+  font-weight:800!important;
+}
+html[data-mw-global-theme="dark"] .finance-card .value,
+html[data-mw-global-theme="dark"] .finance-card:nth-child(1) .value,
+html[data-mw-global-theme="dark"] .finance-card:nth-child(2) .value,
+html[data-mw-global-theme="dark"] .finance-card:nth-child(3) .value,
+html[data-mw-global-theme="dark"] .finance-card:nth-child(4) .value,
+html[data-mw-global-theme="dark"] .finance-card:nth-child(5) .value,
+html[data-mw-global-theme="dark"] .finance-card:nth-child(6) .value{
+  color:#f8fafc!important;
+  font-size:25px!important;
+  font-weight:950!important;
+  text-shadow:0 0 16px rgba(248,250,252,.08)!important;
+}
+html[data-mw-global-theme="dark"] #cardCollected,
+html[data-mw-global-theme="dark"] #cardFees,
+html[data-mw-global-theme="dark"] #cardNet{
+  color:#fbbf24!important;
+}
+
+/* Shipment cards and summary data */
+html[data-mw-global-theme="dark"] .shipment{
+  background:linear-gradient(145deg,#172033,#0f172a)!important;
+  border:1px solid #334155!important;
+  color:#f1f5f9!important;
+}
+html[data-mw-global-theme="dark"] .shipment-summary,
+html[data-mw-global-theme="dark"] .shipment-summary > div,
+html[data-mw-global-theme="dark"] .shipment-summary b,
+html[data-mw-global-theme="dark"] .summary-address,
+html[data-mw-global-theme="dark"] .shipment-details,
+html[data-mw-global-theme="dark"] .shipment-head{
+  color:#f1f5f9!important;
+}
+html[data-mw-global-theme="dark"] .shipment-summary .muted,
+html[data-mw-global-theme="dark"] .shipment-details .muted{
+  color:#cbd5e1!important;
+  font-weight:700!important;
+}
+html[data-mw-global-theme="dark"] .code{
+  color:#fbbf24!important;
+  font-weight:950!important;
+}
+html[data-mw-global-theme="dark"] .summary-address{
+  color:#e2e8f0!important;
+  font-weight:800!important;
+}
+html[data-mw-global-theme="dark"] .money,
+html[data-mw-global-theme="dark"] .shipment-summary .money,
+html[data-mw-global-theme="dark"] .item .money{
+  color:#f59e0b!important;
+  font-weight:950!important;
+  text-shadow:0 0 12px rgba(245,158,11,.12)!important;
+}
+html[data-mw-global-theme="dark"] .item{
+  background:#111827!important;
+  border:1px solid #334155!important;
+  color:#f1f5f9!important;
+}
+html[data-mw-global-theme="dark"] .item b,
+html[data-mw-global-theme="dark"] .delivery-image-box b{
+  color:#e2e8f0!important;
+  font-weight:800!important;
+}
+html[data-mw-global-theme="dark"] .secondary{
+  color:#fbbf24!important;
+  font-weight:800!important;
+}
+
+/* Delivery status sidebar */
+html[data-mw-global-theme="dark"] .tabs{
+  background:#0f172a!important;
+  border:1px solid #334155!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.26)!important;
+}
+html[data-mw-global-theme="dark"] .tab{
+  background:#1e293b!important;
+  color:#e2e8f0!important;
+  border:1px solid #334155!important;
+  font-weight:900!important;
+}
+html[data-mw-global-theme="dark"] .tab:hover{
+  background:#26364d!important;
+  color:#fff!important;
+  border-color:#64748b!important;
+}
+html[data-mw-global-theme="dark"] .tab.active{
+  background:#f59e0b!important;
+  color:#111827!important;
+  border-color:#fbbf24!important;
+  box-shadow:0 8px 20px rgba(245,158,11,.22)!important;
+}
+html[data-mw-global-theme="dark"] .tab.active .badge{
+  background:#111827!important;
+  color:#fbbf24!important;
+  font-weight:900!important;
+}
+
+/* Supporting interactive surfaces */
+html[data-mw-global-theme="dark"] .toolbar,
+html[data-mw-global-theme="dark"] .scanner-panel,
+html[data-mw-global-theme="dark"] .delivery-image-box{
+  background:#0f172a!important;
+  border-color:#334155!important;
+  color:#f1f5f9!important;
+}
+html[data-mw-global-theme="dark"] .edit-box select,
+html[data-mw-global-theme="dark"] .edit-box input,
+html[data-mw-global-theme="dark"] .edit-box textarea,
+html[data-mw-global-theme="dark"] .toolbar input{
+  background:#020617!important;
+  color:#f8fafc!important;
+  border-color:#475569!important;
+}
+html[data-mw-global-theme="dark"] .proof-status,
+html[data-mw-global-theme="dark"] .loading,
+html[data-mw-global-theme="dark"] .empty{
+  color:#cbd5e1!important;
+}
