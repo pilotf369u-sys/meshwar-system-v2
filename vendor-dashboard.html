@@ -6,7 +6,7 @@
   <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="pragma" content="no-cache">
   <meta http-equiv="expires" content="0">
-  <meta name="meshwar-build" content="vendor-v44-featured-requests-phase2-20260827">
+  <meta name="meshwar-build" content="vendor-v45-realtime-raceguard-20260827">
   <title>لوحة صاحب المتجر - MeshWar</title>
   <style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617}
@@ -42,7 +42,7 @@
   <script src="js/vendor-product-edit-fields-v26.js?v=20260825-native-modal-raceguard1"></script>
   <script src="js/vendor-product-save-snapshot-v27.js?v=20260825-v34-complete-save-bridge1"></script>
   <script src="js/vendor-product-save-complete-v34.js?v=20260825-v34-required-cost3"></script>
-  <script src="js/vendor-ux-realtime-v28.js?v=20260824-v31-edit-read-hydration1"></script>
+  <script src="js/vendor-ux-realtime-v28.js?v=20260827-v32-realtime-raceguard"></script>
   <script src="js/vendor-edit-direct-dom-v32.js?v=20260825-v33-stale-hydration-guard2"></script>
 </head>
 <body>
@@ -50,7 +50,7 @@
     <div class="vendor-loader-shell" aria-hidden="true"><div class="vendor-loader-top vendor-loader-shimmer"></div><div class="vendor-loader-stats"><div class="vendor-loader-stat vendor-loader-shimmer"></div><div class="vendor-loader-stat vendor-loader-shimmer"></div><div class="vendor-loader-stat vendor-loader-shimmer"></div></div><div class="vendor-loader-panel vendor-loader-shimmer"></div></div>
     <div class="vendor-loader-center"><div class="vendor-loader-box"><span class="vendor-loader-spinner" aria-hidden="true"></span><span class="vendor-loader-text">جاري تجهيز لوحة المتجر...</span></div></div>
   </div>
-  <iframe id="vendorFrame" aria-busy="true" src="vendor-dashboard-v2.html?v=20260827-v44-featured-phase2" title="لوحة صاحب المتجر"></iframe>
+  <iframe id="vendorFrame" aria-busy="true" src="vendor-dashboard-v2.html?v=20260827-v45-realtime-raceguard" title="لوحة صاحب المتجر"></iframe>
   <script>
     (function(){
       const frame=document.getElementById('vendorFrame');
@@ -58,9 +58,10 @@
       function bindActiveTabPersistence(){const win=frame.contentWindow,d=win?.document;if(!d||win.__mwActiveTabPersistenceBound)return;d.addEventListener('click',e=>{const btn=e.target?.closest?.('.vendor-main-tab,[id^="vendorTabBtn-"]');if(btn?.id){try{win.localStorage.setItem(ACTIVE_TAB_KEY,btn.id)}catch(err){console.warn('Vendor active tab save failed',err)}}},true);win.__mwActiveTabPersistenceBound=true}
       function bindV24PlNavigation(){const win=frame.contentWindow,d=win?.document;if(!d||win.__mwV24PlNavigationBound)return;d.addEventListener('click',e=>{if(!e.target?.closest?.('#vendorTabBtn-pl'))return;win.requestAnimationFrame(()=>{try{window.MeshwarVendorFinanceSettlementV24?.ensureUi(win,{refresh:true})}catch(err){console.error('Vendor P&L V24 direct injection failed',err)}})},true);win.__mwV24PlNavigationBound=true}
       function restoreActiveTab(){const win=frame.contentWindow,d=win?.document;if(!d)return;let saved='';try{saved=win.localStorage.getItem(ACTIVE_TAB_KEY)||''}catch(err){console.warn('Vendor active tab read failed',err)}if(!saved)return;const btn=d.getElementById(saved);if(btn&&typeof btn.click==='function'&&!btn.classList.contains('active'))btn.click()}
-      function revealFallback(error){console.error('Vendor UX/realtime V28 install failed',error);frame.style.visibility='visible';frame.setAttribute('aria-busy','false');document.getElementById('vendorBootLoader')?.remove()}
+      function revealFallback(error){console.error('Vendor UX/realtime V32 install failed',error);frame.style.visibility='visible';frame.setAttribute('aria-busy','false');document.getElementById('vendorBootLoader')?.remove()}
       function injectFeaturedPhase2(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorFeaturedPhase2'))return;const s=d.createElement('script');s.id='mwVendorFeaturedPhase2';s.src='js/vendor-featured-requests-v2.js?v=20260827-v2.0';d.head.appendChild(s)}
       function install(){
+        injectFeaturedPhase2();
         try{window.MeshwarVendorBarcodeV11?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode install failed',e)}
         try{window.MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)}catch(e){console.error('Vendor order smart search install failed',e)}
         try{window.MeshwarVendorThemePaginationV16?.install(frame.contentWindow)}catch(e){console.error('Vendor theme/pagination install failed',e)}
@@ -77,8 +78,8 @@
         try{window.MeshwarVendorProductSaveSnapshotV27?.install(frame.contentWindow)}catch(e){console.error('Vendor product save snapshot V27 install failed',e)}
         try{window.MeshwarVendorProductSaveCompleteV34?.install(frame.contentWindow)}catch(e){console.error('Vendor complete product save V34 install failed',e)}
         try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor complete edit hydration V33 install failed',e)}
-        try{const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);if(boot&&typeof boot.then==='function')boot.catch(revealFallback);else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V28 module unavailable'))}catch(e){revealFallback(e)}
-        injectFeaturedPhase2();bindActiveTabPersistence();bindV24PlNavigation();setTimeout(restoreActiveTab,80);
+        try{const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);if(boot&&typeof boot.then==='function')boot.catch(revealFallback);else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V32 module unavailable'))}catch(e){revealFallback(e)}
+        bindActiveTabPersistence();bindV24PlNavigation();setTimeout(restoreActiveTab,80);
       }
       frame.addEventListener('load',install);
     })();
