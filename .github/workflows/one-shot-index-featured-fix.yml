@@ -1,0 +1,59 @@
+name: One Shot Index Featured Fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/one-shot-index-featured-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch index integration
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          responsive='<link rel="stylesheet" href="css/customer-landing-responsive-v1.css?v=20260827-v1.3">'
+          featured='<link rel="stylesheet" href="css/customer-featured-hub-v1.css?v=20260827-v1.1">'
+          if responsive not in s:
+              s=s.replace('</head>',f'{responsive}\n{featured}\n</head>',1)
+          elif featured not in s:
+              s=s.replace(responsive,responsive+'\n'+featured,1)
+
+          # Remove the obsolete standalone MeshWar branding card from source.
+          s=re.sub(r'\n\s*<div class="header-container"><img class="main-logo"[^>]*>\s*<h1>منصة MeshWar</h1><p>.*?</p></div>\s*\n', '\n', s, count=1, flags=re.S)
+
+          # Force refresh of the existing CMS reader that loads settings.site_settings/video_url.
+          s=s.replace('js/local-store-pricing.js?v=local-modal-v4-2','js/local-store-pricing.js?v=20260827-site-cms-v4-3')
+
+          hub_script='<script src="js/customer-featured-hub-v1.js?v=20260827-v1.1"></script>'
+          if hub_script not in s:
+              marker='<script src="js/local-store-pricing.js?v=20260827-site-cms-v4-3"></script>'
+              if marker in s:
+                  s=s.replace(marker,marker+'\n'+hub_script,1)
+              else:
+                  s=s.replace('</body>',hub_script+'\n</body>',1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Remove one-shot workflow
+        run: git rm .github/workflows/one-shot-index-featured-fix.yml
+      - name: Commit index integration
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html .github/workflows/one-shot-index-featured-fix.yml
+          git commit -m "fix: wire dynamic hero video and featured hub on index" || exit 0
+          git push origin HEAD:main
