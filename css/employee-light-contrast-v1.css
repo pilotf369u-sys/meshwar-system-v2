@@ -1,0 +1,26 @@
+/* EMPLOYEE_LIGHT_CONTRAST_V1 — CSS-only visual override.
+   Scope: employee dashboard, Light Mode only.
+   No DOM, Supabase, event-handler, or business-logic changes. */
+
+html[data-mw-global-theme="light"] body #activePipelineLabel.employee-badge{
+  background:#fef3c7!important;
+  color:#78350f!important;
+  border:1px solid #d97706!important;
+  font-weight:800!important;
+  text-shadow:none!important;
+  box-shadow:none!important;
+}
+
+html[data-mw-global-theme="light"] body #pipelineOrdersBody .collect-due{
+  background:#fef3c7!important;
+  color:#92400e!important;
+  border:1px solid #d97706!important;
+  font-weight:900!important;
+  text-shadow:none!important;
+  box-shadow:none!important;
+}
+
+html[data-mw-global-theme="light"] body #pipelineOrdersBody .collect-due *{
+  color:#92400e!important;
+  -webkit-text-fill-color:#92400e!important;
+}
