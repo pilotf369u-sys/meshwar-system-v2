@@ -1,9 +1,441 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><title>منصة KINTO - دليل المتاجر والشحن الدولي</title><script src="https://cdn.tailwindcss.com"></script></head>
-<body style="margin:0;background:#032b25;color:#fff">
-<nav style="background:#063b32;padding:14px 20px"><a href="index.html"><img src="images/meshwar-logo.png" alt="KINTO" style="height:44px"></a></nav>
-<section class="header-container kinto-featured-store-v21" style="display:grid!important;visibility:visible!important;opacity:1!important;margin:24px auto;max-width:1180px;padding:22px;background:#063b32;border-radius:24px"><div><img class="main-logo" src="images/meshwar-logo.png" alt="KINTO" style="width:100px"></div><div><span>✦ متجر مختار</span><h1>متجر KINTO الرئيسي</h1><p>تسوق مختار</p><a href="#localStoresPublic" style="color:#fff">استكشف المتجر ←</a></div></section>
-<section id="meshwarStoreTabs"></section><section id="internationalStoresSection"></section><section id="localStoresPublic"></section><section id="localStoreProductsPanel"></section>
-<link rel="stylesheet" href="css/hero-v14-emerald-glass.css?v=20260828-v21"><script src="js/index-featured-campaigns-v1.js?v=20260828-v21-kinto"></script>
-</body></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>منصة KINTO - دليل المتاجر والشحن الدولي</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class',corePlugins:{preflight:false}}</script>
+<script>(()=>{try{document.documentElement.classList.toggle('dark',localStorage.getItem('meshwar-theme')!=='light')}catch{document.documentElement.classList.add('dark')}})()</script>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f4f6f9; color: #333; padding: 20px; margin: 0; position: relative; }
+        .user-auth-zone { position: absolute; top: 25px; left: 25px; z-index: 1000; }
+        .account-btn { background-color: #cc0000; color: #ffffff; text-decoration: none; padding: 10px 22px; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(204, 0, 0, 0.2); transition: all 0.3s ease; }
+        .header-container { text-align: center; margin-top: 30px; margin-bottom: 35px; }
+        .main-logo { width: 380px; max-width: 95%; height: auto; margin-bottom: 15px; border-radius: 8px; }
+        h1 { color: #cc0000; margin: 0 0 8px 0; font-size: 34px; font-weight: bold; }
+        .section-title { color: #cc6600; border-bottom: 2px solid #cc6600; padding-bottom: 5px; margin-top: 40px; font-size: 19px; }
+        .grid-container { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px; justify-content: center; }
+        .store-card { background: white; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; width: 210px; height: 195px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        .logo-container { width: 100%; height: 75px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; }
+        .store-logo { max-width: 85%; max-height: 100%; object-fit: contain; }
+        .store-link { display: inline-block; background-color: #003366; color: white; text-decoration: none; padding: 6px 12px; border-radius: 6px; width: 90%; font-weight: bold; font-size: 12px; margin-top: auto; }
+        .local-link { background-color: #cc6600; }
+        .fixed-order-btn { position: fixed; bottom: 30px; right: 30px; background-color: #25d366; color: white; padding: 15px 25px; border-radius: 50px; border: none; z-index: 9999; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); transition: transform 0.3s; }
+        .fixed-order-btn:hover { transform: scale(1.05); }
+        .nav-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; padding: 25px; background: #ffffff; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .nav-container a { text-decoration: none; color: #495057; background: #f8f9fa; padding: 10px 22px; border-radius: 50px; font-size: 15px; font-weight: 600; border: 1px solid #dee2e6; transition: all 0.3s ease; }
+        .nav-container a:hover { background: #ff6600; color: #ffffff; border-color: #ff6600; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(255, 102, 0, 0.3); }
+
+        /* LOCAL_STORES_PUBLIC_V1 */
+        .local-stores-shell{margin:36px auto 12px;max-width:1180px;padding:24px;border-radius:24px;background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.93));border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 50px rgba(15,23,42,.22);color:#fff}.local-stores-head{display:flex;align-items:end;justify-content:space-between;gap:14px;flex-wrap:wrap}.local-stores-head h2{margin:0;color:#fff;font-size:24px}.local-stores-head p{margin:6px 0 0;color:#94a3b8;font-size:13px}.local-specialty-filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.local-filter-btn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#cbd5e1;padding:8px 14px;border-radius:999px;cursor:pointer;font-weight:700;transition:.2s}.local-filter-btn:hover,.local-filter-btn.active{background:#ea580c;color:#fff;border-color:#fb923c;transform:translateY(-1px)}.local-stores-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:14px}.local-public-card{min-height:190px;border-radius:20px;padding:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(14px);box-shadow:inset 0 1px rgba(255,255,255,.05);transition:.25s;display:flex;flex-direction:column;align-items:center;text-align:center}.local-public-card:hover{transform:translateY(-4px);border-color:rgba(251,146,60,.45);background:rgba(255,255,255,.1)}.local-public-logo{width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.12);background:#1e293b;margin-bottom:10px}.local-public-name{font-size:16px;font-weight:900;color:#fff;margin:3px 0}.local-public-meta{color:#94a3b8;font-size:12px;line-height:1.7}.local-public-chip{margin-top:auto;padding-top:12px;color:#fdba74;font-size:11px;font-weight:800}.local-empty{grid-column:1/-1;text-align:center;padding:30px;color:#94a3b8}
+    </style>
+
+<style type="text/tailwindcss">
+/* MESHWAR_INDEX_TAILWIND_V3 */
+@layer base{body{@apply m-0 min-h-screen bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100;}html{@apply scroll-smooth;}}
+@layer components{
+.header-container{@apply relative mx-auto mt-8 max-w-7xl overflow-hidden rounded-3xl border border-slate-200/70 bg-white/70 px-6 py-10 text-center shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-slate-900/60;}
+.header-container h1{@apply !text-slate-900 dark:!text-white}.header-container p{@apply !text-slate-500 dark:!text-slate-400}.main-logo{@apply !w-64 drop-shadow-xl;}
+.nav-container{@apply !relative !top-auto mx-auto mt-5 flex max-w-7xl flex-wrap justify-center gap-3 rounded-2xl border border-slate-200 bg-white/70 p-3 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-slate-900/60;}
+.nav-container a{@apply !rounded-full !border !border-slate-200 !bg-white/70 !text-slate-700 transition-all duration-300 hover:!-translate-y-0.5 hover:!border-sky-400/40 hover:!text-sky-500 dark:!border-white/10 dark:!bg-white/5 dark:!text-slate-200;}
+.section-title{@apply mx-auto !mt-14 max-w-7xl !border-0 px-4 pb-3 !text-xl !font-black !text-slate-900 dark:!text-white;}
+.grid-container{@apply mx-auto !grid max-w-7xl !grid-cols-2 gap-4 px-4 md:!grid-cols-4 lg:!grid-cols-6;}
+.store-card{@apply !h-auto !w-auto min-h-40 !rounded-2xl !border !border-slate-200 !bg-white/70 !p-4 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:shadow-cyan-500/10 dark:!border-white/10 dark:!bg-slate-900/60;}
+.store-card h3{@apply !text-slate-900 dark:!text-white}.logo-container{@apply !h-14 rounded-xl bg-slate-100/70 p-2 dark:bg-white/5}.store-logo{@apply transition-transform duration-300}.store-card:hover .store-logo{@apply scale-105}.store-link{@apply !rounded-xl !bg-gradient-to-r !from-sky-600 !to-indigo-600 !py-2 shadow-md transition-all duration-300 hover:shadow-sky-500/20}.local-link{@apply !from-orange-500 !to-amber-500;}
+.local-stores-shell{@apply !mx-auto !mt-10 !max-w-7xl !rounded-3xl !border !border-slate-200 !bg-white/70 !text-slate-900 shadow-2xl backdrop-blur-md dark:!border-white/10 dark:!bg-slate-900/60 dark:!text-white}.local-stores-head h2,.local-public-name{@apply !text-slate-900 dark:!text-white}.local-stores-head p,.local-public-meta,.local-empty{@apply !text-slate-500 dark:!text-slate-400}.local-public-card{@apply !border-slate-200 !bg-white/60 transition-all duration-300 hover:scale-[1.02] hover:shadow-cyan-500/10 dark:!border-white/10 dark:!bg-white/5}.local-filter-btn{@apply !border-slate-200 !bg-white/70 !text-slate-700 dark:!border-white/10 dark:!bg-white/5 dark:!text-slate-200}.local-filter-btn.active,.local-filter-btn:hover{@apply !border-transparent !bg-gradient-to-r !from-sky-500 !to-indigo-500 !text-white}.local-public-chip{@apply !text-sky-500 dark:!text-sky-300}.fixed-order-btn{@apply !bg-gradient-to-r !from-sky-600 !to-indigo-600 !shadow-xl}.account-btn{@apply !bg-gradient-to-r !from-sky-600 !to-indigo-600}.user-auth-zone{@apply !fixed !bottom-4 !left-4 !top-auto;}
+}
+
+/* MESHWAR_ROYAL_GOLD_V4 */
+.local-stores-grid{grid-template-columns:repeat(1,minmax(0,1fr))!important;gap:16px!important}
+.local-public-card{min-width:0!important;border-color:rgba(251,191,36,.22)!important;box-shadow:0 14px 40px rgba(2,6,23,.22),inset 0 1px rgba(255,255,255,.04)!important}
+.local-public-card:hover{border-color:rgba(251,191,36,.55)!important;box-shadow:0 18px 48px rgba(251,191,36,.10),0 0 0 1px rgba(56,189,248,.10)!important}
+.local-public-logo{border-color:rgba(251,191,36,.40)!important;box-shadow:0 8px 25px rgba(251,191,36,.08)!important}
+.local-public-open{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:13px;padding:9px 12px;border-radius:12px;border:1px solid rgba(251,191,36,.48);background:linear-gradient(90deg,rgba(2,132,199,.30),rgba(79,70,229,.30));color:#f8fafc;text-decoration:none;font-size:12px;font-weight:900;transition:.25s;box-sizing:border-box}
+.local-public-open:hover{transform:translateY(-2px);border-color:#fbbf24;box-shadow:0 10px 30px rgba(251,191,36,.12)}
+.local-public-location{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:5px;color:#cbd5e1;font-size:12px}
+.header-container,.store-card,.local-stores-shell{box-shadow:0 18px 50px rgba(2,6,23,.18),0 0 0 1px rgba(251,191,36,.04)!important}
+.store-link,.fixed-order-btn,.account-btn{border:1px solid rgba(251,191,36,.35)!important}
+@media(min-width:640px){.local-stores-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(min-width:768px){.local-stores-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(min-width:1280px){.local-stores-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+
+</style>
+
+<style>/* MESHWAR_COMPACT_SHOWCASE_V5 */.local-stores-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}.local-public-card{min-height:158px!important;padding:12px!important;border-radius:16px!important}.local-public-logo{width:52px!important;height:52px!important;margin-bottom:7px!important}.local-public-name{font-size:14px!important}.local-public-meta{font-size:11px!important}.local-public-chip{font-size:10px!important;padding-top:7px!important}.local-store-open{margin-top:8px!important;padding:7px 10px!important;font-size:10px!important}@media(min-width:768px){.local-stores-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}}@media(min-width:1024px){.local-stores-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}}</style>
+
+<style>/* MESHWAR_UI_ONLY_M1 */
+@keyframes meshwarTickerMove{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.meshwar-ticker-track{display:inline-block;min-width:100%;animation:meshwarTickerMove 22s linear infinite}
+#meshwarStoreTabs>div{gap:14px!important;padding:10px!important}
+#meshwarVideoAd video{display:block;background:#020617}
+</style>
+
+<style id="meshwarLocalProductLayoutFix">
+#localStoreProductsGrid{grid-template-columns:repeat(1,minmax(0,1fr))!important;align-items:stretch!important;grid-auto-rows:auto!important;overflow:visible!important}
+#localStoreProductsGrid .meshwar-local-product-card{height:auto!important;max-height:none!important;min-height:0!important;overflow:hidden!important}
+@media(min-width:700px){#localStoreProductsGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(min-width:1100px){#localStoreProductsGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+</style>
+</head>
+<body>
+
+<nav class="sticky top-0 z-50 border-b border-white/10 bg-slate-950/90 shadow-lg shadow-black/20 backdrop-blur-xl dark:bg-slate-950/90"><div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3"><a href="index.html" class="flex items-center gap-2 font-black text-slate-900 no-underline dark:text-white"><img src="images/meshwar-logo.png" class="h-12 w-12 rounded-xl border border-amber-400/40 bg-white/5 p-1 shadow-lg shadow-amber-400/10" alt="KINTO"></a><div class="flex items-center gap-2"><a href="#localStoresPublic" class="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-700 no-underline dark:text-slate-200">🏪 المتاجر</a><button id="meshwarThemeToggle" type="button" class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-slate-700 dark:text-slate-100">☾</button></div></div></nav>
+<section class="mx-auto max-w-7xl px-4 pt-8"><div class="grid gap-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-2xl backdrop-blur-md md:grid-cols-[1.15fr_.85fr] md:p-10 dark:border-white/10 dark:bg-slate-900/60"><div><h2 class="mt-4 text-4xl font-black leading-tight text-slate-950 md:text-6xl dark:text-white">تسوّق، اطلب، وتابع<br><span class="bg-gradient-to-r from-sky-400 to-indigo-500 bg-clip-text text-transparent">من مكان واحد.</span></h2><p class="mt-4 max-w-2xl text-sm leading-7 text-slate-500 dark:text-slate-400">واجهة موحدة للمتاجر المحلية والعالمية مع وصول سريع للطلب والتتبع.</p><div class="mt-6 flex flex-wrap gap-3"><button type="button" onclick="document.getElementById('orderModal').style.display='block'" class="rounded-xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-5 py-3 font-black text-white shadow-lg shadow-amber-400/10 transition-all duration-300 hover:scale-[1.02] hover:border-amber-300 hover:shadow-amber-400/20">طلب منتج مباشر</button><a href="#localStoresPublic" class="rounded-xl border border-slate-200 bg-white/50 px-5 py-3 font-black text-slate-700 no-underline dark:border-white/10 dark:bg-white/5 dark:text-slate-200">المتاجر المحلية</a></div></div><div class="rounded-2xl border border-amber-400/20 bg-slate-900/80 p-5 shadow-lg shadow-amber-400/5 backdrop-blur-md"><div class="text-sm font-black text-slate-100">تتبع سريع للطلب</div><div class="mt-1 text-xs text-slate-300">أدخل رقم الطلب أو الباركود.</div><div class="mt-4 flex gap-2"><input id="meshwarHeroTrackInput" class="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/10" placeholder="MW / رقم الطلب / الباركود"><button id="meshwarHeroTrackBtn" type="button" onclick="meshwarQuickTrack()" class="rounded-xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-4 font-black text-white shadow-md shadow-amber-400/10 transition hover:border-amber-300">تتبع</button></div></div></div><div id="meshwarVideoAd" class="mx-auto mt-4 max-w-7xl px-4"><div class="overflow-hidden rounded-3xl border border-amber-400/20 bg-black shadow-2xl shadow-amber-400/5"><video id="meshwarPromoVideo" class="aspect-[16/5] min-h-[180px] w-full object-cover sm:aspect-[16/6]" autoplay muted loop playsinline controls preload="metadata"><source src="videos/promo.mp4" type="video/mp4"></video><button id="meshwarPromoSoundBtn" type="button" class="hidden" aria-hidden="true" tabindex="-1">🔇 تشغيل الصوت</button><button id="meshwarPromoPlayBtn" type="button" class="hidden" aria-hidden="true" tabindex="-1">⏯ تشغيل / إيقاف</button></div></div></section>
+
+    <button class="fixed-order-btn" onclick="document.getElementById('orderModal').style.display='block'"><i class="fa-solid fa-cart-shopping"></i> طلب منتج</button>
+    <div class="user-auth-zone" style="text-align: center;"><a href="#" id="authLink" class="account-btn"><i class="fa-solid fa-circle-user"></i> <span id="authText">حسابي / تسجيل</span></a><br><a href="#" id="logoutBtn" onclick="logout()" style="display:none; color: #cc0000; font-size: 13px; margin-top: 8px; text-decoration: none; font-weight: bold;">تسجيل خروج</a></div>
+    <div class="header-container kinto-featured-store"><div class="kinto-featured-logo-wrap"><img class="main-logo" src="images/meshwar-logo.png" alt="KINTO Logo"></div><div class="kinto-featured-copy"><span class="kinto-featured-badge">✦ متجر مختار</span><h1 class="kinto-featured-title">KINTO <span class="kinto-featured-accent">Featured Store</span></h1><p class="kinto-featured-subtitle">واجهة مختارة بعناية لتجربة تسوق وشحن متكاملة بهوية KINTO الفاخرة.</p></div></div>
+
+
+    <section id="meshwarTicker" class="mx-auto mt-6 max-w-7xl overflow-hidden rounded-2xl border border-amber-400/25 bg-slate-900/75 px-3 py-3 shadow-lg backdrop-blur-md"><div class="meshwar-ticker-track whitespace-nowrap text-sm font-black text-amber-200 md:text-base">✨ عروض KINTO الجديدة قريباً • تابع أحدث المتاجر والخصومات والخدمات من مكان واحد • أهلاً بكم في KINTO ✨</div></section>
+
+    <section id="meshwarStoreTabs" class="mx-auto mt-8 max-w-7xl px-4"><div class="flex flex-wrap gap-3 rounded-2xl border border-amber-400/20 bg-slate-900/60 p-2 backdrop-blur-md"><button id="showInternationalStoresBtn" type="button" class="min-w-[220px] flex-1 rounded-2xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-8 py-4 text-base font-black text-white shadow-xl shadow-amber-400/10 transition hover:scale-[1.02] md:text-lg">🌐 المتاجر العالمية</button><button id="showLocalStoresBtn" type="button" class="min-w-[220px] flex-1 rounded-2xl border border-amber-400/25 bg-white/5 px-8 py-4 text-base font-black text-slate-100 shadow-lg transition hover:scale-[1.02] hover:border-amber-400/50 md:text-lg">🏪 المتاجر المحلية</button></div></section>
+
+    <section id="localStoresPublic" class="local-stores-shell">
+      <div class="local-stores-head"><div><h2>🏪 المتاجر المحلية</h2><p>متاجر محلية موثقة ومضافة مباشرة عبر منصة KINTO.</p></div></div>
+      <div id="localSpecialtyFilters" class="local-specialty-filters"><button class="local-filter-btn active" data-specialty="الكل">الكل</button></div>
+      <div id="localStoresPublicGrid" class="local-stores-grid"><div class="local-empty">جاري تحميل المتاجر المحلية...</div></div>
+      <div id="localStoreProductsPanel" style="display:none;margin-top:22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <div><h3 id="localStoreProductsTitle" style="margin:0;color:#fff">منتجات المتجر</h3><div id="localStoreProductsMeta" class="local-public-meta"></div></div>
+          <button type="button" id="backToLocalStoresBtn" class="local-public-open" style="width:auto;min-width:140px;cursor:pointer">← كل المتاجر</button>
+        </div>
+        <div id="localStoreProductsGrid" class="local-stores-grid"><div class="local-empty">جاري تحميل المنتجات...</div></div>
+      </div>
+    </section>
+
+    <section id="internationalStoresSection">
+    <h2 class="section-title">المتاجر الشاملة</h2>
+    <div class="grid-container">
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/trendyol.png" alt="Trendyol"></div><h3>Trendyol</h3><a class="store-link" href="https://www.trendyol.com" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/hepsiburada.png" alt="Hepsiburada"></div><h3>Hepsiburada</h3><a class="store-link" href="https://www.hepsiburada.com" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/N11.png" alt="N11"></div><h3>N11</h3><a class="store-link" href="https://www.n11.com" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/boyner.png" alt="Boyner"></div><h3>Boyner</h3><a class="store-link" href="https://www.boyner.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/beymen.png" alt="Beymen"></div><h3>Beymen</h3><a class="store-link" href="https://www.beymen.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+    </div>
+
+    <h2 class="section-title">الأزياء والملابس</h2>
+    <div class="grid-container">
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/waikiki.png" alt="LC Waikiki"></div><h3>LC Waikiki</h3><a class="store-link" href="https://www.lcwaikiki.com" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/defacto.png" alt="Defacto"></div><h3>Defacto</h3><a class="store-link" href="https://www.defacto.com.tr" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/KOTON.png" alt="Koton"></div><h3>Koton</h3><a class="store-link" href="https://www.koton.com" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/mavi.png" alt="Mavi"></div><h3>Mavi</h3><a class="store-link" href="https://www.mavi.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/colins.png" alt="Colin's"></div><h3>Colin's</h3><a class="store-link" href="https://www.colins.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/ltb.png" alt="LTB"></div><h3>LTB</h3><a class="store-link" href="https://www.ltbjeans.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/uspolo.png" alt="U.S. Polo Assn."></div><h3>U.S. Polo Assn.</h3><a class="store-link" href="https://tr.uspoloassn.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/zara.png" alt="Zara"></div><h3>Zara</h3><a class="store-link" href="https://www.zara.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/hm.png" alt="H&M"></div><h3>H&M</h3><a class="store-link" href="https://www2.hm.com/tr_tr/index.html" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/mango.png" alt="Mango"></div><h3>Mango</h3><a class="store-link" href="https://shop.mango.com/tr/tr" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/bershka.png" alt="Bershka"></div><h3>Bershka</h3><a class="store-link" href="https://www.bershka.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/pullandbear.png" alt="Pull&Bear"></div><h3>Pull&Bear</h3><a class="store-link" href="https://www.pullandbear.com/tr/en/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/stradivarius.png" alt="Stradivarius"></div><h3>Stradivarius</h3><a class="store-link" href="https://www.stradivarius.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/oysho.png" alt="Oysho"></div><h3>Oysho</h3><a class="store-link" href="https://www.oysho.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/massimodutti.png" alt="Massimo Dutti"></div><h3>Massimo Dutti</h3><a class="store-link" href="https://www.massimodutti.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/marksandspencer.png" alt="Marks & Spencer"></div><h3>Marks & Spencer</h3><a class="store-link" href="https://www.marksandspencer.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/ipekyol.png" alt="İpekyol"></div><h3>İpekyol</h3><a class="store-link" href="https://www.ipekyol.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/twist.png" alt="Twist"></div><h3>Twist</h3><a class="store-link" href="https://www.twist.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/dsdamat.png" alt="D'S Damat"></div><h3>D'S Damat</h3><a class="store-link" href="https://www.dsdamat.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/lacoste.png" alt="Lacoste"></div><h3>Lacoste</h3><a class="store-link" href="https://www.lacoste.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/esswaap.png" alt="Esswaap"></div><h3>Esswaap</h3><a class="store-link" href="https://www.esswaap.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/kayra.png" alt="Kayra"></div><h3>Kayra</h3><a class="store-link" href="https://www.kayra.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+    </div>
+
+    <h2 class="section-title">الرياضة والأحذية</h2>
+    <div class="grid-container">
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/nike.png" alt="Nike"></div><h3>Nike</h3><a class="store-link" href="https://www.nike.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/adidas.png" alt="Adidas"></div><h3>Adidas</h3><a class="store-link" href="https://www.adidas.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/puma.png" alt="Puma"></div><h3>Puma</h3><a class="store-link" href="https://tr.puma.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/flo.png" alt="FLO"></div><h3>FLO</h3><a class="store-link" href="https://www.flo.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/superstep.png" alt="SuperStep"></div><h3>SuperStep</h3><a class="store-link" href="https://www.superstep.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/luvishoes.png" alt="Luvi Shoes"></div><h3>Luvi Shoes</h3><a class="store-link" href="https://www.luvishoes.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+    </div>
+
+    <h2 class="section-title">التجميل والعناية</h2>
+    <div class="grid-container">
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/gratis.png" alt="Gratis"></div><h3>Gratis</h3><a class="store-link" href="https://www.gratis.com" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/watsons.png" alt="Watsons"></div><h3>Watsons</h3><a class="store-link" href="https://www.watsons.com.tr" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/eveshop.png" alt="Eve Shop"></div><h3>Eve Shop</h3><a class="store-link" href="https://www.eveshop.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/sephora.png" alt="Sephora"></div><h3>Sephora</h3><a class="store-link" href="https://www.sephora.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/madparfum.png" alt="MAD Parfumeur"></div><h3>MAD Parfumeur</h3><a class="store-link" href="https://www.madparfum.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/goldenrose.png" alt="Golden Rose"></div><h3>Golden Rose</h3><a class="store-link" href="https://shop.goldenrose.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/penti.png" alt="Penti"></div><h3>Penti</h3><a class="store-link" href="https://www.penti.com/tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+    </div>
+
+    <h2 class="section-title">المنزل والأطفال والسوبر ماركت</h2>
+    <div class="grid-container">
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/madamecoco.png" alt="Madame Coco"></div><h3>Madame Coco</h3><a class="store-link" href="https://www.madamecoco.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/englishhome.png" alt="English Home"></div><h3>English Home</h3><a class="store-link" href="https://www.englishhome.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/ebebek.png" alt="ebebek"></div><h3>ebebek</h3><a class="store-link" href="https://kurumsal.ebebek.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/kanz.png" alt="Kanz"></div><h3>Kanz</h3><a class="store-link" href="https://www.kanzcocuk.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/toyzzshop.png" alt="Toyzz Shop"></div><h3>Toyzz Shop</h3><a class="store-link" href="https://www.toyzzshop.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/getir.png" alt="Getir"></div><h3>Getir</h3><a class="store-link" href="https://getir.com/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/migros.png" alt="Migros"></div><h3>Migros</h3><a class="store-link" href="https://www.migros.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/a101.png" alt="A101"></div><h3>A101</h3><a class="store-link" href="https://www.a101.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/bim.png" alt="BİM"></div><h3>BİM</h3><a class="store-link" href="https://www.bim.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+        <div class="store-card"><div class="logo-container"><img class="store-logo" src="images/sok.png" alt="Şok Market"></div><h3>Şok Market</h3><a class="store-link" href="https://kurumsal.sokmarket.com.tr/" target="_blank" rel="noopener noreferrer">تصفح</a></div>
+    </div>
+
+    </section>
+
+<footer id="meshwarSocialFooter" class="mx-auto mt-14 max-w-7xl px-4 pb-10"><div class="flex flex-col items-center justify-between gap-5 rounded-3xl border border-white/10 bg-slate-900/60 p-6 text-center shadow-xl backdrop-blur-md md:flex-row md:text-right"><div><div class="font-black text-white">KINTO</div><div class="mt-1 text-xs text-slate-400">تواصل معنا عبر منصاتنا الاجتماعية</div></div><div class="flex items-center gap-3"><a href="#" aria-label="WhatsApp" class="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-400/10 text-lg text-emerald-300 transition hover:scale-110"><i class="fa-brands fa-whatsapp"></i></a><a href="#" aria-label="Telegram" class="flex h-11 w-11 items-center justify-center rounded-full border border-sky-400/30 bg-sky-400/10 text-lg text-sky-300 transition hover:scale-110"><i class="fa-brands fa-telegram"></i></a><a href="#" aria-label="Instagram" class="flex h-11 w-11 items-center justify-center rounded-full border border-pink-400/30 bg-pink-400/10 text-lg text-pink-300 transition hover:scale-110"><i class="fa-brands fa-instagram"></i></a></div></div></footer>
+
+    <div id="orderModal" class="fixed inset-0 z-[12000] hidden overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-md" style="display:none;">
+        <div class="mx-auto my-8 w-full max-w-md rounded-3xl border border-amber-400/25 bg-slate-900/90 p-5 text-right text-slate-100 shadow-2xl shadow-amber-400/10 backdrop-blur-xl" dir="rtl">
+            <div class="mb-4 flex items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div><div class="text-xs font-bold text-amber-300">KINTO Order</div><h3 class="mt-1 text-xl font-black text-white">إرسال تفاصيل الطلب</h3></div>
+                <img src="images/meshwar-logo.png" alt="KINTO Logo" class="h-12 w-12 rounded-xl border border-amber-400/30 bg-white/5 object-contain p-1 shadow-lg shadow-amber-400/10">
+            </div>
+            <div class="space-y-4">
+                <label class="block"><span class="mb-1.5 block text-sm font-bold text-slate-200">رابط المنتج</span><input type="text" id="pUrl" placeholder="الصق الرابط هنا" class="w-full box-border rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/10"></label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="block"><span class="mb-1.5 block text-sm font-bold text-slate-200">اللون</span><input type="text" id="pColor" placeholder="مثلاً: أسود" class="w-full box-border rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-amber-400/60"></label>
+                    <label class="block"><span class="mb-1.5 block text-sm font-bold text-slate-200">المقاس</span><input type="text" id="pSize" placeholder="مثلاً: XL" class="w-full box-border rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-amber-400/60"></label>
+                </div>
+                <label class="block"><span class="mb-1.5 block text-sm font-bold text-slate-200">العدد</span><input type="number" id="pQuantity" value="1" min="1" class="w-full box-border rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-white outline-none transition focus:border-amber-400/60"></label>
+                <button id="mainOrderSubmitBtn" onclick="submitOrder()" class="w-full rounded-xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-3 font-black text-white shadow-lg shadow-amber-400/10 transition-all duration-300 hover:scale-[1.01] hover:border-amber-300 hover:shadow-amber-400/20">إرسال للواتساب</button>
+                <button onclick="document.getElementById('orderModal').style.display='none'" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-bold text-slate-300 transition hover:border-amber-400/30 hover:text-white">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MAIN_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
+        const MAIN_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+        let mainSupabase = null;
+        let currentHomeCustomer = null;
+
+        async function ensureMainSupabase() {
+            if (mainSupabase) return mainSupabase;
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+            mainSupabase = createClient(MAIN_SUPABASE_URL, MAIN_SUPABASE_KEY);
+            return mainSupabase;
+        }
+
+        function getStoredCustomerId() {
+            const direct = String(localStorage.getItem('meshwar_customer_id') || '').trim();
+            if (direct) return direct;
+            const viewing = String(localStorage.getItem('viewingCustomerId') || '').trim();
+            if (viewing) return viewing;
+            try {
+                const user = JSON.parse(localStorage.getItem('loggedInUser') || '{}');
+                if (user && user.id != null) return String(user.id).trim();
+            } catch (e) {
+                console.warn('Invalid customer session object:', e);
+            }
+            return '';
+        }
+
+        async function restoreCustomerSession() {
+            const authLink = document.getElementById('authLink');
+            const authText = document.getElementById('authText');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const customerId = getStoredCustomerId();
+            if (!customerId) {
+                currentHomeCustomer = null;
+                if (authText) authText.innerText = 'حسابي / تسجيل';
+                if (authLink) authLink.href = 'login.html';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                return null;
+            }
+            try {
+                const supabase = await ensureMainSupabase();
+                const { data: customer, error } = await supabase.from('customers').select('id,name,phone').eq('id', customerId).maybeSingle();
+                if (error) throw error;
+                if (!customer) throw new Error('العميل غير موجود');
+                currentHomeCustomer = customer;
+                localStorage.setItem('meshwar_customer_id', String(customer.id));
+                localStorage.setItem('viewingCustomerId', String(customer.id));
+                localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, name: customer.name || '' }));
+                if (authText) authText.innerText = 'أهلاً، ' + (customer.name || 'العميل') + ' | لوحتي';
+                if (authLink) authLink.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id));
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                return customer;
+            } catch (e) {
+                console.error('Customer session restore failed:', e);
+                currentHomeCustomer = null;
+                if (authText) authText.innerText = 'حسابي / تسجيل';
+                if (authLink) authLink.href = 'login.html';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                return null;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            await restoreCustomerSession();
+            const nav = document.createElement('nav');
+            nav.className = 'nav-container';
+            const all = document.createElement('a');
+            all.innerText = 'الكل';
+            all.href = '#';
+            nav.appendChild(all);
+            document.querySelectorAll('.section-title').forEach((title, index) => {
+                title.id = 'section-' + index;
+                const link = document.createElement('a');
+                link.innerText = title.innerText;
+                link.href = '#section-' + index;
+                nav.appendChild(link);
+            });
+            document.body.insertBefore(nav, document.body.firstChild);
+        });
+
+        function logout() {
+            currentHomeCustomer = null;
+            localStorage.removeItem('meshwar_customer_id');
+            localStorage.removeItem('loggedInUser');
+            localStorage.removeItem('viewingCustomerId');
+            window.location.reload();
+        }
+
+        async function generateMainOrderCode(supabase) {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('order_code')
+                .not('order_code', 'is', null)
+                .order('created_at', { ascending: false })
+                .limit(1000);
+            if (error) throw error;
+            let maxNumber = 1000;
+            (data || []).forEach(row => {
+                const match = String(row.order_code || '').match(/^MW-(\d+)$/i);
+                if (match) maxNumber = Math.max(maxNumber, Number(match[1]));
+            });
+            return 'MW-' + (maxNumber + 1);
+        }
+
+        async function submitOrder() {
+            const customerId = String(currentHomeCustomer?.id || getStoredCustomerId() || '').trim();
+            if (!customerId) {
+                alert('الرجاء تسجيل الدخول أولاً');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const urlField = document.getElementById('pUrl');
+            const colorField = document.getElementById('pColor');
+            const sizeField = document.getElementById('pSize');
+            const quantityField = document.getElementById('pQuantity');
+            const url = urlField ? urlField.value.trim() : '';
+            const color = colorField ? colorField.value.trim() : 'غير محدد';
+            const size = sizeField ? sizeField.value.trim() : 'غير محدد';
+            const quantity = Number(quantityField ? quantityField.value : 1) || 1;
+            if (!url) return alert('الرجاء إدخال رابط المنتج على الأقل.');
+
+            const submitBtn = document.getElementById('mainOrderSubmitBtn');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'جاري حفظ الطلب...'; }
+
+            try {
+                const supabase = await ensureMainSupabase();
+                const { data: customer, error: customerError } = await supabase
+                    .from('customers')
+                    .select('id,name,phone')
+                    .eq('id', customerId)
+                    .maybeSingle();
+                if (customerError) {
+                    console.error('Supabase customer lookup failed:', customerError);
+                    throw customerError;
+                }
+                if (!customer) throw new Error('العميل غير موجود في Supabase');
+                currentHomeCustomer = customer;
+
+                const orderCode = await generateMainOrderCode(supabase);
+                const payload = {
+                    order_code: orderCode,
+                    customer_id: customer.id,
+                    customer_name: customer.name || '',
+                    customer_phone: customer.phone || '',
+                    details: { color, size, quantity },
+                    order_url: url,
+                    image_url: null,
+                    status: 'انتظار رد الموظف'
+                };
+
+                console.log('Supabase orders insert payload:', payload);
+                const { data: insertData, error: insertError } = await supabase
+                    .from('orders')
+                    .insert([payload]);
+
+                if (insertError) {
+                    console.error('Supabase orders insert failed:', insertError, payload);
+                    throw insertError;
+                }
+
+                console.log('Supabase order insert succeeded:', insertData, payload);
+
+                const emoji = {
+                    cart: '\uD83D\uDED2', person: '\uD83D\uDC64', phone: '\uD83D\uDCF1', id: '\uD83C\uDD94',
+                    link: '\uD83D\uDD17', color: '\uD83C\uDFA8', ruler: '\uD83D\uDCCF', box: '\uD83D\uDCE6', pin: '\uD83D\uDCCC'
+                };
+                const message = [
+                    '*طلب جديد عبر منصة KINTO* ' + emoji.cart,
+                    '',
+                    emoji.person + ' *الاسم:* ' + (customer.name || ''),
+                    emoji.phone + ' *الهاتف:* ' + (customer.phone || ''),
+                    emoji.id + ' *رقم الطلب:* ' + orderCode,
+                    emoji.link + ' *رابط المنتج:* ' + url,
+                    emoji.color + ' *اللون:* ' + color,
+                    emoji.ruler + ' *المقاس:* ' + size,
+                    emoji.box + ' *العدد:* ' + quantity,
+                    emoji.pin + ' *الحالة:* انتظار رد الموظف'
+                ].join('\n');
+
+                const whatsappNumber = '905521855554';
+                const whatsappURL = 'https://wa.me/' + whatsappNumber + '?text=' + encodeURIComponent(message);
+                window.open(whatsappURL, '_blank', 'noopener');
+
+                if (urlField) urlField.value = '';
+                if (colorField) colorField.value = '';
+                if (sizeField) sizeField.value = '';
+                if (quantityField) quantityField.value = '1';
+                const orderModal = document.getElementById('orderModal');
+                if (orderModal) orderModal.style.display = 'none';
+
+                alert('تم حفظ الطلب في Supabase بنجاح. رقم الطلب: ' + orderCode);
+                window.location.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id));
+            } catch (error) {
+                console.error('Supabase order submit aborted before WhatsApp:', error);
+                alert('لم يتم فتح واتساب لأن حفظ الطلب في Supabase فشل: ' + (error.message || error));
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'إرسال للواتساب'; }
+            }
+        }
+
+        window.submitOrder = submitOrder;
+        window.logout = logout;
+    </script>
+
+<script type="module">
+/* LOCAL_STORES_PUBLIC_DATA_V1 */
+const LOCAL_STORES_SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
+const LOCAL_STORES_SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+const {createClient:localStoresCreateClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+const localStoresSb=localStoresCreateClient(LOCAL_STORES_SUPABASE_URL,LOCAL_STORES_SUPABASE_KEY);
+const localPlaceholder='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><rect width="100%" height="100%" rx="80" fill="#1e293b"/><circle cx="80" cy="62" r="25" fill="#64748b"/><path d="M35 137c6-30 24-45 45-45s39 15 45 45" fill="#64748b"/><text x="80" y="153" text-anchor="middle" font-family="Arial" font-size="13" fill="#cbd5e1">STORE</text></svg>`);
+let localPublicStores=[],localActiveSpecialty='الكل';
+const localEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+function localCountryFlag(country){const x=String(country||'').trim().toLowerCase();const m={'العراق':'🇮🇶','iraq':'🇮🇶','تركيا':'🇹🇷','turkey':'🇹🇷','türkiye':'🇹🇷','سوريا':'🇸🇾','syria':'🇸🇾','السعودية':'🇸🇦','saudi arabia':'🇸🇦','الإمارات':'🇦🇪','uae':'🇦🇪','الأردن':'🇯🇴','jordan':'🇯🇴'};return m[x]||'📍'}
+async function openStore(storeUrl,storeId){console.log('Opening store:',storeUrl,storeId);const id=String(storeId||'').trim();if(id){const grid=document.getElementById('localStoresPublicGrid'),filters=document.getElementById('localSpecialtyFilters'),panel=document.getElementById('localStoreProductsPanel');if(grid)grid.style.display='none';if(filters)filters.style.display='none';if(panel)panel.style.display='block';await loadStoreDetails(id);if(typeof window.loadLocalStoreProductsV3==='function'){await window.loadLocalStoreProductsV3(id)}else{console.error('Local Store V3 loader is not available for store:',id);if(document.getElementById('localStoreProductsGrid'))document.getElementById('localStoreProductsGrid').innerHTML='<div class=\"local-v3-debug-error\">تعذر تشغيل محمل منتجات المتجر V3. يرجى تحديث الصفحة.</div>'}panel?.scrollIntoView({behavior:'smooth',block:'start'});return}const url=String(storeUrl||'').trim();if(url){window.open(url,'_blank');return}alert('تعذر فتح المتجر حالياً.')}
+window.openStore=openStore;
+async function loadStoreDetails(storeId){const id=String(storeId||'').trim();if(!id)return;const panel=document.getElementById('localStoreProductsPanel'),grid=document.getElementById('localStoreProductsGrid'),title=document.getElementById('localStoreProductsTitle'),meta=document.getElementById('localStoreProductsMeta');if(panel)panel.style.display='block';if(title)title.textContent='منتجات المتجر';if(meta)meta.textContent='';if(grid)grid.innerHTML='<div class="local-empty">جاري تحميل منتجات المتجر...</div>'}
+window.loadStoreDetails=loadStoreDetails;
+function showLocalStoreList(){const grid=document.getElementById('localStoresPublicGrid'),filters=document.getElementById('localSpecialtyFilters'),panel=document.getElementById('localStoreProductsPanel'),products=document.getElementById('localStoreProductsGrid');if(panel)panel.style.display='none';if(products)products.innerHTML='<div class=\"local-empty\">جاري تحميل المنتجات...</div>';if(filters)filters.style.display='flex';if(grid)grid.style.display='grid';renderLocalPublicStores();document.getElementById('localStoresPublic')?.scrollIntoView({behavior:'smooth',block:'start'})}
+document.getElementById('backToLocalStoresBtn')?.addEventListener('click',showLocalStoreList);
+window.showLocalStoreList=showLocalStoreList;
+function renderLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');if(!grid)return;const rows=localPublicStores.filter(s=>localActiveSpecialty==='الكل'||String(s.specialty||'شامل')===localActiveSpecialty);grid.style.display='grid';grid.innerHTML=rows.map(s=>`<article class="local-public-card"><img class="local-public-logo" src="${localEsc(s.logo_url||localPlaceholder)}" onerror="this.onerror=null;this.src='${localEsc(localPlaceholder)}'" alt="${localEsc(s.store_name||'متجر')}"><div class="local-public-name">${localEsc(s.store_name||'متجر محلي')}</div><div class="local-public-meta">${localEsc(s.specialty||s.store_type||'شامل')}</div><div class="local-public-location"><span>${localCountryFlag(s.country)}</span><span>${localEsc(s.governorate||s.country||'غير محدد')}</span></div><div class="local-public-chip">${localEsc(s.default_currency||'')} · متجر نشط</div><button type="button" class="local-public-open" style="pointer-events:auto;cursor:pointer" onclick="openStore('${String(s.store_url||'').replace(/'/g,"\'")}', '${String(s.id||'').replace(/'/g,"\'")}')">✨ فتح المتجر</button></article>`).join('')||'<div class="local-empty">لا توجد متاجر ضمن هذا التخصص حالياً.</div>'}
+function renderLocalSpecialtyFilters(){const box=document.getElementById('localSpecialtyFilters');if(!box)return;const specs=['الكل',...new Set(localPublicStores.map(s=>String(s.specialty||'شامل').trim()).filter(Boolean))];box.innerHTML=specs.map(x=>`<button class="local-filter-btn ${x===localActiveSpecialty?'active':''}" data-specialty="${localEsc(x)}">${localEsc(x)}</button>`).join('');box.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{localActiveSpecialty=b.dataset.specialty||'الكل';renderLocalSpecialtyFilters();renderLocalPublicStores()}))}
+async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false}).range(0,999);if(error)throw error;localPublicStores=data||[];renderLocalSpecialtyFilters();renderLocalPublicStores();const storeId=new URLSearchParams(window.location.search).get('storeId');if(storeId){window.showStoresTab?.('local');await openStore('',storeId)}}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class="local-empty">تعذر تحميل المتاجر المحلية حالياً.</div>'}}
+loadLocalPublicStores();
+</script>
+
+<script>/* MESHWAR_INDEX_UI_V3 */(function(){const r=document.documentElement,b=document.getElementById('meshwarThemeToggle');if(b)b.onclick=()=>{const d=!r.classList.contains('dark');r.classList.toggle('dark',d);try{localStorage.setItem('meshwar-theme',d?'dark':'light')}catch{};b.textContent=d?'☀':'☾'}})();function meshwarQuickTrack(){const a=document.getElementById('meshwarHeroTrackInput'),v=String(a?.value||'').trim();if(!v)return a?.focus();const x=[...document.querySelectorAll('input')].find(e=>e!==a&&/track|order|barcode|shipment|code|تتبع|طلب|باركود|شحنة/i.test([e.id,e.name,e.placeholder].filter(Boolean).join(' ')));if(x){x.value=v;x.dispatchEvent(new Event('input',{bubbles:true}));}if(typeof window.trackOrder==='function')return window.trackOrder(v);if(typeof window.trackShipment==='function')return window.trackShipment(v);const b=[...document.querySelectorAll('button,a')].find(e=>e.id!=='meshwarHeroTrackBtn'&&/تتبع|track/i.test(e.textContent||''));if(b){b.scrollIntoView({behavior:'smooth',block:'center'});if(b.tagName==='BUTTON')setTimeout(()=>b.click(),300)}}</script>
+
+<script>/* MESHWAR_COMPACT_SHOWCASE_UI_V6 */(function(){const intl=document.getElementById('internationalStoresSection'),loc=document.getElementById('localStoresPublic'),bi=document.getElementById('showInternationalStoresBtn'),bl=document.getElementById('showLocalStoresBtn');function paint(btn,active){if(!btn)return;btn.classList.toggle('bg-gradient-to-r',active);btn.classList.toggle('from-sky-600',active);btn.classList.toggle('to-indigo-600',active);btn.classList.toggle('border-amber-400/50',active);btn.classList.toggle('text-white',active);btn.classList.toggle('bg-white/5',!active);btn.classList.toggle('border-amber-400/25',!active);btn.classList.toggle('text-slate-100',!active);btn.setAttribute('aria-selected',active?'true':'false')}function show(k){const local=k==='local';if(intl)intl.style.display=local?'none':'';if(loc)loc.style.display=local?'':'none';paint(bi,!local);paint(bl,local)}window.showStoresTab=show;bi?.addEventListener('click',()=>show('international'));bl?.addEventListener('click',()=>show('local'));const selectedStoreId=new URLSearchParams(window.location.search).get('storeId');show(selectedStoreId?'local':'international');const v=document.getElementById('meshwarPromoVideo'),sb=document.getElementById('meshwarPromoSoundBtn'),pb=document.getElementById('meshwarPromoPlayBtn');sb?.addEventListener('click',()=>{if(!v)return;v.muted=!v.muted;sb.textContent=v.muted?'🔇 تشغيل الصوت':'🔊 كتم الصوت'});pb?.addEventListener('click',()=>{if(!v)return;v.paused?v.play().catch(()=>{}):v.pause()})})();</script>
+<script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>
+<script type="module" src="js/local-store-card-v3.js?v=local-modal-v4-2"></script>
+<script src="js/local-store-product-details-v4.js?v=local-modal-v4-2" data-mw-product-details-v4></script>
+<link rel="stylesheet" href="css/hero-v14-emerald-glass.css?v=20260828-v15-brand-hero"><script src="js/index-featured-campaigns-v1.js?v=20260828-v21-kinto"></script>
+</body>
+</html>
