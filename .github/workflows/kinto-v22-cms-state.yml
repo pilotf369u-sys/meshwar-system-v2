@@ -1,0 +1,35 @@
+name: KINTO V22 CMS State
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/kinto-v22-cms-state.yml']
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch canonical featured store state
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('admin-content-cms.html'); s=p.read_text()
+          reps=[
+          ("let cmsSb=null,currentAdmin=null;","let cmsSb=null,currentAdmin=null,currentSettings={};"),
+          ("function parseSettings(v){if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return v;try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}}","function parseSettings(v){if(v==null)return{};if(Array.isArray(v))return parseSettings(v[0]);if(typeof v==='string'){try{return parseSettings(JSON.parse(v))}catch{return{}}}if(typeof v==='object'){if(v.value!=null)return parseSettings(v.value);return v}return{}}"),
+          ("function collect(){const out={};textIds.forEach(k=>out[k]=String(document.getElementById(k)?.value||'').trim());out.video_url=cleanVideoUrl(out.video_url);out.hero_media_type=out.hero_media_type==='image'?'image':'video';out.hero_title_color=hex(document.getElementById('hero_title_color_text')?.value||document.getElementById('hero_title_color')?.value,'#ffffff');out.hero_subtitle_color=hex(document.getElementById('hero_subtitle_color_text')?.value||document.getElementById('hero_subtitle_color')?.value,'#e2e8f0');out.hero_overlay_opacity=Math.max(0,Math.min(90,Number(document.getElementById('hero_overlay_opacity')?.value||42)));boolIds.forEach(k=>out[k]=!!document.getElementById(k)?.checked);return out}","function collect(){const out={...currentSettings};textIds.forEach(k=>out[k]=String(document.getElementById(k)?.value||'').trim());out.video_url=cleanVideoUrl(out.video_url);out.hero_media_type=out.hero_media_type==='image'?'image':'video';out.hero_title_color=hex(document.getElementById('hero_title_color_text')?.value||document.getElementById('hero_title_color')?.value,'#ffffff');out.hero_subtitle_color=hex(document.getElementById('hero_subtitle_color_text')?.value||document.getElementById('hero_subtitle_color')?.value,'#e2e8f0');out.hero_overlay_opacity=Math.max(0,Math.min(90,Number(document.getElementById('hero_overlay_opacity')?.value||42)));boolIds.forEach(k=>out[k]=!!document.getElementById(k)?.checked);const fs=document.getElementById('featured_store_id');if(fs)out.featured_store_id=String(fs.value||'').trim();else if(!Object.prototype.hasOwnProperty.call(out,'featured_store_id')&&out.featuredStoreId!=null)out.featured_store_id=String(out.featuredStoreId||'').trim();delete out.featuredStoreId;return out}"),
+          ("async function loadSiteSettings(){try{status('جاري التحقق وتحميل الإعدادات...');if(!currentAdmin)await verifyAdmin();const sb=await getSb(),{data,error}=await sb.rpc('get_site_settings');if(error)throw error;const raw=parseSettings(data),s={...DEFAULTS,...raw};s.video_url=cleanVideoUrl(s.video_url);fillForm(s);status(data?'تم تحميل إعدادات الموقع السحابية.':'تم تحميل القيم الافتراضية.','ok')}catch(e){console.error(e);if(migrationMissing(e))migrationNotice();else status(e.message||String(e),'err')}}","async function loadSiteSettings(){try{status('جاري التحقق وتحميل الإعدادات...');if(!currentAdmin)await verifyAdmin();const sb=await getSb(),{data,error}=await sb.rpc('get_site_settings');if(error)throw error;const raw=parseSettings(data);currentSettings={...raw};if(!Object.prototype.hasOwnProperty.call(currentSettings,'featured_store_id')&&currentSettings.featuredStoreId!=null)currentSettings.featured_store_id=String(currentSettings.featuredStoreId||'').trim();delete currentSettings.featuredStoreId;const s={...DEFAULTS,...currentSettings};s.video_url=cleanVideoUrl(s.video_url);fillForm(s);if(typeof window.kintoHydrateFeaturedStoreV22==='function')setTimeout(()=>window.kintoHydrateFeaturedStoreV22(),0);status(data?'تم تحميل إعدادات الموقع السحابية.':'تم تحميل القيم الافتراضية.','ok')}catch(e){console.error(e);if(migrationMissing(e))migrationNotice();else status(e.message||String(e),'err')}}"),
+          ("async function saveSiteSettings(){const btn=document.getElementById('cmsSaveBtn');try{btn.disabled=true;status('جاري حفظ إعدادات الموقع...');await verifyAdmin();const next=validate(collect()),sb=await getSb(),{error}=await sb.rpc('save_site_settings',{p_admin_id:adminId(),p_value:next});if(error)throw error;status('تم الحفظ، جاري التحقق من JSON في قاعدة البيانات...');const saved=await verifySavedHero(sb,next);fillForm({...next,...saved});status('تم حفظ والتحقق من مفاتيح Hero V13 الخمسة بنجاح.','ok')}catch(e){console.error(e);if(migrationMissing(e))migrationNotice();else status(e.message||String(e),'err')}finally{btn.disabled=false}}","async function saveSiteSettings(){const btn=document.getElementById('cmsSaveBtn');try{btn.disabled=true;status('جاري حفظ إعدادات الموقع...');await verifyAdmin();const sb=await getSb(),latest=await sb.rpc('get_site_settings');if(latest.error)throw latest.error;currentSettings={...parseSettings(latest.data),...currentSettings};const next=validate(collect()),{error}=await sb.rpc('save_site_settings',{p_admin_id:adminId(),p_value:next});if(error)throw error;status('تم الحفظ، جاري التحقق من JSON في قاعدة البيانات...');const saved=await verifySavedHero(sb,next);if(String(saved.featured_store_id??'')!==String(next.featured_store_id??''))throw new Error('فشل التحقق من featured_store_id بعد الحفظ.');currentSettings={...saved};fillForm({...next,...saved});if(typeof window.kintoHydrateFeaturedStoreV22==='function')await window.kintoHydrateFeaturedStoreV22();status('تم حفظ الإعدادات والتحقق من featured_store_id وHero بنجاح.','ok')}catch(e){console.error(e);if(migrationMissing(e))migrationNotice();else status(e.message||String(e),'err')}finally{btn.disabled=false}}"),
+          ('js/admin-featured-store-v18.js?v=20260828-v19','js/admin-featured-store-v18.js?v=20260828-v22')]
+          for old,new in reps:
+              assert old in s, old[:120]
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          Path('.github/workflows/kinto-v22-cms-state.yml').unlink()
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin-content-cms.html .github/workflows/kinto-v22-cms-state.yml
+          git commit -m 'fix: canonical featured store CMS hydration V22'
+          git push
