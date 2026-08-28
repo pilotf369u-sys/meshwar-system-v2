@@ -1,4 +1,4 @@
-/* KINTO Admin CMS — Featured Store Selector V22 */
+/* KINTO Admin CMS — Featured Store Selector V22.0.1 (final CI trigger) */
 (()=>{'use strict';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));let rows=[];
 function parse(v){if(v==null)return{};if(Array.isArray(v))return parse(v[0]);if(typeof v==='string'){try{return parse(JSON.parse(v))}catch{return{}}}if(typeof v==='object'){if(v.value!=null)return parse(v.value);return v}return{}}
