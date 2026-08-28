@@ -23,7 +23,7 @@
 </div>
 <script>
 const CMS_SB_URL='https://hsmmbloouskqdnptiiad.supabase.co',CMS_SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
-const DEFAULTS={video_url:'',video_poster:'',hero_media_type:'video',hero_image_url:'',hero_title_color:'#ffffff',hero_subtitle_color:'#e2e8f0',hero_overlay_opacity:42,announcement_text:'✨ تابع أحدث المتاجر والخصومات والخدمات من مكان واحد ✨',is_active:true,hero_title:'تسوّق، اطلب، وتابع\nمن مكان واحد.',hero_subtitle:'واجهة موحدة للمتاجر المحلية والعالمية مع وصول سريع للطلب والتتبع.',cta_primary_text:'طلب منتج مباشر',cta_primary_url:'#orderModal',cta_secondary_text:'المتاجر المحلية',cta_secondary_url:'#localStoresPublic',whatsapp_url:'',whatsapp_active:false,facebook_url:'',facebook_active:false,instagram_url:'',instagram_active:false,telegram_url:'',telegram_active:false,tiktok_url:'',tiktok_active:false,support_phone:'',support_email:'',contact_address:'',site_title:'منصة MeshWar - دليل المتاجر والشحن الدولي',meta_description:'',favicon_url:''};
+const DEFAULTS={video_url:'',video_poster:'',hero_media_type:'video',hero_image_url:'',hero_title_color:'#ffffff',hero_subtitle_color:'#e2e8f0',hero_overlay_opacity:42,announcement_text:'✨ تابع أحدث المتاجر والخصومات والخدمات من مكان واحد ✨',is_active:true,hero_title:'تسوّق، اطلب، وتابع\nمن مكان واحد.',hero_subtitle:'واجهة موحدة للمتاجر المحلية والعالمية مع وصول سريع للطلب والتتبع.',cta_primary_text:'طلب منتج مباشر',cta_primary_url:'#orderModal',cta_secondary_text:'المتاجر المحلية',cta_secondary_url:'#localStoresPublic',whatsapp_url:'',whatsapp_active:false,facebook_url:'',facebook_active:false,instagram_url:'',instagram_active:false,telegram_url:'',telegram_active:false,tiktok_url:'',tiktok_active:false,support_phone:'',support_email:'',contact_address:'',site_title:'منصة KINTO - دليل المتاجر والشحن الدولي',meta_description:'',favicon_url:''};
 const HERO_VERIFY_KEYS=['hero_title_color','hero_subtitle_color','hero_overlay_opacity','hero_media_type','hero_image_url'];
 let cmsSb=null,currentAdmin=null;
 async function getSb(){if(cmsSb)return cmsSb;const{createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');return cmsSb=createClient(CMS_SB_URL,CMS_SB_KEY)}
@@ -54,6 +54,7 @@ function bindVisualControls(){['hero_title_color','hero_subtitle_color'].forEach
 function bindVideoPasteGuard(){const e=document.getElementById('video_url');if(!e)return;e.addEventListener('change',()=>{e.value=cleanVideoUrl(e.value)})}
 window.loadSiteSettings=loadSiteSettings;window.saveSiteSettings=saveSiteSettings;window.addEventListener('DOMContentLoaded',()=>{syncEmbeddedViewport();bindVideoPasteGuard();bindUploads();bindVisualControls();loadSiteSettings()});
 </script>
+<script src="js/admin-featured-store-v18.js?v=20260828-v18"></script>
 <script src="js/admin-featured-campaigns-v1.js?v=20260827-v1.1-approval-refresh"></script>
 <script src="js/admin-featured-requests-v2.js?v=20260827-v2.3-pending-products"></script>
 </body>
