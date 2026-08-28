@@ -1,4 +1,4 @@
-/* KINTO V20 — aggressive emerald reset + final geometry */
+/* KINTO V23 — aggressive emerald reset + critical-paint CI trigger */
 :root{--k20:#063b32;--k20-deep:#032b25;--k20-panel:#08483c;--k20-panel2:#054238;--k20-accent:#b95504;--k20-gold:#f2c85b;--k20-text:#f7fbfa;--k20-muted:#b8cec8;--k20-line:rgba(242,200,91,.16)}
 html,body{min-height:100%!important;margin:0!important;padding:0!important;background:#032b25!important;background-image:radial-gradient(circle at 12% -8%,rgba(185,85,4,.14),transparent 28%),linear-gradient(180deg,#063b32 0%,#04362e 46%,#032b25 100%)!important;background-attachment:fixed!important;color:var(--k20-text)!important}
 body,body>main,body>section,body>header,body>footer,body>[class*="container"],body>[class*="wrapper"],body>[class*="shell"],body main,body main>section,body section,body footer{background-color:transparent!important;background-image:none!important}
