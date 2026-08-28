@@ -1,0 +1,31 @@
+name: KINTO V21 Index Repair
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/kinto-v21-index-repair.yml']
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+      - name: Restore full index and activate V21
+        run: |
+          git show 07878d522c47e8219015d6dffb5b8aea7e506752:index.html > index.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text()
+          old='js/index-featured-campaigns-v1.js?v=20260828-v20-kinto'
+          new='js/index-featured-campaigns-v1.js?v=20260828-v21-kinto'
+          assert old in s
+          p.write_text(s.replace(old,new))
+          Path('.github/workflows/kinto-v21-index-repair.yml').unlink()
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/kinto-v21-index-repair.yml
+          git commit -m 'fix: restore full index and activate KINTO V21'
+          git push
