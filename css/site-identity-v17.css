@@ -1,4 +1,4 @@
-/* KINTO V17 — final brand purge + featured store showcase */
+/* KINTO V17.0.1 — final brand purge + featured store showcase; final CI trigger */
 :root{--kinto-emerald:#063b32;--kinto-emerald-deep:#032b25;--kinto-accent:#b95504;--kinto-gold:#f2c85b}
 html,body{background:#031f1b!important;background-image:radial-gradient(circle at 12% 0%,rgba(185,85,4,.08),transparent 30%),linear-gradient(180deg,#031f1b 0%,#063b32 48%,#032b25 100%)!important;color:#eef7f4!important}
 body>nav{background:#063b32!important;background-image:linear-gradient(135deg,#063b32 0%,#08483c 55%,#032b25 100%)!important;border-color:rgba(242,200,91,.18)!important;box-shadow:0 12px 32px rgba(1,24,20,.35)!important}
