@@ -1,0 +1,35 @@
+name: KINTO V26 Specialty Labels Wire
+on:
+  push:
+    paths:
+      - '.github/workflows/kinto-v26-specialty-labels.yml'
+permissions:
+  contents: write
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Activate V26 public loader
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='js/index-featured-campaigns-v1.js?v=20260828-v23-kinto'
+          new='js/index-featured-campaigns-v1.js?v=20260828-v26-kinto'
+          if old not in s:
+              raise SystemExit('Expected V23 loader reference not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          rm .github/workflows/kinto-v26-specialty-labels.yml
+      - name: Commit activation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/kinto-v26-specialty-labels.yml
+          git commit -m 'fix: activate V26 specialty text root repair'
+          git push origin main
