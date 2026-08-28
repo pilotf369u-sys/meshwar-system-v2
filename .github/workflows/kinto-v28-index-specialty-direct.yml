@@ -1,0 +1,37 @@
+name: KINTO V28 Direct Index Specialty Fix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/kinto-v28-index-specialty-direct.yml']
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index.html specialty buttons directly
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+
+          old_static='''<div id="localSpecialtyFilters" class="local-specialty-filters"><button class="local-filter-btn active" data-specialty="الكل">الكل</button></div>'''
+          new_static='''<div id="localSpecialtyFilters" class="local-specialty-filters" style="color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;opacity:1!important;visibility:visible!important"><button type="button" class="local-filter-btn active" data-specialty="الكل" aria-label="الكل" style="color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;opacity:1!important;visibility:visible!important"><span style="color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;opacity:1!important;visibility:visible!important">الكل</span></button></div>'''
+          assert old_static in s, 'static localSpecialtyFilters block not found'
+          s=s.replace(old_static,new_static,1)
+
+          old_func="function renderLocalSpecialtyFilters(){const box=document.getElementById('localSpecialtyFilters');if(!box)return;const specs=['الكل',...new Set(localPublicStores.map(s=>String(s.specialty||'شامل').trim()).filter(Boolean))];box.replaceChildren(...specs.map(x=>{const label=String(x||'').trim()||'شامل',b=document.createElement('button');b.type='button';b.className='local-filter-btn '+(label===localActiveSpecialty?'active':'');b.dataset.specialty=label;b.textContent=label;b.setAttribute('aria-label',label);b.style.setProperty('color','#ffffff','important');b.style.setProperty('-webkit-text-fill-color','#ffffff','important');b.style.setProperty('opacity','1','important');b.style.setProperty('visibility','visible','important');b.addEventListener('click',()=>{localActiveSpecialty=label;renderLocalSpecialtyFilters();renderLocalPublicStores()});return b}))}"
+          new_func="function renderLocalSpecialtyFilters(){const box=document.getElementById('localSpecialtyFilters');if(!box)return;const specs=['الكل',...new Set(localPublicStores.map(s=>String(s.specialty||'شامل').trim()).filter(Boolean))];box.replaceChildren(...specs.map(x=>{const label=String(x||'').trim()||'شامل',b=document.createElement('button'),t=document.createElement('span');b.type='button';b.className='local-filter-btn '+(label===localActiveSpecialty?'active':'');b.dataset.specialty=label;b.setAttribute('aria-label',label);b.style.setProperty('color','#ffffff','important');b.style.setProperty('-webkit-text-fill-color','#ffffff','important');b.style.setProperty('opacity','1','important');b.style.setProperty('visibility','visible','important');t.textContent=label;t.style.setProperty('display','inline','important');t.style.setProperty('color','#ffffff','important');t.style.setProperty('-webkit-text-fill-color','#ffffff','important');t.style.setProperty('opacity','1','important');t.style.setProperty('visibility','visible','important');b.replaceChildren(t);b.addEventListener('click',()=>{localActiveSpecialty=label;renderLocalSpecialtyFilters();renderLocalPublicStores()});return b}))}"
+          assert old_func in s, 'current renderLocalSpecialtyFilters function not found'
+          s=s.replace(old_func,new_func,1)
+          s=s.replace('js/index-featured-campaigns-v1.js?v=20260828-v27-kinto','js/index-featured-campaigns-v1.js?v=20260828-v28-kinto',1)
+          p.write_text(s)
+          Path('.github/workflows/kinto-v28-index-specialty-direct.yml').unlink()
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/kinto-v28-index-specialty-direct.yml
+          git commit -m 'fix: write specialty labels directly in index html'
+          git push
