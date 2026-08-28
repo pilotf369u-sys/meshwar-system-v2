@@ -1,0 +1,18 @@
+/* MeshWar V16 — unified premium identity */
+:root{--mw-emerald:#063b32;--mw-emerald-2:#08483c;--mw-emerald-deep:#032b25;--mw-burnt:#b95504;--mw-gold:#f2c85b}
+html,body{background:#041f1b!important;background-image:radial-gradient(circle at 15% 0%,rgba(185,85,4,.10),transparent 28%),linear-gradient(180deg,#041f1b 0%,#063b32 46%,#032b25 100%)!important;color:#eef7f4!important}
+body>nav{background:#063b32!important;background-image:linear-gradient(135deg,#063b32 0%,#08483c 56%,#032b25 100%)!important;border-color:rgba(242,200,91,.18)!important;box-shadow:0 12px 32px rgba(1,24,20,.34)!important}
+body>nav>div{min-height:68px!important}
+body>nav a[href="index.html"]{gap:0!important;min-width:56px!important;color:#fff!important}
+body>nav a[href="index.html"]>span{display:none!important}
+body>nav a[href="index.html"] img{height:50px!important;width:auto!important;max-width:150px!important;min-width:50px!important;object-fit:contain!important;padding:0!important;border:0!important;border-radius:12px!important;background:transparent!important;box-shadow:0 8px 22px rgba(0,0,0,.18)!important}
+body>nav a:not([href="index.html"]),body>nav button,.nav-container a,#meshwarStoreTabs button,.local-filter-btn{background:#b95504!important;background-image:none!important;color:#063b32!important;border-color:rgba(242,200,91,.28)!important;box-shadow:0 7px 18px rgba(0,0,0,.16)!important;font-weight:900!important}
+body>nav a:not([href="index.html"]):hover,body>nav button:hover,.nav-container a:hover,#meshwarStoreTabs button:hover,.local-filter-btn:hover,.local-filter-btn.active{background:#ca650e!important;color:#032b25!important;border-color:#f2c85b!important}
+.header-container,.local-stores-shell,.store-card,.local-public-card,#meshwarTicker,#meshwarStoreTabs>div,footer#meshwarSocialFooter>div{background:linear-gradient(145deg,rgba(6,59,50,.94),rgba(3,43,37,.94))!important;border-color:rgba(242,200,91,.18)!important;color:#eef7f4!important;box-shadow:0 16px 40px rgba(1,24,20,.26)!important}
+.header-container h1,.header-container p,.section-title,.local-stores-head h2,.local-stores-head p,.local-public-name,.local-public-meta,.local-empty{color:#eef7f4!important}
+.grid-container,.local-stores-grid,#internationalStoresSection{background:transparent!important}
+.mw-home-hero-grid,.mw-home-hero-grid.mw-hero-v15-emerald{background-color:#063b32!important;background-image:linear-gradient(135deg,#063b32 0%,#08483c 52%,#032b25 100%)!important}
+.mw-home-video-card.is-image{aspect-ratio:16/9!important;height:auto!important;overflow:hidden!important;background:#031a17!important}
+.mw-home-video-card.is-image video,.mw-home-video-card.is-image iframe{display:none!important}
+.mw-home-video-card.is-image .mw-hero-image,.mw-home-video-card.is-image .mw-hero-image-v15{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center!important}
+@media(max-width:640px){body>nav a[href="index.html"] img{height:44px!important;max-width:120px!important}body>nav>div{min-height:62px!important}}
