@@ -1,0 +1,4 @@
+/* MeshWar V15.1 — navbar + brand identity enforcement */
+body>nav{background:#063b32!important;background-image:linear-gradient(135deg,#063b32 0%,#08483c 55%,#032b25 100%)!important;border-color:rgba(242,200,91,.22)!important;box-shadow:0 10px 28px rgba(3,43,37,.28)!important}
+body>nav a{color:#fff!important}body>nav a:hover{color:#f2c85b!important}body>nav img[data-mw-brand-logo],body>nav a[href="index.html"] img{object-fit:contain!important;display:block!important}
+.mw-home-video-card.is-image{aspect-ratio:16/9!important;height:auto!important;background:#031a17!important}.mw-home-video-card.is-image .mw-hero-image,.mw-home-video-card.is-image .mw-hero-image-v15{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important}
