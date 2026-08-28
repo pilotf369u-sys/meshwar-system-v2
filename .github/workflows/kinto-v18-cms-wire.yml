@@ -1,0 +1,35 @@
+name: KINTO V18 CMS Wire
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/kinto-v18-cms-wire.yml'
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire V18 selector and cache bust
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('admin-content-cms.html'); s=p.read_text()
+          needle='<script src="js/admin-featured-campaigns-v1.js?v=20260827-v1.1-approval-refresh"></script>'
+          insert='<script src="js/admin-featured-store-v18.js?v=20260828-v18"></script>\n'+needle
+          if 'admin-featured-store-v18.js' not in s:
+              assert needle in s
+              s=s.replace(needle,insert)
+          s=s.replace("site_title:'منصة MeshWar - دليل المتاجر والشحن الدولي'","site_title:'منصة KINTO - دليل المتاجر والشحن الدولي'")
+          p.write_text(s)
+          q=Path('index.html'); x=q.read_text()
+          x=x.replace('js/index-featured-campaigns-v1.js?v=20260828-v17-kinto','js/index-featured-campaigns-v1.js?v=20260828-v18-kinto')
+          q.write_text(x)
+          Path('.github/workflows/kinto-v18-cms-wire.yml').unlink()
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin-content-cms.html index.html .github/workflows/kinto-v18-cms-wire.yml
+          git commit -m 'feat: activate KINTO V18 CMS selector and theme'
+          git push
