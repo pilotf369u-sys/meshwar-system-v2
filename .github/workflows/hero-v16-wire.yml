@@ -1,0 +1,31 @@
+name: Hero V16 Wire
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/hero-v16-wire.yml'
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Activate V16 cache bust
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='js/index-featured-campaigns-v1.js?v=20260828-v15-brand-hero'
+          new='js/index-featured-campaigns-v1.js?v=20260828-v16-identity'
+          if old not in s:
+              raise SystemExit('Expected V15 loader tag not found')
+          p.write_text(s.replace(old,new,1))
+          Path('.github/workflows/hero-v16-wire.yml').unlink()
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/hero-v16-wire.yml
+          git commit -m 'feat: activate V16 identity cache bust'
+          git push
