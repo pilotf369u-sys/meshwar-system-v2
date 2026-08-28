@@ -1,7 +1,7 @@
 /* MESHWAR_VENDOR_PRODUCT_SAVE_COMPLETE_V34 */
 (function(){
   'use strict';
-  const VERSION='20260825-v34-required-cost3';
+  const VERSION='20260828-v34-cost-hydration-guard4';
   const arr=v=>Array.isArray(v)?v.map(x=>String(x??'').trim()).filter(Boolean):[];
   const parse=v=>{if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return{...v};try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?{...x}:{}}catch{return{}}};
   const uniq=v=>[...new Set(v.filter(Boolean))];
@@ -13,21 +13,21 @@
 
     function ensureCostField(){
       let input=$('mwProductCostPrice');
-      if(input){input.type='number';input.min='0';input.step='0.01';input.required=true;input.name='cost_price';input.placeholder='سعر التكلفة (Cost Price) *';input.setAttribute('aria-label','سعر التكلفة (Cost Price)');input.setAttribute('aria-required','true');return input}
+      if(input){input.type='number';input.min='0';input.step='0.01';input.required=true;input.name='cost_price';input.placeholder='سعر التكلفة (Cost Price) *';input.setAttribute('aria-label','سعر التكلفة (Cost Price)');input.setAttribute('aria-required','true');if(!input.__mwCostDirtyBound){input.addEventListener('input',()=>{input.dataset.mwCostDirty='1'});input.__mwCostDirtyBound=true}return input}
       const base=$('productBasePrice');if(!base)return null;
-      input=d.createElement('input');input.id='mwProductCostPrice';input.name='cost_price';input.className='field';input.type='number';input.min='0';input.step='0.01';input.required=true;input.placeholder='سعر التكلفة (Cost Price) *';input.setAttribute('aria-label','سعر التكلفة (Cost Price)');input.setAttribute('aria-required','true');
+      input=d.createElement('input');input.id='mwProductCostPrice';input.name='cost_price';input.className='field';input.type='number';input.min='0';input.step='0.01';input.required=true;input.placeholder='سعر التكلفة (Cost Price) *';input.setAttribute('aria-label','سعر التكلفة (Cost Price)');input.setAttribute('aria-required','true');input.addEventListener('input',()=>{input.dataset.mwCostDirty='1'});input.__mwCostDirtyBound=true;
       base.insertAdjacentElement('afterend',input);return input;
     }
     function hydrateCostField(){
-      const input=ensureCostField();if(!input)return;
+      const input=ensureCostField();if(!input||input.dataset.mwCostDirty==='1')return;
       const id=String($('productId')?.value||'').trim();if(!id){input.value='';return}
       const product=(Array.isArray(win.products)?win.products:[]).find(p=>String(p.id)===id);
-      if(product)input.value=product.cost_price==null?'':String(product.cost_price);
+      if(product&&product.cost_price!=null)input.value=String(product.cost_price);
     }
     function bindCostHydration(){
       const modal=$('productModal');if(!modal||modal.__mwV34CostObserver)return;
       let open=!modal.classList.contains('hidden');
-      const sync=()=>{const next=!modal.classList.contains('hidden');if(next&&!open){setTimeout(hydrateCostField,0);setTimeout(hydrateCostField,160)}open=next};
+      const sync=()=>{const next=!modal.classList.contains('hidden');if(next&&!open){const input=ensureCostField();if(input)delete input.dataset.mwCostDirty;setTimeout(hydrateCostField,0);setTimeout(hydrateCostField,160)}open=next};
       new win.MutationObserver(sync).observe(modal,{attributes:true,attributeFilter:['class']});modal.__mwV34CostObserver=true;
     }
     ensureCostField();bindCostHydration();
@@ -63,12 +63,8 @@
           if(uploaded[0])imageUrl=uploaded[0];
         }
         const domGallery=Array.from(d.querySelectorAll('#productImageGallery img,#productImagesPreview img,[data-product-image-gallery] img')).map(img=>String(img.currentSrc||img.src||'').trim());
-        const oldImages=uniq([
-          ...arr(oldOptions.images),...arr(oldOptions.image_urls),...arr(oldOptions.gallery),
-          ...arr(existing.images),...arr(existing.image_urls),String(existing.image_url||'').trim()
-        ]);
+        const oldImages=uniq([...arr(oldOptions.images),...arr(oldOptions.image_urls),...arr(oldOptions.gallery),...arr(existing.images),...arr(existing.image_urls),String(existing.image_url||'').trim()]);
         const images=uniq([imageUrl,...uploaded,...domGallery,...oldImages]);
-
         const colors=win.optionsArray(String($('productColors')?.value||''));
         const sizes=win.optionsArray(String($('productSizes')?.value||''));
         const volumes=win.optionsArray(String($('productVolumes')?.value||''));
@@ -80,6 +76,7 @@
         win.__mwVendorProductSaveV34LastPayload=payload;
         const query=id?win.sb.from('local_products').update(payload).eq('id',id).eq('store_id',win.vendorStore.id):win.sb.from('local_products').insert([payload]);
         const{error}=await query;if(error)throw error;
+        if(costInput)delete costInput.dataset.mwCostDirty;
         win.closeProductModal();win.showNotice(id?'تم تحديث المنتج وحفظ جميع الحقول.':'تمت إضافة المنتج وحفظ جميع الحقول.');await win.loadProducts();
       }catch(e){console.error('Product complete save error:',e);const message=e?.message||String(e);win.showNotice('تعذر حفظ المنتج: '+message,true);alert(message)}
     };
