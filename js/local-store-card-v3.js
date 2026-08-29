@@ -108,7 +108,7 @@ async function createOrder(product,store,selection={},requestedQuantity=1){
     const rows=await restRequest('orders?select=order_code&order=created_at.desc&limit=1000',{timeout:3000});const vendor=vendorPrice(product),usd=customerPriceUsd(product,store),iqd=customerPriceIqd(product,store);if(vendor===null||usd===null||iqd===null)throw new Error('سعر المنتج غير صالح.');
     let max=1000;(rows||[]).forEach(r=>{const m=String(r.order_code||'').match(/^MW-(\d+)$/i);if(m)max=Math.max(max,Number(m[1]))});const orderCode='MW-'+(max+1);
     const selectedColor=String(selection.color||'').trim(),selectedSize=String(selection.size||'').trim(),selectedVolume=String(selection.volume||'').trim();const unitIqd=ceilPrice(iqd),totalIqd=ceilPrice(unitIqd*requestedQuantity);
-    const payload={order_code:orderCode,customer_id:customer.id,customer_name:customer.name||'',customer_phone:customer.phone||'',total_price:totalIqd,currency:'IQD',details:{source:'local_store',store_id:store.id,store_name:store.store_name||'',product_id:String(product.id),product_name:product.product_name||'',selected_color:selectedColor,selected_size:selectedSize,selected_volume:selectedVolume,selected_options:{color:selectedColor,size:selectedSize,volume:selectedVolume},requested_quantity:requestedQuantity,quantity:requestedQuantity,vendor_price_usd:vendor,commission_rate:Number(store.commission_rate||10),customer_price_usd:ceilPrice(usd),exchange_rate:exchangeRate(store),customer_price_local:unitIqd,customer_total_local:totalIqd,local_currency:'IQD',governorate:customer.governorate||customer.state||customer.city||customer.province||''},order_url:'index.html?storeId='+encodeURIComponent(store.id),image_url:product.image_url||null,status:'انتظار رد الموظف'};
+    const payload={order_code:orderCode,customer_id:customer.id,customer_name:customer.name||'',customer_phone:customer.phone||'',total_price:totalIqd,currency:'IQD',details:{source:'local_store',store_id:store.id,store_name:store.store_name||'',product_id:String(product.id),product_name:product.product_name||'',product_url:'index.html?storeId='+encodeURIComponent(store.id)+'&productId='+encodeURIComponent(String(product.id))+'#localStoreProductsPanel',product_image:product.image_url||null,selected_color:selectedColor,selected_size:selectedSize,selected_volume:selectedVolume,selected_options:{color:selectedColor,size:selectedSize,volume:selectedVolume},requested_quantity:requestedQuantity,quantity:requestedQuantity,vendor_price_usd:vendor,commission_rate:Number(store.commission_rate||10),customer_price_usd:ceilPrice(usd),exchange_rate:exchangeRate(store),customer_price_local:unitIqd,customer_total_local:totalIqd,local_currency:'IQD',governorate:customer.governorate||customer.state||customer.city||customer.province||''},order_url:'index.html?storeId='+encodeURIComponent(store.id)+'&productId='+encodeURIComponent(String(product.id))+'#localStoreProductsPanel',image_url:product.image_url||null,status:'انتظار رد الموظف'};
     await restRequest('orders',{method:'POST',body:[payload],timeout:5000});alert('تم إرسال الطلب بنجاح. الكمية: '+requestedQuantity+' — الإجمالي: '+iqdLabel(totalIqd)+' — رقم الطلب: '+orderCode);location.href='dashboard.html?customerId='+encodeURIComponent(customer.id);return{ok:true,orderCode,customerId:customer.id};
   }catch(e){if(reservation?.managed)await rollbackStock(product.id,reservation);console.error('Local order error:',e);alert('تعذر إرسال الطلب: '+(e.message||e));await renderStoreProductsV3(store.id);return{ok:false,error:e}}
 }
@@ -124,3 +124,24 @@ const originalLoadStoreDetails=window.loadStoreDetails;
 window.loadStoreDetails=async function(storeId){const result=typeof originalLoadStoreDetails==='function'?await originalLoadStoreDetails(storeId):undefined;await renderStoreProductsV3(storeId);return result};
 renderStoreProductsV3();
 window.addEventListener('load',()=>setTimeout(()=>renderStoreProductsV3(),80),{once:true});
+
+/* DIRECT_PRODUCT_SCROLL_V31 — exact product focus for dashboard deep-links */
+(()=>{
+  const params=new URLSearchParams(location.search);
+  const pid=String(params.get('productId')||params.get('product')||'').trim();
+  if(!pid)return;
+  let tries=0;
+  const focusExact=()=>{
+    const card=[...document.querySelectorAll('.local-v3-card[data-product-card]')].find(x=>String(x.dataset.productCard||'')===pid);
+    if(!card){if(++tries<80)setTimeout(focusExact,200);return;}
+    card.id='product-'+pid;
+    card.setAttribute('data-direct-product-focus','true');
+    card.style.setProperty('outline','4px solid #fbbf24','important');
+    card.style.setProperty('outline-offset','4px','important');
+    card.style.setProperty('box-shadow','0 0 0 6px rgba(251,191,36,.20),0 18px 50px rgba(2,6,23,.35)','important');
+    requestAnimationFrame(()=>card.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'}));
+    setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'}),120);
+  };
+  focusExact();
+  window.addEventListener('load',()=>setTimeout(focusExact,80),{once:true});
+})();
