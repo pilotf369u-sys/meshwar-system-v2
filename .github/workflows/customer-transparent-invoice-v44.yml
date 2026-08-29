@@ -1,0 +1,32 @@
+name: Customer Transparent Invoice V44
+on:
+  workflow_dispatch:
+  push:
+    branches: [review/customer-transparent-invoice-v44]
+    paths: ['.github/workflows/customer-transparent-invoice-v44.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: review/customer-transparent-invoice-v44}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.x'}
+      - run: python scripts/customer_transparent_invoice_v44.py
+      - name: Contract checks
+        run: |
+          grep -q 'CUSTOMER_TRANSPARENT_INVOICE_V44' dashboard.html
+          grep -q 'external_shipping_fee' dashboard.html
+          grep -q 'productTotal+externalShippingFee+deliveryFee' dashboard.html
+          grep -q 'أجور الشحن الخارجي' dashboard.html
+          grep -q 'المجموع الكلي النهائي' dashboard.html
+          git diff -- dashboard.html
+      - name: Commit patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add dashboard.html
+          git commit -m 'fix: transparent customer invoice totals V44'
+          git push
