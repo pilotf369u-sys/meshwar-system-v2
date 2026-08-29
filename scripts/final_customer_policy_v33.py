@@ -8,21 +8,23 @@ replacement = '''function customerDecisionHtml(order,index,price,currency){const
 text2, n = re.subn(r"function customerDecisionHtml\(order,index,price,currency\)\{.*?\}\nfunction getOrderSiparisNo", replacement, text, count=1, flags=re.S)
 if n != 1:
     raise SystemExit(f'customerDecisionHtml patch count={n}')
-if '✏️ تعديل الطلب' in text2[text2.find('function customerDecisionHtml'):text2.find('function getOrderSiparisNo')]:
-    raise SystemExit('edit button still present in customer decision renderer')
+segment = text2[text2.find('function customerDecisionHtml'):text2.find('function getOrderSiparisNo')]
+if '✏️ تعديل الطلب' in segment or 'editCustomerOrder(' in segment:
+    raise SystemExit('edit control still present in customer decision renderer')
 dash.write_text(text2, encoding='utf-8')
 
-# 2) Store: extend direct-product pulse to ~24 seconds.
+# 2) Store: keep the strong direct-product pulse visible for about 24 seconds.
 js = Path('js/local-store-card-v3.js')
 j = js.read_text(encoding='utf-8')
 old = 'animation:kintoDirectProductPulseV32Strong .72s ease-in-out 6!important;'
 new = 'animation:kintoDirectProductPulseV32Strong 1.2s ease-in-out 20!important;'
-if old not in j:
-    raise SystemExit('V32 pulse signature not found')
-j = j.replace(old, new, 1)
+if old in j:
+    j = j.replace(old, new, 1)
+elif new not in j:
+    raise SystemExit('direct-product pulse signature not found')
 js.write_text(j, encoding='utf-8')
 
-# 3) Cache-bust the active storefront module so Pages/users receive V33 immediately.
+# 3) Cache-bust the active storefront module so users receive V33 immediately.
 idx = Path('index.html')
 i = idx.read_text(encoding='utf-8')
 i2, m = re.subn(r'js/local-store-card-v3\.js\?v=[^"\']+', 'js/local-store-card-v3.js?v=20260829-final-v33', i, count=1)
