@@ -10,7 +10,7 @@
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
-  const BUILD='20260829-admin-money-v39';
+  const BUILD='20260829-admin-money-v40';
   const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
@@ -57,7 +57,7 @@
       }
       if(screen==='employee'||screen==='admin'){
         const nativeRender=d.createElement('script');
-        nativeRender.src='js/external-shipping-native-order-render-v1.js?v=20260829-native-render-v39';
+        nativeRender.src='js/external-shipping-native-order-render-v1.js?v=20260829-native-render-v40';
         nativeRender.dataset.meshwarScreen=screen;
         d.head.appendChild(nativeRender);
         return;
