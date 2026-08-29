@@ -1,0 +1,46 @@
+name: Customer Money Columns V42
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/customer_money_columns_v42_patch.py'
+      - '.github/workflows/customer-money-columns-v42.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python scripts/customer_money_columns_v42_patch.py
+      - name: Verify separation invariants
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('dashboard.html').read_text(encoding='utf-8')
+          a=s.index('function activeOrderRow(o,index){')
+          b=s.index('\nfunction historyOrderRow',a)
+          f=s[a:b]
+          assert 'productPrice=money.productTotal' in f
+          assert 'externalShippingFee=money.externalShippingFee' in f
+          assert 'deliveryFee=money.deliveryFee' in f
+          assert 'grandTotal=money.grandTotal' in f
+          assert 'customerDecisionHtml(o,index,grandTotal,currency)' in f
+          assert '.update(' not in f and 'total_price:' not in f
+          print('V42 money separation invariants OK')
+          PY
+      - name: Commit production patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add dashboard.html
+          if git diff --cached --quiet; then echo 'No changes'; exit 0; fi
+          git commit -m 'fix: separate product shipping delivery totals v42'
+          git push origin main
