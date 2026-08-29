@@ -1,0 +1,40 @@
+name: Employee Safe Realtime V42
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/employee_safe_realtime_v42_patch.py'
+      - '.github/workflows/employee-safe-realtime-v42.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python scripts/employee_safe_realtime_v42_patch.py
+      - name: Validate employee-only realtime contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('employee-dashboard.html').read_text(encoding='utf-8')
+          assert 'EMPLOYEE_SAFE_REALTIME_V42' in s
+          assert "employee-orders-pipeline-v42" in s
+          block=s[s.index('/* EMPLOYEE_SAFE_REALTIME_V42'):s.index("document.addEventListener('click'",s.index('/* EMPLOYEE_SAFE_REALTIME_V42'))]
+          assert 'location.reload' not in block
+          assert 'loadPipelineOrders()' not in block
+          assert 'body.innerHTML' in block  # only removes the empty-state row when inserting first live order
+          assert "setTimeout(flush,employeeRealtimeIsEditing()?60000:220)" in block
+          PY
+          git diff -- employee-dashboard.html
+      - name: Commit employee production patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add employee-dashboard.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: employee targeted safe realtime updates V42'
+          git push
