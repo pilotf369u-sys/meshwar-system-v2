@@ -1,0 +1,26 @@
+name: Admin Money Display V40
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/admin_money_display_v40.py'
+      - '.github/workflows/admin-money-display-v40.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python scripts/admin_money_display_v40.py
+      - name: Commit production patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/external-shipping-native-order-render-v1.js external-shipping-shell.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: admin money values display and shipping parity V40'
+          git push
