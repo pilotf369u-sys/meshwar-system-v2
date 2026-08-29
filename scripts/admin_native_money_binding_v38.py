@@ -28,3 +28,5 @@ t=shell.read_text(encoding='utf-8')
 t=t.replace("const BUILD='20260827-customer-cms-video-v21.2.1';","const BUILD='20260829-admin-money-v38';")
 t=t.replace("js/external-shipping-native-order-render-v1.js?v=20260826-native-render-v1","js/external-shipping-native-order-render-v1.js?v=20260829-native-render-v38")
 shell.write_text(t,encoding='utf-8')
+
+# trigger V38
