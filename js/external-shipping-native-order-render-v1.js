@@ -4,11 +4,12 @@
 const script=document.currentScript;
 const screen=String(script?.dataset?.meshwarScreen||'').trim().toLowerCase();
 if(screen!=='employee'&&screen!=='admin')return;
-const VERSION='20260826-native-render-v1';
+const VERSION='20260829-native-render-v38';
 const num=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
 const fee=o=>Math.max(0,num(o?.external_shipping_fee));
 const localFee=o=>Math.max(0,num(o?.delivery_fee));
 const product=o=>Math.max(0,num(o?.total_price));
+const bindInputValue=(id,value)=>queueMicrotask(()=>{const el=document.getElementById(id);if(el)el.value=(value===null||value===undefined||value==='')?'':String(value)});
 const payTypeValue=o=>String(o?.delivery_payment_type||'cod_full');
 const extCurrencyValue=o=>{
   const base=String(o?.currency||'USD'),ext=String(o?.external_shipping_currency||'').trim();
@@ -50,7 +51,7 @@ function installEmployee(){
   installCss();employeeHeader();
   window.doorCollectionAmount=collectionDue;
   window.orderRowHtml=function(o){
-    const id=encodeURIComponent(cloudId(o.id)),qty=o._quantity||orderQuantity(o),hasPrice=o.total_price!==null&&o.total_price!==undefined&&o.total_price!==''&&num(o.total_price)>0,price=hasPrice?o.total_price:'',status=o.status||'انتظار رد الموظف',code=o.order_code||o.id,due=collectionDue(o),mainPhone=o._customer_phone||o.customer_phone||'',ext=fee(o),extCur=extCurrencyValue(o),pricingDisabled=can('pricing')?'':'disabled';
+    const id=encodeURIComponent(cloudId(o.id)),qty=o._quantity||orderQuantity(o),price=product(o),status=o.status||'انتظار رد الموظف',code=o.order_code||o.id,due=collectionDue(o),mainPhone=o._customer_phone||o.customer_phone||'',ext=fee(o),extCur=extCurrencyValue(o),pricingDisabled=can('pricing')?'':'disabled';bindInputValue('price-'+id,price);bindInputValue('externalFee-'+id,ext);
     return `<tr class="${orderRowClass(status)}">
 <td><b>${escapeHtml(code)}</b><br><input id="ref-${id}" value="${escapeHtml(o.reference_order_no||'')}" placeholder="Sipariş No"><svg class="barcode-svg" data-barcode="${escapeHtml(code)}" data-order-id="${escapeHtml(cloudId(o.id))}"></svg><button class="btn btn-blue" onclick="printOrderBarcode('${id}')">طباعة</button></td>
 <td><b>${escapeHtml(o.customer_name||'---')}</b><br><span dir="ltr">${escapeHtml(mainPhone)}</span><br><span class="customer-code">${escapeHtml(orderCustomerCode(o))}</span>${employeeSecondaryContact(o)}</td>
@@ -80,7 +81,7 @@ function installAdmin(){
   installCss();adminHeader();
   window.doorCollection=collectionDue;
   window.adminOrderRow=function(o){
-    const id=encodeURIComponent(String(o.id)),code=o.order_code||o.id,status=o.status||'انتظار رد الموظف',qty=o._quantity||adminOrderQuantity(o),hasPrice=o.total_price!==null&&o.total_price!==undefined&&o.total_price!==''&&num(o.total_price)>0,price=hasPrice?o.total_price:'',url=adminOrderProductUrl(o),phone=o._customer_phone||o.customer_phone||'---',ext=fee(o),extCur=extCurrencyValue(o),due=collectionDue(o);
+    const id=encodeURIComponent(String(o.id)),code=o.order_code||o.id,status=o.status||'انتظار رد الموظف',qty=o._quantity||adminOrderQuantity(o),price=product(o),url=adminOrderProductUrl(o),phone=o._customer_phone||o.customer_phone||'---',ext=fee(o),extCur=extCurrencyValue(o),due=collectionDue(o);bindInputValue('adminPrice-'+id,price);bindInputValue('adminExternalFee-'+id,ext);
     return `<tr class="${rowClass(status)}">
 <td><b>${esc(code)}</b><br><input id="adminRef-${id}" value="${esc(o.reference_order_no||'')}" placeholder="Sipariş No"><svg class="barcode-svg" data-admin-barcode="${esc(code)}" data-admin-id="${esc(o.id)}"></svg><button class="btn-blue" onclick="printAdminOrderBarcode('${id}')">طباعة</button></td>
 <td><b>${esc(o.customer_name||'---')}</b><br><span dir="ltr">${esc(phone)}</span><br><span class="customer-code">${esc(orderCustomerCode(o))}</span>${secondaryContactHtml(o._secondary_phone)}</td>
