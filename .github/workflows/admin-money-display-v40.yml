@@ -24,3 +24,4 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m 'fix: admin money values display and shipping parity V40'
           git push
+# trigger-v40
