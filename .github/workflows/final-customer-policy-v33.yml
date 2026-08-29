@@ -1,0 +1,28 @@
+name: Final Customer Policy V33
+
+on:
+  push:
+    paths:
+      - '.github/workflows/final-customer-policy-v33.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply final customer policy and pulse
+        run: python scripts/final_customer_policy_v33.py
+      - name: Commit final patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dashboard.html js/local-store-card-v3.js index.html
+          git diff --cached --quiet && { echo "No changes to commit"; exit 1; }
+          git commit -m "fix: cancellation-only customer policy and extended pulse V33"
+          git push origin HEAD:main
