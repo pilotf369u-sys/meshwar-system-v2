@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'scripts/admin_employee_row_parity_v39.py'
+      - '.github/workflows/admin-employee-row-parity-v39.yml'
   workflow_dispatch:
 jobs:
   patch:
