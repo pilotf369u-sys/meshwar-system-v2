@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 p=Path('employee-dashboard.html')
 s=p.read_text(encoding='utf-8')
 new=r'''/* EMPLOYEE_SAFE_REALTIME_V42 — targeted rows only; never reload page/table from realtime */
@@ -47,8 +46,12 @@ async function setupRealtime(){
   unreadRealtimeChannel=sb.channel('employee-messages-pipeline').on('postgres_changes',{event:'*',schema:'public',table:'messages'},async payload=>{if(currentChatCustomerId&&cloudId(payload?.new?.customer_id||payload?.old?.customer_id)===currentChatCustomerId)await loadChatMessages();await fetchUnreadChatNotifications()}).subscribe();
   unreadPollingTimer=setInterval(fetchUnreadChatNotifications,10000)
 }'''
-pattern=r"async function setupRealtime\(\)\{.*?unreadPollingTimer=setInterval\(fetchUnreadChatNotifications,10000\)\}"
-s2,n=re.subn(pattern,new,s,count=1,flags=re.S)
-if n!=1:
-    raise SystemExit(f'setupRealtime baseline match count={n}; aborting safely')
-p.write_text(s2,encoding='utf-8')
+start=s.find('async function setupRealtime(){')
+end=s.find("document.addEventListener('click'",start)
+if start<0 or end<0 or end<=start:
+    raise SystemExit(f'bounded setupRealtime markers not found start={start} end={end}')
+old=s[start:end]
+if "employee-orders-pipeline" not in old or "unreadPollingTimer" not in old:
+    raise SystemExit('bounded setupRealtime block did not match expected baseline')
+s=s[:start]+new+'\n'+s[end:]
+p.write_text(s,encoding='utf-8')
