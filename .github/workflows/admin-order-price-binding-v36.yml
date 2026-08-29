@@ -1,0 +1,35 @@
+name: Admin Order Price Binding V36
+on:
+  push:
+    paths:
+      - 'scripts/admin_order_price_binding_v36.py'
+      - '.github/workflows/admin-order-price-binding-v36.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply admin binding patch
+        run: python scripts/admin_order_price_binding_v36.py
+      - name: Validate binding markers
+        run: |
+          grep -q 'adminOrderBoundNumber' admin-dashboard.html
+          grep -q 'adminDeliveryFee-' admin-dashboard.html
+          grep -q 'أجور الشحن' admin-dashboard.html
+          grep -q 'payload.delivery_fee' admin-dashboard.html
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin-dashboard.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "fix: sync admin product price and shipping fee binding V36"
+          git push origin HEAD:main
