@@ -21,13 +21,15 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           s=Path('employee-dashboard.html').read_text(encoding='utf-8')
-          assert 'EMPLOYEE_SAFE_REALTIME_V42' in s
+          assert s.count('EMPLOYEE_SAFE_REALTIME_V42') == 1
+          assert s.count('let employeeRealtimePending=') == 1
           assert "employee-orders-pipeline-v42" in s
           block=s[s.index('/* EMPLOYEE_SAFE_REALTIME_V42'):s.index("document.addEventListener('click'",s.index('/* EMPLOYEE_SAFE_REALTIME_V42'))]
           assert 'location.reload' not in block
           assert 'loadPipelineOrders()' not in block
-          assert 'body.innerHTML' in block
-          assert "setTimeout(flush,employeeRealtimeIsEditing()?60000:220)" in block
+          assert "employeeRealtimeIsEditing()?60000:220" in block
+          assert 'row.outerHTML=html' in block
+          assert "body.insertAdjacentHTML('afterbegin',html)" in block
           PY
           git diff -- employee-dashboard.html
       - name: Commit employee production patch
@@ -38,4 +40,4 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m 'feat: employee targeted safe realtime updates V42'
           git push
-# trigger-v42
+# trigger-v42-dedupe
