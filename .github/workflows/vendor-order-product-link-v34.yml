@@ -1,0 +1,33 @@
+name: Vendor Order Product Link V34
+
+on:
+  push:
+    paths:
+      - '.github/workflows/vendor-order-product-link-v34.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply vendor order product image and link
+        run: python scripts/vendor_order_product_link_v34.py
+      - name: Validate patch
+        run: |
+          grep -q 'vendorOrderProductUrl' vendor-dashboard-v2.html
+          grep -q 'رابط المنتج' vendor-dashboard-v2.html
+          grep -q 'productId=' vendor-dashboard-v2.html
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vendor-dashboard-v2.html
+          git diff --cached --quiet && { echo "No changes to commit"; exit 1; }
+          git commit -m "feat: vendor order product image and direct link V34"
+          git push origin HEAD:main
