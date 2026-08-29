@@ -1,0 +1,52 @@
+name: Customer Official Invoice V45 Wire
+on:
+  push:
+    branches: [feature/customer-official-invoice-v45]
+    paths:
+      - '.github/workflows/customer-invoice-v45-wire.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/customer-official-invoice-v45
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python scripts/customer_invoice_v45_patch.py
+      - name: Verify invoice contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('dashboard.html').read_text(encoding='utf-8')
+          assert 'customerApprovalInvoiceModal' in s
+          assert 'تأكيد وموافقة نهائية' in s
+          assert 'طباعة / حفظ PDF' in s
+          assert 'customer_get_approved_invoice' in s
+          assert 'customer_approve_order_invoice' in s
+          assert '(سيضاف عند وصول المنتج للفرع)' in s
+          assert 'ولا يشمل أجور التوصيل المحلي' in s
+          assert "set status = 'تمت الموافقة - بانتظار الدفع'" in Path('supabase/migrations/20260829_customer_official_invoice_v45.sql').read_text(encoding='utf-8')
+          print('V45 invoice contract OK')
+          PY
+      - name: Validate inline JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('dashboard.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',s,re.I)
+          Path('/tmp/customer-inline.js').write_text('\n'.join(blocks),encoding='utf-8')
+          PY
+          node --check /tmp/customer-inline.js
+      - name: Commit patched dashboard
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add dashboard.html
+          git commit -m 'feat: add guarded official customer invoice v45'
+          git push
