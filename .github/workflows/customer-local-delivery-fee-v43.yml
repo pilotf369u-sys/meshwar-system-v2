@@ -1,0 +1,35 @@
+name: Customer Local Delivery Fee V43
+on:
+  workflow_dispatch:
+  push:
+    branches: [review/customer-local-delivery-fee-v43]
+    paths:
+      - scripts/customer_local_delivery_fee_v43.py
+      - .github/workflows/customer-local-delivery-fee-v43.yml
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: review/customer-local-delivery-fee-v43
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python scripts/customer_local_delivery_fee_v43.py
+      - name: Verify scope and contract
+        run: |
+          git diff -- dashboard.html
+          test "$(git diff --name-only | tr -d '\r')" = "dashboard.html"
+          grep -q 'CUSTOMER_LOCAL_DELIVERY_FEE_V43' dashboard.html
+          grep -q 'delivery_fee' dashboard.html
+          grep -q 'أجرة التوصيل المحلية' dashboard.html
+      - name: Commit review patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add dashboard.html
+          git commit -m 'fix: show local delivery fee in customer totals V43'
+          git push
