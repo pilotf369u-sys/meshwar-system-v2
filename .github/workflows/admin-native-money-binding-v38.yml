@@ -1,0 +1,32 @@
+name: Admin Native Money Binding V38
+on:
+  push:
+    paths:
+      - 'scripts/admin_native_money_binding_v38.py'
+  workflow_dispatch:
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply native money binding
+        run: python scripts/admin_native_money_binding_v38.py
+      - name: Validate runtime binding and cache bust
+        run: |
+          grep -q "20260829-native-render-v38" js/external-shipping-native-order-render-v1.js
+          grep -q "bindInputValue('adminPrice-'" js/external-shipping-native-order-render-v1.js
+          grep -q "bindInputValue('adminExternalFee-'" js/external-shipping-native-order-render-v1.js
+          grep -q "20260829-admin-money-v38" external-shipping-shell.html
+          grep -q "external-shipping-native-order-render-v1.js?v=20260829-native-render-v38" external-shipping-shell.html
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/external-shipping-native-order-render-v1.js external-shipping-shell.html
+          git commit -m "fix: bind admin money inputs in native renderer V38"
+          git push
