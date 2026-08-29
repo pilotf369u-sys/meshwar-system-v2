@@ -1,0 +1,15 @@
+from pathlib import Path
+p=Path('dashboard.html')
+s=p.read_text(encoding='utf-8')
+s=s.replace('<th>السعر</th><th>التفاصيل</th><th>الرابط</th><th>قرار العميل / الدفع</th>','<th>المجموع الكلي النهائي</th><th>التفاصيل</th><th>الرابط</th><th>قرار العميل / الدفع</th>',1)
+s=s.replace('.decision-box{min-width:190px}', '.decision-box{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;min-width:0}')
+start=s.index('function customerDecisionHtml(order,index,price,currency){')
+end=s.index('\nfunction getOrderSiparisNo',start)
+new_dec="""function customerDecisionHtml(order,index,price,currency){const status=String(order.status||'انتظار رد الموظف').trim(),priced=price!==null&&Number.isFinite(price)&&price>0,editable=canCustomerEditStatus(status);if(!editable)return '---';if(isWaitingCustomerApprovalStatus(status)&&priced)return `<div class=\"decision-box\"><button class=\"btn-approve\" onclick=\"approveOrder(${index})\">✓ موافقة / دفع</button><button class=\"btn-cancel\" onclick=\"cancelOrder(${index})\">إلغاء</button></div>`;if(status==='تمت الموافقة - بانتظار الدفع'||status==='تمت الموافقة')return `<div class=\"decision-box\"><span style=\"font-weight:800;color:#16865b\">✓ تمت الموافقة</span><button class=\"btn-cancel\" onclick=\"cancelOrder(${index})\">إلغاء</button></div>`;return `<div class=\"decision-box\"><button class=\"btn-cancel\" onclick=\"cancelOrder(${index})\">إلغاء</button></div>`;}"""
+s=s[:start]+new_dec+s[end:]
+start=s.index('function activeOrderRow(o,index){')
+end=s.index('\nfunction historyOrderRow',start)
+new_row="""function activeOrderRow(o,index){const code=o.order_code||String(o.id),status=o.status||'انتظار رد الموظف',[bg,color]=orderStatusStyle(status),money=customerOrderMoneyBreakdown(o),grandTotal=money.grandTotal,currency=o.currency||'$',qty=o._quantity||getOrderQuantity(o),image=o.image_url?`<img src=\"${escapeHtml(o.image_url)}\" class=\"order-thumb\" onerror=\"this.style.display='none'\">`:'---',url=getOrderProductUrl(o),link=url?`<a href=\"${escapeHtml(url)}\" target=\"_blank\" rel=\"noopener noreferrer\">فتح الرابط</a>`:'---';return `<tr><td><b>${escapeHtml(code)}</b><br>${siparisDisplayHtml(getOrderSiparisNo(o))}<br><svg class=\"barcode-svg\" data-order-barcode=\"${escapeHtml(code)}\"></svg></td><td>${image}</td><td><span class=\"qty-badge\">${escapeHtml(qty)}</span><div style=\"margin-top:6px;font-size:11px;font-weight:800;color:#475569\">📦 الطرود: ${escapeHtml(getOrderParcelsCount(o))}</div></td><td>${o.created_at?new Date(o.created_at).toLocaleString('ar'):'---'}</td><td><span class=\"status-pill\" style=\"background:${bg};color:${color}\">${escapeHtml(status)}</span></td><td><b>${grandTotal===null||!Number.isFinite(grandTotal)?'---':grandTotal.toFixed(2)+' '+escapeHtml(currency)}</b></td><td><button class=\"btn-details\" onclick=\"openCustomerOrderDetails(${index})\">عرض</button></td><td>${link}</td><td>${customerDecisionHtml(o,index,grandTotal,currency)}</td></tr>`}"""
+s=s[:start]+new_row+s[end:]
+s=s.replace('colspan="12">لا توجد طلبات نشطة حالياً.','colspan="9">لا توجد طلبات نشطة حالياً.',1)
+p.write_text(s,encoding='utf-8')
