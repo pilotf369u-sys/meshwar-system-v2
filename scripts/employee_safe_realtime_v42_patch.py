@@ -1,7 +1,7 @@
 from pathlib import Path
+import re
 p=Path('employee-dashboard.html')
 s=p.read_text(encoding='utf-8')
-old="async function setupRealtime(){const sb=await ensureEmployeeSupabase();realtimeChannel=sb.channel('employee-orders-pipeline').on('postgres_changes',{event:'*',schema:'public',table:'orders'},async()=>{await Promise.all([refreshPipelineCounts(),PIPELINES[activePipeline].rewards?loadRewardsManagementTable():loadPipelineOrders()])}).subscribe();unreadRealtimeChannel=sb.channel('employee-messages-pipeline').on('postgres_changes',{event:'*',schema:'public',table:'messages'},async payload=>{if(currentChatCustomerId&&cloudId(payload?.new?.customer_id||payload?.old?.customer_id)===currentChatCustomerId)await loadChatMessages();await fetchUnreadChatNotifications()}).subscribe();unreadPollingTimer=setInterval(fetchUnreadChatNotifications,10000)}"
 new=r'''/* EMPLOYEE_SAFE_REALTIME_V42 — targeted rows only; never reload page/table from realtime */
 let employeeRealtimePending=new Map(),employeeRealtimeFlushTimer=null,employeeRealtimeLastEditAt=0;
 function employeeRealtimeIsEditing(){const a=document.activeElement,p=document.getElementById('ordersPanel');return !!(a&&p&&p.contains(a)&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))}
@@ -32,19 +32,23 @@ async function employeeRealtimeApply(payload){
   else if(pipelinePage===1){const body=document.getElementById('pipelineOrdersBody');if(body){if(body.querySelector('td[colspan]'))body.innerHTML='';body.insertAdjacentHTML('afterbegin',html);while(body.querySelectorAll('tr').length>pipelinePageSize)body.lastElementChild?.remove()}pipelineTotal+=1}
   renderPagination();await Promise.all([renderBarcodes(),refreshPipelineCounts()]);
 }
+async function employeeRealtimeFlush(){
+  if(employeeRealtimeIsEditing()){employeeRealtimeFlushTimer=setTimeout(employeeRealtimeFlush,1000);return}
+  const batch=[...employeeRealtimePending.values()];employeeRealtimePending.clear();for(const x of batch)await employeeRealtimeApply(x)
+}
 function employeeRealtimeQueue(payload){
   const id=cloudId(payload?.new?.id||payload?.old?.id);if(!id)return;employeeRealtimePending.set(id,payload);clearTimeout(employeeRealtimeFlushTimer);
-  const flush=async()=>{if(employeeRealtimeIsEditing()||Date.now()-employeeRealtimeLastEditAt<900){employeeRealtimeFlushTimer=setTimeout(flush,1000);return}const batch=[...employeeRealtimePending.values()];employeeRealtimePending.clear();for(const x of batch)await employeeRealtimeApply(x)};
-  employeeRealtimeFlushTimer=setTimeout(flush,employeeRealtimeIsEditing()?60000:220);
+  employeeRealtimeFlushTimer=setTimeout(employeeRealtimeFlush,employeeRealtimeIsEditing()?60000:220);
 }
 async function setupRealtime(){
-  const panel=document.getElementById('ordersPanel');if(panel&&!panel.dataset.safeRealtimeV42){panel.dataset.safeRealtimeV42='1';panel.addEventListener('input',employeeRealtimeTouchEdit,true);panel.addEventListener('change',employeeRealtimeTouchEdit,true);panel.addEventListener('focusout',()=>{employeeRealtimeLastEditAt=Date.now();clearTimeout(employeeRealtimeFlushTimer);employeeRealtimeFlushTimer=setTimeout(async()=>{if(employeeRealtimeIsEditing())return;const batch=[...employeeRealtimePending.values()];employeeRealtimePending.clear();for(const x of batch)await employeeRealtimeApply(x)},1000)},true)}
+  const panel=document.getElementById('ordersPanel');if(panel&&!panel.dataset.safeRealtimeV42){panel.dataset.safeRealtimeV42='1';panel.addEventListener('input',employeeRealtimeTouchEdit,true);panel.addEventListener('change',employeeRealtimeTouchEdit,true);panel.addEventListener('focusout',()=>{employeeRealtimeLastEditAt=Date.now();clearTimeout(employeeRealtimeFlushTimer);employeeRealtimeFlushTimer=setTimeout(employeeRealtimeFlush,1000)},true)}
   const sb=await ensureEmployeeSupabase();
   realtimeChannel=sb.channel('employee-orders-pipeline-v42').on('postgres_changes',{event:'*',schema:'public',table:'orders'},payload=>employeeRealtimeQueue(payload)).subscribe();
   unreadRealtimeChannel=sb.channel('employee-messages-pipeline').on('postgres_changes',{event:'*',schema:'public',table:'messages'},async payload=>{if(currentChatCustomerId&&cloudId(payload?.new?.customer_id||payload?.old?.customer_id)===currentChatCustomerId)await loadChatMessages();await fetchUnreadChatNotifications()}).subscribe();
   unreadPollingTimer=setInterval(fetchUnreadChatNotifications,10000)
 }'''
-if old not in s:
-    raise SystemExit('setupRealtime baseline not found; aborting safely')
-s=s.replace(old,new,1)
-p.write_text(s,encoding='utf-8')
+pattern=r"async function setupRealtime\(\)\{.*?unreadPollingTimer=setInterval\(fetchUnreadChatNotifications,10000\)\}"
+s2,n=re.subn(pattern,new,s,count=1,flags=re.S)
+if n!=1:
+    raise SystemExit(f'setupRealtime baseline match count={n}; aborting safely')
+p.write_text(s2,encoding='utf-8')
