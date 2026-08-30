@@ -1,0 +1,37 @@
+/* MESHWAR_LOCAL_STORE_CATEGORY_IMAGES_V53 — isolated addon; no session/auth overrides. */
+(function(){
+  'use strict';
+  const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
+  const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+  const STORE_KEY='meshwar_vendor_store';
+  const state={media:new Map(),cats:new Map(),observer:null,storeId:'',installed:false};
+  const q=v=>encodeURIComponent(String(v??''));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const sessionStore=()=>{try{return JSON.parse(sessionStorage.getItem(STORE_KEY)||'null')}catch{return null}};
+  function storeId(){return String(sessionStore()?.id||new URLSearchParams(location.search).get('storeId')||state.storeId||'').trim()}
+  async function rest(path,{method='GET',body=null,headers={}}={}){
+    const r=await fetch(`${SB_URL}/rest/v1/${path}`,{method,cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,Accept:'application/json','Content-Type':'application/json',...headers},body:body==null?null:JSON.stringify(body)});
+    if(!r.ok)throw new Error(await r.text()||`HTTP ${r.status}`);const t=await r.text();return t?JSON.parse(t):null;
+  }
+  function css(){if(document.getElementById('mwCategoryImagesV53Css'))return;const s=document.createElement('style');s.id='mwCategoryImagesV53Css';s.textContent=`
+    .mw-cat-image-wrap{display:inline-flex;align-items:center;gap:7px;margin-inline-end:8px}.mw-cat-image-thumb{width:34px;height:34px;border-radius:10px;object-fit:cover;border:1px solid rgba(212,175,55,.38);background:rgba(255,255,255,.06)}
+    .mw-cat-image-action{border:1px solid rgba(56,189,248,.32)!important;background:rgba(2,132,199,.18)!important;color:#e0f2fe!important}.mw-cat-image-action[data-busy="1"]{opacity:.6;pointer-events:none}
+    #mwCategoryShell .mw-cat-tab-image{width:28px;height:28px;border-radius:8px;object-fit:cover;border:1px solid rgba(212,175,55,.4);display:block;margin:0 auto 4px}
+    #mwCategoryShell [data-cat-filter].mw-has-category-image{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:70px;padding:7px 12px}
+  `;document.head.appendChild(s)}
+  async function loadData(sid){sid=String(sid||storeId()).trim();if(!sid)return;state.storeId=sid;const [cats,media]=await Promise.all([
+    rest(`store_categories?select=id,slug,name,parent_id,is_visible&store_id=eq.${q(sid)}`),
+    rest(`store_category_media?select=category_id,store_id,image_url,storage_path&store_id=eq.${q(sid)}`)
+  ]);state.cats=new Map((cats||[]).map(c=>[String(c.id),c]));state.media=new Map((media||[]).map(m=>[String(m.category_id),m]));}
+  function categoryForFilter(filter){filter=String(filter||'');if(filter.startsWith('cat:'))return state.cats.get(filter.slice(4))||null;for(const c of state.cats.values())if(String(c.slug)===filter)return c;return null}
+  function decorateStorefront(){const shell=document.getElementById('mwCategoryShell');if(!shell)return;shell.querySelectorAll('[data-cat-filter]').forEach(btn=>{const c=categoryForFilter(btn.dataset.catFilter),m=c&&state.media.get(String(c.id));btn.classList.toggle('mw-has-category-image',!!m?.image_url);let img=btn.querySelector('.mw-cat-tab-image');if(m?.image_url){if(!img){img=document.createElement('img');img.className='mw-cat-tab-image';img.alt='';btn.prepend(img)}img.src=m.image_url}else img?.remove()})}
+  function decorateVendorRows(){document.querySelectorAll('#mwCatList .mw-cat-row[data-cat-id]').forEach(row=>{const id=String(row.dataset.catId||''),m=state.media.get(id),name=row.querySelector('.mw-cat-name');if(name&&!name.querySelector('.mw-cat-image-wrap')){const wrap=document.createElement('span');wrap.className='mw-cat-image-wrap';wrap.innerHTML=`<img class="mw-cat-image-thumb" alt="" style="${m?.image_url?'':'display:none'}" src="${esc(m?.image_url||'')}">`;name.prepend(wrap)}else if(name){const img=name.querySelector('.mw-cat-image-thumb');if(img){if(m?.image_url){img.src=m.image_url;img.style.display='block'}else img.style.display='none'}}const actions=row.querySelector('.mw-cat-actions');if(actions&&!actions.querySelector('[data-cat-image-upload]')){const b=document.createElement('button');b.type='button';b.className='mw-cat-image-action';b.dataset.catImageUpload=id;b.textContent=m?.image_url?'تغيير الصورة':'إضافة صورة';actions.prepend(b)}})}
+  function extFor(file){const n=String(file?.name||'').toLowerCase(),type=String(file?.type||'');if(type==='image/png'||n.endsWith('.png'))return'png';if(type==='image/webp'||n.endsWith('.webp'))return'webp';if(type==='image/gif'||n.endsWith('.gif'))return'gif';return'jpg'}
+  async function uploadCategoryImage(categoryId,file){if(!file)return;if(!/^image\/(jpeg|png|webp|gif)$/.test(file.type))throw new Error('نوع الصورة غير مدعوم.');if(file.size>3*1024*1024)throw new Error('حجم الصورة يجب ألا يتجاوز 3MB.');const sid=storeId();if(!sid)throw new Error('تعذر تحديد المتجر.');const path=`${sid}/${categoryId}-${Date.now()}.${extFor(file)}`;const r=await fetch(`${SB_URL}/storage/v1/object/category-images/${path}`,{method:'POST',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':file.type,'x-upsert':'true'},body:file});if(!r.ok)throw new Error(await r.text()||'فشل رفع الصورة.');const imageUrl=`${SB_URL}/storage/v1/object/public/category-images/${path}`;await rest('store_category_media?on_conflict=category_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:{category_id:categoryId,store_id:sid,image_url:imageUrl,storage_path:path,updated_at:new Date().toISOString()}});await loadData(sid);decorateVendorRows();decorateStorefront()}
+  function chooseFile(categoryId,button){const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp,image/gif';input.hidden=true;document.body.appendChild(input);input.onchange=async()=>{const file=input.files?.[0];if(!file){input.remove();return}button.dataset.busy='1';const old=button.textContent;button.textContent='جاري الرفع...';try{await uploadCategoryImage(categoryId,file);button.textContent='تم ✓';setTimeout(()=>{button.textContent='تغيير الصورة';button.dataset.busy='0'},700)}catch(e){console.error('Category image upload failed',e);alert('تعذر رفع صورة التصنيف: '+(e?.message||e));button.textContent=old;button.dataset.busy='0'}finally{input.remove()}};input.click()}
+  function bind(){document.addEventListener('click',e=>{const b=e.target.closest?.('[data-cat-image-upload]');if(!b)return;e.preventDefault();e.stopPropagation();chooseFile(String(b.dataset.catImageUpload||''),b)},true)}
+  function observe(){state.observer?.disconnect?.();state.observer=new MutationObserver(()=>{decorateVendorRows();decorateStorefront()});state.observer.observe(document.documentElement,{subtree:true,childList:true})}
+  async function refresh(){const sid=storeId();if(!sid)return;try{await loadData(sid);decorateVendorRows();decorateStorefront()}catch(e){console.warn('Category image V53 data unavailable (migration may not be applied yet).',e)}}
+  function install(){if(state.installed)return;state.installed=true;css();bind();observe();const boot=()=>{refresh();setTimeout(refresh,700);setTimeout(refresh,1800)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();}
+  window.MeshwarCategoryImagesV53={refresh,uploadCategoryImage};install();
+})();
