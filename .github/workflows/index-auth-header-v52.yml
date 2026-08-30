@@ -1,0 +1,41 @@
+name: Index Auth Header V52
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/index-auth-header-v52.py'
+      - '.github/workflows/index-auth-header-v52.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python scripts/index-auth-header-v52.py
+      - name: Verify runtime auth header lock
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          assert s.count('id="meshwarHeaderControls"') == 1
+          assert 'INDEX_AUTH_HEADER_RUNTIME_LOCK_V52' in s
+          assert 'ensureCustomerAuthInHeader();' in s
+          assert "logoutBtn.style.display = 'inline-flex'" in s
+          assert 'position: absolute; top: 25px; left: 25px' not in s
+          nav=s[s.index('<nav class="sticky'):s.index('</nav>')]
+          assert 'id="authLink"' in nav and 'id="logoutBtn"' in nav and 'meshwarHeaderControls' in nav
+          print('Index auth header runtime V52 OK')
+          PY
+      - name: Commit production runtime fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: lock post-login customer auth into top header V52'
+          git push
