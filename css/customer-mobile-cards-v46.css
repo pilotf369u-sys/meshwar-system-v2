@@ -1,0 +1,59 @@
+/* MeshWar Customer Mobile Cards V46
+   Presentation-only override. Desktop/table structure and financial/data logic are untouched. */
+@media (max-width:760px){
+  #activeOrders .table-wrap,
+  #orderHistory .table-wrap{overflow:visible!important;border:0!important;background:transparent!important}
+
+  #activeOrders tbody,
+  #orderHistory tbody{display:grid!important;grid-template-columns:1fr!important;gap:16px!important;padding:6px 0!important}
+
+  #activeOrders tbody tr,
+  #orderHistory tbody tr{display:block!important;width:100%!important;margin:0!important;padding:10px 12px!important;overflow:visible!important;border:1px solid rgba(245,196,81,.16)!important;border-radius:18px!important;background:linear-gradient(145deg,rgba(15,27,45,.90),rgba(7,17,31,.88))!important;box-shadow:0 12px 30px rgba(0,0,0,.22)!important}
+
+  #activeOrders tbody td,
+  #orderHistory tbody td{display:grid!important;grid-template-columns:minmax(92px,34%) minmax(0,1fr)!important;align-items:center!important;gap:12px!important;min-height:48px!important;padding:10px 4px!important;margin:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.10)!important;background:transparent!important;text-align:start!important;line-height:1.55!important;overflow:visible!important;word-break:normal!important;overflow-wrap:anywhere!important}
+
+  #activeOrders tbody td:last-child,
+  #orderHistory tbody td:last-child{border-bottom:0!important}
+
+  #activeOrders tbody td::before,
+  #orderHistory tbody td::before{display:block!important;align-self:center!important;color:#f8e4ad!important;font-size:11px!important;font-weight:900!important;line-height:1.4!important;white-space:normal!important;text-align:start!important}
+
+  #activeOrders td:nth-child(6)::before{content:"المجموع الكلي النهائي"!important}
+
+  #activeOrders .order-thumb,
+  #orderHistory .order-thumb{display:block!important;width:64px!important;height:64px!important;margin-inline:auto!important}
+
+  #activeOrders .barcode-svg,
+  #orderHistory .barcode-svg{display:block!important;width:min(100%,180px)!important;max-width:180px!important;height:42px!important;margin:8px auto 0!important}
+
+  #activeOrders .siparis-no,
+  #orderHistory .siparis-no{display:block!important;width:100%!important;max-width:100%!important;margin:6px 0 0!important;white-space:normal!important;overflow-wrap:anywhere!important}
+
+  #activeOrders .qty-badge,
+  #orderHistory .qty-badge{width:100%!important;max-width:100%!important;min-width:0!important}
+
+  #activeOrders .status-pill,
+  #orderHistory .status-pill{display:inline-flex!important;max-width:100%!important;justify-content:center!important;white-space:normal!important;text-align:center!important;line-height:1.4!important}
+
+  #activeOrders .decision-box{display:flex!important;width:100%!important;min-width:0!important;gap:7px!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:wrap!important;white-space:normal!important}
+
+  #activeOrders .decision-box button,
+  #activeOrders .btn-details,
+  #activeOrders .btn-approve,
+  #activeOrders .btn-cancel{max-width:100%!important;white-space:normal!important;line-height:1.35!important}
+
+  #activeOrders td a,
+  #orderHistory td a{max-width:100%!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+}
+
+@media (max-width:430px){
+  #activeOrders tbody tr,
+  #orderHistory tbody tr{padding:8px 10px!important;border-radius:16px!important}
+
+  #activeOrders tbody td,
+  #orderHistory tbody td{grid-template-columns:minmax(84px,32%) minmax(0,1fr)!important;gap:9px!important;padding:9px 2px!important;font-size:12px!important}
+
+  #activeOrders tbody td::before,
+  #orderHistory tbody td::before{font-size:10.5px!important}
+}
