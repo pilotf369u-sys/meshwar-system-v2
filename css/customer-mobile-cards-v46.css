@@ -1,25 +1,48 @@
-/* MeshWar Customer Mobile Cards V46
-   Presentation-only override. Desktop/table structure and financial/data logic are untouched. */
+/* MeshWar Customer Mobile Cards V47
+   Presentation-only override.
+   Scope is deliberately limited to the active/history TABLES.
+   Modal/popup markup, desktop table structure and financial/data logic are untouched. */
 @media (max-width:760px){
   #activeOrders .table-wrap,
   #orderHistory .table-wrap{overflow:visible!important;border:0!important;background:transparent!important}
+
+  #activeOrders table,
+  #orderHistory table{min-width:0!important;width:100%!important}
+
+  #activeOrders thead,
+  #orderHistory thead{display:none!important}
 
   #activeOrders tbody,
   #orderHistory tbody{display:grid!important;grid-template-columns:1fr!important;gap:16px!important;padding:6px 0!important}
 
   #activeOrders tbody tr,
-  #orderHistory tbody tr{display:block!important;width:100%!important;margin:0!important;padding:10px 12px!important;overflow:visible!important;border:1px solid rgba(245,196,81,.16)!important;border-radius:18px!important;background:linear-gradient(145deg,rgba(15,27,45,.90),rgba(7,17,31,.88))!important;box-shadow:0 12px 30px rgba(0,0,0,.22)!important}
+  #orderHistory tbody tr{display:block!important;width:100%!important;margin:0!important;padding:10px 12px!important;overflow:hidden!important;border:1px solid rgba(245,196,81,.16)!important;border-radius:18px!important;background:linear-gradient(145deg,rgba(15,27,45,.90),rgba(7,17,31,.88))!important;box-shadow:0 12px 30px rgba(0,0,0,.22)!important}
 
   #activeOrders tbody td,
-  #orderHistory tbody td{display:grid!important;grid-template-columns:minmax(92px,34%) minmax(0,1fr)!important;align-items:center!important;gap:12px!important;min-height:48px!important;padding:10px 4px!important;margin:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.10)!important;background:transparent!important;text-align:start!important;line-height:1.55!important;overflow:visible!important;word-break:normal!important;overflow-wrap:anywhere!important}
+  #orderHistory tbody td{display:none!important}
 
-  #activeOrders tbody td:last-child,
-  #orderHistory tbody td:last-child{border-bottom:0!important}
+  /* Active card: keep identity/details/action cells plus ONE financial value only.
+     Column 6 is the canonical final grand total already rendered by dashboard logic. */
+  #activeOrders tbody td:nth-child(1),
+  #activeOrders tbody td:nth-child(2),
+  #activeOrders tbody td:nth-child(3),
+  #activeOrders tbody td:nth-child(6),
+  #activeOrders tbody td:nth-child(8),
+  #activeOrders tbody td:nth-child(9){display:grid!important;grid-template-columns:minmax(92px,34%) minmax(0,1fr)!important;align-items:center!important;gap:12px!important;min-height:48px!important;padding:10px 4px!important;margin:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.10)!important;background:transparent!important;text-align:start!important;line-height:1.55!important;overflow:visible!important;word-break:normal!important;overflow-wrap:anywhere!important}
+
+  #activeOrders tbody td:nth-child(6)::before{content:"المجموع الكلي النهائي"!important}
+
+  #activeOrders tbody td:nth-child(1)::before{content:"الطلب"!important}
+  #activeOrders tbody td:nth-child(2)::before{content:"التفاصيل"!important}
+  #activeOrders tbody td:nth-child(3)::before{content:"الكمية"!important}
+  #activeOrders tbody td:nth-child(8)::before{content:"الحالة"!important}
+  #activeOrders tbody td:nth-child(9)::before{content:"الإجراءات"!important}
 
   #activeOrders tbody td::before,
   #orderHistory tbody td::before{display:block!important;align-self:center!important;color:#f8e4ad!important;font-size:11px!important;font-weight:900!important;line-height:1.4!important;white-space:normal!important;text-align:start!important}
 
-  #activeOrders td:nth-child(6)::before{content:"المجموع الكلي النهائي"!important}
+  /* History remains readable as a card; it does not share active-order financial hiding rules. */
+  #orderHistory tbody td{display:grid!important;grid-template-columns:minmax(92px,34%) minmax(0,1fr)!important;align-items:center!important;gap:12px!important;min-height:48px!important;padding:10px 4px!important;margin:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.10)!important;background:transparent!important;text-align:start!important;line-height:1.55!important;overflow:visible!important;overflow-wrap:anywhere!important}
 
   #activeOrders .order-thumb,
   #orderHistory .order-thumb{display:block!important;width:64px!important;height:64px!important;margin-inline:auto!important}
@@ -45,13 +68,29 @@
 
   #activeOrders td a,
   #orderHistory td a{max-width:100%!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+
+  /* Critical isolation: popup/modal keeps the exact desktop field/value layout.
+     No mobile card grid, pseudo-label or hidden-cell rule is allowed to leak into it. */
+  .modal-overlay .modal-content table{min-width:0!important;width:100%!important;display:table!important}
+  .modal-overlay .modal-content thead{display:table-header-group!important}
+  .modal-overlay .modal-content tbody{display:table-row-group!important;padding:0!important}
+  .modal-overlay .modal-content tr{display:table-row!important;padding:0!important;background:transparent!important;box-shadow:none!important}
+  .modal-overlay .modal-content td,
+  .modal-overlay .modal-content th{display:table-cell!important}
+  .modal-overlay .modal-content td::before,
+  .modal-overlay .modal-content th::before{content:none!important;display:none!important}
 }
 
 @media (max-width:430px){
   #activeOrders tbody tr,
   #orderHistory tbody tr{padding:8px 10px!important;border-radius:16px!important}
 
-  #activeOrders tbody td,
+  #activeOrders tbody td:nth-child(1),
+  #activeOrders tbody td:nth-child(2),
+  #activeOrders tbody td:nth-child(3),
+  #activeOrders tbody td:nth-child(6),
+  #activeOrders tbody td:nth-child(8),
+  #activeOrders tbody td:nth-child(9),
   #orderHistory tbody td{grid-template-columns:minmax(84px,32%) minmax(0,1fr)!important;gap:9px!important;padding:9px 2px!important;font-size:12px!important}
 
   #activeOrders tbody td::before,
