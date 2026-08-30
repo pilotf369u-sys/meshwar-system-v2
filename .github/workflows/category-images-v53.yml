@@ -1,0 +1,39 @@
+name: Category Images V53
+on:
+  push:
+    branches: [feature/category-images-v53]
+    paths:
+      - 'js/local-store-category-images-v53.js'
+      - 'supabase/migrations/20260830_store_category_media_v53.sql'
+      - 'scripts/category-images-v53-wire.py'
+      - '.github/workflows/category-images-v53.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate-and-wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Wire isolated addon
+        run: python scripts/category-images-v53-wire.py
+      - name: Validate JS syntax and isolation
+        run: |
+          node --check js/local-store-category-images-v53.js
+          grep -Fq 'store_category_media' supabase/migrations/20260830_store_category_media_v53.sql
+          grep -Fq "category-images" supabase/migrations/20260830_store_category_media_v53.sql
+          ! grep -Fq 'restoreCustomerSession' js/local-store-category-images-v53.js
+          ! grep -Fq 'meshwar_customer_id' js/local-store-category-images-v53.js
+          grep -Fq 'local-store-category-images-v53.js?v=20260830-v53' index.html
+          grep -Fq 'local-store-category-images-v53.js?v=20260830-v53' vendor-dashboard-v2.html
+      - name: Commit branch wiring only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html vendor-dashboard-v2.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: wire isolated category image addon V53'
+          git push
