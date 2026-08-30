@@ -20,7 +20,7 @@
 <script>(()=>{try{document.documentElement.classList.toggle('dark',localStorage.getItem('meshwar-theme')!=='light')}catch{document.documentElement.classList.add('dark')}})()</script>
     <style>
         body { font-family: 'Arial', sans-serif; background-color: #f4f6f9; color: #333; padding: 20px; margin: 0; position: relative; }
-        .user-auth-zone { position: absolute; top: 25px; left: 25px; z-index: 1000; }
+        .user-auth-zone { position: static; display:flex; align-items:center; gap:8px; z-index:auto; }
         .account-btn { background-color: #cc0000; color: #ffffff; text-decoration: none; padding: 10px 22px; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(204, 0, 0, 0.2); transition: all 0.3s ease; }
         .header-container { text-align: center; margin-top: 30px; margin-bottom: 35px; }
         .main-logo { width: 380px; max-width: 95%; height: auto; margin-bottom: 15px; border-radius: 8px; }
@@ -95,7 +95,7 @@
 </head>
 <body>
 
-<nav class="sticky top-0 z-50 border-b border-white/10 bg-slate-950/90 shadow-lg shadow-black/20 backdrop-blur-xl dark:bg-slate-950/90"><div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3"><a href="index.html" class="flex items-center gap-2 font-black text-slate-900 no-underline dark:text-white"><img src="images/meshwar-logo.png" class="h-12 w-12 rounded-xl border border-amber-400/40 bg-white/5 p-1 shadow-lg shadow-amber-400/10" alt="KINTO"></a><div class="flex flex-wrap items-center justify-end gap-2"><a href="#localStoresPublic" class="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-700 no-underline dark:text-slate-200">🏪 المتاجر</a><button id="meshwarThemeToggle" type="button" class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-slate-700 dark:text-slate-100">☾</button><div class="user-auth-zone" style="text-align:center"><a href="#" id="authLink" class="account-btn"><i class="fa-solid fa-circle-user"></i><span id="authText">حسابي / تسجيل</span></a><a href="#" id="logoutBtn" onclick="logout()" class="header-logout-btn" style="display:none">تسجيل خروج</a></div></div></div></nav>
+<nav class="sticky top-0 z-50 border-b border-white/10 bg-slate-950/90 shadow-lg shadow-black/20 backdrop-blur-xl dark:bg-slate-950/90"><div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3"><a href="index.html" class="flex items-center gap-2 font-black text-slate-900 no-underline dark:text-white"><img src="images/meshwar-logo.png" class="h-12 w-12 rounded-xl border border-amber-400/40 bg-white/5 p-1 shadow-lg shadow-amber-400/10" alt="KINTO"></a><div id="meshwarHeaderControls" class="flex flex-wrap items-center justify-end gap-2"><a href="#localStoresPublic" class="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-700 no-underline dark:text-slate-200">🏪 المتاجر</a><button id="meshwarThemeToggle" type="button" class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-slate-700 dark:text-slate-100">☾</button><div class="user-auth-zone" style="text-align:center"><a href="#" id="authLink" class="account-btn"><i class="fa-solid fa-circle-user"></i><span id="authText">حسابي / تسجيل</span></a><a href="#" id="logoutBtn" onclick="logout()" class="header-logout-btn" style="display:none">تسجيل خروج</a></div></div></div></nav>
 <section class="mx-auto max-w-7xl px-4 pt-8"><div class="grid gap-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-2xl backdrop-blur-md md:grid-cols-[1.15fr_.85fr] md:p-10 dark:border-white/10 dark:bg-slate-900/60"><div><h2 class="mt-4 text-4xl font-black leading-tight text-slate-950 md:text-6xl dark:text-white">تسوّق، اطلب، وتابع<br><span class="bg-gradient-to-r from-sky-400 to-indigo-500 bg-clip-text text-transparent">من مكان واحد.</span></h2><p class="mt-4 max-w-2xl text-sm leading-7 text-slate-500 dark:text-slate-400">واجهة موحدة للمتاجر المحلية والعالمية مع وصول سريع للطلب والتتبع.</p><div class="mt-6 flex flex-wrap gap-3"><button type="button" onclick="document.getElementById('orderModal').style.display='block'" class="rounded-xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-5 py-3 font-black text-white shadow-lg shadow-amber-400/10 transition-all duration-300 hover:scale-[1.02] hover:border-amber-300 hover:shadow-amber-400/20">طلب منتج مباشر</button><a href="#localStoresPublic" class="rounded-xl border border-slate-200 bg-white/50 px-5 py-3 font-black text-slate-700 no-underline dark:border-white/10 dark:bg-white/5 dark:text-slate-200">المتاجر المحلية</a></div></div><div class="rounded-2xl border border-amber-400/20 bg-slate-900/80 p-5 shadow-lg shadow-amber-400/5 backdrop-blur-md"><div class="text-sm font-black text-slate-100">تتبع سريع للطلب</div><div class="mt-1 text-xs text-slate-300">أدخل رقم الطلب أو الباركود.</div><div class="mt-4 flex gap-2"><input id="meshwarHeroTrackInput" class="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/10" placeholder="MW / رقم الطلب / الباركود"><button id="meshwarHeroTrackBtn" type="button" onclick="meshwarQuickTrack()" class="rounded-xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-4 font-black text-white shadow-md shadow-amber-400/10 transition hover:border-amber-300">تتبع</button></div></div></div><div id="meshwarVideoAd" class="mx-auto mt-4 max-w-7xl px-4"><div class="overflow-hidden rounded-3xl border border-amber-400/20 bg-black shadow-2xl shadow-amber-400/5"><video id="meshwarPromoVideo" class="aspect-[16/5] min-h-[180px] w-full object-cover sm:aspect-[16/6]" autoplay muted loop playsinline controls preload="metadata"><source src="videos/promo.mp4" type="video/mp4"></video><button id="meshwarPromoSoundBtn" type="button" class="hidden" aria-hidden="true" tabindex="-1">🔇 تشغيل الصوت</button><button id="meshwarPromoPlayBtn" type="button" class="hidden" aria-hidden="true" tabindex="-1">⏯ تشغيل / إيقاف</button></div></div></section>
 
     <button class="fixed-order-btn" onclick="document.getElementById('orderModal').style.display='block'"><i class="fa-solid fa-cart-shopping"></i> طلب منتج</button>
@@ -240,7 +240,25 @@
             return '';
         }
 
+        // INDEX_AUTH_HEADER_RUNTIME_LOCK_V52 — the header is the only legal auth mount.
+        function ensureCustomerAuthInHeader(){
+            const host=document.getElementById('meshwarHeaderControls');
+            const zone=document.querySelector('.user-auth-zone');
+            if(!host||!zone)return zone||null;
+            if(zone.parentElement!==host)host.appendChild(zone);
+            zone.style.setProperty('position','static','important');
+            zone.style.setProperty('left','auto','important');
+            zone.style.setProperty('right','auto','important');
+            zone.style.setProperty('top','auto','important');
+            zone.style.setProperty('bottom','auto','important');
+            zone.style.setProperty('display','flex','important');
+            zone.style.setProperty('align-items','center','important');
+            zone.style.setProperty('gap','8px','important');
+            return zone;
+        }
+
         async function restoreCustomerSession() {
+            ensureCustomerAuthInHeader();
             const authLink = document.getElementById('authLink');
             const authText = document.getElementById('authText');
             const logoutBtn = document.getElementById('logoutBtn');
@@ -250,6 +268,7 @@
                 if (authText) authText.innerText = 'حسابي / تسجيل';
                 if (authLink) authLink.href = 'login.html';
                 if (logoutBtn) logoutBtn.style.display = 'none';
+                ensureCustomerAuthInHeader();
                 return null;
             }
             try {
@@ -263,7 +282,8 @@
                 localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, name: customer.name || '' }));
                 if (authText) authText.innerText = 'أهلاً، ' + (customer.name || 'العميل') + ' | لوحتي';
                 if (authLink) authLink.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id));
-                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+                ensureCustomerAuthInHeader();
                 return customer;
             } catch (e) {
                 console.error('Customer session restore failed:', e);
@@ -271,9 +291,16 @@
                 if (authText) authText.innerText = 'حسابي / تسجيل';
                 if (authLink) authLink.href = 'login.html';
                 if (logoutBtn) logoutBtn.style.display = 'none';
+                ensureCustomerAuthInHeader();
                 return null;
             }
         }
+
+        document.addEventListener('DOMContentLoaded',()=>{
+            ensureCustomerAuthInHeader();
+            const observer=new MutationObserver(()=>ensureCustomerAuthInHeader());
+            observer.observe(document.body,{childList:true,subtree:true});
+        },{once:true});
 
         document.addEventListener('DOMContentLoaded', async function() {
             await restoreCustomerSession();
