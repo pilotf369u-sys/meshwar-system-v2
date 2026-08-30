@@ -142,29 +142,9 @@ function installDelivery(){
   try{window.loadDeliveryOrders?.()}catch(e){console.warn(e)}
 }
 
-async function fetchCustomerOrderFromModal(){
-  const box=document.getElementById('customerOrderDetailsContent');if(!box||typeof window.ensureCustomerPortalSupabase!=='function')return null;
-  const text=String(box.querySelector('p')?.textContent||''),code=text.replace(/^.*?:\s*/,'').trim();if(!code)return null;
-  const sb=await window.ensureCustomerPortalSupabase();
-  let q=sb.from('orders').select('id,order_code,total_price,currency,external_shipping_fee,external_shipping_currency').eq('order_code',code).limit(1),{data,error}=await q;
-  if(error){console.warn('Customer external fee lookup failed:',error);return null}
-  return data?.[0]||null;
-}
-async function appendCustomerInvoice(){
-  const o=await fetchCustomerOrderFromModal(),box=document.getElementById('customerOrderDetailsContent');if(!o||!box)return;
-  box.querySelector('[data-external-shipping-invoice]')?.remove();
-  const cur=String(o.currency||currency(o)),extCur=currency(o),invoiceTotal=product(o)+fee(o),marker=document.createElement('div');marker.dataset.externalShippingInvoice='1';
-  marker.innerHTML=`<hr style="border:0;border-top:1px solid rgba(148,163,184,.3);margin:12px 0"><p><b>سعر السلعة:</b> ${product(o).toFixed(2)} ${esc(cur)}</p><p><b>أجور الشحن الخارجي:</b> ${fee(o).toFixed(2)} ${esc(extCur)}</p><p><b>المجموع الكلي:</b> ${invoiceTotal.toFixed(2)} ${esc(cur)}</p>`;box.appendChild(marker);
-}
-function installCustomer(){
-  if(typeof window.openCustomerOrderDetails==='function'&&!window.__mwExternalCustomerDetailsV2){
-    const base=window.openCustomerOrderDetails;window.openCustomerOrderDetails=function(i){const r=base(i);setTimeout(()=>appendCustomerInvoice().catch(e=>console.warn(e)),0);return r};window.__mwExternalCustomerDetailsV2=true;
-  }
-  const params=new URLSearchParams(location.search),viewedBy=params.get('viewedBy'),back=document.getElementById('backBtn');
-  if(back&&viewedBy==='employee'&&params.get('employeeId'))back.onclick=e=>{e.preventDefault();window.top.location.href=topShell('employee',{employeeId:params.get('employeeId')})};
-  if(back&&viewedBy==='admin'&&params.get('adminId')){back.textContent='العودة إلى لوحة الأدمن';back.onclick=e=>{e.preventDefault();window.top.location.href=topShell('admin',{adminId:params.get('adminId')})}}
-}
 
-if(screen==='employee')installEmployee();else if(screen==='admin')installAdmin();else if(screen==='manifest')installManifest();else if(screen==='branch')installBranch();else if(screen==='delivery')installDelivery();else if(screen==='customer')installCustomer();
+/* CUSTOMER_POST_LOGIN_ROOT_FIX_V50: legacy customer invoice injector removed. */
+
+if(screen==='employee')installEmployee();else if(screen==='admin')installAdmin();else if(screen==='manifest')installManifest();else if(screen==='branch')installBranch();else if(screen==='delivery')installDelivery();
 window.MeshwarExternalShippingV2={VERSION,gross,due,fee,currency};
 })();

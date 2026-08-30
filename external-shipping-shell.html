@@ -49,6 +49,7 @@
         const customerPolish=d.createElement('script');
         customerPolish.src='js/customer-light-polish-v1.js?v=20260826-customer-polish-v1.1-final';
         d.head.appendChild(customerPolish);
+        return; // CUSTOMER_POST_LOGIN_ROOT_FIX_V50: customer uses dashboard.html canonical renderer only.
       }
       if(screen==='branch'){
         const branchContact=d.createElement('script');

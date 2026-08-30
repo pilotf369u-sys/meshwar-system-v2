@@ -61,64 +61,7 @@ function wrapRenderForPolish(){
   });
   setTimeout(polishEmployeeAdmin,120);
 }
-function customerCurrency(o){return baseCurrency(o)}
-function decisionHtml(o,index){
-  const status=o?.status||'انتظار رد الموظف',cur=customerCurrency(o),sum=total(o),priced=sum>0,
-        cancelAllowed=typeof window.canCustomerCancelStatus==='function'?window.canCustomerCancelStatus(status):false,
-        waiting=typeof window.isWaitingCustomerApprovalStatus==='function'?window.isWaitingCustomerApprovalStatus(status):false;
-  if(waiting&&priced){return `<div class="decision-box"><div style="margin-bottom:7px;font-weight:bold;color:#9a3412">المجموع الكلي: ${money(sum,cur)}</div><div style="font-size:11px;opacity:.82;margin-bottom:7px">يشمل سعر السلعة + الشحن الخارجي</div><button class="btn-approve" onclick="approveOrder(${index})">موافقة على الشراء</button>${cancelAllowed?`<button class="btn-cancel" onclick="cancelOrder(${index})">رفض السعر / إلغاء</button>`:''}</div>`}
-  if(status==='تمت الموافقة - بانتظار الدفع')return `<div class="payment-box"><b>تمت الموافقة على الطلب</b><br><b>المبلغ الإجمالي:</b> ${money(sum,cur)}<br><small>سعر السلعة + الشحن الخارجي</small><br>يرجى متابعة تعليمات الدفع من الموظف.</div>`;
-  return cancelAllowed&&priced?`<button class="btn-cancel" onclick="cancelOrder(${index})">إلغاء الطلب</button>`:'---';
-}
-function installCustomerRows(){
-  if(typeof window.activeOrderRow==='function'&&!window.__mwExternalCustomerActiveV3){
-    const base=window.activeOrderRow;
-    window.activeOrderRow=function(o,index){
-      let html=base(o,index),cur=customerCurrency(o),ext=external(o),sum=total(o);
-      const cells=[];const holder=document.createElement('tbody');holder.innerHTML=html;const tr=holder.firstElementChild;if(!tr)return html;
-      tr.querySelectorAll('td').forEach(td=>cells.push(td));
-      if(cells.length>=9){
-        const extTd=document.createElement('td');extTd.dataset.externalFeeCell='1';extTd.innerHTML=`<b>${money(ext,externalCurrency(o))}</b>`;
-        const totalTd=document.createElement('td');totalTd.dataset.externalTotalCell='1';totalTd.innerHTML=`<b>${money(sum,cur)}</b>`;
-        cells[5].after(extTd,totalTd);
-        const decisionCell=tr.querySelectorAll('td')[10];if(decisionCell)decisionCell.innerHTML=decisionHtml(o,index);
-      }
-      return tr.outerHTML;
-    };
-    window.__mwExternalCustomerActiveV3=true;
-  }
-  if(typeof window.historyOrderRow==='function'&&!window.__mwExternalCustomerHistoryV3){
-    const base=window.historyOrderRow;
-    window.historyOrderRow=function(o,index){
-      const holder=document.createElement('tbody');holder.innerHTML=base(o,index);const tr=holder.firstElementChild;if(!tr)return base(o,index);const cells=[...tr.querySelectorAll('td')];
-      if(cells.length>=8){const extTd=document.createElement('td');extTd.innerHTML=`<b>${money(external(o),externalCurrency(o))}</b>`;const totalTd=document.createElement('td');totalTd.innerHTML=`<b>${money(total(o),customerCurrency(o))}</b>`;cells[5].after(extTd,totalTd)}
-      return tr.outerHTML;
-    };
-    window.__mwExternalCustomerHistoryV3=true;
-  }
-  if(typeof window.customerDecisionHtml==='function')window.customerDecisionHtml=(o,index)=>decisionHtml(o,index);
-}
-function addCustomerHeaders(){
-  const active=document.querySelector('#activeOrders table thead tr'),hist=document.querySelector('#orderHistory table thead tr');
-  if(active&&!active.querySelector('[data-external-fee-head]')){
-    const ref=active.children[5];
-    if(ref){ref.textContent='سعر السلعة';const a=document.createElement('th');a.dataset.externalFeeHead='1';a.textContent='أجور الشحن الخارجي';const b=document.createElement('th');b.dataset.externalTotalHead='1';b.textContent='المجموع الكلي';ref.after(a,b)}
-  }
-  if(hist&&!hist.querySelector('[data-external-fee-head]')){
-    const ref=hist.children[5];
-    if(ref){ref.textContent='سعر السلعة';const a=document.createElement('th');a.dataset.externalFeeHead='1';a.textContent='أجور الشحن الخارجي';const b=document.createElement('th');b.dataset.externalTotalHead='1';b.textContent='المجموع الكلي';ref.after(a,b)}
-  }
-}
-function installCustomer(){
-  addCustomerHeaders();installCustomerRows();
-  if(typeof window.renderOrdersPanels==='function'&&!window.__mwExternalRenderPanelsV3){
-    const base=window.renderOrdersPanels;window.renderOrdersPanels=function(...args){addCustomerHeaders();const r=base.apply(this,args);setTimeout(addCustomerHeaders,0);return r};window.__mwExternalRenderPanelsV3=true;
-  }
-  // Existing rows were rendered before this layer loaded in some browsers; trigger the cloud loader when available.
-  const params=new URLSearchParams(location.search),customerId=params.get('customerId')||localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId');
-  if(customerId&&typeof window.loadCustomerOrdersFromCloud==='function')setTimeout(()=>window.loadCustomerOrdersFromCloud(customerId).catch(e=>console.warn('Customer V3 refresh:',e)),80);
-}
+/* CUSTOMER_POST_LOGIN_ROOT_FIX_V50: legacy customer table/header renderer removed. */
 if(screen==='employee'||screen==='admin')wrapRenderForPolish();
-if(screen==='customer')installCustomer();
 window.MeshwarExternalShippingUIPolishV3={version:'20260825-v3',total,externalCurrency};
 })();
