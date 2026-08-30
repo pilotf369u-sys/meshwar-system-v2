@@ -1,0 +1,35 @@
+name: Customer Render Invariant V48
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/customer-render-invariant-v48.yml']
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.x'}
+      - run: python scripts/customer-render-invariant-v48.py
+      - name: Verify invariant
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('dashboard.html').read_text(encoding='utf-8')
+          assert 'CUSTOMER_RENDER_INVARIANT_V48' in s
+          assert '<th>المجموع الكلي النهائي</th>' in s
+          assert '#activeOrders td:nth-child(6)::before{content:"المجموع الكلي النهائي"}' in s
+          assert 'if(tr.children.length!==9)tr.outerHTML=activeOrderRow(o,globalIndex)' in s
+          assert 'customerOrderMoneyBreakdown(o)' in s
+          assert '<b>سعر السلعة:</b>' in s and '<b>أجور الشحن الخارجي:</b>' in s and '<b>أجرة التوصيل المحلية:</b>' in s and '<b>المجموع الكلي النهائي:</b>' in s
+          print('V48 invariant verified')
+          PY
+      - name: Commit production fix
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add dashboard.html
+          git commit -m 'fix: lock customer order render template V48'
+          git push
