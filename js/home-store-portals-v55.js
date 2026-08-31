@@ -1,124 +1,22 @@
-/* KINTO HOME STORE PORTALS V62 — isolated homepage navigation + resilient fixed-header back control + showcase sizing */
+/* KINTO HOME STORE PORTALS V63 — resilient fixed-header home control */
 (function(){
   const INTL_ID='internationalStoresSection', LOCAL_ID='localStoresPublic';
   let portalShell,contentHead,headerBack,current=null,headerObserver=null;
   const q=id=>document.getElementById(id);
   const unique=s=>[...new Set(s.filter(Boolean))];
-  function collectLogos(section,local){
-    if(!section)return[];
-    const selectors=local?['.local-public-logo','img[src]']:['.store-logo','img[src]'];
-    for(const sel of selectors){
-      const srcs=unique([...section.querySelectorAll(sel)].map(img=>img.getAttribute('src')).filter(x=>x&& !/^data:/i.test(x)));
-      if(srcs.length)return srcs.slice(0,5);
-    }
-    return[];
-  }
-  function logoStrip(section,local){
-    const wrap=document.createElement('div');wrap.className='mw-v55-logo-strip';
-    const logos=collectLogos(section,local);
-    if(!logos.length){for(let i=0;i<4;i++){const f=document.createElement('span');f.className='mw-v55-logo-fallback';f.textContent=local?'K':'✦';wrap.appendChild(f)}return wrap}
-    logos.forEach(src=>{const img=document.createElement('img');img.src=src;img.alt='';img.loading='lazy';wrap.appendChild(img)});
-    return wrap;
-  }
-  function makePortal(kind,title,subtitle,icon,section){
-    const btn=document.createElement('button');btn.type='button';btn.className='mw-v55-portal';btn.dataset.kind=kind;btn.setAttribute('aria-pressed','false');
-    const top=document.createElement('div');top.className='mw-v55-portal-top';
-    const ico=document.createElement('span');ico.className='mw-v55-icon';ico.textContent=icon;
-    const arrow=document.createElement('span');arrow.className='mw-v55-arrow';arrow.textContent='←';
-    top.append(ico,arrow);
-    const h=document.createElement('h3');h.textContent=title;
-    const p=document.createElement('p');p.textContent=subtitle;
-    btn.append(top,h,p,logoStrip(section,kind==='local'));
-    btn.addEventListener('click',()=>show(kind,true));
-    return btn;
-  }
-  function setActiveSections(kind){
-    const intl=q(INTL_ID),local=q(LOCAL_ID);
-    [intl,local].forEach(el=>{if(el){el.classList.add('mw-v55-section-hidden');el.classList.remove('mw-v55-active')}});
-    const active=kind==='local'?local:intl;
-    if(active){active.classList.remove('mw-v55-section-hidden');active.classList.add('mw-v55-active')}
-  }
-  function updatePortalPressed(kind){
-    portalShell?.querySelectorAll('.mw-v55-portal').forEach(b=>b.setAttribute('aria-pressed',b.dataset.kind===kind?'true':'false'));
-  }
-  function normalizeShowcases(){
-    const candidates=[
-      document.querySelector('#meshwarVideoAd > div'),
-      document.querySelector('.header-container.kinto-featured-store')
-    ].filter(Boolean);
-    candidates.forEach(el=>el.classList.add('kinto-v61-showcase-frame'));
-  }
-  function ensureHeaderBack(){
-    const controls=q('meshwarHeaderControls');if(!controls)return null;
-    const existing=q('mwV62HeaderBack');
-    if(existing&&existing.parentElement===controls){headerBack=existing;return headerBack}
-    q('mwV61HeaderBack')?.remove();
-    headerBack=document.createElement('button');
-    headerBack.type='button';
-    headerBack.id='mwV62HeaderBack';
-    headerBack.className='mw-v55-back mw-v62-header-back';
-    headerBack.setAttribute('aria-label','العودة لاختيار نوع المتجر');
-    headerBack.innerHTML='<span aria-hidden="true">↩</span><span>اختيار نوع المتجر</span>';
-    headerBack.addEventListener('click',()=>landing(true));
-    controls.prepend(headerBack);
-    return headerBack;
-  }
-  function watchHeaderBack(){
-    if(headerObserver)return;
-    const nav=q('meshwarHeaderControls')?.closest('nav')||document.body;
-    headerObserver=new MutationObserver(()=>{
-      if(document.body.classList.contains('mw-v55-browse-mode')&&!q('mwV62HeaderBack'))ensureHeaderBack();
-    });
-    headerObserver.observe(nav,{childList:true,subtree:true});
-  }
-  function ensureContentHead(){
-    if(contentHead)return contentHead;
-    contentHead=document.createElement('div');contentHead.className='mw-v55-content-head';contentHead.hidden=true;
-    const title=document.createElement('div');title.className='mw-v55-content-title';
-    contentHead.append(title);
-    const anchor=q(INTL_ID)||q(LOCAL_ID);anchor?.parentNode?.insertBefore(contentHead,anchor);
-    return contentHead;
-  }
-  function show(kind,pushHash){
-    current=kind;document.body.classList.add('mw-v55-browse-mode');
-    ensureHeaderBack();
-    setActiveSections(kind);updatePortalPressed(kind);
-    const head=ensureContentHead();head.hidden=false;head.querySelector('.mw-v55-content-title').textContent=kind==='local'?'المتاجر المحلية':'المتاجر العالمية';
-    try{window.showStoresTab?.(kind==='local'?'local':'international')}catch{}
-    setActiveSections(kind);
-    if(pushHash)history.replaceState(history.state,'',kind==='local'?'#local-stores':'#global-stores');
-    const active=q(kind==='local'?LOCAL_ID:INTL_ID);setTimeout(()=>active?.scrollIntoView({behavior:'smooth',block:'start'}),40);
-  }
-  function landing(clearHash){
-    current=null;document.body.classList.remove('mw-v55-browse-mode');
-    [q(INTL_ID),q(LOCAL_ID)].forEach(el=>{if(el){el.classList.add('mw-v55-section-hidden');el.classList.remove('mw-v55-active')}});
-    updatePortalPressed('');if(contentHead)contentHead.hidden=true;
-    if(clearHash&&/#(?:global|local)-stores$/i.test(location.hash))history.replaceState(history.state,'',location.pathname+location.search);
-    portalShell?.scrollIntoView({behavior:'smooth',block:'center'});
-  }
-  function build(){
-    const intl=q(INTL_ID),local=q(LOCAL_ID);if(!intl&&!local)return;
-    q('meshwarStoreTabs')?.setAttribute('aria-hidden','true');
-    normalizeShowcases();ensureHeaderBack();watchHeaderBack();
-    portalShell=document.createElement('section');portalShell.className='mw-v55-portal-shell';portalShell.id='kintoStorePortalsV55';
-    const head=document.createElement('div');head.className='mw-v55-portal-head';
-    const h=document.createElement('h2');h.textContent='اختر وجهتك للتسوق';
-    const p=document.createElement('p');p.textContent='واجهة واحدة نظيفة، ومساحتان منفصلتان للمتاجر العالمية والمحلية.';head.append(h,p);
-    const portals=document.createElement('div');portals.className='mw-v55-portals';
-    portals.append(makePortal('global','المتاجر العالمية','أبرز المتاجر العالمية في تبويب مستقل ونظيف.','🌍',intl),makePortal('local','المتاجر المحلية','متاجر محلية مختارة في مساحة مستقلة دون تكديس الصفحة.','🏪',local));
-    portalShell.append(head,portals);
-    const anchor=q('meshwarStoreTabs')||intl||local;anchor?.parentNode?.insertBefore(portalShell,anchor);
-    ensureContentHead();
-    const hash=String(location.hash||'').toLowerCase();
-    if(hash==='#global-stores')show('global',false);else if(hash==='#local-stores')show('local',false);else landing(false);
-    const mo=new MutationObserver(()=>{
-      portalShell?.querySelectorAll('.mw-v55-portal').forEach(btn=>{
-        const kind=btn.dataset.kind,section=q(kind==='local'?LOCAL_ID:INTL_ID),strip=btn.querySelector('.mw-v55-logo-strip');
-        if(!strip||strip.querySelector('img'))return;const logos=collectLogos(section,kind==='local');if(!logos.length)return;strip.replaceWith(logoStrip(section,kind==='local'));
-      });
-      if(document.body.classList.contains('mw-v55-browse-mode'))ensureHeaderBack();
-    });
-    if(local)mo.observe(local,{childList:true,subtree:true});if(intl)mo.observe(intl,{childList:true,subtree:true});
-  }
+  function collectLogos(section,local){if(!section)return[];const selectors=local?['.local-public-logo','img[src]']:['.store-logo','img[src]'];for(const sel of selectors){const srcs=unique([...section.querySelectorAll(sel)].map(img=>img.getAttribute('src')).filter(x=>x&&!/^data:/i.test(x)));if(srcs.length)return srcs.slice(0,5)}return[]}
+  function logoStrip(section,local){const wrap=document.createElement('div');wrap.className='mw-v55-logo-strip';const logos=collectLogos(section,local);if(!logos.length){for(let i=0;i<4;i++){const f=document.createElement('span');f.className='mw-v55-logo-fallback';f.textContent=local?'K':'✦';wrap.appendChild(f)}return wrap}logos.forEach(src=>{const img=document.createElement('img');img.src=src;img.alt='';img.loading='lazy';wrap.appendChild(img)});return wrap}
+  function makePortal(kind,title,subtitle,icon,section){const btn=document.createElement('button');btn.type='button';btn.className='mw-v55-portal';btn.dataset.kind=kind;btn.setAttribute('aria-pressed','false');const top=document.createElement('div');top.className='mw-v55-portal-top';const ico=document.createElement('span');ico.className='mw-v55-icon';ico.textContent=icon;const arrow=document.createElement('span');arrow.className='mw-v55-arrow';arrow.textContent='←';top.append(ico,arrow);const h=document.createElement('h3');h.textContent=title;const p=document.createElement('p');p.textContent=subtitle;btn.append(top,h,p,logoStrip(section,kind==='local'));btn.addEventListener('click',()=>show(kind,true));return btn}
+  function setActiveSections(kind){const intl=q(INTL_ID),local=q(LOCAL_ID);[intl,local].forEach(el=>{if(el){el.classList.add('mw-v55-section-hidden');el.classList.remove('mw-v55-active')}});const active=kind==='local'?local:intl;if(active){active.classList.remove('mw-v55-section-hidden');active.classList.add('mw-v55-active')}}
+  function updatePortalPressed(kind){portalShell?.querySelectorAll('.mw-v55-portal').forEach(b=>b.setAttribute('aria-pressed',b.dataset.kind===kind?'true':'false'))}
+  function normalizeShowcases(){[document.querySelector('#meshwarVideoAd > div'),document.querySelector('.header-container.kinto-featured-store')].filter(Boolean).forEach(el=>el.classList.add('kinto-v61-showcase-frame'))}
+  function installV63Style(){if(q('mwV63HeaderHomeStyle'))return;const s=document.createElement('style');s.id='mwV63HeaderHomeStyle';s.textContent=`@keyframes mwV63HomeGlow{0%,100%{box-shadow:0 8px 24px rgba(229,185,63,.28),0 0 0 0 rgba(255,224,138,0),inset 0 1px rgba(255,255,255,.30)}50%{box-shadow:0 10px 38px rgba(229,185,63,.62),0 0 0 4px rgba(255,224,138,.14),inset 0 1px rgba(255,255,255,.42)}}#meshwarHeaderControls .mw-v63-header-home{display:none!important;position:relative;overflow:hidden;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:9px 18px!important;border:1px solid rgba(255,231,148,.92)!important;border-radius:999px!important;background:linear-gradient(135deg,rgba(255,255,255,.24) 0%,rgba(244,194,58,.72) 48%,rgba(151,103,7,.55) 100%)!important;color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.34);font-size:12px!important;font-weight:950!important;white-space:nowrap;backdrop-filter:blur(22px) saturate(165%)!important;-webkit-backdrop-filter:blur(22px) saturate(165%)!important;cursor:pointer}body.mw-v55-browse-mode #meshwarHeaderControls .mw-v63-header-home{display:inline-flex!important;animation:mwV63HomeGlow 1.8s ease-in-out infinite!important}#meshwarHeaderControls .mw-v63-header-home::after{content:'';position:absolute;inset:-40% auto -40% -35%;width:24%;transform:skewX(-18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.72),transparent);animation:mwV63Sweep 2.8s ease-in-out infinite}@keyframes mwV63Sweep{0%,58%{left:-35%}82%,100%{left:125%}}#meshwarHeaderControls .mw-v63-header-home:hover,#meshwarHeaderControls .mw-v63-header-home:focus-visible{transform:translateY(-1px);border-color:#fff0a8!important;box-shadow:0 12px 42px rgba(229,185,63,.68),0 0 0 3px rgba(255,224,138,.16)!important;outline:none!important}@media(max-width:720px){#meshwarHeaderControls .mw-v63-header-home{min-height:38px;padding:7px 12px!important;font-size:11px!important}}@media(prefers-reduced-motion:reduce){body.mw-v55-browse-mode #meshwarHeaderControls .mw-v63-header-home,#meshwarHeaderControls .mw-v63-header-home::after{animation:none!important}}`;document.head.appendChild(s)}
+  function removeRedundantStoresButton(){const controls=q('meshwarHeaderControls');if(!controls)return;[...controls.querySelectorAll('a,button')].forEach(el=>{if(el.id==='mwV63HeaderHome')return;const text=String(el.textContent||'').replace(/\s+/g,' ').trim();if(text==='المتاجر'||text==='🏪 المتاجر'||text==='المتاجر 🏪'){el.remove()}})}
+  function ensureHeaderBack(){const controls=q('meshwarHeaderControls');if(!controls)return null;removeRedundantStoresButton();const existing=q('mwV63HeaderHome');if(existing&&existing.parentElement===controls){headerBack=existing;return headerBack}q('mwV61HeaderBack')?.remove();q('mwV62HeaderBack')?.remove();headerBack=document.createElement('button');headerBack.type='button';headerBack.id='mwV63HeaderHome';headerBack.className='mw-v55-back mw-v63-header-home';headerBack.setAttribute('aria-label','الرجوع للرئيسية');headerBack.innerHTML='<span aria-hidden="true">⌂</span><span>الرجوع للرئيسية</span>';headerBack.addEventListener('click',()=>landing(true));controls.prepend(headerBack);return headerBack}
+  function watchHeaderBack(){if(headerObserver)return;const nav=q('meshwarHeaderControls')?.closest('nav')||document.body;headerObserver=new MutationObserver(()=>{removeRedundantStoresButton();if(document.body.classList.contains('mw-v55-browse-mode')&&!q('mwV63HeaderHome'))ensureHeaderBack()});headerObserver.observe(nav,{childList:true,subtree:true})}
+  function ensureContentHead(){if(contentHead)return contentHead;contentHead=document.createElement('div');contentHead.className='mw-v55-content-head';contentHead.hidden=true;const title=document.createElement('div');title.className='mw-v55-content-title';contentHead.append(title);const anchor=q(INTL_ID)||q(LOCAL_ID);anchor?.parentNode?.insertBefore(contentHead,anchor);return contentHead}
+  function show(kind,pushHash){current=kind;document.body.classList.add('mw-v55-browse-mode');ensureHeaderBack();setActiveSections(kind);updatePortalPressed(kind);const head=ensureContentHead();head.hidden=false;head.querySelector('.mw-v55-content-title').textContent=kind==='local'?'المتاجر المحلية':'المتاجر العالمية';try{window.showStoresTab?.(kind==='local'?'local':'international')}catch{}setActiveSections(kind);if(pushHash)history.replaceState(history.state,'',kind==='local'?'#local-stores':'#global-stores');const active=q(kind==='local'?LOCAL_ID:INTL_ID);setTimeout(()=>active?.scrollIntoView({behavior:'smooth',block:'start'}),40)}
+  function landing(clearHash){current=null;document.body.classList.remove('mw-v55-browse-mode');[q(INTL_ID),q(LOCAL_ID)].forEach(el=>{if(el){el.classList.add('mw-v55-section-hidden');el.classList.remove('mw-v55-active')}});updatePortalPressed('');if(contentHead)contentHead.hidden=true;if(clearHash&&/#(?:global|local)-stores$/i.test(location.hash))history.replaceState(history.state,'',location.pathname+location.search);portalShell?.scrollIntoView({behavior:'smooth',block:'center'})}
+  function build(){const intl=q(INTL_ID),local=q(LOCAL_ID);if(!intl&&!local)return;q('meshwarStoreTabs')?.setAttribute('aria-hidden','true');installV63Style();normalizeShowcases();removeRedundantStoresButton();ensureHeaderBack();watchHeaderBack();portalShell=document.createElement('section');portalShell.className='mw-v55-portal-shell';portalShell.id='kintoStorePortalsV55';const head=document.createElement('div');head.className='mw-v55-portal-head';const h=document.createElement('h2');h.textContent='اختر وجهتك للتسوق';const p=document.createElement('p');p.textContent='واجهة واحدة نظيفة، ومساحتان منفصلتان للمتاجر العالمية والمحلية.';head.append(h,p);const portals=document.createElement('div');portals.className='mw-v55-portals';portals.append(makePortal('global','المتاجر العالمية','أبرز المتاجر العالمية في تبويب مستقل ونظيف.','🌍',intl),makePortal('local','المتاجر المحلية','متاجر محلية مختارة في مساحة مستقلة دون تكديس الصفحة.','🏪',local));portalShell.append(head,portals);const anchor=q('meshwarStoreTabs')||intl||local;anchor?.parentNode?.insertBefore(portalShell,anchor);ensureContentHead();const hash=String(location.hash||'').toLowerCase();if(hash==='#global-stores')show('global',false);else if(hash==='#local-stores')show('local',false);else landing(false);const mo=new MutationObserver(()=>{portalShell?.querySelectorAll('.mw-v55-portal').forEach(btn=>{const kind=btn.dataset.kind,section=q(kind==='local'?LOCAL_ID:INTL_ID),strip=btn.querySelector('.mw-v55-logo-strip');if(!strip||strip.querySelector('img'))return;const logos=collectLogos(section,kind==='local');if(!logos.length)return;strip.replaceWith(logoStrip(section,kind==='local'))});removeRedundantStoresButton();if(document.body.classList.contains('mw-v55-browse-mode'))ensureHeaderBack()});if(local)mo.observe(local,{childList:true,subtree:true});if(intl)mo.observe(intl,{childList:true,subtree:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build,{once:true});else build();
 })();
