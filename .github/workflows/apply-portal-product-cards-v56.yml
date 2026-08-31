@@ -4,6 +4,7 @@ on:
     branches: [fix/portal-product-cards-v56]
     paths:
       - 'css/portal-product-cards-v56.css'
+      - 'js/product-deeplink-v56.js'
       - '.github/workflows/apply-portal-product-cards-v56.yml'
 permissions:
   contents: write
@@ -16,20 +17,31 @@ jobs:
         with:
           ref: fix/portal-product-cards-v56
           fetch-depth: 0
-      - name: Wire V56 presentation stylesheet only
+      - name: Wire V56 presentation and deep-link guard
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          tag='<link rel="stylesheet" href="css/portal-product-cards-v56.css?v=20260831">'
-          if tag not in s:
+          css='<link rel="stylesheet" href="css/portal-product-cards-v56.css?v=20260831">'
+          js='<script src="js/product-deeplink-v56.js?v=20260831"></script>'
+          if css not in s:
               if '</head>' not in s: raise SystemExit('index.html missing </head>')
-              s=s.replace('</head>', '    '+tag+'\n</head>', 1)
-              p.write_text(s)
+              s=s.replace('</head>', '    '+css+'\n</head>', 1)
+          if js not in s:
+              if '</body>' not in s: raise SystemExit('index.html missing </body>')
+              s=s.replace('</body>', '    '+js+'\n</body>', 1)
+          p.write_text(s)
           PY
           grep -Fq 'css/portal-product-cards-v56.css?v=20260831' index.html
+          grep -Fq 'js/product-deeplink-v56.js?v=20260831' index.html
+          grep -Fq "['productId','product_id','product','pid']" js/product-deeplink-v56.js
+          grep -Fq "[data-pid]" js/product-deeplink-v56.js
+          grep -Fq 'scrollIntoView' js/product-deeplink-v56.js
+          grep -Fq 'mw-v56-deeplink-highlight' js/product-deeplink-v56.js
+          grep -Fq 'mw-v55-section-hidden' js/product-deeplink-v56.js
+          node --check js/product-deeplink-v56.js
           git diff --check
           changed="$(git diff --name-only)"
           test "$changed" = "index.html"
@@ -40,5 +52,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m 'style: enable portal and product card V56 presentation'
+          git commit -m 'fix: enable V56 product deep-link compatibility guard'
           git push origin HEAD:fix/portal-product-cards-v56
