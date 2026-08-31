@@ -1,0 +1,42 @@
+/* KINTO STORE INTERACTION HOTFIX V66
+   Interaction safety only. No layout sizing, routes, data, Supabase, pagination or business logic. */
+
+/* The visible store CTAs must always own their hit area. */
+#meshwarFeaturedCampaigns .mw-featured-cta,
+#meshwarFeaturedCampaigns .mw-featured-card-open,
+#internationalStoresSection .store-link,
+#localStoresPublic .local-public-open,
+#localStoresPublic .local-store-open{
+  position:relative!important;
+  z-index:30!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+}
+
+/* Decorative/media layers must never steal clicks from store CTAs. */
+#meshwarFeaturedCampaigns .mw-featured-bg,
+#meshwarFeaturedCampaigns .mw-featured-shade,
+#meshwarFeaturedCampaigns .mw-featured-card-media,
+#meshwarFeaturedCampaigns .mw-featured-card-media>img,
+#meshwarFeaturedCampaigns .mw-featured-card-logo,
+#meshwarFeaturedCampaigns .mw-featured-card-badge,
+#meshwarFeaturedCampaigns .mw-featured-card-products,
+#meshwarFeaturedCampaigns .mw-featured-card-product,
+#meshwarFeaturedCampaigns .mw-featured-card-product img{
+  pointer-events:none!important;
+}
+
+/* Keep card/body stacking deterministic without changing geometry. */
+#meshwarFeaturedCampaigns .mw-featured-copy,
+#meshwarFeaturedCampaigns .mw-featured-card-body{
+  position:relative!important;
+  z-index:5!important;
+}
+
+/* Portal decoration is explicitly non-interactive. */
+.mw-v55-portal::before,
+.mw-v55-portal::after,
+.mw-v55-portal-top::after{
+  pointer-events:none!important;
+}
