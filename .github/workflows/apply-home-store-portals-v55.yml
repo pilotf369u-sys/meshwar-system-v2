@@ -1,0 +1,51 @@
+name: Apply Home Store Portals V55
+on:
+  push:
+    branches: [fix/home-store-portals-v55]
+    paths:
+      - 'css/home-store-portals-v55.css'
+      - 'js/home-store-portals-v55.js'
+      - '.github/workflows/apply-home-store-portals-v55.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/home-store-portals-v55
+          fetch-depth: 0
+      - name: Wire V55 isolated assets
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          css='<link rel="stylesheet" href="css/home-store-portals-v55.css?v=20260831">'
+          js='<script src="js/home-store-portals-v55.js?v=20260831"></script>'
+          if css not in s:
+              if '</head>' not in s: raise SystemExit('index.html missing </head>')
+              s=s.replace('</head>', '    '+css+'\n</head>', 1)
+          if js not in s:
+              if '</body>' not in s: raise SystemExit('index.html missing </body>')
+              s=s.replace('</body>', '    '+js+'\n</body>', 1)
+          p.write_text(s)
+          PY
+          grep -Fq 'css/home-store-portals-v55.css?v=20260831' index.html
+          grep -Fq 'js/home-store-portals-v55.js?v=20260831' index.html
+          node --check js/home-store-portals-v55.js
+          git diff --check
+          changed="$(git diff --name-only)"
+          test "$changed" = "index.html"
+      - name: Commit review wiring
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: enable clean store portals V55 on review branch'
+          git push origin HEAD:fix/home-store-portals-v55
