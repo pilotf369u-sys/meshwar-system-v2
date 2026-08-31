@@ -1,4 +1,4 @@
-/* KINTO V57 — precise portal/product presentation; product media must remain complete */
+/* KINTO V58 — uniform product media + stable merchandising */
 :root{--v56-gold:#f2ca63;--v56-gold-strong:#d9aa2c;--v56-emerald:#0a5a49;--v56-emerald-deep:#023b31;--v56-cyan:#35d4ba}
 
 /* Homepage store portals */
@@ -18,23 +18,24 @@
 .mw-v55-portal:nth-child(1) .mw-v55-portal-top::after,.mw-v55-portal:nth-child(2) .mw-v55-portal-top::after{position:absolute;top:22px;left:22px;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:900;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#e7f8f3;backdrop-filter:blur(8px)}
 .mw-v55-portal:nth-child(1) .mw-v55-portal-top::after{content:"🌍 خيارات عالمية"}.mw-v55-portal:nth-child(2) .mw-v55-portal-top::after{content:"🏪 تسوق محلي"}
 
-/* Phase 1 — complete product media, zero artificial gutters, zero crop.
-   The wrapper follows each source image's intrinsic ratio instead of forcing a square.
-   This preserves Arabic/English copy embedded in promotional product images. */
-#localStoreProductsGrid{grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr))!important;gap:18px!important;align-items:start!important}
-#localStoreProductsGrid .local-v3-card{border-radius:22px!important;border-color:rgba(242,202,99,.30)!important;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045))!important;box-shadow:0 16px 42px rgba(0,0,0,.14)!important;overflow:hidden!important;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease!important}
+/* Phase 1 root fix: one uniform media frame for every product.
+   The real image is NEVER cropped: contain keeps every pixel/text visible.
+   The frame itself fills the card, so portrait/landscape sources cannot stretch card height. */
+#localStoreProductsGrid{grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr))!important;gap:18px!important;align-items:stretch!important}
+#localStoreProductsGrid .local-v3-card{height:100%!important;display:flex!important;flex-direction:column!important;border-radius:22px!important;border-color:rgba(242,202,99,.30)!important;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045))!important;box-shadow:0 16px 42px rgba(0,0,0,.14)!important;overflow:hidden!important;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease!important}
 #localStoreProductsGrid .local-v3-card:hover{transform:translateY(-5px)!important;border-color:rgba(242,202,99,.58)!important;box-shadow:0 24px 54px rgba(0,0,0,.22),0 0 0 1px rgba(242,202,99,.06)!important}
-#localStoreProductsGrid .local-v3-img-wrap{display:block!important;width:100%!important;height:auto!important;min-height:0!important;aspect-ratio:auto!important;padding:0!important;margin:0!important;background:transparent!important;border-bottom:1px solid rgba(242,202,99,.16)!important;overflow:hidden!important;line-height:0!important}
-#localStoreProductsGrid .local-v3-img{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;aspect-ratio:auto!important;object-fit:contain!important;object-position:center!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;transform:none!important}
+#localStoreProductsGrid .local-v3-img-wrap{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:260px!important;min-height:260px!important;max-height:260px!important;aspect-ratio:auto!important;padding:0!important;margin:0!important;overflow:hidden!important;line-height:0!important;border-bottom:1px solid rgba(242,202,99,.18)!important;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.98) 0 42%,rgba(235,240,235,.96) 72%,rgba(218,226,220,.98) 100%)!important}
+html.dark #localStoreProductsGrid .local-v3-img-wrap{background:radial-gradient(circle at 50% 42%,rgba(248,250,249,.98) 0 46%,rgba(228,235,230,.98) 78%,rgba(205,216,208,.98) 100%)!important}
+#localStoreProductsGrid .local-v3-img{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;transform:none!important}
 #localStoreProductsGrid .local-v3-card:hover .local-v3-img{transform:none!important}
-#localStoreProductsGrid .local-v3-body{min-height:0!important;padding:12px 13px 14px!important;gap:0!important}
+#localStoreProductsGrid .local-v3-body{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;padding:12px 13px 14px!important;gap:0!important}
 #localStoreProductsGrid .local-v3-name{font-size:1rem!important;line-height:1.4!important;margin:0 0 4px!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important}
 #localStoreProductsGrid .local-v3-desc{font-size:.78rem!important;line-height:1.45!important;min-height:0!important;margin:2px 0 0!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important}
 #localStoreProductsGrid .local-v3-price{margin-top:9px!important;padding:8px 9px!important;border-radius:11px!important;background:rgba(242,202,99,.085)!important;border-color:rgba(242,202,99,.22)!important}
 #localStoreProductsGrid .local-v3-local{font-size:18px!important}.local-v3-old-row{margin-bottom:6px!important;padding-bottom:5px!important}.local-v3-note{font-size:10px!important;margin-top:4px!important}
 #localStoreProductsGrid .local-v3-options{gap:7px!important;margin-top:8px!important}.local-v3-option-label{font-size:11px!important}.local-v3-option-select{min-height:38px!important;padding:6px 9px!important}
-#localStoreProductsGrid .local-v3-qty{margin-top:8px!important;padding:7px 9px!important}.local-v3-qty-btn{width:31px!important;height:31px!important}.local-v3-order{min-height:43px!important;margin-top:10px!important;font-size:.9rem!important;border-radius:11px!important}
+#localStoreProductsGrid .local-v3-qty{margin-top:8px!important;padding:7px 9px!important}.local-v3-qty-btn{width:31px!important;height:31px!important}.local-v3-order{min-height:43px!important;margin-top:auto!important;padding-top:10px!important;font-size:.9rem!important;border-radius:11px!important}
 #localStoreProductsGrid .local-v3-discount-badge{top:18px!important;right:-38px!important;z-index:6!important}
 
-@media(max-width:720px){.mw-v55-portal{min-height:220px!important;padding:22px!important}.mw-v55-portal h3{font-size:23px!important}.mw-v55-portal p{max-width:100%!important}.mw-v55-portal::after{left:18px;bottom:17px}.mw-v55-logo-strip{padding-bottom:34px!important}#localStoreProductsGrid{grid-template-columns:1fr!important;gap:14px!important}#localStoreProductsGrid .local-v3-body{padding:11px 12px 13px!important}}
+@media(max-width:720px){.mw-v55-portal{min-height:220px!important;padding:22px!important}.mw-v55-portal h3{font-size:23px!important}.mw-v55-portal p{max-width:100%!important}.mw-v55-portal::after{left:18px;bottom:17px}.mw-v55-logo-strip{padding-bottom:34px!important}#localStoreProductsGrid{grid-template-columns:1fr!important;gap:14px!important}#localStoreProductsGrid .local-v3-img-wrap{height:300px!important;min-height:300px!important;max-height:300px!important}#localStoreProductsGrid .local-v3-body{padding:11px 12px 13px!important}}
 @media(prefers-reduced-motion:reduce){.mw-v55-portal,.mw-v55-icon,.mw-v55-arrow,#localStoreProductsGrid .local-v3-card{transition:none!important}}
