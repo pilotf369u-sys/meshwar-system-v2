@@ -1,0 +1,130 @@
+/* KINTO REFERENCE UI OVERHAUL V64
+   VISUAL-ONLY LAYER.
+   No JavaScript, APIs, Supabase, Pagination, Deep Link, slider logic, ids or handlers are changed.
+*/
+:root{
+  --k64-bg:#001c18;
+  --k64-bg-2:#002a23;
+  --k64-panel:rgba(5,45,37,.72);
+  --k64-panel-strong:rgba(3,34,29,.90);
+  --k64-gold:#e0a936;
+  --k64-gold-2:#f2cc73;
+  --k64-gold-soft:rgba(224,169,54,.22);
+  --k64-line:rgba(224,169,54,.32);
+  --k64-text:#fffdf8;
+  --k64-muted:#b7c8c2;
+  --k64-shadow:0 26px 80px rgba(0,0,0,.30),0 0 0 1px rgba(224,169,54,.04);
+}
+
+html,body{background:#001c18!important;background-image:radial-gradient(circle at 20% 0%,rgba(224,169,54,.055),transparent 30%),radial-gradient(circle at 88% 18%,rgba(20,100,82,.25),transparent 34%),linear-gradient(180deg,#001713 0%,#00271f 48%,#001b17 100%)!important;color:var(--k64-text)!important}
+body{padding:0!important;overflow-x:hidden}
+
+/* ===== HEADER ===== */
+body>nav.sticky{position:sticky!important;top:0!important;z-index:9998!important;border:0!important;border-bottom:1px solid rgba(224,169,54,.16)!important;background:linear-gradient(180deg,rgba(0,22,18,.97),rgba(0,31,26,.90))!important;box-shadow:0 14px 40px rgba(0,0,0,.22)!important;backdrop-filter:blur(24px) saturate(135%)!important;-webkit-backdrop-filter:blur(24px) saturate(135%)!important}
+body>nav.sticky>div{max-width:1440px!important;min-height:68px!important;padding:10px 28px!important}
+body>nav.sticky a[href="index.html"]{gap:11px!important;color:#fff!important;letter-spacing:.5px}
+body>nav.sticky a[href="index.html"] img{width:52px!important;height:52px!important;border-radius:15px!important;border:1px solid rgba(224,169,54,.45)!important;background:rgba(255,255,255,.96)!important;box-shadow:0 8px 24px rgba(224,169,54,.12)!important}
+#meshwarHeaderControls{gap:9px!important;align-items:center!important}
+#meshwarHeaderControls>a,#meshwarHeaderControls>button,#meshwarHeaderControls .account-btn,#meshwarHeaderControls .header-logout-btn{min-height:38px!important;border-radius:999px!important;border:1px solid rgba(224,169,54,.28)!important;background:rgba(255,255,255,.055)!important;color:#fff!important;box-shadow:inset 0 1px rgba(255,255,255,.06)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important}
+#meshwarHeaderControls>a:hover,#meshwarHeaderControls>button:hover,#meshwarHeaderControls .account-btn:hover{border-color:rgba(242,204,115,.72)!important;background:rgba(224,169,54,.12)!important;box-shadow:0 8px 26px rgba(224,169,54,.13)!important}
+
+/* Preserve and emphasize the V63 return-home control. */
+#meshwarHeaderControls .mw-v62-header-back{position:relative!important;overflow:hidden!important;padding:9px 17px!important;border:1px solid rgba(242,204,115,.86)!important;background:linear-gradient(135deg,rgba(242,204,115,.30),rgba(224,169,54,.12),rgba(255,255,255,.10))!important;color:#fff!important;text-shadow:0 1px 6px rgba(0,0,0,.28)!important;box-shadow:0 9px 30px rgba(224,169,54,.25),inset 0 1px rgba(255,255,255,.22)!important}
+
+/* ===== HERO / PROMO ===== */
+body>nav.sticky+section{max-width:1440px!important;padding:28px 28px 0!important}
+body>nav.sticky+section>div:first-child{border:1px solid rgba(224,169,54,.16)!important;border-radius:28px!important;background:linear-gradient(140deg,rgba(1,41,33,.88),rgba(2,30,26,.70))!important;box-shadow:var(--k64-shadow)!important;backdrop-filter:blur(22px)!important;-webkit-backdrop-filter:blur(22px)!important}
+body>nav.sticky+section>div:first-child h2{color:#fff!important;font-size:clamp(30px,4.3vw,62px)!important;line-height:1.18!important;text-shadow:0 4px 26px rgba(0,0,0,.28)!important}
+body>nav.sticky+section>div:first-child h2 span{background:linear-gradient(90deg,var(--k64-gold-2),#c78b22)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important}
+body>nav.sticky+section>div:first-child p{color:var(--k64-muted)!important;font-size:14px!important}
+body>nav.sticky+section>div:first-child button{background:linear-gradient(135deg,#f0c465,#c98b21)!important;color:#10241f!important;border:1px solid rgba(255,227,151,.72)!important;box-shadow:0 12px 30px rgba(224,169,54,.18)!important}
+body>nav.sticky+section>div:first-child a{border-color:rgba(224,169,54,.26)!important;background:rgba(255,255,255,.055)!important;color:#fff!important}
+body>nav.sticky+section>div:first-child>div:last-child{border-color:rgba(224,169,54,.20)!important;background:linear-gradient(145deg,rgba(0,25,21,.94),rgba(4,47,38,.78))!important}
+#meshwarHeroTrackInput{border-color:rgba(224,169,54,.18)!important;background:rgba(0,18,15,.68)!important;color:#fff!important}
+#meshwarHeroTrackBtn{background:linear-gradient(135deg,#f0c465,#c98b21)!important;color:#10241f!important}
+
+#meshwarVideoAd{max-width:1384px!important;margin-top:22px!important;padding:0!important}
+#meshwarVideoAd>.kinto-v61-showcase-frame,#meshwarVideoAd>div{position:relative!important;width:100%!important;height:clamp(280px,34vw,520px)!important;min-height:clamp(280px,34vw,520px)!important;max-height:clamp(280px,34vw,520px)!important;border-radius:30px!important;border:1px solid rgba(224,169,54,.38)!important;background:#00120f!important;box-shadow:0 30px 90px rgba(0,0,0,.38),0 0 0 1px rgba(242,204,115,.05),inset 0 1px rgba(255,255,255,.06)!important;overflow:hidden!important}
+#meshwarVideoAd>.kinto-v61-showcase-frame:after,#meshwarVideoAd>div:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(0,18,15,.18),transparent 42%,rgba(224,169,54,.035));box-shadow:inset 0 0 70px rgba(0,0,0,.20)}
+#meshwarVideoAd video{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important;border-radius:inherit!important}
+
+/* ===== FEATURED INTRO ===== */
+.header-container.kinto-featured-store.kinto-v61-showcase-frame{height:auto!important;min-height:0!important;max-height:none!important;max-width:1384px!important;margin:30px auto 16px!important;padding:20px 24px!important;border-radius:24px!important;border:1px solid rgba(224,169,54,.20)!important;background:linear-gradient(135deg,rgba(5,48,39,.72),rgba(1,31,26,.78))!important;box-shadow:0 18px 50px rgba(0,0,0,.20)!important}
+.header-container.kinto-featured-store .kinto-featured-logo-wrap{width:90px!important;min-width:90px!important}
+.header-container.kinto-featured-store .main-logo{max-height:72px!important;width:72px!important;border-radius:18px!important;background:rgba(255,255,255,.94)!important;padding:7px!important;box-sizing:border-box!important}
+.header-container.kinto-featured-store .kinto-featured-title{color:#fff!important;font-size:clamp(22px,3vw,34px)!important}
+.header-container.kinto-featured-store .kinto-featured-accent,.header-container.kinto-featured-store .kinto-featured-badge{color:var(--k64-gold-2)!important}
+.header-container.kinto-featured-store .kinto-featured-subtitle{color:var(--k64-muted)!important}
+
+/* ===== PORTAL CARDS ===== */
+.mw-v55-portal-shell{max-width:1384px!important;margin-top:34px!important}
+.mw-v55-portal-head h2{color:#fff!important;font-size:clamp(26px,3.2vw,40px)!important}
+.mw-v55-portal-head p{color:var(--k64-muted)!important}
+.mw-v55-portal{border:1px solid rgba(224,169,54,.30)!important;background:linear-gradient(145deg,rgba(8,71,56,.74),rgba(3,44,36,.78))!important;box-shadow:0 22px 64px rgba(0,0,0,.20),inset 0 1px rgba(255,255,255,.07)!important}
+.mw-v55-portal:hover{border-color:rgba(242,204,115,.72)!important;box-shadow:0 26px 70px rgba(0,0,0,.24),0 0 28px rgba(224,169,54,.09)!important}
+.mw-v55-icon{border-color:rgba(224,169,54,.50)!important;background:linear-gradient(145deg,rgba(224,169,54,.22),rgba(255,255,255,.07))!important}
+
+/* ===== FEATURED STORES: horizontal luxury circles, CSS only ===== */
+#internationalStoresSection{max-width:1384px!important;margin:28px auto 0!important;padding:0 22px 28px!important;box-sizing:border-box!important}
+#internationalStoresSection .section-title{margin:34px 0 14px!important;padding:0 4px 10px!important;color:#fff!important;font-size:22px!important;border-bottom:1px solid rgba(224,169,54,.20)!important}
+#internationalStoresSection .section-title:before{content:"✦ ";color:var(--k64-gold)!important}
+#internationalStoresSection .grid-container{display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;gap:14px!important;margin:0!important;padding:8px 4px 18px!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x proximity!important;scrollbar-width:thin!important;scrollbar-color:rgba(224,169,54,.42) rgba(255,255,255,.04)!important;-webkit-overflow-scrolling:touch!important}
+#internationalStoresSection .store-card{flex:0 0 154px!important;width:154px!important;min-width:154px!important;min-height:190px!important;height:auto!important;padding:8px!important;border:0!important;border-radius:22px!important;background:transparent!important;box-shadow:none!important;scroll-snap-align:start!important;color:#fff!important;justify-content:flex-start!important;gap:8px!important}
+#internationalStoresSection .store-card:hover{transform:translateY(-3px)!important;background:rgba(255,255,255,.025)!important}
+#internationalStoresSection .logo-container{width:116px!important;height:116px!important;min-height:116px!important;margin:0 auto 4px!important;padding:12px!important;border-radius:50%!important;border:1px solid rgba(242,204,115,.72)!important;background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.12),rgba(0,20,16,.96) 64%)!important;box-shadow:0 12px 34px rgba(0,0,0,.26),0 0 0 4px rgba(224,169,54,.055),inset 0 0 22px rgba(224,169,54,.06)!important;box-sizing:border-box!important}
+#internationalStoresSection .store-logo{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;filter:drop-shadow(0 4px 12px rgba(0,0,0,.22))!important}
+#internationalStoresSection .store-card h3{margin:3px 0 0!important;color:#fff!important;font-size:13px!important;line-height:1.35!important;text-align:center!important}
+#internationalStoresSection .store-link{width:auto!important;min-width:84px!important;margin:2px auto 0!important;padding:6px 10px!important;border-radius:999px!important;border:1px solid rgba(224,169,54,.38)!important;background:rgba(224,169,54,.09)!important;color:var(--k64-gold-2)!important;font-size:10px!important;box-shadow:none!important}
+#internationalStoresSection .store-link:hover{background:linear-gradient(135deg,#edbd58,#c78a24)!important;color:#0d211c!important;border-color:#f2cc73!important}
+
+/* ===== LOCAL STORES ===== */
+#localStoresPublic.mw-v55-active{max-width:1384px!important;padding:26px!important;border:1px solid rgba(224,169,54,.18)!important;border-radius:28px!important;background:linear-gradient(145deg,rgba(5,52,42,.64),rgba(1,30,25,.70))!important;box-shadow:var(--k64-shadow)!important}
+#localStoresPublic .local-stores-head h2{color:#fff!important;font-size:24px!important}
+#localStoresPublic .local-stores-head p{color:var(--k64-muted)!important}
+#localStoresPublicGrid{gap:16px!important}
+#localStoresPublicGrid .local-public-card{border:1px solid rgba(224,169,54,.24)!important;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.025))!important;border-radius:24px!important;box-shadow:0 16px 42px rgba(0,0,0,.16)!important}
+#localStoresPublicGrid .local-public-logo{width:76px!important;height:76px!important;border-radius:50%!important;border:2px solid rgba(242,204,115,.64)!important;box-shadow:0 8px 26px rgba(224,169,54,.12)!important}
+#localStoresPublicGrid .local-public-open{background:linear-gradient(135deg,#edbd58,#c78a24)!important;color:#10241f!important;border-color:rgba(255,225,145,.72)!important}
+.local-filter-btn{border-color:rgba(224,169,54,.22)!important;background:rgba(255,255,255,.04)!important}
+.local-filter-btn.active,.local-filter-btn:hover{background:linear-gradient(135deg,#edbd58,#c78a24)!important;color:#10241f!important;border-color:#f2cc73!important}
+
+/* ===== TRUST BAR: uses existing ticker node only; no HTML/JS changes ===== */
+#meshwarTicker{display:flex!important;align-items:center!important;justify-content:center!important;max-width:1384px!important;min-height:88px!important;margin:24px auto!important;padding:14px 22px!important;border-radius:24px!important;border:1px solid rgba(224,169,54,.22)!important;background:linear-gradient(135deg,rgba(4,49,39,.80),rgba(2,31,26,.88))!important;box-shadow:0 18px 48px rgba(0,0,0,.18)!important;overflow:hidden!important;box-sizing:border-box!important}
+#meshwarTicker .meshwar-ticker-track{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;animation:none!important}
+#meshwarTicker:after{content:"🛡️  منتجات أصلية 100%   │   🚚  توصيل سريع وآمن   │   🎧  دعم العملاء 24/7   │   🏅  ضمان استرجاع 14 يوم";display:block;color:var(--k64-gold-2);font-size:clamp(12px,1.35vw,17px);font-weight:900;line-height:2;text-align:center;word-spacing:3px;letter-spacing:.1px}
+
+/* ===== FLOATING ORDER CTA ===== */
+.fixed-order-btn{right:24px!important;bottom:24px!important;border:1px solid rgba(242,204,115,.84)!important;background:linear-gradient(135deg,#f0c465,#c98b21)!important;color:#10241f!important;box-shadow:0 16px 40px rgba(224,169,54,.25)!important}
+
+/* Preserve product browsing / pagination surfaces: no display/order/layout overrides below this point. */
+#localStoreProductsPanel{scroll-margin-top:96px!important}
+
+@media(max-width:900px){
+  body>nav.sticky>div{padding:9px 14px!important}
+  body>nav.sticky a[href="index.html"] img{width:44px!important;height:44px!important}
+  #meshwarHeaderControls{gap:6px!important}
+  body>nav.sticky+section{padding:18px 14px 0!important}
+  body>nav.sticky+section>div:first-child{padding:22px!important}
+  #meshwarVideoAd>.kinto-v61-showcase-frame,#meshwarVideoAd>div{height:clamp(230px,52vw,360px)!important;min-height:clamp(230px,52vw,360px)!important;max-height:clamp(230px,52vw,360px)!important;border-radius:22px!important}
+  .header-container.kinto-featured-store.kinto-v61-showcase-frame{margin:22px 14px 14px!important;padding:16px!important}
+  #internationalStoresSection{padding:0 12px 22px!important}
+  #internationalStoresSection .store-card{flex-basis:132px!important;width:132px!important;min-width:132px!important}
+  #internationalStoresSection .logo-container{width:98px!important;height:98px!important;min-height:98px!important}
+  #localStoresPublic.mw-v55-active{margin:18px 12px!important;padding:18px!important}
+  #meshwarTicker{margin:18px 14px!important;min-height:100px!important;padding:12px 16px!important}
+  #meshwarTicker:after{white-space:normal!important;word-spacing:1px!important}
+}
+
+@media(max-width:620px){
+  #meshwarHeaderControls .account-btn{padding:7px 10px!important;font-size:10px!important}
+  body>nav.sticky+section>div:first-child{grid-template-columns:1fr!important}
+  body>nav.sticky+section>div:first-child h2{font-size:clamp(27px,9vw,42px)!important}
+  #meshwarVideoAd>.kinto-v61-showcase-frame,#meshwarVideoAd>div{height:240px!important;min-height:240px!important;max-height:240px!important}
+  .mw-v55-portals{grid-template-columns:1fr!important}
+  #meshwarTicker:after{content:"🛡️ أصلية 100%  •  🚚 توصيل آمن  •  🎧 دعم 24/7  •  🏅 استرجاع 14 يوم";font-size:12px!important}
+  .fixed-order-btn{right:14px!important;bottom:14px!important;padding:11px 15px!important;font-size:12px!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{scroll-behavior:auto!important}
+}
