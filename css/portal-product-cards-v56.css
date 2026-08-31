@@ -1,0 +1,38 @@
+/* KINTO V56 — portal engagement + product-image-first cards; presentation only */
+:root{--v56-gold:#f2ca63;--v56-gold-strong:#d9aa2c;--v56-emerald:#0a5a49;--v56-emerald-deep:#023b31;--v56-cyan:#35d4ba}
+
+/* Homepage store portals: richer visual hierarchy and click affordance */
+.mw-v55-portals{gap:22px!important}
+.mw-v55-portal{position:relative!important;isolation:isolate!important;overflow:hidden!important;min-height:250px!important;padding:28px!important;border-radius:30px!important;border:1px solid rgba(242,202,99,.34)!important;background:linear-gradient(145deg,rgba(9,88,72,.72),rgba(3,43,36,.72))!important;box-shadow:0 22px 58px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.12)!important;transition:transform .28s ease,box-shadow .28s ease,border-color .28s ease,filter .28s ease!important}
+.mw-v55-portal:nth-child(2){background:linear-gradient(145deg,rgba(17,112,87,.70),rgba(3,50,41,.74))!important}
+.mw-v55-portal::before{content:"";position:absolute;inset:-45% -70%;z-index:-1;background:linear-gradient(110deg,transparent 42%,rgba(255,255,255,.16) 50%,transparent 58%);transform:translateX(-38%) rotate(7deg);transition:transform .7s ease;pointer-events:none}
+.mw-v55-portal::after{content:"اكتشف الآن  ←";position:absolute;left:24px;bottom:22px;padding:8px 13px;border-radius:999px;border:1px solid rgba(242,202,99,.45);background:rgba(242,202,99,.12);color:#ffe8a8;font-size:12px;font-weight:900;letter-spacing:.15px;box-shadow:inset 0 1px rgba(255,255,255,.08);pointer-events:none}
+.mw-v55-portal:hover,.mw-v55-portal:focus-visible{transform:translateY(-8px) scale(1.012)!important;border-color:rgba(242,202,99,.78)!important;box-shadow:0 34px 78px rgba(0,0,0,.27),0 0 0 1px rgba(242,202,99,.12),0 0 42px rgba(43,201,166,.09)!important;filter:saturate(1.08) brightness(1.035)!important}
+.mw-v55-portal:hover::before,.mw-v55-portal:focus-visible::before{transform:translateX(42%) rotate(7deg)}
+.mw-v55-icon{width:66px!important;height:66px!important;border-radius:20px!important;background:linear-gradient(145deg,rgba(242,202,99,.27),rgba(255,255,255,.08))!important;border-color:rgba(242,202,99,.55)!important;box-shadow:0 10px 26px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.14)!important;transition:transform .28s ease!important}
+.mw-v55-portal:hover .mw-v55-icon{transform:rotate(-4deg) scale(1.08)}
+.mw-v55-arrow{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:50%!important;background:rgba(255,255,255,.075)!important;border:1px solid rgba(242,202,99,.28)!important;transition:transform .28s ease,background .28s ease!important}
+.mw-v55-portal:hover .mw-v55-arrow{transform:translateX(-5px)!important;background:rgba(242,202,99,.15)!important}
+.mw-v55-portal h3{font-size:26px!important;margin-top:20px!important;letter-spacing:.1px!important}.mw-v55-portal p{font-size:13px!important;max-width:78%!important;line-height:1.8!important;color:#c9dad5!important}
+.mw-v55-logo-strip{margin-top:22px!important;padding-bottom:38px!important}.mw-v55-logo-strip img,.mw-v55-logo-fallback{width:42px!important;height:42px!important;border-radius:13px!important;box-shadow:0 8px 18px rgba(0,0,0,.16)!important;transition:transform .24s ease!important}.mw-v55-portal:hover .mw-v55-logo-strip img,.mw-v55-portal:hover .mw-v55-logo-fallback{transform:translateY(-2px)}
+.mw-v55-portal:nth-child(1) .mw-v55-portal-top::after,.mw-v55-portal:nth-child(2) .mw-v55-portal-top::after{position:absolute;top:22px;left:22px;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:900;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#e7f8f3;backdrop-filter:blur(8px)}
+.mw-v55-portal:nth-child(1) .mw-v55-portal-top::after{content:"🌍 خيارات عالمية"}.mw-v55-portal:nth-child(2) .mw-v55-portal-top::after{content:"🏪 تسوق محلي"}
+
+/* Local store product cards: image-first merchandising */
+#localStoreProductsGrid{grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr))!important;gap:20px!important}
+#localStoreProductsGrid .local-v3-card{border-radius:22px!important;border-color:rgba(242,202,99,.30)!important;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045))!important;box-shadow:0 16px 42px rgba(0,0,0,.14)!important;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease!important}
+#localStoreProductsGrid .local-v3-card:hover{transform:translateY(-5px)!important;border-color:rgba(242,202,99,.58)!important;box-shadow:0 24px 54px rgba(0,0,0,.22),0 0 0 1px rgba(242,202,99,.06)!important}
+#localStoreProductsGrid .local-v3-img-wrap{height:auto!important;min-height:300px!important;aspect-ratio:4/3!important;padding:0!important;background:linear-gradient(145deg,#f7f8f5,#eef2ee)!important;border-bottom:1px solid rgba(242,202,99,.16)!important;overflow:hidden!important}
+#localStoreProductsGrid .local-v3-img{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;padding:14px!important;box-sizing:border-box!important;transition:transform .34s ease!important}
+#localStoreProductsGrid .local-v3-card:hover .local-v3-img{transform:scale(1.045)!important}
+#localStoreProductsGrid .local-v3-body{min-height:0!important;padding:13px 14px 15px!important;gap:0!important}
+#localStoreProductsGrid .local-v3-name{font-size:1rem!important;line-height:1.45!important;margin:0 0 4px!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important}
+#localStoreProductsGrid .local-v3-desc{font-size:.78rem!important;line-height:1.5!important;min-height:0!important;margin:2px 0 0!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important}
+#localStoreProductsGrid .local-v3-price{margin-top:10px!important;padding:9px 10px!important;border-radius:11px!important;background:rgba(242,202,99,.085)!important;border-color:rgba(242,202,99,.22)!important}
+#localStoreProductsGrid .local-v3-local{font-size:18px!important}.local-v3-old-row{margin-bottom:6px!important;padding-bottom:5px!important}.local-v3-note{font-size:10px!important;margin-top:4px!important}
+#localStoreProductsGrid .local-v3-options{gap:7px!important;margin-top:9px!important}.local-v3-option-label{font-size:11px!important}.local-v3-option-select{min-height:38px!important;padding:6px 9px!important}
+#localStoreProductsGrid .local-v3-qty{margin-top:9px!important;padding:7px 9px!important}.local-v3-qty-btn{width:31px!important;height:31px!important}.local-v3-order{min-height:43px!important;margin-top:11px!important;font-size:.9rem!important;border-radius:11px!important}
+#localStoreProductsGrid .local-v3-discount-badge{top:18px!important;right:-38px!important;z-index:6!important}
+
+@media(max-width:720px){.mw-v55-portal{min-height:220px!important;padding:22px!important}.mw-v55-portal h3{font-size:23px!important}.mw-v55-portal p{max-width:100%!important}.mw-v55-portal::after{left:18px;bottom:17px}.mw-v55-logo-strip{padding-bottom:34px!important}#localStoreProductsGrid .local-v3-img-wrap{min-height:260px!important;aspect-ratio:1/1!important}#localStoreProductsGrid .local-v3-img{padding:10px!important}}
+@media(prefers-reduced-motion:reduce){.mw-v55-portal,.mw-v55-icon,.mw-v55-arrow,#localStoreProductsGrid .local-v3-card,#localStoreProductsGrid .local-v3-img{transition:none!important}}
