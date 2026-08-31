@@ -1,0 +1,19 @@
+/* KINTO MODERN UI V54 — presentation only */
+:root{--v54-glass:rgba(255,255,255,.075);--v54-line:rgba(255,255,255,.13);--v54-gold:#f4c95d;--v54-text:#f8fafc;--v54-muted:#a9b8b4}
+body{background:radial-gradient(circle at 85% 8%,rgba(244,201,93,.10),transparent 28%),radial-gradient(circle at 12% 28%,rgba(34,197,94,.08),transparent 30%),linear-gradient(180deg,#063b32 0%,#032b25 55%,#02251f 100%)!important}
+.header-container,.nav-container,.local-stores-shell{background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.045))!important;border:1px solid var(--v54-line)!important;backdrop-filter:blur(22px) saturate(125%)!important;-webkit-backdrop-filter:blur(22px) saturate(125%)!important;box-shadow:0 22px 65px rgba(0,0,0,.20),inset 0 1px rgba(255,255,255,.08)!important}
+.header-container{border-radius:30px!important}
+.nav-container{border-radius:22px!important;padding:10px!important}
+.nav-container a{background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.10)!important;color:#e7efec!important;box-shadow:none!important}
+.nav-container a:hover{background:rgba(244,201,93,.12)!important;border-color:rgba(244,201,93,.42)!important;color:#ffe49b!important}
+.section-title{color:var(--v54-text)!important;letter-spacing:.1px}
+.store-card,.local-public-card{background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.045))!important;border:1px solid rgba(255,255,255,.11)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;box-shadow:0 14px 38px rgba(0,0,0,.15)!important}
+.store-card:hover,.local-public-card:hover{transform:translateY(-4px)!important;border-color:rgba(244,201,93,.38)!important;box-shadow:0 20px 46px rgba(0,0,0,.22),0 0 0 1px rgba(244,201,93,.05)!important}
+.logo-container{background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.07)!important}
+#meshwarStoreTabs>div{max-width:920px!important;margin:12px auto 22px!important;padding:8px!important;display:flex!important;justify-content:center!important;gap:8px!important;border-radius:20px!important;background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.10)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;box-shadow:0 16px 44px rgba(0,0,0,.16)!important}
+#meshwarStoreTabs button,#meshwarStoreTabs a{min-height:44px!important;border-radius:14px!important;border:1px solid transparent!important;background:transparent!important;color:#d9e5e1!important;font-weight:800!important;transition:transform .2s ease,background .2s ease,border-color .2s ease,color .2s ease!important}
+#meshwarStoreTabs button:hover,#meshwarStoreTabs a:hover,#meshwarStoreTabs .active,#meshwarStoreTabs [aria-selected="true"]{background:linear-gradient(135deg,rgba(244,201,93,.18),rgba(255,255,255,.07))!important;border-color:rgba(244,201,93,.34)!important;color:#ffe7a6!important;transform:translateY(-1px)!important}
+.local-stores-head p,.local-public-meta{color:var(--v54-muted)!important}
+.account-btn,.store-link,.fixed-order-btn{box-shadow:0 10px 28px rgba(0,0,0,.18)!important}
+@media(max-width:700px){#meshwarStoreTabs>div{justify-content:flex-start!important;overflow-x:auto!important;scrollbar-width:none!important}#meshwarStoreTabs>div::-webkit-scrollbar{display:none}.header-container{border-radius:24px!important}.nav-container{border-radius:18px!important}}
+@media(prefers-reduced-motion:reduce){.store-card,.local-public-card,#meshwarStoreTabs button,#meshwarStoreTabs a{transition:none!important}}
