@@ -1,7 +1,7 @@
-/* KINTO HOME STORE PORTALS V61 — isolated homepage navigation + header back control + showcase sizing */
+/* KINTO HOME STORE PORTALS V62 — isolated homepage navigation + resilient fixed-header back control + showcase sizing */
 (function(){
   const INTL_ID='internationalStoresSection', LOCAL_ID='localStoresPublic';
-  let portalShell,contentHead,headerBack,current=null;
+  let portalShell,contentHead,headerBack,current=null,headerObserver=null;
   const q=id=>document.getElementById(id);
   const unique=s=>[...new Set(s.filter(Boolean))];
   function collectLogos(section,local){
@@ -49,17 +49,27 @@
     candidates.forEach(el=>el.classList.add('kinto-v61-showcase-frame'));
   }
   function ensureHeaderBack(){
-    if(headerBack?.isConnected)return headerBack;
     const controls=q('meshwarHeaderControls');if(!controls)return null;
+    const existing=q('mwV62HeaderBack');
+    if(existing&&existing.parentElement===controls){headerBack=existing;return headerBack}
+    q('mwV61HeaderBack')?.remove();
     headerBack=document.createElement('button');
     headerBack.type='button';
-    headerBack.id='mwV61HeaderBack';
-    headerBack.className='mw-v55-back mw-v61-header-back';
+    headerBack.id='mwV62HeaderBack';
+    headerBack.className='mw-v55-back mw-v62-header-back';
+    headerBack.setAttribute('aria-label','العودة لاختيار نوع المتجر');
     headerBack.innerHTML='<span aria-hidden="true">↩</span><span>اختيار نوع المتجر</span>';
-    headerBack.hidden=true;
     headerBack.addEventListener('click',()=>landing(true));
     controls.prepend(headerBack);
     return headerBack;
+  }
+  function watchHeaderBack(){
+    if(headerObserver)return;
+    const nav=q('meshwarHeaderControls')?.closest('nav')||document.body;
+    headerObserver=new MutationObserver(()=>{
+      if(document.body.classList.contains('mw-v55-browse-mode')&&!q('mwV62HeaderBack'))ensureHeaderBack();
+    });
+    headerObserver.observe(nav,{childList:true,subtree:true});
   }
   function ensureContentHead(){
     if(contentHead)return contentHead;
@@ -71,9 +81,9 @@
   }
   function show(kind,pushHash){
     current=kind;document.body.classList.add('mw-v55-browse-mode');
+    ensureHeaderBack();
     setActiveSections(kind);updatePortalPressed(kind);
     const head=ensureContentHead();head.hidden=false;head.querySelector('.mw-v55-content-title').textContent=kind==='local'?'المتاجر المحلية':'المتاجر العالمية';
-    const back=ensureHeaderBack();if(back)back.hidden=false;
     try{window.showStoresTab?.(kind==='local'?'local':'international')}catch{}
     setActiveSections(kind);
     if(pushHash)history.replaceState(history.state,'',kind==='local'?'#local-stores':'#global-stores');
@@ -82,14 +92,14 @@
   function landing(clearHash){
     current=null;document.body.classList.remove('mw-v55-browse-mode');
     [q(INTL_ID),q(LOCAL_ID)].forEach(el=>{if(el){el.classList.add('mw-v55-section-hidden');el.classList.remove('mw-v55-active')}});
-    updatePortalPressed('');if(contentHead)contentHead.hidden=true;if(headerBack)headerBack.hidden=true;
+    updatePortalPressed('');if(contentHead)contentHead.hidden=true;
     if(clearHash&&/#(?:global|local)-stores$/i.test(location.hash))history.replaceState(history.state,'',location.pathname+location.search);
     portalShell?.scrollIntoView({behavior:'smooth',block:'center'});
   }
   function build(){
     const intl=q(INTL_ID),local=q(LOCAL_ID);if(!intl&&!local)return;
     q('meshwarStoreTabs')?.setAttribute('aria-hidden','true');
-    normalizeShowcases();ensureHeaderBack();
+    normalizeShowcases();ensureHeaderBack();watchHeaderBack();
     portalShell=document.createElement('section');portalShell.className='mw-v55-portal-shell';portalShell.id='kintoStorePortalsV55';
     const head=document.createElement('div');head.className='mw-v55-portal-head';
     const h=document.createElement('h2');h.textContent='اختر وجهتك للتسوق';
@@ -106,6 +116,7 @@
         const kind=btn.dataset.kind,section=q(kind==='local'?LOCAL_ID:INTL_ID),strip=btn.querySelector('.mw-v55-logo-strip');
         if(!strip||strip.querySelector('img'))return;const logos=collectLogos(section,kind==='local');if(!logos.length)return;strip.replaceWith(logoStrip(section,kind==='local'));
       });
+      if(document.body.classList.contains('mw-v55-browse-mode'))ensureHeaderBack();
     });
     if(local)mo.observe(local,{childList:true,subtree:true});if(intl)mo.observe(intl,{childList:true,subtree:true});
   }
