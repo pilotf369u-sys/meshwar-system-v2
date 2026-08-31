@@ -1,7 +1,7 @@
-/* KINTO V67 — direct featured-store routing; no delegated store click handler. */
+/* KINTO V68 — direct featured-store routing to isolated store page. */
 (()=>{'use strict';
 const ROOT_ID='meshwarFeaturedCampaigns';
-const storeHref=id=>`index.html?storeId=${encodeURIComponent(String(id||'').trim())}`;
+const storeHref=id=>`store.html?storeId=${encodeURIComponent(String(id||'').trim())}`;
 let boundRoot=null;
 function normalizeStoreLinks(root){
   root.querySelectorAll('a[data-open-store]').forEach(a=>{
@@ -21,7 +21,7 @@ function bindControls(root){
   if(boundRoot===root)return;
   boundRoot=root;
   root.addEventListener('click',e=>{
-    if(e.target.closest('a[data-open-store]'))return; // native href navigation only
+    if(e.target.closest('a[data-open-store]'))return;
     if(e.target.closest('#mwFeaturedPrev')){e.preventDefault();setSlide(root,activeIndex(root)-1);return;}
     if(e.target.closest('#mwFeaturedNext')){e.preventDefault();setSlide(root,activeIndex(root)+1);return;}
     const dot=e.target.closest('[data-dot]');if(dot){e.preventDefault();setSlide(root,Number(dot.dataset.dot)||0);}
@@ -29,8 +29,6 @@ function bindControls(root){
 }
 function harden(){
   const root=document.getElementById(ROOT_ID);if(!root)return;
-  /* Remove V13 delegated onclick that called preventDefault()+openStore().
-     Store anchors now navigate directly using their real storeId in href. */
   root.onclick=null;
   normalizeStoreLinks(root);
   bindControls(root);
