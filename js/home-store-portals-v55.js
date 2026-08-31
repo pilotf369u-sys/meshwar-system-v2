@@ -1,7 +1,7 @@
-/* KINTO HOME STORE PORTALS V55 — isolated homepage navigation */
+/* KINTO HOME STORE PORTALS V61 — isolated homepage navigation + header back control + showcase sizing */
 (function(){
   const INTL_ID='internationalStoresSection', LOCAL_ID='localStoresPublic';
-  let portalShell,contentHead,current=null;
+  let portalShell,contentHead,headerBack,current=null;
   const q=id=>document.getElementById(id);
   const unique=s=>[...new Set(s.filter(Boolean))];
   function collectLogos(section,local){
@@ -41,12 +41,31 @@
   function updatePortalPressed(kind){
     portalShell?.querySelectorAll('.mw-v55-portal').forEach(b=>b.setAttribute('aria-pressed',b.dataset.kind===kind?'true':'false'));
   }
+  function normalizeShowcases(){
+    const candidates=[
+      document.querySelector('#meshwarVideoAd > div'),
+      document.querySelector('.header-container.kinto-featured-store')
+    ].filter(Boolean);
+    candidates.forEach(el=>el.classList.add('kinto-v61-showcase-frame'));
+  }
+  function ensureHeaderBack(){
+    if(headerBack?.isConnected)return headerBack;
+    const controls=q('meshwarHeaderControls');if(!controls)return null;
+    headerBack=document.createElement('button');
+    headerBack.type='button';
+    headerBack.id='mwV61HeaderBack';
+    headerBack.className='mw-v55-back mw-v61-header-back';
+    headerBack.innerHTML='<span aria-hidden="true">↩</span><span>اختيار نوع المتجر</span>';
+    headerBack.hidden=true;
+    headerBack.addEventListener('click',()=>landing(true));
+    controls.prepend(headerBack);
+    return headerBack;
+  }
   function ensureContentHead(){
     if(contentHead)return contentHead;
     contentHead=document.createElement('div');contentHead.className='mw-v55-content-head';contentHead.hidden=true;
     const title=document.createElement('div');title.className='mw-v55-content-title';
-    const back=document.createElement('button');back.type='button';back.className='mw-v55-back';back.textContent='العودة لاختيار نوع المتجر';back.addEventListener('click',()=>landing(true));
-    contentHead.append(title,back);
+    contentHead.append(title);
     const anchor=q(INTL_ID)||q(LOCAL_ID);anchor?.parentNode?.insertBefore(contentHead,anchor);
     return contentHead;
   }
@@ -54,6 +73,7 @@
     current=kind;document.body.classList.add('mw-v55-browse-mode');
     setActiveSections(kind);updatePortalPressed(kind);
     const head=ensureContentHead();head.hidden=false;head.querySelector('.mw-v55-content-title').textContent=kind==='local'?'المتاجر المحلية':'المتاجر العالمية';
+    const back=ensureHeaderBack();if(back)back.hidden=false;
     try{window.showStoresTab?.(kind==='local'?'local':'international')}catch{}
     setActiveSections(kind);
     if(pushHash)history.replaceState(history.state,'',kind==='local'?'#local-stores':'#global-stores');
@@ -62,13 +82,14 @@
   function landing(clearHash){
     current=null;document.body.classList.remove('mw-v55-browse-mode');
     [q(INTL_ID),q(LOCAL_ID)].forEach(el=>{if(el){el.classList.add('mw-v55-section-hidden');el.classList.remove('mw-v55-active')}});
-    updatePortalPressed('');if(contentHead)contentHead.hidden=true;
+    updatePortalPressed('');if(contentHead)contentHead.hidden=true;if(headerBack)headerBack.hidden=true;
     if(clearHash&&/#(?:global|local)-stores$/i.test(location.hash))history.replaceState(history.state,'',location.pathname+location.search);
     portalShell?.scrollIntoView({behavior:'smooth',block:'center'});
   }
   function build(){
     const intl=q(INTL_ID),local=q(LOCAL_ID);if(!intl&&!local)return;
     q('meshwarStoreTabs')?.setAttribute('aria-hidden','true');
+    normalizeShowcases();ensureHeaderBack();
     portalShell=document.createElement('section');portalShell.className='mw-v55-portal-shell';portalShell.id='kintoStorePortalsV55';
     const head=document.createElement('div');head.className='mw-v55-portal-head';
     const h=document.createElement('h2');h.textContent='اختر وجهتك للتسوق';
