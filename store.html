@@ -28,14 +28,17 @@
       <a href="index.html" aria-label="KINTO"><img src="images/meshwar-logo.png" alt="KINTO"></a>
       <a class="store-back" href="index.html">← الرجوع للرئيسية</a>
     </nav>
+
     <section class="store-hero">
       <h1 id="localStoreProductsTitle" class="store-title">جاري فتح المتجر...</h1>
       <p id="localStoreProductsMeta" class="store-meta">يتم التحقق من معرف المتجر وتحميل بياناته مباشرة.</p>
     </section>
+
     <section id="localStoreProductsPanel">
       <div id="localStoreProductsGrid"><div class="store-state">جاري تحميل المنتجات...</div></div>
     </section>
   </main>
+
   <script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>
   <script>
   (()=>{'use strict';
@@ -45,11 +48,26 @@
     const title=document.getElementById('localStoreProductsTitle');
     const meta=document.getElementById('localStoreProductsMeta');
     const grid=document.getElementById('localStoreProductsGrid');
-    if(!id){title.textContent='معرف المتجر غير موجود';meta.textContent='الرابط لا يحتوي storeId صالحاً.';grid.innerHTML='<div class="store-state">تعذر فتح المتجر بدون storeId.</div>';return;}
+    if(!id){
+      title.textContent='معرف المتجر غير موجود';
+      meta.textContent='الرابط لا يحتوي storeId صالحاً.';
+      grid.innerHTML='<div class="store-state">تعذر فتح المتجر بدون storeId.</div>';
+      return;
+    }
     window.__KINTO_STORE_ID__=id;
-    fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json'}})
-      .then(r=>{if(!r.ok)throw new Error(`Store REST ${r.status}`);return r.json()}).then(rows=>{const s=Array.isArray(rows)?rows[0]:null;if(!s)throw new Error('Store not found or inactive');title.textContent=s.store_name||'منتجات المتجر';meta.textContent=[s.specialty||s.store_type,s.governorate||s.country].filter(Boolean).join(' · ')||'متجر نشط';document.title=`${s.store_name||'KINTO Store'} - KINTO`;})
-      .catch(err=>{console.error('Store header load error:',err);title.textContent='منتجات المتجر';meta.textContent='سيتم محاولة تحميل المنتجات مباشرة من معرف المتجر.';});
+    fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{
+      cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json'}
+    }).then(r=>{if(!r.ok)throw new Error(`Store REST ${r.status}`);return r.json()}).then(rows=>{
+      const s=Array.isArray(rows)?rows[0]:null;
+      if(!s)throw new Error('Store not found or inactive');
+      title.textContent=s.store_name||'منتجات المتجر';
+      meta.textContent=[s.specialty||s.store_type,s.governorate||s.country].filter(Boolean).join(' · ')||'متجر نشط';
+      document.title=`${s.store_name||'KINTO Store'} - KINTO`;
+    }).catch(err=>{
+      console.error('Store header load error:',err);
+      title.textContent='منتجات المتجر';
+      meta.textContent='سيتم محاولة تحميل المنتجات مباشرة من معرف المتجر.';
+    });
   })();
   </script>
   <script src="js/local-cart-v93.js?v=20260901-v93"></script>
