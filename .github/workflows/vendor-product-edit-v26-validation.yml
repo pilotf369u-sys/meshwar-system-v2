@@ -35,7 +35,7 @@ jobs:
           grep -q "20260824-v27-payloadfix1" js/local-store-taxonomy-persistence-v10.js
           grep -q "hydrateTaxonomyForEdit" js/local-store-taxonomy-persistence-v10.js
           grep -q "persistTaxonomy" js/local-store-taxonomy-persistence-v10.js
-          grep -q "vendor-product-edit-fields-v26.js?v=20260824-v27-payloadfix1" vendor-dashboard.html
+          grep -q "vendor-product-edit-fields-v26.js?v=20260825-native-modal-raceguard1" vendor-dashboard.html
           grep -q "MeshwarVendorProductEditFieldsV26?.install" vendor-dashboard.html
           ! grep -q "wrapSaveProduct" js/vendor-product-edit-fields-v26.js
           ! grep -q "wrapEditProduct" js/vendor-product-edit-fields-v26.js
