@@ -1,4 +1,4 @@
-/* KINTO V59 — deterministic deep-link pulse, resilient to legacy V31 inline focus */
+/* KINTO V78 — deterministic deep-link pulse + isolated-store compatibility */
 (function(){
   const params=new URLSearchParams(location.search);
   const productId=['productId','product_id','product','pid'].map(k=>params.get(k)).find(v=>String(v||'').trim());
@@ -6,6 +6,22 @@
 
   const pid=String(productId).trim();
   const storeId=String(params.get('storeId')||params.get('store_id')||'').trim();
+
+  /* V78: legacy/customer/employee/admin product links still point at index.html.
+     Since local storefronts now live on store.html, preserve the exact store/product
+     identifiers and move the browser to the isolated storefront before any legacy
+     homepage openStore/DOM behavior can intercept the deep link. */
+  const onStorePage=/(?:^|\/)store\.html$/i.test(location.pathname);
+  if(storeId&&!onStorePage){
+    const target=new URL('store.html',location.href);
+    target.search=location.search;
+    target.searchParams.set('storeId',storeId);
+    target.searchParams.set('productId',pid);
+    target.hash=location.hash||'';
+    location.replace(target.href);
+    return;
+  }
+
   const style=document.createElement('style');
   style.id='mwV59DeepLinkStyle';
   style.textContent=`
