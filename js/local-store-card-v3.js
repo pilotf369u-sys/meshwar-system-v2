@@ -1,7 +1,7 @@
 const SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
 const SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
 const CACHE_PREFIX='meshwar_local_store_cache_v3_';
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const fmt=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:0});
 const Pricing=window.MeshwarLocalPricing||{ceilNumber:v=>Math.ceil(Number(v)),commissionFraction:r=>{const n=Number(r);return Number.isFinite(n)&&n>=0&&n<100?n/100:.10},customerPriceUSD:(v,r)=>Math.ceil(Number(v)/(1-(Number(r)||10)/100)),customerPriceLocal:(v,r,x)=>Math.ceil((Math.ceil(Number(v)/(1-(Number(r)||10)/100))*Number(x||1))/1000)*1000,discountPercent:(b,d)=>Math.max(1,Math.min(99,Math.round(((Number(b)-Number(d))/Number(b))*100)))};
 const ceilPrice=Pricing.ceilNumber;
