@@ -5,70 +5,22 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>KINTO Store</title>
+  <link rel="stylesheet" href="css/local-cart-v93.css?v=20260901-v93">
   <style>
-    :root{color-scheme:dark}
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:linear-gradient(180deg,#063b32 0%,#04362e 46%,#032b25 100%);color:#f8fafc}
-    .store-shell{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:18px 0 48px}
-    .store-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid rgba(229,185,63,.24);border-radius:18px;background:rgba(2,44,37,.82);position:sticky;top:10px;z-index:30;backdrop-filter:blur(18px)}
-    .store-nav img{width:42px;height:42px;object-fit:contain;border-radius:12px;background:rgba(255,255,255,.08);padding:5px}
-    .store-back{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 14px;border:1px solid rgba(255,224,138,.58);border-radius:999px;color:#fff;text-decoration:none;font-weight:900;background:rgba(229,185,63,.12)}
-    .store-hero{margin:20px 0 16px;padding:22px;border:1px solid rgba(229,185,63,.28);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.04));box-shadow:0 22px 55px rgba(0,0,0,.16)}
-    .store-title{margin:0;font-size:clamp(24px,4vw,38px);color:#ffe08a}
-    .store-meta{margin:8px 0 0;color:#c8d7d3;line-height:1.8}
-    #localStoreProductsPanel{display:block!important}
-    #localStoreProductsGrid{margin-top:16px}
-    .store-state{padding:26px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(15,23,42,.32);text-align:center;color:#d7e4e0}
+    :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:linear-gradient(180deg,#063b32 0%,#04362e 46%,#032b25 100%);color:#f8fafc}.store-shell{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:18px 0 48px}.store-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid rgba(229,185,63,.24);border-radius:18px;background:rgba(2,44,37,.82);position:sticky;top:10px;z-index:30;backdrop-filter:blur(18px)}.store-nav img{width:42px;height:42px;object-fit:contain;border-radius:12px;background:rgba(255,255,255,.08);padding:5px}.store-back{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 14px;border:1px solid rgba(255,224,138,.58);border-radius:999px;color:#fff;text-decoration:none;font-weight:900;background:rgba(229,185,63,.12)}.store-hero{margin:20px 0 16px;padding:22px;border:1px solid rgba(229,185,63,.28);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.04));box-shadow:0 22px 55px rgba(0,0,0,.16)}.store-title{margin:0;font-size:clamp(24px,4vw,38px);color:#ffe08a}.store-meta{margin:8px 0 0;color:#c8d7d3;line-height:1.8}#localStoreProductsPanel{display:block!important}#localStoreProductsGrid{margin-top:16px}.store-state{padding:26px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(15,23,42,.32);text-align:center;color:#d7e4e0}
   </style>
 </head>
 <body>
   <main class="store-shell">
-    <nav class="store-nav">
-      <a href="index.html" aria-label="KINTO"><img src="images/meshwar-logo.png" alt="KINTO"></a>
-      <a class="store-back" href="index.html">← الرجوع للرئيسية</a>
-    </nav>
-
-    <section class="store-hero">
-      <h1 id="localStoreProductsTitle" class="store-title">جاري فتح المتجر...</h1>
-      <p id="localStoreProductsMeta" class="store-meta">يتم التحقق من معرف المتجر وتحميل بياناته مباشرة.</p>
-    </section>
-
-    <section id="localStoreProductsPanel">
-      <div id="localStoreProductsGrid"><div class="store-state">جاري تحميل المنتجات...</div></div>
-    </section>
+    <nav class="store-nav"><a href="index.html" aria-label="KINTO"><img src="images/meshwar-logo.png" alt="KINTO"></a><a class="store-back" href="index.html">← الرجوع للرئيسية</a></nav>
+    <section class="store-hero"><h1 id="localStoreProductsTitle" class="store-title">جاري فتح المتجر...</h1><p id="localStoreProductsMeta" class="store-meta">يتم التحقق من معرف المتجر وتحميل بياناته مباشرة.</p></section>
+    <section id="localStoreProductsPanel"><div id="localStoreProductsGrid"><div class="store-state">جاري تحميل المنتجات...</div></div></section>
   </main>
-
   <script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>
   <script>
-  (()=>{'use strict';
-    const SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
-    const SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
-    const id=String(new URLSearchParams(location.search).get('storeId')||'').trim();
-    const title=document.getElementById('localStoreProductsTitle');
-    const meta=document.getElementById('localStoreProductsMeta');
-    const grid=document.getElementById('localStoreProductsGrid');
-    if(!id){
-      title.textContent='معرف المتجر غير موجود';
-      meta.textContent='الرابط لا يحتوي storeId صالحاً.';
-      grid.innerHTML='<div class="store-state">تعذر فتح المتجر بدون storeId.</div>';
-      return;
-    }
-    window.__KINTO_STORE_ID__=id;
-    fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{
-      cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json'}
-    }).then(r=>{if(!r.ok)throw new Error(`Store REST ${r.status}`);return r.json()}).then(rows=>{
-      const s=Array.isArray(rows)?rows[0]:null;
-      if(!s)throw new Error('Store not found or inactive');
-      title.textContent=s.store_name||'منتجات المتجر';
-      meta.textContent=[s.specialty||s.store_type,s.governorate||s.country].filter(Boolean).join(' · ')||'متجر نشط';
-      document.title=`${s.store_name||'KINTO Store'} - KINTO`;
-    }).catch(err=>{
-      console.error('Store header load error:',err);
-      title.textContent='منتجات المتجر';
-      meta.textContent='سيتم محاولة تحميل المنتجات مباشرة من معرف المتجر.';
-    });
-  })();
+  (()=>{'use strict';const SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co',SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH',id=String(new URLSearchParams(location.search).get('storeId')||'').trim(),title=document.getElementById('localStoreProductsTitle'),meta=document.getElementById('localStoreProductsMeta'),grid=document.getElementById('localStoreProductsGrid');if(!id){title.textContent='معرف المتجر غير موجود';meta.textContent='الرابط لا يحتوي storeId صالحاً.';grid.innerHTML='<div class="store-state">تعذر فتح المتجر بدون storeId.</div>';return}window.__KINTO_STORE_ID__=id;fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json'}}).then(r=>{if(!r.ok)throw new Error(`Store REST ${r.status}`);return r.json()}).then(rows=>{const s=Array.isArray(rows)?rows[0]:null;if(!s)throw new Error('Store not found or inactive');title.textContent=s.store_name||'منتجات المتجر';meta.textContent=[s.specialty||s.store_type,s.governorate||s.country].filter(Boolean).join(' · ')||'متجر نشط';document.title=`${s.store_name||'KINTO Store'} - KINTO`}).catch(err=>{console.error('Store header load error:',err);title.textContent='منتجات المتجر';meta.textContent='سيتم محاولة تحميل المنتجات مباشرة من معرف المتجر.'})})();
   </script>
-  <script type="module" src="js/local-store-card-v3.js?v=20260831-store-v68"></script>
+  <script src="js/local-cart-v93.js?v=20260901-v93"></script>
+  <script type="module" src="js/local-store-card-v3.js?v=20260901-v93"></script>
 </body>
 </html>
