@@ -1,17 +1,17 @@
-/* KINTO V80 — CSS-only split treatment for header user information and orders entry. */
+/* KINTO V81 — CSS-only header user controls alignment. No JS or routing changes. */
 #meshwarHeaderControls .user-auth-zone{
   display:flex!important;
   align-items:center!important;
   justify-content:flex-end!important;
-  gap:9px!important;
-  flex-wrap:wrap!important;
+  gap:8px!important;
+  flex-wrap:nowrap!important;
   min-width:0!important;
   background:transparent!important;
 }
 #meshwarHeaderControls #authLink.account-btn{
   display:flex!important;
   align-items:center!important;
-  gap:9px!important;
+  gap:8px!important;
   padding:0!important;
   margin:0!important;
   border:0!important;
@@ -22,80 +22,96 @@
 }
 #meshwarHeaderControls #authLink.account-btn>i{display:none!important}
 #meshwarHeaderControls #authText,
-#meshwarHeaderControls #authLink.account-btn::after{
+#meshwarHeaderControls #authLink.account-btn::after,
+#meshwarHeaderControls .header-logout-btn{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
-  min-height:38px!important;
+  height:40px!important;
+  min-height:40px!important;
   box-sizing:border-box!important;
-  border:1px solid rgba(255,224,138,.28)!important;
-  border-radius:15px!important;
-  background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.055))!important;
-  color:#f8fafc!important;
-  box-shadow:0 9px 24px rgba(2,6,23,.17),inset 0 1px rgba(255,255,255,.11)!important;
+  border-radius:14px!important;
+  white-space:nowrap!important;
+  line-height:1!important;
   backdrop-filter:blur(16px) saturate(135%)!important;
   -webkit-backdrop-filter:blur(16px) saturate(135%)!important;
   transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease,background .2s ease!important;
-  white-space:nowrap!important;
 }
 #meshwarHeaderControls #authText{
-  padding:8px 13px!important;
-  font-size:12px!important;
-  font-weight:850!important;
+  padding:0 14px!important;
   max-width:190px!important;
   overflow:hidden!important;
   text-overflow:ellipsis!important;
-}
-#meshwarHeaderControls #authText::before{
-  content:"أهلاً، ";
-  color:#ffe08a;
-  font-weight:900;
-  margin-inline-end:3px;
-}
-#meshwarHeaderControls #authLink.account-btn::after{
-  content:"طلباتي";
-  padding:8px 15px!important;
+  border:1px solid rgba(255,224,138,.28)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.055))!important;
+  color:#f8fafc!important;
+  box-shadow:0 8px 22px rgba(2,6,23,.16),inset 0 1px rgba(255,255,255,.11)!important;
   font-size:12px!important;
-  font-weight:950!important;
+  font-weight:850!important;
+}
+/* V81: do not prepend another greeting; runtime #authText remains the single source of user wording. */
+#meshwarHeaderControls #authText::before{content:none!important;display:none!important}
+#meshwarHeaderControls #authLink.account-btn::after{
+  content:"\f07a  طلباتي";
+  min-width:112px!important;
+  padding:0 18px!important;
+  border:1px solid rgba(255,224,138,.72)!important;
+  background:linear-gradient(145deg,rgba(255,224,138,.98),rgba(216,169,31,.92))!important;
   color:#17221f!important;
-  border-color:rgba(255,224,138,.62)!important;
-  background:linear-gradient(145deg,rgba(255,224,138,.96),rgba(216,169,31,.9))!important;
-  box-shadow:0 9px 26px rgba(229,185,63,.19),inset 0 1px rgba(255,255,255,.3)!important;
+  box-shadow:0 9px 28px rgba(229,185,63,.26),0 0 0 1px rgba(255,224,138,.08),inset 0 1px rgba(255,255,255,.34)!important;
+  font-family:"Font Awesome 6 Free","Font Awesome 5 Free",Arial,sans-serif!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  letter-spacing:0!important;
+}
+#meshwarHeaderControls .header-logout-btn{
+  flex:0 0 auto!important;
+  padding:0 14px!important;
+  border:1px solid rgba(248,113,113,.35)!important;
+  background:rgba(127,29,29,.18)!important;
+  color:#fecaca!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  box-shadow:0 8px 22px rgba(2,6,23,.14),inset 0 1px rgba(255,255,255,.06)!important;
 }
 #meshwarHeaderControls #authLink.account-btn:hover #authText,
 #meshwarHeaderControls #authLink.account-btn:focus-visible #authText{
-  transform:translateY(-2px)!important;
-  border-color:rgba(255,224,138,.6)!important;
+  transform:translateY(-1px)!important;
+  border-color:rgba(255,224,138,.58)!important;
   background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(229,185,63,.08))!important;
-  box-shadow:0 13px 30px rgba(2,6,23,.23),0 0 0 1px rgba(255,224,138,.08),inset 0 1px rgba(255,255,255,.15)!important;
+  box-shadow:0 12px 28px rgba(2,6,23,.22),0 0 0 1px rgba(255,224,138,.08),inset 0 1px rgba(255,255,255,.15)!important;
 }
 #meshwarHeaderControls #authLink.account-btn:hover::after,
 #meshwarHeaderControls #authLink.account-btn:focus-visible::after{
-  transform:translateY(-2px)!important;
+  transform:translateY(-1px)!important;
   border-color:#ffe08a!important;
-  box-shadow:0 14px 32px rgba(229,185,63,.28),0 0 0 3px rgba(255,224,138,.08),inset 0 1px rgba(255,255,255,.34)!important;
+  box-shadow:0 13px 34px rgba(229,185,63,.38),0 0 0 3px rgba(255,224,138,.10),inset 0 1px rgba(255,255,255,.38)!important;
+}
+#meshwarHeaderControls .header-logout-btn:hover,
+#meshwarHeaderControls .header-logout-btn:focus-visible{
+  transform:translateY(-1px)!important;
+  border-color:rgba(248,113,113,.62)!important;
+  background:rgba(185,28,28,.27)!important;
+  box-shadow:0 12px 28px rgba(127,29,29,.22),inset 0 1px rgba(255,255,255,.08)!important;
 }
 #meshwarHeaderControls #authLink.account-btn:focus-visible{outline:none!important}
-#meshwarHeaderControls .header-logout-btn{
-  flex:0 0 auto!important;
-  min-height:38px!important;
-  padding:8px 12px!important;
-  border-radius:14px!important;
-  backdrop-filter:blur(14px)!important;
-  -webkit-backdrop-filter:blur(14px)!important;
-}
 @media(max-width:640px){
-  #meshwarHeaderControls .user-auth-zone{gap:6px!important;max-width:100%!important}
-  #meshwarHeaderControls #authLink.account-btn{gap:6px!important;max-width:100%!important}
-  #meshwarHeaderControls #authText{max-width:124px!important;min-height:35px!important;padding:7px 9px!important;font-size:10.5px!important}
-  #meshwarHeaderControls #authLink.account-btn::after{min-height:35px!important;padding:7px 11px!important;font-size:11px!important}
-  #meshwarHeaderControls .header-logout-btn{min-height:35px!important;padding:7px 9px!important;font-size:10.5px!important}
+  #meshwarHeaderControls .user-auth-zone{gap:5px!important;max-width:100%!important}
+  #meshwarHeaderControls #authLink.account-btn{gap:5px!important;max-width:100%!important}
+  #meshwarHeaderControls #authText,
+  #meshwarHeaderControls #authLink.account-btn::after,
+  #meshwarHeaderControls .header-logout-btn{height:36px!important;min-height:36px!important}
+  #meshwarHeaderControls #authText{max-width:118px!important;padding:0 9px!important;font-size:10.5px!important}
+  #meshwarHeaderControls #authLink.account-btn::after{min-width:96px!important;padding:0 11px!important;font-size:11.5px!important}
+  #meshwarHeaderControls .header-logout-btn{padding:0 9px!important;font-size:10.5px!important}
 }
-@media(max-width:390px){
+@media(max-width:430px){
+  #meshwarHeaderControls .user-auth-zone{flex-wrap:wrap!important;justify-content:flex-end!important}
   #meshwarHeaderControls #authText{max-width:104px!important}
-  #meshwarHeaderControls #authLink.account-btn::after{padding-inline:9px!important}
+  #meshwarHeaderControls #authLink.account-btn::after{min-width:90px!important;padding-inline:9px!important}
 }
 @media(prefers-reduced-motion:reduce){
   #meshwarHeaderControls #authText,
-  #meshwarHeaderControls #authLink.account-btn::after{transition:none!important}
+  #meshwarHeaderControls #authLink.account-btn::after,
+  #meshwarHeaderControls .header-logout-btn{transition:none!important}
 }
