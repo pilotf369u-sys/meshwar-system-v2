@@ -24,6 +24,8 @@ body.mw-v55-browse-mode #meshwarHeaderControls .mw-v62-header-back{display:inlin
 .header-container.kinto-featured-store.kinto-v61-showcase-frame .kinto-featured-logo-wrap,.header-container.kinto-featured-store.kinto-v61-showcase-frame .kinto-featured-copy{min-width:0!important;max-height:100%!important;overflow:hidden!important}
 .header-container.kinto-featured-store.kinto-v61-showcase-frame .main-logo{display:block!important;width:auto!important;max-width:100%!important;max-height:calc(var(--v61-showcase-h) - 44px)!important;margin:0 auto!important;object-fit:contain!important}
 body.mw-v55-browse-mode .mw-v55-portal-shell{margin-bottom:16px}.mw-v55-portal[aria-pressed="true"]{border-color:rgba(229,185,63,.62);box-shadow:0 20px 55px rgba(0,0,0,.18),0 0 0 1px rgba(229,185,63,.10)}
+/* V83: CSS-only entry point for the existing homepage order modal. */
+#orderModal:target{display:block!important}
 /* remove heavy black/grey panels from the store browsing surfaces */
 #internationalStoresSection.mw-v55-active,#localStoresPublic.mw-v55-active,.mw-v55-content-head{background:transparent!important}
 #internationalStoresSection.mw-v55-active .store-card,#localStoresPublic.mw-v55-active .local-public-card{background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.045))!important;border-color:rgba(229,185,63,.22)!important;color:#fff!important;box-shadow:0 14px 36px rgba(0,0,0,.13)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important}
