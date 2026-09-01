@@ -1,0 +1,185 @@
+/* KINTO V91 — video + four featured stores layout only. */
+@media (min-width: 980px) {
+  /* The CMS featured section is mounted immediately after the home hero section. Keep both as a balanced two-column showcase without touching data/runtime logic. */
+  body > section:has(.mw-home-hero-grid) {
+    float: left;
+    width: calc(50% - 12px) !important;
+    max-width: none !important;
+    margin: 18px 0 24px !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+  }
+
+  body > section:has(.mw-home-hero-grid) .mw-home-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    padding: 18px !important;
+    min-height: 100% !important;
+    background: linear-gradient(145deg, rgba(4,47,40,.92), rgba(7,67,56,.78)) !important;
+    border-color: rgba(255,224,138,.22) !important;
+  }
+
+  /* V91 replaces the former copy/banner-heavy composition with the video as the left visual cell. */
+  body > section:has(.mw-home-hero-grid) .mw-home-copy {
+    display: none !important;
+  }
+
+  body > section:has(.mw-home-hero-grid) .mw-home-video-card {
+    width: 100% !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+    aspect-ratio: 16 / 9 !important;
+    border-radius: 24px !important;
+    border-color: rgba(255,224,138,.30) !important;
+    background: #031f1b !important;
+    box-shadow: 0 18px 42px rgba(2,25,21,.28), inset 0 1px rgba(255,255,255,.06) !important;
+  }
+
+  body > section:has(.mw-home-hero-grid) .mw-home-search-slot {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 10px 0 0 !important;
+    padding: 0 !important;
+  }
+
+  #meshwarFeaturedCampaigns {
+    float: right;
+    width: calc(50% - 12px) !important;
+    max-width: none !important;
+    margin: 18px 0 24px !important;
+    padding: 18px !important;
+    min-height: 100% !important;
+    border-radius: 28px !important;
+    border: 1px solid rgba(255,224,138,.24) !important;
+    background: linear-gradient(145deg, rgba(4,47,40,.90), rgba(7,67,56,.74)) !important;
+    box-shadow: 0 18px 42px rgba(2,25,21,.24), inset 0 1px rgba(255,255,255,.06) !important;
+    backdrop-filter: blur(18px) saturate(125%);
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+    box-sizing: border-box;
+  }
+
+  /* Remove the oversized featured campaign hero in-place. */
+  #meshwarFeaturedCampaigns .mw-featured-hero,
+  #meshwarFeaturedCampaigns .mw-featured-strip,
+  #meshwarFeaturedCampaigns .mw-featured-grid-title,
+  #meshwarFeaturedCampaigns #mwFeaturedCircularV76 {
+    display: none !important;
+  }
+
+  /* Reuse the already-rendered four CMS featured stores instead of duplicating or hardcoding store data. */
+  #meshwarFeaturedCampaigns .mw-featured-grid.mw-v76-source-hidden,
+  #meshwarFeaturedCampaigns .mw-featured-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    min-height: 0 !important;
+  }
+
+  #meshwarFeaturedCampaigns .mw-featured-card {
+    min-height: 174px !important;
+    border-radius: 22px !important;
+    padding: 16px !important;
+    overflow: hidden !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.035)) !important;
+    border: 1px solid rgba(255,224,138,.24) !important;
+    box-shadow: 0 12px 28px rgba(2,25,21,.18), inset 0 1px rgba(255,255,255,.06) !important;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease !important;
+  }
+
+  #meshwarFeaturedCampaigns .mw-featured-card:hover,
+  #meshwarFeaturedCampaigns .mw-featured-card:focus-within {
+    transform: translateY(-2px) !important;
+    border-color: rgba(255,224,138,.56) !important;
+    box-shadow: 0 16px 34px rgba(2,25,21,.22), 0 0 18px rgba(229,185,63,.10) !important;
+  }
+
+  #meshwarFeaturedCampaigns .mw-featured-card-media,
+  #meshwarFeaturedCampaigns .mw-featured-card-meta,
+  #meshwarFeaturedCampaigns .mw-featured-card-rating,
+  #meshwarFeaturedCampaigns .mw-featured-card-products {
+    display: none !important;
+  }
+
+  #meshwarFeaturedCampaigns .mw-featured-card-logo {
+    position: static !important;
+    width: 66px !important;
+    height: 66px !important;
+    margin: 0 auto 10px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid rgba(255,224,138,.70) !important;
+    background: rgba(255,255,255,.96) !important;
+    box-shadow: 0 10px 22px rgba(2,25,21,.24) !important;
+  }
+
+  #meshwarFeaturedCampaigns .mw-featured-card-body {
+    width: 100% !important;
+    padding: 0 !important;
+    text-align: center !important;
+    align-items: center !important;
+  }
+
+  #meshwarFeaturedCampaigns .mw-featured-card-name {
+    margin: 0 0 10px !important;
+    color: #fff1b8 !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+    font-weight: 900 !important;
+  }
+
+  #meshwarFeaturedCampaigns .mw-featured-card-open {
+    width: 100% !important;
+    min-height: 34px !important;
+    margin-top: auto !important;
+    padding: 0 10px !important;
+    border-radius: 11px !important;
+    border: 1px solid rgba(255,224,138,.42) !important;
+    background: rgba(4,47,40,.78) !important;
+    color: #ffe08a !important;
+    font-size: 10px !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure the next homepage surfaces start below both V91 columns. */
+  .header-container.kinto-featured-store,
+  #meshwarTicker,
+  #meshwarStoreTabs {
+    clear: both !important;
+  }
+}
+
+@media (max-width: 979px) {
+  /* On smaller screens keep a clean single-column flow but still remove the oversized campaign banner. */
+  #meshwarFeaturedCampaigns .mw-featured-hero,
+  #meshwarFeaturedCampaigns .mw-featured-strip,
+  #meshwarFeaturedCampaigns .mw-featured-grid-title,
+  #meshwarFeaturedCampaigns #mwFeaturedCircularV76 {
+    display: none !important;
+  }
+
+  #meshwarFeaturedCampaigns .mw-featured-grid.mw-v76-source-hidden,
+  #meshwarFeaturedCampaigns .mw-featured-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  #meshwarFeaturedCampaigns .mw-featured-card {
+    min-height: 176px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  #meshwarFeaturedCampaigns .mw-featured-grid.mw-v76-source-hidden,
+  #meshwarFeaturedCampaigns .mw-featured-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #meshwarFeaturedCampaigns .mw-featured-card {
+    transition: none !important;
+  }
+}
