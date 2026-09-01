@@ -3,7 +3,7 @@
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   // CI compatibility marker: btn.textContent='عرض التفاصيل والطلب'
-  let resolveCore,rejectCore;
+  let resolveCore,rejectCore,activeProductId='',cartReadyPromise=null;
   const coreReady=new Promise((resolve,reject)=>{resolveCore=resolve;rejectCore=reject});
 
   async function rest(path){
@@ -11,6 +11,19 @@
     if(!r.ok)throw new Error(await r.text()||`HTTP ${r.status}`);
     const t=await r.text();return t?JSON.parse(t):null;
   }
+
+  function ensureCart(){
+    const ready=()=>{const cart=window.KintoLocalCartV93;if(!cart||typeof cart.add!=='function')return null;if(typeof cart.addItem!=='function')cart.addItem=cart.add.bind(cart);return cart};
+    const existing=ready();if(existing)return Promise.resolve(existing);if(cartReadyPromise)return cartReadyPromise;
+    if(!document.querySelector('link[data-kinto-local-cart-v93]')){const link=document.createElement('link');link.rel='stylesheet';link.href='css/local-cart-v93.css?v=20260901-stage2';link.dataset.kintoLocalCartV93='1';document.head.appendChild(link)}
+    cartReadyPromise=new Promise((resolve,reject)=>{const done=()=>{const cart=ready();cart?resolve(cart):reject(new Error('تعذر تهيئة سلة المتاجر المحلية.'))};const found=document.querySelector('script[data-kinto-local-cart-v93]');if(found){found.addEventListener('load',done,{once:true});found.addEventListener('error',()=>reject(new Error('تعذر تحميل سلة المتاجر المحلية.')),{once:true});setTimeout(done,0);return}const s=document.createElement('script');s.src='js/local-cart-v93.js?v=20260901-stage2';s.dataset.kintoLocalCartV93='1';s.onload=done;s.onerror=()=>reject(new Error('تعذر تحميل سلة المتاجر المحلية.'));document.head.appendChild(s)});
+    return cartReadyPromise;
+  }
+
+  const moneyNumber=v=>{const n=Number(String(v||'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:null};
+  function currentUnitPrice(product,store){const pricing=window.MeshwarLocalPricing,vendor=Number(product?.discount_price??product?.base_price);let unit=Number.isFinite(vendor)?pricing?.customerPriceLocal?.(vendor,store?.commission_rate,store?.exchange_rate):null;if(!Number.isFinite(Number(unit))){const card=[...document.querySelectorAll('.local-v3-card')].find(c=>String(c.dataset.productCard||'')===String(product?.id||''));unit=moneyNumber(card?.querySelector('.local-v3-local')?.textContent)}return Number.isFinite(Number(unit))?Math.ceil(Number(unit)):null}
+  function oldUnitPrice(product,store){const base=Number(product?.base_price),discount=Number(product?.discount_price);if(!Number.isFinite(base)||!Number.isFinite(discount)||discount>=base)return null;const pricing=window.MeshwarLocalPricing;let old=pricing?.customerPriceLocal?.(base,store?.commission_rate,store?.exchange_rate);if(!Number.isFinite(Number(old))){const card=[...document.querySelectorAll('.local-v3-card')].find(c=>String(c.dataset.productCard||'')===String(product?.id||''));old=moneyNumber(card?.querySelector('.local-v3-old')?.textContent)}return Number.isFinite(Number(old))?Math.ceil(Number(old)):null}
+  function labelModalCartCta(){const btn=document.querySelector('#mwLocalProductDetailsModal.open .mw-modal-confirm:not(:disabled)');if(btn)btn.textContent='أضف للسلة'}
 
   async function hydrateStoreContext(productId){
     const context=window.MeshwarLocalStoreV4Context||{};
@@ -35,15 +48,36 @@
     if(!btn||btn.disabled)return;
     e.preventDefault();e.stopImmediatePropagation();
     try{
+      activeProductId=String(btn.dataset.pid||'').trim();
       await coreReady;
-      await hydrateStoreContext(btn.dataset.pid);
+      await hydrateStoreContext(activeProductId);
       if(typeof window.openProductModal!=='function')throw new Error('نافذة تفاصيل المنتج لم تكتمل تهيئتها.');
-      await window.openProductModal(btn.dataset.pid);
-      await window.MeshwarVariantStock?.enhanceModal?.(btn.dataset.pid);
-      await window.MeshwarMatrixStock?.enhanceModal?.(btn.dataset.pid);
-      window.MeshwarLocalStoreV7?.enhanceModal?.(btn.dataset.pid);
-      await window.MeshwarDetailedDescriptionV8?.applyModalDetailedDescription?.(btn.dataset.pid);
-    }catch(err){console.error('V4 store context error',err);alert('تعذر فتح أو إرسال الطلب: '+(err?.message||err))}
+      await window.openProductModal(activeProductId);
+      labelModalCartCta();
+      await window.MeshwarVariantStock?.enhanceModal?.(activeProductId);
+      await window.MeshwarMatrixStock?.enhanceModal?.(activeProductId);
+      window.MeshwarLocalStoreV7?.enhanceModal?.(activeProductId);
+      await window.MeshwarDetailedDescriptionV8?.applyModalDetailedDescription?.(activeProductId);
+    }catch(err){console.error('V4 store context error',err);alert('تعذر فتح تفاصيل المنتج: '+(err?.message||err))}
+  },true);
+
+  document.addEventListener('click',async e=>{
+    const confirmBtn=e.target.closest?.('#mwLocalProductDetailsModal.open .mw-modal-confirm');
+    if(!confirmBtn||confirmBtn.disabled||!activeProductId)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    const modal=confirmBtn.closest('#mwLocalProductDetailsModal'),body=modal?.querySelector('#mwDetailBody');if(!modal||!body)return;
+    const selection={color:'',size:'',volume:''};
+    for(const [key,label] of [['color','اللون'],['size','المقاس'],['volume','الحجم']]){const group=body.querySelector(`[data-group="${key}"]`);if(!group)continue;const active=group.querySelector('.mw-option-btn.active');if(!active)return alert('يرجى اختيار '+label);selection[key]=String(active.dataset.value||'').trim()}
+    const quantity=Math.max(1,Math.floor(Number(body.querySelector('[data-q-value]')?.textContent)||1));
+    const originalText=confirmBtn.textContent;confirmBtn.disabled=true;confirmBtn.textContent='جاري الإضافة للسلة...';
+    try{
+      const rows=await rest(`local_products?select=id,store_id,product_name,image_url,base_price,discount_price,options&id=eq.${encodeURIComponent(activeProductId)}&limit=1`),product=Array.isArray(rows)?rows[0]:null;if(!product)throw new Error('تعذر تحميل المنتج المحدد.');
+      let store=window.MeshwarLocalStoreV4Context?.store||null;if(!store||String(store.id)!==String(product.store_id)){const stores=await rest(`local_stores?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(product.store_id)}&limit=1`);store=Array.isArray(stores)?stores[0]:null}if(!store)throw new Error('تعذر تحميل بيانات المتجر.');
+      const unit=currentUnitPrice(product,store),oldUnit=oldUnitPrice(product,store);if(unit===null)throw new Error('سعر المنتج غير صالح.');
+      const cart=await ensureCart(),vendor=Number(product.discount_price??product.base_price),pricing=window.MeshwarLocalPricing;
+      cart.addItem({store_id:String(store.id),store_name:store.store_name||'',product_id:String(product.id),product_name:product.product_name||'',image_url:product.image_url||'',selected_options:selection,quantity,unit_price_local:unit,old_unit_price_local:oldUnit,currency:'IQD',pricing_snapshot:{vendor_price_usd:Number.isFinite(vendor)?vendor:0,customer_price_usd:Number(pricing?.customerPriceUSD?.(vendor,store.commission_rate))||0,exchange_rate:Number(store.exchange_rate)||0,commission_rate:Number(store.commission_rate)||0}});
+      modal.classList.remove('open');cart.open?.();
+    }catch(err){console.error('V93 modal cart add failed',err);alert('تعذر إضافة المنتج للسلة: '+(err?.message||err));confirmBtn.disabled=false;confirmBtn.textContent=originalText}
   },true);
 
   const script=document.createElement('script');
