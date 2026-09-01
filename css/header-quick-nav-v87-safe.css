@@ -1,10 +1,67 @@
-/* KINTO V87 SAFE — header quick navigation visuals only */
-#meshwarHeaderControls .kinto-v87-quick-nav{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;box-sizing:border-box;padding:8px 14px;border:1px solid rgba(255,224,138,.38);border-radius:999px;background:linear-gradient(135deg,rgba(255,255,255,.11),rgba(255,255,255,.045));color:#f8fafc!important;text-decoration:none!important;font-size:11px;font-weight:900;line-height:1;white-space:nowrap;position:relative;overflow:hidden;isolation:isolate;backdrop-filter:blur(18px) saturate(155%);-webkit-backdrop-filter:blur(18px) saturate(155%);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 7px 22px rgba(0,0,0,.18),0 0 18px rgba(229,185,63,.06);transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease,background .22s ease}
-#meshwarHeaderControls .kinto-v87-quick-nav::after{content:"";position:absolute;z-index:-1;top:-55%;bottom:-55%;left:-34%;width:24%;transform:skewX(-18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.48),transparent);transition:left .55s ease}
-#meshwarHeaderControls .kinto-v87-quick-nav:hover,#meshwarHeaderControls .kinto-v87-quick-nav:focus-visible{transform:translateY(-1px);border-color:rgba(255,231,148,.86);background:linear-gradient(135deg,rgba(255,255,255,.17),rgba(229,185,63,.12));box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 10px 28px rgba(0,0,0,.22),0 0 24px rgba(229,185,63,.22);outline:none}
-#meshwarHeaderControls .kinto-v87-quick-nav:hover::after,#meshwarHeaderControls .kinto-v87-quick-nav:focus-visible::after{left:118%}
-#meshwarHeaderControls .kinto-v87-quick-nav--featured{border-color:rgba(255,224,138,.66);background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(229,185,63,.18));color:#fff3bf!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 8px 24px rgba(0,0,0,.2),0 0 20px rgba(229,185,63,.15)}
-#meshwarHeaderControls .kinto-v87-nav-icon{font-size:13px;line-height:1;filter:drop-shadow(0 0 7px rgba(255,224,138,.28))}
-@media(max-width:900px){#meshwarHeaderControls .kinto-v87-quick-nav{min-height:36px;padding:7px 10px;font-size:10px;gap:5px}#meshwarHeaderControls .kinto-v87-nav-icon{font-size:12px}}
-@media(max-width:640px){#meshwarHeaderControls{gap:5px!important}#meshwarHeaderControls .kinto-v87-quick-nav{padding:7px 9px}}
-@media(prefers-reduced-motion:reduce){#meshwarHeaderControls .kinto-v87-quick-nav,#meshwarHeaderControls .kinto-v87-quick-nav::after{transition:none}}
+/* KINTO V88 — header quick navigation visual refinement only. */
+#meshwarHeaderControls .kinto-v87-quick-nav{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:0;
+  min-height:40px;
+  box-sizing:border-box;
+  padding:0 14px;
+  border:1px solid rgba(255,224,138,.34);
+  border-radius:14px;
+  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(6,59,50,.22));
+  color:#f8fafc!important;
+  text-decoration:none!important;
+  font-size:12px;
+  font-weight:850;
+  line-height:1;
+  white-space:nowrap;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  backdrop-filter:blur(16px) saturate(135%);
+  -webkit-backdrop-filter:blur(16px) saturate(135%);
+  box-shadow:0 8px 22px rgba(2,6,23,.16),inset 0 1px rgba(255,255,255,.10),0 0 0 1px rgba(255,224,138,.03);
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease,background .2s ease;
+}
+#meshwarHeaderControls .kinto-v87-quick-nav::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  top:-65%;
+  bottom:-65%;
+  left:-38%;
+  width:22%;
+  transform:skewX(-18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.34),transparent);
+  transition:left .55s ease;
+}
+#meshwarHeaderControls .kinto-v87-quick-nav:hover,
+#meshwarHeaderControls .kinto-v87-quick-nav:focus-visible{
+  transform:translateY(-1px);
+  border-color:rgba(255,224,138,.62);
+  background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(229,185,63,.075));
+  box-shadow:0 12px 28px rgba(2,6,23,.22),0 0 0 1px rgba(255,224,138,.08),0 0 20px rgba(229,185,63,.12),inset 0 1px rgba(255,255,255,.14);
+  outline:none;
+}
+#meshwarHeaderControls .kinto-v87-quick-nav:hover::after,
+#meshwarHeaderControls .kinto-v87-quick-nav:focus-visible::after{left:118%;}
+#meshwarHeaderControls .kinto-v87-quick-nav--featured{
+  border-color:rgba(255,224,138,.48);
+  background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(229,185,63,.09));
+  color:#fff7d6!important;
+  box-shadow:0 8px 22px rgba(2,6,23,.16),0 0 14px rgba(229,185,63,.08),inset 0 1px rgba(255,255,255,.11);
+}
+/* V88: keep markup untouched while removing all visual icons from the three quick-nav buttons. */
+#meshwarHeaderControls .kinto-v87-nav-icon{display:none!important;}
+@media(max-width:900px){
+  #meshwarHeaderControls .kinto-v87-quick-nav{min-height:36px;padding:0 11px;font-size:10.5px;}
+}
+@media(max-width:640px){
+  #meshwarHeaderControls{gap:5px!important;}
+  #meshwarHeaderControls .kinto-v87-quick-nav{padding:0 9px;}
+}
+@media(prefers-reduced-motion:reduce){
+  #meshwarHeaderControls .kinto-v87-quick-nav,
+  #meshwarHeaderControls .kinto-v87-quick-nav::after{transition:none;}
+}
