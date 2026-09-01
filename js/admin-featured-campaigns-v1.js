@@ -1,2 +1,2 @@
-/* MeshWar Admin Featured Campaigns loader V15 */
-(()=>{'use strict';const load=src=>new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});load('js/admin-featured-campaigns-v1-core-v15.js?v=20260828-v15').then(()=>load('js/admin-brand-logo-v15.js?v=20260828-v15')).catch(e=>console.error('Admin V15 loader failed',e));})();
+/* KINTO Admin Featured Campaigns loader V92 */
+(()=>{'use strict';const load=src=>new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});load('js/admin-featured-campaigns-v1-core-v15.js?v=20260901-v92').then(()=>load('js/admin-featured-campaigns-v92.js?v=20260901-v92')).then(()=>load('js/admin-brand-logo-v15.js?v=20260901-v92')).catch(e=>console.error('Admin V92 loader failed',e));})();
