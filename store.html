@@ -1,16 +1,58 @@
-/* KINTO V93 — frontend-only local-store cart. No Supabase/order/auth/shipping writes. */
-(()=>{'use strict';
-const KEY='kinto_local_cart_v1',esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])),money=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:0});let state=read();
-function read(){try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(x)?x.filter(valid):[]}catch{return[]}}function valid(x){return x&&String(x.store_id||'').trim()&&String(x.product_id||'').trim()&&Number(x.quantity)>0}
-function snapshot(){return state.map(x=>JSON.parse(JSON.stringify(x)))}function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){console.warn('KINTO local cart storage failed',e)}render();window.dispatchEvent(new CustomEvent('kinto:local-cart-change',{detail:snapshot()}))}
-function optionsKey(o={}){return ['color','size','volume'].map(k=>String(o[k]||'').trim()).join('|')}function itemKey(x){return String(x.store_id)+'::'+String(x.product_id)+'::'+optionsKey(x.selected_options)}
-function normalize(i){const q=Math.max(1,Math.floor(Number(i.quantity)||1)),unit=Math.max(0,Number(i.unit_price_local)||0),old=Math.max(0,Number(i.old_unit_price_local)||0);return{store_id:String(i.store_id||'').trim(),store_name:String(i.store_name||'').trim(),product_id:String(i.product_id||'').trim(),product_name:String(i.product_name||'').trim(),image_url:String(i.image_url||''),selected_options:{color:String(i.selected_options?.color||''),size:String(i.selected_options?.size||''),volume:String(i.selected_options?.volume||'')},quantity:q,unit_price_local:unit,old_unit_price_local:old||null,currency:String(i.currency||'IQD').trim().toUpperCase()||'IQD',pricing_snapshot:{base_price_local:old||unit,discount_price_local:old&&old>unit?unit:null,captured_price_local:unit,captured_at:new Date().toISOString()}}}
-function add(input){const next=normalize(input);if(!valid(next)||!next.unit_price_local)throw new Error('بيانات المنتج أو السعر غير مكتملة.');const key=itemKey(next),found=state.find(x=>itemKey(x)===key);if(found){found.quantity=(Number(found.quantity)||1)+next.quantity;found.unit_price_local=next.unit_price_local;found.old_unit_price_local=next.old_unit_price_local;found.pricing_snapshot=next.pricing_snapshot;found.product_name=next.product_name;found.image_url=next.image_url;found.store_name=next.store_name}else state.push(next);save();open();return snapshot()}
-function setQuantity(key,q){const x=state.find(v=>itemKey(v)===key);if(!x)return;x.quantity=Math.max(1,Math.floor(Number(q)||1));save()}function remove(key){state=state.filter(x=>itemKey(x)!==key);save()}function clear(){state=[];save()}function count(){return state.reduce((n,x)=>n+(Number(x.quantity)||1),0)}function subtotal(a){return a.reduce((n,x)=>n+(Number(x.unit_price_local)||0)*(Number(x.quantity)||1),0)}function group(){return state.reduce((m,x)=>{(m[x.store_id]??=[]).push(x);return m},{})}function open(){document.documentElement.classList.add('kinto-local-cart-open')}function close(){document.documentElement.classList.remove('kinto-local-cart-open')}
-function ensureUi(){if(document.getElementById('kintoLocalCartDrawer'))return;document.body.insertAdjacentHTML('beforeend','<button type="button" class="kinto-local-cart-trigger" id="kintoLocalCartTrigger">🛒 السلة <span class="kinto-local-cart-count" id="kintoLocalCartCount">0</span></button><div class="kinto-local-cart-backdrop" id="kintoLocalCartBackdrop"></div><aside id="kintoLocalCartDrawer" class="kinto-local-cart-drawer" aria-label="سلة المتاجر المحلية"><div class="kinto-local-cart-head"><h2 class="kinto-local-cart-title">سلة المتاجر المحلية</h2><button type="button" class="kinto-local-cart-close" aria-label="إغلاق">×</button></div><div class="kinto-local-cart-body" id="kintoLocalCartBody"></div><div class="kinto-local-cart-foot"><div class="kinto-local-cart-grand"><span>المجموع</span><strong id="kintoLocalCartGrand">IQD 0</strong></div><div class="kinto-local-cart-note">V93: السلة محلية فقط؛ لا إرسال طلب ولا حجز أو خصم مخزون.</div></div></aside>');document.getElementById('kintoLocalCartTrigger').onclick=open;document.getElementById('kintoLocalCartBackdrop').onclick=close;document.querySelector('.kinto-local-cart-close').onclick=close;document.getElementById('kintoLocalCartDrawer').addEventListener('click',e=>{const b=e.target.closest('[data-cart-action]');if(!b)return;const key=b.dataset.key,x=state.find(v=>itemKey(v)===key);if(b.dataset.cartAction==='remove')remove(key);else if(x&&b.dataset.cartAction==='plus')setQuantity(key,x.quantity+1);else if(x&&b.dataset.cartAction==='minus')setQuantity(key,x.quantity-1)})}
-function render(){ensureUi();const c=document.getElementById('kintoLocalCartCount'),body=document.getElementById('kintoLocalCartBody'),grand=document.getElementById('kintoLocalCartGrand');c.textContent=String(count());if(!state.length){body.innerHTML='<div class="kinto-local-cart-empty">السلة فارغة حالياً.</div>';grand.textContent='IQD 0';return}body.innerHTML=Object.entries(group()).map(([sid,items])=>{const cur=items[0]?.currency||'IQD';return `<section class="kinto-local-cart-store" data-store-id="${esc(sid)}"><div class="kinto-local-cart-store-title">${esc(items[0]?.store_name||'متجر محلي')}</div>${items.map(x=>{const key=itemKey(x),opts=[x.selected_options?.color&&'اللون: '+x.selected_options.color,x.selected_options?.size&&'المقاس: '+x.selected_options.size,x.selected_options?.volume&&'الحجم: '+x.selected_options.volume].filter(Boolean).join(' · ');return `<div class="kinto-local-cart-item"><img class="kinto-local-cart-img" src="${esc(x.image_url)}" alt=""><div><div class="kinto-local-cart-name">${esc(x.product_name)}</div>${opts?`<div class="kinto-local-cart-options">${esc(opts)}</div>`:''}<div class="kinto-local-cart-price">${esc(cur)} ${money(x.unit_price_local)} × ${x.quantity}</div><div class="kinto-local-cart-actions"><div class="kinto-local-cart-qty"><button data-cart-action="minus" data-key="${esc(key)}">−</button><span>${x.quantity}</span><button data-cart-action="plus" data-key="${esc(key)}">+</button></div><button class="kinto-local-cart-remove" data-cart-action="remove" data-key="${esc(key)}">حذف</button></div></div></div>`}).join('')}<div class="kinto-local-cart-store-total">المجموع الفرعي: ${esc(cur)} ${money(subtotal(items))}</div></section>`}).join('');const currencies=[...new Set(state.map(x=>x.currency||'IQD'))];grand.textContent=currencies.length===1?`${currencies[0]} ${money(subtotal(state))}`:'مقسم حسب المتجر'}
-function numberFromText(s){const m=String(s||'').replace(/,/g,'').match(/([0-9]+(?:\.[0-9]+)?)/);return m?Number(m[1]):0}
-function captureLocalCta(e){const btn=e.target.closest?.('.local-v3-order[data-pid]');if(!btn||btn.disabled)return;e.preventDefault();e.stopImmediatePropagation();const card=btn.closest('[data-product-card]');if(!card)return;const selected={color:'',size:'',volume:''};for(const sel of card.querySelectorAll('.local-v3-option-select[data-option]')){const value=String(sel.value||'').trim();if(!value){alert('يرجى اختيار '+String(sel.closest('label')?.firstChild?.textContent||'الخيار').trim()+' قبل الإضافة للسلة.');sel.focus();return}selected[sel.dataset.option]=value}const unit=numberFromText(card.querySelector('.local-v3-local')?.textContent),old=numberFromText(card.querySelector('.local-v3-old')?.textContent),quantity=Math.max(1,Number(card.querySelector('[data-qty-value]')?.textContent)||1),storeId=String(window.__KINTO_STORE_ID__||new URLSearchParams(location.search).get('storeId')||'').trim();try{add({store_id:storeId,store_name:document.getElementById('localStoreProductsTitle')?.textContent||'متجر محلي',product_id:btn.dataset.pid,product_name:card.querySelector('.local-v3-name')?.textContent||'منتج',image_url:card.querySelector('.local-v3-img')?.src||'',selected_options:selected,quantity,unit_price_local:unit,old_unit_price_local:old,currency:'IQD'});btn.textContent='✓ تمت الإضافة للسلة';setTimeout(()=>{if(btn.isConnected&&!btn.disabled)btn.textContent='أضف للسلة'},900)}catch(err){console.error('Local cart add failed',err);alert(err.message||'تعذر إضافة المنتج للسلة.')}}
-document.addEventListener('click',captureLocalCta,true);new MutationObserver(()=>document.querySelectorAll('.local-v3-order:not(:disabled)').forEach(b=>{if(b.textContent.trim()==='اطلب الآن')b.textContent='أضف للسلة'})).observe(document.documentElement,{childList:true,subtree:true});
-window.KintoLocalCartV93={storageKey:KEY,add,setQuantity,remove,clear,getItems:snapshot,getCount:count,open,close};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',render,{once:true});else render();window.addEventListener('storage',e=>{if(e.key===KEY){state=read();render()}});
-})();
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>KINTO Store</title>
+  <link rel="stylesheet" href="css/local-cart-v93.css?v=20260901-v93">
+  <style>
+    :root{color-scheme:dark}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:linear-gradient(180deg,#063b32 0%,#04362e 46%,#032b25 100%);color:#f8fafc}
+    .store-shell{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:18px 0 48px}
+    .store-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid rgba(229,185,63,.24);border-radius:18px;background:rgba(2,44,37,.82);position:sticky;top:10px;z-index:30;backdrop-filter:blur(18px)}
+    .store-nav img{width:42px;height:42px;object-fit:contain;border-radius:12px;background:rgba(255,255,255,.08);padding:5px}
+    .store-back{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 14px;border:1px solid rgba(255,224,138,.58);border-radius:999px;color:#fff;text-decoration:none;font-weight:900;background:rgba(229,185,63,.12)}
+    .store-hero{margin:20px 0 16px;padding:22px;border:1px solid rgba(229,185,63,.28);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.04));box-shadow:0 22px 55px rgba(0,0,0,.16)}
+    .store-title{margin:0;font-size:clamp(24px,4vw,38px);color:#ffe08a}
+    .store-meta{margin:8px 0 0;color:#c8d7d3;line-height:1.8}
+    #localStoreProductsPanel{display:block!important}
+    #localStoreProductsGrid{margin-top:16px}
+    .store-state{padding:26px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(15,23,42,.32);text-align:center;color:#d7e4e0}
+  </style>
+</head>
+<body>
+  <main class="store-shell">
+    <nav class="store-nav">
+      <a href="index.html" aria-label="KINTO"><img src="images/meshwar-logo.png" alt="KINTO"></a>
+      <a class="store-back" href="index.html">← الرجوع للرئيسية</a>
+    </nav>
+    <section class="store-hero">
+      <h1 id="localStoreProductsTitle" class="store-title">جاري فتح المتجر...</h1>
+      <p id="localStoreProductsMeta" class="store-meta">يتم التحقق من معرف المتجر وتحميل بياناته مباشرة.</p>
+    </section>
+    <section id="localStoreProductsPanel">
+      <div id="localStoreProductsGrid"><div class="store-state">جاري تحميل المنتجات...</div></div>
+    </section>
+  </main>
+  <script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>
+  <script>
+  (()=>{'use strict';
+    const SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
+    const SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+    const id=String(new URLSearchParams(location.search).get('storeId')||'').trim();
+    const title=document.getElementById('localStoreProductsTitle');
+    const meta=document.getElementById('localStoreProductsMeta');
+    const grid=document.getElementById('localStoreProductsGrid');
+    if(!id){title.textContent='معرف المتجر غير موجود';meta.textContent='الرابط لا يحتوي storeId صالحاً.';grid.innerHTML='<div class="store-state">تعذر فتح المتجر بدون storeId.</div>';return;}
+    window.__KINTO_STORE_ID__=id;
+    fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json'}})
+      .then(r=>{if(!r.ok)throw new Error(`Store REST ${r.status}`);return r.json()}).then(rows=>{const s=Array.isArray(rows)?rows[0]:null;if(!s)throw new Error('Store not found or inactive');title.textContent=s.store_name||'منتجات المتجر';meta.textContent=[s.specialty||s.store_type,s.governorate||s.country].filter(Boolean).join(' · ')||'متجر نشط';document.title=`${s.store_name||'KINTO Store'} - KINTO`;})
+      .catch(err=>{console.error('Store header load error:',err);title.textContent='منتجات المتجر';meta.textContent='سيتم محاولة تحميل المنتجات مباشرة من معرف المتجر.';});
+  })();
+  </script>
+  <script src="js/local-cart-v93.js?v=20260901-v93"></script>
+  <script type="module" src="js/local-store-card-v3.js?v=20260901-v93"></script>
+</body>
+</html>
