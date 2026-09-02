@@ -219,7 +219,22 @@ document.addEventListener('click',e=>{const w=document.querySelector('.notificat
 window.onload=async()=>{try{await loadEmployeeIdentity();await Promise.all([loadBranches(),loadCouriersForOrders()]);renderPipelineTabs();document.getElementById('activePipelineLabel').innerText=PIPELINES[activePipeline].label;await Promise.all([loadPipelineOrders(),refreshPipelineCounts(),fetchUnreadChatNotifications(),setupRealtime()])}catch(e){console.error(e);document.getElementById('employeeIdentity').innerText='تعذر التحقق: '+(e.message||e)}};
 window.addEventListener('beforeunload',()=>{if(unreadPollingTimer)clearInterval(unreadPollingTimer);if(chatPollingTimer)clearInterval(chatPollingTimer)});
 Object.assign(window,{switchPipeline,schedulePipelineSearch,handlePipelineSearchKeydown,changePipelinePage,goPipelinePage,changePipelinePageSize,onBranchFilterChange,saveOrderRow,printOrderBarcode,exportSelectedBranchCsv,printSelectedBranchReport,loadRewardsManagementTable,changeReward,openOrderDetailsById,closeOrderDetailsModal,openCustomerPortal,toggleNotificationDropdown,openUnreadNotification,openChat,closeChatModal,sendChatMessage,handleEmployeeChatFile});
-</script></body></html>
+</script>
+<script src="js/kinto-bundle-ui-v93.js?v=20260902-v93"></script>
+<script id="kinto-v93-bundle-adapter">
+/* KINTO_V93_BUNDLE_ADAPTER — canonical Bundle details + invoice bridge. */
+(()=>{'use strict';
+let last='';
+function pools(){const out=[];const known=[typeof currentCustomerOrdersGlobal!=='undefined'?currentCustomerOrdersGlobal:null,typeof cloudOrders!=='undefined'?cloudOrders:null,typeof adminOrdersCloud!=='undefined'?adminOrdersCloud:null,typeof orders!=='undefined'?orders:null];for(const v of known)if(Array.isArray(v)&&!out.includes(v))out.push(v);for(const k of Object.keys(window)){let v;try{v=window[k]}catch{continue}if(Array.isArray(v)&&!out.includes(v)&&v.some(x=>x&&typeof x==='object'&&('details'in x||'order_code'in x||('status'in x&&'total_price'in x))))out.push(v)}return out}
+function visible(){const selectors=['#customerOrderDetailsContent','#orderDetailsContent','#detailsContent','#customerOrderDetailsModal .modal-content','#orderDetailsModal .modal-content','#detailsModal .modal-content'];for(const s of selectors){const el=document.querySelector(s);if(el&&el.offsetParent!==null)return el}return [...document.querySelectorAll('.modal-content')].find(el=>el.offsetParent!==null)||null}
+function orderFor(box){const text=box?.innerText||'';for(const p of pools())for(const o of p){const code=String(o?.order_code||'').trim(),id=String(o?.id||'').trim();if(code&&text.includes(code))return o;if(id&&text.includes(id))return o}return null}
+function run(){const box=visible();if(!box||!window.KintoBundleV93)return;const o=orderFor(box);if(!o)return;const sig=String(o.id||o.order_code||'')+'|'+String(o.updated_at||o.created_at||'');if(box.dataset.kintoV93Sig===sig&&box.querySelector('.kinto-v93-bundle'))return;window.KintoBundleV93.enhance(box,o);box.dataset.kintoV93Sig=sig;last=sig}
+const observer=new MutationObserver(()=>requestAnimationFrame(run));
+function start(){observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class']});document.addEventListener('click',()=>setTimeout(run,60),true);run()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+</script>
+</body></html>
 <style>
 .parcel-detail-image{max-width:100%;max-height:72vh;object-fit:contain;border-radius:10px;border:1px solid #cbd5e1}.parcel-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.parcel-status{font-size:12px;color:#64748b;font-weight:700;margin-top:8px}.parcel-camera-stage{display:none;margin-top:12px;padding:10px;background:#0f172a;border-radius:12px}.parcel-camera-stage.active{display:block}.parcel-camera-video{width:100%;max-height:55vh;border-radius:10px;background:#000;object-fit:contain}.parcel-camera-tools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
 </style>
