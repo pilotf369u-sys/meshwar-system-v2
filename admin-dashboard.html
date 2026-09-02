@@ -240,7 +240,22 @@ function setAdminMasterActive(sectionId){document.querySelectorAll('.sidebar a[d
 function ensureAdminEmbeddedSection(sectionId){const cfg=ADMIN_EMBEDDED_SECTIONS[sectionId];if(!cfg)return;const frame=document.getElementById(cfg.frame);if(!frame||frame.getAttribute('src'))return;const adminId=String(currentAdminCloud?.id||getAdminId?.()||'').trim(),u=new URL(cfg.page,location.href);u.searchParams.set('embed','1');if(adminId)u.searchParams.set('adminId',adminId);frame.src=u.pathname.split('/').pop()+u.search}
 async function showAdminMasterSection(sectionId){showSection(sectionId);setAdminMasterActive(sectionId);const u=new URL(location.href);u.searchParams.set('section',sectionId);history.replaceState(null,'',u.pathname+u.search+u.hash);ensureAdminEmbeddedSection(sectionId);if(sectionId==='vendor-finance'&&typeof loadAdminVendorFinance==='function')await loadAdminVendorFinance()}
 window.addEventListener('load',()=>{const requested=new URLSearchParams(location.search).get('section');if(requested&&document.getElementById(requested)){showAdminMasterSection(requested)}else{setAdminMasterActive(document.querySelector('.card.active-section')?.id||'orders')}});
-</script></body></html>
+</script>
+<script src="js/kinto-bundle-ui-v93.js?v=20260902-v93"></script>
+<script id="kinto-v93-bundle-adapter">
+/* KINTO_V93_BUNDLE_ADAPTER — canonical Bundle details + invoice bridge. */
+(()=>{'use strict';
+let last='';
+function pools(){const out=[];for(const k of Object.keys(window)){let v;try{v=window[k]}catch{continue}if(Array.isArray(v)&&v.some(x=>x&&typeof x==='object'&&('details'in x||'order_code'in x||('status'in x&&'total_price'in x))))out.push(v)}return out}
+function visible(){const selectors=['#customerOrderDetailsContent','#orderDetailsContent','#detailsContent','#customerOrderDetailsModal .modal-content','#orderDetailsModal .modal-content','#detailsModal .modal-content'];for(const s of selectors){const el=document.querySelector(s);if(el&&el.offsetParent!==null)return el}return [...document.querySelectorAll('.modal-content')].find(el=>el.offsetParent!==null)||null}
+function orderFor(box){const text=box?.innerText||'';for(const p of pools())for(const o of p){const code=String(o?.order_code||'').trim(),id=String(o?.id||'').trim();if(code&&text.includes(code))return o;if(id&&text.includes(id))return o}return null}
+function run(){const box=visible();if(!box||!window.KintoBundleV93)return;const o=orderFor(box);if(!o)return;const sig=String(o.id||o.order_code||'')+'|'+String(o.updated_at||o.created_at||'');if(box.dataset.kintoV93Sig===sig&&box.querySelector('.kinto-v93-bundle'))return;window.KintoBundleV93.enhance(box,o);box.dataset.kintoV93Sig=sig;last=sig}
+const observer=new MutationObserver(()=>requestAnimationFrame(run));
+function start(){observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class']});document.addEventListener('click',()=>setTimeout(run,60),true);run()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+</script>
+</body></html>
 <style>
 .admin-parcel-preview{max-width:100%;max-height:72vh;object-fit:contain;border-radius:10px;border:1px solid #cbd5e1}
 </style>
