@@ -6,7 +6,7 @@
   <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="pragma" content="no-cache">
   <meta http-equiv="expires" content="0">
-  <meta name="meshwar-build" content="vendor-v45-realtime-raceguard-20260827">
+  <meta name="meshwar-build" content="vendor-v94-multistore-20260902">
   <title>لوحة صاحب المتجر - MeshWar</title>
   <style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617}
@@ -50,7 +50,7 @@
     <div class="vendor-loader-shell" aria-hidden="true"><div class="vendor-loader-top vendor-loader-shimmer"></div><div class="vendor-loader-stats"><div class="vendor-loader-stat vendor-loader-shimmer"></div><div class="vendor-loader-stat vendor-loader-shimmer"></div><div class="vendor-loader-stat vendor-loader-shimmer"></div></div><div class="vendor-loader-panel vendor-loader-shimmer"></div></div>
     <div class="vendor-loader-center"><div class="vendor-loader-box"><span class="vendor-loader-spinner" aria-hidden="true"></span><span class="vendor-loader-text">جاري تجهيز لوحة المتجر...</span></div></div>
   </div>
-  <iframe id="vendorFrame" aria-busy="true" src="vendor-dashboard-v2.html?v=20260827-v45-realtime-raceguard" title="لوحة صاحب المتجر"></iframe>
+  <iframe id="vendorFrame" aria-busy="true" src="vendor-dashboard-v2.html?v=20260902-v94" title="لوحة صاحب المتجر"></iframe>
   <script>
     (function(){
       const frame=document.getElementById('vendorFrame');
@@ -60,6 +60,7 @@
       function restoreActiveTab(){const win=frame.contentWindow,d=win?.document;if(!d)return;let saved='';try{saved=win.localStorage.getItem(ACTIVE_TAB_KEY)||''}catch(err){console.warn('Vendor active tab read failed',err)}if(!saved)return;const btn=d.getElementById(saved);if(btn&&typeof btn.click==='function'&&!btn.classList.contains('active'))btn.click()}
       function revealFallback(error){console.error('Vendor UX/realtime V32 install failed',error);frame.style.visibility='visible';frame.setAttribute('aria-busy','false');document.getElementById('vendorBootLoader')?.remove()}
       function injectFeaturedPhase2(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorFeaturedPhase2'))return;const s=d.createElement('script');s.id='mwVendorFeaturedPhase2';s.src='js/vendor-featured-requests-v2.js?v=20260827-v2.0';d.head.appendChild(s)}
+      function injectV94Orders(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorV94Orders'))return;const s=d.createElement('script');s.id='mwVendorV94Orders';s.src='js/vendor-v94-multistore-orders.js?v=20260902-v94';s.onerror=()=>console.error('Vendor V94 multi-store adapter failed to load');d.body.appendChild(s)}
       function install(){
         injectFeaturedPhase2();
         try{window.MeshwarVendorBarcodeV11?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode install failed',e)}
@@ -73,11 +74,12 @@
         try{window.MeshwarVendorPlExpenseV23?.install(frame.contentWindow)}catch(e){console.error('Vendor P&L expense V23 install failed',e)}
         try{window.MeshwarVendorFinanceSettlementV24?.install(frame.contentWindow)}catch(e){console.error('Vendor P&L settlement V24 install failed',e)}
         try{window.MeshwarVendorFinanceDeliveredV35?.install(frame.contentWindow)}catch(e){console.error('Vendor delivered finance V35 install failed',e)}
-        try{window.MeshwarVendorSettlementPdfDetailsV25?.install(frame.contentWindow)}catch(e){console.error('Vendor settlement PDF details V25 install failed',e)}
-        try{window.MeshwarVendorProductEditFieldsV26?.install(frame.contentWindow)}catch(e){console.error('Vendor product edit fields V26 install failed',e)}
-        try{window.MeshwarVendorProductSaveSnapshotV27?.install(frame.contentWindow)}catch(e){console.error('Vendor product save snapshot V27 install failed',e)}
-        try{window.MeshwarVendorProductSaveCompleteV34?.install(frame.contentWindow)}catch(e){console.error('Vendor complete product save V34 install failed',e)}
-        try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor complete edit hydration V33 install failed',e)}
+        try{window.MeshwarVendorSettlementPdfDetailsV25?.install(frame.contentWindow)}catch(e){console.error('Vendor settlement PDF details install failed',e)}
+        try{window.MeshwarVendorProductEditFieldsV26?.install(frame.contentWindow)}catch(e){console.error('Vendor product edit fields failed',e)}
+        try{window.MeshwarVendorProductSaveSnapshotV27?.install(frame.contentWindow)}catch(e){console.error('Vendor product snapshot failed',e)}
+        try{window.MeshwarVendorProductSaveCompleteV34?.install(frame.contentWindow)}catch(e){console.error('Vendor product save failed',e)}
+        try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor edit hydration failed',e)}
+        injectV94Orders();
         try{const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);if(boot&&typeof boot.then==='function')boot.catch(revealFallback);else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V32 module unavailable'))}catch(e){revealFallback(e)}
         bindActiveTabPersistence();bindV24PlNavigation();setTimeout(restoreActiveTab,80);
       }
