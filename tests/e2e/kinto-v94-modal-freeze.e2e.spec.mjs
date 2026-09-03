@@ -32,6 +32,7 @@ test('V94 modal tabs, close and invoice remain responsive for multi-store orders
 
   await details.locator('.kinto-v94-invoice-btn').click();
   await expect.poll(()=>page.evaluate(()=>Boolean(window.__popupOpenedAt))).toBe(true);
-  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('الإجمالي العالمي المطلوب من العميل'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('class="grand"'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>!window.__popupWrites.join('').includes('الإجمالي العالمي المطلوب من العميل'))).toBe(true);
   await expect(details.locator('.kinto-v94-invoice-btn')).toBeEnabled();
 });
