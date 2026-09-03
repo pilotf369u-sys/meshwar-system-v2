@@ -1,0 +1,49 @@
+name: V94 Multi-Store Contract Validation
+
+on:
+  pull_request:
+    paths:
+      - 'js/local-cart-v93.js'
+      - 'js/kinto-bundle-ui-v93.js'
+      - 'js/vendor-multistore-v94.js'
+      - 'store.html'
+      - 'vendor-dashboard.html'
+      - 'supabase/migrations/20260903_v94_global_multistore_contract.sql'
+      - '.github/workflows/v94-multistore-validation.yml'
+
+jobs:
+  validate-v94:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: |
+          node --check js/local-cart-v93.js
+          node --check js/kinto-bundle-ui-v93.js
+          node --check js/vendor-multistore-v94.js
+      - name: Global cart contract
+        run: |
+          grep -q "kinto_global_cart_v94" js/local-cart-v93.js
+          grep -q "v94-global-multistore" js/local-cart-v93.js
+          grep -q "stores=storeSummaries" js/local-cart-v93.js
+          grep -q "customer_total_local:total" js/local-cart-v93.js
+          ! grep -q "wrong=items.find" js/local-cart-v93.js
+      - name: Role invoice segmentation contract
+        run: |
+          grep -q "storeGroups" js/kinto-bundle-ui-v93.js
+          grep -q "admin','branch','employee" js/kinto-bundle-ui-v93.js
+          grep -q "المبلغ الكلي المطلوب تحصيله من العميل" js/kinto-bundle-ui-v93.js
+          grep -q "KintoBundleV94" js/kinto-bundle-ui-v93.js
+      - name: Vendor privacy contract
+        run: |
+          grep -q "meshwar_vendor_v94_orders" js/vendor-multistore-v94.js
+          grep -q "حصة متجرك فقط" js/vendor-multistore-v94.js
+          ! grep -q "customer_total_local" js/vendor-multistore-v94.js
+          ! grep -q "total_price" js/vendor-multistore-v94.js
+          grep -q "meshwar_vendor_v94_orders" supabase/migrations/20260903_v94_global_multistore_contract.sql
+          grep -q "never returns global totals or other stores" supabase/migrations/20260903_v94_global_multistore_contract.sql
+      - name: Paid lock and independent store status
+        run: |
+          grep -q "Paid V94 global order status is locked" supabase/migrations/20260903_v94_global_multistore_contract.sql
+          grep -q "meshwar_vendor_v94_set_store_status" supabase/migrations/20260903_v94_global_multistore_contract.sql
+          grep -q "Store status cannot move backwards" supabase/migrations/20260903_v94_global_multistore_contract.sql
