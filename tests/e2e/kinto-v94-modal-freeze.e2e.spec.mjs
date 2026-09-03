@@ -8,7 +8,7 @@ test('V94 modal tabs, close and invoice remain responsive for multi-store orders
   await page.setContent('<button id="close">إغلاق</button><div id="details"></div>');
   await page.addScriptTag({path:path.join(root,'js/kinto-bundle-ui-v93.js')});
   await page.evaluate(()=>{
-    const order={order_code:'KN-42',reference_order_no:'SP-EMP-92841',total_price:30,currency:'USD',details:{items:[
+    const order={order_code:'KN-42',reference_order_no:'SP-EMP-92841',status:'انتظار رد الموظف',total_price:30,currency:'USD',details:{items:[
       {store_id:'s1',store_name:'المتجر الأول',product_name:'A',quantity:1,unit_price_local:10,line_total_local:10,currency:'USD'},
       {store_id:'s2',store_name:'المتجر الثاني',product_name:'B',quantity:1,unit_price_local:20,line_total_local:20,currency:'USD'}
     ],stores:[{store_id:'s1',store_name:'المتجر الأول',subtotal_local:10},{store_id:'s2',store_name:'المتجر الثاني',subtotal_local:20}]}};
@@ -38,5 +38,6 @@ test('V94 modal tabs, close and invoice remain responsive for multi-store orders
   await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('data-value="KN-000042"'))).toBe(true);
   await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('Sipariş No: SP-EMP-92841'))).toBe(true);
   await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('aria-label="KINTO Logo"'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('class="order-status">انتظار رد الموظف'))).toBe(true);
   await expect(details.locator('.kinto-v94-invoice-btn')).toBeEnabled();
 });
