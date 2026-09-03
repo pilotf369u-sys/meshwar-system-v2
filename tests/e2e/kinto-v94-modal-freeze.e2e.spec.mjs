@@ -40,4 +40,28 @@ test('V94 modal tabs, close and invoice remain responsive for multi-store orders
   await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('aria-label="KINTO Logo"'))).toBe(true);
   await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('class="order-status">انتظار رد الموظف'))).toBe(true);
   await expect(details.locator('.kinto-v94-invoice-btn')).toBeEnabled();
+
+  const storeButtons=details.locator('.kinto-v94-store-invoice-btn');
+  await expect(storeButtons).toHaveCount(2);
+  await expect(storeButtons.nth(0)).toHaveText('فاتورة المتجر الأول');
+  await expect(storeButtons.nth(1)).toHaveText('فاتورة المتجر الثاني');
+
+  await page.evaluate(()=>{window.__popupWrites=[]});
+  await storeButtons.nth(0).click();
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('Sipariş No: SP-EMP-92841'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('المتجر الأول'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('>A<'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>!window.__popupWrites.join('').includes('المتجر الثاني'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>!window.__popupWrites.join('').includes('>B<'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('10 USD'))).toBe(true);
+  await expect(storeButtons.nth(0)).toBeEnabled();
+
+  await page.evaluate(()=>{window.__popupWrites=[]});
+  await storeButtons.nth(1).click();
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('المتجر الثاني'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('>B<'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>!window.__popupWrites.join('').includes('المتجر الأول'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>!window.__popupWrites.join('').includes('>A<'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('20 USD'))).toBe(true);
+  await expect(storeButtons.nth(1)).toBeEnabled();
 });
