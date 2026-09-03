@@ -6,7 +6,7 @@
   <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="pragma" content="no-cache">
   <meta http-equiv="expires" content="0">
-  <meta name="meshwar-build" content="vendor-v45-realtime-raceguard-20260827">
+  <meta name="meshwar-build" content="vendor-v94-multistore-20260903">
   <title>لوحة صاحب المتجر - MeshWar</title>
   <style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617}
@@ -44,6 +44,7 @@
   <script src="js/vendor-product-save-complete-v34.js?v=20260825-v34-required-cost3"></script>
   <script src="js/vendor-ux-realtime-v28.js?v=20260827-v32-realtime-raceguard"></script>
   <script src="js/vendor-edit-direct-dom-v32.js?v=20260825-v33-stale-hydration-guard2"></script>
+  <script src="js/vendor-multistore-v94.js?v=20260903-v94"></script>
 </head>
 <body>
   <div id="vendorBootLoader" role="status" aria-live="polite">
@@ -79,6 +80,7 @@
         try{window.MeshwarVendorProductSaveCompleteV34?.install(frame.contentWindow)}catch(e){console.error('Vendor complete product save V34 install failed',e)}
         try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor complete edit hydration V33 install failed',e)}
         try{const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);if(boot&&typeof boot.then==='function')boot.catch(revealFallback);else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V32 module unavailable'))}catch(e){revealFallback(e)}
+        try{window.MeshwarVendorMultiStoreV94?.install(frame)}catch(e){console.error('Vendor V94 multi-store install failed',e)}
         bindActiveTabPersistence();bindV24PlNavigation();setTimeout(restoreActiveTab,80);
       }
       frame.addEventListener('load',install);
