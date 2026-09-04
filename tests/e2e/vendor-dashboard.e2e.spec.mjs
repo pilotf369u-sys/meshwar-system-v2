@@ -41,6 +41,8 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await statusSelect.selectOption('مخزن الشركة');
     await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_RPC_CALLS.filter(x=>x.name==='vendor_advance_order_segment_status').at(-1)?.args||null)).toEqual({p_session_token:'e2e-secure-token',p_segment_id:'seg-e2e-1',p_expected_status:'بانتظار التسديد',p_next_status:'مخزن الشركة'});
     await expect(vendor.locator('#ordersBody tr').filter({hasText:'KN-009501'})).toContainText('مخزن الشركة');
+    await frameWindow(page,()=>{const storeId=window.__MESH_E2E_STORE.id;window.__MESH_E2E_DB.order_store_segments.unshift({segment_id:'seg-e2e-live',order_id:'global-e2e-live',order_code:'KN-009599',reference_order_no:'SIP-9599',order_created_at:new Date().toISOString(),items_preview:[{store_id:storeId,product_id:'p-2',product_name:'Realtime Segment Product',quantity:1,unit_price_local:9000,line_total_local:9000,currency:'IQD'}],quantity_total:1,subtotal_local:9000,currency:'IQD',store_status:'بانتظار التسديد',confirmed_at:new Date().toISOString(),vendor_payment_status:'pending',customer:{name:'Realtime Customer'}});window.__MESH_E2E_ORDERS_REALTIME?.({new:{details:{source:'local_cart_bundle',items:[{store_id:storeId}]}}})});
+    await expect(vendor.locator('#ordersBody tr').filter({hasText:'KN-009599'})).toHaveCount(1);await expect(vendor.locator('#ordersBody')).toContainText('Realtime Segment Product');
   });
 
   test('V95: legacy browser sessions must re-authenticate before global orders expose customer data',async({page})=>{
