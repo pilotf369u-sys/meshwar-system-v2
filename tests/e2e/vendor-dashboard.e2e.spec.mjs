@@ -48,6 +48,8 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await frameWindow(page,async()=>{const storeId=window.__MESH_E2E_STORE.id;window.__MESH_E2E_DB.orders.unshift({id:'global-without-session',order_code:'KN-009599',total_price:16000,currency:'IQD',status:'تم التسديد',created_at:new Date().toISOString(),details:{source:'local_cart_bundle',bundle_stock_lifecycle_state:'deducted',items:[{store_id:storeId,store_name:'Test Store',product_id:'p-1',product_name:'Protected Product',quantity:1,unit_price_local:16000,line_total_local:16000,currency:'IQD'}],stores:[{store_id:storeId,store_name:'Test Store'}],store_statuses:{[storeId]:'بانتظار التسديد'}}});await window.loadOrders()});
     await expect(vendor.locator('#loginView')).toBeVisible();await expect(vendor.locator('#dashboardView')).toBeHidden();await expect(vendor.locator('#loginNotice')).toContainText('تسجيل الدخول مرة واحدة');
     await expect.poll(()=>frameWindow(page,()=>sessionStorage.getItem('meshwar_vendor_store'))).toBeNull();
+    await vendor.locator('#loginIdentity').fill('vendor-e2e');await vendor.locator('#loginPassword').fill('correct-password');await vendor.locator('#loginBtn').click();
+    await expect(vendor.locator('#dashboardView')).toBeVisible();await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_RPC_CALLS.filter(x=>x.name==='vendor_login_session').at(-1)?.args||null)).toEqual({p_identity:'vendor-e2e',p_password:'correct-password'});await expect.poll(()=>frameWindow(page,()=>JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null')?.token||'')).toBe('e2e-secure-token');
   });
 
   test('catalog: add/edit stock, taxonomy persistence, barcode fallback, global margin auto-pricing and pagination',async({page})=>{
