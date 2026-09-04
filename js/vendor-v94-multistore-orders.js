@@ -59,7 +59,7 @@ async function loadSegmentOrders(){
   }catch(e){
     if(active&&String(e?.message||'').includes('VENDOR_SESSION_INVALID')){clearSession();runtime.requireSecureLogin?.('انتهت جلسة المتجر الآمنة. سجّل الدخول مجدداً لتحديث الطلبات.');return}
     console.error('Vendor V95 segment load error',e);
-    try{const fallback=await fetchLegacy(storeId);if(fallback.some(o=>o._v95Source==='legacy-global')){runtime.showNotice('تعذر تحميل شرائح الطلبات الآمنة. لم تُعرض بيانات العميل أو أدوات الحالة حفاظاً على الخصوصية.',true);return}runtime.setOrders(fallback);renderOrders();runtime.renderFinance();runtime.renderStats()}catch(fallbackError){runtime.showNotice('تعذر تحميل طلبات المتجر: '+(fallbackError.message||fallbackError),true)}
+    try{const fallback=await fetchLegacy(storeId);if(fallback.some(o=>o._v95Source==='legacy-global')){runtime.showNotice('تعذر تحميل شرائح الطلبات الآمنة: '+String(e?.message||'خطأ غير معروف')+'. لم تُعرض بيانات العميل أو أدوات الحالة حفاظاً على الخصوصية.',true);return}runtime.setOrders(fallback);renderOrders();runtime.renderFinance();runtime.renderStats()}catch(fallbackError){runtime.showNotice('تعذر تحميل طلبات المتجر: '+(fallbackError.message||fallbackError),true)}
   }
 }
 
