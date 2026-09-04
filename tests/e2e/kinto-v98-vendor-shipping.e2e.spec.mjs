@@ -23,9 +23,10 @@ test('V98 shipping settings are session-protected and lost-update safe', async (
 });
 
 test('V98 snapshots one resolved vendor quote on every independent order', async () => {
-  const [sql, compatSql, cart, invoice, vendorInvoice] = await Promise.all([
+  const [sql, compatSql, uuidCompatSql, cart, invoice, vendorInvoice] = await Promise.all([
     read('supabase/migrations/20260905_v98_vendor_shipping_settings.sql'),
     read('supabase/migrations/20260905_v98_shipping_details_type_compat.sql'),
+    read('supabase/migrations/20260905_v98_shipping_uuid_text_compat.sql'),
     read('js/local-cart-v93.js'),
     read('js/kinto-bundle-ui-v93.js'),
     read('js/vendor-v94-multistore-orders.js')
@@ -34,9 +35,14 @@ test('V98 snapshots one resolved vendor quote on every independent order', async
   expect(sql).toContain("'checkout_contract', '') <> 'independent_vendor_orders'");
   expect(sql).toContain('private.v94_jsonb_object(to_jsonb(new.details))');
   expect(sql).not.toContain('private.v94_jsonb_object(new.details)');
+  expect(sql).toContain('c.id::text = new.customer_id::text');
+  expect(sql).not.toContain('c.id = new.customer_id');
   expect(sql).toContain('))::text;');
   expect(compatSql).toContain('private.v94_jsonb_object(to_jsonb(new.details))');
   expect(compatSql).not.toContain('private.v94_jsonb_object(new.details)');
+  expect(compatSql).toContain('c.id::text = new.customer_id::text');
+  expect(uuidCompatSql).toContain('c.id::text = new.customer_id::text');
+  expect(uuidCompatSql).not.toContain('c.id = new.customer_id');
   expect(sql).toContain('SHIPPING_DESTINATION_UNSUPPORTED');
   expect(sql).toContain('SHIPPING_CURRENCY_MISMATCH');
   expect(sql).toContain("'shipping_snapshot', v_quote");
