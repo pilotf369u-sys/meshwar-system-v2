@@ -62,3 +62,22 @@ test('V98 schema prepares realtime consumers without exposing direct table acces
   expect(sql).toContain('shipping_company_name text');
   expect(sql).toContain('shipping_snapshot jsonb');
 });
+
+test('V99 vendor order list projects immutable shipping and realtime row identity', async () => {
+  const [sql, adapter, dashboard] = await Promise.all([
+    read('supabase/migrations/20260905_v99_vendor_order_shipping_projection.sql'),
+    read('js/vendor-v94-multistore-orders.js'),
+    read('vendor-dashboard-v2.html')
+  ]);
+
+  expect(sql).toContain('private.require_vendor_session(p_session_token)');
+  expect(sql).toContain('o.shipping_company_name');
+  expect(sql).toContain('o.delivery_fee');
+  expect(sql).toContain('o.shipping_snapshot');
+  expect(sql).toContain('segment_updated_at timestamptz');
+  expect(adapter).toContain('data-vendor-shipping-snapshot');
+  expect(adapter).toContain('data-vendor-segment-id');
+  expect(adapter).toContain('data-vendor-order-id');
+  expect(adapter).toContain('data-segment-updated-at');
+  expect(dashboard).toContain('<th>الشحن</th>');
+});
