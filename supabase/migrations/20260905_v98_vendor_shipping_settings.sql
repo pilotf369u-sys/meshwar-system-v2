@@ -375,7 +375,10 @@ security definer
 set search_path = public, private, pg_temp
 as $$
 declare
-  v_details jsonb := private.v94_jsonb_object(new.details);
+  -- orders.details is TEXT in the live schema. Wrap it as jsonb first so the
+  -- V94 compatibility parser can safely accept both TEXT-backed and JSONB-backed
+  -- deployments without PostgreSQL resolving a nonexistent (text) overload.
+  v_details jsonb := private.v94_jsonb_object(to_jsonb(new.details));
   v_customer jsonb := '{}'::jsonb;
   v_quote jsonb;
   v_store_id uuid;
@@ -394,7 +397,10 @@ begin
   if new.customer_id is not null then
     select coalesce(to_jsonb(c), '{}'::jsonb) into v_customer
     from public.customers c
-    where c.id = new.customer_id
+    -- orders.customer_id is TEXT in the live schema while customers.id is UUID.
+    -- Compare their canonical textual values; this also avoids casting malformed
+    -- legacy customer identifiers to uuid and aborting checkout.
+    where c.id::text = new.customer_id::text
     limit 1;
   end if;
 
@@ -414,7 +420,7 @@ begin
   new.delivery_currency := v_currency;
   new.shipping_company_name := nullif(v_quote ->> 'company_name', '');
   new.shipping_snapshot := v_quote;
-  new.details := v_details
+  new.details := (v_details
     || jsonb_build_object(
       'shipping_mode', case when coalesce((v_quote ->> 'matched')::boolean, false) then 'vendor_rate_snapshot' else 'unconfigured' end,
       'delivery_fee', v_fee,
@@ -423,7 +429,7 @@ begin
       'shipping_company_name', new.shipping_company_name,
       'shipping_snapshot', v_quote,
       'grand_total_local', private.v94_numeric(v_details ->> 'customer_total_local', new.total_price) + v_fee
-    );
+    ))::text;
   return new;
 end;
 $$;
