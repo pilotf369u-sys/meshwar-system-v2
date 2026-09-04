@@ -90,3 +90,21 @@ test('V99 vendor order list projects immutable shipping and realtime row identit
   expect(adapter).toContain('data-segment-updated-at');
   expect(dashboard).toContain('<th>الشحن</th>');
 });
+
+test('V101 checkout carries destination and resolves an active same-currency fallback', async () => {
+  const [sql, cart] = await Promise.all([
+    read('supabase/migrations/20260905_v101_checkout_shipping_destination_fallback.sql'),
+    read('js/local-cart-v93.js')
+  ]);
+
+  expect(cart).toContain('customers?select=*');
+  expect(cart).toContain('shippingDestination(customer)');
+  expect(cart).toContain("rpc/checkout_independent_vendor_orders_v101");
+  expect(sql).toContain("'app.checkout_customer_shipping'");
+  expect(sql).toContain('private.v101_location_key');
+  expect(sql).toContain("v_mode := 'default_fallback'");
+  expect(sql).toContain("upper(r.currency) = v_currency");
+  expect(sql).toContain("'provider', v_match.company_name");
+  expect(sql).toContain("'cost', v_match.delivery_fee");
+  expect(sql).toContain('SHIPPING_RATE_NOT_CONFIGURED_FOR_ORDER_CURRENCY');
+});
