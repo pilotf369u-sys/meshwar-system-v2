@@ -29,7 +29,7 @@ begin
   if new.customer_id is not null then
     select coalesce(to_jsonb(c), '{}'::jsonb) into v_customer
     from public.customers c
-    where c.id = new.customer_id
+    where c.id::text = new.customer_id::text
     limit 1;
   end if;
 
