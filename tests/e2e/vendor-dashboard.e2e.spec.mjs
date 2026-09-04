@@ -28,6 +28,19 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     for(const[status,tone]of tones){await frameWindow(page,async s=>{const o=window.__MESH_E2E_DB.orders.find(x=>x.id==='o-pending');o.status=s;await window.loadOrders()},status);await search.fill('MW-5664');await shellOrderFilter(page,{highlightExact:true});await expect.poll(()=>frameWindow(page,()=>document.querySelector('#ordersBody tr[data-mw-order-highlight] td[data-label="الحالة"] span')?.dataset.mwOrderStatusTone||'')).toBe(tone);await vendor.locator('#vendorOrderSearchClear').click()}
   });
 
+  test('V95: secure store segments, full customer details and atomic status with legacy fallback',async({page})=>{
+    const vendor=await openVendor(page);
+    await frameWindow(page,async()=>{sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token',expiresAt:new Date(Date.now()+3600000).toISOString()}));await window.loadOrders()});
+    const segmentRow=vendor.locator('#ordersBody tr').filter({hasText:'KN-009501'});
+    await expect(segmentRow).toHaveCount(1);await expect(segmentRow).toContainText('Segment Product');
+    await expect(vendor.locator('#ordersBody tr').filter({hasText:'MW-5664'})).toHaveCount(1);
+    await segmentRow.getByRole('button',{name:'تفاصيل'}).click();
+    await expect(vendor.locator('#vendorOrderDetailsModal')).toHaveClass(/flex/);await expect(vendor.locator('#vendorOrderDetailsBody')).toContainText('عميل الاختبار');await expect(vendor.locator('#vendorOrderDetailsBody')).toContainText('07700000000');await expect(vendor.locator('#vendorOrderDetailsBody')).toContainText('الكرادة، شارع الاختبار');await expect(vendor.locator('#vendorOrderDetailsBody')).toContainText('SIP-9501');await frameWindow(page,()=>window.closeVendorOrderDetails());
+    await segmentRow.getByRole('button',{name:'قيد التجهيز'}).click();
+    await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_RPC_CALLS.filter(x=>x.name==='vendor_advance_order_segment_status').at(-1)?.args||null)).toEqual({p_session_token:'e2e-secure-token',p_segment_id:'seg-e2e-1',p_expected_status:'بانتظار التسديد',p_next_status:'قيد التجهيز'});
+    await expect(vendor.locator('#ordersBody tr').filter({hasText:'KN-009501'})).toContainText('قيد التجهيز');
+  });
+
   test('catalog: add/edit stock, taxonomy persistence, barcode fallback, global margin auto-pricing and pagination',async({page})=>{
     const vendor=await openVendor(page);await vendor.locator('#vendorTabBtn-products').click();
     await expect(vendor.locator('#mwVendorPager-products [data-pager-info]')).toContainText('1–10 من 23');await expect(vendor.locator('#productsBody tr:not(.mw-page-hidden)')).toHaveCount(10);

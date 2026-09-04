@@ -331,6 +331,28 @@ async function setupVendorOrdersRealtime(){
 }
 window.addEventListener('beforeunload',()=>{try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime unload cleanup:',e)}});
 Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct,saveExchangeRate,loadOrders,printShippingLabel,openVendorOrderDetails,closeVendorOrderDetails,setVendorTab,setVendorOrderFilter,setVendorFinanceFilter,exportVendorPaidStatement});
+window.MeshwarVendorRuntime={
+  sb,
+  getStore:()=>vendorStore,
+  setStore:value=>{vendorStore=value||null},
+  saveStoreSession,
+  openDashboard,
+  getOrders:()=>orders,
+  setOrders:value=>{orders=Array.isArray(value)?value:[]},
+  money,
+  financeCurrency,
+  showNotice,
+  renderFinance,
+  renderStats,
+  updateVendorOrderCounters,
+  vendorOrderMatchesFilter,
+  closeVendorOrderDetails,
+  nativeLoadOrders:loadOrders,
+  nativeRenderVendorOrders:renderVendorOrders,
+  nativeOpenVendorOrderDetails:openVendorOrderDetails,
+  nativeVendorLogin:vendorLogin,
+  nativeVendorLogout:vendorLogout
+};
 document.querySelectorAll('[data-finance-filter]').forEach(btn=>{btn.addEventListener('click',()=>setVendorFinanceFilter(btn.dataset.financeFilter||'all'))});
 const vendorPaidStatementBtn=document.querySelector('button[onclick="exportVendorPaidStatement()"]');if(vendorPaidStatementBtn){vendorPaidStatementBtn.removeAttribute('onclick');vendorPaidStatementBtn.addEventListener('click',exportVendorPaidStatement)}
 const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
