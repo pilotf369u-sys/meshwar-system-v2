@@ -21,16 +21,24 @@ declare
   v_customer_row jsonb := '{}'::jsonb;
   v_customer jsonb := '{}'::jsonb;
 begin
-  select s, to_jsonb(o)
-  into v_segment, v_order
+  select s.*
+  into v_segment
   from public.order_store_segments s
-  join public.orders o on o.id = s.order_id
   where s.id = p_segment_id
     and s.store_id = v_store_id
     and s.payment_confirmed = true;
 
   if v_segment.id is null then
     raise exception 'ORDER_SEGMENT_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  select to_jsonb(o)
+  into v_order
+  from public.orders o
+  where o.id = v_segment.order_id;
+
+  if v_order is null then
+    raise exception 'ORDER_NOT_FOUND' using errcode = 'P0002';
   end if;
 
   v_details := private.v94_jsonb_object(v_order -> 'details');
