@@ -1,11 +1,9 @@
--- KINTO V99 — expose immutable shipping snapshots in the secure vendor order list.
--- The list remains session-scoped and returns one store segment per row.
+-- KINTO V100 — normalize legacy/current shipping snapshot keys in vendor orders.
+-- Safe to run after V99. No order data is rewritten.
 
 begin;
 
-drop function if exists public.vendor_list_order_segments(text, integer, integer);
-
-create function public.vendor_list_order_segments(
+create or replace function public.vendor_list_order_segments(
   p_session_token text,
   p_limit integer default 100,
   p_offset integer default 0
@@ -71,6 +69,9 @@ begin
     )::numeric,
     coalesce(
       nullif(o.delivery_currency::text, ''),
+      nullif(o.shipping_snapshot ->> 'currency', ''),
+      nullif(v.order_details #>> '{shipping_snapshot,currency}', ''),
+      nullif(v.order_details ->> 'delivery_currency', ''),
       s.currency
     ),
     coalesce(
@@ -109,7 +110,7 @@ comment on function public.vendor_list_order_segments(
   integer,
   integer
 ) is
-'V99 session-scoped vendor projection with immutable order shipping snapshot and segment update cursor for realtime reconciliation.';
+'V100 vendor projection: resolves company_name/provider and delivery_fee/cost from immutable order snapshots and TEXT details fallback.';
 
 notify pgrst, 'reload schema';
 

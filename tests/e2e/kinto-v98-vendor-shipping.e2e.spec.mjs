@@ -64,8 +64,9 @@ test('V98 schema prepares realtime consumers without exposing direct table acces
 });
 
 test('V99 vendor order list projects immutable shipping and realtime row identity', async () => {
-  const [sql, adapter, dashboard] = await Promise.all([
+  const [sql, compatSql, adapter, dashboard] = await Promise.all([
     read('supabase/migrations/20260905_v99_vendor_order_shipping_projection.sql'),
+    read('supabase/migrations/20260905_v100_vendor_shipping_snapshot_key_compat.sql'),
     read('js/vendor-v94-multistore-orders.js'),
     read('vendor-dashboard-v2.html')
   ]);
@@ -75,6 +76,14 @@ test('V99 vendor order list projects immutable shipping and realtime row identit
   expect(sql).toContain('o.delivery_fee');
   expect(sql).toContain('o.shipping_snapshot');
   expect(sql).toContain('segment_updated_at timestamptz');
+  expect(compatSql).toContain("o.shipping_snapshot ->> 'provider'");
+  expect(compatSql).toContain("o.shipping_snapshot ->> 'cost'");
+  expect(compatSql).toContain("v.order_details #>> '{shipping_snapshot,provider}'");
+  expect(compatSql).toContain('private.v94_jsonb_object(to_jsonb(o.details))');
+  expect(adapter).toContain('shipping.provider');
+  expect(adapter).toContain('shipping.cost');
+  expect(adapter).toContain('snapshot.provider');
+  expect(adapter).toContain('snapshot.cost');
   expect(adapter).toContain('data-vendor-shipping-snapshot');
   expect(adapter).toContain('data-vendor-segment-id');
   expect(adapter).toContain('data-vendor-order-id');
