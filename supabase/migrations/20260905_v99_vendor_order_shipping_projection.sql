@@ -50,16 +50,40 @@ begin
     s.store_status,
     s.confirmed_at,
     s.vendor_payment_status,
-    nullif(o.shipping_company_name::text, ''),
-    coalesce(o.delivery_fee, 0)::numeric,
+    coalesce(
+      nullif(o.shipping_company_name::text, ''),
+      nullif(o.shipping_snapshot ->> 'company_name', ''),
+      nullif(o.shipping_snapshot ->> 'provider', ''),
+      nullif(o.shipping_snapshot ->> 'carrier_name', ''),
+      nullif(v.order_details #>> '{shipping_snapshot,company_name}', ''),
+      nullif(v.order_details #>> '{shipping_snapshot,provider}', ''),
+      nullif(v.order_details ->> 'shipping_company_name', '')
+    ),
+    coalesce(
+      nullif(private.v94_numeric(o.shipping_snapshot ->> 'delivery_fee', -1), -1),
+      nullif(private.v94_numeric(o.shipping_snapshot ->> 'cost', -1), -1),
+      nullif(private.v94_numeric(o.shipping_snapshot ->> 'shipping_cost', -1), -1),
+      nullif(private.v94_numeric(v.order_details #>> '{shipping_snapshot,delivery_fee}', -1), -1),
+      nullif(private.v94_numeric(v.order_details #>> '{shipping_snapshot,cost}', -1), -1),
+      nullif(private.v94_numeric(v.order_details ->> 'delivery_fee_local', -1), -1),
+      o.delivery_fee,
+      0
+    )::numeric,
     coalesce(
       nullif(o.delivery_currency::text, ''),
       s.currency
     ),
-    coalesce(o.shipping_snapshot, '{}'::jsonb),
+    coalesce(
+      nullif(o.shipping_snapshot, '{}'::jsonb),
+      private.v94_jsonb_object(v.order_details -> 'shipping_snapshot'),
+      '{}'::jsonb
+    ),
     s.updated_at
   from public.order_store_segments s
   join public.orders o on o.id = s.order_id
+  cross join lateral (
+    select private.v94_jsonb_object(to_jsonb(o.details)) as order_details
+  ) v
   where s.store_id = v_store_id
     and s.payment_confirmed = true
   order by s.confirmed_at desc nulls last, s.created_at desc
