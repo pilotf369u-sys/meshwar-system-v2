@@ -34,12 +34,12 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     const segmentRow=vendor.locator('#ordersBody tr').filter({hasText:'KN-009501'});
     await expect(segmentRow).toHaveCount(1);await expect(segmentRow).toContainText('Segment Product');
     await expect(vendor.locator('#ordersBody tr').filter({hasText:'MW-5664'})).toHaveCount(1);
-    const statusSelect=segmentRow.getByRole('combobox',{name:'حالة حصة المتجر'});await expect(statusSelect.locator('option')).toHaveCount(18);await expect(statusSelect.locator('option[value="قيد الطلب"]')).toHaveCount(1);await expect(statusSelect.locator('option[value="مخزن الشركة"]')).toHaveCount(1);await expect(statusSelect.locator('option[value="تم التسليم"]')).toHaveCount(1);
+    const statusSelect=segmentRow.getByRole('combobox',{name:'حالة حصة المتجر'});await expect(statusSelect.locator('option')).toHaveCount(11);await expect(statusSelect.locator('option[value="قيد الطلب"]')).toHaveCount(0);await expect(statusSelect.locator('option[value="بانتظار تأكيد الدفع"]')).toHaveCount(0);await expect(statusSelect.locator('option[value="مخزن الشركة"]')).toHaveCount(1);await expect(statusSelect.locator('option[value="تم التسليم"]')).toHaveCount(1);
     await segmentRow.getByRole('button',{name:'تفاصيل'}).click();
     const invoice=vendor.frameLocator('#vendorStoreInvoiceFrame');await expect(vendor.locator('#vendorOrderDetailsModal')).toHaveClass(/flex/);await expect(invoice.locator('.invoice-head')).toBeVisible();await expect(invoice.locator('body')).toContainText('عميل الاختبار');await expect(invoice.locator('body')).toContainText('07700000000');await expect(invoice.locator('body')).toContainText('الكرادة، شارع الاختبار');await expect(invoice.locator('body')).toContainText('SIP-9501');await expect(invoice.locator('body')).toContainText('Segment Product');await expect(invoice.locator('.grand')).toContainText('16,000 IQD');await frameWindow(page,()=>window.closeVendorOrderDetails());
-    await statusSelect.selectOption('قيد الطلب');
-    await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_RPC_CALLS.filter(x=>x.name==='vendor_advance_order_segment_status').at(-1)?.args||null)).toEqual({p_session_token:'e2e-secure-token',p_segment_id:'seg-e2e-1',p_expected_status:'بانتظار التسديد',p_next_status:'قيد الطلب'});
-    await expect(vendor.locator('#ordersBody tr').filter({hasText:'KN-009501'})).toContainText('قيد الطلب');
+    await statusSelect.selectOption('مخزن الشركة');
+    await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_RPC_CALLS.filter(x=>x.name==='vendor_advance_order_segment_status').at(-1)?.args||null)).toEqual({p_session_token:'e2e-secure-token',p_segment_id:'seg-e2e-1',p_expected_status:'بانتظار التسديد',p_next_status:'مخزن الشركة'});
+    await expect(vendor.locator('#ordersBody tr').filter({hasText:'KN-009501'})).toContainText('مخزن الشركة');
   });
 
   test('catalog: add/edit stock, taxonomy persistence, barcode fallback, global margin auto-pricing and pagination',async({page})=>{

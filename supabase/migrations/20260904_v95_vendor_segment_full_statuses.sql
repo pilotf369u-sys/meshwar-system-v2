@@ -1,5 +1,5 @@
 -- V95 vendor segment workflow
--- Expands the atomic per-store status RPC to the unified MeshWar status list.
+-- Restricts the atomic per-store status RPC to post-"قيد الطلب" vendor operations.
 
 begin;
 
@@ -18,13 +18,6 @@ declare
   v_store_id uuid := private.require_vendor_session(p_session_token);
   v_segment public.order_store_segments%rowtype;
   v_allowed_statuses constant text[] := array[
-    'مستحق مكافأة',
-    'ملغية من قبل العميل',
-    'بانتظار رد الموظف',
-    'بانتظار موافقة العميل',
-    'بانتظار تأكيد الدفع',
-    'تم التسديد',
-    'قيد الطلب',
     'مخزن الشركة',
     'تجهيز شحن',
     'محولة إلى الفرع',

@@ -6,7 +6,7 @@ const html=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const runtime=window.MeshwarVendorRuntime;
 if(!runtime){console.error('Vendor V95 runtime bridge unavailable');return}
 const detailCache=new Map();
-const UNIFIED_STATUSES=['مستحق مكافأة','ملغية من قبل العميل','بانتظار رد الموظف','بانتظار موافقة العميل','بانتظار تأكيد الدفع','تم التسديد','قيد الطلب','مخزن الشركة','تجهيز شحن','محولة إلى الفرع','تم الشحن','مخزن محلي','مندوب','توزيع داخلي','تم التسليم','رفض التسليم','مرفوض'];
+const VENDOR_OPERATIONAL_STATUSES=['مخزن الشركة','تجهيز شحن','محولة إلى الفرع','تم الشحن','مخزن محلي','مندوب','توزيع داخلي','تم التسليم','رفض التسليم','مرفوض'];
 const LEGACY_STATUS_MAP={'انتظار رد الموظف':'بانتظار رد الموظف','بانتظار موافقة الزبون':'بانتظار موافقة العميل','بانتظار التسعير':'بانتظار موافقة العميل','تم التسعير / بانتظار موافقة العميل':'بانتظار موافقة العميل','تمت الموافقة - بانتظار الدفع':'بانتظار تأكيد الدفع','تمت الموافقة':'بانتظار تأكيد الدفع','مخزن شركة':'مخزن الشركة','جاري التوصيل مع المندوب':'مندوب','رفض الطلب':'رفض التسليم'};
 
 function session(){try{const value=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');if(!value?.token)return null;if(value.expiresAt&&Date.parse(value.expiresAt)<=Date.now()){sessionStorage.removeItem(SESSION_KEY);return null}return value}catch{return null}}
@@ -57,7 +57,7 @@ async function loadSegmentOrders(){
 }
 
 function normalizedStatus(value){const status=String(value||'').trim();return LEGACY_STATUS_MAP[status]||status}
-function statusOptions(current){const selected=normalizedStatus(current),options=UNIFIED_STATUSES.includes(selected)?UNIFIED_STATUSES:[selected,...UNIFIED_STATUSES].filter(Boolean);return options.map(status=>`<option value="${html(status)}" ${status===selected?'selected':''}>${html(status)}</option>`).join('')}
+function statusOptions(current){const selected=normalizedStatus(current),currentOption=VENDOR_OPERATIONAL_STATUSES.includes(selected)?'':`<option value="" selected disabled>الحالة الحالية — ${html(selected||'---')}</option>`;return currentOption+VENDOR_OPERATIONAL_STATUSES.map(status=>`<option value="${html(status)}" ${status===selected?'selected':''}>${html(status)}</option>`).join('')}
 function actionButtons(o){const status=o._v94Paid?`<select aria-label="حالة حصة المتجر" data-vendor-segment-status="${html(o.id)}" onchange="setV94VendorStoreStatus('${html(o.id)}',this.value)" class="min-w-[170px] rounded-lg border border-emerald-400/30 bg-slate-900 px-3 py-2 text-xs font-black text-emerald-100">${statusOptions(o._v94StoreStatus||o.status)}</select>`:'';return `<div class="flex flex-wrap gap-2"><button type="button" onclick="printShippingLabel('${html(o.id)}')" class="rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs font-black text-sky-200">🖨️ طباعة الملصق</button><button type="button" onclick="openV94VendorOrderDetails('${html(o.id)}')" class="rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-xs font-black text-violet-200">تفاصيل</button>${status}</div>`}
 
 function renderOrders(){
@@ -84,7 +84,7 @@ function printStoreInvoice(){const frame=document.getElementById('vendorStoreInv
 function ensureInvoiceBarcode(frame){const doc=frame?.contentDocument,svg=doc?.getElementById('invoiceBarcode');if(!doc||!svg)return;const draw=()=>{try{frame.contentWindow.JsBarcode(svg,svg.dataset.value,{format:'CODE128',displayValue:false,height:32,margin:0,width:1.5})}catch(e){console.warn('Vendor invoice barcode failed',e)}};if(frame.contentWindow.JsBarcode)return draw();const script=doc.createElement('script');script.src='https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js';script.onload=draw;doc.head.appendChild(script)}
 
 async function setStatus(id,next){
-  const o=runtime.getOrders().find(x=>String(x.id)===String(id)),active=session(),target=normalizedStatus(next);if(!o)return runtime.showNotice('تعذر العثور على حصة المتجر.',true);if(!UNIFIED_STATUSES.includes(target)){runtime.showNotice('حالة الطلب المحددة غير معتمدة.',true);await loadSegmentOrders();return}if(target===normalizedStatus(o._v94StoreStatus||o.status))return;
+  const o=runtime.getOrders().find(x=>String(x.id)===String(id)),active=session(),target=normalizedStatus(next);if(!o)return runtime.showNotice('تعذر العثور على حصة المتجر.',true);if(!VENDOR_OPERATIONAL_STATUSES.includes(target)){runtime.showNotice('هذه الحالة ليست ضمن الصلاحيات التشغيلية للتاجر.',true);await loadSegmentOrders();return}if(target===normalizedStatus(o._v94StoreStatus||o.status))return;
   if(o._v95SegmentId&&active){const expected=String(o._v94StoreStatus||o.status||''),{error}=await runtime.sb.rpc('vendor_advance_order_segment_status',{p_session_token:active.token,p_segment_id:o._v95SegmentId,p_expected_status:expected,p_next_status:target});if(error){runtime.showNotice('تعذر تحديث الحالة: '+(error.message||error),true);await loadSegmentOrders();return}detailCache.delete(String(o.id));runtime.showNotice('تم تحديث حالة حصة المتجر إلى: '+target);runtime.closeVendorOrderDetails();await loadSegmentOrders();return}
   return legacySetStatus(o,target);
 }
@@ -99,6 +99,6 @@ async function secureLogin(){
 
 async function secureLogout(){const active=session();clearSession();if(active){try{await runtime.sb.rpc('vendor_logout_session',{p_session_token:active.token})}catch(e){console.warn('Vendor session revoke failed',e)}}return runtime.nativeVendorLogout()}
 
-window.vendorLogin=secureLogin;window.vendorLogout=secureLogout;window.loadOrders=loadSegmentOrders;window.renderVendorOrders=renderOrders;window.openV94VendorOrderDetails=openDetails;window.setV94VendorStoreStatus=setStatus;window.printV95VendorStoreInvoice=printStoreInvoice;window.MeshwarVendorV94={projectOrder:projectLegacyOrder,projectSegment,loadOrders:loadSegmentOrders,session,statuses:UNIFIED_STATUSES.slice()};
+window.vendorLogin=secureLogin;window.vendorLogout=secureLogout;window.loadOrders=loadSegmentOrders;window.renderVendorOrders=renderOrders;window.openV94VendorOrderDetails=openDetails;window.setV94VendorStoreStatus=setStatus;window.printV95VendorStoreInvoice=printStoreInvoice;window.MeshwarVendorV94={projectOrder:projectLegacyOrder,projectSegment,loadOrders:loadSegmentOrders,session,statuses:VENDOR_OPERATIONAL_STATUSES.slice()};
 setTimeout(()=>{if(runtime.getStore())loadSegmentOrders()},100);
 })();
