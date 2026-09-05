@@ -306,3 +306,10 @@ test('V115 opens invoices deterministically from customer, employee and admin de
     expect(page).toContain('defer src="js/invoice-details-hotfix-v115.js?v=20260905-v116"');
   }
 });
+
+test('V117 preserves the invoice action when legacy bundle details are malformed', async () => {
+  const invoice = await read('js/kinto-bundle-ui-v93.js');
+  expect(invoice).toContain("d.items.filter(x=>x&&typeof x==='object')");
+  expect(invoice).toContain("invoice action preserved");
+  expect(invoice.indexOf("container.appendChild(actions)")).toBeLessThan(invoice.indexOf("container.insertAdjacentHTML('beforeend',bundleHtml(order))"));
+});
