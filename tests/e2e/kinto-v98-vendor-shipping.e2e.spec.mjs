@@ -303,6 +303,6 @@ test('V115 opens invoices deterministically from customer, employee and admin de
   expect(hotfix).toContain("wrap('openOrderDetailsModalData'");
   expect(hotfix).toContain('window.KintoBundleV93.enhance');
   for (const page of [customer, employee, admin]) {
-    expect(page).toContain('invoice-details-hotfix-v115.js?v=20260905-v115');
+    expect(page).toContain('defer src="js/invoice-details-hotfix-v115.js?v=20260905-v116"');
   }
 });
