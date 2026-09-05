@@ -172,8 +172,16 @@ begin
     raise exception 'REWARD_CURRENCY_NOT_IN_ORDER' using errcode = '22023';
   end if;
   if v_currency = private.v112_reward_currency(coalesce(v_order.currency, 'IQD'))
-     and p_amount > coalesce(v_order.total_price, 0)
-       + case when private.v112_reward_currency(coalesce(v_order.delivery_currency, v_order.currency, 'IQD')) = v_currency then coalesce(v_order.delivery_fee, 0) else 0 end then
+     and p_amount > (
+       coalesce(v_order.total_price, 0)
+       + (
+         case
+           when private.v112_reward_currency(coalesce(v_order.delivery_currency, v_order.currency, 'IQD')) = v_currency
+             then coalesce(v_order.delivery_fee, 0)
+           else 0
+         end
+       )
+     ) then
     raise exception 'REWARD_DISCOUNT_EXCEEDS_ORDER_TOTAL' using errcode = '22003';
   end if;
   if v_currency <> private.v112_reward_currency(coalesce(v_order.currency, 'IQD'))
