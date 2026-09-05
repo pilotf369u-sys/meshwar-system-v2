@@ -169,5 +169,25 @@ test('V104 lets the owning vendor atomically control shipping per independent or
   expect(adapter).toContain('vendor_update_order_shipping');
   expect(adapter).toContain('vendorFreeShippingChanged');
   expect(adapter).toContain('p_expected_version:Number(panel.dataset.version)');
-  expect(shell).toContain('v104-order-shipping-control');
+  expect(shell).toContain('v105-row-shipping-control');
+});
+
+test('V105 defers shipping to the vendor and keeps every invoice on canonical data', async () => {
+  const [sql, adapter, invoice, shell] = await Promise.all([
+    read('supabase/migrations/20260905_v105_vendor_assigned_shipping_source.sql'),
+    read('js/vendor-v94-multistore-orders.js'),
+    read('js/kinto-bundle-ui-v93.js'),
+    read('vendor-dashboard.html')
+  ]);
+  expect(sql).toContain("'vendor_assignment_pending'");
+  expect(sql).toContain('new.shipping_company_name := null');
+  expect(sql).toContain('new.delivery_fee := 0');
+  expect(sql).toContain('vendor_list_order_shipping_controls');
+  expect(adapter).toContain('shippingTableControl');
+  expect(adapter).toContain('saveVendorTableShipping');
+  expect(adapter).toContain('p_segment_ids:ids');
+  expect(invoice).toContain('hydrateCanonicalShipping(order)');
+  expect(invoice).toContain('بانتظار تحديد التاجر');
+  expect(invoice).toContain('t.deliveryCurrency');
+  expect(shell).toContain('v105-row-shipping-control');
 });
