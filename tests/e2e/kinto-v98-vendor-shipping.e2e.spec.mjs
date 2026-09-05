@@ -169,7 +169,7 @@ test('V104 lets the owning vendor atomically control shipping per independent or
   expect(adapter).toContain('vendor_update_order_shipping');
   expect(adapter).toContain('vendorFreeShippingChanged');
   expect(adapter).toContain('p_expected_version:Number(panel.dataset.version)');
-  expect(shell).toContain('v110-modern-tracking');
+  expect(shell).toContain('v111-clean-gold-tracking');
 });
 
 test('V105 defers shipping to the vendor and keeps every invoice on canonical data', async () => {
@@ -189,7 +189,7 @@ test('V105 defers shipping to the vendor and keeps every invoice on canonical da
   expect(invoice).toContain('hydrateCanonicalShipping(order)');
   expect(invoice).toContain('بانتظار تحديد التاجر');
   expect(invoice).toContain('t.deliveryCurrency');
-  expect(shell).toContain('v110-modern-tracking');
+  expect(shell).toContain('v111-clean-gold-tracking');
 });
 
 test('V107 shows one canonical color-coded collection status in every invoice', async () => {
@@ -227,13 +227,13 @@ test('V108 renders one compact canonical order timeline in every invoice', async
     expect(source).toContain('الشحن والتوصيل');
     expect(source).toContain('تم التسليم');
     expect(source).toContain('rejected');
-    expect(source).toContain('الحالة الحالية:');
+    expect(source).not.toContain('<small>الحالة الحالية:');
   }
   expect(sharedInvoice).toContain('invoiceTimeline(order?.status)');
   expect(vendorInvoice).toContain('vendorInvoiceTimeline(data.status)');
 });
 
-test('V110 gives invoice tracking modern SVG icons, gold glow and a stable status badge', async () => {
+test('V111 gives invoice tracking a clean path, stronger gold glow and no duplicate status', async () => {
   const [sharedInvoice, vendorInvoice] = await Promise.all([
     read('js/kinto-bundle-ui-v93.js'),
     read('js/vendor-v94-multistore-orders.js')
@@ -246,7 +246,9 @@ test('V110 gives invoice tracking modern SVG icons, gold glow and a stable statu
     expect(source).toContain('track-step:not(:last-of-type)::after');
     expect(source).toContain('@keyframes trackGlow');
     expect(source).toContain('@keyframes trackGoldGlow');
-    expect(source).toContain('rgba(212,167,44,.95)');
+    expect(source).toContain('0 0 18px rgba(212,167,44,1)');
+    expect(source).toContain('.track-step::after{display:none!important}');
+    expect(source).not.toContain('<small>الحالة الحالية:');
     expect(source).toContain('.date-block>span{display:block}');
     expect(source).toContain('max-width:145px!important');
   }
