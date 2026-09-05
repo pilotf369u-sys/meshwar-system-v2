@@ -189,7 +189,7 @@ begin
     raise exception 'REWARD_DISCOUNT_EXCEEDS_DELIVERY_TOTAL' using errcode = '22003';
   end if;
 
-  select * into v_customer from public.customers where id = v_order.customer_id for update;
+  select * into v_customer from public.customers where id::text = v_order.customer_id::text for update;
   v_balance := coalesce(nullif(v_customer.reward_balances ->> v_currency, '')::numeric, 0);
   if v_balance < p_amount then raise exception 'REWARD_BALANCE_INSUFFICIENT' using errcode = '22003'; end if;
 
@@ -200,7 +200,7 @@ begin
   update public.customers
   set reward_balances = jsonb_set(reward_balances, array[v_currency], to_jsonb(v_balance - p_amount), true),
       rewards_log = coalesce(rewards_log, '[]'::jsonb) || jsonb_build_array(v_snapshot || jsonb_build_object('type', 'order_discount', 'order_id', p_order_id, 'amount', -p_amount, 'date', now()))
-  where id = v_order.customer_id;
+  where id::text = v_order.customer_id::text;
 
   update public.orders
   set reward_discount_amount = p_amount,
