@@ -169,7 +169,7 @@ test('V104 lets the owning vendor atomically control shipping per independent or
   expect(adapter).toContain('vendor_update_order_shipping');
   expect(adapter).toContain('vendorFreeShippingChanged');
   expect(adapter).toContain('p_expected_version:Number(panel.dataset.version)');
-  expect(shell).toContain('v106-shipping-layout');
+  expect(shell).toContain('v107-collection-status');
 });
 
 test('V105 defers shipping to the vendor and keeps every invoice on canonical data', async () => {
@@ -189,5 +189,27 @@ test('V105 defers shipping to the vendor and keeps every invoice on canonical da
   expect(invoice).toContain('hydrateCanonicalShipping(order)');
   expect(invoice).toContain('بانتظار تحديد التاجر');
   expect(invoice).toContain('t.deliveryCurrency');
-  expect(shell).toContain('v106-shipping-layout');
+  expect(shell).toContain('v107-collection-status');
+});
+
+test('V107 shows one canonical color-coded collection status in every invoice', async () => {
+  const [sql, sharedInvoice, vendorInvoice, courier] = await Promise.all([
+    read('supabase/migrations/20260905_v107_invoice_collection_status_projection.sql'),
+    read('js/kinto-bundle-ui-v93.js'),
+    read('js/vendor-v94-multistore-orders.js'),
+    read('delivery-dashboard.html')
+  ]);
+
+  for (const source of [sharedInvoice, vendorInvoice, courier]) {
+    expect(source).toContain('تحصيل كامل عند الاستلام');
+    expect(source).toContain('البضاعة مدفوعة');
+    expect(source).toContain('مدفوع مقدماً شامل التوصيل');
+  }
+  expect(sharedInvoice).toContain('delivery_payment_type');
+  expect(sharedInvoice).toContain('collection-status ${collection.tone}');
+  expect(vendorInvoice).toContain('invoiceCollectionInfo');
+  expect(vendorInvoice).toContain('collection-status ${collection.tone}');
+  expect(courier).toContain('deliveryCollectionBadge(o)');
+  expect(sql).toContain("'delivery_payment_type', o.delivery_payment_type");
+  expect(sql).toContain('private.require_vendor_session(p_session_token)');
 });
