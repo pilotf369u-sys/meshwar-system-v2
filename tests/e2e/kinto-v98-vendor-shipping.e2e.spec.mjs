@@ -281,3 +281,11 @@ test('V111 gives invoice tracking a clean path, stronger gold glow and no duplic
     expect(source).toContain('max-width:145px!important');
   }
 });
+
+test('V114 supports orders tables without updated_at', async () => {
+  const migration = await read('supabase/migrations/20260905_v114_reward_orders_without_updated_at.sql');
+
+  expect(migration).toContain('create or replace function public.apply_order_reward_discount');
+  expect(migration).not.toContain('updated_at');
+  expect(migration).toContain('reward_discount_snapshot = v_snapshot');
+});
