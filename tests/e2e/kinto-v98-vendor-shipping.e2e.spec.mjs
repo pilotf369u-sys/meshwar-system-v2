@@ -169,7 +169,7 @@ test('V104 lets the owning vendor atomically control shipping per independent or
   expect(adapter).toContain('vendor_update_order_shipping');
   expect(adapter).toContain('vendorFreeShippingChanged');
   expect(adapter).toContain('p_expected_version:Number(panel.dataset.version)');
-  expect(shell).toContain('v107-collection-status');
+  expect(shell).toContain('v108-invoice-timeline');
 });
 
 test('V105 defers shipping to the vendor and keeps every invoice on canonical data', async () => {
@@ -189,7 +189,7 @@ test('V105 defers shipping to the vendor and keeps every invoice on canonical da
   expect(invoice).toContain('hydrateCanonicalShipping(order)');
   expect(invoice).toContain('بانتظار تحديد التاجر');
   expect(invoice).toContain('t.deliveryCurrency');
-  expect(shell).toContain('v107-collection-status');
+  expect(shell).toContain('v108-invoice-timeline');
 });
 
 test('V107 shows one canonical color-coded collection status in every invoice', async () => {
@@ -212,4 +212,23 @@ test('V107 shows one canonical color-coded collection status in every invoice', 
   expect(courier).toContain('deliveryCollectionBadge(o)');
   expect(sql).toContain("'delivery_payment_type', o.delivery_payment_type");
   expect(sql).toContain('private.require_vendor_session(p_session_token)');
+});
+
+test('V108 renders one compact canonical order timeline in every invoice', async () => {
+  const [sharedInvoice, vendorInvoice] = await Promise.all([
+    read('js/kinto-bundle-ui-v93.js'),
+    read('js/vendor-v94-multistore-orders.js')
+  ]);
+
+  for (const source of [sharedInvoice, vendorInvoice]) {
+    expect(source).toContain('invoice-track');
+    expect(source).toContain('استلام الطلب');
+    expect(source).toContain('التجهيز');
+    expect(source).toContain('الشحن والتوصيل');
+    expect(source).toContain('تم التسليم');
+    expect(source).toContain('rejected');
+    expect(source).toContain('الحالة الحالية:');
+  }
+  expect(sharedInvoice).toContain('invoiceTimeline(order?.status)');
+  expect(vendorInvoice).toContain('vendorInvoiceTimeline(data.status)');
 });
