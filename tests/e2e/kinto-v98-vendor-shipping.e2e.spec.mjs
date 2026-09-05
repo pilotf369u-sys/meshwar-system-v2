@@ -169,7 +169,7 @@ test('V104 lets the owning vendor atomically control shipping per independent or
   expect(adapter).toContain('vendor_update_order_shipping');
   expect(adapter).toContain('vendorFreeShippingChanged');
   expect(adapter).toContain('p_expected_version:Number(panel.dataset.version)');
-  expect(shell).toContain('v111-clean-gold-tracking');
+  expect(shell).toContain('v112-rewards');
 });
 
 test('V105 defers shipping to the vendor and keeps every invoice on canonical data', async () => {
@@ -189,7 +189,28 @@ test('V105 defers shipping to the vendor and keeps every invoice on canonical da
   expect(invoice).toContain('hydrateCanonicalShipping(order)');
   expect(invoice).toContain('بانتظار تحديد التاجر');
   expect(invoice).toContain('t.deliveryCurrency');
-  expect(shell).toContain('v111-clean-gold-tracking');
+  expect(shell).toContain('v112-rewards');
+});
+
+test('V112 supports multi-currency rewards and invoice-safe order discounts', async () => {
+  const [admin, employee, sharedInvoice, vendorInvoice, rewardUi, migration] = await Promise.all([
+    read('admin-dashboard.html'), read('employee-dashboard.html'),
+    read('js/kinto-bundle-ui-v93.js'), read('js/vendor-v94-multistore-orders.js'),
+    read('js/rewards-loyalty-v112.js'),
+    read('supabase/migrations/20260905_v112_multicurrency_rewards_order_discount.sql')
+  ]);
+  expect(admin).toContain('rewards-loyalty-v112.js?v=20260905-v112');
+  expect(employee).toContain('rewards-loyalty-v112.js?v?v=20260905-v112'.replace('?v?v','?v'));
+  expect(rewardUi).toContain("const CURRENCIES=['USD','IQD','TRY']");
+  expect(rewardUi).toContain("rpc('adjust_customer_reward_balance'");
+  expect(rewardUi).toContain("rpc('apply_order_reward_discount'");
+  expect(migration).toContain('reward_balances jsonb');
+  expect(migration).toContain('create or replace function public.apply_order_reward_discount');
+  for (const source of [sharedInvoice, vendorInvoice]) {
+    expect(source).toContain('خصم المكافآت / الولاء');
+    expect(source).toContain('reward_discount_currency');
+    expect(source).toContain('reward-discount');
+  }
 });
 
 test('V107 shows one canonical color-coded collection status in every invoice', async () => {
