@@ -124,6 +124,9 @@ test('V102 preserves cross-currency fallback and coalesces vendor table renderin
   expect(adapter).toContain('segmentReloadQueued');
   expect(adapter).toContain('if(markup!==lastOrdersMarkup)');
   expect(adapter).not.toContain("setTimeout(()=>{if(runtime.getStore())loadSegmentOrders()},100)");
+  expect(adapter).toContain("meshwar:vendor-segment-adapter-ready");
   expect(dashboard).toContain('window.MeshwarVendorV94?.loadOrders');
-  expect(dashboard).toContain('setTimeout(()=>openDashboard(),180)');
+  expect(dashboard).toContain('loadDashboardOrders()');
+  expect(dashboard).toContain("meshwar:vendor-segment-adapter-ready");
+  expect(dashboard).not.toContain('setTimeout(()=>openDashboard(),180)');
 });
