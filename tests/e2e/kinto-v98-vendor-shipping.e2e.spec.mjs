@@ -289,3 +289,20 @@ test('V114 supports orders tables without updated_at', async () => {
   expect(migration).not.toContain('updated_at');
   expect(migration).toContain('reward_discount_snapshot = v_snapshot');
 });
+
+test('V115 opens invoices deterministically from customer, employee and admin details', async () => {
+  const [hotfix, customer, employee, admin] = await Promise.all([
+    read('js/invoice-details-hotfix-v115.js'),
+    read('dashboard.html'),
+    read('employee-dashboard.html'),
+    read('admin-dashboard.html')
+  ]);
+
+  expect(hotfix).toContain("wrap('openCustomerOrderDetails'");
+  expect(hotfix).toContain("wrap('openOrderDetailsById'");
+  expect(hotfix).toContain("wrap('openOrderDetailsModalData'");
+  expect(hotfix).toContain('window.KintoBundleV93.enhance');
+  for (const page of [customer, employee, admin]) {
+    expect(page).toContain('invoice-details-hotfix-v115.js?v=20260905-v115');
+  }
+});
