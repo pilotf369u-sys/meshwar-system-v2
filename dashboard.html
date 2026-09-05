@@ -132,7 +132,7 @@ window.onload=async()=>{try{currentCustomerCloud=normalizeCloudCustomer(await fe
 window.addEventListener('beforeunload',async()=>{if(chatPollingTimer)clearInterval(chatPollingTimer);if(ordersPollingTimer)clearInterval(ordersPollingTimer);try{const sb=await ensureCustomerPortalSupabase();if(chatRealtimeChannel)await sb.removeChannel(chatRealtimeChannel);if(ordersRealtimeChannel)await sb.removeChannel(ordersRealtimeChannel)}catch(e){}});
 Object.assign(window,{switchCustomerTab,openRewardsModal,closeRewardsModal,openCustomerOrderDetails,closeCustomerOrderDetails,approveOrder,cancelOrder,saveAddress,saveSecondaryPhone,sendCustomerMessage,copyWarehouseAddress,saveCloudDraft,deleteCloudDraft,handleCustomerChatFile,refreshCustomerUnreadCount,markCustomerMessagesRead});
 </script>
-<script src="js/invoice-details-hotfix-v115.js?v=20260905-v115"></script>
+<script defer src="js/invoice-details-hotfix-v115.js?v=20260905-v116"></script>
 
 <script src="js/kinto-bundle-ui-v93.js?v=20260905-v112-rewards"></script>
 <script defer src="js/rewards-loyalty-v112.js?v=20260905-v112"></script>
