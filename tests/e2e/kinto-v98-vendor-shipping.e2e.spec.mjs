@@ -130,3 +130,21 @@ test('V102 preserves cross-currency fallback and coalesces vendor table renderin
   expect(dashboard).toContain("meshwar:vendor-segment-adapter-ready");
   expect(dashboard).not.toContain('setTimeout(()=>openDashboard(),180)');
 });
+
+test('V103 projects customer location and atomically mirrors independent order status', async () => {
+  const [sql, adapter, shell] = await Promise.all([
+    read('supabase/migrations/20260905_v103_vendor_location_and_global_status_sync.sql'),
+    read('js/vendor-v94-multistore-orders.js'),
+    read('vendor-dashboard.html')
+  ]);
+
+  expect(sql).toContain('customer_location jsonb');
+  expect(sql).toContain('private.v103_sync_independent_order_status');
+  expect(sql).toContain('set status = $2');
+  expect(sql).toContain("'canonical_order_status'");
+  expect(sql).toContain("notify pgrst, 'reload schema'");
+  expect(adapter).toContain('function orderLocation(o)');
+  expect(adapter).toContain('📍');
+  expect(adapter).toContain('حالة الشحنة');
+  expect(shell).toContain('v103-location-status-sync');
+});
