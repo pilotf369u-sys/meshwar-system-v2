@@ -108,3 +108,22 @@ test('V101 checkout carries destination and resolves an active same-currency fal
   expect(sql).toContain("'cost', v_match.delivery_fee");
   expect(sql).toContain('SHIPPING_RATE_NOT_CONFIGURED_FOR_ORDER_CURRENCY');
 });
+
+test('V102 preserves cross-currency fallback and coalesces vendor table rendering', async () => {
+  const [sql, adapter, dashboard] = await Promise.all([
+    read('supabase/migrations/20260905_v102_shipping_currency_fallback_and_ui_stability.sql'),
+    read('js/vendor-v94-multistore-orders.js'),
+    read('vendor-dashboard-v2.html')
+  ]);
+
+  expect(sql).toContain('private.v102_resolve_shipping_quote');
+  expect(sql).toContain("v_mode := 'cross_currency_default'");
+  expect(sql).toContain("'mixed_currency'");
+  expect(sql).toContain("'grand_total_components'");
+  expect(adapter).toContain('segmentLoadPromise');
+  expect(adapter).toContain('segmentReloadQueued');
+  expect(adapter).toContain('if(markup!==lastOrdersMarkup)');
+  expect(adapter).not.toContain("setTimeout(()=>{if(runtime.getStore())loadSegmentOrders()},100)");
+  expect(dashboard).toContain('window.MeshwarVendorV94?.loadOrders');
+  expect(dashboard).toContain('setTimeout(()=>openDashboard(),180)');
+});
