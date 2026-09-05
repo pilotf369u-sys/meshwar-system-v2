@@ -121,4 +121,5 @@ async function secureLogin(){
 async function secureLogout(){const active=session();clearSession();if(active){try{await runtime.sb.rpc('vendor_logout_session',{p_session_token:active.token})}catch(e){console.warn('Vendor session revoke failed',e)}}return runtime.nativeVendorLogout()}
 
 window.vendorLogin=secureLogin;window.vendorLogout=secureLogout;window.loadOrders=loadSegmentOrders;window.renderVendorOrders=renderOrders;window.openV94VendorOrderDetails=openDetails;window.setV94VendorStoreStatus=setStatus;window.printV95VendorStoreInvoice=printStoreInvoice;window.MeshwarVendorV94={projectOrder:projectLegacyOrder,projectSegment,loadOrders:loadSegmentOrders,session,statuses:VENDOR_OPERATIONAL_STATUSES.slice()};
+window.dispatchEvent(new CustomEvent('meshwar:vendor-segment-adapter-ready'));
 })();
