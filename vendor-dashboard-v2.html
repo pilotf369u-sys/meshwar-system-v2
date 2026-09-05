@@ -224,7 +224,15 @@ function requireSecureVendorLogin(message){
   $('loginNotice').textContent=message||'سجّل الدخول مجدداً لتفعيل جلسة الطلبات الآمنة.';
   $('loginIdentity').focus();
 }
-async function openDashboard(){if(!vendorStore)return;$('loginView').classList.add('hidden');$('dashboardView').classList.remove('hidden');$('storeName').textContent=vendorStore.store_name||'المتجر';$('storeMeta').textContent=[vendorStore.specialty,vendorStore.governorate].filter(Boolean).join(' • ');$('storeLogo').src=vendorStore.logo_url||PLACEHOLDER;$('storeLogo').onerror=()=>{$('storeLogo').src=PLACEHOLDER};$('exchangeRate').value=vendorStore.exchange_rate||1;$('exchangeBase').value='USD';$('exchangeTarget').value=vendorStore.exchange_target_currency||'IQD';renderExchangePreview();const secureOrdersLoader=window.MeshwarVendorV94?.loadOrders;await Promise.all([loadProducts(),secureOrdersLoader?secureOrdersLoader():loadOrders(),loadFinance()]);await setupVendorOrdersRealtime()}
+async function loadDashboardOrders(){
+  if(window.MeshwarVendorV94?.loadOrders)return window.MeshwarVendorV94.loadOrders();
+  if(window.parent!==window){
+    await new Promise(resolve=>{const timer=setTimeout(resolve,300);window.addEventListener('meshwar:vendor-segment-adapter-ready',()=>{clearTimeout(timer);resolve()},{once:true})});
+  }
+  const secureOrdersLoader=window.MeshwarVendorV94?.loadOrders;
+  return secureOrdersLoader?secureOrdersLoader():loadOrders();
+}
+async function openDashboard(){if(!vendorStore)return;$('loginView').classList.add('hidden');$('dashboardView').classList.remove('hidden');$('storeName').textContent=vendorStore.store_name||'المتجر';$('storeMeta').textContent=[vendorStore.specialty,vendorStore.governorate].filter(Boolean).join(' • ');$('storeLogo').src=vendorStore.logo_url||PLACEHOLDER;$('storeLogo').onerror=()=>{$('storeLogo').src=PLACEHOLDER};$('exchangeRate').value=vendorStore.exchange_rate||1;$('exchangeBase').value='USD';$('exchangeTarget').value=vendorStore.exchange_target_currency||'IQD';renderExchangePreview();await Promise.all([loadProducts(),loadDashboardOrders(),loadFinance()]);await setupVendorOrdersRealtime()}
 function toggleTheme(){document.documentElement.classList.toggle('dark');document.documentElement.classList.toggle('light')}
 
 async function loadProducts(){if(!vendorStore)return;const{data,error}=await sb.from('local_products').select('*').eq('store_id',vendorStore.id).order('created_at',{ascending:false});if(error){showNotice('تعذر تحميل المنتجات: '+error.message,true);return}products=data||[];await syncProductPricingSnapshots();renderProducts();renderStats()}
@@ -371,7 +379,7 @@ window.MeshwarVendorRuntime={
 };
 document.querySelectorAll('[data-finance-filter]').forEach(btn=>{btn.addEventListener('click',()=>setVendorFinanceFilter(btn.dataset.financeFilter||'all'))});
 const vendorPaidStatementBtn=document.querySelector('button[onclick="exportVendorPaidStatement()"]');if(vendorPaidStatementBtn){vendorPaidStatementBtn.removeAttribute('onclick');vendorPaidStatementBtn.addEventListener('click',exportVendorPaidStatement)}
-const restored=storeSession();if(restored){vendorStore=restored;if(window.parent!==window)setTimeout(()=>openDashboard(),180);else openDashboard()}
+const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 </script>
 </body>
 </html>
