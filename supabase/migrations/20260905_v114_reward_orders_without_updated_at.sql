@@ -1,4 +1,4 @@
--- V113: fix customers UUID versus orders.customer_id text comparison.
+-- V114: support legacy orders tables without a modification timestamp column.
 begin;
 
 create or replace function public.apply_order_reward_discount(
@@ -42,13 +42,11 @@ begin
   if v_currency = private.v112_reward_currency(coalesce(v_order.currency, 'IQD'))
      and p_amount > (
        coalesce(v_order.total_price, 0)
-       + (
-         case
+       + case
            when private.v112_reward_currency(coalesce(v_order.delivery_currency, v_order.currency, 'IQD')) = v_currency
              then coalesce(v_order.delivery_fee, 0)
            else 0
          end
-       )
      ) then
     raise exception 'REWARD_DISCOUNT_EXCEEDS_ORDER_TOTAL' using errcode = '22003';
   end if;
@@ -85,7 +83,7 @@ revoke all on function public.apply_order_reward_discount(uuid, numeric, text, t
 grant execute on function public.apply_order_reward_discount(uuid, numeric, text, text) to anon, authenticated;
 
 comment on function public.apply_order_reward_discount(uuid, numeric, text, text) is
-'V113 atomic loyalty discount with UUID/text-safe customer matching.';
+'V114 atomic loyalty discount compatible with legacy orders tables.';
 
 notify pgrst, 'reload schema';
 commit;
