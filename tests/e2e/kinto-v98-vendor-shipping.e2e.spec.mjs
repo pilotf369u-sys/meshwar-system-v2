@@ -213,6 +213,13 @@ test('V112 supports multi-currency rewards and invoice-safe order discounts', as
   }
 });
 
+test('V113 matches text order customer ids to UUID customer rows safely', async () => {
+  const migration = await read('supabase/migrations/20260905_v113_reward_uuid_text_compat.sql');
+  expect(migration).toContain('id::text = v_order.customer_id::text');
+  expect(migration).toContain('create or replace function public.apply_order_reward_discount');
+  expect(migration).toContain("notify pgrst, 'reload schema'");
+});
+
 test('V107 shows one canonical color-coded collection status in every invoice', async () => {
   const [sql, sharedInvoice, vendorInvoice, courier] = await Promise.all([
     read('supabase/migrations/20260905_v107_invoice_collection_status_projection.sql'),
