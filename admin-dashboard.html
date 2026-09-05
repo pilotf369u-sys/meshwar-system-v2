@@ -241,7 +241,7 @@ function ensureAdminEmbeddedSection(sectionId){const cfg=ADMIN_EMBEDDED_SECTIONS
 async function showAdminMasterSection(sectionId){showSection(sectionId);setAdminMasterActive(sectionId);const u=new URL(location.href);u.searchParams.set('section',sectionId);history.replaceState(null,'',u.pathname+u.search+u.hash);ensureAdminEmbeddedSection(sectionId);if(sectionId==='vendor-finance'&&typeof loadAdminVendorFinance==='function')await loadAdminVendorFinance()}
 window.addEventListener('load',()=>{const requested=new URLSearchParams(location.search).get('section');if(requested&&document.getElementById(requested)){showAdminMasterSection(requested)}else{setAdminMasterActive(document.querySelector('.card.active-section')?.id||'orders')}});
 </script>
-<script src="js/kinto-bundle-ui-v93.js?v=20260905-v109-tracking-icons"></script>
+<script src="js/kinto-bundle-ui-v93.js?v=20260905-v110-modern-tracking"></script>
 <script id="kinto-v93-bundle-adapter">
 /* KINTO_V93_BUNDLE_ADAPTER — canonical Bundle details + invoice bridge. */
 (()=>{'use strict';
