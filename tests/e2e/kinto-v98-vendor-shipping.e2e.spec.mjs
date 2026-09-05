@@ -148,3 +148,26 @@ test('V103 projects customer location and atomically mirrors independent order s
   expect(adapter).toContain('حالة الشحنة');
   expect(shell).toContain('v103-location-status-sync');
 });
+
+test('V104 lets the owning vendor atomically control shipping per independent order', async () => {
+  const [sql, adapter, shell] = await Promise.all([
+    read('supabase/migrations/20260905_v104_vendor_order_shipping_control.sql'),
+    read('js/vendor-v94-multistore-orders.js'),
+    read('vendor-dashboard.html')
+  ]);
+
+  expect(sql).toContain('shipping_version bigint not null default 0');
+  expect(sql).toContain('private.require_vendor_session(p_session_token)');
+  expect(sql).toContain('for update;');
+  expect(sql).toContain('ORDER_SHIPPING_VERSION_CONFLICT');
+  expect(sql).toContain('SHIPPING_COMPANY_NOT_AVAILABLE');
+  expect(sql).toContain("'free_shipping'");
+  expect(sql).toContain("'vendor_manual_selection'");
+  expect(sql).toContain('shipping_snapshot = $5');
+  expect(sql).toContain('update public.order_store_segments');
+  expect(adapter).toContain('vendor_get_order_shipping_control');
+  expect(adapter).toContain('vendor_update_order_shipping');
+  expect(adapter).toContain('vendorFreeShippingChanged');
+  expect(adapter).toContain('p_expected_version:Number(panel.dataset.version)');
+  expect(shell).toContain('v104-order-shipping-control');
+});
