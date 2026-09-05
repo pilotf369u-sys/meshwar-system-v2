@@ -169,7 +169,7 @@ test('V104 lets the owning vendor atomically control shipping per independent or
   expect(adapter).toContain('vendor_update_order_shipping');
   expect(adapter).toContain('vendorFreeShippingChanged');
   expect(adapter).toContain('p_expected_version:Number(panel.dataset.version)');
-  expect(shell).toContain('v108-invoice-timeline');
+  expect(shell).toContain('v109-tracking-icons');
 });
 
 test('V105 defers shipping to the vendor and keeps every invoice on canonical data', async () => {
@@ -189,7 +189,7 @@ test('V105 defers shipping to the vendor and keeps every invoice on canonical da
   expect(invoice).toContain('hydrateCanonicalShipping(order)');
   expect(invoice).toContain('بانتظار تحديد التاجر');
   expect(invoice).toContain('t.deliveryCurrency');
-  expect(shell).toContain('v108-invoice-timeline');
+  expect(shell).toContain('v109-tracking-icons');
 });
 
 test('V107 shows one canonical color-coded collection status in every invoice', async () => {
@@ -231,4 +231,19 @@ test('V108 renders one compact canonical order timeline in every invoice', async
   }
   expect(sharedInvoice).toContain('invoiceTimeline(order?.status)');
   expect(vendorInvoice).toContain('vendorInvoiceTimeline(data.status)');
+});
+
+test('V109 gives invoice tracking semantic icons, glow and a prominent status badge', async () => {
+  const [sharedInvoice, vendorInvoice] = await Promise.all([
+    read('js/kinto-bundle-ui-v93.js'),
+    read('js/vendor-v94-multistore-orders.js')
+  ]);
+
+  for (const source of [sharedInvoice, vendorInvoice]) {
+    expect(source).toContain("['📥','⚙','🚚','✓']");
+    expect(source).toContain("['✕','·','·','·']");
+    expect(source).toContain('track-step:not(:last-of-type)::after');
+    expect(source).toContain('@keyframes trackGlow');
+    expect(source).toContain('border-radius:6px;background:#ecfdf5');
+  }
 });
