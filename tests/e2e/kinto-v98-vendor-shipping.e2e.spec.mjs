@@ -313,3 +313,9 @@ test('V117 preserves the invoice action when legacy bundle details are malformed
   expect(invoice).toContain("invoice action preserved");
   expect(invoice.indexOf("container.appendChild(actions)")).toBeLessThan(invoice.indexOf("container.insertAdjacentHTML('beforeend',bundleHtml(order))"));
 });
+
+test('V118 keeps discounted invoice totals mutable at runtime', async () => {
+  const invoice = await read('js/kinto-bundle-ui-v93.js');
+  expect(invoice).toContain('let grand=mixed?base:base+delivery');
+  expect(invoice).not.toMatch(/const[^;]*grand=mixed\?base:base\+delivery/);
+});
