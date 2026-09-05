@@ -205,8 +205,7 @@ begin
   update public.orders
   set reward_discount_amount = p_amount,
       reward_discount_currency = v_currency,
-      reward_discount_snapshot = v_snapshot,
-      updated_at = now()
+      reward_discount_snapshot = v_snapshot
   where id = p_order_id;
 
   return jsonb_build_object('order_id', p_order_id, 'customer_id', v_order.customer_id,
