@@ -220,7 +220,7 @@ window.onload=async()=>{try{await loadEmployeeIdentity();await Promise.all([load
 window.addEventListener('beforeunload',()=>{if(unreadPollingTimer)clearInterval(unreadPollingTimer);if(chatPollingTimer)clearInterval(chatPollingTimer)});
 Object.assign(window,{switchPipeline,schedulePipelineSearch,handlePipelineSearchKeydown,changePipelinePage,goPipelinePage,changePipelinePageSize,onBranchFilterChange,saveOrderRow,printOrderBarcode,exportSelectedBranchCsv,printSelectedBranchReport,loadRewardsManagementTable,changeReward,openOrderDetailsById,closeOrderDetailsModal,openCustomerPortal,toggleNotificationDropdown,openUnreadNotification,openChat,closeChatModal,sendChatMessage,handleEmployeeChatFile});
 </script>
-<script src="js/kinto-bundle-ui-v93.js?v=20260905-v105-shipping-source"></script>
+<script src="js/kinto-bundle-ui-v93.js?v=20260905-v107-collection-status"></script>
 <script id="kinto-v93-bundle-adapter">
 /* KINTO_V93_BUNDLE_ADAPTER — canonical Bundle details + invoice bridge. */
 (()=>{'use strict';
