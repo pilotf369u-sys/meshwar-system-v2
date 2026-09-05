@@ -169,7 +169,7 @@ test('V104 lets the owning vendor atomically control shipping per independent or
   expect(adapter).toContain('vendor_update_order_shipping');
   expect(adapter).toContain('vendorFreeShippingChanged');
   expect(adapter).toContain('p_expected_version:Number(panel.dataset.version)');
-  expect(shell).toContain('v105-row-shipping-control');
+  expect(shell).toContain('v106-shipping-layout');
 });
 
 test('V105 defers shipping to the vendor and keeps every invoice on canonical data', async () => {
@@ -189,5 +189,5 @@ test('V105 defers shipping to the vendor and keeps every invoice on canonical da
   expect(invoice).toContain('hydrateCanonicalShipping(order)');
   expect(invoice).toContain('بانتظار تحديد التاجر');
   expect(invoice).toContain('t.deliveryCurrency');
-  expect(shell).toContain('v105-row-shipping-control');
+  expect(shell).toContain('v106-shipping-layout');
 });
