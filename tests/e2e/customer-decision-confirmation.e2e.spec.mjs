@@ -15,6 +15,9 @@ test('customer decision page is appended only to its dedicated invoice window', 
   expect(source).toContain('section.className=\'customer-decision\'');
   expect(source).toContain('اطمئن، شرائك من منصتنا');
   expect(source).toContain('خصومات ولاء حصرية ومستمرة');
+  expect(source).toContain('customer-decision-shipping');
+  expect(source).toContain('بانتظار تحديد شركة الشحن وتكلفة التوصيل');
+  expect(source).toContain('التوصيل مجاني');
   expect(source).not.toContain('customer-decision-summary');
   expect(source).not.toContain('عنوان التسليم المسجل');
   expect(source).not.toContain('customerDecisionModal');
