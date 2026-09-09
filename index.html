@@ -12,7 +12,7 @@
       html.kinto-ready,html.kinto-ready body{background:#032b25!important;background-image:linear-gradient(180deg,#063b32 0%,#04362e 46%,#032b25 100%)!important;}
       @media (prefers-reduced-motion:reduce){html.kinto-ready body>*{transition:none!important;}}
     </style>
-    <script>document.documentElement.classList.add('kinto-booting');window.__kintoPaintFailsafe=setTimeout(()=>{const r=document.documentElement;r.classList.remove('kinto-booting');r.classList.add('kinto-ready')},2500);</script>
+    <script>(()=>{try{window.history.scrollRestoration='manual'}catch{}const pinTop=()=>window.scrollTo(0,0);pinTop();window.addEventListener('pageshow',pinTop,{once:true});document.documentElement.classList.add('kinto-booting');window.__kintoPaintFailsafe=setTimeout(()=>{const r=document.documentElement;r.classList.remove('kinto-booting');r.classList.add('kinto-ready')},2500)})()</script>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.tailwindcss.com"></script>
