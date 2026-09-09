@@ -1,7 +1,7 @@
 /* KINTO V92 — strict public campaign_type routing. No Auth/Pagination/ordering logic touched. */
 (()=>{'use strict';
 const URL='https://hsmmbloouskqdnptiiad.supabase.co',KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH',$=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));let clientPromise=null,busy=false;
-async function sb(){return clientPromise||(clientPromise=import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').then(({createClient})=>createClient(URL,KEY)))}
+async function sb(){return clientPromise||(clientPromise=window.KintoSupabase?Promise.resolve(window.KintoSupabase):window.ensureMainSupabase())}
 function storeId(el){return String(el?.querySelector('[data-open-store]')?.dataset.openStore||'')}
 function isVideo(u){return /\.(mp4|webm|mov)(?:[?#].*)?$/i.test(String(u||''))}
 function routeExisting(rows){const root=$('meshwarFeaturedCampaigns');if(!root)return;const heroIds=new Set(rows.filter(r=>r.slot_type==='hero_banner').map(r=>String(r.store_id||''))),gridIds=new Set(rows.filter(r=>r.slot_type==='featured_grid').map(r=>String(r.store_id||'')));const hero=$('mwFeaturedHero'),grid=$('mwFeaturedGrid');

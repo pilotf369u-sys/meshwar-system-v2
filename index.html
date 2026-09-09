@@ -226,30 +226,29 @@
     <script>
         const MAIN_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
         const MAIN_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
-        const MAIN_SUPABASE_SINGLETON = '__kintoMainSupabaseV1';
-        const MAIN_SUPABASE_PROMISE = '__kintoMainSupabasePromiseV1';
         let currentHomeCustomer = null;
 
         function ensureMainSupabase() {
-            if (window[MAIN_SUPABASE_SINGLETON]) return Promise.resolve(window[MAIN_SUPABASE_SINGLETON]);
-            if (!window[MAIN_SUPABASE_PROMISE]) {
-                window[MAIN_SUPABASE_PROMISE] = import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm')
+            if (window.KintoSupabase) return Promise.resolve(window.KintoSupabase);
+            if (!window.KintoSupabaseReady) {
+                window.KintoSupabaseReady = import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm')
                     .then(({ createClient }) => {
-                        if (!window[MAIN_SUPABASE_SINGLETON]) {
-                            window[MAIN_SUPABASE_SINGLETON] = createClient(MAIN_SUPABASE_URL, MAIN_SUPABASE_KEY, {
+                        if (!window.KintoSupabase) {
+                            window.KintoSupabase = createClient(MAIN_SUPABASE_URL, MAIN_SUPABASE_KEY, {
                                 auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
                             });
                         }
-                        return window[MAIN_SUPABASE_SINGLETON];
+                        return window.KintoSupabase;
                     })
                     .catch(error => {
-                        delete window[MAIN_SUPABASE_PROMISE];
+                        window.KintoSupabaseReady = null;
                         throw error;
                     });
             }
-            return window[MAIN_SUPABASE_PROMISE];
+            return window.KintoSupabaseReady;
         }
         window.ensureMainSupabase = ensureMainSupabase;
+        window.KintoSupabaseReady = ensureMainSupabase();
 
         function getStoredCustomerId() {
             const direct = String(localStorage.getItem('meshwar_customer_id') || '').trim();
