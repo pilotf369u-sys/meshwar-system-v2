@@ -25,6 +25,16 @@ function applyTheme(theme){
   }
 }
 function toggleTheme(){applyTheme(root.dataset.mwGlobalTheme==='light'?'dark':'light')}
+function installClickHandler(){
+  if(root.dataset.mwThemeClickBound==='true')return;
+  document.addEventListener('click',function(event){
+    const target=event.target instanceof Element?event.target.closest('#mwGlobalThemeToggle'):null;
+    if(!target)return;
+    event.preventDefault();
+    toggleTheme();
+  });
+  root.dataset.mwThemeClickBound='true';
+}
 function installStyles(){
   if(document.getElementById('mw-global-theme-v1-css'))return;
   const s=document.createElement('style');s.id='mw-global-theme-v1-css';s.textContent=`
@@ -119,15 +129,16 @@ function findHost(){
   return document.querySelector('.top-actions,.dashboard-header,.top-nav,.header-actions,.page-header,.dashboard-topbar,.topbar,.header')||document.body;
 }
 function installButton(){
-  if(document.getElementById('mwGlobalThemeToggle'))return;
+  const existing=document.getElementById('mwGlobalThemeToggle');
+  if(existing){applyTheme(root.dataset.mwGlobalTheme||readTheme());return}
   const host=findHost(),btn=document.createElement('button');
-  btn.type='button';btn.id='mwGlobalThemeToggle';btn.setAttribute('aria-label','تبديل الوضع المضيء والداكن');btn.onclick=toggleTheme;
+  btn.type='button';btn.id='mwGlobalThemeToggle';btn.setAttribute('aria-label','تبديل الوضع المضيء والداكن');
   if(host===document.body){btn.style.position='fixed';btn.style.left='16px';btn.style.top='16px';btn.style.zIndex='15000'}
   else if(host.classList.contains('dashboard-header')){btn.style.marginInlineStart='8px'}
   host.insertBefore(btn,host.firstChild||null);
   applyTheme(root.dataset.mwGlobalTheme||readTheme());
 }
-installStyles();applyTheme(readTheme());
+installStyles();installClickHandler();applyTheme(readTheme());
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installButton,{once:true});else installButton();
-window.MeshwarGlobalTheme={version:'20260826-global-theme-v1.1',applyTheme,toggleTheme};
+window.MeshwarGlobalTheme={version:'20260909-global-theme-v1.2',applyTheme,toggleTheme};
 })();
