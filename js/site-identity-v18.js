@@ -1,7 +1,7 @@
 /* KINTO V23 — forced Featured Store + anti-FOUC release */
 (()=>{'use strict';
 const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co',SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
-const FALLBACK={id:'kinto-main',store_name:'متجر KINTO الرئيسي',logo_url:'images/meshwar-logo.png',store_url:'',country:'',governorate:'',specialty:'تسوق مختار',status:'active'};
+const FALLBACK={id:'kinto-main',store_name:'متجر KINTO الرئيسي',logo_url:'images/kinto-logo-official.png',store_url:'',country:'',governorate:'',specialty:'تسوق مختار',status:'active'};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 let sb=null,revealed=false;
 function reveal(){if(revealed)return;revealed=true;const root=document.documentElement;root.classList.remove('kinto-booting');root.classList.add('kinto-ready');requestAnimationFrame(()=>root.classList.add('kinto-painted'))}
