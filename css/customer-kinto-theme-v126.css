@@ -1,9 +1,13 @@
 /* KINTO V126 — customer dashboard dual theme only. */
 html[data-mw-global-theme="light"]{--customer-bg:#e9e7df;--customer-bg-2:#f2f0e8;--customer-surface:#f7f5ee;--customer-surface-2:#eeece4;--customer-text:#27302b;--customer-muted:#68716c;--customer-line:#d3d1c8;--customer-olive:#39483b;--customer-gold:#a77a24;--customer-shadow:0 14px 38px rgba(48,55,49,.09);color-scheme:light!important;background:var(--customer-bg)!important}
-html[data-mw-global-theme="light"] body{background:radial-gradient(circle at 12% 0%,rgba(168,143,82,.09),transparent 30%),linear-gradient(145deg,var(--customer-bg-2),var(--customer-bg))!important;color:var(--customer-text)!important}
+html[data-mw-global-theme="light"] body{background-color:var(--customer-bg)!important;background-image:radial-gradient(circle at 12% 0%,rgba(168,143,82,.09),transparent 30%),linear-gradient(145deg,var(--customer-bg-2),var(--customer-bg))!important;color:var(--customer-text)!important}
+html[data-mw-global-theme="light"] body .app-shell,
+html[data-mw-global-theme="light"] body .container,
+html[data-mw-global-theme="light"] body .main-content{background-color:transparent!important;background-image:none!important;color:var(--customer-text)!important;box-shadow:none!important}
 html[data-mw-global-theme="light"] body .dashboard-header,
 html[data-mw-global-theme="light"] body .info-card,
-html[data-mw-global-theme="light"] body .panel-card{background:linear-gradient(145deg,var(--customer-surface),var(--customer-surface-2))!important;color:var(--customer-text)!important;border-color:var(--customer-line)!important;box-shadow:var(--customer-shadow)!important}
+html[data-mw-global-theme="light"] body .panel-card,
+html[data-mw-global-theme="light"] body .modal-content{background-color:var(--customer-surface)!important;background-image:linear-gradient(145deg,var(--customer-surface),var(--customer-surface-2))!important;color:var(--customer-text)!important;border-color:var(--customer-line)!important;box-shadow:var(--customer-shadow)!important}
 html[data-mw-global-theme="light"] body .dashboard-header::after,
 html[data-mw-global-theme="light"] body .info-card::after{opacity:.22!important}
 html[data-mw-global-theme="light"] body .welcome,
@@ -74,6 +78,14 @@ html[data-mw-global-theme="dark"] body select{background:#032b25!important;color
 html[data-mw-global-theme="dark"] body .customer-local-cart .kinto-local-cart-store{background:rgba(6,59,50,.9)!important;border-color:rgba(242,200,91,.2)!important}
 html[data-mw-global-theme="dark"] body .customer-local-cart .kinto-local-cart-foot{background:linear-gradient(145deg,#08483c,#04362e)!important;border-color:rgba(242,200,91,.25)!important}
 
+.customer-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px;padding:10px 12px;border:1px solid rgba(242,200,91,.16);border-radius:12px;background:rgba(3,43,37,.58);color:#c9ddd7}
+.customer-pagination[hidden]{display:none!important}.customer-page-buttons{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.customer-pagination button{min-width:36px;height:36px;padding:0 11px;border:1px solid rgba(242,200,91,.22);border-radius:9px;background:#073b32;color:#f7fbfa;font:800 12px/1 "Segoe UI",Tahoma,sans-serif;cursor:pointer}.customer-pagination button:hover:not(:disabled){background:#0a5144;border-color:rgba(242,200,91,.48)}.customer-pagination button.is-active{background:#f2c85b;color:#27302b;border-color:#f2c85b}.customer-pagination button:disabled{opacity:.4;cursor:not-allowed}.customer-page-summary{font-size:12px;font-weight:800}.customer-page-gap{padding:0 2px;color:#b8cec8}
+html[data-mw-global-theme="light"] body .customer-pagination{background:#e8e5dc!important;color:#465149!important;border-color:#cbc8bb!important}
+html[data-mw-global-theme="light"] body .customer-pagination button{background:#f4f2eb!important;color:#3c4740!important;border-color:#c9c6bb!important}
+html[data-mw-global-theme="light"] body .customer-pagination button:hover:not(:disabled){background:#dedbd1!important;border-color:#9ca499!important}
+html[data-mw-global-theme="light"] body .customer-pagination button.is-active{background:#48594a!important;color:#f8f5e9!important;border-color:#48594a!important}
+html[data-mw-global-theme="light"] body .customer-page-gap{color:#68716c!important}
+
 .customer-header-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
 body #mwGlobalThemeToggle{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-width:94px!important;height:42px!important;padding:0 14px!important;border:1px solid rgba(242,200,91,.42)!important;border-radius:999px!important;background:#08483c!important;color:#f5dda0!important;font:800 12px/1 "Segoe UI",Tahoma,sans-serif!important;cursor:pointer!important;box-shadow:0 7px 20px rgba(0,20,17,.2)!important;transition:transform .18s ease,background .18s ease!important}
 body #mwGlobalThemeToggle:hover{transform:translateY(-1px)!important;background:#0a5144!important;filter:none!important}
@@ -81,5 +93,5 @@ body #mwGlobalThemeToggle:focus-visible{outline:3px solid rgba(210,178,95,.28)!i
 html[data-mw-global-theme="light"] body #mwGlobalThemeToggle{background:#e4e1d7!important;color:#354038!important;border-color:#bdb9aa!important;box-shadow:0 6px 18px rgba(48,55,49,.1)!important}
 html[data-mw-global-theme="light"] body .back-link{background:#e8e5dc!important;color:#3b463f!important;border-color:#c8c4b8!important}
 html[data-mw-global-theme="dark"] body .back-link{background:rgba(210,178,95,.06)!important;color:#e5d49a!important;border-color:rgba(210,178,95,.2)!important}
-@media(max-width:700px){.dashboard-header{flex-wrap:wrap}.customer-header-actions{width:100%;justify-content:space-between}body #mwGlobalThemeToggle{min-width:86px!important;height:40px!important}}
+@media(max-width:700px){.dashboard-header{flex-wrap:wrap}.customer-header-actions{width:100%;justify-content:space-between}body #mwGlobalThemeToggle{min-width:86px!important;height:40px!important}.customer-pagination{justify-content:center}.customer-page-summary{width:100%;text-align:center}.customer-page-buttons{justify-content:center}}
 @media(prefers-reduced-motion:reduce){body #mwGlobalThemeToggle{transition:none!important}}
