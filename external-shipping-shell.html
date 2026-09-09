@@ -4,9 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MeshWar</title>
-<style>html,body{margin:0!important;padding:0!important;width:100%!important;max-width:100%!important;height:100%!important;overflow:hidden;background:#020617}#app{position:fixed!important;inset:0!important;width:100vw!important;max-width:none!important;height:100vh!important;margin:0!important;padding:0!important;border:0;display:block}</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{--shell-header-height:0px;--shell-bg:#032b25;--shell-text:#f8f5e8;--shell-gold:#e5b93f}html,body{margin:0!important;padding:0!important;width:100%!important;max-width:100%!important;height:100%!important;overflow:hidden;background:var(--shell-bg);font-family:"Segoe UI",Tahoma,Arial,sans-serif}.kinto-shell-header{display:none}.kinto-customer-shell{--shell-header-height:76px}.kinto-customer-shell .kinto-shell-header{position:fixed;inset:0 0 auto;z-index:90;height:var(--shell-header-height);display:block;background:rgba(3,43,37,.96);border-bottom:1px solid rgba(229,185,63,.22);box-shadow:0 12px 34px rgba(0,0,0,.18);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}.kinto-shell-inner{max-width:1280px;min-height:76px;margin:auto;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-sizing:border-box}.kinto-shell-brand{display:flex;align-items:center;gap:11px;flex:0 0 auto;color:var(--shell-text);text-decoration:none;font-weight:950}.kinto-shell-brand img{width:52px;height:52px;object-fit:contain;padding:4px;box-sizing:border-box;border:1px solid rgba(246,220,131,.58);border-radius:12px;background:rgba(255,255,255,.94);box-shadow:0 8px 22px rgba(0,0,0,.22),0 0 0 3px rgba(229,185,63,.07)}.kinto-shell-brand-copy{display:grid;gap:2px}.kinto-shell-brand-copy strong{font-size:15px;letter-spacing:.12em}.kinto-shell-brand-copy small{color:#d8c37a;font-size:9px;letter-spacing:.08em}.kinto-shell-nav,.kinto-shell-actions{display:flex;align-items:center;gap:8px}.kinto-shell-nav{flex:1;justify-content:center}.kinto-shell-link,.kinto-shell-action{min-height:42px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;box-sizing:border-box;border:1px solid rgba(229,185,63,.34);border-radius:13px;background:rgba(255,255,255,.045);color:var(--shell-text);text-decoration:none;font-size:12px;font-weight:900;white-space:nowrap;transition:.2s}.kinto-shell-link:hover,.kinto-shell-action:hover{transform:translateY(-2px);border-color:#f3d77b;background:rgba(229,185,63,.11);box-shadow:0 9px 22px rgba(0,0,0,.16)}.kinto-shell-link i,.kinto-shell-action i{width:1.1em;text-align:center;font-size:15px;color:#f3d77b}.kinto-shell-action.primary{border-color:#ffe795;background:linear-gradient(135deg,#f7dc83,#d8aa2d);color:#183128;box-shadow:0 8px 20px rgba(229,185,63,.22),inset 0 1px rgba(255,255,255,.55)}.kinto-shell-action.primary i{color:#183128}.kinto-shell-theme{cursor:pointer}.kinto-shell-theme .fa-sun{display:none}html[data-shell-theme="light"]{--shell-bg:#e9e6dc;--shell-text:#354038}html[data-shell-theme="light"] .kinto-shell-header{background:rgba(239,236,226,.97);border-color:rgba(124,105,52,.28)}html[data-shell-theme="light"] .kinto-shell-link,html[data-shell-theme="light"] .kinto-shell-action:not(.primary){background:rgba(255,255,255,.48);color:#354038;border-color:rgba(124,105,52,.32)}html[data-shell-theme="light"] .kinto-shell-brand{color:#26372f}html[data-shell-theme="light"] .kinto-shell-theme .fa-moon{display:none}html[data-shell-theme="light"] .kinto-shell-theme .fa-sun{display:inline-block}#app{position:fixed!important;inset:var(--shell-header-height) 0 0!important;width:100vw!important;max-width:none!important;height:calc(100vh - var(--shell-header-height))!important;margin:0!important;padding:0!important;border:0;display:block;background:var(--shell-bg)}
+@media(max-width:900px){.kinto-customer-shell{--shell-header-height:132px}.kinto-shell-inner{align-items:flex-start;flex-wrap:wrap}.kinto-shell-nav{order:3;flex:1 0 100%;justify-content:flex-start;overflow-x:auto;padding:3px 0 5px}.kinto-shell-actions{margin-inline-start:auto}.kinto-shell-brand-copy small{display:none}}
+@media(max-width:520px){.kinto-customer-shell{--shell-header-height:182px}.kinto-shell-inner{padding:9px 12px}.kinto-shell-brand img{width:46px;height:46px}.kinto-shell-brand-copy{display:none}.kinto-shell-action{padding:0 11px}.kinto-shell-action .action-label{display:none}.kinto-shell-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}.kinto-shell-link{min-height:40px;padding:0 8px}}
+</style>
 </head>
 <body>
+<header class="kinto-shell-header"><div class="kinto-shell-inner"><a class="kinto-shell-brand" href="index.html" aria-label="KINTO الرئيسية"><img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="52" height="52" alt="KINTO Logo"><span class="kinto-shell-brand-copy"><strong>KINTO</strong><small>SHOP • SHIP • ENJOY</small></span></a><nav class="kinto-shell-nav" aria-label="التنقل الرئيسي"><a class="kinto-shell-link" href="index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>الرئيسية</span></a><a class="kinto-shell-link" href="local-stores.html"><i class="fa-solid fa-store" aria-hidden="true"></i><span>المتاجر المحلية</span></a><a class="kinto-shell-link" href="global-stores.html"><i class="fa-solid fa-earth-americas" aria-hidden="true"></i><span>المتاجر العالمية</span></a><a class="kinto-shell-link" href="index.html#meshwarFeaturedCampaigns"><i class="fa-solid fa-star" aria-hidden="true"></i><span>المتاجر المميزة</span></a></nav><div class="kinto-shell-actions"><button type="button" id="kintoShellThemeToggle" class="kinto-shell-action kinto-shell-theme" aria-label="تبديل الوضع المضيء والمظلم"><i class="fa-solid fa-moon" aria-hidden="true"></i><i class="fa-solid fa-sun" aria-hidden="true"></i><span id="kintoShellThemeLabel" class="action-label">مضيء</span></button><a class="kinto-shell-action primary" href="index.html"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i><span class="action-label">الرجوع للرئيسية</span></a></div></div></header>
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
@@ -14,6 +20,10 @@
   const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
+  if(screen==='customer')document.body.classList.add('kinto-customer-shell');
+  const themeButton=document.getElementById('kintoShellThemeToggle'),themeLabel=document.getElementById('kintoShellThemeLabel'),readTheme=()=>localStorage.getItem('meshwar_global_theme')==='light'?'light':'dark',applyShellTheme=theme=>{const value=theme==='light'?'light':'dark';document.documentElement.dataset.shellTheme=value;themeButton?.setAttribute('aria-pressed',String(value==='light'));if(themeLabel)themeLabel.textContent=value==='light'?'مظلم':'مضيء';try{const child=document.getElementById('app').contentDocument?.documentElement;if(child){child.dataset.mwGlobalTheme=value;child.dataset.mwTheme=value}}catch{}};
+  applyShellTheme(readTheme());
+  themeButton?.addEventListener('click',()=>{const next=document.documentElement.dataset.shellTheme==='light'?'dark':'light';localStorage.setItem('meshwar_global_theme',next);applyShellTheme(next)});
   params.delete('screen');
   params.set('_v',BUILD);
   const qs=params.toString(),frame=document.getElementById('app');
@@ -42,6 +52,9 @@
         d.head.appendChild(deliveryDark);
       }
       if(screen==='customer'){
+        const shellHeaderScope=d.createElement('style');
+        shellHeaderScope.textContent='.dashboard-header{display:none!important}#mwGlobalThemeToggle{display:none!important}body{padding-top:0!important}';
+        d.head.appendChild(shellHeaderScope);
         const landingResponsive=d.createElement('link');
         landingResponsive.rel='stylesheet';
         landingResponsive.href='css/customer-landing-responsive-v1.css?v=20260827-cms-video-v1';
@@ -55,6 +68,7 @@
         const customerPolish=d.createElement('script');
         customerPolish.src='js/customer-light-polish-v1.js?v=20260826-customer-polish-v1.1-final';
         d.head.appendChild(customerPolish);
+        applyShellTheme(readTheme());
         return; // CUSTOMER_POST_LOGIN_ROOT_FIX_V50: customer uses dashboard.html canonical renderer only.
       }
       if(screen==='branch'){
