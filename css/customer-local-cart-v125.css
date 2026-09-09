@@ -1,0 +1,23 @@
+/* KINTO V125 — customer dashboard local-store cart, fully scoped. */
+.customer-local-cart-tab .panel-head{align-items:flex-start;margin-bottom:18px}
+.customer-local-cart-tab .panel-head h2{display:flex;align-items:center;gap:9px}
+.customer-local-cart-tab .panel-head h2 i{color:#f5c451}
+.customer-cart-intro{margin:7px 0 0;color:#aebdce;font-size:14px;line-height:1.7}
+.customer-local-cart{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+.customer-local-cart .kinto-local-cart-body{padding:0;overflow:visible}
+.customer-local-cart .kinto-local-cart-store{background:rgba(2,6,23,.28);border-color:rgba(245,196,81,.2)}
+.customer-local-cart .kinto-local-cart-store-title{font-size:16px;padding:14px 16px}
+.customer-local-cart .kinto-local-cart-item{grid-template-columns:34px 82px minmax(0,1fr);gap:14px;padding:15px 16px}
+.customer-local-cart .kinto-local-cart-img{width:82px;height:82px;background:#fff}
+.customer-local-cart .kinto-local-cart-name{font-size:15px;color:#fff}
+.customer-local-cart .kinto-local-cart-options{font-size:12px}
+.customer-local-cart .kinto-local-cart-price{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:14px}
+.customer-local-cart .kinto-local-cart-store-total{padding:13px 16px;color:#fde68a}
+.customer-local-cart .kinto-local-cart-foot{position:sticky;top:96px;padding:18px;border:1px solid rgba(245,196,81,.22);border-radius:17px;background:linear-gradient(145deg,rgba(7,59,50,.96),rgba(3,43,36,.96));box-shadow:0 18px 48px rgba(0,0,0,.25)}
+.customer-local-cart .kinto-local-cart-grand{font-size:15px;align-items:center}
+.customer-local-cart .kinto-local-cart-grand strong{font-size:19px}
+.customer-local-cart .kinto-local-cart-checkout{min-height:52px;font-size:15px}
+.customer-local-cart .kinto-local-cart-empty{min-height:220px;display:grid;place-items:center;background:rgba(2,6,23,.2);font-size:15px}
+.customer-local-cart .kinto-local-cart-note{font-size:12px}
+@media(max-width:900px){.customer-local-cart{grid-template-columns:1fr}.customer-local-cart .kinto-local-cart-foot{position:static}}
+@media(max-width:560px){.customer-local-cart-tab .panel-head{display:grid}.customer-local-cart .kinto-local-cart-item{grid-template-columns:28px 62px minmax(0,1fr);gap:9px;padding:12px 9px}.customer-local-cart .kinto-local-cart-img{width:62px;height:62px}.customer-local-cart .kinto-local-cart-actions{align-items:flex-end;flex-direction:column}.customer-local-cart .kinto-local-cart-price{font-size:12px}}
