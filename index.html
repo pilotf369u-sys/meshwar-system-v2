@@ -23,7 +23,7 @@
     <script>(()=>{try{window.history.scrollRestoration='manual'}catch{}const pinTop=()=>window.scrollTo(0,0);pinTop();window.addEventListener('pageshow',pinTop,{once:true});document.documentElement.classList.add('kinto-ready')})()</script>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script>window.tailwind=window.tailwind||{};window.tailwind.config={darkMode:'class',corePlugins:{preflight:false}}</script>
+<script>window.tailwind=window.tailwind||{};window.tailwind.config={darkMode:'class',corePlugins:{preflight:false}};(()=>{const warn=console.warn.bind(console);console.warn=(...args)=>{if(typeof args[0]==='string'&&args[0].includes('cdn.tailwindcss.com should not be used in production'))return;warn(...args)}})()</script>
 <script defer src="https://cdn.tailwindcss.com"></script>
 <script>(()=>{try{document.documentElement.classList.toggle('dark',localStorage.getItem('meshwar-theme')!=='light')}catch{document.documentElement.classList.add('dark')}})()</script>
     <style>
