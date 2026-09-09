@@ -16,11 +16,11 @@
       html.kinto-ready,html.kinto-ready body{background:#032b25!important;background-image:linear-gradient(180deg,#063b32 0%,#04362e 46%,#032b25 100%)!important;}
       @media (prefers-reduced-motion:reduce){html.kinto-ready body>*{transition:none!important;}}
     </style>
-    <script>(()=>{try{window.history.scrollRestoration='manual'}catch{}const pinTop=()=>window.scrollTo(0,0);pinTop();window.addEventListener('pageshow',pinTop,{once:true});document.documentElement.classList.add('kinto-booting');window.__kintoPaintFailsafe=setTimeout(()=>{const r=document.documentElement;r.classList.remove('kinto-booting');r.classList.add('kinto-ready')},2500)})()</script>
+    <script>(()=>{try{window.history.scrollRestoration='manual'}catch{}const pinTop=()=>window.scrollTo(0,0);pinTop();window.addEventListener('pageshow',pinTop,{once:true});document.documentElement.classList.add('kinto-ready')})()</script>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={darkMode:'class',corePlugins:{preflight:false}}</script>
+<script>window.tailwind=window.tailwind||{};window.tailwind.config={darkMode:'class',corePlugins:{preflight:false}}</script>
+<script defer src="https://cdn.tailwindcss.com"></script>
 <script>(()=>{try{document.documentElement.classList.toggle('dark',localStorage.getItem('meshwar-theme')!=='light')}catch{document.documentElement.classList.add('dark')}})()</script>
     <style>
         body { font-family: 'Arial', sans-serif; background-color: #f4f6f9; color: #333; padding: 20px; margin: 0; position: relative; }
@@ -223,14 +223,22 @@
         const MAIN_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
         const MAIN_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
         let mainSupabase = null;
+        let mainSupabasePromise = null;
         let currentHomeCustomer = null;
 
-        async function ensureMainSupabase() {
-            if (mainSupabase) return mainSupabase;
-            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-            mainSupabase = createClient(MAIN_SUPABASE_URL, MAIN_SUPABASE_KEY);
-            return mainSupabase;
+        function ensureMainSupabase() {
+            if (mainSupabase) return Promise.resolve(mainSupabase);
+            if (!mainSupabasePromise) {
+                mainSupabasePromise = import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm')
+                    .then(({ createClient }) => (mainSupabase = createClient(MAIN_SUPABASE_URL, MAIN_SUPABASE_KEY)))
+                    .catch(error => {
+                        mainSupabasePromise = null;
+                        throw error;
+                    });
+            }
+            return mainSupabasePromise;
         }
+        window.ensureMainSupabase = ensureMainSupabase;
 
         function getStoredCustomerId() {
             const direct = String(localStorage.getItem('meshwar_customer_id') || '').trim();
@@ -455,8 +463,7 @@
 /* LOCAL_STORES_PUBLIC_DATA_V1 */
 const LOCAL_STORES_SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
 const LOCAL_STORES_SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
-const {createClient:localStoresCreateClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-const localStoresSb=localStoresCreateClient(LOCAL_STORES_SUPABASE_URL,LOCAL_STORES_SUPABASE_KEY);
+const localStoresSb=await window.ensureMainSupabase();
 const localPlaceholder='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><rect width="100%" height="100%" rx="80" fill="#1e293b"/><circle cx="80" cy="62" r="25" fill="#64748b"/><path d="M35 137c6-30 24-45 45-45s39 15 45 45" fill="#64748b"/><text x="80" y="153" text-anchor="middle" font-family="Arial" font-size="13" fill="#cbd5e1">STORE</text></svg>`);
 let localPublicStores=[],localActiveSpecialty='الكل';
 const localEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
