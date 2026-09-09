@@ -238,7 +238,7 @@
                     .then(({ createClient }) => {
                         if (!window.KintoSupabase) {
                             window.KintoSupabase = createClient(MAIN_SUPABASE_URL, MAIN_SUPABASE_KEY, {
-                                auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+                                auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
                             });
                         }
                         return window.KintoSupabase;
@@ -286,10 +286,26 @@
 
         async function restoreCustomerSession() {
             ensureCustomerAuthInHeader();
-            const authLink = document.getElementById('authLink');
-            const authText = document.getElementById('authText');
+            const authLink = document.getElementById('kintoHeaderAccount') || document.getElementById('authLink');
+            const authText = document.getElementById('authText') || authLink?.querySelector('.action-label');
             const logoutBtn = document.getElementById('logoutBtn');
-            const customerId = getStoredCustomerId();
+            let supabase;
+            let authUser = null;
+            try {
+                supabase = await ensureMainSupabase();
+                const { data, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                authUser = data?.session?.user || null;
+            } catch (e) {
+                console.warn('Supabase auth session restore failed:', e);
+            }
+            const customerId = String(
+                authUser?.user_metadata?.customer_id ||
+                authUser?.app_metadata?.customer_id ||
+                getStoredCustomerId() ||
+                authUser?.id ||
+                ''
+            ).trim();
             if (!customerId) {
                 currentHomeCustomer = null;
                 if (authText) authText.innerText = 'حسابي / تسجيل';
@@ -299,7 +315,7 @@
                 return null;
             }
             try {
-                const supabase = await ensureMainSupabase();
+                supabase = supabase || await ensureMainSupabase();
                 const { data: customer, error } = await supabase.from('customers').select('id,name,phone').eq('id', customerId).maybeSingle();
                 if (error) throw error;
                 if (!customer) throw new Error('العميل غير موجود');
