@@ -46,6 +46,12 @@
         landingResponsive.rel='stylesheet';
         landingResponsive.href='css/customer-landing-responsive-v1.css?v=20260827-cms-video-v1';
         d.head.appendChild(landingResponsive);
+        // Keep the customer palette last in the cascade: dashboard-polish is injected
+        // after dashboard.html and must never restore the legacy navy dark surfaces.
+        const customerTheme=d.createElement('link');
+        customerTheme.rel='stylesheet';
+        customerTheme.href='css/customer-kinto-theme-v126.css?v=20260909-v127-deep-olive';
+        d.head.appendChild(customerTheme);
         const customerPolish=d.createElement('script');
         customerPolish.src='js/customer-light-polish-v1.js?v=20260826-customer-polish-v1.1-final';
         d.head.appendChild(customerPolish);
