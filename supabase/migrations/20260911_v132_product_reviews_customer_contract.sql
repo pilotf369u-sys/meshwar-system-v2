@@ -5,7 +5,6 @@ begin;
 
 create extension if not exists pgcrypto;
 create schema if not exists private;
-revoke all on schema private from public, anon, authenticated;
 
 create or replace function private.review_jsonb_object(p_value jsonb)
 returns jsonb
@@ -78,9 +77,35 @@ declare
   v_password_ok boolean := false;
   v_token text;
   v_expires_at timestamptz := now() + interval '30 days';
+  v_identity_normalized text;
+  v_identity_hash bytea;
+  v_failed_attempts integer;
 begin
   if trim(coalesce(p_identity, '')) = '' or coalesce(p_password, '') = '' then
-    raise exception 'REVIEW_LOGIN_FIELDS_REQUIRED';
+    return jsonb_build_object('ok', false, 'error', 'REVIEW_LOGIN_FIELDS_REQUIRED');
+  end if;
+
+  v_identity_normalized := lower(trim(p_identity));
+  v_identity_hash := digest(v_identity_normalized, 'sha256');
+
+  -- Serialize attempts for the same identity so parallel requests cannot bypass
+  -- the five-attempt limit. Only the new review subsystem is locked.
+  perform pg_advisory_xact_lock(hashtextextended(encode(v_identity_hash, 'hex'), 132));
+
+  delete from public.customer_review_login_attempts
+  where attempted_at < now() - interval '24 hours';
+
+  select count(*)::integer into v_failed_attempts
+  from public.customer_review_login_attempts a
+  where a.identity_hash = v_identity_hash
+    and a.attempted_at >= now() - interval '15 minutes';
+
+  if v_failed_attempts >= 5 then
+    return jsonb_build_object(
+      'ok', false,
+      'error', 'REVIEW_LOGIN_RATE_LIMITED',
+      'retry_after_seconds', 900
+    );
   end if;
 
   select c.* into v_customer
@@ -91,7 +116,9 @@ begin
   limit 1;
 
   if v_customer.id is null then
-    raise exception 'REVIEW_LOGIN_INVALID';
+    insert into public.customer_review_login_attempts(identity_hash)
+    values (v_identity_hash);
+    return jsonb_build_object('ok', false, 'error', 'REVIEW_LOGIN_INVALID');
   end if;
 
   v_customer_json := to_jsonb(v_customer);
@@ -108,8 +135,13 @@ begin
   end if;
 
   if not v_password_ok then
-    raise exception 'REVIEW_LOGIN_INVALID';
+    insert into public.customer_review_login_attempts(identity_hash)
+    values (v_identity_hash);
+    return jsonb_build_object('ok', false, 'error', 'REVIEW_LOGIN_INVALID');
   end if;
+
+  delete from public.customer_review_login_attempts
+  where identity_hash = v_identity_hash;
 
   delete from public.customer_review_sessions
   where customer_id = v_customer.id
@@ -120,6 +152,7 @@ begin
   values (v_customer.id, digest(v_token, 'sha256'), v_expires_at);
 
   return jsonb_build_object(
+    'ok', true,
     'session_token', v_token,
     'expires_at', v_expires_at,
     'customer', jsonb_build_object(
