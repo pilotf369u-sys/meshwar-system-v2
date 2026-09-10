@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>KINTO Store</title>
   <link rel="stylesheet" href="css/local-cart-v93.css?v=20260902-v94">
-  <link rel="stylesheet" href="css/store-unified-header-v1.css?v=20260910-v1">
+  <link rel="stylesheet" href="css/store-unified-header-v1.css?v=20260910-v2">
   <style>
     :root{color-scheme:dark}
     *{box-sizing:border-box}
@@ -28,8 +28,13 @@
           <img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="48" height="48" alt="شعار KINTO">
           <span><strong>KINTO</strong><small>SHOP • SHIP • ENJOY</small></span>
         </a>
+        <nav class="store-primary-nav" aria-label="التنقل الرئيسي">
+          <a class="store-header-btn store-back" href="index.html"><span aria-hidden="true">⌂</span><span>الرئيسية</span></a>
+          <a class="store-header-btn" href="local-stores.html"><span aria-hidden="true">▣</span><span>المتاجر المحلية</span></a>
+          <a class="store-header-btn" href="global-stores.html"><span aria-hidden="true">◉</span><span>المتاجر العالمية</span></a>
+          <a class="store-header-btn" href="index.html#meshwarFeaturedCampaigns"><span aria-hidden="true">★</span><span>المتاجر المميزة</span></a>
+        </nav>
         <nav class="store-header-actions" aria-label="أدوات العميل">
-          <a class="store-header-btn store-back" href="index.html"><span aria-hidden="true">←</span><span>الرجوع للرئيسية</span></a>
           <a class="store-header-btn store-shop-now" href="index.html?openOrder=1"><span aria-hidden="true">🛒</span><span>تسوق الآن</span></a>
           <button class="store-header-btn" type="button" id="mwGlobalThemeToggle" aria-label="تبديل الوضع المضيء والداكن"></button>
           <a class="store-header-btn" id="kintoStoreAccount" href="login.html"><span aria-hidden="true">◉</span><span id="kintoStoreAccountLabel">حسابي</span></a>
@@ -54,7 +59,7 @@
 
   <script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>
   <script src="js/global-theme-toggle-v1.js?v=20260909-global-theme-v1.2-toggle-fix"></script>
-  <script type="module" src="js/store-unified-header-v1.js?v=20260910-v1"></script>
+  <script type="module" src="js/store-unified-header-v1.js?v=20260910-v2"></script>
   <script>
   (()=>{'use strict';
     const SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
