@@ -179,7 +179,7 @@ async function placeOrder(product){
     const{error}=await sb.from('orders').insert([payload]);
     if(error)throw error;
     alert('تم إرسال الطلب بنجاح. السعر: '+formatInt(finalUsd)+' $ / '+formatInt(finalLocal)+' '+localCurrency+' — رقم الطلب: '+orderCode);
-    location.href='dashboard.html?customerId='+encodeURIComponent(customer.id);
+    location.href='external-shipping-shell.html?screen=customer&customerId='+encodeURIComponent(customer.id);
   }catch(e){console.error(e);alert('تعذر إرسال الطلب: '+(e.message||e))}
 }
 
