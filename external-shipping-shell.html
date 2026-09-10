@@ -52,9 +52,6 @@
         d.head.appendChild(deliveryDark);
       }
       if(screen==='customer'){
-        const shellHeaderScope=d.createElement('style');
-        shellHeaderScope.textContent='.dashboard-header{display:none!important}#mwGlobalThemeToggle{display:none!important}body{padding-top:0!important}';
-        d.head.appendChild(shellHeaderScope);
         const landingResponsive=d.createElement('link');
         landingResponsive.rel='stylesheet';
         landingResponsive.href='css/customer-landing-responsive-v1.css?v=20260827-cms-video-v1';
