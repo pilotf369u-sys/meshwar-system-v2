@@ -324,7 +324,7 @@
                 localStorage.setItem('viewingCustomerId', String(customer.id));
                 localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, name: customer.name || '' }));
                 if (authText) authText.innerText = 'أهلاً، ' + (customer.name || 'العميل') + ' | لوحتي';
-                if (authLink) authLink.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id));
+                if (authLink) authLink.href = 'external-shipping-shell.html?screen=customer&customerId=' + encodeURIComponent(String(customer.id));
                 if (logoutBtn) logoutBtn.style.display = 'inline-flex';
                 ensureCustomerAuthInHeader();
                 return customer;
@@ -473,7 +473,7 @@
                 if (orderModal) orderModal.style.display = 'none';
 
                 alert('تم حفظ الطلب في Supabase بنجاح. رقم الطلب: ' + orderCode);
-                window.location.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id));
+                window.location.href = 'external-shipping-shell.html?screen=customer&customerId=' + encodeURIComponent(String(customer.id));
             } catch (error) {
                 console.error('Supabase order submit aborted before WhatsApp:', error);
                 alert('لم يتم فتح واتساب لأن حفظ الطلب في Supabase فشل: ' + (error.message || error));
