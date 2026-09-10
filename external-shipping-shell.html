@@ -16,13 +16,25 @@
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
-  const BUILD='20260829-admin-money-v40';
+  const BUILD='20260910-single-customer-header-v1';
   const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
   if(screen==='customer')document.body.classList.add('kinto-customer-shell');
   const themeButton=document.getElementById('kintoShellThemeToggle'),themeLabel=document.getElementById('kintoShellThemeLabel'),readTheme=()=>localStorage.getItem('meshwar_global_theme')==='light'?'light':'dark',applyShellTheme=theme=>{const value=theme==='light'?'light':'dark';document.documentElement.dataset.shellTheme=value;themeButton?.setAttribute('aria-pressed',String(value==='light'));if(themeLabel)themeLabel.textContent=value==='light'?'مظلم':'مضيء';try{const child=document.getElementById('app').contentDocument?.documentElement;if(child){child.dataset.mwGlobalTheme=value;child.dataset.mwTheme=value}}catch{}};
   const bindShellCustomerIdentity=d=>{const source={name:d.getElementById('userName'),code:d.getElementById('customerCode'),country:d.getElementById('customerCountryChip'),phone:d.getElementById('customerSecondaryPhoneChip')},target={name:document.getElementById('kintoShellCustomerName'),code:document.getElementById('kintoShellCustomerCode'),country:document.getElementById('kintoShellCustomerCountry'),phone:document.getElementById('kintoShellCustomerPhone')},sync=()=>{if(target.name)target.name.textContent=source.name?.textContent?.trim()||'عزيزي العميل';if(target.code)target.code.textContent=source.code?.textContent?.trim()||'---';if(target.country)target.country.textContent=source.country?.textContent?.trim()||'---';const phone=source.phone?.textContent?.trim()||'';if(target.phone){target.phone.textContent=phone;target.phone.hidden=!phone}};sync();const observer=new MutationObserver(sync);Object.values(source).forEach(node=>node&&observer.observe(node,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['style']}));};
+  const removeEmbeddedCustomerHeader=d=>{
+    let state=d.getElementById('customerHeaderState');
+    if(!state){state=d.createElement('div');state.id='customerHeaderState';state.hidden=true;state.setAttribute('aria-hidden','true');state.style.setProperty('display','none','important');d.body.prepend(state)}
+    const selectors='header.dashboard-header,.kinto-unified-customer-header,[data-kinto-customer-header]';
+    const remove=()=>d.querySelectorAll(selectors).forEach(header=>{
+      ['mwGlobalThemeToggle','backBtn','userName','customerCode','customerCountryChip','customerSecondaryPhoneChip'].forEach(id=>{const node=header.querySelector('#'+id);if(node)state.appendChild(node)});
+      header.remove();
+    });
+    remove();
+    const observer=new MutationObserver(remove);
+    observer.observe(d.body,{childList:true,subtree:true});
+  };
   applyShellTheme(readTheme());
   themeButton?.addEventListener('click',()=>{const next=document.documentElement.dataset.shellTheme==='light'?'dark':'light';localStorage.setItem('meshwar_global_theme',next);applyShellTheme(next)});
   params.delete('screen');
@@ -53,6 +65,7 @@
         d.head.appendChild(deliveryDark);
       }
       if(screen==='customer'){
+        removeEmbeddedCustomerHeader(d);
         bindShellCustomerIdentity(d);
         const landingResponsive=d.createElement('link');
         landingResponsive.rel='stylesheet';
