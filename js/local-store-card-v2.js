@@ -42,7 +42,7 @@ async function createOrder(product,store){
     let max=1000;(rows||[]).forEach(r=>{const m=String(r.order_code||'').match(/^MW-(\d+)$/i);if(m)max=Math.max(max,Number(m[1]))});const orderCode='MW-'+(max+1);
     const payload={order_code:orderCode,customer_id:customer.id,customer_name:customer.name||'',customer_phone:customer.phone||'',total_price:local,currency:cur,details:{source:'local_store',store_id:store.id,store_name:store.store_name||'',product_id:String(product.id),product_name:product.product_name||'',vendor_price_usd:v,commission_rate:rateOf(store),platform_margin_usd:usd-v,customer_price_usd:usd,exchange_rate:fxOf(store),customer_price_local:local,local_currency:cur,quantity:1},order_url:'index.html?storeId='+encodeURIComponent(store.id),image_url:product.image_url||null,status:'انتظار رد الموظف'};
     const{error}=await sb.from('orders').insert([payload]);if(error)throw error;
-    alert('تم إرسال الطلب بنجاح. السعر: '+moneyLabel(local,cur)+' — رقم الطلب: '+orderCode);location.href='dashboard.html?customerId='+encodeURIComponent(customer.id);
+    alert('تم إرسال الطلب بنجاح. السعر: '+moneyLabel(local,cur)+' — رقم الطلب: '+orderCode);location.href='external-shipping-shell.html?screen=customer&customerId='+encodeURIComponent(customer.id);
   }catch(e){console.error(e);alert('تعذر إرسال الطلب: '+(e.message||e))}
 }
 
