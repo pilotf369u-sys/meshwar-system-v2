@@ -451,6 +451,30 @@ Object.assign(window,{renderCustomerRewardSummary,openRewardsModal,refreshCustom
     };
   }
 })();
+document.addEventListener('click', async function(e) {
+    const submitBtn = e.target.closest('#submitReviewBtn, .submit-review-btn');
+    if (!submitBtn) return;
+    
+    if (typeof window.kintoCustomerSubmitReview === 'function') {
+        const ratingInput = document.getElementById('reviewRatingInput');
+        const commentInput = document.getElementById('reviewCommentInput');
+        
+        const result = await window.kintoCustomerSubmitReview({
+            orderId: window.activeReviewOrderId,
+            productId: window.activeReviewProductId,
+            rating: ratingInput ? parseInt(ratingInput.value) || 5 : 5,
+            comment: commentInput ? commentInput.value.trim() : '',
+            imageUrl: null
+        });
+        
+        if (result && result.success) {
+            alert('تم إرسال تقييمك بنجاح!');
+            location.reload();
+        } else {
+            alert('حدث خطأ أثناء الإرسال: ' + (result?.error || 'يرجى المحاولة لاحقاً'));
+        }
+    }
+});
 </script>   
 /* CUSTOMER_PRODUCT_REVIEWS_PHASE2_V1 */
 (function(){
