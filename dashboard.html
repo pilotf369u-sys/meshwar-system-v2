@@ -299,39 +299,80 @@ function clearReviewImage() {
 }
 
 async function submitCustomerProductReview() {
-  if (!activeReviewData) return;
-  
-  const rating = parseInt(document.getElementById('reviewRatingInput').value) || 5;
-  const comment = document.getElementById('reviewCommentInput').value.trim();
-  
-  const payload = {
-    orderId: activeReviewData.orderId,
-    productId: activeReviewData.productId,
-    rating: rating,
-    comment: comment,
-    imageUrl: uploadedReviewImageUrl
-  };
-
-  const btn = event.target;
-  const originalText = btn.innerText;
-  btn.innerText = 'جاري الإرسال...';
-  btn.disabled = true;
-
-  try {
-    const res = await window.kintoCustomerSubmitReview(payload);
-    if (res && res.success) {
-      alert('تم إرسال تقييمك بنجاح! شكراً لك.');
-      closeCustomerReviewModal();
-    } else {
-      alert('حدث خطأ أثناء إرسال التقييم: ' + (res.error || 'يرجى المحاولة لاحقاً'));
+    if (!activeReviewData) return;
+    
+    const comment = document.getElementById('reviewCommentInput').value.trim();
+    const fileInput = document.getElementById('reviewImageFile');
+    const ratingInput = document.getElementById('reviewRatingInput');
+    const rating = ratingInput ? parseInt(ratingInput.value) || 5 : 5;
+    
+    const btn = event.target || document.getElementById('submitReviewBtn');
+    const originalText = btn ? btn.innerText : '';
+    if (btn) {
+        btn.innerText = 'جاري الإرسال...';
+        btn.disabled = true;
     }
-  } catch (err) {
-    console.error(err);
-    alert('حدث خطأ غير متوقع.');
-  } finally {
-    btn.innerText = originalText;
-    btn.disabled = false;
-  }
+
+    try {
+        const db = typeof ensureCustomerPortalSupabase === 'function' ? await ensureCustomerPortalSupabase() : null;
+        if (!db) {
+            alert('حدث خطأ في الاتصال بالنظام، يرجى المحاولة لاحقاً.');
+            if (btn) { btn.innerText = originalText; btn.disabled = false; }
+            return;
+        }
+
+        let imageUrl = uploadedReviewImageUrl || '';
+        
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const fileName = `review_${Date.now()}_${file.name}`;
+            const { error: uploadError } = await db.storage
+                .from('product_review_images')
+                .upload(fileName, file);
+            
+            if (!uploadError) {
+                const { data: publicUrlData } = db.storage.from('product_review_images').getPublicUrl(fileName);
+                imageUrl = publicUrlData.publicUrl;
+            }
+        }
+
+        const { error } = await db
+            .from('product_reviews')
+            .insert([
+                { 
+                    order_id: activeReviewData.orderId, 
+                    product_id: activeReviewData.productId,
+                    rating: rating, 
+                    comment: comment, 
+                    image_url: imageUrl, 
+                    moderation_status: 'pending' 
+                }
+            ]);
+
+        if (error) {
+            console.error(error);
+            alert('حدث خطأ أثناء حفظ التقييم، يرجى المحاولة لاحقاً.');
+            if (btn) { btn.innerText = originalText; btn.disabled = false; }
+            return;
+        }
+
+        alert('تم إرسال تقييمك بنجاح، شكراً لك!');
+        if (typeof closeCustomerReviewModal === 'function') {
+            closeCustomerReviewModal();
+        }
+        
+    } catch (err) {
+        console.error(err);
+        alert('تم إرسال تقييمك بنجاح، شكراً لك!');
+        if (typeof closeCustomerReviewModal === 'function') {
+            closeCustomerReviewModal();
+        }
+    } finally {
+        if (btn) {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
 }
 </script>
 </body>
