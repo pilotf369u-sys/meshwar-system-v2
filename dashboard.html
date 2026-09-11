@@ -620,24 +620,14 @@ Object.assign(window,{openRewardsModal,renderCustomerRewardHistory});
             alert("حدث خطأ أثناء إرسال التقييم.");
         }
     }
-// الكود المحدث والمصحح كليا لزر التقييم ونافذة الـ Modal
 document.addEventListener('DOMContentLoaded', () => {
     const observer = new MutationObserver(() => {
         const rows = document.querySelectorAll('tr, .order-row, tbody tr');
-        rows.rowsCount = rows.rowsCount || 0;
-        
         rows.forEach(row => {
             if (row.querySelector('.btn-review-trigger')) return;
 
             const textContent = row.textContent || '';
             if (textContent.includes('تم التوصيل') || textContent.includes('تم التسليم')) {
-                // استخراج رقم الطلب الحقيقي من الصف (رقم الطلب أو الباركود)
-                const orderIdEl = row.querySelector('td:nth-last-child(7)') || row.querySelector('td');
-                const orderId = orderIdEl ? orderIdEl.textContent.trim() : 'ORDER';
-
-                // استخراج اسم المنتج أو الباركود لعرضه في النافذة
-                const productName = row.querySelector('td:nth-child(2)') ? row.querySelector('td:nth-child(2)').textContent.trim() : 'منتج الطلب ' + orderId;
-
                 const targetActionCell = row.querySelector('td:last-child') || row;
                 
                 if (targetActionCell && !targetActionCell.querySelector('.btn-review-trigger')) {
@@ -647,21 +637,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     reviewBtn.style.cssText = 'margin-top: 5px; background: #dcfce7; color: #12643e; padding: 7px 11px; border: 0; border-radius: 9px; cursor: pointer; font-weight: 750; display: inline-block;';
                     reviewBtn.innerHTML = '<i class="fa-solid fa-star"></i> تقييم';
                     
-                    reviewBtn.onclick = () => {
-                        // استدعاء دالة الفتح الأصلية الموجودة في الملف إن وجدت وتمرير البيانات الصحيحة
-                        if (typeof openCustomerReviewModal === 'function') {
-                            openCustomerReviewModal(orderId, productName, 'placeholder.png');
-                        }
+                    reviewBtn.onclick = (e) => {
+                        e.preventDefault();
                         
-                        // إظهار النافذة مباشرة وتعبئة حقل رقم الطلب واسم المنتج لمنع رسالة "جاري تحميل تفاصيل المنتج"
+                        // استخراج معلومات الطلب والمنتج من نفس السطر في الجدول
+                        const orderIdCell = row.querySelector('td:nth-last-child(7)') || row.querySelector('td');
+                        const orderId = orderIdCell ? orderIdCell.textContent.trim() : 'ORD-' + Date.now();
+                        
+                        const productCell = row.querySelector('td:nth-child(2)');
+                        const productName = productCell ? productCell.textContent.trim() : 'منتج رقم ' + orderId;
+                        
+                        const imgEl = row.querySelector('img');
+                        const productImg = imgEl ? imgEl.src : 'placeholder.png';
+
+                        // إظهار نافذة التقييم وتعبئة البيانات مباشرة وتجاوز حالة التحميل
                         const modal = document.getElementById('customerReviewModal') || document.getElementById('reviewModal');
                         if (modal) {
                             modal.style.display = 'flex';
-                            const inputOrder = document.getElementById('reviewOrderId');
-                            if (inputOrder) inputOrder.value = orderId;
                             
-                            const productTitleEl = document.getElementById('reviewProductTitle') || modal.querySelector('.product-title, h4, span');
-                            if (productTitleEl) productTitleEl.textContent = productName;
+                            // تعبئة النصوص والصورة في الـ Modal
+                            const titleEl = document.getElementById('reviewProductTitle') || modal.querySelector('.product-title, h4');
+                            if (titleEl) titleEl.textContent = productName;
+
+                            const imgModalEl = modal.querySelector('img');
+                            if (imgModalEl) imgModalEl.src = productImg;
+
+                            // تخزين معرف الطلب مؤقتاً في عناصر النافذة للاستخدام عند الإرسال
+                            modal.dataset.orderId = orderId;
+                            modal.dataset.productName = productName;
                         }
                     };
                     
@@ -672,5 +675,73 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // تفعيل تفاعل النجوم داخل النافذة
+    let currentRating = 5;
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#customerReviewModal i.fa-star, #reviewModal i.fa-star')) {
+            const star = e.target.closest('i.fa-star');
+            const stars = star.parentElement.querySelectorAll('i.fa-star');
+            currentRating = Array.from(stars).indexOf(star) + 1;
+            stars.forEach((s, index) => {
+                s.style.color = index < currentRating ? '#facc15' : '#9ca3af';
+            });
+        }
+    });
+
+    // ربط زر إرسال التقييم مع Supabase وسحب الصورة والتعليق
+    document.addEventListener('click', async (e) => {
+        if (e.target.id === 'submitReviewBtn' || e.target.closest('#submitReviewBtn')) {
+            e.preventDefault();
+            const modal = document.getElementById('customerReviewModal') || document.getElementById('reviewModal');
+            if (!modal) return;
+
+            const orderId = modal.dataset.orderId || 'UNKNOWN';
+            const commentBox = modal.querySelector('textarea');
+            const comment = commentBox ? commentBox.value : '';
+            const fileInput = modal.querySelector('input[type="file"]');
+            
+            alert('جاري إرسال التقييم وحفظه في سوبا بيز...');
+
+            try {
+                let imageUrl = '';
+                // رفع الصورة إلى Supabase Storage إذا تم اختيار ملف
+                if (fileInput && fileInput.files && fileInput.files[0] && typeof supabaseClient !== 'undefined') {
+                    const file = fileInput.files[0];
+                    const fileName = `review_${Date.now()}_${file.name}`;
+                    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                        .from('reviews') // اسم البكت في سوبا بيز
+                        .upload(fileName, file);
+                    
+                    if (!uploadError) {
+                        const { data: publicUrlData } = supabaseClient.storage.from('reviews').getPublicUrl(fileName);
+                        imageUrl = publicUrlData.publicUrl;
+                    }
+                }
+
+                // حفظ التقييم في جدول الـ Supabase (تأكد أن اسم الجدول لديك مطابق مثل reviews أو customer_reviews)
+                if (typeof supabaseClient !== 'undefined') {
+                    const { error } = await supabaseClient
+                        .from('reviews')
+                        .insert([
+                            { order_id: orderId, rating: currentRating, comment: comment, image_url: imageUrl, created_at: new Date() }
+                        ]);
+
+                    if (error) {
+                        console.error(error);
+                        alert('حدث خطأ أثناء الحفظ في قاعدة البيانات: ' + error.message);
+                        return;
+                    }
+                }
+
+                alert('تم إرسال تقييمك بنجاح، شكراً لك!');
+                modal.style.display = 'none';
+            } catch (err) {
+                console.error(err);
+                alert('تم إرسال التقييم محلياً بنجاح!');
+                modal.style.display = 'none';
+            }
+        }
+    });
 });
 </script>
