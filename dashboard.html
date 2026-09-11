@@ -459,3 +459,165 @@ Object.assign(window,{openRewardsModal,renderCustomerRewardHistory});
  Object.assign(window,{viewCustomerPod:view,closeCustomerPodViewer:close});
 })();
 </script>
+<!-- ========================================== -->
+<!-- 1. نافذة التقييم المنبثقة (HTML & CSS) -->
+<!-- ========================================== -->
+<div id="customerReviewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: #ffffff; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); direction: rtl; text-align: right; position: relative;">
+        
+        <!-- زر الإغلاق -->
+        <button onclick="closeCustomerReviewModal()" style="position: absolute; top: 15px; left: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">&times;</button>
+        
+        <h3 style="margin-top: 0; margin-bottom: 15px; color: #333; font-size: 18px;">🌟 تقييم المنتج</h3>
+        
+        <form onsubmit="kintoCustomerSubmitReview(event)">
+            <input type="hidden" id="reviewOrderId">
+            <input type="hidden" id="reviewProductId">
+
+            <!-- تقييم النجوم -->
+            <div style="margin-bottom: 15px; text-align: center;">
+                <div id="starContainer" style="font-size: 30px; cursor: pointer; color: #e4e5e9;">
+                    <span onclick="setReviewRating(1)" class="review-star" data-value="1">★</span>
+                    <span onclick="setReviewRating(2)" class="review-star" data-value="2">★</span>
+                    <span onclick="setReviewRating(3)" class="review-star" data-value="3">★</span>
+                    <span onclick="setReviewRating(4)" class="review-star" data-value="4">★</span>
+                    <span onclick="setReviewRating(5)" class="review-star" data-value="5">★</span>
+                </div>
+            </div>
+
+            <!-- خانة التعليق -->
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px;">رأيك في المنتج:</label>
+                <textarea id="reviewComment" rows="4" placeholder="اكتب تجربتك مع المنتج هنا..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical; box-sizing: border-box; font-family: inherit;"></textarea>
+            </div>
+
+            <!-- خانة رفع الصورة أو الكاميرا -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px;">إضافة صورة (اختياري):</label>
+                <input type="file" id="reviewImageInput" accept="image/*" capture="environment" style="width: 100%; padding: 8px; border: 1px dashed #ccc; border-radius: 6px; box-sizing: border-box; background: #fafafa;">
+            </div>
+
+            <!-- أزرار الإجراءات -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeCustomerReviewModal()" style="padding: 10px 20px; background: #e0e0e0; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: #333;">إلغاء</button>
+                <button type="submit" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">إرسال التقييم</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 2. كود البرمجة والربط (JavaScript) -->
+<!-- ========================================== -->
+<script>
+    // متغير لتخزين قيمة النجوم المختارة (افتراضياً 5 نجوم)
+    window.currentSelectedRating = 5;
+
+    // دالة لفتح نافذة التقييم وتمرير معرّف الطلب والمنتج
+    function openCustomerReviewModal(orderId, productId) {
+        document.getElementById('reviewOrderId').value = orderId;
+        document.getElementById('reviewProductId').value = productId;
+        document.getElementById('reviewComment').value = '';
+        document.getElementById('reviewImageInput').value = '';
+        
+        // ضبط النجوم لتكون كلها مضاءة افتراضياً عند الفتح
+        setReviewRating(5);
+        
+        // إظهار النافذة
+        document.getElementById('customerReviewModal').style.display = 'flex';
+    }
+
+    // دالة لإغلاق نافذة التقييم
+    function closeCustomerReviewModal() {
+        document.getElementById('customerReviewModal').style.display = 'none';
+    }
+
+    // دالة تحديد النجوم بصرياً
+    function setReviewRating(rating) {
+        window.currentSelectedRating = rating;
+        const stars = document.querySelectorAll('.review-star');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.style.color = '#ffc107'; // ذهبي
+            } else {
+                star.style.color = '#e4e5e9'; // رمادي
+            }
+        });
+    }
+
+    // دالة معالجة وإرسال التقييم إلى Supabase
+    async function kintoCustomerSubmitReview(event) {
+        event.preventDefault();
+
+        const orderId = document.getElementById('reviewOrderId').value;
+        const productId = document.getElementById('reviewProductId').value;
+        const rating = window.currentSelectedRating || 5;
+        const comment = document.getElementById('reviewComment').value.trim();
+        const imageInput = document.getElementById('reviewImageInput');
+
+        try {
+            let imageStoragePath = null;
+
+            // 1. رفع الصورة إذا تم اختيارها إلى الـ Bucket الآمن
+            if (imageInput && imageInput.files && imageInput.files.length > 0) {
+                const file = imageInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${orderId}_${Date.now()}.${fileExt}`;
+
+                const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
+                    .from('product-review-images')
+                    .upload(fileName, file);
+
+                if (uploadError) {
+                    console.error("خطأ في رفع الصورة:", uploadError.message);
+                    alert("حدث خطأ أثناء رفع الصورة، يرجى المحاولة مرة أخرى.");
+                    return;
+                }
+
+                imageStoragePath = uploadData.path;
+            }
+
+            // 2. إرسال بيانات التقييم إلى جدول product_reviews
+            const { data: reviewData, error: reviewError } = await window.supabaseClient
+                .from('product_reviews')
+                .insert([
+                    {
+                        order_id: orderId,
+                        product_id: productId,
+                        rating: parseInt(rating),
+                        comment: comment,
+                        moderation_status: 'pending'
+                    }
+                ])
+                .select()
+                .single();
+
+            if (reviewError) {
+                console.error("خطأ في حفظ التقييم:", reviewError.message);
+                alert("فشل حفظ التقييم: " + reviewError.message);
+                return;
+            }
+
+            // 3. ربط الصورة المرفوعة بالتقييم في جدول product_review_images
+            if (imageStoragePath && reviewData) {
+                await window.supabaseClient
+                    .from('product_review_images')
+                    .insert([
+                        {
+                            review_id: reviewData.id,
+                            storage_path: imageStoragePath,
+                            sort_order: 1,
+                            moderation_status: 'pending'
+                        }
+                    ]);
+            }
+
+            alert("شكراً لك! تم إرسال تقييمك بنجاح وسيتم نشره بعد المراجعة.");
+            closeCustomerReviewModal();
+
+        } catch (err) {
+            console.error("حدث خطأ غير متوقع:", err);
+            alert("حدث خطأ أثناء إرسال التقييم.");
+        }
+    }
+</script>
