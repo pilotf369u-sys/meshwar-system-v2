@@ -620,4 +620,38 @@ Object.assign(window,{openRewardsModal,renderCustomerRewardHistory});
             alert("حدث خطأ أثناء إرسال التقييم.");
         }
     }
+<script>
+  // كود تلقائي لإضافة زر التقييم بجانب زر التفاصيل للطلبات المسلمة
+  document.addEventListener('DOMContentLoaded', () => {
+    const observer = new MutationObserver(() => {
+      document.querySelectorAll('tr').forEach(row => {
+        // ابحث عن زر التفاصيل داخل الصف
+        const detailsBtn = row.querySelector('.btn-details');
+        if (detailsBtn && !row.querySelector('.btn-review-custom')) {
+          // تحقق مما إذا كانت الحالة تشير إلى "تم التسليم"
+          const rowText = row.innerText;
+          if (rowText.includes('تم التسليم')) {
+            // استخرج معرف الطلب من الصف أو الزر
+            const reviewBtn = document.createElement('button');
+            reviewBtn.type = 'button';
+            reviewBtn.className = 'btn-approve btn-review-custom';
+            reviewBtn.style.cssText = 'margin-right: 5px; background: rgba(16,185,129,.12); color: #a7f3d0; border: 1px solid rgba(16,185,129,.24); padding: 7px 11px; border-radius: 9px; cursor: pointer; font-weight: 750;';
+            reviewBtn.innerHTML = '<i class="fa-solid fa-star"></i> تقييم الطلب';
+            
+            // عند الضغط عليه يفتح نافذة التقييم
+            reviewBtn.onclick = () => {
+              if (typeof openReviewModal === 'function') {
+                openReviewModal(); // ضع معرف الطلب هنا إن وجد
+              } else {
+                alert('جاهز للتقييم');
+              }
+            };
+            
+            detailsBtn.parentNode.insertBefore(reviewBtn, detailsBtn.nextSibling);
+          }
+        }
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  });
 </script>
