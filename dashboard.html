@@ -423,7 +423,6 @@ const rewardSetupOrdersBase=setupOrdersRealtime;setupOrdersRealtime=async functi
 openRewardsModal=async function(){await refreshCustomerRewardProfile();renderCustomerRewardHistory();document.getElementById('rewardsModal').style.display='flex'};
 window.addEventListener('beforeunload',async()=>{if(customerRewardProfileTimer)clearInterval(customerRewardProfileTimer);try{const sb=await ensureCustomerPortalSupabase();if(customerRewardProfileChannel)await sb.removeChannel(customerRewardProfileChannel)}catch(e){}});
 Object.assign(window,{renderCustomerRewardsSummary, openRewardsModal, refreshCustomerRewardProfile});
-});
 /* CUSTOMER_PRODUCT_REVIEWS_SUBMIT_PHASE2_V1 */
 (function(){
   if (!window.kintoCustomerSubmitReview) {
