@@ -225,6 +225,35 @@ window.addEventListener('beforeunload',async()=>{if(customerRewardProfileTimer)c
 Object.assign(window,{renderCustomerRewardSummary,openRewardsModal,refreshCustomerRewardProfile});
 </script>
 <script>
+ <script>
+/* CUSTOMER_PRODUCT_REVIEWS_SUBMIT_PHASE2_V1 */
+(function(){
+  if (!window.kintoCustomerSubmitReview) {
+    window.kintoCustomerSubmitReview = async function(reviewData) {
+      try {
+        const sb = await ensureCustomerPortalSupabase();
+        const customerId = currentCustomerCloud?.id;
+        if (!customerId) throw new Error("Customer not authenticated");
+        
+        const { data, error } = await sb.rpc('customer_submit_product_review_v132', {
+          p_customer_id: customerId,
+          p_order_id: reviewData.orderId,
+          p_product_id: reviewData.productId,
+          p_rating: reviewData.rating,
+          p_comment: reviewData.comment,
+          p_image_url: reviewData.imageUrl || null
+        });
+        
+        if (error) throw error;
+        return { success: true, data };
+      } catch (err) {
+        console.error("Error submitting product review:", err);
+        return { success: false, error: err.message || err };
+      }
+    };
+  }
+})();
+</script>   
 /* CUSTOMER_PRODUCT_REVIEWS_PHASE2_V1 */
 (function(){
   if (!window.kintoCustomerReadyProducts) {
