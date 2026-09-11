@@ -422,7 +422,8 @@ async function setupCustomerRewardProfileSync(){try{const sb=await ensureCustome
 const rewardSetupOrdersBase=setupOrdersRealtime;setupOrdersRealtime=async function(...args){const r=await rewardSetupOrdersBase(...args);await setupCustomerRewardProfileSync();return r};
 openRewardsModal=async function(){await refreshCustomerRewardProfile();renderCustomerRewardHistory();document.getElementById('rewardsModal').style.display='flex'};
 window.addEventListener('beforeunload',async()=>{if(customerRewardProfileTimer)clearInterval(customerRewardProfileTimer);try{const sb=await ensureCustomerPortalSupabase();if(customerRewardProfileChannel)await sb.removeChannel(customerRewardProfileChannel)}catch(e){}});
-Object.assign(window,{renderCustomerRewardSummary,openRewardsModal,refreshCustomerRewardProfile});
+Object.assign(window,{renderCustomerRewardsSummary, openRewardsModal, refreshCustomerRewardProfile});
+});
 </script>
 /* CUSTOMER_PRODUCT_REVIEWS_SUBMIT_PHASE2_V1 */
 (function(){
@@ -458,13 +459,15 @@ document.addEventListener('click', async function(e) {
         const ratingInput = document.getElementById('reviewRatingInput');
         const commentInput = document.getElementById('reviewCommentInput');
         
-        const result = await window.kintoCustomerSubmitReview({
+        const payload = {
             orderId: window.activeReviewOrderId,
             productId: window.activeReviewProductId,
             rating: ratingInput ? parseInt(ratingInput.value) || 5 : 5,
-            comment: commentInput ? commentInput.value.trim() : '',
-            imageUrl: null
-        });
+            comment: commentInput ? commentInput.value.trim() : ''
+        };
+        
+        console.log("إرسال التقييم بالبيانات:", payload);
+        const result = await window.kintoCustomerSubmitReview(payload);
         
         if (result && result.success) {
             alert('تم إرسال تقييمك بنجاح!');
