@@ -433,14 +433,13 @@ Object.assign(window,{renderCustomerRewardSummary,openRewardsModal,refreshCustom
         const customerId = currentCustomerCloud?.id;
         if (!customerId) throw new Error("Customer not authenticated");
         
-        const { data, error } = await sb.rpc('customer_submit_product_review_v132', {
-          p_customer_id: customerId,
-          p_order_id: reviewData.orderId,
-          p_product_id: reviewData.productId,
-          p_rating: reviewData.rating,
-          p_comment: reviewData.comment,
-          p_image_url: reviewData.imageUrl || null
-        });
+      const { data, error } = await sb.rpc('customer_submit_product_review_v132', {
+        p_session_token: customerId,
+        p_order_id: reviewData.orderId,
+        p_product_id: reviewData.productId,
+        p_rating: reviewData.rating,
+        p_comment: reviewData.comment
+    });
         
         if (error) throw error;
         return { success: true, data };
