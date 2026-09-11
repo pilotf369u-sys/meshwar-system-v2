@@ -620,38 +620,56 @@ Object.assign(window,{openRewardsModal,renderCustomerRewardHistory});
             alert("حدث خطأ أثناء إرسال التقييم.");
         }
     }
-<script>
-  // كود تلقائي لإضافة زر التقييم بجانب زر التفاصيل للطلبات المسلمة
-  document.addEventListener('DOMContentLoaded', () => {
+// الكود النهائي الموحد لتفعيل زر التقييم وربطه بجدول الطلبات
+document.addEventListener('DOMContentLoaded', () => {
+    // مراقبة ظهور الجدول أو التحديثات لإضافة زر التقييم للطلبات التي حالتها "تم التوصيل"
     const observer = new MutationObserver(() => {
-      document.querySelectorAll('tr').forEach(row => {
-        // ابحث عن زر التفاصيل داخل الصف
-        const detailsBtn = row.querySelector('.btn-details');
-        if (detailsBtn && !row.querySelector('.btn-review-custom')) {
-          // تحقق مما إذا كانت الحالة تشير إلى "تم التسليم"
-          const rowText = row.innerText;
-          if (rowText.includes('تم التسليم')) {
-            // استخرج معرف الطلب من الصف أو الزر
-            const reviewBtn = document.createElement('button');
-            reviewBtn.type = 'button';
-            reviewBtn.className = 'btn-approve btn-review-custom';
-            reviewBtn.style.cssText = 'margin-right: 5px; background: rgba(16,185,129,.12); color: #a7f3d0; border: 1px solid rgba(16,185,129,.24); padding: 7px 11px; border-radius: 9px; cursor: pointer; font-weight: 750;';
-            reviewBtn.innerHTML = '<i class="fa-solid fa-star"></i> تقييم الطلب';
-            
-            // عند الضغط عليه يفتح نافذة التقييم
-            reviewBtn.onclick = () => {
-              if (typeof openReviewModal === 'function') {
-                openReviewModal(); // ضع معرف الطلب هنا إن وجد
-              } else {
-                alert('جاهز للتقييم');
-              }
-            };
-            
-            detailsBtn.parentNode.insertBefore(reviewBtn, detailsBtn.nextSibling);
-          }
-        }
-      });
+        // البحث عن صفوف الجدول أو أزرار التفاصيل/الحالة
+        const rows = document.querySelectorAll('tr, .order-row, tbody tr');
+        rows.forEach(row => {
+            // تجنب تكرار إضافة الزر إذا كان موجوداً مسبقاً
+            if (row.querySelector('.btn-review-trigger')) return;
+
+            // التحقق من حالة الطلب (مثلاً إذا احتوى الصف على نص "تم التوصيل")
+            const textContent = row.textContent || '';
+            if (textContent.includes('تم التوصيل') || textContent.includes('تم التسليم')) {
+                // محاولة استخراج معرف الطلب أو الباركود أو الـ ID المناسب
+                const orderIdEl = row.querySelector('.siparis-no') || row.querySelector('td');
+                const orderId = orderIdEl ? orderIdEl.textContent.trim() : 'ORDER';
+
+                // إيجاد مكان مناسب لإدراج زر التقييم (بجانب زر التفاصيل مثلاً)
+                const targetActionCell = row.querySelector('td:last-child') || row;
+                
+                if (targetActionCell && !targetActionCell.querySelector('.btn-review-trigger')) {
+                    const reviewBtn = document.createElement('button');
+                    reviewBtn.type = 'button';
+                    reviewBtn.className = 'btn-approve btn-review-trigger';
+                    reviewBtn.style.cssText = 'margin-right: 5px; background: #dcfce7; color: #12643e; padding: 7px 11px; border: 0; border-radius: 9px; cursor: pointer; font-weight: 750;';
+                    reviewBtn.innerHTML = '<i class="fa-solid fa-star"></i> تقييم';
+                    
+                    // ربط الحدث بفتح نافذة التقييم الصحيحة الموجودة في الصفحة
+                    reviewBtn.onclick = () => {
+                        if (typeof openCustomerReviewModal === 'function') {
+                            openCustomerReviewModal(orderId, 'منتج عام');
+                        } else {
+                            // دالة احتياطية لفتح الـ Modal مباشرة إذا لم تكن الدالة المعرفة تعمل
+                            const modal = document.getElementById('customerReviewModal') || document.getElementById('reviewModal');
+                            if (modal) {
+                                modal.style.display = 'flex';
+                                const inputOrder = document.getElementById('reviewOrderId');
+                                if (inputOrder) inputOrder.value = orderId;
+                            } else {
+                                alert('نافذة التقييم غير موجودة في الصفحة!');
+                            }
+                        }
+                    };
+                    
+                    targetActionCell.appendChild(reviewBtn);
+                }
+            }
+        });
     });
+
     observer.observe(document.body, { childList: true, subtree: true });
-  });
+});
 </script>
