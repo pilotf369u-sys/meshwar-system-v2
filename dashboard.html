@@ -224,7 +224,57 @@ openRewardsModal=async function(){await refreshCustomerRewardProfile();renderCus
 window.addEventListener('beforeunload',async()=>{if(customerRewardProfileTimer)clearInterval(customerRewardProfileTimer);try{const sb=await ensureCustomerPortalSupabase();if(customerRewardProfileChannel)await sb.removeChannel(customerRewardProfileChannel)}catch(e){}});
 Object.assign(window,{renderCustomerRewardSummary,openRewardsModal,refreshCustomerRewardProfile});
 </script>
-
+<script>
+ <script>
+/* CUSTOMER_PRODUCT_REVIEWS_SUBMIT_PHASE2_V1 */
+(function(){
+  if (!window.kintoCustomerSubmitReview) {
+    window.kintoCustomerSubmitReview = async function(reviewData) {
+      try {
+        const sb = await ensureCustomerPortalSupabase();
+        const customerId = currentCustomerCloud?.id;
+        if (!customerId) throw new Error("Customer not authenticated");
+        
+        const { data, error } = await sb.rpc('customer_submit_product_review_v132', {
+          p_customer_id: customerId,
+          p_order_id: reviewData.orderId,
+          p_product_id: reviewData.productId,
+          p_rating: reviewData.rating,
+          p_comment: reviewData.comment,
+          p_image_url: reviewData.imageUrl || null
+        });
+        
+        if (error) throw error;
+        return { success: true, data };
+      } catch (err) {
+        console.error("Error submitting product review:", err);
+        return { success: false, error: err.message || err };
+      }
+    };
+  }
+})();
+</script>   
+/* CUSTOMER_PRODUCT_REVIEWS_PHASE2_V1 */
+(function(){
+  if (!window.kintoCustomerReadyProducts) {
+    window.kintoCustomerReadyProducts = async function() {
+      try {
+        const sb = await ensureCustomerPortalSupabase();
+        const customerId = currentCustomerCloud?.id;
+        if (!customerId) return [];
+        const { data, error } = await sb.rpc('customer_review_ready_products_v132', {
+          p_customer_id: customerId
+        });
+        if (error) throw error;
+        return data || [];
+      } catch (err) {
+        console.error("Error fetching ready products for review:", err);
+        return [];
+      }
+    };
+  }
+})();
+</script>
 <script>
 /* REWARD_UI_POLISH_V3 */
 function formatRewardDateTime(value){if(!value)return'—';const d=new Date(value);if(Number.isNaN(d.getTime()))return escapeHtml(value);const date=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}).format(d);const time=new Intl.DateTimeFormat('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}).format(d);return `${date} - ${time}`}
