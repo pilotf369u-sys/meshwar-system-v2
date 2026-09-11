@@ -620,47 +620,48 @@ Object.assign(window,{openRewardsModal,renderCustomerRewardHistory});
             alert("حدث خطأ أثناء إرسال التقييم.");
         }
     }
-// الكود النهائي الموحد لتفعيل زر التقييم وربطه بجدول الطلبات
+// الكود المحدث والمصحح كليا لزر التقييم ونافذة الـ Modal
 document.addEventListener('DOMContentLoaded', () => {
-    // مراقبة ظهور الجدول أو التحديثات لإضافة زر التقييم للطلبات التي حالتها "تم التوصيل"
     const observer = new MutationObserver(() => {
-        // البحث عن صفوف الجدول أو أزرار التفاصيل/الحالة
         const rows = document.querySelectorAll('tr, .order-row, tbody tr');
+        rows.rowsCount = rows.rowsCount || 0;
+        
         rows.forEach(row => {
-            // تجنب تكرار إضافة الزر إذا كان موجوداً مسبقاً
             if (row.querySelector('.btn-review-trigger')) return;
 
-            // التحقق من حالة الطلب (مثلاً إذا احتوى الصف على نص "تم التوصيل")
             const textContent = row.textContent || '';
             if (textContent.includes('تم التوصيل') || textContent.includes('تم التسليم')) {
-                // محاولة استخراج معرف الطلب أو الباركود أو الـ ID المناسب
-                const orderIdEl = row.querySelector('.siparis-no') || row.querySelector('td');
+                // استخراج رقم الطلب الحقيقي من الصف (رقم الطلب أو الباركود)
+                const orderIdEl = row.querySelector('td:nth-last-child(7)') || row.querySelector('td');
                 const orderId = orderIdEl ? orderIdEl.textContent.trim() : 'ORDER';
 
-                // إيجاد مكان مناسب لإدراج زر التقييم (بجانب زر التفاصيل مثلاً)
+                // استخراج اسم المنتج أو الباركود لعرضه في النافذة
+                const productName = row.querySelector('td:nth-child(2)') ? row.querySelector('td:nth-child(2)').textContent.trim() : 'منتج الطلب ' + orderId;
+
                 const targetActionCell = row.querySelector('td:last-child') || row;
                 
                 if (targetActionCell && !targetActionCell.querySelector('.btn-review-trigger')) {
                     const reviewBtn = document.createElement('button');
                     reviewBtn.type = 'button';
                     reviewBtn.className = 'btn-approve btn-review-trigger';
-                    reviewBtn.style.cssText = 'margin-right: 5px; background: #dcfce7; color: #12643e; padding: 7px 11px; border: 0; border-radius: 9px; cursor: pointer; font-weight: 750;';
+                    reviewBtn.style.cssText = 'margin-top: 5px; background: #dcfce7; color: #12643e; padding: 7px 11px; border: 0; border-radius: 9px; cursor: pointer; font-weight: 750; display: inline-block;';
                     reviewBtn.innerHTML = '<i class="fa-solid fa-star"></i> تقييم';
                     
-                    // ربط الحدث بفتح نافذة التقييم الصحيحة الموجودة في الصفحة
                     reviewBtn.onclick = () => {
+                        // استدعاء دالة الفتح الأصلية الموجودة في الملف إن وجدت وتمرير البيانات الصحيحة
                         if (typeof openCustomerReviewModal === 'function') {
-                            openCustomerReviewModal(orderId, 'منتج عام');
-                        } else {
-                            // دالة احتياطية لفتح الـ Modal مباشرة إذا لم تكن الدالة المعرفة تعمل
-                            const modal = document.getElementById('customerReviewModal') || document.getElementById('reviewModal');
-                            if (modal) {
-                                modal.style.display = 'flex';
-                                const inputOrder = document.getElementById('reviewOrderId');
-                                if (inputOrder) inputOrder.value = orderId;
-                            } else {
-                                alert('نافذة التقييم غير موجودة في الصفحة!');
-                            }
+                            openCustomerReviewModal(orderId, productName, 'placeholder.png');
+                        }
+                        
+                        // إظهار النافذة مباشرة وتعبئة حقل رقم الطلب واسم المنتج لمنع رسالة "جاري تحميل تفاصيل المنتج"
+                        const modal = document.getElementById('customerReviewModal') || document.getElementById('reviewModal');
+                        if (modal) {
+                            modal.style.display = 'flex';
+                            const inputOrder = document.getElementById('reviewOrderId');
+                            if (inputOrder) inputOrder.value = orderId;
+                            
+                            const productTitleEl = document.getElementById('reviewProductTitle') || modal.querySelector('.product-title, h4, span');
+                            if (productTitleEl) productTitleEl.textContent = productName;
                         }
                     };
                     
