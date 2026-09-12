@@ -5,8 +5,10 @@
   const VERSION = 'v135';
   const SESSION_KEY = 'kinto_customer_review_session_v132';
   const MAX_IMAGES = 1;
-  const COMPRESSED_MAX_BYTES = 320 * 1024;
-  const COMPRESSED_MAX_DIMENSION = 1280;
+  const COMPRESSED_TARGET_BYTES = 25 * 1024;
+  const COMPRESSED_MAX_BYTES = 50 * 1024;
+  const COMPRESSED_MAX_DIMENSION = 320;
+  const REVIEW_STORAGE_BUCKET = 'product-review-images';
   const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
   const state = { token: '', items: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null };
@@ -349,16 +351,17 @@
       const ratio = Math.min(1, COMPRESSED_MAX_DIMENSION / Math.max(width, height));
       width = Math.max(1, Math.round(width * ratio)); height = Math.max(1, Math.round(height * ratio));
       const canvas = document.createElement('canvas'), encode = (type, quality) => new Promise(resolve => canvas.toBlob(resolve, type, quality));
-      let blob = null, quality = .78;
-      for (let pass = 0; pass < 8; pass += 1) {
+      let blob = null, quality = .82;
+      for (let pass = 0; pass < 12; pass += 1) {
         canvas.width = width; canvas.height = height;
         canvas.getContext('2d', { alpha: false }).drawImage(source, 0, 0, width, height);
         blob = await encode('image/webp', quality) || await encode('image/jpeg', quality);
-        if (blob && blob.size <= COMPRESSED_MAX_BYTES) break;
-        if (quality > .5) quality -= .09;
-        else if (Math.max(width, height) > 480) { width = Math.max(1, Math.round(width * .82)); height = Math.max(1, Math.round(height * .82)); }
+        if (blob && blob.size <= COMPRESSED_TARGET_BYTES) break;
+        if (quality > .44) quality -= .07;
+        else if (Math.max(width, height) > 240) { width = Math.max(1, Math.round(width * .88)); height = Math.max(1, Math.round(height * .88)); }
       }
       if (!blob) throw new Error('تعذر ضغط الصورة.');
+      if (blob.size > COMPRESSED_MAX_BYTES) throw new Error('تعذر تجهيز الصورة بالحجم الآمن. جرّب صورة أخرى.');
       return new File([blob], `${String(file.name || 'review').replace(/\.[^.]+$/, '')}.webp`, { type: blob.type || 'image/webp', lastModified: Date.now() });
     } finally { if (source && typeof source.close === 'function') source.close(); }
   }
@@ -434,20 +437,28 @@
   }
 
   async function uploadImage(reviewId, file) {
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    let binary = '';
-    for (let offset = 0; offset < bytes.length; offset += 32768) {
-      binary += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
-    }
     const sb = await client();
-    const { data, error } = await sb.rpc('customer_upload_review_image_v139', {
+    const { data: ticket, error: ticketError } = await sb.rpc('customer_create_review_image_upload_v150', {
       p_session_token: state.token,
       p_review_id: reviewId,
       p_mime_type: file.type,
-      p_base64: btoa(binary)
+      p_byte_size: file.size
     });
-    if (error) throw error;
-    if (!data?.ok) throw new Error('تعذر حفظ صورة التقييم.');
+    if (ticketError) throw ticketError;
+    if (!ticket?.ticket_id || !ticket?.storage_path) throw new Error('تعذر إنشاء تصريح رفع الصورة.');
+    const bucket = ticket.bucket || REVIEW_STORAGE_BUCKET;
+    const { error: uploadError } = await sb.storage.from(bucket).upload(
+      ticket.storage_path, file, { upsert: false, contentType: file.type, cacheControl: '31536000' }
+    );
+    if (uploadError) throw uploadError;
+    const { data, error } = await sb.rpc('customer_finalize_review_image_upload_v150', {
+      p_session_token: state.token,
+      p_ticket_id: ticket.ticket_id
+    });
+    if (error || !data?.ok) {
+      await sb.storage.from(bucket).remove([ticket.storage_path]).catch(() => {});
+      throw error || new Error('تعذر تثبيت صورة التقييم.');
+    }
   }
 
   function updateBadge(count) {
