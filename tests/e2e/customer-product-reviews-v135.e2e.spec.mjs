@@ -19,6 +19,10 @@ test('customer reviews UI is isolated, responsive, and exposes camera plus devic
   await page.locator('#reviewUnlockBtn').click();
   await expect(page.locator('.review-product-card')).toContainText('Test Product 01');
   await expect(page.locator('#reviewReadyBadge')).toHaveText('1');
+  await expect(page.locator('.review-order-action')).toContainText('تقييم المنتج');
+  await page.locator('[data-tab="notifications"]').click();
+  await expect(page.locator('.review-notification')).toContainText('جاهز للتقييم');
+  await tab.click();
   const rpcCalls = await page.evaluate(() => window.__MESH_E2E_RPC_CALLS || []);
   expect(rpcCalls.some(call => call.name === 'customer_review_ready_products_v132' && call.args?.p_session_token === 'e2e-review-token')).toBeTruthy();
 
@@ -29,6 +33,6 @@ test('customer reviews UI is isolated, responsive, and exposes camera plus devic
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.reviews-panel-card')).toBeVisible();
-  await expect(page.locator('#reviewUnlockForm')).toBeVisible();
-  await expect(page.locator('#reviewUnlockBtn')).toBeVisible();
+  await expect(page.locator('#reviewUnlock')).toBeHidden();
+  await expect(page.locator('.review-product-card')).toBeVisible();
 });

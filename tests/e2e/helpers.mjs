@@ -9,7 +9,7 @@ export function fixtureDb(){
     {id:'sub-b',store_id:STORE.id,parent_id:'cat-b',name:'Sub B',slug:'sub-b',sort_order:1,is_visible:true},
     ...Array.from({length:19},(_,i)=>({id:`cat-${i+3}`,store_id:STORE.id,parent_id:null,name:`Main ${i+3}`,slug:`main-${i+3}`,sort_order:i+3,is_visible:true}))
   ];
-  const mk=(id,code,status,total,details)=>({id,order_code:code,status,total_price:total,currency:'USD',created_at:new Date().toISOString(),details:{source:'local_store',store_id:STORE.id,product_name:'Test Product 01',quantity:2,parcels_count:1,city:'Baghdad',...details}});
+  const mk=(id,code,status,total,details)=>({id,customer_id:'e2e-customer',order_code:code,status,total_price:total,currency:'USD',created_at:new Date().toISOString(),details:{source:'local_store',store_id:STORE.id,product_name:'Test Product 01',quantity:2,parcels_count:1,city:'Baghdad',...details}});
   const orders=[
     mk('o-pending','MW-5664','بانتظار الموافقة',120,{commission_rate:10,vendor_payment_status:'pending'}),
     mk('o-delivery','MW-5665','قيد التوصيل',80,{commission_rate:10,vendor_payment_status:'pending'}),

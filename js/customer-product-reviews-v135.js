@@ -161,6 +161,8 @@
       if (button) openModal(state.items[Number(button.dataset.reviewIndex)]);
     });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
+    const historyBody = $('historyOrdersTableBody');
+    if (historyBody) new MutationObserver(decorateOrderReviewButtons).observe(historyBody, { childList: true, subtree: true });
   }
 
   function customerIdentity() {
@@ -233,6 +235,7 @@
       console.info('[KINTO Reviews] ready-products RPC completed', state.lastReadyResult);
       $('reviewUnlock').hidden = true;
       renderProducts();
+      decorateOrderReviewButtons();
       updateBadge(readyCount);
       injectReviewNotification(readyCount);
       message('reviewPanelStatus', '');
@@ -273,6 +276,43 @@
         </div>
       </article>`;
     }).join('');
+  }
+
+  function decorateOrderReviewButtons() {
+    const body = $('historyOrdersTableBody');
+    const orders = typeof currentCustomerOrdersGlobal !== 'undefined' ? currentCustomerOrdersGlobal : [];
+    if (!body || !state.items.length || !Array.isArray(orders)) return;
+    const readyByOrder = new Map();
+    state.items.forEach(item => {
+      if (!isReady(item) || item.review_id) return;
+      const id = String(item.order_id || '');
+      if (id) readyByOrder.set(id, (readyByOrder.get(id) || 0) + 1);
+    });
+    body.querySelectorAll('tr').forEach(row => {
+      const existing = row.querySelector('.review-order-action');
+      const order = orders.find(candidate => {
+        const id = String(candidate?.id || '');
+        const code = String(candidate?.order_code || '');
+        return readyByOrder.has(id) && ((code && row.textContent.includes(code)) || (!code && row.textContent.includes(id)));
+      });
+      if (!order) { existing?.remove(); return; }
+      const count = readyByOrder.get(String(order.id)) || 0;
+      const label = count > 1 ? `تقييم المنتجات (${count})` : 'تقييم المنتج';
+      if (existing) {
+        if (existing.dataset.reviewCount !== String(count)) existing.innerHTML = `<i class="fa-solid fa-star"></i> ${label}`;
+        existing.dataset.reviewCount = String(count);
+        return;
+      }
+      const cell = row.lastElementChild;
+      if (!cell) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'review-primary-btn review-order-action';
+      button.dataset.reviewCount = String(count);
+      button.innerHTML = `<i class="fa-solid fa-star"></i> ${label}`;
+      button.addEventListener('click', activateReviewsTab);
+      cell.appendChild(button);
+    });
   }
 
   function statusLabel(status) {
