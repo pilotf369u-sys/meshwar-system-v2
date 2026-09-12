@@ -1,0 +1,2 @@
+[functions.product-review-image-upload]
+verify_jwt = false
