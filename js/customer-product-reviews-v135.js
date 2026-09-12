@@ -8,7 +8,7 @@
   const MAX_IMAGES = 5;
   const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
-  const state = { token: '', items: [], selectedItem: null, files: [], rating: 0, busy: false, lastReadyResult: null };
+  const state = { token: '', items: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null };
 
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
@@ -75,6 +75,7 @@
         </div>
         <div id="reviewPanelStatus" class="review-status-line" role="status" aria-live="polite"></div>
         <div id="reviewProductsGrid" class="review-grid"></div>
+        <nav id="reviewPager" class="review-pager" aria-label="صفحات المنتجات الجاهزة للتقييم"></nav>
       </div>`;
     drafts.insertAdjacentElement('afterend', section);
 
@@ -155,6 +156,13 @@
       const button = event.target.closest('[data-review-index]');
       if (button) openModal(state.items[Number(button.dataset.reviewIndex)]);
     });
+    $('reviewPager')?.addEventListener('click', event => {
+      const button = event.target.closest('[data-review-page]');
+      if (!button) return;
+      state.page = Number(button.dataset.reviewPage) || 1;
+      renderProducts();
+      $('productReviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
     const historyBody = $('historyOrdersTableBody');
     if (historyBody) new MutationObserver(decorateOrderReviewButtons).observe(historyBody, { childList: true, subtree: true });
@@ -198,6 +206,7 @@
       if (error) throw error;
       const payload = rpcPayload(data);
       state.items = Array.isArray(payload.items) ? payload.items : [];
+      state.page = 1;
       const readyCount = state.items.filter(item => isReady(item) && !item.review_id).length;
       state.lastReadyResult = { ok: true, itemCount: state.items.length, readyCount, receivedAt: new Date().toISOString() };
       console.info('[KINTO Reviews] ready-products RPC completed', state.lastReadyResult);
@@ -225,12 +234,18 @@
 
   function renderProducts() {
     const grid = $('reviewProductsGrid');
+    const pager = $('reviewPager');
     if (!grid) return;
     if (!state.items.length) {
       grid.innerHTML = '<div class="review-empty"><i class="fa-regular fa-circle-check"></i>لا توجد منتجات بانتظار التقييم حالياً.</div>';
+      if (pager) pager.innerHTML = '';
       return;
     }
-    grid.innerHTML = state.items.map((item, index) => {
+    const pages = Math.max(1, Math.ceil(state.items.length / state.pageSize));
+    state.page = Math.min(pages, Math.max(1, state.page));
+    const start = (state.page - 1) * state.pageSize;
+    grid.innerHTML = state.items.slice(start, start + state.pageSize).map((item, offset) => {
+      const index = start + offset;
       const status = String(item.review_status || '');
       const ready = isReady(item) && !item.review_id;
       const image = String(item.product_image || '').trim();
@@ -244,6 +259,10 @@
         </div>
       </article>`;
     }).join('');
+    if (pager) pager.innerHTML = pages > 1 ? `
+      <button type="button" data-review-page="${state.page - 1}" ${state.page === 1 ? 'disabled' : ''}>السابق</button>
+      <span>صفحة ${state.page} من ${pages} · ${state.items.length} منتج</span>
+      <button type="button" data-review-page="${state.page + 1}" ${state.page === pages ? 'disabled' : ''}>التالي</button>` : '';
   }
 
   function decorateOrderReviewButtons() {
@@ -365,11 +384,19 @@
       });
       if (error) throw error;
       if (!data?.id) throw new Error('لم تُرجع الخدمة رقم التقييم.');
+      let uploaded = 0;
+      let uploadFailure = null;
       for (let i = 0; i < state.files.length; i += 1) {
-        message('reviewFormMessage', `تم حفظ التقييم. جاري رفع الصورة ${i + 1} من ${state.files.length}...`);
-        await uploadImage(data.id, state.files[i]);
+        message('reviewFormMessage', `تم حفظ التقييم قيد المراجعة. جاري رفع الصورة ${i + 1} من ${state.files.length}...`);
+        try { await uploadImage(data.id, state.files[i]); uploaded += 1; }
+        catch (error) { uploadFailure = error; break; }
       }
-      message('reviewFormMessage', 'تم إرسال تقييمك وصورك للمراجعة بنجاح.', 'success');
+      if (uploadFailure) {
+        message('reviewFormMessage', `تم حفظ التقييم بحالة «قيد المراجعة»، لكن تعذر رفع الصور: ${uploadFailure.message}`, 'error');
+        state.busy = false;
+        return;
+      }
+      message('reviewFormMessage', uploaded ? 'تم إرسال تقييمك وصورك للمراجعة بنجاح.' : 'تم إرسال تقييمك للمراجعة بنجاح.', 'success');
       setTimeout(async () => { state.busy = false; closeModal(); await loadReadyProducts(); }, 850);
     } catch (error) {
       message('reviewFormMessage', error?.message || 'تعذر إرسال التقييم.', 'error');
@@ -380,11 +407,19 @@
   async function uploadImage(reviewId, file) {
     const form = new FormData();
     form.append('review_id', reviewId); form.append('session_token', state.token); form.append('file', file, file.name);
-    const response = await fetch(`${CUSTOMER_SUPABASE_URL}/functions/v1/product-review-image-upload`, {
-      method: 'POST', headers: { apikey: CUSTOMER_SUPABASE_KEY }, body: form
-    });
+    let response;
+    try {
+      response = await fetch(`${CUSTOMER_SUPABASE_URL}/functions/v1/product-review-image-upload`, {
+        method: 'POST', headers: { apikey: CUSTOMER_SUPABASE_KEY }, body: form
+      });
+    } catch {
+      throw new Error('خدمة رفع صور التقييم غير منشورة أو غير متاحة حالياً');
+    }
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload?.ok) throw new Error(payload?.error || 'تعذر رفع صورة التقييم.');
+    if (!response.ok || !payload?.ok) {
+      if (response.status === 404) throw new Error('خدمة رفع صور التقييم غير منشورة');
+      throw new Error(payload?.error || `تعذر رفع صورة التقييم (${response.status})`);
+    }
   }
 
   function updateBadge(count) {
