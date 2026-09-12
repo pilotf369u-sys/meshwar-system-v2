@@ -167,6 +167,7 @@
       $('productReviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
+    document.addEventListener('click', event => { if (event.target.closest('[data-tab="notifications"]')) setTimeout(injectRejectionNotifications, 80); });
     const historyBody = $('historyOrdersTableBody');
     if (historyBody) new MutationObserver(decorateOrderReviewButtons).observe(historyBody, { childList: true, subtree: true });
   }
@@ -213,6 +214,7 @@
       const readyCount = state.items.filter(item => isReady(item) && !item.review_id).length;
       state.lastReadyResult = { ok: true, itemCount: state.items.length, readyCount, receivedAt: new Date().toISOString() };
       console.info('[KINTO Reviews] ready-products RPC completed', state.lastReadyResult);
+      await loadDisplayContext(sb);
       $('reviewUnlock').hidden = true;
       renderProducts();
       decorateOrderReviewButtons();
@@ -256,7 +258,9 @@
       return `<article class="review-product-card">
         <div class="review-product-media">${image ? `<img src="${esc(image)}" alt="${esc(item.product_name || 'المنتج')}" loading="lazy">` : '<div class="review-product-placeholder"><i class="fa-solid fa-box-open"></i></div>'}</div>
         <h3>${esc(item.product_name || 'المنتج')}</h3>
-        <div class="review-order-ref">طلب: ${esc(item.order_id || '—')}</div>
+        ${item.store_name ? `<div class="review-order-ref">المتجر: ${esc(item.store_name)}</div>` : ''}
+        <div class="review-order-ref">الطلب: ${esc(item.order_display || String(item.order_id || '—').slice(0, 8))}</div>
+        ${status === 'rejected' ? `<div class="review-form-message is-error">سبب الرفض: ${esc(item.rejection_reason || 'المحتوى لا يستوفي إرشادات تقييمات KINTO.')}</div>` : ''}
         <div class="review-card-footer">
           <span class="review-state-pill ${esc(status)}">${ready ? 'جاهز للتقييم' : statusLabel(status)}</span>
           ${ready ? `<button class="review-primary-btn" type="button" data-review-index="${index}">قيّم الآن</button>` : ''}
@@ -500,6 +504,15 @@
     notice.innerHTML = `<div><strong><i class="fa-solid fa-star"></i> لديك ${count} ${count === 1 ? 'منتج جاهز' : 'منتجات جاهزة'} للتقييم</strong><p>قيّم المنتجات التي استلمتها وشارك تجربتك الموثّقة.</p></div><button type="button" class="review-primary-btn">ابدأ التقييم</button>`;
     notice.querySelector('button').addEventListener('click', event => activateReviewsTab(event));
     container.prepend(notice);
+  }
+
+  async function loadDisplayContext(sb) {
+    try {
+      const { data, error } = await sb.rpc('customer_review_display_context_v154', { p_session_token: state.token });
+      if (error) throw error;
+      const map = new Map((data?.items || []).map(item => [String(item.review_id), item]));
+      state.items = state.items.map(item => ({ ...item, ...(map.get(String(item.review_id)) || {}) }));
+    } catch (error) { console.warn('[KINTO Reviews] display context unavailable', error); }
   }
 
   async function loadRejectionNotifications(sb) {
