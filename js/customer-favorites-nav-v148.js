@@ -1,0 +1,6 @@
+/* KINTO V148 — favorites entry across primary customer-facing headers. */
+(()=>{'use strict';
+function customerId(){let id=String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();try{const x=JSON.parse(localStorage.getItem('loggedInUser')||'{}');id=id||String(x?.id||'').trim()}catch{}return id}
+function mount(){if(document.getElementById('kintoGlobalFavoritesLink'))return;const id=customerId();if(!id)return;const container=document.querySelector('#kintoHomeHeader .user-auth-zone,.top .header-actions');if(!container)return;const link=document.createElement('a');link.id='kintoGlobalFavoritesLink';link.className=container.closest('#kintoHomeHeader')?'header-action kinto-global-favorites':'header-action kinto-global-favorites';link.href=`dashboard.html?customerId=${encodeURIComponent(id)}&tab=favorites`;link.innerHTML='<i class="fa-solid fa-heart" aria-hidden="true"></i><span class="action-label">مفضلاتي</span>';const account=container.querySelector('#authLink,#kintoHeaderAccount');account?.insertAdjacentElement('beforebegin',link)||container.prepend(link)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+})();

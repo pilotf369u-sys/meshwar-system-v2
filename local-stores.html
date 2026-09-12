@@ -40,5 +40,6 @@ search.addEventListener('input',render);
 fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,logo_url,country,governorate,store_type,specialty,default_currency,status&status=eq.active&order=created_at.desc&limit=1000`,{cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json'}}).then(r=>{if(!r.ok)throw new Error(`Local stores REST ${r.status}`);return r.json()}).then(data=>{rows=Array.isArray(data)?data:[];renderFilters();render()}).catch(err=>{console.error('Local stores directory load error:',err);grid.innerHTML='<div class="state">تعذر تحميل المتاجر المحلية حالياً.</div>';count.textContent='0'});
 })();
 </script>
+<link rel="stylesheet" href="css/customer-favorites-nav-v148.css?v=20260912-v148"><script src="js/customer-favorites-nav-v148.js?v=20260912-v148"></script>
 </body>
 </html>
