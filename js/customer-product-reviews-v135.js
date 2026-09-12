@@ -11,7 +11,7 @@
   const REVIEW_STORAGE_BUCKET = 'product-review-images';
   const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
-  const state = { token: '', items: [], rejectionNotices: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null };
+  const state = { token: '', items: [], moderationNotices: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null };
 
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
@@ -48,6 +48,15 @@
     const tabs = document.querySelector('.tabs-nav');
     const drafts = $('drafts');
     if (!tabs || !drafts || $('productReviews')) return false;
+
+    const notificationsButton = tabs.querySelector('[data-tab="notifications"]');
+    if (notificationsButton && !$('notificationUnreadBadge')) {
+      const notificationBadge = document.createElement('span');
+      notificationBadge.id = 'notificationUnreadBadge';
+      notificationBadge.className = 'tab-badge';
+      notificationBadge.textContent = '0';
+      notificationsButton.appendChild(notificationBadge);
+    }
 
     const button = document.createElement('button');
     button.type = 'button';
@@ -167,7 +176,10 @@
       $('productReviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
-    document.addEventListener('click', event => { if (event.target.closest('[data-tab="notifications"]')) setTimeout(injectRejectionNotifications, 80); });
+    document.addEventListener('click', event => {
+      if (!event.target.closest('[data-tab="notifications"]')) return;
+      setTimeout(async () => { injectModerationNotifications(); decorateOrderNotificationKeys(); await markVisibleNotificationsRead(); }, 100);
+    });
     const historyBody = $('historyOrdersTableBody');
     if (historyBody) new MutationObserver(decorateOrderReviewButtons).observe(historyBody, { childList: true, subtree: true });
   }
@@ -220,7 +232,7 @@
       decorateOrderReviewButtons();
       updateBadge(readyCount);
       injectReviewNotification(readyCount);
-      await loadRejectionNotifications(sb);
+      await loadModerationNotifications(sb);
       message('reviewPanelStatus', '');
     } catch (error) {
       state.items = [];
@@ -501,7 +513,8 @@
     container?.querySelector('.review-notification')?.remove();
     if (!container || count < 1) return;
     const notice = document.createElement('div'); notice.className = 'notification-item review-notification';
-    notice.innerHTML = `<div><strong><i class="fa-solid fa-star"></i> لديك ${count} ${count === 1 ? 'منتج جاهز' : 'منتجات جاهزة'} للتقييم</strong><p>قيّم المنتجات التي استلمتها وشارك تجربتك الموثّقة.</p></div><button type="button" class="review-primary-btn">ابدأ التقييم</button>`;
+    notice.dataset.notificationKey = `review-ready:${state.items.filter(item => isReady(item) && !item.review_id).map(item => `${item.order_id}:${item.product_id || item.product_reference || item.product_name}`).sort().join('|')}`;
+    notice.innerHTML = `<div><strong><i class="fa-solid fa-star"></i> رأيك يصنع فرقاً ✨</strong><p>لديك ${count} ${count === 1 ? 'منتج جاهز للتقييم بعد استلامه' : 'منتجات جاهزة للتقييم بعد استلامها'}. شارك تجربتك الصادقة لتساعد مجتمع KINTO على اختيار الأفضل، ولن يستغرق الأمر سوى لحظات.</p></div><button type="button" class="review-primary-btn">قيّم الآن</button>`;
     notice.querySelector('button').addEventListener('click', event => activateReviewsTab(event));
     container.prepend(notice);
   }
@@ -515,28 +528,80 @@
     } catch (error) { console.warn('[KINTO Reviews] display context unavailable', error); }
   }
 
-  async function loadRejectionNotifications(sb) {
+  async function loadModerationNotifications(sb) {
     try {
-      const { data, error } = await sb.rpc('customer_review_rejection_notices_v153', { p_session_token: state.token });
+      const { data, error } = await sb.rpc('customer_review_moderation_notices_v155', { p_session_token: state.token });
       if (error) throw error;
-      state.rejectionNotices = Array.isArray(data?.items) ? data.items : [];
-      injectRejectionNotifications();
+      state.moderationNotices = Array.isArray(data?.items) ? data.items : [];
+      injectModerationNotifications();
+      decorateOrderNotificationKeys();
+      await refreshNotificationBadge(sb);
     } catch (error) {
-      console.warn('[KINTO Reviews] rejection notices unavailable', error);
-      state.rejectionNotices = [];
+      console.warn('[KINTO Reviews] moderation notices unavailable', error);
+      try {
+        const { data } = await sb.rpc('customer_review_rejection_notices_v153', { p_session_token: state.token });
+        state.moderationNotices = (Array.isArray(data?.items) ? data.items : []).map(item => ({ ...item, status: 'rejected' }));
+        injectModerationNotifications();
+      } catch {
+        state.moderationNotices = [];
+      }
     }
   }
 
-  function injectRejectionNotifications() {
+  function injectModerationNotifications() {
     const container = $('notificationsContainer');
-    container?.querySelectorAll('.review-rejection-notification').forEach(node => node.remove());
+    container?.querySelectorAll('.review-moderation-notification').forEach(node => node.remove());
     if (!container) return;
-    state.rejectionNotices.forEach(item => {
+    state.moderationNotices.forEach(item => {
       const notice = document.createElement('div');
-      notice.className = 'notification-item review-rejection-notification';
-      notice.innerHTML = `<div><strong><i class="fa-solid fa-circle-info"></i> تحديث بشأن تقييم ${esc(item.product_name || 'المنتج')}</strong><p>${esc(item.message || 'لم يتم نشر التقييم لعدم توافقه مع إرشادات النشر.')}</p>${item.moderated_at ? `<small>${new Date(item.moderated_at).toLocaleString('ar')}</small>` : ''}</div>`;
+      notice.className = `notification-item review-moderation-notification ${item.status === 'rejected' ? 'review-rejection-notification' : 'review-published-notification'}`;
+      notice.dataset.notificationKey = `review-moderation:${item.review_id}:${item.status}:${item.moderated_at || ''}`;
+      const icon = item.status === 'published' ? 'fa-circle-check' : 'fa-circle-info';
+      notice.innerHTML = `<div><strong><i class="fa-solid ${icon}"></i> ${item.status === 'published' ? 'شكراً لمساهمتك' : 'تحديث بشأن تقييم'} ${esc(item.product_name || 'المنتج')}</strong><p>${esc(item.message || 'تم تحديث حالة تقييمك.')}</p>${item.store_name ? `<small>المتجر: ${esc(item.store_name)}</small>` : ''}${item.moderated_at ? `<small> · ${new Date(item.moderated_at).toLocaleString('ar')}</small>` : ''}</div>`;
       container.prepend(notice);
     });
+  }
+
+  function decorateOrderNotificationKeys() {
+    const container = $('notificationsContainer');
+    const orders = typeof currentCustomerOrdersGlobal !== 'undefined' && Array.isArray(currentCustomerOrdersGlobal) ? currentCustomerOrdersGlobal : [];
+    if (!container) return;
+    [...container.querySelectorAll('.notification-item:not(.review-notification):not(.review-moderation-notification)')].forEach((node, index) => {
+      const order = orders[index]; if (!order) return;
+      node.dataset.notificationKey = `order:${order.id || order.order_code}:${order.status || ''}:${order.updated_at || order.created_at || ''}`;
+    });
+  }
+
+  function visibleNotificationKeys() {
+    return [...new Set([...document.querySelectorAll('#notificationsContainer [data-notification-key]')].map(node => node.dataset.notificationKey).filter(Boolean))];
+  }
+
+  function setNotificationBadge(count) {
+    const badge = $('notificationUnreadBadge'); if (!badge) return;
+    badge.textContent = count > 99 ? '99+' : String(Math.max(0, count || 0));
+    badge.classList.toggle('show', count > 0);
+  }
+
+  async function refreshNotificationBadge(sbInstance) {
+    if (!state.token) return;
+    const keys = visibleNotificationKeys(); if (!keys.length) return setNotificationBadge(0);
+    try {
+      const sb = sbInstance || await client();
+      const { data, error } = await sb.rpc('customer_notification_read_state_v155', { p_session_token: state.token, p_notification_keys: keys });
+      if (error) throw error;
+      setNotificationBadge(Number(data?.unread_count || 0));
+    } catch (error) { console.warn('[KINTO Reviews] notification badge unavailable', error); }
+  }
+
+  async function markVisibleNotificationsRead() {
+    if (!state.token) return;
+    const keys = visibleNotificationKeys(); if (!keys.length) return setNotificationBadge(0);
+    try {
+      const sb = await client();
+      const { error } = await sb.rpc('customer_mark_notifications_read_v155', { p_session_token: state.token, p_notification_keys: keys });
+      if (error) throw error;
+      setNotificationBadge(0);
+    } catch (error) { console.warn('[KINTO Reviews] mark notifications read failed', error); }
   }
 
   function message(id, text, kind = '') {
@@ -550,7 +615,9 @@
     renderCloudNotifications = function (...args) {
       const result = base.apply(this, args);
       injectReviewNotification(state.items.filter(item => isReady(item) && !item.review_id).length);
-      injectRejectionNotifications();
+      injectModerationNotifications();
+      decorateOrderNotificationKeys();
+      refreshNotificationBadge();
       return result;
     };
     renderCloudNotifications.__reviewsV135 = true;
