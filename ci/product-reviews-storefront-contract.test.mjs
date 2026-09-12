@@ -15,7 +15,8 @@ assert.match(client,/data-review-product/);
 assert.match(client,/data-review-lightbox/);
 assert.match(css,/\.kinto-reviews-modal/);
 assert.match(css,/\.kinto-review-lightbox/);
-assert.match(css,/html:not\(\.dark\)/);
+assert.match(css,/data-mw-global-theme="light"/);
+assert.match(css,/data-mw-global-theme="dark"/);
 assert.match(css,/minmax\(min\(230px,100%\),1fr\)/);
 for(const source of[client,css]){
   assert.doesNotMatch(source,/(?:update|insert|delete).*orders/i);
