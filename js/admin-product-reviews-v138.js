@@ -1,7 +1,7 @@
 /* KINTO V138 — isolated admin product-review moderation UI. */
 (() => {
   'use strict';
-  const state = { status: 'pending', page: 1, size: 20, total: 0, items: [], busy: false };
+  const state = { status: 'pending', page: 1, size: 6, total: 0, items: [], busy: false };
   const escReview = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
   function install() {
@@ -58,7 +58,7 @@
       <div class="admin-review-actions"><button class="btn-green" data-decision="published">موافقة ونشر</button><button class="btn-red" data-decision="rejected">رفض</button><button class="btn-dark" data-decision="hidden">إخفاء</button></div>
     </article>`).join('') || '<div class="mini">لا توجد تقييمات في هذا القسم.</div>';
     const pages=Math.max(1,Math.ceil(state.total/state.size)),pager=document.getElementById('adminReviewPager');
-    pager.innerHTML=pages>1?`<button data-review-page="${state.page-1}" ${state.page===1?'disabled':''}>السابق</button><span>صفحة ${state.page} من ${pages}</span><button data-review-page="${state.page+1}" ${state.page===pages?'disabled':''}>التالي</button>`:'';
+    pager.innerHTML=`<button data-review-page="${state.page-1}" ${state.page===1?'disabled':''}>السابق</button><span>صفحة ${state.page} من ${pages} · ${state.total} تقييم</span><button data-review-page="${state.page+1}" ${state.page===pages?'disabled':''}>التالي</button>`;
   }
 
   async function loadReviewImages() {
