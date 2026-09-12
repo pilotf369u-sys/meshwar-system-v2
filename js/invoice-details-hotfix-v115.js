@@ -32,10 +32,10 @@ wrap('openOrderDetailsModalData',encodedId=>{
 // V138: load the isolated review-moderation bundle only inside the admin dashboard.
 if(/(?:^|\/)admin-dashboard\.html$/.test(location.pathname)){
   const style=document.createElement('link');
-  style.rel='stylesheet';style.href='css/admin-product-reviews-v138.css?v=20260912-v139';
+  style.rel='stylesheet';style.href='css/admin-product-reviews-v138.css?v=20260912-v153-actions';
   document.head.appendChild(style);
   const script=document.createElement('script');
-  script.src='js/admin-product-reviews-v138.js?v=20260912-v152-media';script.defer=true;
+  script.src='js/admin-product-reviews-v138.js?v=20260912-v153-rejection';script.defer=true;
   document.head.appendChild(script);
 }
 })();

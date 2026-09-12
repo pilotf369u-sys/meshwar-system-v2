@@ -11,7 +11,7 @@
   const REVIEW_STORAGE_BUCKET = 'product-review-images';
   const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
-  const state = { token: '', items: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null };
+  const state = { token: '', items: [], rejectionNotices: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null };
 
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
@@ -218,6 +218,7 @@
       decorateOrderReviewButtons();
       updateBadge(readyCount);
       injectReviewNotification(readyCount);
+      await loadRejectionNotifications(sb);
       message('reviewPanelStatus', '');
     } catch (error) {
       state.items = [];
@@ -501,6 +502,30 @@
     container.prepend(notice);
   }
 
+  async function loadRejectionNotifications(sb) {
+    try {
+      const { data, error } = await sb.rpc('customer_review_rejection_notices_v153', { p_session_token: state.token });
+      if (error) throw error;
+      state.rejectionNotices = Array.isArray(data?.items) ? data.items : [];
+      injectRejectionNotifications();
+    } catch (error) {
+      console.warn('[KINTO Reviews] rejection notices unavailable', error);
+      state.rejectionNotices = [];
+    }
+  }
+
+  function injectRejectionNotifications() {
+    const container = $('notificationsContainer');
+    container?.querySelectorAll('.review-rejection-notification').forEach(node => node.remove());
+    if (!container) return;
+    state.rejectionNotices.forEach(item => {
+      const notice = document.createElement('div');
+      notice.className = 'notification-item review-rejection-notification';
+      notice.innerHTML = `<div><strong><i class="fa-solid fa-circle-info"></i> تحديث بشأن تقييم ${esc(item.product_name || 'المنتج')}</strong><p>${esc(item.message || 'لم يتم نشر التقييم لعدم توافقه مع إرشادات النشر.')}</p>${item.moderated_at ? `<small>${new Date(item.moderated_at).toLocaleString('ar')}</small>` : ''}</div>`;
+      container.prepend(notice);
+    });
+  }
+
   function message(id, text, kind = '') {
     const target = $(id); if (!target) return;
     target.textContent = String(text || ''); target.classList.toggle('is-error', kind === 'error'); target.classList.toggle('is-success', kind === 'success');
@@ -512,6 +537,7 @@
     renderCloudNotifications = function (...args) {
       const result = base.apply(this, args);
       injectReviewNotification(state.items.filter(item => isReady(item) && !item.review_id).length);
+      injectRejectionNotifications();
       return result;
     };
     renderCloudNotifications.__reviewsV135 = true;
