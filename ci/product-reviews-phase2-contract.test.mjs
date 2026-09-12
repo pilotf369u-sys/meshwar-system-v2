@@ -11,6 +11,9 @@ assert.match(dashboard, /customer-product-reviews-v135\.css/);
 assert.match(dashboard, /customer-product-reviews-v135\.js/);
 assert.match(client, /customer_review_ready_products_v132/);
 assert.match(client, /customer_submit_product_review_v132/);
+assert.match(client, /customer\?\.customer_code/);
+assert.match(client, /ready-products RPC completed/);
+assert.match(client, /diagnostics:/);
 assert.match(client, /customer_review_login_v132/);
 assert.match(client, /activateReviewsTab/);
 assert.match(client, /window\.switchCustomerTab/);
@@ -32,6 +35,9 @@ assert.match(edge, /file\.size > MAX_BYTES/);
 assert.match(edge, /eq\('customer_id', session\.customer_id\)/);
 assert.match(edge, /SUPABASE_SERVICE_ROLE_KEY/);
 assert.match(config, /\[functions\.product-review-image-upload\][\s\S]*verify_jwt = false/);
+assert.doesNotMatch(dashboard, /btn-review-trigger/);
+assert.equal((dashboard.match(/id=["']customerReviewModal["']/g) || []).length, 0);
+assert.doesNotMatch(dashboard, /\.from\(['"](?:reviews|product_reviews|product_review_images)['"]\)/);
 
 for (const source of [client, edge]) {
   assert.doesNotMatch(source, /(?:update|insert|delete).*orders/i);
