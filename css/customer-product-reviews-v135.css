@@ -42,6 +42,7 @@
   background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)
 }
+.review-unlock[hidden]{display:none!important}
 .review-unlock-copy h3{margin:0 0 8px;color:#fff;font-size:18px}
 .review-unlock-copy p{margin:0;color:var(--review-muted);line-height:1.8;font-size:13px}
 .review-unlock-form{display:flex;gap:9px}
@@ -59,6 +60,7 @@
   box-shadow:0 9px 25px rgba(226,165,35,.22)
 }
 .review-primary-btn:hover,.review-submit-btn:hover{transform:translateY(-2px);filter:brightness(1.05);box-shadow:0 13px 30px rgba(226,165,35,.34)}
+.review-order-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin:7px 5px 0;white-space:nowrap;font-size:11px;padding:8px 11px}
 .review-primary-btn:disabled,.review-submit-btn:disabled{opacity:.58;cursor:not-allowed;transform:none}
 .review-secondary-btn{color:#e9f4f0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13)}
 .review-secondary-btn:hover{background:rgba(255,255,255,.12)}

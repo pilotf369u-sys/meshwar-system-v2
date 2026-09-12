@@ -6,6 +6,7 @@ const client = readFileSync(new URL('../js/customer-product-reviews-v135.js', im
 const css = readFileSync(new URL('../css/customer-product-reviews-v135.css', import.meta.url), 'utf8');
 const edge = readFileSync(new URL('../supabase/functions/product-review-image-upload/index.ts', import.meta.url), 'utf8');
 const config = readFileSync(new URL('../supabase/config.toml', import.meta.url), 'utf8');
+const login = readFileSync(new URL('../login.html', import.meta.url), 'utf8');
 
 assert.match(dashboard, /customer-product-reviews-v135\.css/);
 assert.match(dashboard, /customer-product-reviews-v135\.js/);
@@ -14,6 +15,9 @@ assert.match(client, /customer_submit_product_review_v132/);
 assert.match(client, /customer\?\.customer_code/);
 assert.match(client, /ready-products RPC completed/);
 assert.match(client, /diagnostics:/);
+assert.match(client, /review-order-action/);
+assert.match(login, /customer_review_login_v132/);
+assert.match(login, /kinto_customer_review_session_v132/);
 assert.match(client, /customer_review_login_v132/);
 assert.match(client, /activateReviewsTab/);
 assert.match(client, /window\.switchCustomerTab/);
