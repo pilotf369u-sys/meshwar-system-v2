@@ -24,6 +24,7 @@
       </div><div id="adminReviewMessage" class="mini"></div><div id="adminReviewGrid" class="admin-review-grid"></div>
       <div id="adminReviewPager" class="pagination-bar"></div>`;
     document.querySelector('.main-content')?.appendChild(section);
+    const lightbox=document.createElement('div');lightbox.id='adminReviewLightbox';lightbox.className='modal-overlay';lightbox.innerHTML='<div class="modal-content" style="max-width:900px"><button type="button" data-close-review-lightbox class="btn-dark">إغلاق ×</button><img alt="صورة التقييم بالحجم الكامل" style="display:block;max-width:100%;max-height:75vh;margin:12px auto;border-radius:12px"></div>';document.body.appendChild(lightbox);lightbox.addEventListener('click',e=>{if(e.target===lightbox||e.target.closest('[data-close-review-lightbox]'))lightbox.style.display='none'});
     document.getElementById('adminReviewStatus').addEventListener('change', event => { state.status = event.target.value; state.page = 1; load(); });
     document.getElementById('adminReviewRefresh').addEventListener('click', load);
     document.getElementById('adminReviewGrid').addEventListener('click', handleAction);
@@ -53,7 +54,7 @@
     const grid = document.getElementById('adminReviewGrid');
     document.getElementById('adminReviewCount').textContent = `${state.total} تقييم`;
     grid.innerHTML = state.items.map(item => `<article class="admin-review-card" data-id="${escReview(item.id)}">
-      <div class="admin-review-head">${item.product_image ? `<img src="${escReview(item.product_image)}" alt="">` : ''}<div><b>${escReview(item.product_name)}</b><small>${escReview(item.customer_name)} · ${new Date(item.created_at).toLocaleDateString('ar')}</small></div><strong>${'★'.repeat(Number(item.rating)||0)}</strong></div>
+      <div class="admin-review-head">${item.product_image ? `<img src="${escReview(item.product_image)}" alt="">` : ''}<div><b>${escReview(item.product_name)}</b><small>المتجر: ${escReview(item.store_name||'غير محدد')}</small><small>${escReview(item.customer_name)} · ${new Date(item.created_at).toLocaleDateString('ar')}</small></div><strong>${'★'.repeat(Number(item.rating)||0)}</strong></div>
       <p>${escReview(item.comment || 'لا يوجد تعليق')}</p><div class="admin-review-images">${(item.images||[]).map(image=>`<span data-review-image="${escReview(image.id)}">جاري تحميل الصورة…</span>`).join('')}</div><textarea class="admin-review-note" maxlength="1000" placeholder="ملاحظة الإدارة (اختيارية)">${escReview(item.moderation_note || '')}</textarea>
       <div class="admin-review-actions"><button class="btn-green" data-decision="published">موافقة ونشر</button><button class="btn-red" data-decision="rejected">رفض</button><button class="btn-dark" data-decision="hidden">إخفاء</button></div>
     </article>`).join('') || '<div class="mini">لا توجد تقييمات في هذا القسم.</div>';
@@ -70,11 +71,13 @@
       if(error||(!data?.base64&&!data?.storage_path)){target.textContent='تعذر تحميل الصورة';return;}
       const src=data.base64?`data:${data.mime_type};base64,${data.base64}`:sb.storage.from(data.bucket||'product-review-images').getPublicUrl(data.storage_path).data?.publicUrl;
       if(!src){target.textContent='تعذر تحميل الصورة';return;}
-      target.innerHTML=`<img src="${escReview(src)}" alt="صورة التقييم" loading="lazy">`;
+      target.innerHTML=`<img src="${escReview(src)}" data-admin-review-preview alt="صورة التقييم — اضغط للتكبير" loading="lazy"><button type="button" class="btn-red" data-delete-review-image="${escReview(target.dataset.reviewImage)}">حذف الصورة فقط</button>`;
     }));
   }
 
   async function handleAction(event) {
+    const preview=event.target.closest('[data-admin-review-preview]');if(preview){const box=document.getElementById('adminReviewLightbox');box.querySelector('img').src=preview.src;box.style.display='flex';return;}
+    const imageDelete=event.target.closest('[data-delete-review-image]');if(imageDelete){if(state.busy||!confirm('حذف الصورة فقط مع الإبقاء على التعليق؟'))return;state.busy=true;imageDelete.disabled=true;try{const sb=await ensureCustomerSupabase(),{data,error}=await sb.rpc('admin_delete_product_review_image_v152',{p_admin_id:getAdminId(),p_image_id:imageDelete.dataset.deleteReviewImage});if(error)throw error;if(data?.storage_path){const removed=await sb.storage.from(data.bucket||'product-review-images').remove([data.storage_path]);if(removed.error)console.warn('Deferred review image cleanup',removed.error)}await load()}catch(error){alert(error?.message||'تعذر حذف الصورة.')}finally{state.busy=false;imageDelete.disabled=false}return;}
     const button=event.target.closest('[data-decision]'); if(!button||state.busy)return;
     const card=button.closest('[data-id]'),note=card.querySelector('.admin-review-note').value.trim();
     state.busy=true; button.disabled=true;
