@@ -100,8 +100,8 @@
           <div id="reviewStars" class="review-stars" role="radiogroup" aria-label="اختر التقييم من نجمة إلى خمس نجوم">
             ${[1,2,3,4,5].map(n => `<button class="review-star" type="button" data-rating="${n}" role="radio" aria-checked="false" aria-label="${n} من 5">★</button>`).join('')}
           </div>
-          <label class="review-label" for="reviewComment">تعليقك <span style="font-weight:500;color:#9fb1aa">(اختياري)</span></label>
-          <textarea id="reviewComment" class="review-comment" maxlength="2000" placeholder="اكتب تجربتك بوضوح لمساعدة العملاء الآخرين..."></textarea>
+          <label class="review-label" for="reviewComment">تعليقك <span style="font-weight:500;color:#f5c451">(مطلوب)</span></label>
+          <textarea id="reviewComment" class="review-comment" minlength="1" maxlength="2000" required placeholder="اكتب تجربتك بوضوح لمساعدة العملاء الآخرين..."></textarea>
           <span id="reviewCommentCounter" class="review-counter">0 / 2000</span>
           <span class="review-label">صورة المنتج <span style="font-weight:500;color:#9fb1aa">(صورة واحدة)</span></span>
           <div class="review-media-actions">
@@ -309,6 +309,30 @@
     return ({ pending: 'قيد المراجعة', published: 'منشور', rejected: 'مرفوض', hidden: 'غير ظاهر' })[status] || 'تم التقييم';
   }
 
+  function friendlyReviewError(error) {
+    const raw = String(error?.message || error || '');
+    const code = [
+      'PRODUCT_NOT_FOUND', 'PRODUCT_NOT_FOUND_IN_DELIVERED_ORDER', 'DELIVERED_ORDER_NOT_FOUND', 'REVIEW_STORE_NOT_FOUND',
+      'INVALID_REVIEW_RATING', 'REVIEW_COMMENT_REQUIRED', 'REVIEW_COMMENT_TOO_LONG',
+      'REVIEW_IMAGE_LIMIT_REACHED', 'IMAGE_SIZE_NOT_ALLOWED', 'IMAGE_TYPE_NOT_ALLOWED',
+      'REVIEW_UPLOAD_TICKET_INVALID', 'REVIEW_STORAGE_OBJECT_NOT_FOUND'
+    ].find(value => raw.includes(value));
+    return ({
+      PRODUCT_NOT_FOUND: 'تعذر مطابقة المنتج مع الطلب المسلّم. حدّث الصفحة وحاول مجدداً.',
+      PRODUCT_NOT_FOUND_IN_DELIVERED_ORDER: 'هذا المنتج غير موجود ضمن الطلب المسلّم.',
+      DELIVERED_ORDER_NOT_FOUND: 'تعذر العثور على الطلب المسلّم.',
+      REVIEW_STORE_NOT_FOUND: 'تعذر مطابقة متجر المنتج مع الطلب المسلّم.',
+      INVALID_REVIEW_RATING: 'اختر تقييماً من نجمة إلى خمس نجوم.',
+      REVIEW_COMMENT_REQUIRED: 'اكتب تعليقك عن المنتج قبل إرسال التقييم.',
+      REVIEW_COMMENT_TOO_LONG: 'التعليق أطول من 2000 حرف.',
+      REVIEW_IMAGE_LIMIT_REACHED: 'يسمح حالياً بصورة واحدة فقط لكل تقييم.',
+      IMAGE_SIZE_NOT_ALLOWED: 'تعذر تجهيز الصورة بالحجم الآمن.',
+      IMAGE_TYPE_NOT_ALLOWED: 'صيغة الصورة غير مدعومة.',
+      REVIEW_UPLOAD_TICKET_INVALID: 'انتهت مهلة رفع الصورة. أعد اختيارها وحاول مجدداً.',
+      REVIEW_STORAGE_OBJECT_NOT_FOUND: 'لم يكتمل حفظ الصورة. حاول مرة أخرى.'
+    })[code] || 'تعذر إرسال التقييم حالياً. حاول مرة أخرى.';
+  }
+
   function setRating(value) {
     state.rating = Math.min(5, Math.max(0, Number(value) || 0));
     document.querySelectorAll('.review-star').forEach(star => {
@@ -402,6 +426,7 @@
     if (state.busy || !state.selectedItem || !state.token) return;
     if (state.rating < 1 || state.rating > 5) return message('reviewFormMessage', 'اختر عدد النجوم أولاً.', 'error');
     const comment = $('reviewComment').value.trim();
+    if (!comment) return message('reviewFormMessage', 'اكتب تعليقك عن المنتج قبل إرسال التقييم.', 'error');
     if (comment.length > 2000) return message('reviewFormMessage', 'التعليق أطول من 2000 حرف.', 'error');
     state.busy = true; $('reviewSubmitBtn').disabled = true;
     message('reviewFormMessage', 'جاري حفظ التقييم الآمن...');
@@ -424,14 +449,14 @@
         catch (error) { uploadFailure = error; break; }
       }
       if (uploadFailure) {
-        message('reviewFormMessage', `تم حفظ التقييم بحالة «قيد المراجعة»، لكن تعذر رفع الصور: ${uploadFailure.message}`, 'error');
+        message('reviewFormMessage', `تم حفظ التقييم بحالة «قيد المراجعة»، لكن تعذر رفع الصورة: ${friendlyReviewError(uploadFailure)}`, 'error');
         state.busy = false;
         return;
       }
       message('reviewFormMessage', uploaded ? 'تم إرسال تقييمك وصورك للمراجعة بنجاح.' : 'تم إرسال تقييمك للمراجعة بنجاح.', 'success');
       setTimeout(async () => { state.busy = false; closeModal(); await loadReadyProducts(); }, 850);
     } catch (error) {
-      message('reviewFormMessage', error?.message || 'تعذر إرسال التقييم.', 'error');
+      message('reviewFormMessage', friendlyReviewError(error), 'error');
       state.busy = false;
     } finally { $('reviewSubmitBtn').disabled = false; }
   }
