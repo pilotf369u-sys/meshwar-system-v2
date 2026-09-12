@@ -156,7 +156,7 @@ window.onload=async()=>{try{currentCustomerCloud=normalizeCloudCustomer(await fe
 window.addEventListener('beforeunload',async()=>{if(chatPollingTimer)clearInterval(chatPollingTimer);if(ordersPollingTimer)clearInterval(ordersPollingTimer);try{const sb=await ensureCustomerPortalSupabase();if(chatRealtimeChannel)await sb.removeChannel(chatRealtimeChannel);if(ordersRealtimeChannel)await sb.removeChannel(ordersRealtimeChannel)}catch(e){}});
 Object.assign(window,{switchCustomerTab,openRewardsModal,closeRewardsModal,openCustomerOrderDetails,closeCustomerOrderDetails,openCustomerDecisionPage,handleCustomerDecisionPageAction,approveOrder,cancelOrder,saveAddress,saveSecondaryPhone,sendCustomerMessage,copyWarehouseAddress,logoutCustomer,handleCustomerChatFile,refreshCustomerUnreadCount,markCustomerMessagesRead});
 </script>
-<script src="js/customer-product-reviews-v135.js?v=20260912-ready-products-fix2" defer></script>
+<script src="js/customer-product-reviews-v135.js?v=20260912-v136-silent-session" defer></script>
 <script defer src="js/invoice-details-hotfix-v115.js?v=20260905-v116"></script>
 
 <script>try{const kintoCustomerId=new URLSearchParams(location.search).get('customerId');if(kintoCustomerId)localStorage.setItem('meshwar_customer_id',kintoCustomerId)}catch{}</script>

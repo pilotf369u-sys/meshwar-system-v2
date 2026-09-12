@@ -67,15 +67,11 @@
           </div>
           <span class="chip reviews-security-chip"><i class="fa-solid fa-shield-halved"></i> شراء موثّق</span>
         </div>
-        <div id="reviewUnlock" class="review-unlock">
+        <div id="reviewUnlock" class="review-unlock" hidden>
           <div class="review-unlock-copy">
-            <h3>تحقق آمن لمرة واحدة</h3>
-            <p>أدخل كلمة مرور حسابك لفتح التقييمات. لن يتم حفظ كلمة المرور، بل رمز جلسة تقييم مؤقت داخل هذه النافذة فقط.</p>
+            <h3>جاري تفعيل جلسة التقييم الآمنة</h3>
+            <p>يتم التحقق من جلسة العميل تلقائياً دون طلب كلمة المرور مرة أخرى.</p>
           </div>
-          <form id="reviewUnlockForm" class="review-unlock-form">
-            <input id="reviewPassword" class="review-password" type="password" autocomplete="current-password" placeholder="كلمة المرور" required>
-            <button id="reviewUnlockBtn" class="review-primary-btn" type="submit"><i class="fa-solid fa-lock-open"></i> فتح تقييماتي</button>
-          </form>
         </div>
         <div id="reviewPanelStatus" class="review-status-line" role="status" aria-live="polite"></div>
         <div id="reviewProductsGrid" class="review-grid"></div>
@@ -142,7 +138,6 @@
   }
 
   function bindUi() {
-    $('reviewUnlockForm')?.addEventListener('submit', unlock);
     $('reviewModalClose')?.addEventListener('click', closeModal);
     $('reviewCancelBtn')?.addEventListener('click', closeModal);
     $('productReviewModal')?.addEventListener('click', event => { if (event.target === event.currentTarget) closeModal(); });
@@ -183,39 +178,12 @@
     return item?.ready_for_review === true || item?.ready_for_review === 'true';
   }
 
-  async function unlock(event) {
-    event?.preventDefault();
-    const password = $('reviewPassword')?.value || '';
-    const identity = customerIdentity();
-    if (!identity || !password) return message('reviewPanelStatus', 'أدخل كلمة المرور لإكمال التحقق.', 'error');
-    const button = $('reviewUnlockBtn');
-    button.disabled = true;
-    message('reviewPanelStatus', 'جاري التحقق الآمن...');
-    try {
-      const sb = await client();
-      const { data, error } = await sb.rpc('customer_review_login_v132', { p_identity: identity, p_password: password });
-      if (error) throw error;
-      if (!data?.ok) throw new Error(loginError(data?.error));
-      saveSession(data);
-      $('reviewPassword').value = '';
-      await loadReadyProducts();
-    } catch (error) {
-      message('reviewPanelStatus', error?.message || 'تعذر فتح التقييمات.', 'error');
-    } finally { button.disabled = false; }
-  }
-
-  function loginError(code) {
-    if (code === 'REVIEW_LOGIN_RATE_LIMITED') return 'محاولات كثيرة. انتظر 15 دقيقة ثم حاول مجدداً.';
-    if (code === 'REVIEW_LOGIN_INVALID') return 'بيانات التحقق غير صحيحة.';
-    return 'تعذر التحقق من الحساب.';
-  }
-
   async function openPanel() {
     state.token = readSession();
     if (!state.token) {
-      $('reviewUnlock').hidden = false;
+      $('reviewUnlock').hidden = true;
       $('reviewProductsGrid').innerHTML = '';
-      message('reviewPanelStatus', 'تحقق بكلمة المرور لعرض منتجات الطلبات المسلّمة بأمان.');
+      message('reviewPanelStatus', 'جلسة التقييم غير متاحة حالياً. سجّل الدخول مجدداً مرة واحدة لتفعيلها تلقائياً.', 'error');
       return;
     }
     await loadReadyProducts();
@@ -249,7 +217,7 @@
       };
       console.error('[KINTO Reviews] ready-products RPC failed', state.lastReadyResult);
       if (/REVIEW_SESSION_(INVALID|REQUIRED)/i.test(String(error?.message || ''))) {
-        clearSession(); $('reviewUnlock').hidden = false;
+        clearSession(); $('reviewUnlock').hidden = true;
       }
       message('reviewPanelStatus', error?.message || 'تعذر تحميل المنتجات.', 'error');
     }
@@ -460,7 +428,7 @@
   async function boot() {
     if (!injectUi()) return setTimeout(boot, 80);
     wrapNotifications(); wrapLogout(); state.token = readSession();
-    window.addEventListener('load', () => { if (state.token) loadReadyProducts().catch(() => {}); }, { once: true });
+    if (state.token) await loadReadyProducts();
   }
 
   window.KintoCustomerReviewsV135 = {

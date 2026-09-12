@@ -6,6 +6,10 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('customer reviews UI is isolated, responsive, and exposes camera plus device inputs', async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('kinto_customer_review_session_v132', JSON.stringify({
+    token: 'e2e-review-token',
+    expiresAt: new Date(Date.now() + 3600000).toISOString()
+  })));
   await page.goto('/dashboard.html?customerId=e2e-customer');
   await expect(page.locator('#customerCode')).toHaveText('CUS-E2E');
 
@@ -13,10 +17,7 @@ test('customer reviews UI is isolated, responsive, and exposes camera plus devic
   await expect(tab).toBeVisible();
   await tab.click();
   await expect(page.locator('#productReviews')).toHaveClass(/active/);
-  await expect(page.locator('#reviewUnlock')).toBeVisible();
-
-  await page.locator('#reviewPassword').fill('e2e-password');
-  await page.locator('#reviewUnlockBtn').click();
+  await expect(page.locator('#reviewUnlock')).toBeHidden();
   await expect(page.locator('.review-product-card')).toContainText('Test Product 01');
   await expect(page.locator('#reviewReadyBadge')).toHaveText('1');
   await expect(page.locator('.review-order-action')).toContainText('تقييم المنتج');

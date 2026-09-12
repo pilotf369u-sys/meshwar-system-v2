@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const files = [
   'supabase/migrations/20260911_v131_product_reviews_schema.sql',
   'supabase/migrations/20260911_v132_product_reviews_customer_contract.sql',
+  'supabase/migrations/20260912_v136_product_review_pgcrypto_path_fix.sql',
   'supabase/migrations/20260911_v133_product_reviews_public_read.sql',
   'supabase/migrations/20260911_v134_product_review_storage_bucket.sql'
 ];
