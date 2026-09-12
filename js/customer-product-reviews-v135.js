@@ -8,7 +8,7 @@
   const MAX_IMAGES = 5;
   const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
-  const state = { token: '', items: [], selectedItem: null, files: [], rating: 0, busy: false };
+  const state = { token: '', items: [], selectedItem: null, files: [], rating: 0, busy: false, lastReadyResult: null };
 
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
@@ -165,7 +165,20 @@
 
   function customerIdentity() {
     const customer = typeof currentCustomerCloud === 'object' ? currentCustomerCloud : null;
-    return String(customer?.code || customer?.phone || customer?.email || '').trim();
+    return String(customer?.code || customer?.customer_code || customer?.phone || customer?.email || '').trim();
+  }
+
+  function rpcPayload(data) {
+    if (data && typeof data === 'object') return data;
+    if (typeof data !== 'string') return {};
+    try {
+      const parsed = JSON.parse(data);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch { return {}; }
+  }
+
+  function isReady(item) {
+    return item?.ready_for_review === true || item?.ready_for_review === 'true';
   }
 
   async function unlock(event) {
@@ -200,6 +213,7 @@
     if (!state.token) {
       $('reviewUnlock').hidden = false;
       $('reviewProductsGrid').innerHTML = '';
+      message('reviewPanelStatus', 'تحقق بكلمة المرور لعرض منتجات الطلبات المسلّمة بأمان.');
       return;
     }
     await loadReadyProducts();
@@ -212,13 +226,25 @@
       const sb = await client();
       const { data, error } = await sb.rpc('customer_review_ready_products_v132', { p_session_token: state.token });
       if (error) throw error;
-      state.items = Array.isArray(data?.items) ? data.items : [];
+      const payload = rpcPayload(data);
+      state.items = Array.isArray(payload.items) ? payload.items : [];
+      const readyCount = state.items.filter(item => isReady(item) && !item.review_id).length;
+      state.lastReadyResult = { ok: true, itemCount: state.items.length, readyCount, receivedAt: new Date().toISOString() };
+      console.info('[KINTO Reviews] ready-products RPC completed', state.lastReadyResult);
       $('reviewUnlock').hidden = true;
       renderProducts();
-      updateBadge(Number(data?.ready_count || 0));
-      injectReviewNotification(Number(data?.ready_count || 0));
+      updateBadge(readyCount);
+      injectReviewNotification(readyCount);
       message('reviewPanelStatus', '');
     } catch (error) {
+      state.items = [];
+      state.lastReadyResult = {
+        ok: false,
+        code: String(error?.code || ''),
+        message: String(error?.message || 'تعذر تحميل المنتجات.'),
+        receivedAt: new Date().toISOString()
+      };
+      console.error('[KINTO Reviews] ready-products RPC failed', state.lastReadyResult);
       if (/REVIEW_SESSION_(INVALID|REQUIRED)/i.test(String(error?.message || ''))) {
         clearSession(); $('reviewUnlock').hidden = false;
       }
@@ -235,7 +261,7 @@
     }
     grid.innerHTML = state.items.map((item, index) => {
       const status = String(item.review_status || '');
-      const ready = item.ready_for_review === true && !item.review_id;
+      const ready = isReady(item) && !item.review_id;
       const image = String(item.product_image || '').trim();
       return `<article class="review-product-card">
         <div class="review-product-media">${image ? `<img src="${esc(image)}" alt="${esc(item.product_name || 'المنتج')}" loading="lazy">` : '<div class="review-product-placeholder"><i class="fa-solid fa-box-open"></i></div>'}</div>
@@ -378,7 +404,7 @@
     const base = renderCloudNotifications;
     renderCloudNotifications = function (...args) {
       const result = base.apply(this, args);
-      injectReviewNotification(state.items.filter(item => item.ready_for_review === true && !item.review_id).length);
+      injectReviewNotification(state.items.filter(item => isReady(item) && !item.review_id).length);
       return result;
     };
     renderCloudNotifications.__reviewsV135 = true;
@@ -397,6 +423,13 @@
     window.addEventListener('load', () => { if (state.token) loadReadyProducts().catch(() => {}); }, { once: true });
   }
 
-  window.KintoCustomerReviewsV135 = { version: VERSION, openPanel, activateReviewsTab, refresh: loadReadyProducts, clearSession };
+  window.KintoCustomerReviewsV135 = {
+    version: VERSION,
+    openPanel,
+    activateReviewsTab,
+    refresh: loadReadyProducts,
+    clearSession,
+    diagnostics: () => ({ ...state.lastReadyResult })
+  };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
 })();
