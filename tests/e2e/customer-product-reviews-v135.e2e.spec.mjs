@@ -29,7 +29,7 @@ test('customer reviews UI is isolated, responsive, and exposes camera plus devic
 
   await expect(page.locator('#reviewCameraInput')).toHaveAttribute('accept', 'image/*');
   await expect(page.locator('#reviewCameraInput')).toHaveAttribute('capture', 'environment');
-  await expect(page.locator('#reviewFilesInput')).toHaveAttribute('multiple', '');
+  await expect(page.locator('#reviewFilesInput')).not.toHaveAttribute('multiple', '');
   await expect(page.locator('#reviewFilesInput')).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp');
 
   await page.setViewportSize({ width: 390, height: 844 });
