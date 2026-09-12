@@ -1,0 +1,4 @@
+import assert from 'node:assert/strict';import{readFileSync}from'node:fs';
+const html=readFileSync(new URL('../store.html',import.meta.url),'utf8'),css=readFileSync(new URL('../css/storefront-premium-v145.css',import.meta.url),'utf8'),client=readFileSync(new URL('../js/storefront-product-modal-v145.js',import.meta.url),'utf8');
+assert.match(html,/storefront-premium-v145\.css/);assert.match(html,/storefront-product-modal-v145\.js/);assert.match(css,/kinto-product-dialog/);assert.match(css,/متجر موثّق/);assert.match(client,/sourceCard\.querySelector\('\.local-v3-order:not\(:disabled\)'\)\?\.click\(\)/);assert.match(client,/stopImmediatePropagation/);
+for(const source of[css,client]){assert.doesNotMatch(source,/(?:update|insert|delete).*orders/i);assert.doesNotMatch(source,/(?:update|insert|delete).*employees/i);assert.doesNotMatch(source,/(?:update|insert|delete).*invoices/i)}console.log('Storefront premium V145 contract: OK');
