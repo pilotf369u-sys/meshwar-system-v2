@@ -1,7 +1,7 @@
 -- KINTO V153: standardized rejection notices using the existing review record.
 begin;
 create or replace function public.customer_review_rejection_notices_v153(p_session_token text)
-returns jsonb language plpgsql security definer stable set search_path=public,private,pg_temp as $$
+returns jsonb language plpgsql security definer set search_path=public,private,pg_temp as $$
 declare v_customer uuid;v_items jsonb;
 begin
  v_customer:=private.require_customer_review_session(p_session_token);
