@@ -205,7 +205,7 @@ begin
   select to_jsonb(o) into v_order
   from public.orders o
   where o.id = p_order_id
-    and o.customer_id = p_customer_id
+    and trim(o.customer_id::text) = p_customer_id::text
     and trim(coalesce(o.status, '')) = 'تم التسليم'
   limit 1;
 
@@ -346,7 +346,7 @@ begin
     select o.id as order_id, o.created_at, to_jsonb(o) as order_json,
       private.review_jsonb_object(to_jsonb(o) -> 'details') as details
     from public.orders o
-    where o.customer_id = v_customer_id
+    where trim(o.customer_id::text) = v_customer_id::text
       and trim(coalesce(o.status, '')) = 'تم التسليم'
   ), extracted as (
     select d.order_id, d.created_at,
