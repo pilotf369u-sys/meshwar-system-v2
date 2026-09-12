@@ -5,6 +5,7 @@ const files = [
   'supabase/migrations/20260911_v131_product_reviews_schema.sql',
   'supabase/migrations/20260911_v132_product_reviews_customer_contract.sql',
   'supabase/migrations/20260912_v136_product_review_pgcrypto_path_fix.sql',
+  'supabase/migrations/20260912_v137_product_review_order_customer_compat.sql',
   'supabase/migrations/20260911_v133_product_reviews_public_read.sql',
   'supabase/migrations/20260911_v134_product_review_storage_bucket.sql'
 ];
@@ -16,7 +17,7 @@ assert.match(sql, /create table if not exists public\.product_review_images/i);
 assert.match(sql, /create table if not exists public\.customer_review_sessions/i);
 assert.match(sql, /create table if not exists public\.customer_review_login_attempts/i);
 assert.match(sql, /trim\(coalesce\(o\.status, ''\)\) = 'تم التسليم'/);
-assert.match(sql, /o\.customer_id = p_customer_id/);
+assert.match(sql, /trim\(o\.customer_id::text\) = p_customer_id::text/);
 assert.match(sql, /PRODUCT_NOT_FOUND_IN_DELIVERED_ORDER/);
 assert.match(sql, /unique \(customer_id, order_id, product_reference\)/i);
 assert.match(sql, /digest\(p_session_token, 'sha256'\)/i);
