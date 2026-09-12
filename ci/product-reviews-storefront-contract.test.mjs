@@ -17,7 +17,9 @@ assert.match(css,/\.kinto-reviews-modal/);
 assert.match(css,/\.kinto-review-lightbox/);
 assert.match(css,/data-mw-global-theme="light"/);
 assert.match(css,/data-mw-global-theme="dark"/);
-assert.match(css,/minmax\(min\(230px,100%\),1fr\)/);
+assert.match(css,/minmax\(min\(190px,100%\),220px\)/);
+assert.match(css,/repeat\(2,minmax\(0,1fr\)\)/);
+assert.match(css,/-webkit-line-clamp:2/);
 for(const source of[client,css]){
   assert.doesNotMatch(source,/(?:update|insert|delete).*orders/i);
   assert.doesNotMatch(source,/(?:update|insert|delete).*employees/i);
