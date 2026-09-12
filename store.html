@@ -48,8 +48,11 @@
     </header>
 
     <section class="store-hero">
-      <h1 id="localStoreProductsTitle" class="store-title">جاري فتح المتجر...</h1>
-      <p id="localStoreProductsMeta" class="store-meta">يتم التحقق من معرف المتجر وتحميل بياناته مباشرة.</p>
+      <div class="store-hero-identity">
+        <img id="localStoreLogo" class="store-hero-logo" alt="شعار المتجر" hidden>
+        <div class="store-hero-copy"><h1 id="localStoreProductsTitle" class="store-title">جاري فتح المتجر...</h1>
+        <p id="localStoreProductsMeta" class="store-meta">يتم التحقق من معرف المتجر وتحميل بياناته مباشرة.</p></div>
+      </div>
     </section>
 
     <section id="localStoreProductsPanel">
@@ -75,13 +78,15 @@
       return;
     }
     window.__KINTO_STORE_ID__=id;
-    fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{
+    fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,logo_url,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{
       cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json'}
     }).then(r=>{if(!r.ok)throw new Error(`Store REST ${r.status}`);return r.json()}).then(rows=>{
       const s=Array.isArray(rows)?rows[0]:null;
       if(!s)throw new Error('Store not found or inactive');
       title.textContent=s.store_name||'منتجات المتجر';
       meta.textContent=[s.specialty||s.store_type,s.governorate||s.country].filter(Boolean).join(' · ')||'متجر نشط';
+      const logo=document.getElementById('localStoreLogo'),fallback=document.querySelector('.store-brand img')?.src||'';
+      if(logo){logo.src=s.logo_url||fallback;logo.alt=`شعار ${s.store_name||'المتجر'}`;logo.hidden=!logo.src;logo.onerror=()=>{if(fallback&&logo.src!==fallback){logo.src=fallback;logo.hidden=false}else logo.hidden=true}}
       document.title=`${s.store_name||'KINTO Store'} - KINTO`;
     }).catch(err=>{
       console.error('Store header load error:',err);
@@ -93,8 +98,8 @@
   <script src="js/local-cart-v93.js?v=20260905-v101-shipping-destination"></script>
   <script type="module" src="js/local-store-card-v3.js?v=20260901-v93"></script>
   <link rel="stylesheet" href="css/store-product-reviews-v140.css?v=20260912-v143-compact-cards">
-  <link rel="stylesheet" href="css/store-card-modern-v144.css?v=20260912-v144">
-  <script src="js/store-product-reviews-v140.js?v=20260912-v141" defer></script>
+  <link rel="stylesheet" href="css/store-card-modern-v144.css?v=20260912-v144-1-contrast-logo">
+  <script src="js/store-product-reviews-v140.js?v=20260912-v144-1" defer></script>
   <script src="js/store-card-modern-v144.js?v=20260912-v144" defer></script>
 </body>
 </html>
