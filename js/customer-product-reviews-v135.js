@@ -4,8 +4,9 @@
 
   const VERSION = 'v135';
   const SESSION_KEY = 'kinto_customer_review_session_v132';
-  const MAX_FILE_BYTES = 5 * 1024 * 1024;
-  const MAX_IMAGES = 5;
+  const MAX_IMAGES = 1;
+  const COMPRESSED_MAX_BYTES = 320 * 1024;
+  const COMPRESSED_MAX_DIMENSION = 1280;
   const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
   const state = { token: '', items: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null };
@@ -100,14 +101,14 @@
           <label class="review-label" for="reviewComment">تعليقك <span style="font-weight:500;color:#9fb1aa">(اختياري)</span></label>
           <textarea id="reviewComment" class="review-comment" maxlength="2000" placeholder="اكتب تجربتك بوضوح لمساعدة العملاء الآخرين..."></textarea>
           <span id="reviewCommentCounter" class="review-counter">0 / 2000</span>
-          <span class="review-label">صور المنتج <span style="font-weight:500;color:#9fb1aa">(حتى 5 صور)</span></span>
+          <span class="review-label">صورة المنتج <span style="font-weight:500;color:#9fb1aa">(صورة واحدة)</span></span>
           <div class="review-media-actions">
             <input id="reviewCameraInput" type="file" accept="image/*" capture="environment" hidden>
-            <input id="reviewFilesInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+            <input id="reviewFilesInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
             <button id="reviewCameraBtn" class="review-media-btn" type="button"><i class="fa-solid fa-camera"></i> التقاط بالكاميرا الخلفية</button>
             <button id="reviewFilesBtn" class="review-media-btn" type="button"><i class="fa-regular fa-images"></i> اختيار من الجهاز</button>
           </div>
-          <p class="review-media-note">JPEG أو PNG أو WebP فقط، وبحد أقصى 5MB للصورة الواحدة.</p>
+          <p class="review-media-note">اختر الصورة بأي حجم مناسب؛ سيقوم النظام بضغطها وتحسينها تلقائياً قبل الحفظ.</p>
           <div id="reviewPreviews" class="review-previews"></div>
           <div id="reviewFormMessage" class="review-form-message" role="status" aria-live="polite"></div>
           <div class="review-dialog-actions">
@@ -335,20 +336,48 @@
     state.selectedItem = null; state.files = [];
   }
 
-  function addFiles(fileList) {
+  async function compressReviewImage(file) {
+    let source;
+    try {
+      source = typeof createImageBitmap === 'function' ? await createImageBitmap(file) : await new Promise((resolve, reject) => {
+        const image = new Image(), url = URL.createObjectURL(file);
+        image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
+        image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('تعذر قراءة الصورة المختارة.')); };
+        image.src = url;
+      });
+      let width = Number(source.width || source.naturalWidth), height = Number(source.height || source.naturalHeight);
+      const ratio = Math.min(1, COMPRESSED_MAX_DIMENSION / Math.max(width, height));
+      width = Math.max(1, Math.round(width * ratio)); height = Math.max(1, Math.round(height * ratio));
+      const canvas = document.createElement('canvas'), encode = (type, quality) => new Promise(resolve => canvas.toBlob(resolve, type, quality));
+      let blob = null, quality = .78;
+      for (let pass = 0; pass < 8; pass += 1) {
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d', { alpha: false }).drawImage(source, 0, 0, width, height);
+        blob = await encode('image/webp', quality) || await encode('image/jpeg', quality);
+        if (blob && blob.size <= COMPRESSED_MAX_BYTES) break;
+        if (quality > .5) quality -= .09;
+        else if (Math.max(width, height) > 480) { width = Math.max(1, Math.round(width * .82)); height = Math.max(1, Math.round(height * .82)); }
+      }
+      if (!blob) throw new Error('تعذر ضغط الصورة.');
+      return new File([blob], `${String(file.name || 'review').replace(/\.[^.]+$/, '')}.webp`, { type: blob.type || 'image/webp', lastModified: Date.now() });
+    } finally { if (source && typeof source.close === 'function') source.close(); }
+  }
+
+  async function addFiles(fileList) {
     const incoming = Array.from(fileList || []);
-    for (const file of incoming) {
-      if (state.files.length >= MAX_IMAGES) return message('reviewFormMessage', 'الحد الأقصى هو 5 صور.', 'error');
+    const file = incoming[0];
+    if (!file) return;
+    try {
       const type = String(file.type || '').toLowerCase();
       if (!ALLOWED_TYPES.has(type) || !ALLOWED_EXTENSIONS.test(file.name || '')) {
-        message('reviewFormMessage', `نوع الصورة غير مدعوم: ${file.name}`, 'error'); continue;
+        return message('reviewFormMessage', 'نوع الصورة غير مدعوم. اختر JPEG أو PNG أو WebP.', 'error');
       }
-      if (file.size <= 0 || file.size > MAX_FILE_BYTES) {
-        message('reviewFormMessage', `يجب أن يكون حجم ${file.name} أقل من 5MB.`, 'error'); continue;
-      }
-      if (!state.files.some(existing => existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified)) state.files.push(file);
-    }
-    renderPreviews();
+      if (file.size <= 0) return message('reviewFormMessage', 'الصورة المختارة فارغة.', 'error');
+      message('reviewFormMessage', 'جاري تجهيز الصورة وضغطها تلقائياً...');
+      state.files = [await compressReviewImage(file)];
+      renderPreviews();
+      message('reviewFormMessage', `تم تجهيز الصورة (${Math.max(1, Math.round(state.files[0].size / 1024))}KB).`, 'success');
+    } catch (error) { console.error('[KINTO Reviews] image compression failed', error); message('reviewFormMessage', error?.message || 'تعذر تجهيز الصورة.', 'error'); }
   }
 
   function renderPreviews() {
