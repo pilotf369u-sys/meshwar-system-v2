@@ -67,8 +67,10 @@
     const sb=await ensureCustomerSupabase(),adminId=getAdminId();
     await Promise.all(targets.map(async target=>{
       const {data,error}=await sb.rpc('admin_get_review_image_v139',{p_admin_id:adminId,p_image_id:target.dataset.reviewImage});
-      if(error||!data?.base64){target.textContent='تعذر تحميل الصورة';return;}
-      target.innerHTML=`<img src="data:${escReview(data.mime_type)};base64,${data.base64}" alt="صورة التقييم" loading="lazy">`;
+      if(error||(!data?.base64&&!data?.storage_path)){target.textContent='تعذر تحميل الصورة';return;}
+      const src=data.base64?`data:${data.mime_type};base64,${data.base64}`:sb.storage.from(data.bucket||'product-review-images').getPublicUrl(data.storage_path).data?.publicUrl;
+      if(!src){target.textContent='تعذر تحميل الصورة';return;}
+      target.innerHTML=`<img src="${escReview(src)}" alt="صورة التقييم" loading="lazy">`;
     }));
   }
 
@@ -76,7 +78,7 @@
     const button=event.target.closest('[data-decision]'); if(!button||state.busy)return;
     const card=button.closest('[data-id]'),note=card.querySelector('.admin-review-note').value.trim();
     state.busy=true; button.disabled=true;
-    try { const sb=await ensureCustomerSupabase(),{error}=await sb.rpc('admin_moderate_product_review_v138',{p_admin_id:getAdminId(),p_review_id:card.dataset.id,p_decision:button.dataset.decision,p_note:note||null}); if(error)throw error; await load(); }
+    try { const sb=await ensureCustomerSupabase(),{data,error}=await sb.rpc('admin_moderate_product_review_v138',{p_admin_id:getAdminId(),p_review_id:card.dataset.id,p_decision:button.dataset.decision,p_note:note||null}); if(error)throw error;if(button.dataset.decision==='rejected'&&Array.isArray(data?.deleted_storage_paths)&&data.deleted_storage_paths.length){const removed=await sb.storage.from(data.bucket||'product-review-images').remove(data.deleted_storage_paths);if(removed.error)console.warn('Deferred rejected review image cleanup',removed.error)} await load(); }
     catch(error){alert(error?.message||'تعذر اعتماد التقييم.')} finally {state.busy=false;button.disabled=false;}
   }
 
