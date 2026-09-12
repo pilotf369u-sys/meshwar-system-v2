@@ -2,7 +2,7 @@
 .store-hero{margin:14px 0!important;padding:14px 18px!important;border-radius:19px!important;min-height:96px!important;display:flex!important;align-items:center!important}
 .store-hero-identity{width:100%;min-width:0}.store-hero-copy{display:grid;gap:3px}.store-hero-logo{width:66px!important;height:66px!important;flex-basis:66px!important;border-radius:16px!important}
 .store-title{font:900 clamp(20px,3vw,29px)/1.2 system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif!important;letter-spacing:0!important}.store-meta{margin:2px 0 0!important;font:700 12px/1.6 system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif!important}
-.store-hero-identity::after{content:"✓ متجر موثّق";margin-inline-start:auto;padding:7px 11px;border:1px solid rgba(212,175,55,.42);border-radius:999px;background:rgba(212,175,55,.10);color:#9a6d00;font:850 10px system-ui;white-space:nowrap}
+.store-hero-identity::after{content:"✓ متجر موثّق";margin-inline-start:4px;padding:7px 11px;border:1px solid #b78a16;border-radius:999px;background:#1d493d;color:#fff4c8;font:900 10px system-ui;white-space:nowrap;box-shadow:0 5px 13px rgba(27,62,51,.14)}
 #localStoreProductsGrid .local-v3-card{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif!important}
 #localStoreProductsGrid .local-v3-name{font-family:inherit!important;font-size:.92rem!important;letter-spacing:0!important;text-transform:none!important}
 #localStoreProductsGrid .local-v3-desc{font-family:inherit!important;font-size:.72rem!important}
@@ -10,7 +10,7 @@
 #localStoreProductsGrid .kinto-rating-summary:hover{transform:none!important;box-shadow:none!important}.kinto-rating-empty{font-size:10px!important}.kinto-rating-cta{margin-inline-start:4px!important;font-size:9px!important}
 #localStoreProductsGrid .local-v3-old-row{margin:0 0 3px!important;padding:0!important;border:0!important;line-height:1!important}#localStoreProductsGrid .local-v3-old{font-size:10px!important;opacity:.78!important}
 #localStoreProductsGrid .local-v3-order{min-height:36px!important;font-size:.76rem!important;transition:transform .18s ease,filter .18s ease!important}#localStoreProductsGrid .local-v3-order:hover{transform:translateY(-1px)!important;filter:brightness(1.04)!important}
-html[data-mw-global-theme="dark"] .store-hero-identity::after{color:#ffe28a;background:rgba(212,175,55,.12)}
+html[data-mw-global-theme="dark"] .store-hero-identity::after{color:#132b24;background:linear-gradient(135deg,#f5d66b,#d7aa29);border-color:#ffe28a}
 .kinto-product-modal{position:fixed;inset:0;z-index:10040;display:none;place-items:center;padding:18px;background:rgba(0,12,9,.76);backdrop-filter:blur(13px)}.kinto-product-modal.open{display:grid}
 .kinto-product-dialog{width:min(930px,96vw);max-height:90vh;overflow:auto;border:1px solid rgba(229,185,63,.34);border-radius:24px;background:linear-gradient(145deg,#073c31,#03271f);color:#f7faf8;box-shadow:0 30px 100px rgba(0,0,0,.58)}
 .kinto-product-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid rgba(229,185,63,.18);background:rgba(4,43,35,.92);backdrop-filter:blur(16px)}.kinto-product-head h2{margin:0;font-size:16px}.kinto-product-close{width:36px;height:36px;border:1px solid rgba(255,255,255,.18);border-radius:50%;background:rgba(255,255,255,.07);color:#fff;font-size:20px;cursor:pointer}
