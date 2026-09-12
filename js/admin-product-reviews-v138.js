@@ -45,7 +45,7 @@
       const { data, error } = await sb.rpc('admin_list_product_reviews_v138', { p_admin_id: getAdminId(), p_status: state.status, p_page: state.page, p_page_size: state.size });
       if (error) throw error;
       state.items = Array.isArray(data?.items) ? data.items : []; state.total = Number(data?.total || 0);
-      message.textContent = ''; render();
+      message.textContent = ''; render(); await loadReviewImages();
     } catch (error) { message.textContent = error?.message || 'تعذر تحميل التقييمات.'; }
   }
 
@@ -54,11 +54,22 @@
     document.getElementById('adminReviewCount').textContent = `${state.total} تقييم`;
     grid.innerHTML = state.items.map(item => `<article class="admin-review-card" data-id="${escReview(item.id)}">
       <div class="admin-review-head">${item.product_image ? `<img src="${escReview(item.product_image)}" alt="">` : ''}<div><b>${escReview(item.product_name)}</b><small>${escReview(item.customer_name)} · ${new Date(item.created_at).toLocaleDateString('ar')}</small></div><strong>${'★'.repeat(Number(item.rating)||0)}</strong></div>
-      <p>${escReview(item.comment || 'لا يوجد تعليق')}</p><textarea class="admin-review-note" maxlength="1000" placeholder="ملاحظة الإدارة (اختيارية)">${escReview(item.moderation_note || '')}</textarea>
+      <p>${escReview(item.comment || 'لا يوجد تعليق')}</p><div class="admin-review-images">${(item.images||[]).map(image=>`<span data-review-image="${escReview(image.id)}">جاري تحميل الصورة…</span>`).join('')}</div><textarea class="admin-review-note" maxlength="1000" placeholder="ملاحظة الإدارة (اختيارية)">${escReview(item.moderation_note || '')}</textarea>
       <div class="admin-review-actions"><button class="btn-green" data-decision="published">موافقة ونشر</button><button class="btn-red" data-decision="rejected">رفض</button><button class="btn-dark" data-decision="hidden">إخفاء</button></div>
     </article>`).join('') || '<div class="mini">لا توجد تقييمات في هذا القسم.</div>';
     const pages=Math.max(1,Math.ceil(state.total/state.size)),pager=document.getElementById('adminReviewPager');
     pager.innerHTML=pages>1?`<button data-review-page="${state.page-1}" ${state.page===1?'disabled':''}>السابق</button><span>صفحة ${state.page} من ${pages}</span><button data-review-page="${state.page+1}" ${state.page===pages?'disabled':''}>التالي</button>`:'';
+  }
+
+  async function loadReviewImages() {
+    const targets=[...document.querySelectorAll('[data-review-image]')];
+    if(!targets.length)return;
+    const sb=await ensureCustomerSupabase(),adminId=getAdminId();
+    await Promise.all(targets.map(async target=>{
+      const {data,error}=await sb.rpc('admin_get_review_image_v139',{p_admin_id:adminId,p_image_id:target.dataset.reviewImage});
+      if(error||!data?.base64){target.textContent='تعذر تحميل الصورة';return;}
+      target.innerHTML=`<img src="data:${escReview(data.mime_type)};base64,${data.base64}" alt="صورة التقييم" loading="lazy">`;
+    }));
   }
 
   async function handleAction(event) {

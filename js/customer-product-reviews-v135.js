@@ -405,21 +405,20 @@
   }
 
   async function uploadImage(reviewId, file) {
-    const form = new FormData();
-    form.append('review_id', reviewId); form.append('session_token', state.token); form.append('file', file, file.name);
-    let response;
-    try {
-      response = await fetch(`${CUSTOMER_SUPABASE_URL}/functions/v1/product-review-image-upload`, {
-        method: 'POST', headers: { apikey: CUSTOMER_SUPABASE_KEY }, body: form
-      });
-    } catch {
-      throw new Error('خدمة رفع صور التقييم غير منشورة أو غير متاحة حالياً');
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let binary = '';
+    for (let offset = 0; offset < bytes.length; offset += 32768) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
     }
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload?.ok) {
-      if (response.status === 404) throw new Error('خدمة رفع صور التقييم غير منشورة');
-      throw new Error(payload?.error || `تعذر رفع صورة التقييم (${response.status})`);
-    }
+    const sb = await client();
+    const { data, error } = await sb.rpc('customer_upload_review_image_v139', {
+      p_session_token: state.token,
+      p_review_id: reviewId,
+      p_mime_type: file.type,
+      p_base64: btoa(binary)
+    });
+    if (error) throw error;
+    if (!data?.ok) throw new Error('تعذر حفظ صورة التقييم.');
   }
 
   function updateBadge(count) {

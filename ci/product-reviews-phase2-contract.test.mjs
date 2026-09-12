@@ -14,6 +14,8 @@ assert.match(client, /customer_review_ready_products_v132/);
 assert.match(client, /pageSize:\s*6/);
 assert.match(client, /id="reviewPager"/);
 assert.match(client, /customer_submit_product_review_v132/);
+assert.match(client, /customer_upload_review_image_v139/);
+assert.doesNotMatch(client, /functions\/v1\/product-review-image-upload/);
 assert.match(client, /تم حفظ التقييم بحالة «قيد المراجعة»/);
 assert.match(client, /customer\?\.customer_code/);
 assert.match(client, /ready-products RPC completed/);
