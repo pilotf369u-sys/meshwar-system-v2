@@ -9,6 +9,7 @@ const files = [
   'supabase/migrations/20260912_v138_product_review_admin_moderation.sql',
   'supabase/migrations/20260912_v139_product_review_database_images.sql',
   'supabase/migrations/20260912_v140_storefront_published_reviews.sql',
+  'supabase/migrations/20260912_v141_review_lightbox_helpful.sql',
   'supabase/migrations/20260911_v133_product_reviews_public_read.sql',
   'supabase/migrations/20260911_v134_product_review_storage_bucket.sql'
 ];
@@ -33,6 +34,8 @@ assert.match(sql, /customer_upload_review_image_v139/i);
 assert.match(sql, /product_review_image_payloads/i);
 assert.match(sql, /product_review_summaries_v140/i);
 assert.match(sql, /product_reviews_public_v140/i);
+assert.match(sql, /product_review_helpful_toggle_v141/i);
+assert.match(sql, /product_reviews_public_v141/i);
 assert.match(sql, /'product-review-images',[\s\S]*?false,[\s\S]*?5242880/i);
 assert.match(sql, /on conflict \(id\) do nothing/i);
 assert.doesNotMatch(sql, /revoke all on schema private/i);
