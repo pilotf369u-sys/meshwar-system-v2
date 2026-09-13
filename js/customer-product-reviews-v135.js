@@ -8,10 +8,13 @@
   const COMPRESSED_TARGET_BYTES = 25 * 1024;
   const COMPRESSED_MAX_BYTES = 50 * 1024;
   const COMPRESSED_MAX_DIMENSION = 320;
+  const REVIEW_NOTIFICATION_POLL_MS = 15000;
   const REVIEW_STORAGE_BUCKET = 'product-review-images';
   const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
   const state = { token: '', items: [], moderationNotices: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null };
+  let reviewNotificationTimer = null;
+  let reviewNotificationRefreshBusy = false;
 
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
@@ -604,6 +607,24 @@
     } catch (error) { console.warn('[KINTO Reviews] mark notifications read failed', error); }
   }
 
+  async function refreshLiveReviewNotifications() {
+    if (!state.token || state.busy || reviewNotificationRefreshBusy || document.hidden) return;
+    reviewNotificationRefreshBusy = true;
+    try { await loadReadyProducts(); }
+    finally { reviewNotificationRefreshBusy = false; }
+  }
+
+  function startLiveReviewNotifications() {
+    if (reviewNotificationTimer) clearInterval(reviewNotificationTimer);
+    reviewNotificationTimer = setInterval(refreshLiveReviewNotifications, REVIEW_NOTIFICATION_POLL_MS);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshLiveReviewNotifications();
+    });
+    window.addEventListener('beforeunload', () => {
+      if (reviewNotificationTimer) clearInterval(reviewNotificationTimer);
+    }, { once: true });
+  }
+
   function message(id, text, kind = '') {
     const target = $(id); if (!target) return;
     target.textContent = String(text || ''); target.classList.toggle('is-error', kind === 'error'); target.classList.toggle('is-success', kind === 'success');
@@ -633,7 +654,10 @@
   async function boot() {
     if (!injectUi()) return setTimeout(boot, 80);
     wrapNotifications(); wrapLogout(); state.token = readSession();
-    if (state.token) await loadReadyProducts();
+    if (state.token) {
+      await loadReadyProducts();
+      startLiveReviewNotifications();
+    }
   }
 
   window.KintoCustomerReviewsV135 = {
