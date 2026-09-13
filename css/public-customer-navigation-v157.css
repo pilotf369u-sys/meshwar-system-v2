@@ -26,6 +26,9 @@ html[data-mw-global-theme="light"] .kinto-public-drawer{color:#17372f;background
 
 /* KINTO_HEADER_AUTH_STATE_V159 */
 #kintoHomeHeader [hidden]{display:none!important}#kintoHomeHeader #authLink{isolation:isolate}#kintoHomeHeader #authLink .action-label{white-space:nowrap}
+/* The live #authText is the only account label. Retire the legacy V81 pseudo-button
+   which rendered "طلباتي" for guests and squeezed the authenticated label. */
+#kintoHomeHeader #meshwarHeaderControls #authLink.account-btn::after{content:none!important;display:none!important}
 
 /* KINTO_HEADER_GUEST_STATE_V160 */
 html[data-kinto-customer-logged-in="false"] #kintoHomeHeader #logoutBtn,
