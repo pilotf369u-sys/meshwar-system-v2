@@ -12,7 +12,7 @@
   const REVIEW_STORAGE_BUCKET = 'product-review-images';
   const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
-  const state = { token: '', items: [], moderationNotices: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null };
+  const state = { token: '', items: [], moderationNotices: [], selectedItem: null, files: [], rating: 0, page: 1, pageSize: 6, busy: false, lastReadyResult: null, readySignature: '', moderationSignature: '' };
   let reviewNotificationTimer = null;
   let reviewNotificationRefreshBusy = false;
 
@@ -226,27 +226,34 @@
     await loadReadyProducts();
   }
 
-  async function loadReadyProducts() {
+  async function loadReadyProducts(options = {}) {
     if (!state.token) return;
-    message('reviewPanelStatus', 'جاري تحميل المنتجات المسلّمة...');
+    const silent = options.silent === true;
+    if (!silent) message('reviewPanelStatus', 'جاري تحميل المنتجات المسلّمة...');
     try {
       const sb = await client();
       const { data, error } = await sb.rpc('customer_review_ready_products_v132', { p_session_token: state.token });
       if (error) throw error;
       const payload = rpcPayload(data);
-      state.items = Array.isArray(payload.items) ? payload.items : [];
-      state.page = 1;
+      const nextItems = Array.isArray(payload.items) ? payload.items : [];
+      const nextSignature = JSON.stringify(nextItems.map(item => [item.order_id, item.product_id || item.product_reference, item.review_id, item.review_status, item.ready_for_review]));
+      const changed = nextSignature !== state.readySignature;
+      state.items = nextItems;
+      state.readySignature = nextSignature;
+      if (changed) state.page = 1;
       const readyCount = state.items.filter(item => isReady(item) && !item.review_id).length;
       state.lastReadyResult = { ok: true, itemCount: state.items.length, readyCount, receivedAt: new Date().toISOString() };
       console.info('[KINTO Reviews] ready-products RPC completed', state.lastReadyResult);
       await loadDisplayContext(sb);
       $('reviewUnlock').hidden = true;
-      renderProducts();
-      decorateOrderReviewButtons();
+      if (changed) {
+        renderProducts();
+        decorateOrderReviewButtons();
+      }
       updateBadge(readyCount);
       injectReviewNotification(readyCount);
       await loadModerationNotifications(sb);
-      message('reviewPanelStatus', '');
+      if (!silent) message('reviewPanelStatus', '');
     } catch (error) {
       state.items = [];
       state.lastReadyResult = {
@@ -523,10 +530,13 @@
 
   function injectReviewNotification(count) {
     const container = $('notificationsContainer');
-    container?.querySelector('.review-notification')?.remove();
-    if (!container || count < 1) return;
+    const existing = container?.querySelector('.review-notification');
+    if (!container || count < 1) { existing?.remove(); return; }
+    const notificationKey = `review-ready:${state.items.filter(item => isReady(item) && !item.review_id).map(item => `${item.order_id}:${item.product_id || item.product_reference || item.product_name}`).sort().join('|')}`;
+    if (existing?.dataset.notificationKey === notificationKey) return;
+    existing?.remove();
     const notice = document.createElement('div'); notice.className = 'notification-item review-notification';
-    notice.dataset.notificationKey = `review-ready:${state.items.filter(item => isReady(item) && !item.review_id).map(item => `${item.order_id}:${item.product_id || item.product_reference || item.product_name}`).sort().join('|')}`;
+    notice.dataset.notificationKey = notificationKey;
     notice.innerHTML = `<div><strong><i class="fa-solid fa-star"></i> رأيك يصنع فرقاً ✨</strong><p>لديك ${count} ${count === 1 ? 'منتج جاهز للتقييم بعد استلامه' : 'منتجات جاهزة للتقييم بعد استلامها'}. شارك تجربتك الصادقة لتساعد مجتمع KINTO على اختيار الأفضل، ولن يستغرق الأمر سوى لحظات.</p></div><button type="button" class="review-primary-btn">قيّم الآن</button>`;
     notice.querySelector('button').addEventListener('click', event => activateReviewsTab(event));
     container.prepend(notice);
@@ -545,8 +555,12 @@
     try {
       const { data, error } = await sb.rpc('customer_review_moderation_notices_v155', { p_session_token: state.token });
       if (error) throw error;
-      state.moderationNotices = Array.isArray(data?.items) ? data.items : [];
-      injectModerationNotifications();
+      const nextNotices = Array.isArray(data?.items) ? data.items : [];
+      const nextSignature = JSON.stringify(nextNotices.map(item => [item.review_id, item.status, item.moderated_at, item.message]));
+      const changed = nextSignature !== state.moderationSignature;
+      state.moderationNotices = nextNotices;
+      state.moderationSignature = nextSignature;
+      if (changed) injectModerationNotifications();
       decorateOrderNotificationKeys();
       await refreshNotificationBadge(sb);
     } catch (error) {
@@ -565,7 +579,7 @@
     const container = $('notificationsContainer');
     container?.querySelectorAll('.review-moderation-notification').forEach(node => node.remove());
     if (!container) return;
-    state.moderationNotices.forEach(item => {
+    [...state.moderationNotices].reverse().forEach(item => {
       const notice = document.createElement('div');
       notice.className = `notification-item review-moderation-notification ${item.status === 'rejected' ? 'review-rejection-notification' : 'review-published-notification'}`;
       notice.dataset.notificationKey = `review-moderation:${item.review_id}:${item.status}:${item.moderated_at || ''}`;
@@ -620,7 +634,7 @@
   async function refreshLiveReviewNotifications() {
     if (!state.token || state.busy || reviewNotificationRefreshBusy || document.hidden) return;
     reviewNotificationRefreshBusy = true;
-    try { await loadReadyProducts(); }
+    try { await loadReadyProducts({ silent: true }); }
     finally { reviewNotificationRefreshBusy = false; }
   }
 
