@@ -4,5 +4,5 @@ assert.match(html,/customer-navigation-drawer-v156\.css/);assert.match(html,/cus
 for(const tab of ['activeOrders','orderHistory','chatHelp','notifications','drafts','productReviews','customerFavorites'])assert.match(js,new RegExp(tab));
 for(const selector of ['#backBtn','#mwGlobalThemeToggle','#customerLogoutBtn'])assert.ok(js.includes(selector));
 assert.ok(js.includes('notificationUnreadBadge'));assert.ok(js.includes('MutationObserver'));assert.ok(!js.includes('innerText==='));
-assert.match(css,/@media\(max-width:1024px\)/);assert.ok(css.includes('inset-inline-end'));assert.ok(css.includes('html[dir="ltr"]'));
+assert.ok(js.includes('cleanupThemeDuplicates'));assert.match(css,/@media\(max-width:1024px\)/);assert.ok(css.includes('inset-inline-end'));assert.ok(css.includes('html[dir="ltr"]'));assert.ok(css.includes('kintoDrawerShopGlow'));assert.ok(css.includes('overflow:hidden'));assert.ok(css.includes('72vw'));
 console.log('V156 customer navigation drawer contract passed');
