@@ -532,7 +532,7 @@
     const container = $('notificationsContainer');
     const existing = container?.querySelector('.review-notification');
     if (!container || count < 1) { existing?.remove(); return; }
-    const notificationKey = `review-ready:${state.items.filter(item => isReady(item) && !item.review_id).map(item => `${item.order_id}:${item.product_id || item.product_reference || item.product_name}`).sort().join('|')}`;
+    const notificationKey = `review-ready-v1554:${state.items.filter(item => isReady(item) && !item.review_id).map(item => `${item.order_id}:${item.product_id || item.product_reference || item.product_name}`).sort().join('|')}`;
     if (existing?.dataset.notificationKey === notificationKey) return;
     existing?.remove();
     const notice = document.createElement('div'); notice.className = 'notification-item review-notification';
@@ -582,7 +582,7 @@
     [...state.moderationNotices].reverse().forEach(item => {
       const notice = document.createElement('div');
       notice.className = `notification-item review-moderation-notification ${item.status === 'rejected' ? 'review-rejection-notification' : 'review-published-notification'}`;
-      notice.dataset.notificationKey = `review-moderation:${item.review_id}:${item.status}:${item.moderated_at || ''}`;
+      notice.dataset.notificationKey = `review-moderation-v1554:${item.review_id}:${item.status}:${item.moderated_at || ''}`;
       const icon = item.status === 'published' ? 'fa-circle-check' : 'fa-circle-info';
       notice.innerHTML = `<div><strong><i class="fa-solid ${icon}"></i> ${item.status === 'published' ? 'شكراً لمساهمتك' : 'تحديث بشأن تقييم'} ${esc(item.product_name || 'المنتج')}</strong><p>${esc(item.message || 'تم تحديث حالة تقييمك.')}</p>${item.store_name ? `<small>المتجر: ${esc(item.store_name)}</small>` : ''}${item.moderated_at ? `<small> · ${new Date(item.moderated_at).toLocaleString('ar')}</small>` : ''}</div>`;
       container.prepend(notice);
