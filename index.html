@@ -102,7 +102,7 @@
     <link rel="stylesheet" href="css/modern-ui-v54.css?v=20260831">
     <link rel="stylesheet" href="css/home-store-portals-v55.css?v=20260831">
     <link rel="stylesheet" href="css/portal-product-cards-v56.css?v=20260831">
-    <link rel="stylesheet" href="css/public-customer-navigation-v157.css?v=20260913-v160-guest-state-lock">
+    <link rel="stylesheet" href="css/public-customer-navigation-v157.css?v=20260913-v161-auth-state-rebuild">
     <script defer src="js/global-theme-toggle-v1.js?v=20260913-v157-index"></script>
     <style id="kintoUnifiedHomeHeaderV1">
     #kintoHomeHeader{position:sticky;top:0;z-index:80;width:100vw;margin-inline:calc(50% - 50vw);border-bottom:1px solid rgba(229,185,63,.22);background:rgba(3,43,37,.94);box-shadow:0 12px 34px rgba(0,0,0,.18);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
@@ -282,11 +282,14 @@
             return '';
         }
 
-        // INDEX_AUTH_HEADER_RUNTIME_LOCK_V52 — the header is the only legal auth mount.
+        // INDEX_AUTH_HEADER_RUNTIME_LOCK_V53 — keep one canonical auth zone and rebuild it from the verified state.
         function ensureCustomerAuthInHeader(){
             const host=document.getElementById('meshwarHeaderControls');
-            const zone=document.querySelector('.user-auth-zone');
-            if(!host||!zone)return zone||null;
+            if(!host)return null;
+            const zones=[...document.querySelectorAll('.user-auth-zone')];
+            let zone=zones.find(item=>item.closest('#kintoHomeHeader'))||zones[0]||document.createElement('div');
+            zone.className='user-auth-zone';
+            zones.forEach(item=>{if(item!==zone)item.remove()});
             if(zone.parentElement!==host)host.appendChild(zone);
             zone.style.setProperty('position','static','important');
             zone.style.setProperty('left','auto','important');
@@ -299,6 +302,33 @@
             return zone;
         }
 
+        function renderCustomerAuthState(loggedIn, customer){
+            const zone=ensureCustomerAuthInHeader();
+            if(!zone)return;
+            zone.replaceChildren();
+            const authLink=document.createElement('a');
+            authLink.id='authLink';
+            authLink.className='header-action account-btn'+(loggedIn?'':' primary');
+            authLink.href=loggedIn
+                ? 'dashboard.html?customerId='+encodeURIComponent(String(customer.id))+'&tab=activeOrders'
+                : 'login.html';
+            authLink.setAttribute('aria-label',loggedIn?'طلباتي':'دخول حسابي');
+            authLink.innerHTML=loggedIn
+                ? '<i class="fa-solid fa-box" aria-hidden="true"></i><span id="authText" class="action-label">طلباتي</span>'
+                : '<i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span id="authText" class="action-label">دخول حسابي</span>';
+            zone.appendChild(authLink);
+            if(loggedIn){
+                const logoutBtn=document.createElement('a');
+                logoutBtn.id='logoutBtn';
+                logoutBtn.href='#';
+                logoutBtn.className='header-action header-logout-btn';
+                logoutBtn.textContent='تسجيل خروج';
+                logoutBtn.addEventListener('click',event=>{event.preventDefault();logout()});
+                zone.appendChild(logoutBtn);
+            }
+            document.querySelectorAll('#kintoHomeHeader .kinto-global-favorites,#kintoHomeHeader [id="kintoGlobalFavoritesLink"]').forEach(item=>item.remove());
+        }
+
         async function restoreCustomerSession() {
             ensureCustomerAuthInHeader();
             const authLink = document.getElementById('authLink');
@@ -308,17 +338,7 @@
             if (!customerId) {
                 currentHomeCustomer = null;
                 document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
-                if (authLink) {
-                    authLink.href = 'login.html';
-                    authLink.classList.add('primary');
-                    authLink.setAttribute('aria-label', 'دخول حسابي');
-                    authLink.innerHTML = '<i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span id="authText" class="action-label">دخول حسابي</span>';
-                }
-                if (logoutBtn) {
-                    logoutBtn.hidden = true;
-                    logoutBtn.style.setProperty('display', 'none', 'important');
-                }
-                ensureCustomerAuthInHeader();
+                renderCustomerAuthState(false, null);
                 window.KintoPublicCustomerNavigationV157?.sync?.();
                 return null;
             }
@@ -332,17 +352,7 @@
                 localStorage.setItem('viewingCustomerId', String(customer.id));
                 localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, name: customer.name || '', code: customer.code || '', country: customer.country || '', secondary_phone: customer.secondary_phone || '' }));
                 document.documentElement.dataset.kintoCustomerLoggedIn = 'true';
-                if (authLink) {
-                    authLink.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id)) + '&tab=activeOrders';
-                    authLink.classList.remove('primary');
-                    authLink.setAttribute('aria-label', 'طلباتي');
-                    authLink.innerHTML = '<i class="fa-solid fa-box" aria-hidden="true"></i><span id="authText" class="action-label">طلباتي</span>';
-                }
-                if (logoutBtn) {
-                    logoutBtn.hidden = false;
-                    logoutBtn.style.setProperty('display', 'inline-flex', 'important');
-                }
-                ensureCustomerAuthInHeader();
+                renderCustomerAuthState(true, customer);
                 return customer;
             } catch (e) {
                 console.error('Customer session restore failed:', e);
@@ -351,17 +361,7 @@
                 localStorage.removeItem('meshwar_customer_id');
                 localStorage.removeItem('loggedInUser');
                 localStorage.removeItem('viewingCustomerId');
-                if (authLink) {
-                    authLink.href = 'login.html';
-                    authLink.classList.add('primary');
-                    authLink.setAttribute('aria-label', 'دخول حسابي');
-                    authLink.innerHTML = '<i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span id="authText" class="action-label">دخول حسابي</span>';
-                }
-                if (logoutBtn) {
-                    logoutBtn.hidden = true;
-                    logoutBtn.style.setProperty('display', 'none', 'important');
-                }
-                ensureCustomerAuthInHeader();
+                renderCustomerAuthState(false, null);
                 window.KintoPublicCustomerNavigationV157?.sync?.();
                 return null;
             }
@@ -548,6 +548,6 @@ loadLocalPublicStores();
     <script src="js/local-products-pagination-v60.js?v=20260831"></script>
     <script src="js/product-deeplink-v56.js?v=20260831"></script>
 <link rel="stylesheet" href="css/customer-favorites-nav-v148.css?v=20260912-v148"><script src="js/customer-favorites-nav-v148.js?v=20260912-v148"></script>
-<script src="js/public-customer-navigation-v157.js?v=20260913-v160-guest-state-lock" defer></script>
+<script src="js/public-customer-navigation-v157.js?v=20260913-v161-auth-state-rebuild" defer></script>
 </body>
 </html>
