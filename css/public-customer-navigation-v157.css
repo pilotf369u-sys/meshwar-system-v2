@@ -26,3 +26,9 @@ html[data-mw-global-theme="light"] .kinto-public-drawer{color:#17372f;background
 
 /* KINTO_HEADER_AUTH_STATE_V159 */
 #kintoHomeHeader [hidden]{display:none!important}#kintoHomeHeader #authLink{isolation:isolate}#kintoHomeHeader #authLink .action-label{white-space:nowrap}
+
+/* KINTO_HEADER_GUEST_STATE_V160 */
+html[data-kinto-customer-logged-in="false"] #kintoHomeHeader #logoutBtn,
+html[data-kinto-customer-logged-in="false"] #kintoHomeHeader .kinto-public-notifications{display:none!important;visibility:hidden!important;pointer-events:none!important;width:0!important;min-width:0!important;height:0!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;overflow:hidden!important}
+html[data-kinto-customer-logged-in="false"] #kintoHomeHeader #authLink{display:inline-flex!important;visibility:visible!important;pointer-events:auto!important}
+@media(max-width:1024px){html[data-kinto-customer-logged-in="false"] #kintoHomeHeader .user-auth-zone{justify-content:flex-end!important}html[data-kinto-customer-logged-in="false"] #kintoHomeHeader #authLink{flex:0 0 auto!important;max-width:none!important;overflow:visible!important}}
