@@ -60,6 +60,15 @@
       notificationBadge.textContent = '0';
       notificationsButton.appendChild(notificationBadge);
     }
+    const notificationsHead = $('notifications')?.querySelector('.panel-head');
+    if (notificationsHead && !$('markAllNotificationsRead')) {
+      const markAll = document.createElement('button');
+      markAll.id = 'markAllNotificationsRead';
+      markAll.type = 'button';
+      markAll.className = 'btn-details';
+      markAll.innerHTML = '<i class="fa-solid fa-check-double" aria-hidden="true"></i> تعليم الكل كمقروء';
+      notificationsHead.appendChild(markAll);
+    }
 
     const button = document.createElement('button');
     button.type = 'button';
@@ -167,6 +176,7 @@
     $('reviewCameraInput')?.addEventListener('change', event => addFiles(event.target.files));
     $('reviewFilesInput')?.addEventListener('change', event => addFiles(event.target.files));
     $('productReviewForm')?.addEventListener('submit', submitReview);
+    $('markAllNotificationsRead')?.addEventListener('click', markVisibleNotificationsRead);
     $('reviewProductsGrid')?.addEventListener('click', event => {
       const button = event.target.closest('[data-review-index]');
       if (button) openModal(state.items[Number(button.dataset.reviewIndex)]);
@@ -181,7 +191,7 @@
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
     document.addEventListener('click', event => {
       if (!event.target.closest('[data-tab="notifications"]')) return;
-      setTimeout(async () => { injectModerationNotifications(); decorateOrderNotificationKeys(); await markVisibleNotificationsRead(); }, 100);
+      setTimeout(async () => { injectModerationNotifications(); decorateOrderNotificationKeys(); await refreshNotificationBadge(); }, 100);
     });
     const historyBody = $('historyOrdersTableBody');
     if (historyBody) new MutationObserver(decorateOrderReviewButtons).observe(historyBody, { childList: true, subtree: true });
