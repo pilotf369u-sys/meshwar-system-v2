@@ -102,7 +102,7 @@
     <link rel="stylesheet" href="css/modern-ui-v54.css?v=20260831">
     <link rel="stylesheet" href="css/home-store-portals-v55.css?v=20260831">
     <link rel="stylesheet" href="css/portal-product-cards-v56.css?v=20260831">
-    <link rel="stylesheet" href="css/public-customer-navigation-v157.css?v=20260913-v1576-overlay-state-v1583-compact-two-row-header">
+    <link rel="stylesheet" href="css/public-customer-navigation-v157.css?v=20260913-v159-auth-state-fix">
     <script defer src="js/global-theme-toggle-v1.js?v=20260913-v157-index"></script>
     <style id="kintoUnifiedHomeHeaderV1">
     #kintoHomeHeader{position:sticky;top:0;z-index:80;width:100vw;margin-inline:calc(50% - 50vw);border-bottom:1px solid rgba(229,185,63,.22);background:rgba(3,43,37,.94);box-shadow:0 12px 34px rgba(0,0,0,.18);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
@@ -123,7 +123,7 @@
 </head>
 <body style="background-color:#063b32!important">
 
-<header id="kintoHomeHeader" class="top"><div class="top-inner"><a class="brand" href="index.html" aria-label="KINTO الرئيسية"><img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="52" height="52" class="kinto-boot-logo kinto-boot-logo--nav" alt="KINTO Logo" decoding="async" fetchpriority="high"><span class="brand-copy"><strong>KINTO</strong><small>SHOP • SHIP • ENJOY</small></span></a><nav class="main-nav" aria-label="التنقل الرئيسي"><a class="nav-link active" href="index.html" aria-current="page"><i class="nav-icon fa-solid fa-house" aria-hidden="true"></i><span>الرئيسية</span></a><a class="nav-link" href="local-stores.html"><i class="nav-icon fa-solid fa-store" aria-hidden="true"></i><span>المتاجر المحلية</span></a><a class="nav-link" href="global-stores.html"><i class="nav-icon fa-solid fa-earth-americas" aria-hidden="true"></i><span>المتاجر العالمية</span></a><a class="nav-link" href="#meshwarFeaturedCampaigns"><i class="nav-icon fa-solid fa-star" aria-hidden="true"></i><span>المتاجر المميزة</span></a></nav><div id="meshwarHeaderControls" class="header-actions"><div class="user-auth-zone"><a href="#" id="authLink" class="header-action account-btn"><i class="fa-regular fa-circle-user" aria-hidden="true"></i><span id="authText" class="action-label">حسابي / تسجيل</span><span class="account-divider" aria-hidden="true"></span><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i><span class="action-label orders-label">طلباتي</span></a><a href="#" id="logoutBtn" onclick="logout()" class="header-action header-logout-btn" style="display:none">تسجيل خروج</a></div></div></div></header>
+<header id="kintoHomeHeader" class="top"><div class="top-inner"><a class="brand" href="index.html" aria-label="KINTO الرئيسية"><img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="52" height="52" class="kinto-boot-logo kinto-boot-logo--nav" alt="KINTO Logo" decoding="async" fetchpriority="high"><span class="brand-copy"><strong>KINTO</strong><small>SHOP • SHIP • ENJOY</small></span></a><nav class="main-nav" aria-label="التنقل الرئيسي"><a class="nav-link active" href="index.html" aria-current="page"><i class="nav-icon fa-solid fa-house" aria-hidden="true"></i><span>الرئيسية</span></a><a class="nav-link" href="local-stores.html"><i class="nav-icon fa-solid fa-store" aria-hidden="true"></i><span>المتاجر المحلية</span></a><a class="nav-link" href="global-stores.html"><i class="nav-icon fa-solid fa-earth-americas" aria-hidden="true"></i><span>المتاجر العالمية</span></a><a class="nav-link" href="#meshwarFeaturedCampaigns"><i class="nav-icon fa-solid fa-star" aria-hidden="true"></i><span>المتاجر المميزة</span></a></nav><div id="meshwarHeaderControls" class="header-actions"><div class="user-auth-zone"><a href="login.html" id="authLink" class="header-action account-btn primary" aria-label="دخول حسابي"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span id="authText" class="action-label">دخول حسابي</span></a><a href="#" id="logoutBtn" onclick="logout()" class="header-action header-logout-btn" hidden style="display:none!important">تسجيل خروج</a></div></div></div></header>
 <section class="mx-auto max-w-7xl px-4 pt-8"><div class="grid gap-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-2xl backdrop-blur-md md:grid-cols-[1.15fr_.85fr] md:p-10 dark:border-white/10 dark:bg-slate-900/60"><div><h2 class="mt-4 text-4xl font-black leading-tight text-slate-950 md:text-6xl dark:text-white">تسوّق، اطلب، وتابع<br><span class="bg-gradient-to-r from-sky-400 to-indigo-500 bg-clip-text text-transparent">من مكان واحد.</span></h2><p class="mt-4 max-w-2xl text-sm leading-7 text-slate-500 dark:text-slate-400">واجهة موحدة للمتاجر المحلية والعالمية مع وصول سريع للطلب والتتبع.</p><div class="mt-6 flex flex-wrap gap-3"><button type="button" onclick="document.getElementById('orderModal').style.display='block'" class="rounded-xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-5 py-3 font-black text-white shadow-lg shadow-amber-400/10 transition-all duration-300 hover:scale-[1.02] hover:border-amber-300 hover:shadow-amber-400/20">طلب منتج مباشر</button><a href="#localStoresPublic" class="rounded-xl border border-slate-200 bg-white/50 px-5 py-3 font-black text-slate-700 no-underline dark:border-white/10 dark:bg-white/5 dark:text-slate-200">المتاجر المحلية</a></div></div><div class="rounded-2xl border border-amber-400/20 bg-slate-900/80 p-5 shadow-lg shadow-amber-400/5 backdrop-blur-md"><div class="text-sm font-black text-slate-100">تتبع سريع للطلب</div><div class="mt-1 text-xs text-slate-300">أدخل رقم الطلب أو الباركود.</div><div class="mt-4 flex gap-2"><input id="meshwarHeroTrackInput" class="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/10" placeholder="MW / رقم الطلب / الباركود"><button id="meshwarHeroTrackBtn" type="button" onclick="meshwarQuickTrack()" class="rounded-xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-4 font-black text-white shadow-md shadow-amber-400/10 transition hover:border-amber-300">تتبع</button></div></div></div><div id="meshwarVideoAd" class="mx-auto mt-4 max-w-7xl px-4"><div id="meshwarVideoFrame" class="overflow-hidden rounded-3xl border border-amber-400/20 bg-black shadow-2xl shadow-amber-400/5"><video id="meshwarPromoVideo" class="aspect-[16/5] min-h-[180px] w-full object-cover sm:aspect-[16/6]" autoplay muted loop playsinline controls preload="metadata"><source src="videos/promo.mp4" type="video/mp4"></video><button id="meshwarPromoSoundBtn" type="button" class="hidden" aria-hidden="true" tabindex="-1">🔇 تشغيل الصوت</button><button id="meshwarPromoPlayBtn" type="button" class="hidden" aria-hidden="true" tabindex="-1">⏯ تشغيل / إيقاف</button></div></div></section>
 
     <button class="fixed-order-btn" onclick="document.getElementById('orderModal').style.display='block'"><i class="fa-solid fa-cart-shopping"></i> طلب منتج</button>
@@ -307,10 +307,19 @@
             const customerId = getStoredCustomerId();
             if (!customerId) {
                 currentHomeCustomer = null;
-                if (authText) authText.innerText = 'حسابي / تسجيل';
-                if (authLink) authLink.href = 'login.html';
-                if (logoutBtn) logoutBtn.style.display = 'none';
+                document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
+                if (authLink) {
+                    authLink.href = 'login.html';
+                    authLink.classList.add('primary');
+                    authLink.setAttribute('aria-label', 'دخول حسابي');
+                    authLink.innerHTML = '<i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span id="authText" class="action-label">دخول حسابي</span>';
+                }
+                if (logoutBtn) {
+                    logoutBtn.hidden = true;
+                    logoutBtn.style.setProperty('display', 'none', 'important');
+                }
                 ensureCustomerAuthInHeader();
+                window.KintoPublicCustomerNavigationV157?.sync?.();
                 return null;
             }
             try {
@@ -322,18 +331,38 @@
                 localStorage.setItem('meshwar_customer_id', String(customer.id));
                 localStorage.setItem('viewingCustomerId', String(customer.id));
                 localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, name: customer.name || '', code: customer.code || '', country: customer.country || '', secondary_phone: customer.secondary_phone || '' }));
-                if (authText) authText.innerText = 'أهلاً، ' + (customer.name || 'العميل') + ' | لوحتي';
-                if (authLink) authLink.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id));
-                if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+                document.documentElement.dataset.kintoCustomerLoggedIn = 'true';
+                if (authLink) {
+                    authLink.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id)) + '&tab=activeOrders';
+                    authLink.classList.remove('primary');
+                    authLink.setAttribute('aria-label', 'طلباتي');
+                    authLink.innerHTML = '<i class="fa-solid fa-box" aria-hidden="true"></i><span id="authText" class="action-label">طلباتي</span>';
+                }
+                if (logoutBtn) {
+                    logoutBtn.hidden = false;
+                    logoutBtn.style.setProperty('display', 'inline-flex', 'important');
+                }
                 ensureCustomerAuthInHeader();
                 return customer;
             } catch (e) {
                 console.error('Customer session restore failed:', e);
                 currentHomeCustomer = null;
-                if (authText) authText.innerText = 'حسابي / تسجيل';
-                if (authLink) authLink.href = 'login.html';
-                if (logoutBtn) logoutBtn.style.display = 'none';
+                document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
+                localStorage.removeItem('meshwar_customer_id');
+                localStorage.removeItem('loggedInUser');
+                localStorage.removeItem('viewingCustomerId');
+                if (authLink) {
+                    authLink.href = 'login.html';
+                    authLink.classList.add('primary');
+                    authLink.setAttribute('aria-label', 'دخول حسابي');
+                    authLink.innerHTML = '<i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span id="authText" class="action-label">دخول حسابي</span>';
+                }
+                if (logoutBtn) {
+                    logoutBtn.hidden = true;
+                    logoutBtn.style.setProperty('display', 'none', 'important');
+                }
                 ensureCustomerAuthInHeader();
+                window.KintoPublicCustomerNavigationV157?.sync?.();
                 return null;
             }
         }
@@ -362,6 +391,7 @@
 
         function logout() {
             currentHomeCustomer = null;
+            document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
             localStorage.removeItem('meshwar_customer_id');
             localStorage.removeItem('loggedInUser');
             localStorage.removeItem('viewingCustomerId');
@@ -518,6 +548,6 @@ loadLocalPublicStores();
     <script src="js/local-products-pagination-v60.js?v=20260831"></script>
     <script src="js/product-deeplink-v56.js?v=20260831"></script>
 <link rel="stylesheet" href="css/customer-favorites-nav-v148.css?v=20260912-v148"><script src="js/customer-favorites-nav-v148.js?v=20260912-v148"></script>
-<script src="js/public-customer-navigation-v157.js?v=20260913-v1576-overlay-state-v1583-compact-two-row-header" defer></script>
+<script src="js/public-customer-navigation-v157.js?v=20260913-v159-auth-state-fix" defer></script>
 </body>
 </html>
