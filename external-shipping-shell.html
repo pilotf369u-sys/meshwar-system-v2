@@ -52,6 +52,13 @@
         customerTheme.rel='stylesheet';
         customerTheme.href='css/customer-kinto-theme-v126.css?v=20260909-v129-ivory-pagination';
         d.head.appendChild(customerTheme);
+        // The shell injects customerTheme after dashboard.html. Re-append the shared
+        // navigation stylesheet after it so the unified header remains authoritative
+        // on desktop too (legacy .main-nav must not reappear through cascade order).
+        const unifiedHeader=d.createElement('link');
+        unifiedHeader.rel='stylesheet';
+        unifiedHeader.href='css/public-customer-navigation-v157.css?v=20260915-v167-desktop-single-nav';
+        d.head.appendChild(unifiedHeader);
         const customerPolish=d.createElement('script');
         customerPolish.src='js/customer-light-polish-v1.js?v=20260826-customer-polish-v1.1-final';
         d.head.appendChild(customerPolish);
