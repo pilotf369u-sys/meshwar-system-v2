@@ -53,3 +53,6 @@ logout?.addEventListener('click',async()=>{
   }
 });
 syncCustomer();
+
+/* V164: isolated adapter; store/order/product logic above remains untouched. */
+(()=>{if(document.querySelector('script[data-kinto-shared-public-header]'))return;const s=document.createElement('script');s.src='js/kinto-shared-public-header-v164.js?v=20260915-v164';s.defer=true;s.dataset.kintoSharedPublicHeader='true';document.head.appendChild(s)})();
