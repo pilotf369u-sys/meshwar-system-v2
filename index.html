@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" style="background-color:#063b32!important;color-scheme:dark">
+<html lang="ar" dir="rtl" class="kinto-booting" style="background-color:#063b32!important;color-scheme:dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +20,48 @@
       html.kinto-ready,html.kinto-ready body{background:#032b25!important;background-image:linear-gradient(180deg,#063b32 0%,#04362e 46%,#032b25 100%)!important;}
       @media (prefers-reduced-motion:reduce){html.kinto-ready body>*{transition:none!important;}}
     </style>
-    <script>(()=>{try{window.history.scrollRestoration='manual'}catch{}const pinTop=()=>window.scrollTo(0,0);pinTop();window.addEventListener('pageshow',pinTop,{once:true});document.documentElement.classList.add('kinto-ready')})()</script>
+    <script>
+(()=>{
+  'use strict';
+
+  const root = document.documentElement;
+  let revealed = false;
+  let failsafe = null;
+
+  try {
+    window.history.scrollRestoration = 'manual';
+  } catch {}
+
+  const reveal = () => {
+    if (revealed) return;
+    revealed = true;
+
+    if (failsafe) {
+      clearTimeout(failsafe);
+      failsafe = null;
+    }
+
+    window.scrollTo(0, 0);
+
+    root.classList.remove('kinto-booting');
+    root.classList.add('kinto-ready');
+  };
+
+  const afterDomReady = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(reveal);
+    });
+  };
+
+  failsafe = setTimeout(reveal, 3000);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', afterDomReady, { once: true });
+  } else {
+    afterDomReady();
+  }
+})();
+    </script>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script>window.tailwind=window.tailwind||{};window.tailwind.config={darkMode:'class',corePlugins:{preflight:false}};(()=>{const warn=console.warn.bind(console);console.warn=(...args)=>{if(typeof args[0]==='string'&&args[0].includes('cdn.tailwindcss.com should not be used in production'))return;warn(...args)}})()</script>
