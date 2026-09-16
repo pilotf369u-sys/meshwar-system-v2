@@ -242,36 +242,6 @@
 
   </div>
 
-  <div id="meshwarVideoAd" class="mw-home-search-slot mx-auto mt-4 max-w-7xl px-4">
-
-    <div class="mw-home-search-bar rounded-2xl border border-amber-400/20 bg-slate-900/80 p-5 shadow-lg shadow-amber-400/5 backdrop-blur-md">
-
-      <div class="text-sm font-black text-slate-100">تتبع سريع للطلب</div>
-
-      <div class="mt-1 text-xs text-slate-300">
-        أدخل رقم الطلب أو الباركود.
-      </div>
-
-      <div class="mt-4 flex gap-2">
-
-        <input id="meshwarHeroTrackInput"
-               class="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/10"
-               placeholder="MW / رقم الطلب / الباركود">
-
-        <button id="meshwarHeroTrackBtn"
-                type="button"
-                onclick="meshwarQuickTrack()"
-                class="rounded-xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-4 font-black text-white shadow-md shadow-amber-400/10 transition hover:border-amber-300">
-          تتبع
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
 
     <button class="fixed-order-btn" onclick="document.getElementById('orderModal').style.display='block'"><i class="fa-solid fa-cart-shopping"></i> طلب منتج</button>
     <div class="header-container kinto-featured-store"><div class="kinto-featured-logo-wrap"><img class="kinto-boot-logo kinto-boot-logo--featured main-logo" src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="96" height="96" alt="KINTO Logo" decoding="async"></div><div class="kinto-featured-copy"><span class="kinto-featured-badge">✦ متجر مختار</span><h1 class="kinto-featured-title">KINTO <span class="kinto-featured-accent">Featured Store</span></h1><p class="kinto-featured-subtitle">واجهة مختارة بعناية لتجربة تسوق وشحن متكاملة بهوية KINTO الفاخرة.</p></div></div>
@@ -683,8 +653,6 @@ function renderLocalSpecialtyFilters(){const box=document.getElementById('localS
 async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false}).range(0,999);if(error)throw error;localPublicStores=data||[];renderLocalSpecialtyFilters();renderLocalPublicStores();const storeId=new URLSearchParams(window.location.search).get('storeId');if(storeId){window.showStoresTab?.('local');await openStore('',storeId)}}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class="local-empty">تعذر تحميل المتاجر المحلية حالياً.</div>'}}
 loadLocalPublicStores();
 </script>
-
-<script>/* MESHWAR_INDEX_UI_V3 */function meshwarQuickTrack(){const a=document.getElementById('meshwarHeroTrackInput'),v=String(a?.value||'').trim();if(!v)return a?.focus();const x=[...document.querySelectorAll('input')].find(e=>e!==a&&/track|order|barcode|shipment|code|تتبع|طلب|باركود|شحنة/i.test([e.id,e.name,e.placeholder].filter(Boolean).join(' ')));if(x){x.value=v;x.dispatchEvent(new Event('input',{bubbles:true}));}if(typeof window.trackOrder==='function')return window.trackOrder(v);if(typeof window.trackShipment==='function')return window.trackShipment(v);const b=[...document.querySelectorAll('button,a')].find(e=>e.id!=='meshwarHeroTrackBtn'&&/تتبع|track/i.test(e.textContent||''));if(b){b.scrollIntoView({behavior:'smooth',block:'center'});if(b.tagName==='BUTTON')setTimeout(()=>b.click(),300)}}</script>
 
 <script>/* MESHWAR_COMPACT_SHOWCASE_UI_V6 */(function(){const intl=document.getElementById('internationalStoresSection'),loc=document.getElementById('localStoresPublic'),bi=document.getElementById('showInternationalStoresBtn'),bl=document.getElementById('showLocalStoresBtn');function paint(btn,active){if(!btn)return;btn.classList.toggle('bg-gradient-to-r',active);btn.classList.toggle('from-sky-600',active);btn.classList.toggle('to-indigo-600',active);btn.classList.toggle('border-amber-400/50',active);btn.classList.toggle('text-white',active);btn.classList.toggle('bg-white/5',!active);btn.classList.toggle('border-amber-400/25',!active);btn.classList.toggle('text-slate-100',!active);btn.setAttribute('aria-selected',active?'true':'false')}function show(k){const local=k==='local';if(intl)intl.style.display=local?'none':'';if(loc)loc.style.display=local?'':'none';paint(bi,!local);paint(bl,local)}window.showStoresTab=show;bi?.addEventListener('click',()=>show('international'));bl?.addEventListener('click',()=>show('local'));const selectedStoreId=new URLSearchParams(window.location.search).get('storeId');show(selectedStoreId?'local':'international');const v=document.getElementById('meshwarPromoVideo'),sb=document.getElementById('meshwarPromoSoundBtn'),pb=document.getElementById('meshwarPromoPlayBtn');sb?.addEventListener('click',()=>{if(!v)return;v.muted=!v.muted;sb.textContent=v.muted?'🔇 تشغيل الصوت':'🔊 كتم الصوت'});pb?.addEventListener('click',()=>{if(!v)return;v.paused?v.play().catch(()=>{}):v.pause()})})();</script>
 <script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>
