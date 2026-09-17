@@ -26,3 +26,13 @@ html[data-mw-global-theme="light"] #kintoStoreHeader .store-customer-chip{color:
 @media(max-width:620px){#kintoStoreHeader .store-primary-nav,#kintoStoreHeader .store-header-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%}#kintoStoreHeader .store-header-actions{order:2;flex:1 0 100%}#kintoStoreHeader .store-primary-nav{order:3}#kintoStoreHeader .store-header-btn,#kintoStoreHeader #mwGlobalThemeToggle{width:100%!important;min-width:0!important;padding:0 7px!important}.store-header-actions .store-logout:not([hidden]){display:inline-flex}#kintoStoreHeader .store-customer-state{flex-wrap:wrap}}
 @media(max-width:460px){.store-shell{width:min(100% - 16px,1180px)!important;padding-top:8px!important}#kintoStoreHeader.store-nav{top:4px;padding:8px;border-radius:15px}#kintoStoreHeader .store-brand img{width:42px;height:42px}#kintoStoreHeader .store-brand>span{display:none}#kintoStoreHeader .store-header-btn,#kintoStoreHeader #mwGlobalThemeToggle{min-height:38px!important;height:38px!important;font-size:10px!important}#kintoStoreHeader .store-customer-state{font-size:10px}}
 @media(prefers-reduced-motion:reduce){#kintoStoreHeader .store-header-btn{transition:none}}
+#localStoreProductsGrid:has(> .store-state:only-child),
+#localStoreProductsGrid:has(> .local-v3-state:only-child){
+  min-height:520px;
+}
+@media(max-width:640px){
+  #localStoreProductsGrid:has(> .store-state:only-child),
+  #localStoreProductsGrid:has(> .local-v3-state:only-child){
+    min-height:320px;
+  }
+}
