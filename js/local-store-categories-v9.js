@@ -247,7 +247,7 @@
   function cleanupLegacyCategoryBars(keep=null){
     const selectors=['#mwCategoryBar','.old-category-bar','[data-legacy-category-bar]','[data-mw-legacy-category-bar]'];
     selectors.forEach(sel=>document.querySelectorAll(sel).forEach(node=>{if(node!==keep)node.remove()}));
-    document.querySelectorAll('#mwCategoryShell').forEach((node,index)=>{if(node!==keep||index>0)node.remove()});
+    document.querySelectorAll('#mwCategoryShell').forEach((node,index)=>{if(keep?node!==keep:index>0)node.remove()});
   }
 
   function ensureProductsContainer(){
@@ -318,8 +318,10 @@
   function renderCategoryShell(){
     const grid=document.getElementById('localStoreProductsGrid'),container=ensureProductsContainer();if(!grid||!container)return;
     cleanupLegacyCategoryBars();
-    let shell=document.createElement('div');shell.id='mwCategoryShell';shell.innerHTML='<div class="mw-category-bar" data-main-row></div><div class="mw-subcategory-bar" data-sub-row></div>';
-    container.insertBefore(shell,grid);cleanupLegacyCategoryBars(shell);
+    let shell=document.getElementById('mwCategoryShell');
+    if(!shell){shell=document.createElement('div');shell.id='mwCategoryShell';shell.innerHTML='<div class="mw-category-bar" data-main-row></div><div class="mw-subcategory-bar" data-sub-row></div>';container.insertBefore(shell,grid)}
+    else if(shell.parentElement!==container)container.insertBefore(shell,grid);
+    cleanupLegacyCategoryBars(shell);
     const main=shell.querySelector('[data-main-row]'),sub=shell.querySelector('[data-sub-row]');
     const rs=frontRoots(),hasGeneral=[...state.frontProducts.values()].some(p=>!p.category_id),tabs=[['all','الكل'],['featured','⭐ المميزة'],...(hasGeneral?[['general','عام']]:[]),...rs.map(c=>[c.slug,c.name])];
     main.innerHTML=tabs.map(([v,l])=>`<button type="button" data-cat-filter="${esc(v)}">${esc(l)}</button>`).join('');
