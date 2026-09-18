@@ -247,7 +247,7 @@
   function cleanupLegacyCategoryBars(keep=null){
     const selectors=['#mwCategoryBar','.old-category-bar','[data-legacy-category-bar]','[data-mw-legacy-category-bar]'];
     selectors.forEach(sel=>document.querySelectorAll(sel).forEach(node=>{if(node!==keep)node.remove()}));
-    document.querySelectorAll('#mwCategoryShell').forEach((node,index)=>{if(node!==keep||index>0)node.remove()});
+    document.querySelectorAll('#mwCategoryShell').forEach((node,index)=>{if(keep?node!==keep:index>0)node.remove()});
   }
 
   function ensureProductsContainer(){
@@ -268,7 +268,7 @@
       #local-store-products-container{position:relative!important;width:100%;min-width:0}
       #localStoreProductsTitle{color:#0f172a!important;font-weight:800!important;font-size:1.25rem!important;line-height:1.35!important;opacity:1!important}
       html.dark #localStoreProductsTitle{color:#f8fafc!important}
-      #mwCategoryShell{position:sticky!important;top:0!important;z-index:50!important;margin:0 0 14px;padding:10px;border:1px solid rgba(212,175,55,.28);border-radius:16px;background:rgba(11,19,43,.96);box-shadow:0 12px 30px rgba(2,6,23,.22);backdrop-filter:blur(14px);isolation:isolate}
+      #mwCategoryShell{position:sticky!important;top:0!important;z-index:50!important;margin:0 0 14px;padding:10px;border:1px solid rgba(212,175,55,.28);border-radius:16px;background:rgba(6,59,50,.96);box-shadow:0 12px 30px rgba(2,6,23,.22);backdrop-filter:blur(14px);isolation:isolate}
       #mwCategoryShell .mw-category-bar,#mwCategoryShell .mw-subcategory-bar{display:flex;gap:8px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:thin;-webkit-overflow-scrolling:touch;padding:2px 1px}
       #mwCategoryShell .mw-subcategory-bar{margin-top:8px;padding-top:8px;border-top:1px solid rgba(212,175,55,.14)}
       #mwCategoryShell .mw-subcategory-bar:empty{display:none}
@@ -318,8 +318,10 @@
   function renderCategoryShell(){
     const grid=document.getElementById('localStoreProductsGrid'),container=ensureProductsContainer();if(!grid||!container)return;
     cleanupLegacyCategoryBars();
-    let shell=document.createElement('div');shell.id='mwCategoryShell';shell.innerHTML='<div class="mw-category-bar" data-main-row></div><div class="mw-subcategory-bar" data-sub-row></div>';
-    container.insertBefore(shell,grid);cleanupLegacyCategoryBars(shell);
+    let shell=document.getElementById('mwCategoryShell');
+    if(!shell){shell=document.createElement('div');shell.id='mwCategoryShell';shell.innerHTML='<div class="mw-category-bar" data-main-row></div><div class="mw-subcategory-bar" data-sub-row></div>';container.insertBefore(shell,grid)}
+    else if(shell.parentElement!==container)container.insertBefore(shell,grid);
+    cleanupLegacyCategoryBars(shell);
     const main=shell.querySelector('[data-main-row]'),sub=shell.querySelector('[data-sub-row]');
     const rs=frontRoots(),hasGeneral=[...state.frontProducts.values()].some(p=>!p.category_id),tabs=[['all','الكل'],['featured','⭐ المميزة'],...(hasGeneral?[['general','عام']]:[]),...rs.map(c=>[c.slug,c.name])];
     main.innerHTML=tabs.map(([v,l])=>`<button type="button" data-cat-filter="${esc(v)}">${esc(l)}</button>`).join('');
