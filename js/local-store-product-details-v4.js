@@ -46,6 +46,9 @@
   document.addEventListener('click',async e=>{
     const btn=e.target.closest?.('.local-v3-order[data-pid]');
     if(!btn||btn.disabled)return;
+    if(btn.dataset.mwV4Confirmed==='1')return;
+    const card=btn.closest('.local-v3-card[data-product-card]');
+    if(card&&window.KintoProductModalV145?.open){e.preventDefault();e.stopImmediatePropagation();window.KintoProductModalV145.open(card);return}
     e.preventDefault();e.stopImmediatePropagation();
     try{
       activeProductId=String(btn.dataset.pid||'').trim();
