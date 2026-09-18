@@ -84,7 +84,7 @@
   },true);
 
   const script=document.createElement('script');
-  script.src='js/local-store-product-details-v4-core.js?v=desc-unlimit-v8-1';
+  script.src='js/local-store-product-details-v4-core.js?v=20260918-v116';
   script.dataset.mwProductDetailsV4Core='1';
   script.onload=()=>{
     const variant=document.createElement('script');
@@ -100,7 +100,7 @@
         v7.dataset.mwUiStockV7='1';
         v7.onload=()=>{
           const detailed=document.createElement('script');
-          detailed.src='js/local-store-detailed-description-v8.js?v=detailed-desc-v8';
+          detailed.src='js/local-store-detailed-description-v8.js?v=20260918-v116';
           detailed.dataset.mwDetailedDescriptionV8='1';
           detailed.onload=()=>{
             const categories=document.createElement('script');
