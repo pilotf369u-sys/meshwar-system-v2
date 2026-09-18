@@ -6,6 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>KINTO Store</title>
   <link rel="stylesheet" href="css/local-cart-v93.css?v=20260902-v94">
+  <link rel="stylesheet" href="css/store-unified-header-v1.css?v=20260910-v2">
   <link rel="stylesheet" href="css/store-product-reviews-v140.css?v=20260912-v143-compact-cards">
 <link rel="stylesheet" href="css/store-card-modern-v144.css?v=20260912-v144-2-polish">
 <link rel="stylesheet" href="css/storefront-premium-v145.css?v=20260912-v145-1-badge">
@@ -14,6 +15,7 @@
     :root{color-scheme:dark}
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:linear-gradient(180deg,#063b32 0%,#04362e 46%,#032b25 100%);color:#f8fafc}
+    html[data-mw-global-theme="dark"] body{background:#063b32!important;background-image:none!important;color:#f8fafc!important}
     .store-shell{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:18px 0 48px}
     .store-hero{margin:20px 0 16px;padding:22px;border:1px solid rgba(229,185,63,.28);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.04));box-shadow:0 22px 55px rgba(0,0,0,.16)}
     .store-title{margin:0;font-size:clamp(24px,4vw,38px);color:#ffe08a}
@@ -37,9 +39,27 @@
 </head>
 <body>
   <main class="store-shell">
-    <div id="kintoSharedPublicHeaderMount"></div>
-    <script src="js/kinto-shared-public-header-v164.js?v=20260915-v164"></script>
-
+    <header id="kintoStoreHeader" class="store-nav" aria-label="ترويسة متجر KINTO">
+      <div class="store-nav-main">
+        <a class="store-brand" href="index.html" aria-label="KINTO الرئيسية">
+          <img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="48" height="48" alt="شعار KINTO">
+          <span><strong>KINTO</strong><small>SHOP • SHIP • ENJOY</small></span>
+        </a>
+        <nav class="store-primary-nav" aria-label="التنقل الرئيسي">
+          <a class="store-header-btn store-back" href="index.html"><span aria-hidden="true">⌂</span><span>الرئيسية</span></a>
+        </nav>
+        <nav class="store-header-actions" aria-label="أدوات العميل">
+          <a class="store-header-btn store-shop-now" href="index.html?openOrder=1"><span aria-hidden="true">🛒</span><span>تسوق الآن</span></a>
+          <button class="store-header-btn" type="button" id="mwGlobalThemeToggle" aria-label="تبديل الوضع المضيء والداكن"><span aria-hidden="true">☀️</span><span>Light</span></button>
+          <a class="store-header-btn" id="kintoStoreAccount" href="login.html"><span aria-hidden="true">◉</span><span id="kintoStoreAccountLabel">حسابي</span></a>
+          <button class="store-header-btn store-logout" type="button" id="kintoStoreLogout" hidden><span aria-hidden="true">↪</span><span>تسجيل الخروج</span></button>
+        </nav>
+      </div>
+      <div class="store-customer-state" id="kintoStoreCustomerState" aria-live="polite">
+        <span class="store-customer-greeting">مرحباً بك في متجر KINTO</span>
+        <span class="store-customer-chip" id="kintoStoreCustomerCode" hidden></span>
+      </div>
+    </header>
 
     <section class="store-hero">
       <div class="store-hero-identity">
@@ -65,6 +85,8 @@
   </main>
 
   <script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>
+  <script src="js/global-theme-toggle-v1.js?v=20260909-global-theme-v1.2-toggle-fix"></script>
+  <script type="module" src="js/store-unified-header-v1.js?v=20260910-v2"></script>
   <script>
   (()=>{'use strict';
     const SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
