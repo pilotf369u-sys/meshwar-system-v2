@@ -20,12 +20,12 @@
   function injectCss(){
     if(document.getElementById('mwGlobalStoreSearchCss'))return;
     const s=document.createElement('style');s.id='mwGlobalStoreSearchCss';s.textContent=`
-      #mwGlobalStoreSearch{position:relative;z-index:51;margin:0 0 12px;padding:12px;border:1px solid rgba(56,189,248,.24);border-radius:16px;background:rgba(15,23,42,.94);box-shadow:0 10px 28px rgba(2,6,23,.18);backdrop-filter:blur(14px)}
+      #mwGlobalStoreSearch{position:relative;z-index:51;margin:0 0 12px;padding:12px;border:1px solid rgba(212,175,55,.28);border-radius:16px;background:rgba(6,59,50,.96);box-shadow:0 10px 28px rgba(2,6,23,.18);backdrop-filter:blur(14px)}
       #mwGlobalStoreSearch .mw-global-search-row{display:flex;align-items:center;gap:8px}
-      #mwGlobalStoreSearch input{width:100%;min-width:0;box-sizing:border-box;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#fff;color:#0f172a;padding:11px 13px;font-size:14px;font-weight:700;outline:none}
-      #mwGlobalStoreSearch input:focus{border-color:#38bdf8;box-shadow:0 0 0 3px rgba(56,189,248,.12)}
+      #mwGlobalStoreSearch input{width:100%;min-width:0;box-sizing:border-box;border:1px solid rgba(212,175,55,.24);border-radius:12px;background:rgba(3,43,37,.92);color:#f8fafc;padding:11px 13px;font-size:14px;font-weight:700;outline:none}
+      #mwGlobalStoreSearch input:focus{border-color:#D4AF37;box-shadow:0 0 0 3px rgba(212,175,55,.12)}
       #mwGlobalStoreSearch button{flex:0 0 auto;border:1px solid rgba(212,175,55,.42);border-radius:12px;background:linear-gradient(135deg,#D4AF37,#FFDF73);color:#111827;padding:10px 14px;font-weight:900;cursor:pointer}
-      #mwGlobalStoreSearchStatus{margin-top:7px;color:#94a3b8;font-size:11px;font-weight:700}
+      #mwGlobalStoreSearchStatus{margin-top:7px;color:#c8d7d3;font-size:11px;font-weight:700}
       html.dark #mwGlobalStoreSearch input{background:#0f172a;color:#f8fafc;border-color:rgba(148,163,184,.28)}
       @media(max-width:640px){#mwGlobalStoreSearch{padding:9px;border-radius:12px}#mwGlobalStoreSearch button{padding:10px 11px}#mwGlobalStoreSearch input{font-size:13px}}
     `;document.head.appendChild(s);
