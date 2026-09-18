@@ -1,6 +1,5 @@
 /* V144 — presentation-only storefront card layer. */
 #localStoreProductsGrid .local-v3-card{isolation:isolate!important;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease!important}
-#localStoreProductsGrid .local-v3-options,#localStoreProductsGrid .local-v3-qty{display:none!important}
 #localStoreProductsGrid .local-v3-card:hover{transform:translateY(-3px)!important;border-color:rgba(212,175,55,.72)!important;box-shadow:0 14px 34px rgba(15,35,29,.18)!important}
 #localStoreProductsGrid .local-v3-img-wrap{position:relative!important;height:178px!important;padding:0!important;isolation:isolate!important;background:#d8ddd9!important}
 #localStoreProductsGrid .kinto-media-backdrop{position:absolute;inset:-12px;z-index:0;overflow:hidden;pointer-events:none}
