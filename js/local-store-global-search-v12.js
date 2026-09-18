@@ -41,6 +41,9 @@
       box=document.createElement('div');box.id='mwGlobalStoreSearch';
       box.innerHTML='<div class="mw-global-search-row"><input id="mwGlobalStoreSearchInput" type="search" autocomplete="off" inputmode="search" placeholder="ابحث باسم المنتج أو امسح الباركود"><button id="mwGlobalStoreSearchBtn" type="button">بحث</button></div><div id="mwGlobalStoreSearchStatus">البحث شامل جميع أقسام هذا المتجر.</div>';
       container.insertBefore(box,container.firstChild||grid);
+    }else if(box.parentElement!==container)container.insertBefore(box,container.firstChild||grid);
+    if(box.dataset.mwSearchBound!=='1'){
+      box.dataset.mwSearchBound='1';
       const input=box.querySelector('#mwGlobalStoreSearchInput');
       input?.addEventListener('input',()=>{
         clearTimeout(state.debounce);
