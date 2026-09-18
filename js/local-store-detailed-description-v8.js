@@ -50,7 +50,7 @@
   async function persistDetailedDescription(){return persistDetailedDescriptionSnapshot(snapshotDetailedDescription())}
   async function applyModalDetailedDescription(productId){
     const pid=String(productId||'').trim();if(!pid)return;
-    try{const rows=await rest(`local_products?select=id,description,options&id=eq.${encodeURIComponent(pid)}&limit=1`),p=Array.isArray(rows)?rows[0]:null;if(!p)return;const detailed=String(parse(p.options).detailed_description||'').trim();if(!detailed)return;for(let i=0;i<20;i++){const text=document.querySelector('#mwLocalProductDetailsModal .mw-detail-description-text');if(text){text.textContent=detailed;window.MeshwarLocalStoreV7?.enhanceModal?.(pid);return}await sleep(50)}}catch(e){console.warn('Detailed description modal load failed',e)}
+    try{const rows=await rest(`local_products?select=id,description,options&id=eq.${encodeURIComponent(pid)}&limit=1`),p=Array.isArray(rows)?rows[0]:null;if(!p)return;const detailed=String(parse(p.options).detailed_description||'').trim();if(!detailed)return;for(let i=0;i<20;i++){const text=document.querySelector('#kintoProductModalV145.open .kinto-product-description,#mwLocalProductDetailsModal .mw-detail-description-text');if(text){text.textContent=detailed;window.MeshwarLocalStoreV7?.enhanceModal?.(pid);return}await sleep(50)}}catch(e){console.warn('Detailed description modal load failed',e)}
   }
   function bindModalHydration(){
     const modal=document.getElementById('productModal');if(!modal||modal.__mwDetailedDescriptionObserver)return;let wasOpen=false;
