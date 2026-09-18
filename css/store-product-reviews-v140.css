@@ -9,6 +9,7 @@
 #localStoreProductsGrid .local-v3-local{font-size:17px!important}
 #localStoreProductsGrid .local-v3-note{font-size:9px!important}
 #localStoreProductsGrid .local-v3-order{min-height:38px!important;margin-top:8px!important;font-size:.79rem!important}
+html[data-mw-global-theme="light"] body{background:linear-gradient(180deg,#e5e9e6 0%,#dbe1de 52%,#d1d9d5 100%)!important;color:#18352c!important}
 html[data-mw-global-theme="light"] #localStoreProductsGrid .local-v3-card{background:#e9e7dd!important;border-color:#c4a75a!important}
 html[data-mw-global-theme="light"] #localStoreProductsGrid .local-v3-img-wrap{background:#dddcd4!important}
 html[data-mw-global-theme="dark"] #localStoreProductsGrid .local-v3-card{background:linear-gradient(145deg,rgba(18,76,63,.78),rgba(5,47,39,.92))!important;border-color:rgba(229,185,63,.28)!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important}
