@@ -21,7 +21,7 @@
   function normalizeCard(card){
     if(!card||!card.matches?.('.local-v3-card'))return;
     card.classList.add('mw-card-clean');
-    card.querySelectorAll('.local-v3-options,.local-v3-qty').forEach(el=>{el.hidden=true});
+    card.querySelectorAll('.local-v3-options,.local-v3-qty').forEach(el=>{el.classList.add('mw-v4-hidden-order-state')});
     const btn=card.querySelector('.local-v3-order[data-pid]');
     if(btn&&!btn.disabled)btn.textContent='عرض التفاصيل والطلب';
   }
