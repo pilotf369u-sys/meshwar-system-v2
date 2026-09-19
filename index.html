@@ -444,20 +444,7 @@
 
         document.addEventListener('DOMContentLoaded', async function() {
             await restoreCustomerSession();
-            const nav = document.createElement('nav');
-            nav.className = 'nav-container';
-            const all = document.createElement('a');
-            all.innerText = 'الكل';
-            all.href = '#';
-            nav.appendChild(all);
-            document.querySelectorAll('.section-title').forEach((title, index) => {
-                title.id = 'section-' + index;
-                const link = document.createElement('a');
-                link.innerText = title.innerText;
-                link.href = '#section-' + index;
-                nav.appendChild(link);
-            });
-            document.body.insertBefore(nav, document.body.firstChild);
+           
         });
 
         function logout() {
