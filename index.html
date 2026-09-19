@@ -64,48 +64,7 @@
     </script>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script>
-(()=>{
-  'use strict';
 
-  const root = document.documentElement;
-  let revealed = false;
-  let failsafe = null;
-
-  try {
-    window.history.scrollRestoration = 'manual';
-  } catch {}
-
-  const reveal = () => {
-    if (revealed) return;
-    revealed = true;
-
-    if (failsafe) {
-      clearTimeout(failsafe);
-      failsafe = null;
-    }
-
-    window.scrollTo(0, 0);
-
-    root.classList.remove('kinto-booting');
-    root.classList.add('kinto-ready');
-  };
-
-  const afterDomReady = () => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(reveal);
-    });
-  };
-
-  failsafe = setTimeout(reveal, 3000);
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', afterDomReady, { once: true });
-  } else {
-    afterDomReady();
-  }
-})();
-</script>
 <script defer src="https://cdn.tailwindcss.com"></script>
 <script>(()=>{try{document.documentElement.classList.toggle('dark',localStorage.getItem('meshwar-theme')!=='light')}catch{document.documentElement.classList.add('dark')}})()</script>
     <style>
