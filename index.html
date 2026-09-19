@@ -64,13 +64,11 @@
     </script>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
 <script defer src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Arial', sans-serif; background-color: #063b32; color: #333; padding: 20px; margin: 0; position: relative; }
         .user-auth-zone { position: static; display:flex; align-items:center; gap:8px; z-index:auto; }
         .account-btn { background-color: #cc0000; color: #ffffff; text-decoration: none; padding: 10px 22px; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(204, 0, 0, 0.2); transition: all 0.3s ease; }
-        .header-container { text-align: center; margin-top: 30px; margin-bottom: 35px; }
         .main-logo { width: 380px; max-width: 95%; height: auto; margin-bottom: 15px; border-radius: 8px; }
         h1 { color: #cc0000; margin: 0 0 8px 0; font-size: 34px; font-weight: bold; }
         .section-title { color: #cc6600; border-bottom: 2px solid #cc6600; padding-bottom: 5px; margin-top: 40px; font-size: 19px; }
@@ -93,7 +91,7 @@
 /* MESHWAR_INDEX_TAILWIND_V3 */
 @layer base{body{@apply m-0 min-h-screen bg-slate-950 text-slate-100;}html{@apply scroll-smooth;}}
 @layer components{
-.header-container{@apply relative mx-auto mt-8 max-w-7xl overflow-hidden rounded-3xl border border-slate-200/70 bg-white/70 px-6 py-10 text-center shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-slate-900/60;}
+.header-container{@apply relative mx-auto mt-8 mb-[35px] max-w-7xl overflow-hidden rounded-3xl border border-slate-200/70 bg-white/70 px-6 py-10 text-center shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-slate-900/60;}
 .header-container h1{@apply !text-slate-900 dark:!text-white}.header-container p{@apply !text-slate-500 dark:!text-slate-400}.main-logo{@apply !w-64 drop-shadow-xl;}
 .nav-container{@apply !relative !top-auto mx-auto mt-5 flex max-w-7xl flex-wrap justify-center gap-3 rounded-2xl border border-slate-200 bg-white/70 p-3 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-slate-900/60;}
 .nav-container a{@apply !rounded-full !border !border-slate-200 !bg-white/70 !text-slate-700 transition-all duration-300 hover:!-translate-y-0.5 hover:!border-sky-400/40 hover:!text-sky-500 dark:!border-white/10 dark:!bg-white/5 dark:!text-slate-200;}
