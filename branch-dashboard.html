@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" style="background:#0a2f23">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>لوحة تحكم الفرع - MeshWar</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="theme-color" content="#0a2f23"><title>لوحة تحكم الفرع - MeshWar</title>
 <link rel="stylesheet" href="css/kinto-ui-stability-v123.css?v=20260908-v123"><script defer src="js/kinto-ui-stability-v123.js?v=20260908-v123"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={corePlugins:{preflight:false},darkMode:'class'}</script>
@@ -11,10 +11,10 @@ body{font-family:Tahoma,sans-serif;background:#f4f7f6;margin:0;padding:20px}.con
 </style>
 <style id="branchLuxuryTheme">
 /* BRANCH_LUXURY_UI_V1 — visual layer only; operational IDs/functions stay unchanged */
-:root{color-scheme:dark;--branch-bg:#020617;--branch-panel:rgba(15,23,42,.76);--branch-panel-2:rgba(30,41,59,.66);--branch-line:rgba(255,255,255,.09);--branch-gold:#fbbf24;--branch-gold-soft:rgba(251,191,36,.16);--branch-sky:#38bdf8;--branch-text:#e5e7eb;--branch-muted:#94a3b8}
+:root{color-scheme:dark;--branch-bg:#0a2f23;--branch-panel:rgba(10,47,35,.82);--branch-panel-2:rgba(18,72,53,.72);--branch-line:rgba(255,255,255,.09);--branch-gold:#fbbf24;--branch-gold-soft:rgba(251,191,36,.16);--branch-sky:#38bdf8;--branch-text:#e5e7eb;--branch-muted:#a7c7ba}
 html{background:var(--branch-bg)}
-body{min-height:100vh;background:radial-gradient(circle at 12% 8%,rgba(14,165,233,.12),transparent 30%),radial-gradient(circle at 88% 10%,rgba(251,191,36,.10),transparent 26%),linear-gradient(145deg,#020617 0%,#071226 48%,#020617 100%)!important;color:var(--branch-text)!important;padding:22px!important}
-.container{max-width:1560px!important;background:rgba(2,6,23,.42)!important;border:1px solid rgba(251,191,36,.14)!important;border-radius:28px!important;padding:24px!important;box-shadow:0 30px 90px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.04)!important;backdrop-filter:blur(18px)}
+body{min-height:100vh;background:radial-gradient(circle at 12% 8%,rgba(16,185,129,.14),transparent 30%),radial-gradient(circle at 88% 10%,rgba(251,191,36,.10),transparent 26%),linear-gradient(145deg,#071f18 0%,#0a2f23 48%,#071f18 100%)!important;color:var(--branch-text)!important;padding:22px!important}
+.container{max-width:1560px!important;background:rgba(7,31,24,.50)!important;border:1px solid rgba(251,191,36,.14)!important;border-radius:28px!important;padding:24px!important;box-shadow:0 30px 90px rgba(0,0,0,.30),inset 0 1px rgba(255,255,255,.04)!important;backdrop-filter:blur(18px)}
 h2,h3{color:#f8fafc!important}.top{padding:18px 20px;border:1px solid var(--branch-line);border-radius:22px;background:linear-gradient(135deg,rgba(15,23,42,.84),rgba(30,41,59,.62));box-shadow:0 18px 48px rgba(0,0,0,.20),0 0 0 1px rgba(251,191,36,.04)}.top .muted,.muted{color:var(--branch-muted)!important}
 .section-title{background:linear-gradient(90deg,rgba(15,23,42,.96),rgba(30,41,59,.82))!important;color:#fff!important;border:1px solid rgba(251,191,36,.24)!important;border-radius:16px!important;padding:13px 16px!important;box-shadow:0 10px 28px rgba(0,0,0,.17),inset 3px 0 rgba(251,191,36,.75)!important}
 .toolbar{background:rgba(15,23,42,.74)!important;border:1px solid var(--branch-line)!important;border-radius:18px!important;padding:12px!important;box-shadow:inset 0 1px rgba(255,255,255,.025)}
@@ -27,8 +27,20 @@ table{border-collapse:separate!important;border-spacing:0!important;background:r
 .branch-luxury-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.branch-stat-card{position:relative;overflow:hidden;min-height:108px;padding:16px 17px;border-radius:20px;background:linear-gradient(145deg,rgba(15,23,42,.88),rgba(30,41,59,.62));border:1px solid rgba(255,255,255,.08);box-shadow:0 14px 38px rgba(0,0,0,.18)}.branch-stat-card:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(#fde68a,#f59e0b);box-shadow:0 0 16px rgba(251,191,36,.65)}.branch-stat-label{font-size:12px;color:#94a3b8;font-weight:800}.branch-stat-value{margin-top:9px;font-size:31px;line-height:1;font-weight:900;color:#f8fafc}.branch-stat-icon{position:absolute;left:14px;top:13px;font-size:24px;filter:drop-shadow(0 0 9px rgba(251,191,36,.2))}.branch-stat-note{margin-top:8px;font-size:10px;color:#64748b}.branch-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 16px;padding:8px;border-radius:16px;background:rgba(15,23,42,.62);border:1px solid rgba(255,255,255,.07)}.branch-tab{background:rgba(255,255,255,.045)!important;color:#cbd5e1!important;border:1px solid rgba(255,255,255,.08)!important}.branch-tab.active{background:linear-gradient(135deg,rgba(2,132,199,.35),rgba(79,70,229,.38))!important;color:#fff!important;border-color:rgba(251,191,36,.55)!important;box-shadow:0 0 0 1px rgba(251,191,36,.08),0 10px 26px rgba(251,191,36,.09)!important}.branch-quick-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.06)}.branch-quick-actions button{font-size:10px!important;padding:6px 8px!important;white-space:nowrap}.branch-action-receive{background:#065f46!important}.branch-action-transfer{background:#92400e!important}.branch-action-courier{background:#1d4ed8!important}
 @media(max-width:1050px){.branch-luxury-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.container{padding:15px!important}}
 @media(max-width:640px){body{padding:10px!important}.container{border-radius:18px!important;padding:10px!important}.branch-luxury-stats{grid-template-columns:1fr 1fr;gap:8px}.branch-stat-card{min-height:90px;padding:13px}.branch-stat-value{font-size:25px}.branch-tabs{position:sticky;top:4px;z-index:40;overflow-x:auto;flex-wrap:nowrap}.branch-tab{white-space:nowrap}.toolbar{align-items:stretch}.toolbar input,.toolbar select{flex:1 1 150px}.top{padding:14px}.modal-content{width:92%!important;margin:3% auto!important;padding:14px!important}th,td{font-size:11px!important;padding:8px 7px!important}}
+/* KINTO_EMERALD_BRANCH_V122 — visual palette only. */
+.top{background:linear-gradient(135deg,rgba(10,47,35,.92),rgba(18,72,53,.72))}
+.section-title{background:linear-gradient(90deg,rgba(7,39,29,.97),rgba(18,72,53,.86))!important}
+.toolbar,.branch-tabs{background:rgba(8,43,32,.82)!important}
+.branch-stat-card,.account-card{background:linear-gradient(145deg,rgba(10,47,35,.92),rgba(18,72,53,.72))!important}
+input,select{background:rgba(5,31,23,.78)!important}
+table{background:rgba(8,43,32,.72)!important}
+th{background:linear-gradient(180deg,#124b38,#0a2f23)!important}
+.modal-content,.dashboard-scanner-panel,#scannerModal .modal-content{background:linear-gradient(145deg,#0a2f23,#0d3b2d)!important}
+.scan-item,.branch-tab{background:rgba(10,47,35,.78)!important}
+.scan-code{background:#071f18!important}
 html.branch-navigation-restoring .branch-tabs{visibility:hidden}
-html.branch-history-restoring .container{visibility:hidden}
+html.branch-history-restoring #historyModal{display:block}
+html.branch-history-restoring #historyBody:empty::before{content:'جاري تحميل سجل التقفيلات...';display:block;padding:28px;text-align:center;color:#d1fae5;font-weight:800}
 </style>
 <script>
 /* BRANCH_NAVIGATION_STATE_V121 — view state only; never replays operational actions. */
