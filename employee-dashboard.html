@@ -364,6 +364,13 @@ internal_distribution:{label:'📍 توزيع داخلي',statuses:['توزيع 
 delivered:{label:'✅ تم التسليم',statuses:['تم التسليم']},
 rejected:{label:'❌ رفض التسليم',statuses:['رفض التسليم','رفض الطلب','مرفوض','راجع']}
 });
+(()=>{
+  const employeeId=String(new URLSearchParams(location.search).get('employeeId')||'').trim();
+  const fromUrl=String(new URLSearchParams(location.search).get('pipeline')||'').trim();
+  let remembered=PIPELINES[fromUrl]?fromUrl:'';
+  if(!remembered){try{const saved=String(sessionStorage.getItem('kinto_employee_active_pipeline_v118:'+employeeId)||'').trim();if(PIPELINES[saved])remembered=saved}catch{}}
+  if(remembered)activePipeline=remembered;
+})();
 const EMPLOYEE_STATUS_ORDER=[
 ['all','rewards','cancelled','waiting_employee','waiting_customer','waiting_payment','paid'],
 ['in_order','company_store','shipping_prep','branch_transfer','shipped'],
