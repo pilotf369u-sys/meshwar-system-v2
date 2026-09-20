@@ -239,10 +239,13 @@ const ADMIN_EMBEDDED_SECTIONS={
   'branch-reports':{frame:'branchReportsFrame',page:'admin-branch-reports.html'},
   'local-stores':{frame:'localStoresFrame',page:'local-stores-admin.html'}
 };
+const ADMIN_SECTION_SESSION_KEY='kinto_admin_active_section_v116';
 function setAdminMasterActive(sectionId){document.querySelectorAll('.sidebar a[data-admin-section]').forEach(a=>a.classList.toggle('active',a.dataset.adminSection===sectionId))}
 function ensureAdminEmbeddedSection(sectionId){const cfg=ADMIN_EMBEDDED_SECTIONS[sectionId];if(!cfg)return;const frame=document.getElementById(cfg.frame);if(!frame||frame.getAttribute('src'))return;const adminId=String(currentAdminCloud?.id||getAdminId?.()||'').trim(),u=new URL(cfg.page,location.href);u.searchParams.set('embed','1');if(adminId)u.searchParams.set('adminId',adminId);frame.src=u.pathname.split('/').pop()+u.search}
-async function showAdminMasterSection(sectionId){showSection(sectionId);setAdminMasterActive(sectionId);const u=new URL(location.href);u.searchParams.set('section',sectionId);history.replaceState(null,'',u.pathname+u.search+u.hash);ensureAdminEmbeddedSection(sectionId);if(sectionId==='vendor-finance'&&typeof loadAdminVendorFinance==='function')await loadAdminVendorFinance()}
-window.addEventListener('load',()=>{const requested=new URLSearchParams(location.search).get('section');if(requested&&document.getElementById(requested)){showAdminMasterSection(requested)}else{setAdminMasterActive(document.querySelector('.card.active-section')?.id||'orders')}});
+function rememberAdminMasterSection(sectionId){try{sessionStorage.setItem(ADMIN_SECTION_SESSION_KEY,sectionId)}catch{}}
+function readAdminMasterSection(){const urlSection=String(new URLSearchParams(location.search).get('section')||'').trim();if(urlSection)return urlSection;try{return String(sessionStorage.getItem(ADMIN_SECTION_SESSION_KEY)||'').trim()}catch{return''}}
+async function showAdminMasterSection(sectionId){if(!document.getElementById(sectionId))return;showSection(sectionId);setAdminMasterActive(sectionId);rememberAdminMasterSection(sectionId);const u=new URL(location.href);u.searchParams.set('section',sectionId);history.replaceState(history.state,'',u.pathname+u.search+u.hash);ensureAdminEmbeddedSection(sectionId);if(sectionId==='vendor-finance'&&typeof loadAdminVendorFinance==='function')await loadAdminVendorFinance()}
+window.addEventListener('load',()=>{const requested=readAdminMasterSection();if(requested&&document.getElementById(requested)){showAdminMasterSection(requested)}else{const active=document.querySelector('.card.active-section')?.id||'orders';rememberAdminMasterSection(active);setAdminMasterActive(active)}});
 </script>
 <script src="js/kinto-bundle-ui-v93.js?v=20260905-v118"></script>
 <script id="kinto-v93-bundle-adapter">
