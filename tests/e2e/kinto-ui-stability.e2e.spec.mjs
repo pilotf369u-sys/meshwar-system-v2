@@ -57,11 +57,13 @@ test('customer dashboard leaves to public pages with a refresh-stable route', as
 
 test('public customer pages survive mobile browser refresh restoration', async () => {
   const dashboard = await readFile(path.join(root, 'dashboard.html'), 'utf8');
+  const publicNavigation = await readFile(path.join(root, 'js/customer-favorites-nav-v148.js'), 'utf8');
   for (const file of ['index.html', 'local-stores.html', 'global-stores.html']) {
     const source = await readFile(path.join(root, file), 'utf8');
-    expect(source, file).toContain("sessionStorage.setItem('kinto_customer_public_refresh_route'");
-    expect(source, file).toContain("sessionStorage.setItem('kinto_customer_public_refresh_time'");
+    expect(source, file).toContain('js/customer-favorites-nav-v148.js');
   }
+  expect(publicNavigation).toContain("sessionStorage.setItem('kinto_customer_public_refresh_route'");
+  expect(publicNavigation).toContain("sessionStorage.setItem('kinto_customer_public_refresh_time'");
   expect(dashboard).toContain("entry.type==='reload'");
   expect(dashboard).toContain("location.replace(new URL(route,location.href).href)");
   expect(dashboard).toContain("document.documentElement.style.visibility='hidden'");
