@@ -696,3 +696,31 @@ html{background:var(--emp-navy);color-scheme:dark}body{background:radial-gradien
   };
 })();
 </script>
+<script id="employee-pipeline-refresh-v118">
+(()=>{
+  const employeeId=String(new URLSearchParams(location.search).get('employeeId')||'').trim();
+  const storageKey='kinto_employee_active_pipeline_v118:'+employeeId;
+  function rememberEmployeePipeline(key){
+    if(!PIPELINES[key])return;
+    const url=new URL(location.href);
+    url.searchParams.set('pipeline',key);
+    history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+    try{sessionStorage.setItem(storageKey,key)}catch{}
+  }
+  function readEmployeePipeline(){
+    const fromUrl=String(new URLSearchParams(location.search).get('pipeline')||'').trim();
+    if(PIPELINES[fromUrl])return fromUrl;
+    try{const saved=String(sessionStorage.getItem(storageKey)||'').trim();return PIPELINES[saved]?saved:''}catch{return''}
+  }
+  const remembered=readEmployeePipeline();
+  if(remembered)activePipeline=remembered;
+  rememberEmployeePipeline(activePipeline);
+  const switchPipelineBase=window.switchPipeline;
+  window.switchPipeline=async function(key){
+    if(!PIPELINES[key])return;
+    rememberEmployeePipeline(key);
+    return switchPipelineBase(key);
+  };
+  switchPipeline=window.switchPipeline;
+})();
+</script>
