@@ -31,3 +31,14 @@ test('customer polling skips identical Supabase payload renders', async () => {
   expect(source).toContain('if(signature===customerOrdersRenderSignature)return');
   expect(source).toContain('customerOrdersRenderSignature=signature');
 });
+
+test('customer dashboard restores its selected tab before reveal', async () => {
+  const html = await readFile(path.join(root, 'dashboard.html'), 'utf8');
+  const deeplink = await readFile(path.join(root, 'js/customer-dashboard-deeplink-v158.js'), 'utf8');
+  expect(html).toContain('customer-tab-restoring');
+  expect(html).toContain('20260920-v133-refresh-position');
+  expect(deeplink).toContain("sessionStorage.setItem(tabSessionKey(),tab)");
+  expect(deeplink).toContain("url.searchParams.set('tab',tab)");
+  expect(deeplink).toContain('finishTabRestore()');
+  expect(deeplink).not.toMatch(/\.from\(['\"]orders['\"]\)/);
+});
