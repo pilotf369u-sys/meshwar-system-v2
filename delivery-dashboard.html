@@ -3,6 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a2f23">
+<script>
+/* DELIVERY_THEME_FIRST_PAINT_V125 — apply saved visual theme before CSS paints. */
+(function(){
+  let theme='';
+  try{theme=localStorage.getItem('meshwar_global_theme')||localStorage.getItem('meshwar-theme')||''}catch(e){}
+  if(theme!=='light'&&theme!=='dark')theme=matchMedia('(prefers-color-scheme:light)').matches?'light':'dark';
+  const root=document.documentElement,background=theme==='light'?'#f4f7fb':'#0a2f23';
+  root.dataset.mwGlobalTheme=theme;root.dataset.mwTheme=theme;root.classList.toggle('dark',theme==='dark');
+  root.style.background=background;root.style.colorScheme=theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',background);
+})();
+</script>
 <link rel="stylesheet" href="css/kinto-ui-stability-v123.css?v=20260908-v123"><script defer src="js/kinto-ui-stability-v123.js?v=20260908-v123"></script>
 <title>لوحة موظف التوصيل - MeshWar</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -33,6 +46,47 @@ html{background:#050b14;color-scheme:dark}body{background:radial-gradient(circle
 @media(max-width:1100px){.finance{grid-template-columns:repeat(3,minmax(0,1fr))!important}.delivery-layout{grid-template-columns:190px minmax(0,1fr)!important}}
 @media(max-width:760px){.app{padding:10px!important}.finance{grid-template-columns:repeat(2,minmax(0,1fr))!important}.delivery-layout{display:block!important}.tabs{position:static!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;margin-bottom:12px}.tab{font-size:12px!important}.toolbar{display:grid!important;grid-template-columns:1fr auto!important}.toolbar input{grid-column:1/-1!important;min-width:0!important;width:100%!important}.toolbar .btn-blue{min-height:48px!important;font-size:15px!important}.toolbar .btn-gray{min-height:48px!important}.shipment-summary{grid-template-columns:1fr 1fr!important}.summary-address{grid-column:1/-1!important}}
 @media(max-width:520px){.finance{grid-template-columns:1fr 1fr!important;gap:8px!important}.finance-card{padding:12px!important}.finance-card .value{font-size:18px!important}.topbar{padding:14px!important}.topbar h1{font-size:18px!important}.tabs{grid-template-columns:1fr 1fr!important}.shipment-summary{grid-template-columns:1fr!important}.summary-address{grid-column:auto!important}.grid{grid-template-columns:1fr!important}.toolbar{grid-template-columns:1fr 1fr!important}.toolbar input{grid-column:1/-1!important}.toolbar button[data-clear-search]{position:absolute;left:22px;margin-top:7px}.toolbar .btn-blue,.toolbar .btn-gray{width:100%!important}.btn{min-height:44px}.scanner-panel{width:100%!important}}
+/* KINTO_EMERALD_DELIVERY_V125 — visual palette only. */
+html{background:#0a2f23}
+body{background:radial-gradient(circle at 12% 0%,rgba(245,196,81,.10),transparent 24%),radial-gradient(circle at 88% 5%,rgba(16,185,129,.15),transparent 30%),linear-gradient(145deg,#071f18 0%,#0a2f23 48%,#0d3b2d 100%)!important}
+.topbar{background:linear-gradient(135deg,rgba(10,47,35,.95),rgba(7,39,29,.88))!important}
+.finance-card{background:linear-gradient(145deg,rgba(10,47,35,.92),rgba(18,72,53,.74))!important}
+.tabs{background:rgba(7,39,29,.82)!important}
+.tab{background:rgba(10,47,35,.78)!important}
+.tab:hover{background:rgba(18,72,53,.92)!important}
+.toolbar{background:rgba(8,43,32,.86)!important}
+.toolbar input{background:rgba(5,31,23,.78)!important}
+.shipment{background:linear-gradient(145deg,rgba(10,47,35,.92),rgba(7,39,29,.86))!important}
+.item,.delivery-image-box{background:rgba(5,31,23,.55)!important}
+.edit-box select,.edit-box input,.edit-box textarea{background:rgba(5,31,23,.76)!important}
+.empty,.loading,.pager button{background:rgba(10,47,35,.80)!important}
+.scanner-panel{background:linear-gradient(145deg,#0a2f23,#0d3b2d)!important}
+.delivery-image-preview{background:#071f18!important}
+html[data-mw-global-theme="light"]{background:#f4f7fb!important;color-scheme:light}
+html[data-mw-global-theme="light"] body{background:#f4f7fb!important;color:#172033!important}
+html[data-mw-global-theme="light"] .topbar,
+html[data-mw-global-theme="light"] .finance-card,
+html[data-mw-global-theme="light"] .tabs,
+html[data-mw-global-theme="light"] .toolbar,
+html[data-mw-global-theme="light"] .shipment{background:#fff!important;color:#172033!important;border-color:#dbe4ee!important;box-shadow:0 5px 18px rgba(15,23,42,.08)!important}
+html[data-mw-global-theme="light"] .topbar h1,
+html[data-mw-global-theme="light"] .finance-card .value{color:#12335b!important;text-shadow:none!important}
+html[data-mw-global-theme="light"] .muted,
+html[data-mw-global-theme="light"] .finance-card .label{color:#64748b!important}
+html[data-mw-global-theme="light"] .tab{background:#fff!important;color:#334155!important;border-color:#dbe4ee!important}
+html[data-mw-global-theme="light"] .tab.active{background:linear-gradient(135deg,#fde68a,#f5c451 55%,#d99b27)!important;color:#111827!important}
+html[data-mw-global-theme="light"] .toolbar input,
+html[data-mw-global-theme="light"] .edit-box select,
+html[data-mw-global-theme="light"] .edit-box input,
+html[data-mw-global-theme="light"] .edit-box textarea{background:#fff!important;color:#172033!important;border-color:#cbd5e1!important}
+html[data-mw-global-theme="light"] .item,
+html[data-mw-global-theme="light"] .delivery-image-box{background:#f8fafc!important;color:#172033!important;border-color:#edf2f7!important}
+html[data-mw-global-theme="light"] .item b{color:#475569!important}
+html[data-mw-global-theme="light"] .empty,
+html[data-mw-global-theme="light"] .loading,
+html[data-mw-global-theme="light"] .pager button{background:#fff!important;color:#64748b!important;border-color:#dbe4ee!important}
+html[data-mw-global-theme="light"] .scanner-panel{background:#fff!important;color:#172033!important}
+html[data-mw-global-theme="light"] .delivery-image-preview{background:#fff!important}
 html.delivery-navigation-restoring .tabs{visibility:hidden}
 </style>
 </head>
