@@ -42,3 +42,15 @@ test('customer dashboard restores its selected tab before reveal', async () => {
   expect(deeplink).toContain('finishTabRestore()');
   expect(deeplink).not.toMatch(/\.from\(['\"]orders['\"]\)/);
 });
+
+test('customer dashboard leaves to public pages with a refresh-stable route', async () => {
+  const html = await readFile(path.join(root, 'dashboard.html'), 'utf8');
+  const drawer = await readFile(path.join(root, 'js/customer-navigation-drawer-v156.js'), 'utf8');
+  expect(html).toContain('20260920-v134-public-refresh-route');
+  expect(drawer).toContain('function leaveDashboard(href)');
+  expect(drawer).toContain('location.replace(url.href)');
+  for (const href of ['index.html', 'local-stores.html', 'global-stores.html']) {
+    expect(drawer).toContain(`href:'${href}',publicRoute:true`);
+  }
+  expect(drawer).not.toMatch(/\.from\(['\"]orders['\"]\)/);
+});
