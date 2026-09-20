@@ -175,3 +175,24 @@ html[data-mw-global-theme="light"] .scanner-panel,
 html[data-mw-global-theme="light"] .empty{background:#f1f5f9!important;background-image:none!important;color:#0f172a!important;border-color:#cbd5e1!important}
 html[data-mw-global-theme="light"] .proof-status,
 html[data-mw-global-theme="light"] .loading{color:#475569!important;-webkit-text-fill-color:#475569!important}
+
+/* ==================== KINTO EMERALD DARK V1.5 ====================
+   Must stay last: this file is injected after delivery-dashboard.html. */
+html[data-mw-global-theme="dark"]{background:#0a2f23!important}
+html[data-mw-global-theme="dark"] body{
+  background:radial-gradient(circle at 12% 0%,rgba(245,196,81,.10),transparent 24%),radial-gradient(circle at 88% 5%,rgba(16,185,129,.15),transparent 30%),linear-gradient(145deg,#071f18 0%,#0a2f23 48%,#0d3b2d 100%)!important;
+}
+html[data-mw-global-theme="dark"] .topbar{background:#0a2f23!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .finance-card{background:linear-gradient(145deg,#124b38,#0a2f23)!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .shipment{background:linear-gradient(145deg,#103f30,#0a2f23)!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .item{background:#08281f!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .tabs{background:#08281f!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .tab{background:#103f30!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .tab:hover{background:#165a43!important;border-color:#2f8063!important}
+html[data-mw-global-theme="dark"] .toolbar,
+html[data-mw-global-theme="dark"] .scanner-panel,
+html[data-mw-global-theme="dark"] .delivery-image-box{background:#08281f!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .edit-box select,
+html[data-mw-global-theme="dark"] .edit-box input,
+html[data-mw-global-theme="dark"] .edit-box textarea,
+html[data-mw-global-theme="dark"] .toolbar input{background:#061f18!important;border-color:#2f8063!important}
