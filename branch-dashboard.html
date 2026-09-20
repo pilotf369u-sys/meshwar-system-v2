@@ -1,7 +1,19 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" style="background:#0a2f23">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="theme-color" content="#0a2f23"><title>لوحة تحكم الفرع - MeshWar</title>
+<script>
+/* BRANCH_THEME_FIRST_PAINT_V123 — apply the saved visual theme before CSS paints. */
+(function(){
+  let theme='';
+  try{theme=localStorage.getItem('meshwar_global_theme')||localStorage.getItem('meshwar-theme')||''}catch(e){}
+  if(theme!=='light'&&theme!=='dark')theme=matchMedia('(prefers-color-scheme:light)').matches?'light':'dark';
+  const root=document.documentElement,background=theme==='light'?'#f4f7f6':'#0a2f23';
+  root.dataset.mwGlobalTheme=theme;root.dataset.mwTheme=theme;root.classList.toggle('dark',theme==='dark');
+  root.style.background=background;root.style.colorScheme=theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',background);
+})();
+</script>
 <link rel="stylesheet" href="css/kinto-ui-stability-v123.css?v=20260908-v123"><script defer src="js/kinto-ui-stability-v123.js?v=20260908-v123"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={corePlugins:{preflight:false},darkMode:'class'}</script>
@@ -38,6 +50,25 @@ th{background:linear-gradient(180deg,#124b38,#0a2f23)!important}
 .modal-content,.dashboard-scanner-panel,#scannerModal .modal-content{background:linear-gradient(145deg,#0a2f23,#0d3b2d)!important}
 .scan-item,.branch-tab{background:rgba(10,47,35,.78)!important}
 .scan-code{background:#071f18!important}
+html[data-mw-global-theme="light"]{background:#f4f7f6!important;color-scheme:light}
+html[data-mw-global-theme="light"] body{background:#f4f7f6!important;color:#172033!important}
+html[data-mw-global-theme="light"] .container{background:#fff!important;border-color:#e2e8f0!important;box-shadow:0 12px 36px rgba(15,23,42,.08)!important}
+html[data-mw-global-theme="light"] .top,
+html[data-mw-global-theme="light"] .branch-stat-card,
+html[data-mw-global-theme="light"] .account-card{background:#fff!important;color:#172033!important;border-color:#e2e8f0!important}
+html[data-mw-global-theme="light"] h2,
+html[data-mw-global-theme="light"] h3{color:#172033!important}
+html[data-mw-global-theme="light"] .toolbar,
+html[data-mw-global-theme="light"] .branch-tabs{background:#f8fafc!important;border-color:#e2e8f0!important}
+html[data-mw-global-theme="light"] input,
+html[data-mw-global-theme="light"] select{background:#fff!important;color:#172033!important;border-color:#cbd5e1!important}
+html[data-mw-global-theme="light"] table{background:#fff!important;border-color:#cbd5e1!important}
+html[data-mw-global-theme="light"] th{background:#dbe4ef!important;color:#172033!important}
+html[data-mw-global-theme="light"] td{color:#334155!important;border-color:#dbe4ef!important}
+html[data-mw-global-theme="light"] .branch-tab{background:#fff!important;color:#334155!important;border-color:#cbd5e1!important}
+html[data-mw-global-theme="light"] .modal-content,
+html[data-mw-global-theme="light"] .dashboard-scanner-panel,
+html[data-mw-global-theme="light"] #scannerModal .modal-content{background:#fff!important;color:#172033!important}
 html.branch-navigation-restoring .branch-tabs{visibility:hidden}
 html.branch-history-restoring #historyModal{display:block}
 html.branch-history-restoring #historyBody:empty::before{content:'جاري تحميل سجل التقفيلات...';display:block;padding:28px;text-align:center;color:#d1fae5;font-weight:800}
