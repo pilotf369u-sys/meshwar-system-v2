@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import vm from 'node:vm';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const dashboards = ['dashboard.html','admin-dashboard.html','employee-dashboard.html','delivery-dashboard.html','branch-dashboard.html','vendor-dashboard.html'];
@@ -56,58 +55,21 @@ test('customer dashboard leaves to public pages with a refresh-stable route', as
   expect(drawer).not.toMatch(/\.from\(['\"]orders['\"]\)/);
 });
 
-test('public customer pages survive mobile browser refresh restoration', async () => {
+test('customer runs as a top-level page so public refresh cannot restore the orders shell', async () => {
   const dashboard = await readFile(path.join(root, 'dashboard.html'), 'utf8');
-  const publicNavigation = await readFile(path.join(root, 'js/customer-favorites-nav-v148.js'), 'utf8');
-  const earlyIndexNavigation = await readFile(path.join(root, 'js/global-theme-toggle-v1.js'), 'utf8');
-  for (const file of ['index.html', 'local-stores.html', 'global-stores.html']) {
-    const source = await readFile(path.join(root, file), 'utf8');
-    expect(source, file).toContain('js/customer-favorites-nav-v148.js');
+  const shell = await readFile(path.join(root, 'external-shipping-shell.html'), 'utf8');
+  const login = await readFile(path.join(root, 'login.html'), 'utf8');
+  const favorites = await readFile(path.join(root, 'js/customer-favorites-nav-v148.js'), 'utf8');
+  const theme = await readFile(path.join(root, 'js/global-theme-toggle-v1.js'), 'utf8');
+  expect(login).toContain("if(screen==='customer')");
+  expect(login).toContain("return'dashboard.html'");
+  expect(shell).toContain("if(screen==='customer'){location.replace(target");
+  expect(shell.indexOf("if(screen==='customer'){location.replace(target")).toBeLessThan(shell.indexOf('frame.src=target'));
+  for (const asset of ['dashboard-polish-v17.css','customer-landing-responsive-v1.css','customer-kinto-theme-v126.css','public-customer-navigation-v157.css','customer-light-polish-v1.js']) {
+    expect(dashboard, asset).toContain(asset);
   }
-  expect(publicNavigation).toContain("routeKey='kinto_customer_public_refresh_route'");
-  expect(publicNavigation).toContain("timeKey='kinto_customer_public_refresh_time'");
-  expect(publicNavigation).toContain('sessionStorage.setItem(routeKey');
-  expect(publicNavigation).toContain("entry.type==='reload'");
-  expect(publicNavigation).toContain("['pointerdown','keydown','submit']");
-  expect(earlyIndexNavigation).toContain('function armPublicReloadGuard()');
-  expect(dashboard).toContain("sessionStorage.getItem(guardKey)==='1'");
-  expect(dashboard).toContain('location.replace(routeUrl.href)');
-  expect(dashboard).toContain("document.documentElement.style.visibility='hidden'");
-});
-
-test('public reload guard rejects an automatic dashboard jump and yields to real user intent', async () => {
-  const publicSource = await readFile(path.join(root, 'js/customer-favorites-nav-v148.js'), 'utf8');
-  const dashboard = await readFile(path.join(root, 'dashboard.html'), 'utf8');
-  const dashboardGuard = dashboard.match(/<script>(\(function\(\)\{try\{const routeKey=.*?\}\)\(\);)<\/script>/s)?.[1];
-  expect(dashboardGuard).toBeTruthy();
-
-  const values = new Map(), listeners = new Map();
-  const sessionStorage = { setItem: (key, value) => values.set(key, String(value)), getItem: key => values.get(key) ?? null, removeItem: key => values.delete(key) };
-  const publicContext = {
-    window: {}, sessionStorage,
-    location: { pathname: '/local-stores.html', search: '?country=IQ', hash: '#stores' },
-    performance: { getEntriesByType: () => [{ type: 'reload' }] },
-    addEventListener: (type, listener) => listeners.set(type, listener),
-    document: { readyState: 'loading', addEventListener() {}, querySelector: () => ({}) },
-    localStorage: { getItem: () => null }, URLSearchParams
-  };
-  publicContext.window = publicContext;
-  vm.runInNewContext(publicSource, publicContext);
-  expect(values.get('kinto_customer_public_refresh_guard')).toBe('1');
-
-  let restored = '';
-  const dashboardContext = {
-    sessionStorage, URL,
-    location: { href: 'https://example.test/dashboard.html?customerId=1', replace: value => { restored = value; } },
-    document: { documentElement: { style: {} } }, Date
-  };
-  vm.runInNewContext(dashboardGuard, dashboardContext);
-  expect(restored).toBe('https://example.test/local-stores.html?country=IQ#stores');
-
-  values.clear(); listeners.clear(); restored = '';
-  delete publicContext.__kintoPublicReloadGuardArmed;
-  vm.runInNewContext(publicSource, publicContext);
-  listeners.get('pointerdown')?.();
-  vm.runInNewContext(dashboardGuard, dashboardContext);
-  expect(restored).toBe('');
+  for (const source of [dashboard, favorites, theme]) {
+    expect(source).not.toContain('kinto_customer_public_refresh_guard');
+    expect(source).not.toContain('kinto_customer_public_refresh_route');
+  }
 });
