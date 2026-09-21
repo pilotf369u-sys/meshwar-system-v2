@@ -4,6 +4,21 @@
 const KEY='meshwar_global_theme';
 const LEGACY_KEY='meshwar_employee_theme';
 const root=document.documentElement;
+function armPublicReloadGuard(){
+  if(window.__kintoPublicReloadGuardArmed)return;
+  const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+  if(page!=='index.html')return;
+  window.__kintoPublicReloadGuardArmed=true;
+  try{
+    const routeKey='kinto_customer_public_refresh_route',timeKey='kinto_customer_public_refresh_time',guardKey='kinto_customer_public_refresh_guard';
+    const entry=performance.getEntriesByType?.('navigation')?.[0],reloaded=entry?entry.type==='reload':performance.navigation?.type===1;
+    sessionStorage.setItem(routeKey,location.pathname+location.search+location.hash);
+    sessionStorage.setItem(timeKey,String(Date.now()));
+    if(reloaded)sessionStorage.setItem(guardKey,'1');else sessionStorage.removeItem(guardKey);
+    if(reloaded){const cancel=()=>sessionStorage.removeItem(guardKey);['pointerdown','keydown','submit'].forEach(type=>addEventListener(type,cancel,{capture:true,once:true}))}
+  }catch{}
+}
+armPublicReloadGuard();
 function readTheme(){
   try{
     const global=localStorage.getItem(KEY);if(global==='light'||global==='dark')return global;
