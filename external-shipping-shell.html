@@ -18,6 +18,7 @@
   params.delete('screen');
   params.set('_v',BUILD);
   const qs=params.toString(),frame=document.getElementById('app');
+  if(screen==='customer'){location.replace(target+(qs?'?'+qs:''));return}
   frame.src=target+(qs?'?'+qs:'');
   frame.addEventListener('load',()=>{
     try{
