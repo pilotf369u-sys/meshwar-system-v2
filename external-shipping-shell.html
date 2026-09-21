@@ -75,12 +75,6 @@
         const nativeRender=d.createElement('script');
         nativeRender.src='js/external-shipping-native-order-render-v1.js?v=20260829-native-render-v40';
         nativeRender.dataset.meshwarScreen=screen;
-        nativeRender.onload=()=>{
-          const groupFinance=d.createElement('script');
-          groupFinance.src='js/checkout-group-finance-v140.js?v=20260921-v140';
-          groupFinance.dataset.meshwarScreen=screen;
-          d.head.appendChild(groupFinance);
-        };
         d.head.appendChild(nativeRender);
         return;
       }
