@@ -221,7 +221,7 @@ function viewCustomerParcelImage(url){if(!url)return;document.getElementById('cu
 function decorateCustomerParcelButtons(){const active=currentCustomerOrdersGlobal.filter(o=>!isHistoryStatus(o.status)),rows=[...document.querySelectorAll('#activeOrdersTableBody tr')];rows.forEach((tr,i)=>{const o=active[i],url=customerParcelUrl(o);if(!o||!url||tr.dataset.parcelDecorated==='1')return;tr.dataset.parcelDecorated='1';const cells=tr.querySelectorAll('td'),cell=cells[1];if(!cell)return;cell.insertAdjacentHTML('beforeend','<br>'+customerParcelButton(o))})}
 const customerRenderOrdersPanelsBase=renderOrdersPanels;renderOrdersPanels=function(...args){const r=customerRenderOrdersPanelsBase(...args);decorateCustomerParcelButtons();return r};
 const customerOpenDetailsBase=openCustomerOrderDetails;openCustomerOrderDetails=function(i){customerOpenDetailsBase(i);const o=currentCustomerOrdersGlobal[i],box=document.getElementById('customerOrderDetailsContent');if(box&&o){const url=customerParcelUrl(o);box.insertAdjacentHTML('beforeend',`<div style="margin-top:14px;padding:10px;border:1px solid #e5eaf1;border-radius:10px"><b>صورة الطرد:</b><br>${url?customerParcelButton(o):'---'}</div>`)}};
-Object.assign(window,{viewCustomerParcelImage,closeCustomerParcelViewer});
+Object.assign(window,{openCustomerOrderDetails,viewCustomerParcelImage,closeCustomerParcelViewer});
 </script>
 <script>
 const CUSTOMER_REWARD_TARGET=6;
@@ -236,11 +236,23 @@ function renderCustomerRewardSummary(){const box=document.getElementById('reward
 const rewardRenderCustomerBase=renderCurrentCustomer;renderCurrentCustomer=function(c){const r=rewardRenderCustomerBase(c);renderCustomerRewardSummary();return r};
 const rewardLoadOrdersBase=loadCustomerOrdersFromCloud;loadCustomerOrdersFromCloud=async function(customerId){const r=await rewardLoadOrdersBase(customerId);renderCustomerRewardSummary();return r};
 Object.assign(window,{renderCustomerRewardSummary});
+<style>
+.customer-pod-full{max-width:100%;max-height:72vh;object-fit:contain;border-radius:12px}
+</style>
+<div id="customerPodViewer" class="modal-overlay" style="display:none">
+ <div class="modal-content" style="max-width:900px;text-align:center">
+  <button class="btn-cancel" type="button" onclick="closeCustomerPodViewer()" style="float:left">×</button>
+  <h3>🖼️ إثبات التسليم</h3>
+  <img id="customerPodViewerImg" class="customer-pod-full" alt="صورة إثبات التسليم">
+ </div>
+</div>
 /* POD_VISIBILITY_V1_CUSTOMER */
 (function(){
  function podUrl(o){const d=parseOrderDetails(o?.details);return String(o?.delivery_proof_url||o?.pod_image_url||o?.proof_of_delivery_url||d.delivery_proof_url||d.proof_of_delivery_url||d.pod_image_url||'').trim()}
- function btn(o){const u=podUrl(o);return u?`<button class="customer-pod-btn" type="button" onclick="viewCustomerPod('${escapeHtml(u)}')">🖼️ عرض صورة إثبات التسليم</button>`:''}
- function view(u){if(!u)return;document.getElementById('customerPodViewerImg').src=u;document.getElementById('customerPodViewer').style.display='flex'}
+ function btn(o){const u=podUrl(o);if(!u)return'';const encoded=encodeURIComponent(u);return `<button class="customer-pod-btn" type="button" data-pod-url="${escapeHtml(encoded)}">🖼️ عرض صورة إثبات التسليم</button>`}
+ function view(u){if(!u)return;const img=document.getElementById('customerPodViewerImg'),viewer=document.getElementById('customerPodViewer');if(!img||!viewer)return;img.src=String(u);viewer.style.display='flex'}
+ function handlePodClick(e){const b=e.target.closest?.('.customer-pod-btn[data-pod-url]');if(!b)return;let u='';try{u=decodeURIComponent(b.dataset.podUrl||'')}catch{u=b.dataset.podUrl||''}view(u)}
+ document.addEventListener('click',handlePodClick);
  function close(){document.getElementById('customerPodViewer').style.display='none';document.getElementById('customerPodViewerImg').src=''}
  function decorate(){const hist=currentCustomerOrdersGlobal.filter(o=>isHistoryStatus(o.status)),rows=[...document.querySelectorAll('#historyOrdersTableBody tr')].filter(x=>x.querySelectorAll('td').length>1);rows.forEach((tr,i)=>{const o=hist[i],u=podUrl(o);if(!o||!u||tr.dataset.podDecorated==='1')return;tr.dataset.podDecorated='1';const cells=tr.querySelectorAll('td'),cell=cells[cells.length-1];if(cell)cell.insertAdjacentHTML('beforeend','<br>'+btn(o))})}
  const renderBase=renderOrdersPanels;renderOrdersPanels=function(...a){const r=renderBase(...a);decorate();return r};window.renderOrdersPanels=renderOrdersPanels;
