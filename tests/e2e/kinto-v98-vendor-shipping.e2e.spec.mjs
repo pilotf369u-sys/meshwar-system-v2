@@ -187,7 +187,8 @@ test('V105 defers shipping to the vendor and keeps every invoice on canonical da
   expect(adapter).toContain('saveVendorTableShipping');
   expect(adapter).toContain('p_segment_ids:ids');
   expect(invoice).toContain('hydrateCanonicalShipping(order)');
-  expect(invoice).toContain('بانتظار تحديد التاجر');
+  expect(invoice).toContain('بانتظار تحديد الأجرة');
+  expect(invoice).toContain('أجرة التوصيل');
   expect(invoice).toContain('t.deliveryCurrency');
   expect(shell).toContain('v112-rewards');
 });
