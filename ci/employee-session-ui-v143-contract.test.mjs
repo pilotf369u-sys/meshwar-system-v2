@@ -22,6 +22,9 @@ assert.doesNotMatch(dashboard,/async function loadEmployeeIdentity\(\).*?\.from\
 assert.match(dashboard,/employeeVerifiedLogout/,'dashboard must use verified logout');
 assert.match(dashboard,/window\.top\.location\.replace/,'logout/invalid session must leave the employee shell');
 assert.match(dashboard,/تعذر التحقق:[^}]+throw e/,'failed identity must stop later dashboard loaders');
+assert.match(dashboard,/<html lang="ar" dir="rtl" class="employee-auth-pending">/,'dashboard must start hidden before identity verification');
+assert.match(dashboard,/html\.employee-auth-pending body\{visibility:hidden\}/,'protected employee content must not flash before verification');
+assert.match(helper,/classList\.remove\(['"]employee-auth-pending['"]\)/,'verified identity must reveal the employee dashboard');
 
 for(const source of [login,helper]){
   assert.doesNotMatch(source,/\.from\(['"]orders['"]\)\.(insert|update|delete)/,'session integration must not change order writes');
