@@ -5,6 +5,7 @@ const migration=fs.readFileSync(new URL('../supabase/migrations/20260922_v149_co
 const rollback=fs.readFileSync(new URL('../supabase/read-only/20260922_v149_courier_verified_sessions_rollback.sql',import.meta.url),'utf8');
 const login=fs.readFileSync(new URL('../login.html',import.meta.url),'utf8');
 const dashboard=fs.readFileSync(new URL('../delivery-dashboard.html',import.meta.url),'utf8');
+const shell=fs.readFileSync(new URL('../external-shipping-shell.html',import.meta.url),'utf8');
 const helper=fs.readFileSync(new URL('../js/courier-session-v149.js',import.meta.url),'utf8');
 
 for(const marker of ['courier_sessions_v149','courier_login_attempts_v149','private.require_courier_session_v149','public.courier_login_v149','public.courier_session_identity_v149','public.courier_logout_v149',"digest(p_session_token, 'sha256')","now() + interval '8 hours'",'COURIER_LOGIN_RATE_LIMITED'])assert.ok(migration.includes(marker),`missing courier session contract: ${marker}`);
@@ -28,6 +29,9 @@ assert.match(dashboard,/window\.top\.location\.replace/);
 assert.match(dashboard,/<html lang="ar" dir="rtl" class="courier-auth-pending">/);
 assert.match(dashboard,/html\.courier-auth-pending body\{visibility:hidden\}/);
 assert.match(helper,/classList\.remove\(['"]courier-auth-pending['"]\)/);
+assert.match(shell,/dataset\.courierAuthPending=['"]true['"]/,'delivery shell must hide before courier verification');
+assert.match(shell,/html\[data-courier-auth-pending="true"\] #app\{visibility:hidden\}/,'delivery shell iframe must not flash protected content');
+assert.match(dashboard,/removeAttribute\(['"]data-courier-auth-pending['"]\)/,'verified courier identity must reveal the shell');
 const verifier=dashboard.slice(dashboard.indexOf('async function verifyCourier()'),dashboard.indexOf('async function enrichCustomers('));
 assert.ok(verifier,'courier verifier must exist');
 assert.doesNotMatch(verifier,/\.from\(['"]couriers['"]\)/,'courier identity must come from the verified token');
