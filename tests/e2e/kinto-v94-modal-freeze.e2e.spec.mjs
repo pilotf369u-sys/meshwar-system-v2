@@ -65,3 +65,21 @@ test('V94 modal tabs, close and invoice remain responsive for multi-store orders
   await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('20 USD'))).toBe(true);
   await expect(storeButtons.nth(1)).toBeEnabled();
 });
+
+test('invoice includes branch-entered delivery fee without requiring a shipping company',async({page})=>{
+  await page.setContent('<div id="details"></div>');
+  await page.addScriptTag({path:path.join(root,'js/kinto-bundle-ui-v93.js')});
+  await page.evaluate(()=>{
+    const order={id:'branch-fee-order',order_code:'KN-77',status:'مخزن محلي',total_price:30,delivery_fee:5,currency:'USD',details:{product_name:'A',quantity:1}};
+    window.__popupWrites=[];
+    window.__popup={document:{open(){},write(value){window.__popupWrites.push(String(value))},close(){}}};
+    window.open=()=>window.__popup;
+    window.fetch=async url=>String(url).includes('/rest/v1/orders?')?{ok:true,json:async()=>[{delivery_fee:5,delivery_currency:null,shipping_company_name:null,shipping_snapshot:null,shipping_version:0,delivery_payment_type:'cod_full'}]}:{ok:true,json:async()=>[]};
+    window.KintoBundleV94.enhance(document.querySelector('#details'),order);
+  });
+  await page.locator('.kinto-v94-invoice-btn').click();
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('أجرة التوصيل'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('5 USD'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>window.__popupWrites.join('').includes('35 USD'))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>!window.__popupWrites.join('').includes('بانتظار تحديد التاجر'))).toBe(true);
+});
