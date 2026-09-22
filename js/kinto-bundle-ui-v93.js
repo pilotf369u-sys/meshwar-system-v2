@@ -31,8 +31,11 @@ async function invoice(order){const w=window.open('','_blank','width=1000,height
 function storeInvoiceOrder(order,storeId){const groups=storeGroups(order),group=groups.find(g=>String(g.store_id)===String(storeId));if(!group)throw new Error('Store invoice scope was not found');const d=details(order),subtotal=Number(group.subtotal_local)||0,delivery=groups.length===1?(Number(order?.delivery_fee??d.delivery_fee??d.delivery_fee_local)||0):0;return{...order,total_price:subtotal,external_shipping_fee:0,delivery_fee:delivery,details:{...d,items:group.items,stores:[{store_id:group.store_id,store_name:group.store_name,subtotal_local:subtotal}],customer_total_local:subtotal,external_shipping_fee:0,shipping_fee:0,delivery_fee:delivery,local_delivery_fee:delivery}}}
 function printStoreInvoice(order,storeId){return invoice(storeInvoiceOrder(order,storeId))}
 function scopedStoreOrder(order){
-  const d=details(order),groups=storeGroups(order),target=first(order?.store_id,d.store_id);
-  if(!target||groups.length<=1)return order;
+  const d=details(order),groups=storeGroups(order);
+  if(groups.length<=1)return order;
+  const productId=first(order?.product_id,d.product_id),matchedItem=productId?items(order).find(x=>String(x?.product_id||'')===String(productId)):null;
+  const target=first(order?.store_id,d.store_id,matchedItem?.store_id);
+  if(!target)return order;
   const group=groups.find(g=>String(g.store_id)===String(target));
   if(!group)return order;
   const subtotal=Number(group.subtotal_local)||0;
