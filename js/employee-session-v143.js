@@ -40,6 +40,7 @@
     const {data,error}=await supabase.rpc('employee_session_identity_v143',{p_session_token:session.token});
     if(error||!data?.ok||!data?.employee){clear();throw error||new Error('EMPLOYEE_SESSION_INVALID')}
     save({...session,employee:data.employee});
+    global.document?.documentElement?.classList.remove('employee-auth-pending');
     return data.employee;
   }
   async function logout(supabase){
