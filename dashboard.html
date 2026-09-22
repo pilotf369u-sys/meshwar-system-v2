@@ -236,6 +236,16 @@ function renderCustomerRewardSummary(){const box=document.getElementById('reward
 const rewardRenderCustomerBase=renderCurrentCustomer;renderCurrentCustomer=function(c){const r=rewardRenderCustomerBase(c);renderCustomerRewardSummary();return r};
 const rewardLoadOrdersBase=loadCustomerOrdersFromCloud;loadCustomerOrdersFromCloud=async function(customerId){const r=await rewardLoadOrdersBase(customerId);renderCustomerRewardSummary();return r};
 Object.assign(window,{renderCustomerRewardSummary});
+<style>
+.customer-pod-full{max-width:100%;max-height:72vh;object-fit:contain;border-radius:12px}
+</style>
+<div id="customerPodViewer" class="modal-overlay" style="display:none">
+ <div class="modal-content" style="max-width:900px;text-align:center">
+  <button class="btn-cancel" type="button" onclick="closeCustomerPodViewer()" style="float:left">×</button>
+  <h3>🖼️ إثبات التسليم</h3>
+  <img id="customerPodViewerImg" class="customer-pod-full" alt="صورة إثبات التسليم">
+ </div>
+</div>
 /* POD_VISIBILITY_V1_CUSTOMER */
 (function(){
  function podUrl(o){const d=parseOrderDetails(o?.details);return String(o?.delivery_proof_url||o?.pod_image_url||o?.proof_of_delivery_url||d.delivery_proof_url||d.proof_of_delivery_url||d.pod_image_url||'').trim()}
