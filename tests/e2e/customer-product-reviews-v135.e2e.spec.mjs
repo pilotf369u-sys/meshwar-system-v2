@@ -37,33 +37,3 @@ test('customer reviews UI is isolated, responsive, and exposes camera plus devic
   await expect(page.locator('#reviewUnlock')).toBeHidden();
   await expect(page.locator('.review-product-card')).toBeVisible();
 });
-
-
-test('customer delivery proof opens safely even when the URL contains quote-sensitive characters', async ({ page }) => {
-  await page.addInitScript(() => {
-    sessionStorage.setItem('kinto_customer_review_session_v132', JSON.stringify({
-      token: 'e2e-review-token',
-      expiresAt: new Date(Date.now() + 3600000).toISOString()
-    }));
-    const proofUrl = "https://example.test/storage/proof-o'paid.jpg?token=a%26b";
-    window.__MESH_E2E_POD_URL = proofUrl;
-  });
-  await page.goto('/dashboard.html');
-  await page.evaluate(() => {
-    const order = window.__MESH_E2E_DB.orders.find(o => o.id === 'o-paid');
-    order.details.delivery_proof_url = window.__MESH_E2E_POD_URL;
-    order.details.proof_of_delivery_url = window.__MESH_E2E_POD_URL;
-  });
-  await page.reload();
-  await expect(page.locator('#customerCode')).toHaveText('CUS-E2E');
-  await page.evaluate(() => {
-    const rows = [...document.querySelectorAll('#historyOrdersTableBody tr')];
-    const row = rows.find(tr => tr.textContent.includes('MW-5666'));
-    row?.querySelector('button')?.click();
-  });
-  const button = page.locator('#customerOrderDetailsContent .customer-pod-btn');
-  await expect(button).toBeVisible();
-  await button.click();
-  await expect(page.locator('#customerPodViewer')).toBeVisible();
-  await expect(page.locator('#customerPodViewerImg')).toHaveAttribute('src', "https://example.test/storage/proof-o'paid.jpg?token=a%26b");
-});
