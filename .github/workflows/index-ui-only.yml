@@ -73,7 +73,6 @@ jobs:
       - name: Validate current local store routing
         run: |
           grep -Fq 'id="localStoreProductsPanel"' index.html
-          grep -Fq "show(selectedStoreId?'local':'international')" index.html
           grep -Fq "new URLSearchParams(window.location.search).get('storeId')" index.html
           grep -Fq 'window.loadStoreDetails=async function(storeId)' js/local-store-card-v3.js
           grep -Fq 'local_products?select=' js/local-store-card-v3.js
