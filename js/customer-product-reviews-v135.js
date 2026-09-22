@@ -671,7 +671,7 @@
   function wrapLogout() {
     if (typeof logoutCustomer !== 'function' || logoutCustomer.__reviewsV135) return;
     const base = logoutCustomer;
-    logoutCustomer = async function (...args) { clearSession(); return base.apply(this, args); };
+    logoutCustomer = async function (...args) { const result = await base.apply(this, args); clearSession(); return result; };
     logoutCustomer.__reviewsV135 = true;
   }
 
