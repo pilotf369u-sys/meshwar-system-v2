@@ -89,7 +89,20 @@ let chatPollingTimer=null,ordersPollingTimer=null,selectedCustomerChatFile=null,
 async function ensureCustomerPortalSupabase(){if(customerPortalSupabase)return customerPortalSupabase;const{createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');customerPortalSupabase=createClient(CUSTOMER_SUPABASE_URL,CUSTOMER_SUPABASE_KEY);return customerPortalSupabase;}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
 function safeChatFileName(name){return String(name||'file').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-120)||'file'}function isImageAttachment(url){return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(String(url||''))}function attachmentName(url){try{return decodeURIComponent(new URL(url).pathname.split('/').pop()||'ملف مرفق')}catch{return'ملف مرفق'}}function attachmentHtml(m){const url=String(m?.file_url||'').trim();if(!url)return'';const safe=escapeHtml(url),name=escapeHtml(attachmentName(url));return isImageAttachment(url)?`<div class="chat-attachment"><a href="${safe}" target="_blank" rel="noopener"><img src="${safe}" alt="مرفق"></a></div>`:`<div class="chat-attachment"><a class="chat-file-link" href="${safe}" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down"></i>${name}</a></div>`}function handleCustomerChatFile(file){selectedCustomerChatFile=file||null;document.getElementById('customerSelectedFile').innerText=file?`المرفق: ${file.name}`:''}async function uploadCustomerChatAttachment(file){if(!file)return'';if(file.size>15*1024*1024)throw new Error('حجم المرفق يجب ألا يتجاوز 15MB');const sb=await ensureCustomerPortalSupabase(),path=`customer/${String(currentCustomerCloud?.id||'customer')}/${Date.now()}-${safeChatFileName(file.name)}`,{error}=await sb.storage.from('chat-attachments').upload(path,file,{upsert:false,contentType:file.type||undefined});if(error)throw error;const{data}=sb.storage.from('chat-attachments').getPublicUrl(path);if(!data?.publicUrl)throw new Error('تعذر إنشاء رابط المرفق');return data.publicUrl}
-async function fetchCurrentCustomerFromCloud(){const sb=await ensureCustomerPortalSupabase();return KintoCustomerSessionV150.identity(sb)}
+async function fetchCurrentCustomerFromCloud(){
+  const sb=await ensureCustomerPortalSupabase(),params=new URLSearchParams(location.search),viewedBy=String(params.get('viewedBy')||'').trim(),customerId=String(params.get('customerId')||'').trim();
+  if(customerId&&(viewedBy==='employee'||viewedBy==='admin')){
+    const staffId=String(params.get(viewedBy==='employee'?'employeeId':'adminId')||'').trim();
+    if(!staffId)return null;
+    const table=viewedBy==='employee'?'employees':'admins';
+    const {data:staff,error:staffError}=await sb.from(table).select('id').eq('id',staffId).maybeSingle();
+    if(staffError||!staff)return null;
+    const {data:customer,error:customerError}=await sb.from('customers').select('*').eq('id',customerId).maybeSingle();
+    if(customerError||!customer)return null;
+    return customer;
+  }
+  return KintoCustomerSessionV150.identity(sb);
+}
 function normalizeCloudCustomer(c){if(!c)return null;return{...c,rewardsLog:c.rewardsLog??c.rewards_log??[],usageCount:c.usageCount??c.usage_count??0};}
 function isWaitingCustomerApprovalStatus(s){return s==='بانتظار موافقة العميل'||s==='بانتظار موافقة الزبون'||s==='بانتظار التسعير'||s==='تم التسعير / بانتظار موافقة العميل';}
 function isHistoryStatus(s){return TERMINAL_ORDER_STATUSES.includes(s);}
