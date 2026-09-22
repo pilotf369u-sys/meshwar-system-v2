@@ -42,6 +42,8 @@
     sessionStorage.removeItem(SESSION_KEY);
   }
 
+  function readOnlyBlocked(){return window.KINTO_STAFF_CUSTOMER_READ_ONLY===true;}
+
   async function client() {
     if (typeof ensureCustomerPortalSupabase !== 'function') throw new Error('خدمة الاتصال غير جاهزة.');
     return ensureCustomerPortalSupabase();
@@ -459,6 +461,7 @@
   }
 
   async function submitReview(event) {
+    if(readOnlyBlocked()){event?.preventDefault();return message('reviewFormMessage','وضع مشاهدة فقط: لا يمكن إرسال تقييم باسم العميل.','error');}
     event.preventDefault();
     if (state.busy || !state.selectedItem || !state.token) return;
     if (state.rating < 1 || state.rating > 5) return message('reviewFormMessage', 'اختر عدد النجوم أولاً.', 'error');
@@ -499,6 +502,7 @@
   }
 
   async function uploadImage(reviewId, file) {
+    if(readOnlyBlocked())throw new Error('وضع مشاهدة فقط');
     const sb = await client();
     const { data: ticket, error: ticketError } = await sb.rpc('customer_create_review_image_upload_v150', {
       p_session_token: state.token,
@@ -621,6 +625,7 @@
   }
 
   async function markVisibleNotificationsRead() {
+    if(readOnlyBlocked())return;
     if (!state.token) return;
     const keys = visibleNotificationKeys(); if (!keys.length) return setNotificationBadge(0);
     try {
