@@ -92,11 +92,12 @@ function safeChatFileName(name){return String(name||'file').replace(/[^a-zA-Z0-9
 async function fetchCurrentCustomerFromCloud(){
   const sb=await ensureCustomerPortalSupabase(),params=new URLSearchParams(location.search),viewedBy=String(params.get('viewedBy')||'').trim(),customerId=String(params.get('customerId')||'').trim();
   if(customerId&&(viewedBy==='employee'||viewedBy==='admin')){
-    const staffId=String(params.get(viewedBy==='employee'?'employeeId':'adminId')||'').trim();
-    if(!staffId)return null;
-    const table=viewedBy==='employee'?'employees':'admins';
-    const {data:staff,error:staffError}=await sb.from(table).select('id').eq('id',staffId).maybeSingle();
-    if(staffError||!staff)return null;
+    let delegated=null;try{delegated=JSON.parse(sessionStorage.getItem('kinto_staff_customer_view_v151')||'null')}catch{}
+    const validAge=Number.isFinite(Number(delegated?.createdAt))&&Date.now()-Number(delegated.createdAt)<=5*60*1000;
+    if(!delegated||delegated.role!==viewedBy||String(delegated.customerId||'')!==customerId||!delegated.token||!validAge)return null;
+    const rpc=viewedBy==='employee'?'employee_session_identity_v143':'admin_session_identity_v147',key=viewedBy==='employee'?'employee':'admin';
+    const {data:staff,error:staffError}=await sb.rpc(rpc,{p_session_token:String(delegated.token)});
+    if(staffError||!staff?.ok||!staff?.[key]){sessionStorage.removeItem('kinto_staff_customer_view_v151');return null}
     const {data:customer,error:customerError}=await sb.from('customers').select('*').eq('id',customerId).maybeSingle();
     if(customerError||!customer)return null;
     return customer;
