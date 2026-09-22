@@ -9,7 +9,8 @@ assert.match(login,/employee-session-v143\.js/,'login must load the employee ses
 assert.match(login,/secureAwareLogin/,'login must use the verified employee path');
 assert.match(login,/const legacyLogin=login/,'legacy login must be captured before window.login is replaced');
 assert.match(login,/return legacyLogin\(\)/,'non-employee accounts must use the captured legacy login path');
-assert.match(login,/if\(!employee\|\|normalizeRole\(employee\.role\)!==['"]employee['"]\)return legacyLogin\(\)/,'non-employee accounts must stay on their existing login paths');
+assert.match(login,/if\(role!==['"]employee['"]\)return legacyLogin\(\)/,'non-staff accounts must stay on their existing login paths');
+assert.match(login,/if\(role===['"]admin['"]\).*?KintoAdminSessionV147\.login/s,'admin accounts must use their isolated verified path');
 assert.match(helper,/employee_login_v143/,'helper must call the verified login RPC');
 assert.match(helper,/employee_session_identity_v143/,'helper must resolve identity through the session RPC');
 assert.match(helper,/employee_logout_v143/,'helper must revoke the session on logout');
