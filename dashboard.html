@@ -239,8 +239,10 @@ Object.assign(window,{renderCustomerRewardSummary});
 /* POD_VISIBILITY_V1_CUSTOMER */
 (function(){
  function podUrl(o){const d=parseOrderDetails(o?.details);return String(o?.delivery_proof_url||o?.pod_image_url||o?.proof_of_delivery_url||d.delivery_proof_url||d.proof_of_delivery_url||d.pod_image_url||'').trim()}
- function btn(o){const u=podUrl(o);return u?`<button class="customer-pod-btn" type="button" onclick="viewCustomerPod('${escapeHtml(u)}')">🖼️ عرض صورة إثبات التسليم</button>`:''}
- function view(u){if(!u)return;document.getElementById('customerPodViewerImg').src=u;document.getElementById('customerPodViewer').style.display='flex'}
+ function btn(o){const u=podUrl(o);if(!u)return'';const encoded=encodeURIComponent(u);return `<button class="customer-pod-btn" type="button" data-pod-url="${escapeHtml(encoded)}">🖼️ عرض صورة إثبات التسليم</button>`}
+ function view(u){if(!u)return;const img=document.getElementById('customerPodViewerImg'),viewer=document.getElementById('customerPodViewer');if(!img||!viewer)return;img.src=String(u);viewer.style.display='flex'}
+ function handlePodClick(e){const b=e.target.closest?.('.customer-pod-btn[data-pod-url]');if(!b)return;let u='';try{u=decodeURIComponent(b.dataset.podUrl||'')}catch{u=b.dataset.podUrl||''}view(u)}
+ document.addEventListener('click',handlePodClick);
  function close(){document.getElementById('customerPodViewer').style.display='none';document.getElementById('customerPodViewerImg').src=''}
  function decorate(){const hist=currentCustomerOrdersGlobal.filter(o=>isHistoryStatus(o.status)),rows=[...document.querySelectorAll('#historyOrdersTableBody tr')].filter(x=>x.querySelectorAll('td').length>1);rows.forEach((tr,i)=>{const o=hist[i],u=podUrl(o);if(!o||!u||tr.dataset.podDecorated==='1')return;tr.dataset.podDecorated='1';const cells=tr.querySelectorAll('td'),cell=cells[cells.length-1];if(cell)cell.insertAdjacentHTML('beforeend','<br>'+btn(o))})}
  const renderBase=renderOrdersPanels;renderOrdersPanels=function(...a){const r=renderBase(...a);decorate();return r};window.renderOrdersPanels=renderOrdersPanels;
