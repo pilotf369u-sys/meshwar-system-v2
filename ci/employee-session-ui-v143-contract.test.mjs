@@ -9,7 +9,7 @@ assert.match(login,/employee-session-v143\.js/,'login must load the employee ses
 assert.match(login,/secureAwareLogin/,'login must use the verified employee path');
 assert.match(login,/const legacyLogin=login/,'legacy login must be captured before window.login is replaced');
 assert.match(login,/return legacyLogin\(\)/,'non-employee accounts must use the captured legacy login path');
-assert.match(login,/if\(!branch\)return legacyLogin\(\)/,'non-staff, non-branch accounts must stay on their existing login paths');
+assert.match(login,/if\(!courier\)return legacyLogin\(\)/,'non-staff, non-branch, non-courier accounts must stay on their existing login paths');
 assert.match(login,/if\(role===['"]admin['"]\).*?KintoAdminSessionV147\.login/s,'admin accounts must use their isolated verified path');
 assert.match(helper,/employee_login_v143/,'helper must call the verified login RPC');
 assert.match(helper,/employee_session_identity_v143/,'helper must resolve identity through the session RPC');
