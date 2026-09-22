@@ -24,6 +24,7 @@ p{text-align:center;margin:18px 0 0;color:#94a3b8;font-size:13px}a{color:#38bdf8
 <script src="js/employee-session-v143.js?v=20260921-v143"></script>
 <script src="js/admin-session-v147.js?v=20260922-v147"></script>
 <script src="js/branch-session-v148.js?v=20260922-v148"></script>
+<script src="js/courier-session-v149.js?v=20260922-v149"></script>
 <script>
 const LOGIN_SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co',LOGIN_SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';let loginSupabase=null;
 async function ensureLoginSupabase(){if(loginSupabase)return loginSupabase;const{createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');loginSupabase=createClient(LOGIN_SUPABASE_URL,LOGIN_SUPABASE_KEY);return loginSupabase}function parseSiteSettings(v){if(v==null)return{};if(Array.isArray(v))return parseSiteSettings(v[0]);if(typeof v==='string'){try{return parseSiteSettings(JSON.parse(v))}catch{return{}}}if(typeof v==='object'){if(v.value!=null)return parseSiteSettings(v.value);return v}return{}}async function hydrateLoginBrandAndSupport(){try{const sb=await ensureLoginSupabase(),{data,error}=await sb.rpc('get_site_settings');if(error)throw error;const s=parseSiteSettings(data),logo=String(s.brand_logo_url||'').trim(),img=document.getElementById('loginBrandLogo');if(logo&&img)img.src=logo}catch(e){console.warn('KINTO login branding settings unavailable:',e)}}function phoneCandidates(input){const raw=String(input||'').trim(),digits=raw.replace(/[^0-9]/g,'');return Array.from(new Set([raw,digits,digits?'+'+digits:''].filter(Boolean)))}function normalizeRole(role){const r=String(role||'').trim().toLowerCase();if(r==='admin'||r==='أدمن'||r==='ادمن')return'admin';if(r==='employee'||r==='موظف')return'employee';return r}function cloudId(value){return value==null?'':String(value).trim()}function accountEnabled(a){return a&&a.is_active!==false&&a.active!==false&&a.disabled!==true}function passwordMatches(a,p){return String(a?.password??'')===String(p??'')}
@@ -55,10 +56,17 @@ async function secureAwareLogin(){
   }
   let branch=null;
   try{branch=await findBranchInSupabase(inputId)}catch(error){console.error('Branch role lookup error:',error);return alert('تعذر التحقق من نوع الحساب: '+(error.message||error))}
-  if(!branch)return legacyLogin();
-  let attempt;try{attempt=await KintoBranchSessionV148.login(await ensureLoginSupabase(),inputId,passwordInput)}catch(error){console.error('Verified branch login error:',error);alert('تعذر التحقق الآمن من حساب الفرع: '+(error.message||error));return}
-  if(attempt.ok){const branchId=cloudId(attempt.branch?.id);if(!branchId){KintoBranchSessionV148.clear();return alert('معرف الفرع غير صالح.')}location.href=roleShell('branch',{branchId});return}
-  if(attempt.error==='BRANCH_LOGIN_DISABLED')return alert('حساب الفرع معطل. راجع الإدارة.');if(attempt.error==='BRANCH_LOGIN_RATE_LIMITED')return alert('محاولات كثيرة. انتظر 15 دقيقة ثم أعد المحاولة.');return alert('كلمة المرور غير صحيحة.');
+  if(branch){
+    let attempt;try{attempt=await KintoBranchSessionV148.login(await ensureLoginSupabase(),inputId,passwordInput)}catch(error){console.error('Verified branch login error:',error);alert('تعذر التحقق الآمن من حساب الفرع: '+(error.message||error));return}
+    if(attempt.ok){const branchId=cloudId(attempt.branch?.id);if(!branchId){KintoBranchSessionV148.clear();return alert('معرف الفرع غير صالح.')}location.href=roleShell('branch',{branchId});return}
+    if(attempt.error==='BRANCH_LOGIN_DISABLED')return alert('حساب الفرع معطل. راجع الإدارة.');if(attempt.error==='BRANCH_LOGIN_RATE_LIMITED')return alert('محاولات كثيرة. انتظر 15 دقيقة ثم أعد المحاولة.');return alert('كلمة المرور غير صحيحة.');
+  }
+  let courier=null;
+  try{courier=await findCourierInSupabase(inputId)}catch(error){console.error('Courier role lookup error:',error);return alert('تعذر التحقق من نوع الحساب: '+(error.message||error))}
+  if(!courier)return legacyLogin();
+  let attempt;try{attempt=await KintoCourierSessionV149.login(await ensureLoginSupabase(),inputId,passwordInput)}catch(error){console.error('Verified courier login error:',error);alert('تعذر التحقق الآمن من حساب موظف التوصيل: '+(error.message||error));return}
+  if(attempt.ok){const courierId=cloudId(attempt.courier?.id),branchId=cloudId(attempt.courier?.branch_id);if(!courierId){KintoCourierSessionV149.clear();return alert('معرف موظف التوصيل غير صالح.')}location.href=roleShell('delivery',{courierId,...(branchId?{branchId}:{})});return}
+  if(attempt.error==='COURIER_LOGIN_DISABLED')return alert('حساب موظف التوصيل معطل. راجع الإدارة.');if(attempt.error==='COURIER_LOGIN_RATE_LIMITED')return alert('محاولات كثيرة. انتظر 15 دقيقة ثم أعد المحاولة.');return alert('كلمة المرور غير صحيحة.');
 }
 window.login=secureAwareLogin;document.getElementById('loginForm')?.addEventListener('submit',async e=>{e.preventDefault();try{await secureAwareLogin()}finally{const b=document.getElementById('loginSubmitBtn');if(b)b.disabled=false}});hydrateLoginBrandAndSupport();
 </script></body></html>
