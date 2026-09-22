@@ -10,7 +10,7 @@ test('customer reviews UI is isolated, responsive, and exposes camera plus devic
     token: 'e2e-review-token',
     expiresAt: new Date(Date.now() + 3600000).toISOString()
   })));
-  await page.goto('/dashboard.html?customerId=e2e-customer');
+  await page.goto('/dashboard.html');
   await expect(page.locator('#customerCode')).toHaveText('CUS-E2E');
 
   const tab = page.locator('.review-tab-btn');
