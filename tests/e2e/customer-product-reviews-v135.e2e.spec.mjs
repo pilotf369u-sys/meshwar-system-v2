@@ -53,12 +53,13 @@ test('customer delivery proof opens safely even when the URL contains quote-sens
     const order = window.__MESH_E2E_DB.orders.find(o => o.id === 'o-paid');
     order.details.delivery_proof_url = window.__MESH_E2E_POD_URL;
     order.details.proof_of_delivery_url = window.__MESH_E2E_POD_URL;
-    window.currentCustomerOrdersGlobal = window.__MESH_E2E_DB.orders;
-    window.renderOrdersPanels();
   });
+  await page.reload();
+  await expect(page.locator('#customerCode')).toHaveText('CUS-E2E');
   await page.evaluate(() => {
-    const index = window.currentCustomerOrdersGlobal.findIndex(o => o.id === 'o-paid');
-    window.openCustomerOrderDetails(index);
+    const rows = [...document.querySelectorAll('#historyOrdersTableBody tr')];
+    const row = rows.find(tr => tr.textContent.includes('MW-5666'));
+    row?.querySelector('button')?.click();
   });
   const button = page.locator('#customerOrderDetailsContent .customer-pod-btn');
   await expect(button).toBeVisible();
