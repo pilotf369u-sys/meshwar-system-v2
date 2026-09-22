@@ -3,7 +3,7 @@
 const SESSION_KEY='kinto_customer_review_session_v132',state={token:'',lists:[],active:'all',busy:false};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 function sessionToken(){try{const x=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');return x?.token&&(!x.expiresAt||new Date(x.expiresAt)>new Date())?String(x.token):''}catch{return''}}
-async function rpc(name,args){if(typeof ensureCustomerPortalSupabase!=='function')throw new Error('خدمة الاتصال غير جاهزة.');const sb=await ensureCustomerPortalSupabase(),{data,error}=await sb.rpc(name,args);if(error)throw error;return typeof data==='string'?JSON.parse(data):data}
+async function rpc(name,args){if(window.KINTO_STAFF_CUSTOMER_READ_ONLY===true&&!/^customer_favorites_get_/i.test(name))throw new Error('وضع مشاهدة فقط: لا يمكن تعديل مفضلات العميل.');if(typeof ensureCustomerPortalSupabase!=='function')throw new Error('خدمة الاتصال غير جاهزة.');const sb=await ensureCustomerPortalSupabase(),{data,error}=await sb.rpc(name,args);if(error)throw error;return typeof data==='string'?JSON.parse(data):data}
 function items(){const map=new Map();state.lists.forEach(list=>(list.items||[]).forEach(item=>{if(!map.has(String(item.product_id)))map.set(String(item.product_id),{...item,list_id:list.id})}));return[...map.values()]}
 function currentItems(){return state.active==='all'?items():(state.lists.find(x=>String(x.id)===String(state.active))?.items||[])}
 function status(text,error=false){const box=document.getElementById('customerFavoritesStatus');if(box){box.textContent=text||'';box.className=error?'error':''}}
