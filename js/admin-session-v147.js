@@ -25,7 +25,9 @@
     const session=read();if(!session)throw new Error('ADMIN_SESSION_REQUIRED');
     const {data,error}=await supabase.rpc('admin_session_identity_v147',{p_session_token:session.token});
     if(error||!data?.ok||!data?.admin){clear();throw error||new Error('ADMIN_SESSION_INVALID')}
-    save({...session,admin:data.admin});return data.admin;
+    save({...session,admin:data.admin});
+    global.document?.documentElement?.classList.remove('admin-auth-pending');
+    return data.admin;
   }
   async function logout(supabase){const session=read();try{if(session?.token&&supabase)await supabase.rpc('admin_logout_v147',{p_session_token:session.token})}finally{clear()}}
   global.KintoAdminSessionV147=Object.freeze({STORAGE_KEY,read,save,clear,login,identity,logout});
