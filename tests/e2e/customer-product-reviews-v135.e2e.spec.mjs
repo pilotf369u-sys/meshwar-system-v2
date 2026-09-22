@@ -56,7 +56,11 @@ test('customer delivery proof opens safely even when the URL contains quote-sens
     window.currentCustomerOrdersGlobal = window.__MESH_E2E_DB.orders;
     window.renderOrdersPanels();
   });
-  const button = page.locator('.customer-pod-btn').first();
+  await page.evaluate(() => {
+    const index = window.currentCustomerOrdersGlobal.findIndex(o => o.id === 'o-paid');
+    window.openCustomerOrderDetails(index);
+  });
+  const button = page.locator('#customerOrderDetailsContent .customer-pod-btn');
   await expect(button).toBeVisible();
   await button.click();
   await expect(page.locator('#customerPodViewer')).toBeVisible();
