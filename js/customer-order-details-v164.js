@@ -11,7 +11,8 @@ function decorate(index){
   const modal=document.getElementById('customerOrderDetailsModal');
   const box=document.getElementById('customerOrderDetailsContent');
   const card=modal?.querySelector('.modal-content');
-  const order=Array.isArray(window.currentCustomerOrdersGlobal)?window.currentCustomerOrdersGlobal[index]:null;
+  const rows=typeof currentCustomerOrdersGlobal!=='undefined'&&Array.isArray(currentCustomerOrdersGlobal)?currentCustomerOrdersGlobal:[];
+  const order=rows[index]||null;
   if(!modal||!box||!card||!order)return;
   if(!card.querySelector('.customer-order-brand-v164')){
     const brand=document.createElement('div');
