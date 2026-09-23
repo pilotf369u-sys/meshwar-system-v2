@@ -80,7 +80,8 @@ html.dark .vendor-order-count{
   .vendor-tab-panel p{line-height:1.55}
   .vendor-responsive-table td{grid-template-columns:82px minmax(0,1fr)!important;gap:.4rem!important;padding:.56rem!important;font-size:.72rem!important}
   .vendor-responsive-table td::before{font-size:.64rem!important}
-  #vendorTab-products .vendor-table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  #vendorTab-products>div,#vendorTab-products>div>div{min-width:0;max-width:100%}
+  #vendorTab-products .vendor-table-wrap{display:block;width:100%;max-width:100%;min-width:0;overflow-x:auto!important;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
   #vendorTab-products .vendor-compact-table{min-width:650px;table-layout:auto}
   #vendorTab-products .vendor-compact-table th,
   #vendorTab-products .vendor-compact-table td{white-space:nowrap;padding:.55rem .45rem!important}
