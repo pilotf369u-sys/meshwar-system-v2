@@ -56,10 +56,13 @@
   <script>
     (function(){
       const frame=document.getElementById('vendorFrame');
-      const ACTIVE_TAB_KEY='meshwar_vendor_active_tab';
-      function bindActiveTabPersistence(){const win=frame.contentWindow,d=win?.document;if(!d||win.__mwActiveTabPersistenceBound)return;d.addEventListener('click',e=>{const btn=e.target?.closest?.('.vendor-main-tab,[id^="vendorTabBtn-"]');if(btn?.id){try{win.localStorage.setItem(ACTIVE_TAB_KEY,btn.id)}catch(err){console.warn('Vendor active tab save failed',err)}}},true);win.__mwActiveTabPersistenceBound=true}
+      const ACTIVE_TAB_KEY='meshwar_vendor_active_tab',ORDER_FILTER_KEY='meshwar_vendor_order_filter';
+      function bindActiveTabPersistence(){const win=frame.contentWindow,d=win?.document;if(!d||win.__mwActiveTabPersistenceBound)return;d.addEventListener('click',e=>{const btn=e.target?.closest?.('.vendor-main-tab,[id^="vendorTabBtn-"]'),filter=e.target?.closest?.('[data-order-filter]');try{if(btn?.id)win.localStorage.setItem(ACTIVE_TAB_KEY,btn.id);if(filter?.dataset?.orderFilter)win.localStorage.setItem(ORDER_FILTER_KEY,filter.dataset.orderFilter)}catch(err){console.warn('Vendor UI state save failed',err)}},true);win.__mwActiveTabPersistenceBound=true}
       function bindV24PlNavigation(){const win=frame.contentWindow,d=win?.document;if(!d||win.__mwV24PlNavigationBound)return;d.addEventListener('click',e=>{if(!e.target?.closest?.('#vendorTabBtn-pl'))return;win.requestAnimationFrame(()=>{try{window.MeshwarVendorFinanceSettlementV24?.ensureUi(win,{refresh:true})}catch(err){console.error('Vendor P&L V24 direct injection failed',err)}})},true);win.__mwV24PlNavigationBound=true}
-      function restoreActiveTab(){const win=frame.contentWindow,d=win?.document;if(!d)return;let saved='';try{saved=win.localStorage.getItem(ACTIVE_TAB_KEY)||''}catch(err){console.warn('Vendor active tab read failed',err)}if(!saved)return;const btn=d.getElementById(saved);if(btn&&typeof btn.click==='function'&&!btn.classList.contains('active'))btn.click()}
+      function restoreVendorUiState(){const win=frame.contentWindow,d=win?.document;if(!d)return;let savedTab='',savedFilter='';try{savedTab=win.localStorage.getItem(ACTIVE_TAB_KEY)||'';savedFilter=win.localStorage.getItem(ORDER_FILTER_KEY)||''}catch(err){console.warn('Vendor UI state read failed',err)}
+        const restore=()=>{let pending=false;if(savedTab){const btn=d.getElementById(savedTab);if(btn){if(typeof btn.click==='function'&&!btn.classList.contains('active'))btn.click();savedTab=''}else pending=true}if(savedFilter){const filter=d.querySelector(`[data-order-filter="${CSS.escape(savedFilter)}"]`);if(filter){if(typeof win.setVendorOrderFilter==='function')win.setVendorOrderFilter(savedFilter);savedFilter=''}else pending=true}return pending};
+        if(!restore())return;const observer=new MutationObserver(()=>{if(!restore())observer.disconnect()});observer.observe(d.body,{childList:true,subtree:true});win.addEventListener('pagehide',()=>observer.disconnect(),{once:true})
+      }
       function revealFallback(error){console.error('Vendor UX/realtime V32 install failed',error);frame.style.visibility='visible';frame.setAttribute('aria-busy','false');document.getElementById('vendorBootLoader')?.remove()}
       function injectKintoSkinLast(){const d=frame.contentDocument;if(!d)return;d.getElementById('mwVendorKintoSkinV167')?.remove();const l=d.createElement('link');l.id='mwVendorKintoSkinV167';l.rel='stylesheet';l.href='css/vendor-kinto-glass-v166.css?v=20260923-v167';d.head.appendChild(l)}
       function injectFeaturedPhase2(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorFeaturedPhase2'))return;const s=d.createElement('script');s.id='mwVendorFeaturedPhase2';s.src='js/vendor-featured-requests-v2.js?v=20260827-v2.0';d.head.appendChild(s)}
@@ -86,7 +89,7 @@
         injectV94Orders();
         injectShippingV98();
         try{const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);if(boot&&typeof boot.then==='function')boot.catch(revealFallback);else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V32 module unavailable'))}catch(e){revealFallback(e)}
-        bindActiveTabPersistence();bindV24PlNavigation();injectKintoSkinLast();setTimeout(restoreActiveTab,80);
+        bindActiveTabPersistence();bindV24PlNavigation();injectKintoSkinLast();restoreVendorUiState();
       }
       frame.addEventListener('load',install);
     })();
