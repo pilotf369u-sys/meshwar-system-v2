@@ -23,7 +23,7 @@
     console.warn('Vendor V32 auth view resolution timed out; revealing current UI safely.');return false;
   }
 
-  function showFrame(frame){const loader=document.getElementById('vendorBootLoader');frame.style.visibility='visible';frame.setAttribute('aria-busy','false');if(loader){loader.classList.add('vendor-loader-hidden');setTimeout(()=>loader.remove(),220)}}
+  function showFrame(frame){const loader=document.getElementById('vendorBootLoader');requestAnimationFrame(()=>requestAnimationFrame(()=>{frame.style.visibility='visible';frame.setAttribute('aria-busy','false');if(loader){loader.classList.add('vendor-loader-hidden');setTimeout(()=>loader.remove(),220)}}))}
 
   function ensureSaveLoader(){
     let loader=document.getElementById(SAVE_LOADER_ID);if(loader)return loader;
