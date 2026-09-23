@@ -52,3 +52,22 @@ html.dark .vendor-order-count{
   background:rgba(212,175,55,.10)!important;
   border-color:rgba(212,175,55,.16)!important;
 }
+
+@media(max-width:640px){
+  #dashboardView>header>div{padding:.65rem .75rem!important;gap:.5rem!important}
+  #dashboardView>header>div>div:first-child{min-width:0;gap:.5rem!important}
+  #dashboardView>header>div>div:last-child{flex-shrink:0;gap:.35rem!important}
+  #dashboardView>header button{padding:.5rem .6rem!important;font-size:.72rem!important}
+  #storeLogo{width:2.25rem!important;height:2.25rem!important}
+  #dashboardView>main{padding:.75rem!important}
+  #dashboardView>main>section.mb-6.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.5rem!important;margin-bottom:.8rem!important}
+  #dashboardView>main>section.mb-6.grid>article{padding:.7rem!important;min-width:0}
+  #dashboardView>main>section.mb-6.grid>article .text-lg{font-size:.92rem!important;overflow-wrap:anywhere}
+  .vendor-main-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.4rem!important}
+  .vendor-main-tab{padding:.65rem .35rem!important;font-size:.7rem!important;line-height:1.25!important}
+  .vendor-order-filters{gap:.35rem!important}
+  .vendor-order-filter{padding:.45rem .6rem!important;font-size:.68rem!important}
+  .glass{border-radius:1rem!important}
+  .vendor-tab-panel>.glass{padding:.75rem!important}
+  .vendor-responsive-table td{grid-template-columns:88px minmax(0,1fr)!important;gap:.45rem!important;padding:.6rem!important}
+}
