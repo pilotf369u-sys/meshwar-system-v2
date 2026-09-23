@@ -50,6 +50,9 @@ if(/(?:^|\/)(?:employee|admin)-dashboard\.html$/.test(location.pathname)){
   .kinto-staff-order-brand{direction:ltr;display:flex;align-items:center;justify-content:flex-start;gap:10px;margin:0 0 18px;padding:12px 14px;border:1px solid rgba(215,166,46,.28);border-radius:16px;background:linear-gradient(135deg,rgba(10,47,35,.97),rgba(15,78,58,.94));color:#fff;box-shadow:0 12px 28px rgba(10,47,35,.16)}
   .kinto-staff-order-mark,.kinto-staff-order-logo{width:42px;height:42px;border-radius:50%;border:1px solid rgba(215,166,46,.72)}.kinto-staff-order-mark{display:grid;place-items:center;background:rgba(255,255,255,.08);color:#e5bd55;font-size:24px;font-weight:950}.kinto-staff-order-logo{display:block;object-fit:contain;background:rgba(255,255,255,.96);padding:3px}
   .kinto-staff-order-brand div{display:flex;flex-direction:column;line-height:1.1}.kinto-staff-order-brand b{font-size:20px;letter-spacing:1px}.kinto-staff-order-brand small{margin-top:5px;color:#ead28d;font-size:11px}
+  .kinto-staff-order-details .kinto-customer-style-details{direction:rtl;color:#f7fbf8;background:#07513f;border:1px solid rgba(215,166,46,.32);border-radius:16px;padding:15px 17px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+  .kinto-staff-order-details .kinto-customer-style-details p{margin:0;padding:6px 2px;color:#f7fbf8!important;line-height:1.65;font-size:13px}
+  .kinto-staff-order-details .kinto-customer-style-details b{color:#fff!important;font-weight:900}.kinto-staff-order-details .kinto-customer-style-details hr{border:0;border-top:1px solid rgba(255,255,255,.45);margin:8px 0}.kinto-staff-order-details .kinto-customer-style-details a{color:#72b7ff!important;font-weight:900}
   .kinto-staff-order-details .detail-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
   .kinto-staff-order-details .detail-box{min-width:0;padding:12px 13px!important;border:1px solid rgba(10,47,35,.10)!important;border-radius:13px!important;background:rgba(255,255,255,.68)!important;box-shadow:0 5px 16px rgba(15,23,42,.045)!important;color:#263b34}
   .kinto-staff-order-details .detail-box b{color:#0a2f23}
@@ -62,6 +65,11 @@ if(/(?:^|\/)(?:employee|admin)-dashboard\.html$/.test(location.pathname)){
   @media(max-width:700px){#orderDetailsModal .modal-content{width:96vw!important;margin:2vh auto!important;padding:14px!important;border-radius:17px!important}.kinto-staff-order-details .detail-grid{grid-template-columns:1fr!important}.kinto-staff-order-brand{padding:10px 12px}.kinto-staff-order-mark{width:38px;height:38px}.kinto-staff-order-brand b{font-size:18px}}
   `;
   document.head.appendChild(staffStyle);
+  const detailsModal=document.getElementById('orderDetailsModal');
+  if(detailsModal&&!detailsModal.dataset.kintoBackdropClose){
+    detailsModal.dataset.kintoBackdropClose='1';
+    detailsModal.addEventListener('click',e=>{if(e.target===detailsModal&&typeof window.closeOrderDetailsModal==='function')window.closeOrderDetailsModal()});
+  }
 }
 
 // V138: load the isolated review-moderation bundle only inside the admin dashboard.
