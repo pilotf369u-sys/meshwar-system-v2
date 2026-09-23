@@ -54,20 +54,39 @@ html.dark .vendor-order-count{
 }
 
 @media(max-width:640px){
-  #dashboardView>header>div{padding:.65rem .75rem!important;gap:.5rem!important}
-  #dashboardView>header>div>div:first-child{min-width:0;gap:.5rem!important}
-  #dashboardView>header>div>div:last-child{flex-shrink:0;gap:.35rem!important}
-  #dashboardView>header button{padding:.5rem .6rem!important;font-size:.72rem!important}
-  #storeLogo{width:2.25rem!important;height:2.25rem!important}
-  #dashboardView>main{padding:.75rem!important}
-  #dashboardView>main>section.mb-6.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.5rem!important;margin-bottom:.8rem!important}
-  #dashboardView>main>section.mb-6.grid>article{padding:.7rem!important;min-width:0}
-  #dashboardView>main>section.mb-6.grid>article .text-lg{font-size:.92rem!important;overflow-wrap:anywhere}
-  .vendor-main-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.4rem!important}
-  .vendor-main-tab{padding:.65rem .35rem!important;font-size:.7rem!important;line-height:1.25!important}
-  .vendor-order-filters{gap:.35rem!important}
-  .vendor-order-filter{padding:.45rem .6rem!important;font-size:.68rem!important}
-  .glass{border-radius:1rem!important}
-  .vendor-tab-panel>.glass{padding:.75rem!important}
-  .vendor-responsive-table td{grid-template-columns:88px minmax(0,1fr)!important;gap:.45rem!important;padding:.6rem!important}
+  html,body{max-width:100%;overflow-x:hidden}
+  #dashboardView>header>div{padding:.6rem .7rem!important;gap:.45rem!important}
+  #dashboardView>header>div>div:first-child{min-width:0;gap:.45rem!important}
+  #dashboardView>header>div>div:last-child{flex-shrink:0;gap:.3rem!important}
+  #dashboardView>header button{padding:.48rem .55rem!important;font-size:.7rem!important;white-space:nowrap}
+  #storeLogo{width:2.15rem!important;height:2.15rem!important;flex:0 0 auto}
+  #storeName{font-size:.82rem!important}
+  #storeMeta{font-size:.62rem!important}
+  #dashboardView>main{padding:.65rem!important;max-width:100%;overflow:hidden}
+  #dashboardView>main>section.mb-6.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.45rem!important;margin-bottom:.7rem!important}
+  #dashboardView>main>section.mb-6.grid>article{padding:.65rem!important;min-width:0}
+  #dashboardView>main>section.mb-6.grid>article .text-xs{font-size:.64rem!important;line-height:1.25}
+  #dashboardView>main>section.mb-6.grid>article .text-lg{font-size:.86rem!important;overflow-wrap:anywhere}
+  .vendor-main-tabs{display:flex!important;grid-template-columns:none!important;gap:.4rem!important;overflow-x:auto!important;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;padding:.08rem .02rem .45rem;scrollbar-width:none}
+  .vendor-main-tabs::-webkit-scrollbar,.vendor-order-filters::-webkit-scrollbar{display:none}
+  .vendor-main-tab{flex:0 0 auto!important;min-width:max-content;padding:.62rem .72rem!important;font-size:.69rem!important;line-height:1.25!important;scroll-snap-align:start;white-space:nowrap}
+  .vendor-order-filters{flex-wrap:nowrap!important;overflow-x:auto!important;overscroll-behavior-inline:contain;gap:.35rem!important;padding-bottom:.35rem;scrollbar-width:none}
+  .vendor-order-filter{flex:0 0 auto;padding:.44rem .58rem!important;font-size:.66rem!important;white-space:nowrap}
+  .vendor-order-count{min-width:1.3rem!important;height:1.3rem!important;font-size:.61rem!important}
+  .glass{border-radius:.9rem!important}
+  .vendor-tab-panel>.glass{padding:.68rem!important}
+  .vendor-tab-panel h2{font-size:.95rem!important}
+  .vendor-tab-panel p{line-height:1.55}
+  .vendor-responsive-table td{grid-template-columns:82px minmax(0,1fr)!important;gap:.4rem!important;padding:.56rem!important;font-size:.72rem!important}
+  .vendor-responsive-table td::before{font-size:.64rem!important}
+  #vendorTab-products .vendor-table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  #vendorTab-products .vendor-compact-table{min-width:650px;table-layout:auto}
+  #vendorTab-products .vendor-compact-table th,
+  #vendorTab-products .vendor-compact-table td{white-space:nowrap;padding:.55rem .45rem!important}
+  #vendorTab-products .grid.grid-cols-2{grid-template-columns:minmax(0,1fr)!important}
+  #vendorTab-products .col-span-2{grid-column:1!important}
+  #productModal{padding:.55rem!important}
+  #productModal>div{max-height:96vh!important;padding:.8rem!important;border-radius:1rem!important}
+  #productModal .grid{gap:.55rem!important}
+  #productModal .field{font-size:.78rem!important;padding:.65rem .7rem!important}
 }
