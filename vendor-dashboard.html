@@ -89,7 +89,7 @@
         injectV94Orders();
         injectShippingV98();
         try{const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);if(boot&&typeof boot.then==='function')boot.catch(revealFallback);else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V32 module unavailable'))}catch(e){revealFallback(e)}
-        bindActiveTabPersistence();bindV24PlNavigation();injectKintoSkinLast();restoreVendorUiState();
+        bindActiveTabPersistence();bindV24PlNavigation();injectKintoSkinLast();frame.contentWindow.addEventListener('meshwar:vendor-promotions-ready',restoreVendorUiState);frame.contentWindow.addEventListener('meshwar:vendor-shipping-ready',restoreVendorUiState);restoreVendorUiState();
       }
       frame.addEventListener('load',install);
     })();
