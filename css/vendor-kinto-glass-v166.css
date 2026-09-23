@@ -62,7 +62,8 @@ html.dark .vendor-order-count{
   #storeLogo{width:2.15rem!important;height:2.15rem!important;flex:0 0 auto}
   #storeName{font-size:.82rem!important}
   #storeMeta{font-size:.62rem!important}
-  #dashboardView>main{padding:.65rem!important;max-width:100%;overflow:hidden}
+  #dashboardView>main{padding:.65rem!important;width:100%;max-width:100%;min-width:0;overflow-x:visible}
+  .vendor-tab-panel,.vendor-tab-panel>.glass{max-width:100%;min-width:0}
   #dashboardView>main>section.mb-6.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.45rem!important;margin-bottom:.7rem!important}
   #dashboardView>main>section.mb-6.grid>article{padding:.65rem!important;min-width:0}
   #dashboardView>main>section.mb-6.grid>article .text-xs{font-size:.64rem!important;line-height:1.25}
