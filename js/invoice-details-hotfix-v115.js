@@ -16,7 +16,7 @@ const wrap=(name,resolve)=>{
     const target=resolve(...args);
     const staff=isStaffDetails(name);
     if(staff)decorateStaffDetails(target?.box);
-    enhance(target?.box,target?.order,staff?{storeScoped:true,storeInvoiceButtons:false}:undefined);
+    enhance(target?.box,target?.order,staff?{storeScoped:true,storeInvoiceButtons:false}:name==='openCustomerOrderDetails'?{invoiceButton:false}:undefined);
     return result;
   };
   direct.__kintoInvoiceDirect=true;
