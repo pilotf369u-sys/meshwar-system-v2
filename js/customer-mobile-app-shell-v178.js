@@ -30,6 +30,15 @@ function observeCounter(id){
  observer.observe(el,{childList:true,characterData:true,subtree:true});
  counterObservers.push(observer);
 }
+function enableOrderCardOpen(){
+ document.addEventListener('click',event=>{
+  if(!matchMedia('(max-width:1024px)').matches)return;
+  const row=event.target.closest('#activeOrdersTableBody tr,#historyOrdersTableBody tr');
+  if(!row||event.target.closest('button,a,input,select,textarea,label,.decision-box'))return;
+  const details=row.querySelector('.btn-details');
+  details?.click();
+ });
+}
 function build(){
  if($('#kintoMobileAppNav'))return;
  nav=document.createElement('nav');nav.id='kintoMobileAppNav';nav.className='kinto-mobile-app-nav';nav.setAttribute('aria-label','التنقل السريع للعميل');
@@ -43,6 +52,7 @@ function build(){
  $('[data-account]',nav)?.addEventListener('click',()=>window.KintoCustomerNavigationV156?.open?.());
  ['kintoLocalCartCount','chatUnreadBadge','notificationUnreadBadge'].forEach(observeCounter);
  window.addEventListener('kinto:local-cart-change',sync);
+ enableOrderCardOpen();
  document.querySelector('.tabs-nav')?.addEventListener('click',()=>requestAnimationFrame(sync));
  sync();
 }
