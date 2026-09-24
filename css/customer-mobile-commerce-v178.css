@@ -1,6 +1,7 @@
 /* KINTO MOBILE COMMERCE DESIGN SYSTEM V178
    Presentation only. Existing product/cart/order/invoice engines remain authoritative. */
 :root{--kinto-app-bg:#062d25;--kinto-app-surface:#0a3a30;--kinto-app-gold:#e8bf55;--kinto-app-text:#f8f5e8;--kinto-app-muted:#b9ccc6;--kinto-app-radius:20px;--kinto-app-touch:48px}
+.kinto-mobile-customer-summary,.kinto-drawer-account-summary{display:none}
 @media(max-width:1024px){
   html{scroll-padding-bottom:88px}
   body{overflow-x:hidden}
@@ -48,6 +49,14 @@
   .kinto-local-cart-drawer{max-width:100vw!important}
   .kinto-local-cart-head{position:sticky;top:0;z-index:3}
   .kinto-local-cart-checkout{min-height:54px!important;border-radius:15px!important}
+
+  .kinto-drawer-account-summary{display:grid!important;grid-template-columns:1fr!important;gap:9px!important;margin-top:10px!important}
+  .kinto-drawer-account-card{padding:12px!important;border:1px solid rgba(232,191,85,.20)!important;border-radius:15px!important;background:#08372f!important;color:#f8f5e8!important}
+  .kinto-drawer-account-title{display:flex;align-items:center;gap:7px;margin-bottom:8px;color:#e8bf55;font-size:12px}
+  .kinto-drawer-reward-status{font-size:10px;line-height:1.55;color:#d8e4e0}
+  .kinto-drawer-reward-status div{max-width:100%}
+  .kinto-drawer-warehouse-address{font-size:10px;line-height:1.65;color:#d8e4e0}
+  .kinto-drawer-account-action{width:100%;min-height:38px;margin-top:9px;border:1px solid rgba(232,191,85,.28);border-radius:11px;background:rgba(232,191,85,.12);color:#f4d778;font-size:10px;font-weight:900}
 
   /* Customer home: keep primary orders high on screen; secondary account information lives in Account drawer. */
   .summary-grid{display:none!important}
