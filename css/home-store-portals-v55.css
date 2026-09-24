@@ -37,3 +37,11 @@ body.mw-v55-browse-mode .mw-v55-portal-shell{margin-bottom:16px}.mw-v55-portal[a
 /* V203: merchandising emphasis — local first, cleaner cards, stronger logo visibility. */
 .mw-v55-portal[data-kind="local"]{border-color:rgba(255,224,138,.42);background:linear-gradient(145deg,rgba(13,104,84,.42),rgba(255,255,255,.045))}.mw-v55-portal[data-kind="local"] .mw-v55-icon{box-shadow:0 0 0 3px rgba(229,185,63,.07),0 10px 26px rgba(0,0,0,.16)}
 @media(max-width:720px){.mw-v55-logo-strip{gap:9px}.mw-v55-logo-strip img,.mw-v55-logo-fallback{width:42px;height:42px}.mw-v55-portal p{font-size:14px;line-height:1.75}.mw-v55-portal h3{font-size:24px}}
+
+/* V204 — lively merchandising copy without affecting store logic. */
+.mw-v55-logo-strip--loading{direction:rtl;justify-content:flex-start}
+.mw-v55-logo-wait{min-height:42px;display:inline-flex;align-items:center;gap:8px;padding:0 13px;border:1px solid rgba(255,224,138,.28);border-radius:12px;background:rgba(255,255,255,.055);color:#f7dda0;font-size:12px;font-weight:850}
+.mw-v55-logo-wait i{color:#ffe08a}
+.mw-v55-shimmer-title{position:relative;display:inline-block;background:linear-gradient(110deg,#fff 0%,#fff 38%,#ffe69a 47%,#fff8d7 52%,#fff 61%,#fff 100%);background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent;animation:mwV204TitleShimmer 3.8s ease-in-out infinite}
+@keyframes mwV204TitleShimmer{0%,28%{background-position:120% 0}72%,100%{background-position:-120% 0}}
+@media(prefers-reduced-motion:reduce){.mw-v55-shimmer-title{animation:none;background:#fff;-webkit-background-clip:text;background-clip:text}}
