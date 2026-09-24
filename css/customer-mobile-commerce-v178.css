@@ -10,9 +10,16 @@
   .dashboard-header.kinto-customer-header{background:#063b32!important}
   .info-card{background:linear-gradient(145deg,#0b3b32,#082f29)!important}
   .tabs-nav{background:#062d27!important}
-  .address-section{scroll-margin-bottom:110px}
-  #userSecondaryPhone{margin-bottom:10px!important}
-  #userSecondaryPhone + .btn-action{display:block!important;width:100%!important;min-height:48px!important;margin:0 0 12px!important}
+  .address-section{scroll-margin-bottom:110px;padding:12px!important;margin-top:10px!important;border-radius:16px!important}
+  .address-section .panel-head{min-height:32px!important;margin-bottom:8px!important;align-items:center!important}
+  .address-section .panel-head h2{margin:0!important;font-size:14px!important;line-height:1.35!important}
+  .address-section .panel-head .chip{font-size:9px!important;padding:4px 7px!important}
+  .address-section .address-input,.address-section .profile-input{width:100%!important;max-width:none!important;min-height:40px!important;margin:0!important;padding:7px 10px!important;border-radius:10px!important;font-size:12px!important}
+  .address-section #userAddress{margin-bottom:5px!important}
+  .address-section #userAddress[readonly],.address-section #userGovernorate[readonly]{min-height:38px!important;padding-block:6px!important;opacity:.88}
+  .address-section>div:last-child{margin-top:5px!important;font-size:9px!important;line-height:1.4!important}
+  #userSecondaryPhone{margin-bottom:6px!important;min-height:40px!important}
+  #userSecondaryPhone + .btn-action{display:block!important;width:100%!important;min-height:40px!important;margin:0!important;padding:7px 12px!important;border-radius:10px!important;font-size:11px!important}
   .address-section:last-of-type{margin-bottom:calc(92px + env(safe-area-inset-bottom))!important}
   button,a,input,select{touch-action:manipulation}
   .mw-v55-portal-shell{margin-inline:10px!important;padding:16px!important;border-radius:24px!important}
