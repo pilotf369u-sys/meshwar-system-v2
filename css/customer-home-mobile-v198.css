@@ -7,7 +7,8 @@
   #kintoHomeHeader .header-actions{display:flex!important;justify-content:flex-end!important;align-items:center!important}
   #kintoHomeHeader .user-auth-zone{grid-column:auto!important;width:auto!important}
   #kintoHomeHeader .account-btn{min-height:38px!important;padding:0 11px!important;font-size:10px!important}
-  #kintoHomeHeader .header-logout-btn{display:none!important}
+  #kintoHomeHeader #logoutBtn.header-logout-btn{display:none!important;visibility:hidden!important;pointer-events:none!important;width:0!important;min-width:0!important;height:0!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;overflow:hidden!important}
+  .mw-v55-portal .mw-v55-arrow{display:none!important}
   .mw-v55-portal::before,.mw-v55-portal::after{display:none!important;content:none!important}
 
   #kintoHomeHeader + section{padding:10px 10px 0!important}
