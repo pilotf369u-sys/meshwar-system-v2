@@ -1,0 +1,50 @@
+/* KINTO customer home — Mobile/Tablet presentation only. No commerce/auth logic. */
+@media (max-width:1024px){
+  body{padding-bottom:calc(82px + env(safe-area-inset-bottom))!important}
+  #kintoHomeHeader{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:#063b32!important}
+  #kintoHomeHeader .top-inner{min-height:54px!important;align-items:center!important;padding:7px 10px!important}
+  #kintoHomeHeader .brand img{width:40px!important;height:40px!important;border-radius:11px!important}
+  #kintoHomeHeader .header-actions{display:flex!important;justify-content:flex-end!important;align-items:center!important}
+  #kintoHomeHeader .user-auth-zone{grid-column:auto!important;width:auto!important}
+  #kintoHomeHeader .account-btn{min-height:38px!important;padding:0 11px!important;font-size:10px!important}
+  #kintoHomeHeader .header-logout-btn{min-height:38px!important}
+
+  #kintoHomeHeader + section{padding:10px 10px 0!important}
+  .mw-home-hero-grid{display:flex!important;flex-direction:column!important;gap:10px!important;padding:10px!important;border-radius:18px!important;background:rgba(7,55,47,.88)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .mw-home-copy{min-height:0!important}
+  #meshwarVideoFrame{min-height:0!important;aspect-ratio:16/7!important;border-radius:14px!important}
+  #meshwarPromoVideo{min-height:0!important;width:100%!important;height:auto!important;aspect-ratio:16/7!important;object-fit:cover!important}
+
+  #kintoFeaturedStoreSlot{width:100%!important;min-height:0!important;margin:12px 0!important;padding:12px!important;grid-template-columns:72px minmax(0,1fr)!important;gap:10px!important;text-align:right!important;border-radius:16px!important}
+  #kintoFeaturedStoreSlot .kinto-featured-logo-wrap{width:72px!important;height:64px!important;margin:0!important}
+  #kintoFeaturedStoreSlot .kinto-featured-copy{min-height:64px!important}
+
+  #meshwarTicker{margin-top:10px!important;padding:8px 10px!important;border-radius:12px!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  #meshwarTicker .meshwar-ticker-track{font-size:10px!important}
+
+  #localStoresPublic{margin-top:12px!important;padding:12px 0!important}
+  #localStoresPublic .local-stores-head{margin-bottom:10px!important}
+  #localStoresPublic .local-stores-head h2{font-size:16px!important;margin-bottom:3px!important}
+  #localStoresPublic .local-stores-head p{font-size:10px!important;line-height:1.45!important;margin:0!important}
+  #localSpecialtyFilters{gap:6px!important;margin-bottom:10px!important}
+  #localStoresPublicGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-top:8px!important}
+  #localStoresPublicGrid>*{min-width:0!important}
+  #localStoreProductsPanel{margin-top:12px!important}
+  #localStoreProductsGrid{gap:8px!important}
+
+  #internationalStoresSection{margin-top:14px!important}
+  #internationalStoresSection .section-title{margin:18px 0 8px!important;padding-bottom:6px!important;font-size:14px!important}
+  #internationalStoresSection .grid-container{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-top:8px!important}
+  #internationalStoresSection .store-card{min-width:0!important;padding:10px!important;border-radius:14px!important}
+  #internationalStoresSection .store-card h3{font-size:11px!important;margin:6px 0!important}
+  #internationalStoresSection .store-logo{max-width:78%!important;max-height:58px!important}
+  #internationalStoresSection .store-link{width:100%!important;min-height:34px!important;display:flex!important;align-items:center!important;justify-content:center!important;margin-top:6px!important;border-radius:9px!important;font-size:10px!important}
+
+  .fixed-order-btn{bottom:calc(76px + env(safe-area-inset-bottom))!important;left:10px!important;padding:8px 10px!important;border-radius:999px!important;font-size:10px!important}
+}
+@media (max-width:520px){
+  #kintoHomeHeader .top-inner{align-items:center!important}
+  #kintoHomeHeader .brand img{width:38px!important;height:38px!important}
+  #kintoHomeHeader .account-btn{min-height:36px!important;font-size:9px!important}
+  #meshwarVideoFrame,#meshwarPromoVideo{aspect-ratio:16/8!important}
+}
