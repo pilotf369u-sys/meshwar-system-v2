@@ -49,22 +49,31 @@
   .kinto-local-cart-head{position:sticky;top:0;z-index:3}
   .kinto-local-cart-checkout{min-height:54px!important;border-radius:15px!important}
 
-  /* Compact customer orders: same existing rows/data/actions, mobile/tablet presentation only. */
+  /* Compact customer orders: existing data/actions, refined Mobile/Tablet presentation only. */
   #activeOrders .table-wrap,#orderHistory .table-wrap{border:0!important;background:transparent!important}
   #activeOrders tbody,#orderHistory tbody{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;padding:4px!important}
-  #activeOrders tbody tr,#orderHistory tbody tr{display:grid!important;grid-template-columns:82px minmax(0,1fr)!important;grid-template-areas:"image code" "image status" "details details"!important;gap:5px 12px!important;align-items:center!important;padding:12px!important;border:1px solid rgba(232,191,85,.20)!important;border-radius:18px!important;background:#08372f!important;box-shadow:0 7px 18px rgba(0,0,0,.14)!important;overflow:hidden!important;contain:layout paint}
+  #activeOrders tbody tr,#orderHistory tbody tr{display:grid!important;grid-template-columns:1fr!important;grid-template-areas:"code" "image" "status" "decision" "details"!important;gap:8px!important;align-items:center!important;padding:12px!important;border:1px solid rgba(232,191,85,.20)!important;border-radius:18px!important;background:#08372f!important;box-shadow:0 7px 18px rgba(0,0,0,.14)!important;overflow:hidden!important;contain:layout paint}
   #activeOrders tbody td,#orderHistory tbody td{display:none!important}
   #activeOrders tbody td::before,#orderHistory tbody td::before{content:none!important}
-  #activeOrders tbody td:nth-child(1),#orderHistory tbody td:nth-child(1){display:block!important;grid-area:code!important;padding:0!important;border:0!important;background:transparent!important;text-align:right!important;font-size:14px!important}
+  #activeOrders tbody td:nth-child(1),#orderHistory tbody td:nth-child(1){display:block!important;grid-area:code!important;padding:0!important;border:0!important;background:transparent!important;text-align:center!important;font-size:14px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #activeOrders tbody td:nth-child(1) b,#orderHistory tbody td:nth-child(1) b{display:block!important;white-space:nowrap!important;font-size:15px!important;letter-spacing:.2px!important}
   #activeOrders tbody td:nth-child(1) .siparis-no,#activeOrders tbody td:nth-child(1) .barcode-svg,#orderHistory tbody td:nth-child(1) .siparis-no{display:none!important}
   #activeOrders tbody td:nth-child(2),#orderHistory tbody td:nth-child(2){display:flex!important;grid-area:image!important;padding:0!important;border:0!important;background:transparent!important;align-items:center!important;justify-content:center!important}
-  #activeOrders .order-thumb,#orderHistory .order-thumb{width:78px!important;height:78px!important;border-radius:15px!important;padding:3px!important}
-  #activeOrders tbody td:nth-child(5),#orderHistory tbody td:nth-child(5){display:block!important;grid-area:status!important;padding:0!important;border:0!important;background:transparent!important;text-align:right!important}
-  #activeOrders .status-pill,#orderHistory .status-pill{font-size:10px!important;padding:5px 8px!important}
-  #activeOrders tbody td:nth-child(7){display:block!important;grid-area:details!important;padding:6px 0 0!important;border:0!important;background:transparent!important}
-  #orderHistory tbody td:nth-child(8){display:block!important;grid-area:details!important;padding:6px 0 0!important;border:0!important;background:transparent!important}
-  #activeOrders .btn-details,#orderHistory .btn-details{width:100%!important;min-height:42px!important;font-size:12px!important}
+  #activeOrders .order-thumb,#orderHistory .order-thumb{width:88px!important;height:88px!important;border-radius:15px!important;padding:3px!important}
+  #activeOrders tbody td:nth-child(5),#orderHistory tbody td:nth-child(5){display:block!important;grid-area:status!important;padding:0!important;border:0!important;background:transparent!important;text-align:center!important}
+  #activeOrders .status-pill,#orderHistory .status-pill{display:inline-flex!important;max-width:100%!important;min-height:32px!important;align-items:center!important;justify-content:center!important;font-size:10px!important;line-height:1.35!important;padding:6px 10px!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important}
+  #activeOrders tbody td:nth-child(9){display:block!important;grid-area:decision!important;padding:0!important;border:0!important;background:transparent!important}
+  #activeOrders tbody td:nth-child(9):has(.decision-box){display:block!important}
+  #activeOrders tbody td:nth-child(9) .decision-box{display:flex!important;gap:6px!important;justify-content:center!important;flex-wrap:wrap!important}
+  #activeOrders tbody td:nth-child(9) .decision-box .btn-approve,#activeOrders tbody td:nth-child(9) .decision-box .btn-cancel{min-height:38px!important;flex:1 1 100px!important;font-size:10px!important;padding:7px!important}
+  #activeOrders tbody td:nth-child(7){display:block!important;grid-area:details!important;padding:0!important;border:0!important;background:transparent!important}
+  #orderHistory tbody td:nth-child(8){display:block!important;grid-area:details!important;padding:0!important;border:0!important;background:transparent!important}
+  #activeOrders .btn-details,#orderHistory .btn-details{width:100%!important;min-height:40px!important;font-size:11px!important}
   #activeOrders td.empty-state,#orderHistory td.empty-state{display:block!important;grid-column:1/-1!important;padding:24px!important}
+  @media(max-width:390px){
+    #activeOrders tbody,#orderHistory tbody{grid-template-columns:1fr!important}
+    #activeOrders tbody tr,#orderHistory tbody tr{grid-template-columns:92px minmax(0,1fr)!important;grid-template-areas:"image code" "image status" "decision decision" "details details"!important}
+  }
 
 }
 @media(max-width:560px){
