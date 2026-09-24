@@ -5,14 +5,14 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:0});
 const token=v=>encodeURIComponent(String(v||'').trim()||'unknown');
 function customerShoppingSession(){try{return window.KintoCustomerSessionV150?.read?.()||null}catch{return null}}
+function customerId(){try{if(localStorage.getItem('kinto_customer_logged_out_v150')==='1')return'guest';const direct=String(localStorage.getItem('meshwar_customer_id')||'').trim();if(direct)return direct;const logged=JSON.parse(localStorage.getItem('loggedInUser')||'null');if(logged?.id)return String(logged.id).trim()}catch{}return'guest'}
 function requireCustomerShopping(){
-  const session=customerShoppingSession();
-  if(session?.token)return true;
+  const session=customerShoppingSession(),id=customerId();
+  if(session?.token||id!=='guest')return true;
   alert('يمكنك تصفح KINTO بحرية. لإضافة المنتجات للسلة وإتمام الشراء، سجّل دخول حساب العميل أولاً.');
   location.href='login.html';
   return false;
 }
-function customerId(){try{const direct=String(localStorage.getItem('meshwar_customer_id')||'').trim();if(direct)return direct;const logged=JSON.parse(localStorage.getItem('loggedInUser')||'null');if(logged?.id)return String(logged.id).trim()}catch{}return'guest'}
 function currentStoreId(preferred){return String(preferred||window.__KINTO_STORE_ID__||window.MeshwarLocalStoreV4Context?.store?.id||new URLSearchParams(location.search).get('storeId')||'').trim()}
 function makeScope(){const user=customerId();return{userId:user,key:`${PREFIX}_${token(user)}`}}
 let scope=makeScope(),state=read(scope.key),checkoutBusy=false,cloudReady=false,cloudSyncing=false,cloudSaveTimer=null,cloudPollTimer=null,lastCloudUpdatedAt='';
