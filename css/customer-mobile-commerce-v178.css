@@ -62,8 +62,8 @@
   #activeOrders .order-thumb,#orderHistory .order-thumb{width:88px!important;height:88px!important;border-radius:15px!important;padding:3px!important}
   #activeOrders tbody td:nth-child(5),#orderHistory tbody td:nth-child(5){display:block!important;grid-area:status!important;padding:0!important;border:0!important;background:transparent!important;text-align:center!important}
   #activeOrders .status-pill,#orderHistory .status-pill{display:inline-flex!important;max-width:100%!important;min-height:32px!important;align-items:center!important;justify-content:center!important;font-size:10px!important;line-height:1.35!important;padding:6px 10px!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important}
-  #activeOrders tbody td:nth-child(9){display:block!important;grid-area:decision!important;padding:0!important;border:0!important;background:transparent!important}
-  #activeOrders tbody td:nth-child(9):has(.decision-box){display:block!important}
+  #activeOrders tbody td:nth-child(9){display:none!important;grid-area:decision!important;padding:0!important;border:0!important;background:transparent!important}
+  #activeOrders tbody td:nth-child(9).kinto-has-customer-decision{display:block!important}
   #activeOrders tbody td:nth-child(9) .decision-box{display:flex!important;gap:6px!important;justify-content:center!important;flex-wrap:wrap!important}
   #activeOrders tbody td:nth-child(9) .decision-box .btn-approve,#activeOrders tbody td:nth-child(9) .decision-box .btn-cancel{min-height:38px!important;flex:1 1 100px!important;font-size:10px!important;padding:7px!important}
   #activeOrders tbody td:nth-child(7){display:block!important;grid-area:details!important;padding:0!important;border:0!important;background:transparent!important}
