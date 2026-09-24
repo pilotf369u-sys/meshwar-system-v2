@@ -10,16 +10,19 @@
   .dashboard-header.kinto-customer-header{background:#063b32!important}
   .info-card{background:linear-gradient(145deg,#0b3b32,#082f29)!important}
   .tabs-nav{background:#062d27!important}
-  .address-section{scroll-margin-bottom:110px;padding:12px!important;margin-top:10px!important;border-radius:16px!important}
-  .address-section .panel-head{min-height:32px!important;margin-bottom:8px!important;align-items:center!important}
-  .address-section .panel-head h2{margin:0!important;font-size:14px!important;line-height:1.35!important}
-  .address-section .panel-head .chip{font-size:9px!important;padding:4px 7px!important}
-  .address-section .address-input,.address-section .profile-input{width:100%!important;max-width:none!important;min-height:40px!important;margin:0!important;padding:7px 10px!important;border-radius:10px!important;font-size:12px!important}
-  .address-section #userAddress{margin-bottom:5px!important}
-  .address-section #userAddress[readonly],.address-section #userGovernorate[readonly]{min-height:38px!important;padding-block:6px!important;opacity:.88}
-  .address-section>div:last-child{margin-top:5px!important;font-size:9px!important;line-height:1.4!important}
-  #userSecondaryPhone{margin-bottom:6px!important;min-height:40px!important}
-  #userSecondaryPhone + .btn-action{display:block!important;width:100%!important;min-height:40px!important;margin:0!important;padding:7px 12px!important;border-radius:10px!important;font-size:11px!important}
+  .address-section{scroll-margin-bottom:110px;padding:9px 10px!important;margin-top:8px!important;border-radius:14px!important}
+  .address-section .panel-head{min-height:26px!important;margin-bottom:6px!important;align-items:center!important}
+  .address-section .panel-head h2{margin:0!important;font-size:12px!important;line-height:1.25!important}
+  .address-section .panel-head .chip{font-size:8px!important;padding:3px 6px!important}
+  .address-section .address-input,.address-section .profile-input{max-width:none!important;min-height:36px!important;padding:5px 8px!important;border-radius:9px!important;font-size:11px!important}
+  .address-section:has(#userAddress){display:grid!important;grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr)!important;gap:5px!important}
+  .address-section:has(#userAddress) .panel-head,.address-section:has(#userAddress)>div:last-child{grid-column:1/-1!important}
+  .address-section #userAddress,.address-section #userGovernorate{width:100%!important;margin:0!important;min-height:34px!important;padding-block:5px!important;opacity:.88}
+  .address-section>div:last-child{margin-top:2px!important;font-size:8px!important;line-height:1.3!important}
+  .address-section:has(#userSecondaryPhone){display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important;align-items:center!important}
+  .address-section:has(#userSecondaryPhone) .panel-head,.address-section:has(#userSecondaryPhone)>div:last-child{grid-column:1/-1!important}
+  #userSecondaryPhone{width:100%!important;margin:0!important;min-height:38px!important}
+  #userSecondaryPhone + .btn-action{width:auto!important;min-width:92px!important;min-height:38px!important;margin:0!important;padding:6px 10px!important;border-radius:9px!important;font-size:9px!important;white-space:nowrap!important}
   .address-section:last-of-type{margin-bottom:calc(92px + env(safe-area-inset-bottom))!important}
   button,a,input,select{touch-action:manipulation}
   .mw-v55-portal-shell{margin-inline:10px!important;padding:16px!important;border-radius:24px!important}
