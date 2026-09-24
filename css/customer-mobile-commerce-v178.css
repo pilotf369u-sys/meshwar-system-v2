@@ -57,6 +57,14 @@
   .kinto-drawer-reward-status div{max-width:100%}
   .kinto-drawer-warehouse-address{font-size:10px;line-height:1.65;color:#d8e4e0}
   .kinto-drawer-account-action{width:100%;min-height:38px;margin-top:9px;border:1px solid rgba(232,191,85,.28);border-radius:11px;background:rgba(232,191,85,.12);color:#f4d778;font-size:10px;font-weight:900}
+  .kinto-drawer-warehouse-trigger{width:100%!important;min-height:52px!important;display:grid!important;grid-template-columns:auto 1fr auto!important;align-items:center!important;gap:10px!important;text-align:right!important;color:#f4d778!important;font:inherit!important;cursor:pointer!important}
+  .kinto-warehouse-modal{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:18px;background:rgba(1,18,14,.72)}
+  .kinto-warehouse-dialog{position:relative;width:min(92vw,420px);padding:20px;border:1px solid rgba(232,191,85,.34);border-radius:18px;background:#08372f;color:#f8f5e8;box-shadow:0 24px 60px rgba(0,0,0,.35);text-align:right}
+  .kinto-warehouse-dialog h3{margin:0 0 12px;color:#e8bf55;font-size:16px}
+  .kinto-warehouse-dialog p{margin:0;white-space:pre-wrap;line-height:1.8;font-size:13px}
+  .kinto-warehouse-close{position:absolute;left:10px;top:8px;width:34px;height:34px;border:0;background:transparent;color:#f8f5e8;font-size:24px}
+  #activeOrders tbody tr,#orderHistory tbody tr{cursor:pointer}
+
 
   /* Customer home: keep primary orders high on screen; secondary account information lives in Account drawer. */
   .summary-grid{display:none!important}
