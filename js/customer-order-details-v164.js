@@ -21,6 +21,19 @@ function decorate(index){
     brand.innerHTML='<img src="images/kinto-header-logo-v158.jpeg" alt="KINTO" style="width:38px;height:38px;object-fit:cover;border-radius:50%"><div><b style="display:block;letter-spacing:.7px">KINTO</b><small style="color:#ead28d">تفاصيل الطلب</small></div>';
     card.prepend(brand);
   }
+  if(!box.querySelector('.customer-order-image-v182')&&order.image_url){
+    const media=document.createElement('div');
+    media.className='customer-order-image-v182';
+    media.style.cssText='display:flex;justify-content:center;margin:4px 0 14px';
+    const img=document.createElement('img');
+    img.src=String(order.image_url);
+    img.alt='صورة الطلب';
+    img.loading='lazy';
+    img.style.cssText='width:min(100%,220px);height:180px;object-fit:contain;background:#fff;border:1px solid rgba(215,166,46,.28);border-radius:16px;padding:5px';
+    img.onerror=()=>media.remove();
+    media.appendChild(img);
+    box.prepend(media);
+  }
   if(!box.querySelector('.customer-order-date-v164')){
     const row=document.createElement('p');
     row.className='customer-order-date-v164';
