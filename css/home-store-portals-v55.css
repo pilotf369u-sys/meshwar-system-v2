@@ -51,3 +51,7 @@ body.mw-v55-browse-mode .mw-v55-portal-shell{margin-bottom:16px}.mw-v55-portal[a
 .mw-v55-shimmer-copy{background:linear-gradient(110deg,var(--v55-muted) 0%,var(--v55-muted) 42%,#ffe8a6 49%,#fff8dd 52%,var(--v55-muted) 59%,var(--v55-muted) 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent;animation:mwV205CopyShimmer 7.5s ease-in-out infinite}
 @keyframes mwV205CopyShimmer{0%,34%{background-position:125% 0}70%,100%{background-position:-125% 0}}
 @media(prefers-reduced-motion:reduce){.mw-v55-shimmer-copy{animation:none;background:none;color:var(--v55-muted)!important;-webkit-text-fill-color:var(--v55-muted)!important}}
+
+/* V206 — strict portal child allow-list: removes legacy pills regardless of their old class/source. */
+#kintoStorePortalsV55 .mw-v55-portal>:not(.mw-v55-portal-top):not(h3):not(p):not(.mw-v55-logo-strip){display:none!important}
+#kintoStorePortalsV55 .mw-v55-portal>.mw-v55-portal-top>:not(.mw-v55-icon){display:none!important}
