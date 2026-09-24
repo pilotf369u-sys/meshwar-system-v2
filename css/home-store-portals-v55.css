@@ -58,3 +58,13 @@ body.mw-v55-browse-mode .mw-v55-portal-shell{margin-bottom:16px}.mw-v55-portal[a
 
 /* V207: these two pills are not portal content; suppress the legacy generated labels themselves. */
 #kintoStorePortalsV55 [data-kind="local"]::before,#kintoStorePortalsV55 [data-kind="local"]::after,#kintoStorePortalsV55 [data-kind="global"]::before,#kintoStorePortalsV55 [data-kind="global"]::after{content:none!important;display:none!important}
+
+/* V209 — merchandising hierarchy: title high, copy directly below, logos own the lower visual area. */
+#kintoStorePortalsV55 .mw-v55-portal{display:grid!important;grid-template-columns:1fr auto!important;grid-template-rows:auto auto 1fr!important;column-gap:16px!important;align-content:start!important}
+#kintoStorePortalsV55 .mw-v55-portal-top{grid-column:2!important;grid-row:1 / span 2!important;align-self:start!important}
+#kintoStorePortalsV55 .mw-v55-portal>h3{grid-column:1!important;grid-row:1!important;margin:4px 0 6px!important;align-self:start!important}
+#kintoStorePortalsV55 .mw-v55-portal>p{grid-column:1!important;grid-row:2!important;margin:0!important;max-width:100%!important;align-self:start!important}
+#kintoStorePortalsV55 .mw-v55-logo-strip{grid-column:1 / -1!important;grid-row:3!important;align-self:center!important;justify-self:stretch!important;justify-content:center!important;margin:20px 0 0!important;padding:0!important;gap:14px!important;min-height:76px!important}
+#kintoStorePortalsV55 .mw-v55-logo-strip img,#kintoStorePortalsV55 .mw-v55-logo-fallback{width:64px!important;height:64px!important;border-radius:17px!important;padding:5px!important}
+#kintoStorePortalsV55 .mw-v55-logo-wait{min-height:64px!important;padding:0 18px!important;font-size:13px!important}
+@media(max-width:720px){#kintoStorePortalsV55 .mw-v55-portal{min-height:300px!important;padding:22px!important;grid-template-columns:minmax(0,1fr) 74px!important;column-gap:12px!important}#kintoStorePortalsV55 .mw-v55-portal>h3{font-size:25px!important;margin-top:0!important}#kintoStorePortalsV55 .mw-v55-portal>p{font-size:14px!important;line-height:1.7!important}#kintoStorePortalsV55 .mw-v55-logo-strip{gap:10px!important;margin-top:18px!important;min-height:72px!important;flex-wrap:wrap!important}#kintoStorePortalsV55 .mw-v55-logo-strip img,#kintoStorePortalsV55 .mw-v55-logo-fallback{width:58px!important;height:58px!important;border-radius:15px!important}}
