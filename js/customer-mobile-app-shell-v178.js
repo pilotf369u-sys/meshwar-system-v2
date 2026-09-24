@@ -1,15 +1,34 @@
 (()=>{'use strict';
 const $=(s,r=document)=>r.querySelector(s);
-let nav,observer;
-function clickTab(id){const source=$(`.tabs-nav [data-tab="${id}"]`);if(source)source.click()}
+let nav;
+const counterObservers=[];
+function setActive(el){
+ if(!nav||!el)return;
+ nav.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('is-active',x===el));
+}
+function clickTab(el){
+ const id=el?.dataset.tab;
+ if(!id)return;
+ setActive(el);
+ const source=$(`.tabs-nav [data-tab="${id}"]`);
+ if(source)source.click();
+ requestAnimationFrame(sync);
+}
 function badge(id){const el=document.getElementById(id),n=parseInt(el?.textContent||'0',10)||0;return n>0?n:0}
 function sync(){
  if(!nav)return;
  const active=$('.tabs-nav .tab-btn.active')?.dataset.tab||'';
- nav.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('is-active',x.dataset.tab===active));
+ if(active)nav.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('is-active',x.dataset.tab===active));
  const cart=badge('kintoLocalCartCount'),chat=badge('chatUnreadBadge'),notifications=badge('notificationUnreadBadge');
  const cartBadge=$('[data-badge="cart"]',nav),accountBadge=$('[data-badge="account"]',nav),accountCount=chat+notifications;
  [[cartBadge,cart],[accountBadge,accountCount]].forEach(([el,n])=>{if(!el)return;el.textContent=n>99?'99+':String(n);el.classList.toggle('is-visible',n>0)})
+}
+function observeCounter(id){
+ const el=document.getElementById(id);
+ if(!el)return;
+ const observer=new MutationObserver(sync);
+ observer.observe(el,{childList:true,characterData:true,subtree:true});
+ counterObservers.push(observer);
 }
 function build(){
  if($('#kintoMobileAppNav'))return;
@@ -20,11 +39,12 @@ function build(){
  <button type="button" data-tab="activeOrders" aria-label="طلباتي"><i class="fa-solid fa-box"></i><span>طلباتي</span></button>
  <button type="button" data-account aria-label="حسابي"><i class="fa-solid fa-user"></i><span>حسابي</span><b class="kinto-mobile-badge" data-badge="account"></b></button>`;
  document.body.appendChild(nav);
- nav.querySelectorAll('[data-tab]').forEach(x=>x.addEventListener('click',()=>clickTab(x.dataset.tab)));
+ nav.querySelectorAll('[data-tab]').forEach(x=>x.addEventListener('click',()=>clickTab(x)));
  $('[data-account]',nav)?.addEventListener('click',()=>window.KintoCustomerNavigationV156?.open?.());
- observer=new MutationObserver(()=>requestAnimationFrame(sync));
- observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class']});
- sync()
+ ['kintoLocalCartCount','chatUnreadBadge','notificationUnreadBadge'].forEach(observeCounter);
+ window.addEventListener('kinto:local-cart-change',sync);
+ document.querySelector('.tabs-nav')?.addEventListener('click',()=>requestAnimationFrame(sync));
+ sync();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build,{once:true});else build();
 window.KintoCustomerMobileAppV178={sync};
