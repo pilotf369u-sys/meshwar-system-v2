@@ -49,6 +49,16 @@
   .kinto-local-cart-head{position:sticky;top:0;z-index:3}
   .kinto-local-cart-checkout{min-height:54px!important;border-radius:15px!important}
 
+  /* Customer home: keep primary orders high on screen; secondary account information lives in Account drawer. */
+  .summary-grid{display:none!important}
+  .kinto-mobile-customer-summary{display:flex!important;align-items:center!important;gap:10px!important;margin:8px 0 12px!important;padding:10px 12px!important;border:1px solid rgba(232,191,85,.22)!important;border-radius:16px!important;background:#08372f!important;box-shadow:0 6px 16px rgba(0,0,0,.12)!important}
+  .kinto-mobile-customer-summary-icon{width:38px;height:38px;flex:0 0 38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(232,191,85,.12);color:#e8bf55;font-size:18px}
+  .kinto-mobile-customer-summary-copy{min-width:0;display:grid;gap:1px;flex:1;text-align:right}
+  .kinto-mobile-customer-summary-copy span,.kinto-mobile-customer-summary-copy small{font-size:9px;color:#b9ccc6}
+  .kinto-mobile-customer-summary-copy strong{font-size:13px;color:#f8f5e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kinto-mobile-customer-summary-copy small b{color:#e8bf55}
+  .kinto-mobile-customer-summary>button{min-height:36px!important;padding:0 10px!important;border:1px solid rgba(232,191,85,.28)!important;border-radius:11px!important;background:rgba(232,191,85,.10)!important;color:#f4d778!important;font-size:9px!important;font-weight:900!important;white-space:nowrap!important}
+
   /* Compact customer orders: existing data/actions, refined Mobile/Tablet presentation only. */
   #activeOrders .table-wrap,#orderHistory .table-wrap{border:0!important;background:transparent!important}
   #activeOrders tbody,#orderHistory tbody{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;padding:4px!important}
