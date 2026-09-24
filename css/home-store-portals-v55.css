@@ -55,3 +55,6 @@ body.mw-v55-browse-mode .mw-v55-portal-shell{margin-bottom:16px}.mw-v55-portal[a
 /* V206 — strict portal child allow-list: removes legacy pills regardless of their old class/source. */
 #kintoStorePortalsV55 .mw-v55-portal>:not(.mw-v55-portal-top):not(h3):not(p):not(.mw-v55-logo-strip){display:none!important}
 #kintoStorePortalsV55 .mw-v55-portal>.mw-v55-portal-top>:not(.mw-v55-icon){display:none!important}
+
+/* V207: these two pills are not portal content; suppress the legacy generated labels themselves. */
+#kintoStorePortalsV55 [data-kind="local"]::before,#kintoStorePortalsV55 [data-kind="local"]::after,#kintoStorePortalsV55 [data-kind="global"]::before,#kintoStorePortalsV55 [data-kind="global"]::after{content:none!important;display:none!important}
