@@ -50,7 +50,7 @@
   .kinto-local-cart-head{position:sticky;top:0;z-index:3}
   .kinto-local-cart-checkout{min-height:54px!important;border-radius:15px!important}
 
-  .kinto-drawer-account-summary{display:grid!important;grid-template-columns:1fr!important;gap:9px!important;margin-top:10px!important}
+  .kinto-drawer-account-summary{display:grid!important;grid-column:1/-1!important;width:100%!important;grid-template-columns:1fr!important;gap:9px!important;margin-top:10px!important}
   .kinto-drawer-account-card{padding:12px!important;border:1px solid rgba(232,191,85,.20)!important;border-radius:15px!important;background:#08372f!important;color:#f8f5e8!important}
   .kinto-drawer-account-title{display:flex;align-items:center;gap:7px;margin-bottom:8px;color:#e8bf55;font-size:12px}
   .kinto-drawer-reward-status{font-size:10px;line-height:1.55;color:#d8e4e0}
@@ -71,6 +71,7 @@
   /* Compact customer orders: existing data/actions, refined Mobile/Tablet presentation only. */
   #activeOrders .table-wrap,#orderHistory .table-wrap{border:0!important;background:transparent!important}
   #activeOrders tbody,#orderHistory tbody{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;padding:4px!important}
+  #activeOrders tbody tr[hidden],#orderHistory tbody tr[hidden]{display:none!important}
   #activeOrders tbody tr,#orderHistory tbody tr{display:grid!important;grid-template-columns:1fr!important;grid-template-areas:"code" "image" "status" "decision" "details"!important;gap:8px!important;align-items:center!important;padding:12px!important;border:1px solid rgba(232,191,85,.20)!important;border-radius:18px!important;background:#08372f!important;box-shadow:0 7px 18px rgba(0,0,0,.14)!important;overflow:hidden!important;contain:layout paint}
   #activeOrders tbody td,#orderHistory tbody td{display:none!important}
   #activeOrders tbody td::before,#orderHistory tbody td::before{content:none!important}
