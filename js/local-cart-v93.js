@@ -8,9 +8,8 @@ function customerShoppingSession(){try{return window.KintoCustomerSessionV150?.r
 function requireCustomerShopping(){
   const session=customerShoppingSession();
   if(session?.token)return true;
-  const next=encodeURIComponent(location.href);
   alert('يمكنك تصفح KINTO بحرية. لإضافة المنتجات للسلة وإتمام الشراء، سجّل دخول حساب العميل أولاً.');
-  location.href='login.html?next='+next;
+  location.href='login.html';
   return false;
 }
 function customerId(){try{const direct=String(localStorage.getItem('meshwar_customer_id')||'').trim();if(direct)return direct;const logged=JSON.parse(localStorage.getItem('loggedInUser')||'null');if(logged?.id)return String(logged.id).trim()}catch{}return'guest'}
