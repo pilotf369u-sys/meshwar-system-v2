@@ -10,7 +10,7 @@
   .kinto-mobile-app-nav i{font-size:17px;color:#d9c990}
   .kinto-mobile-app-nav .is-active{background:linear-gradient(145deg,#f5dc84,#dca62c);color:#17372f;box-shadow:0 5px 14px rgba(217,155,39,.22)}
   .kinto-mobile-app-nav .is-active i{color:#17372f}
-  .kinto-mobile-app-nav .kinto-mobile-cart{transform:translateY(-8px)}
+  .kinto-mobile-app-nav .kinto-mobile-cart{transform:none}
   .kinto-mobile-app-nav .kinto-mobile-cart:not(.is-active){background:#0b4a3e;color:#c7d7d2;box-shadow:0 5px 14px rgba(0,0,0,.18)}
   .kinto-mobile-app-nav .kinto-mobile-cart:not(.is-active) i{color:#d9c990}
   .kinto-mobile-app-nav .kinto-mobile-badge{position:absolute;top:1px;inset-inline-start:50%;margin-inline-start:8px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;display:none;align-items:center;justify-content:center;background:#dc2626;color:#fff;border:2px solid #063b32;font-size:8px;font-weight:950}
