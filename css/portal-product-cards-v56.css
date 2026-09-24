@@ -15,8 +15,7 @@
 .mw-v55-portal:hover .mw-v55-arrow{transform:translateX(-5px)!important;background:rgba(242,202,99,.15)!important}
 .mw-v55-portal h3{font-size:26px!important;margin-top:20px!important;letter-spacing:.1px!important}.mw-v55-portal p{font-size:13px!important;max-width:78%!important;line-height:1.8!important;color:#c9dad5!important}
 .mw-v55-logo-strip{margin-top:22px!important;padding-bottom:38px!important}.mw-v55-logo-strip img,.mw-v55-logo-fallback{width:42px!important;height:42px!important;border-radius:13px!important;box-shadow:0 8px 18px rgba(0,0,0,.16)!important;transition:transform .24s ease!important}.mw-v55-portal:hover .mw-v55-logo-strip img,.mw-v55-portal:hover .mw-v55-logo-fallback{transform:translateY(-2px)}
-.mw-v55-portal:nth-child(1) .mw-v55-portal-top::after,.mw-v55-portal:nth-child(2) .mw-v55-portal-top::after{position:absolute;top:22px;left:22px;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:900;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#e7f8f3;backdrop-filter:blur(8px)}
-.mw-v55-portal:nth-child(1) .mw-v55-portal-top::after{content:"🌍 خيارات عالمية"}.mw-v55-portal:nth-child(2) .mw-v55-portal-top::after{content:"🏪 تسوق محلي"}
+
 
 /* Phase 1 root fix: one uniform media frame for every product.
    The real image is NEVER cropped: contain keeps every pixel/text visible.

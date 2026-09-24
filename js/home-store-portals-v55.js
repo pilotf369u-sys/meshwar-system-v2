@@ -4,7 +4,7 @@
   let portalShell,contentHead,headerBack,current=null,headerObserver=null;
   const q=id=>document.getElementById(id);
   const unique=s=>[...new Set(s.filter(Boolean))];
-  const isPlaceholderLogo=src=>!src||/^data:/i.test(src)||/placeholder|default|fallback/i.test(src);
+  const isPlaceholderLogo=src=>!src||/placeholder|default|fallback/i.test(src);
   const localLogos=stores=>(Array.isArray(stores)?stores:[]).map(s=>String(s?.logo_url||'').trim()).filter(src=>!isPlaceholderLogo(src));
   function collectLogos(section,local){if(!section)return[];const selectors=local?['.local-public-logo','img[src]']:['.store-logo','img[src]'];for(const sel of selectors){const srcs=unique([...section.querySelectorAll(sel)].map(img=>img.getAttribute('src')).filter(x=>!isPlaceholderLogo(x)));if(srcs.length)return srcs.slice(0,5)}return[]}
   function logoStripFromSources(sources){const wrap=document.createElement('div');wrap.className='mw-v55-logo-strip';unique(sources).slice(0,5).forEach(src=>{const img=document.createElement('img');img.src=src;img.alt='';img.loading='lazy';wrap.appendChild(img)});return wrap}
