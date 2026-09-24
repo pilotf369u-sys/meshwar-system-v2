@@ -2,6 +2,7 @@
 .kinto-mobile-app-nav{display:none}
 @media(max-width:1024px){
   body{padding-bottom:calc(104px + env(safe-area-inset-bottom))!important}
+  .kinto-customer-header{display:none!important}
   .kinto-customer-header .customer-header-actions{display:none!important}
   .kinto-customer-header .customer-header-main{padding:8px 10px!important;min-height:54px}
   .kinto-customer-header .customer-brand{margin-inline:auto!important}
