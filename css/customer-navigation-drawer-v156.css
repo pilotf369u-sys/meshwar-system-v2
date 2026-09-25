@@ -33,6 +33,3 @@ html[data-mw-global-theme="light"] .kinto-drawer-footer{background:rgba(255,255,
 .kinto-drawer-rewards-trigger{width:100%;min-height:48px;padding:8px 10px;display:grid;grid-template-columns:20px auto minmax(0,1fr) 14px;align-items:center;gap:7px;text-align:start;color:#f8f5e8;cursor:pointer}
 .kinto-drawer-rewards-trigger>i{color:#f4d472;font-size:14px;text-align:center}.kinto-drawer-rewards-trigger>span:first-of-type{font-weight:900;white-space:nowrap}.kinto-drawer-rewards-trigger .kinto-drawer-reward-status{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#d9c990;font-size:8px;text-align:end}.kinto-drawer-rewards-trigger:hover,.kinto-drawer-rewards-trigger:focus-visible{border-color:#ffe28a;background:rgba(242,200,91,.17);box-shadow:0 0 0 2px rgba(242,200,91,.11),0 0 19px rgba(242,200,91,.25)}
 html[data-mw-global-theme="light"] .kinto-drawer-rewards-trigger{color:#17372f}.kinto-drawer-rewards-trigger .fa-chevron-left{font-size:10px}
-
-/* V232 — compact profile actions to keep essential account controls in the first viewport. */
-@media(max-width:520px){.kinto-drawer-item--profile{min-height:34px!important;padding:3px 6px!important;font-size:8.5px!important;line-height:1.15!important}.kinto-drawer-item--profile i{width:13px!important;font-size:9px!important}.kinto-drawer-account-summary+.kinto-drawer-item--profile{margin-top:0}}
