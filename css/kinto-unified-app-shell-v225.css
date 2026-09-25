@@ -1,15 +1,27 @@
-/* KINTO unified public app shell — mobile + tablet only. */
-#kintoMobileAppNav,#kintoMobileStoresMenu{display:none}
+/* KINTO APP SHELL V226 — canonical mobile/tablet navigation presentation.
+   Visual source: the customer dashboard shell. */
+.kinto-mobile-app-nav,.kinto-mobile-stores-menu{display:none}
 @media(max-width:1024px){
- body{padding-bottom:86px!important}
- #kintoHomeHeader{display:none!important}
- .fixed-order-btn{bottom:92px!important;left:12px!important;z-index:2147482000!important}
- #kintoMobileAppNav{position:fixed;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom));z-index:2147483000;display:grid;grid-template-columns:repeat(5,1fr);align-items:stretch;gap:4px;padding:7px;border:1px solid rgba(212,175,55,.28);border-radius:24px;background:rgba(4,22,43,.97);box-shadow:0 12px 32px rgba(0,0,0,.38);direction:rtl}
- #kintoMobileAppNav a,#kintoMobileAppNav button{min-width:0;min-height:58px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border-radius:17px;color:#f3e7bd;text-decoration:none;font-size:11px;font-weight:800;line-height:1.1}
- #kintoMobileAppNav i{font-size:20px}
- #kintoMobileAppNav [data-active="true"]{background:linear-gradient(145deg,#f7d568,#dcae32);color:#17352c}
- #kintoMobileStoresMenu{position:fixed;right:18px;bottom:88px;z-index:2147483001;min-width:180px;padding:8px;border:1px solid rgba(212,175,55,.32);border-radius:16px;background:#082f29;box-shadow:0 12px 28px rgba(0,0,0,.35)}
- #kintoMobileStoresMenu.open{display:grid;gap:6px}
- #kintoMobileStoresMenu a{padding:11px 12px;border-radius:11px;color:#f3e7bd;text-decoration:none;font-weight:800;font-size:12px;background:rgba(255,255,255,.05)}
+ body{padding-bottom:calc(104px + env(safe-area-inset-bottom))!important}
+ body .dashboard-header.kinto-customer-header,#kintoHomeHeader{display:none!important}
+ .fixed-order-btn{bottom:calc(84px + env(safe-area-inset-bottom))!important;left:10px!important;z-index:1170!important}
+ .kinto-mobile-app-nav{position:fixed;z-index:1180;inset-inline:8px;bottom:max(8px,env(safe-area-inset-bottom));height:64px;padding:5px 6px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch;gap:2px;border:1px solid rgba(242,200,91,.34);border-radius:20px;background:#073c33;box-shadow:0 10px 28px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.08);contain:layout paint;direction:rtl}
+ .kinto-mobile-app-nav button,.kinto-mobile-app-nav a{position:relative;min-width:0;border:0;border-radius:14px;background:transparent;color:#c7d7d2;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:800 9px/1.1 "Segoe UI",Tahoma,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+ .kinto-mobile-app-nav i{font-size:17px;color:#d9c990}
+ .kinto-mobile-app-nav .is-active{background:linear-gradient(145deg,#f5dc84,#dca62c);color:#17372f;box-shadow:0 5px 14px rgba(217,155,39,.22)}
+ .kinto-mobile-app-nav .is-active i{color:#17372f}
+ .kinto-mobile-app-nav .kinto-mobile-cart:not(.is-active){background:#0b4a3e;color:#c7d7d2;box-shadow:0 5px 14px rgba(0,0,0,.18)}
+ .kinto-mobile-app-nav .kinto-mobile-cart:not(.is-active) i{color:#d9c990}
+ .kinto-mobile-app-nav .kinto-mobile-badge{position:absolute;top:1px;inset-inline-start:50%;margin-inline-start:8px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;display:none;align-items:center;justify-content:center;background:#dc2626;color:#fff;border:2px solid #063b32;font-size:8px;font-weight:950}
+ .kinto-mobile-app-nav .kinto-mobile-badge.is-visible{display:flex}
+ body.kinto-drawer-open .kinto-mobile-app-nav{opacity:0;pointer-events:none}
+ .kinto-mobile-stores-menu{position:fixed;z-index:1181;inset-inline:16px;bottom:82px;padding:8px;border:1px solid rgba(242,200,91,.34);border-radius:16px;background:#073c33;box-shadow:0 10px 28px rgba(0,0,0,.26)}
+ .kinto-mobile-stores-menu.is-open{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+ .kinto-mobile-stores-menu a{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;border-radius:12px;background:rgba(255,255,255,.06);color:#f3e7bd;text-decoration:none;font-size:11px;font-weight:850}
+ .kinto-mobile-stores-menu i{color:#d9c990}
+ html[data-mw-global-theme="light"] .kinto-mobile-app-nav{background:#fffdf7;border-color:#d5b655}
+ html[data-mw-global-theme="light"] .kinto-mobile-app-nav button,html[data-mw-global-theme="light"] .kinto-mobile-app-nav a{color:#52645f}
+ html[data-mw-global-theme="light"] .kinto-mobile-app-nav i{color:#8b6b22}
+ html[data-mw-global-theme="light"] .kinto-mobile-app-nav .is-active{color:#17372f}
 }
-@media(min-width:1025px){#kintoMobileAppNav,#kintoMobileStoresMenu{display:none!important}}
+@media(min-width:1025px){.kinto-mobile-app-nav,.kinto-mobile-stores-menu{display:none!important}}
