@@ -646,5 +646,26 @@ loadLocalPublicStores();
 <link rel="stylesheet" href="css/customer-home-mobile-v198.css?v=20260924-v202"><script src="js/customer-favorites-nav-v148.js?v=20260912-v148"></script>
 <script src="js/customer-session-v150.js?v=20260922-v150"></script>
 <script src="js/public-customer-navigation-v157.js?v=20260925-v214" defer></script>
+
+<style id="kintoMobileAppNavV222">
+@media (min-width:769px){#kintoMobileAppNav{display:none!important}}
+@media (max-width:768px){
+  body{padding-bottom:86px!important}
+  #kintoMobileAppNav{position:fixed;left:10px;right:10px;bottom:8px;z-index:2147483000;display:grid;grid-template-columns:repeat(5,1fr);align-items:stretch;gap:4px;padding:7px;border:1px solid rgba(212,175,55,.28);border-radius:24px;background:rgba(4,22,43,.97);box-shadow:0 12px 32px rgba(0,0,0,.38);direction:rtl}
+  #kintoMobileAppNav a{min-width:0;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border-radius:17px;color:#f3e7bd;text-decoration:none;font-size:11px;font-weight:800;line-height:1.1}
+  #kintoMobileAppNav a i{font-size:20px}
+  #kintoMobileAppNav a[data-active="true"]{background:linear-gradient(145deg,#f7d568,#dcae32);color:#17352c}
+}
+</style>
+<nav id="kintoMobileAppNav" aria-label="تنقل KINTO للجوال">
+  <a href="index.html" data-active="true"><i class="fa-solid fa-house" aria-hidden="true"></i><span>الرئيسية</span></a>
+  <a href="local-stores.html"><i class="fa-solid fa-store" aria-hidden="true"></i><span>المتاجر</span></a>
+  <a href="dashboard.html?tab=drafts" id="kintoMobileCart"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i><span>السلة</span></a>
+  <a href="login.html" id="kintoMobileOrders"><i class="fa-solid fa-box" aria-hidden="true"></i><span>طلباتي</span></a>
+  <a href="login.html" id="kintoMobileAccount"><i class="fa-solid fa-user" aria-hidden="true"></i><span>حسابي</span></a>
+</nav>
+<script id="kintoMobileAppNavRuntimeV222">
+(()=>{const sync=()=>{const id=typeof window.getStoredCustomerId==='function'?String(window.getStoredCustomerId()||'').trim():String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();const orders=document.getElementById('kintoMobileOrders'),account=document.getElementById('kintoMobileAccount'),cart=document.getElementById('kintoMobileCart');if(!orders||!account||!cart)return;const dash=tab=>'dashboard.html?customerId='+encodeURIComponent(id)+'&tab='+encodeURIComponent(tab);orders.href=id?dash('activeOrders'):'login.html';account.href=id?dash('profile'):'login.html';cart.href=id?dash('drafts'):'login.html'};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();window.addEventListener('storage',sync)})();
+</script>
 </body>
 </html>
