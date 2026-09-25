@@ -68,3 +68,7 @@ body.mw-v55-browse-mode .mw-v55-portal-shell{margin-bottom:16px}.mw-v55-portal[a
 #kintoStorePortalsV55 .mw-v55-logo-strip img,#kintoStorePortalsV55 .mw-v55-logo-fallback{width:64px!important;height:64px!important;border-radius:17px!important;padding:5px!important}
 #kintoStorePortalsV55 .mw-v55-logo-wait{min-height:64px!important;padding:0 18px!important;font-size:13px!important}
 @media(max-width:720px){#kintoStorePortalsV55 .mw-v55-portal{min-height:300px!important;padding:22px!important;grid-template-columns:minmax(0,1fr) 74px!important;column-gap:12px!important}#kintoStorePortalsV55 .mw-v55-portal>h3{font-size:25px!important;margin-top:0!important}#kintoStorePortalsV55 .mw-v55-portal>p{font-size:14px!important;line-height:1.7!important}#kintoStorePortalsV55 .mw-v55-logo-strip{gap:10px!important;margin-top:18px!important;min-height:72px!important;flex-wrap:wrap!important}#kintoStorePortalsV55 .mw-v55-logo-strip img,#kintoStorePortalsV55 .mw-v55-logo-fallback{width:58px!important;height:58px!important;border-radius:15px!important}}
+
+/* V210 — local card uses the same logo-led merchandising language as global. */
+#kintoStorePortalsV55 .mw-v55-logo-strip--loading{display:flex!important;min-height:72px!important;background:transparent!important;border:0!important}
+#kintoStorePortalsV55 .mw-v55-logo-wait{display:none!important}
