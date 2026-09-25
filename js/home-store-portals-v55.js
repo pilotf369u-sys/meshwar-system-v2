@@ -5,8 +5,7 @@
   const q=id=>document.getElementById(id);
   const unique=s=>[...new Set(s.filter(Boolean))];
   const isPlaceholderLogo=src=>!src||/placeholder|default|fallback/i.test(src);
-  const localLogoPool=stores=>unique((Array.isArray(stores)?stores:[]).map(s=>String(s?.logo_url||'').trim()).filter(src=>!isPlaceholderLogo(src)));
-  const sampleLogos=(pool,count=5)=>{const a=[...pool];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a.slice(0,count)};
+  const localLogos=stores=>unique((Array.isArray(stores)?stores:[]).map(s=>String(s?.logo_url||'').trim()).filter(src=>!isPlaceholderLogo(src))).slice(0,5);
   function collectLogos(section,local){if(!section)return[];const selectors=local?['.local-public-logo','img[src]']:['.store-logo','img[src]'];for(const sel of selectors){const srcs=unique([...section.querySelectorAll(sel)].map(img=>img.getAttribute('src')).filter(x=>!isPlaceholderLogo(x)));if(srcs.length)return srcs.slice(0,5)}return[]}
   function logoStripFromSources(sources){const wrap=document.createElement('div');wrap.className='mw-v55-logo-strip';unique(sources).slice(0,6).forEach(src=>{const img=document.createElement('img');img.src=src;img.alt='';img.loading='lazy';wrap.appendChild(img)});return wrap}
   function logoStrip(section,local){const wrap=document.createElement('div');wrap.className='mw-v55-logo-strip';const logos=collectLogos(section,local);if(!logos.length&&local){wrap.classList.add('mw-v55-logo-strip--loading');return wrap}if(!logos.length){for(let i=0;i<4;i++){const f=document.createElement('span');f.className='mw-v55-logo-fallback';f.textContent='✦';wrap.appendChild(f)}return wrap}logos.forEach(src=>{const img=document.createElement('img');img.src=src;img.alt='';img.loading='lazy';wrap.appendChild(img)});if(!local&&!logos.some(src=>/zara/i.test(src))){const z=document.createElement('img');z.src='images/zara.png';z.alt='Zara';z.loading='lazy';wrap.appendChild(z)}return wrap}
