@@ -43,11 +43,14 @@ function build(){
  if($('#kintoMobileAppNav'))return;
  nav=document.createElement('nav');nav.id='kintoMobileAppNav';nav.className='kinto-mobile-app-nav';nav.setAttribute('aria-label','التنقل السريع للعميل');
  nav.innerHTML=`<a href="index.html" aria-label="الرئيسية"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
- <a href="local-stores.html" aria-label="المتاجر"><i class="fa-solid fa-store"></i><span>المتاجر</span></a>
+ <button type="button" data-stores aria-label="المتاجر"><i class="fa-solid fa-store"></i><span>المتاجر</span></button>
  <button type="button" class="kinto-mobile-cart" data-tab="drafts" aria-label="السلة"><i class="fa-solid fa-cart-shopping"></i><span>السلة</span><b class="kinto-mobile-badge" data-badge="cart"></b></button>
  <button type="button" data-tab="activeOrders" aria-label="طلباتي"><i class="fa-solid fa-box"></i><span>طلباتي</span></button>
  <button type="button" data-account aria-label="حسابي"><i class="fa-solid fa-user"></i><span>حسابي</span><b class="kinto-mobile-badge" data-badge="account"></b></button>`;
  document.body.appendChild(nav);
+ const storesMenu=document.createElement('div');storesMenu.className='kinto-mobile-stores-menu';storesMenu.innerHTML='<a href="local-stores.html"><i class="fa-solid fa-store"></i><span>المتاجر المحلية</span></a><a href="global-stores.html"><i class="fa-solid fa-earth-americas"></i><span>المتاجر العالمية</span></a>';document.body.appendChild(storesMenu);
+ $('[data-stores]',nav)?.addEventListener('click',()=>storesMenu.classList.toggle('is-open'));
+ document.addEventListener('click',e=>{if(!storesMenu.contains(e.target)&&!$('[data-stores]',nav)?.contains(e.target))storesMenu.classList.remove('is-open')});
  nav.querySelectorAll('[data-tab]').forEach(x=>x.addEventListener('click',()=>clickTab(x)));
  $('[data-account]',nav)?.addEventListener('click',()=>window.KintoCustomerNavigationV156?.open?.());
  ['kintoLocalCartCount','chatUnreadBadge','notificationUnreadBadge'].forEach(observeCounter);

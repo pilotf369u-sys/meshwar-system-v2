@@ -22,3 +22,7 @@
   html[data-mw-global-theme="light"] .kinto-mobile-app-nav i{color:#8b6b22}
   html[data-mw-global-theme="light"] .kinto-mobile-app-nav .is-active{color:#17372f}
 }
+
+/* V223: mobile-only store chooser; desktop remains untouched. */
+.kinto-mobile-stores-menu{display:none}
+@media(max-width:1024px){.kinto-mobile-stores-menu{position:fixed;z-index:1181;inset-inline:16px;bottom:82px;padding:8px;border:1px solid rgba(242,200,91,.34);border-radius:16px;background:#073c33;box-shadow:0 10px 28px rgba(0,0,0,.26)}.kinto-mobile-stores-menu.is-open{display:grid;grid-template-columns:1fr 1fr;gap:7px}.kinto-mobile-stores-menu a{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;border-radius:12px;background:rgba(255,255,255,.06);color:#f3e7bd;text-decoration:none;font-size:11px;font-weight:850}.kinto-mobile-stores-menu i{color:#d9c990}}
