@@ -36,19 +36,6 @@
     .store-state{padding:8px 0;border:0;border-radius:0;background:transparent;text-align:center;color:#d7e4e0}
     @media(max-width:640px){#mwGlobalStoreSearch{padding:9px;border-radius:12px}#mwGlobalStoreSearch button{padding:10px 11px}#mwGlobalStoreSearch input{font-size:13px}#mwCategoryShell{border-radius:12px;padding:8px;margin-inline:-2px}#mwCategoryShell button{font-size:13px;padding:8px 12px}}
   </style>
-
-<style id="kintoStoreMobileCorrectionV243">
-@media(max-width:1024px){
- #kintoStoreMobileNav{left:10px!important;right:10px!important;bottom:8px!important;display:grid!important;grid-template-columns:repeat(5,1fr)!important;align-items:stretch!important;gap:4px!important;padding:7px!important;border:1px solid rgba(212,175,55,.28)!important;border-radius:24px!important;background:rgba(4,22,43,.97)!important;box-shadow:0 12px 32px rgba(0,0,0,.38)!important;direction:rtl!important}
- #kintoStoreMobileNav a,#kintoStoreMobileNav button{min-width:0!important;min-height:58px!important;border:0!important;background:transparent!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;border-radius:17px!important;color:#f3e7bd!important;text-decoration:none!important;font-size:11px!important;font-weight:800!important;line-height:1.1!important}
- #kintoStoreMobileNav a i,#kintoStoreMobileNav button i{font-size:20px!important}
- #kintoStoreMobileNav .kinto-store-mobile-active{background:linear-gradient(145deg,#f7d568,#dcae32)!important;color:#17352c!important}
-}
-@media(max-width:640px){
- #localStoreProductsGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;max-width:none!important;margin-inline:0!important;gap:10px!important}
- #localStoreProductsGrid .local-v3-card{min-width:0!important;width:auto!important;max-width:none!important}
-}
-</style>
 </head>
 <body>
   <main class="store-shell">
@@ -138,26 +125,5 @@
   <script src="js/store-card-modern-v144.js?v=20260912-v144" defer></script>
   <script src="js/storefront-product-modal-v145.js?v=20260912-v145" defer></script>
   <script src="js/customer-favorites-v147.js?v=20260912-v147" defer></script>
-
-<style id="kintoStoreMobileShellV242">
-@media(min-width:1025px){#kintoStoreMobileNav,#kintoStoreMobileStoresMenu{display:none!important}}
-@media(max-width:1024px){
- body{padding-bottom:86px!important}.store-shell{width:min(100% - 16px,1180px);padding-top:8px}#kintoStoreHeader{display:none!important}
- .store-hero{margin:8px 0 10px;padding:14px;border-radius:18px}.store-hero-identity{gap:10px!important}.store-hero-logo{width:54px!important;height:54px!important}.store-title{font-size:22px}.store-meta{margin-top:4px;font-size:12px;line-height:1.5}
- #mwGlobalStoreSearch{padding:8px;margin-bottom:8px}#mwCategoryShell{top:4px;margin-bottom:10px}
- #kintoStoreMobileNav{position:fixed;left:10px;right:10px;bottom:8px;z-index:2147483000;display:grid;grid-template-columns:repeat(5,1fr);align-items:stretch;gap:4px;padding:7px;border:1px solid rgba(212,175,55,.28);border-radius:24px;background:rgba(4,22,43,.97);box-shadow:0 12px 32px rgba(0,0,0,.38);direction:rtl}
- #kintoStoreMobileNav a,#kintoStoreMobileNav button{position:relative;min-width:0;min-height:58px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border-radius:17px;color:#f3e7bd;text-decoration:none;font-size:11px;font-weight:800;line-height:1.1}
- #kintoStoreMobileNav i{font-size:20px}.kinto-store-mobile-active{background:linear-gradient(145deg,#f7d568,#dcae32)!important;color:#17352c!important}
- #kintoStoreMobileStoresMenu{position:fixed;right:18px;bottom:88px;z-index:2147483001;display:none;min-width:180px;padding:8px;border:1px solid rgba(212,175,55,.32);border-radius:16px;background:#082f29;box-shadow:0 12px 28px rgba(0,0,0,.35)}
- #kintoStoreMobileStoresMenu.open{display:grid;gap:6px}#kintoStoreMobileStoresMenu a{padding:11px 12px;border-radius:11px;color:#f3e7bd;text-decoration:none;font-weight:800;font-size:12px;background:rgba(255,255,255,.05)}
- #kintoStoreMobileCartBadge{position:absolute;top:3px;left:50%;margin-left:8px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;display:none;align-items:center;justify-content:center;background:#dc2626;color:#fff;border:2px solid #04162b;font-size:8px;font-weight:950;line-height:1}#kintoStoreMobileCartBadge.show{display:flex}
- body>#kintoLocalCartTrigger{display:none!important}
-}
-</style>
-<nav id="kintoStoreMobileNav" aria-label="تنقل KINTO للجوال"><a href="index.html"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a><button type="button" id="kintoStoreMobileStores" class="kinto-store-mobile-active"><i class="fa-solid fa-store"></i><span>المتاجر</span></button><button type="button" id="kintoStoreMobileCart"><i class="fa-solid fa-cart-shopping"></i><span>السلة</span><b id="kintoStoreMobileCartBadge"></b></button><a href="login.html" id="kintoStoreMobileOrders"><i class="fa-solid fa-box"></i><span>طلباتي</span></a><a href="login.html" id="kintoStoreMobileAccount"><i class="fa-solid fa-user"></i><span>حسابي</span></a></nav>
-<div id="kintoStoreMobileStoresMenu"><a href="local-stores.html">المتاجر المحلية</a><a href="global-stores.html">المتاجر العالمية</a></div>
-<script>
-(()=>{const stores=document.getElementById('kintoStoreMobileStores'),menu=document.getElementById('kintoStoreMobileStoresMenu'),cart=document.getElementById('kintoStoreMobileCart');stores?.addEventListener('click',()=>menu?.classList.toggle('open'));document.addEventListener('click',e=>{if(menu&&!menu.contains(e.target)&&!stores?.contains(e.target))menu.classList.remove('open')});cart?.addEventListener('click',()=>document.getElementById('kintoLocalCartTrigger')?.click());const sync=()=>{const id=typeof window.getStoredCustomerId==='function'?String(window.getStoredCustomerId()||'').trim():String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();const orders=document.getElementById('kintoStoreMobileOrders'),account=document.getElementById('kintoStoreMobileAccount');if(orders)orders.href=id?'dashboard.html?customerId='+encodeURIComponent(id)+'&tab=activeOrders':'login.html';if(account)account.href=id?'dashboard.html?customerId='+encodeURIComponent(id)+'&openAccount=1':'login.html';const badge=document.getElementById('kintoStoreMobileCartBadge'),count=Number(window.KintoLocalCartV93?.getCount?.()||0);if(badge){badge.textContent=count>99?'99+':String(count);badge.classList.toggle('show',count>0)}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();window.addEventListener('storage',sync);window.addEventListener('kinto:local-cart-change',sync);setTimeout(sync,800)})();
-</script>
 </body>
 </html>
