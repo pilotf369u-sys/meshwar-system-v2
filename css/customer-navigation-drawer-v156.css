@@ -42,3 +42,6 @@ html[data-mw-global-theme="light"] .kinto-drawer-rewards-trigger{color:#17372f}.
 
 /* V235 — relocated Settings must span the full Account grid width. */
 @media(max-width:520px){.kinto-drawer-grid[data-group="account"]>.kinto-drawer-group:has(>.kinto-drawer-grid[data-group="settings"]){grid-column:1/-1!important;width:100%!important;min-width:0!important}.kinto-drawer-grid[data-group="account"]>.kinto-drawer-group:has(>.kinto-drawer-grid[data-group="settings"])>.kinto-drawer-grid[data-group="settings"]{width:100%!important}.kinto-drawer-grid[data-group="settings"] .kinto-drawer-item{min-height:38px!important;height:38px!important;padding:4px 8px!important;font-size:8.5px!important}}
+
+/* V236 — settings is again a normal drawer section; match every other two-column button row. */
+@media(max-width:520px){.kinto-drawer-grid[data-group="settings"]{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;width:100%!important}.kinto-drawer-grid[data-group="settings"] .kinto-drawer-item{width:100%!important;min-width:0!important;min-height:38px!important;height:auto!important;padding:5px 7px!important;font-size:10px!important;line-height:1.2!important;white-space:nowrap!important}}
