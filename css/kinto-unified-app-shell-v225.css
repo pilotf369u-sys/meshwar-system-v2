@@ -1,0 +1,15 @@
+/* KINTO unified public app shell — mobile + tablet only. */
+#kintoMobileAppNav,#kintoMobileStoresMenu{display:none}
+@media(max-width:1024px){
+ body{padding-bottom:86px!important}
+ #kintoHomeHeader{display:none!important}
+ .fixed-order-btn{bottom:92px!important;left:12px!important;z-index:2147482000!important}
+ #kintoMobileAppNav{position:fixed;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom));z-index:2147483000;display:grid;grid-template-columns:repeat(5,1fr);align-items:stretch;gap:4px;padding:7px;border:1px solid rgba(212,175,55,.28);border-radius:24px;background:rgba(4,22,43,.97);box-shadow:0 12px 32px rgba(0,0,0,.38);direction:rtl}
+ #kintoMobileAppNav a,#kintoMobileAppNav button{min-width:0;min-height:58px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border-radius:17px;color:#f3e7bd;text-decoration:none;font-size:11px;font-weight:800;line-height:1.1}
+ #kintoMobileAppNav i{font-size:20px}
+ #kintoMobileAppNav [data-active="true"]{background:linear-gradient(145deg,#f7d568,#dcae32);color:#17352c}
+ #kintoMobileStoresMenu{position:fixed;right:18px;bottom:88px;z-index:2147483001;min-width:180px;padding:8px;border:1px solid rgba(212,175,55,.32);border-radius:16px;background:#082f29;box-shadow:0 12px 28px rgba(0,0,0,.35)}
+ #kintoMobileStoresMenu.open{display:grid;gap:6px}
+ #kintoMobileStoresMenu a{padding:11px 12px;border-radius:11px;color:#f3e7bd;text-decoration:none;font-weight:800;font-size:12px;background:rgba(255,255,255,.05)}
+}
+@media(min-width:1025px){#kintoMobileAppNav,#kintoMobileStoresMenu{display:none!important}}
