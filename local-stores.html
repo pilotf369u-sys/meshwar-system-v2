@@ -23,7 +23,7 @@ async function syncHeaderAuth(){const account=document.getElementById('kintoHead
 syncHeaderAuth();
 </script>
 <main>
-<section class="hero"><div class="hero-card"><div class="eyebrow">KINTO LOCAL STORES</div><h1>🏪 المتاجر المحلية</h1><p>اكتشف المتاجر المحلية الموثقة في KINTO، وابحث حسب التخصص أو المنطقة ثم افتح المتجر مباشرة لتصفح منتجاته.</p><div class="tools"><input id="storeSearch" class="search" type="search" placeholder="ابحث عن متجر أو منطقة..." autocomplete="off"><div class="count"><span id="storeCount">0</span>&nbsp; متجر</div></div><nav id="filters" class="filters" aria-label="تصنيفات المتاجر المحلية"><button class="filter-btn active" type="button" data-filter="الكل">الكل</button></nav></div></section>
+<section class="hero"><div class="hero-card"><div class="eyebrow">KINTO LOCAL STORES</div><h1><i class="fa-solid fa-shop" aria-hidden="true"></i> المتاجر المحلية</h1><p>اكتشف المتاجر المحلية الموثقة في KINTO، وابحث حسب التخصص أو المنطقة ثم افتح المتجر مباشرة لتصفح منتجاته.</p><div class="tools"><input id="storeSearch" class="search" type="search" placeholder="ابحث عن متجر أو منطقة..." autocomplete="off"><div class="count"><span id="storeCount">0</span>&nbsp; متجر</div></div><nav id="filters" class="filters" aria-label="تصنيفات المتاجر المحلية"><button class="filter-btn active" type="button" data-filter="الكل">الكل</button></nav></div></section>
 <div class="wrap"><div id="storesGrid" class="grid"><div class="state">جاري تحميل المتاجر المحلية...</div></div></div>
 </main>
 <script>
@@ -42,6 +42,31 @@ fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,logo_url,countr
 </script>
 <link rel="stylesheet" href="css/customer-favorites-nav-v148.css?v=20260912-v148"><script src="js/customer-favorites-nav-v148.js?v=20260912-v148"></script>
 
+<script id="kintoDisplayModeGuardV239">
+(()=>{const mobileUa=/Android.+Mobile|iPhone|iPod/i.test(navigator.userAgent);const desktopRequested=mobileUa&&window.innerWidth>=800;document.documentElement.classList.toggle('kinto-mobile-desktop-requested',desktopRequested)})();
+</script>
+<style id="kintoLocalMobileCompactV239">
+@media(max-width:1024px){
+ .hero{margin:12px auto 10px;padding:0 12px}.hero-card{padding:16px 14px;border-radius:20px}.eyebrow{font-size:9px}.hero h1{font-size:26px;margin:5px 0 5px}.hero h1 i{font-size:.78em;color:#f3d77b;margin-left:5px}.hero p{font-size:12px;line-height:1.55;max-width:none}.tools{margin-top:10px;gap:7px}.search{padding:10px 12px;min-width:160px}.count{padding:0 11px;font-size:12px}.filters{padding-top:8px}.filter-btn{padding:7px 11px;font-size:11px}
+}
+@media(max-width:600px){.hero-card{padding:14px 12px}.hero h1{font-size:24px}}
+@media(max-width:1024px){
+ html.kinto-mobile-desktop-requested body{padding-bottom:0!important}
+ html.kinto-mobile-desktop-requested .top{display:block!important}
+ html.kinto-mobile-desktop-requested #kintoMobileAppNav,
+ html.kinto-mobile-desktop-requested #kintoMobileStoresMenu{display:none!important}
+ html.kinto-mobile-desktop-requested .hero{max-width:1280px;margin:28px auto 16px;padding:0 20px}
+ html.kinto-mobile-desktop-requested .hero-card{padding:28px;border-radius:28px}
+ html.kinto-mobile-desktop-requested .eyebrow{font-size:12px}
+ html.kinto-mobile-desktop-requested .hero h1{font-size:clamp(30px,6vw,58px);margin:8px 0 10px}
+ html.kinto-mobile-desktop-requested .hero p{font-size:inherit;line-height:1.9}
+ html.kinto-mobile-desktop-requested .tools{margin-top:20px;gap:10px}
+ html.kinto-mobile-desktop-requested .search{padding:14px 16px;min-width:220px}
+ html.kinto-mobile-desktop-requested .count{padding:0 15px;font-size:inherit}
+ html.kinto-mobile-desktop-requested .filters{padding:14px 2px 2px}
+ html.kinto-mobile-desktop-requested .filter-btn{padding:10px 15px;font-size:inherit}
+}
+</style>
 <style id="kintoLocalMobileAppNavV238">
 @media(min-width:1025px){#kintoMobileAppNav,#kintoMobileStoresMenu{display:none!important}}
 @media(max-width:1024px){
