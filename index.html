@@ -162,6 +162,10 @@
     @media(max-width:900px){#kintoHomeHeader .top-inner{display:flex!important;flex-wrap:nowrap!important;align-items:flex-start!important;gap:6px!important;padding:6px 9px!important}#kintoHomeHeader .brand{margin:0!important;flex:0 0 auto!important}#kintoHomeHeader .brand-copy{display:none!important}#kintoHomeHeader .main-nav{display:none!important}#kintoHomeHeader .header-actions{width:auto!important;min-width:0!important;flex:1 1 auto!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px!important;margin:0!important}#kintoHomeHeader .user-auth-zone{grid-column:1/-1!important;display:flex!important;justify-content:flex-end!important;gap:3px!important}}
     @media(max-width:520px){#kintoHomeHeader .top-inner{padding:6px!important}#kintoHomeHeader .brand img{width:36px!important;height:36px!important}#kintoHomeHeader .header-action{height:31px!important;min-height:31px!important;padding:0 4px!important;font-size:7.5px!important}#kintoHomeHeader .account-btn .account-divider,#kintoHomeHeader .account-btn .orders-label,#kintoHomeHeader .account-btn .fa-cart-shopping{display:none!important}#kintoHomeHeader .header-logout-btn{width:27px!important;min-width:27px!important;height:31px!important;min-height:31px!important;padding:0!important;font-size:0!important;position:static!important;inset:auto!important;transform:none!important;flex:0 0 27px!important}#kintoHomeHeader .header-logout-btn::before{content:'\f2f5';font-family:'Font Awesome 6 Free';font-size:11px;font-weight:900}.fixed-order-btn{left:10px!important;right:auto!important;bottom:10px!important;padding:8px 12px!important;font-size:11px!important;gap:5px!important}}
     </style>
+    <style id="kintoHeaderReadyGateV217">
+      /* Keep the reserved header box, but do not paint its incomplete pre-JS contents. */
+      html.kinto-ready #kintoHomeHeader:not(.kinto-public-nav-ready){visibility:hidden!important;}
+    </style>
     <style id="kintoRefreshStabilityV214">
     /* Reserve the final mobile header footprint before deferred navigation/auth JS runs. */
     @media(max-width:1024px){
