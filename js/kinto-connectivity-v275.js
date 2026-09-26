@@ -1,35 +1,26 @@
 (function(){
   'use strict';
-  const ID='kintoConnectivityNoticeV275';
-  let hideTimer=0;
+  const ID='kintoOfflineScreenV275';
   function ensure(){
     let el=document.getElementById(ID);
     if(el)return el;
     el=document.createElement('div');
     el.id=ID;
-    el.setAttribute('role','status');
-    el.setAttribute('aria-live','polite');
-    el.style.cssText='position:fixed;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:2147483000;max-width:calc(100% - 28px);padding:9px 14px;border-radius:999px;font:800 12px/1.4 system-ui,-apple-system,Segoe UI,Tahoma,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.24);text-align:center;direction:rtl;display:none';
+    el.setAttribute('role','alert');
+    el.setAttribute('aria-live','assertive');
+    el.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#0a2f23;display:none;align-items:center;justify-content:center;padding:28px;box-sizing:border-box;direction:rtl;font-family:system-ui,-apple-system,Segoe UI,Tahoma,sans-serif';
+    el.innerHTML='<div style="width:min(360px,100%);text-align:center;color:#fff"><img src="images/meshwar-logo.png" alt="KINTO" style="width:112px;height:112px;object-fit:contain;border-radius:50%;margin:0 auto 22px;display:block"><div style="font-size:21px;font-weight:900;margin-bottom:9px">لا يوجد اتصال بالإنترنت</div><div style="font-size:14px;line-height:1.8;opacity:.86;margin-bottom:22px">تحقق من الشبكة ثم حاول مرة أخرى.</div><button type="button" id="kintoOfflineRetryV275" style="border:1px solid rgba(255,215,96,.8);background:#e6b83f;color:#0a2f23;border-radius:14px;padding:11px 24px;font:900 14px system-ui,-apple-system,Segoe UI,Tahoma,sans-serif;cursor:pointer">إعادة المحاولة</button></div>';
     document.body.appendChild(el);
+    el.querySelector('#kintoOfflineRetryV275').addEventListener('click',function(){
+      if(navigator.onLine)location.reload();
+    });
     return el;
   }
-  function showOffline(){
-    clearTimeout(hideTimer);
-    const el=ensure();
-    el.textContent='⚠️ لا يوجد اتصال بالإنترنت — بعض البيانات قد لا تكون محدثة';
-    el.style.background='#241f12';el.style.color='#f5c451';el.style.border='1px solid rgba(245,196,81,.55)';el.style.display='block';
-    document.documentElement.dataset.kintoOffline='1';
-  }
-  function showOnline(){
-    delete document.documentElement.dataset.kintoOffline;
-    const el=ensure();
-    el.textContent='✓ عاد الاتصال بالإنترنت';
-    el.style.background='#0a2f23';el.style.color='#fff';el.style.border='1px solid rgba(245,196,81,.45)';el.style.display='block';
-    clearTimeout(hideTimer);hideTimer=setTimeout(()=>{el.style.display='none'},2200);
-  }
-  function init(){navigator.onLine?void 0:showOffline()}
-  window.addEventListener('offline',showOffline);
-  window.addEventListener('online',showOnline);
+  function offline(){ensure().style.display='flex';document.documentElement.dataset.kintoOffline='1'}
+  function online(){delete document.documentElement.dataset.kintoOffline;const el=document.getElementById(ID);if(el)el.style.display='none'}
+  function init(){navigator.onLine?online():offline()}
+  window.addEventListener('offline',offline);
+  window.addEventListener('online',online);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   window.KintoConnectivityV275=Object.freeze({isOffline:()=>!navigator.onLine});
 })();
