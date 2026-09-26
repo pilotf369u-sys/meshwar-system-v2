@@ -127,6 +127,24 @@
   <script src="js/storefront-product-modal-v145.js?v=20260912-v145" defer></script>
   <script src="js/customer-favorites-v147.js?v=20260912-v147" defer></script>
 
+<style id="kintoStoreMobileProductGridV254">
+@media(max-width:640px){
+ #localStoreProductsGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ #localStoreProductsGrid .local-v3-card{min-width:0!important}
+ #localStoreProductsGrid .local-v3-img-wrap{height:132px!important}
+ #localStoreProductsGrid .local-v3-body{padding:10px!important;min-height:188px!important}
+ #localStoreProductsGrid .local-v3-name{font-size:.76rem!important;min-height:34px!important}
+ #localStoreProductsGrid .local-v3-desc{font-size:.62rem!important}
+ #localStoreProductsGrid .local-v3-price{font-size:.9rem!important}
+ #localStoreProductsGrid .local-v3-order{min-height:34px!important;font-size:.7rem!important}
+}
+@media(min-width:641px) and (max-width:1024px){
+ #localStoreProductsGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}
+ #localStoreProductsGrid .local-v3-card{min-width:0!important}
+ #localStoreProductsGrid .local-v3-img-wrap{height:150px!important}
+ #localStoreProductsGrid .local-v3-body{padding:11px!important;min-height:194px!important}
+}
+</style>
 <style id="kintoStoreMobileAppNavV252">
 @media(min-width:1025px){#kintoMobileAppNav,#kintoMobileStoresMenu{display:none!important}}
 @media(max-width:1024px){
