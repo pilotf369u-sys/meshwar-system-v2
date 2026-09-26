@@ -29,3 +29,7 @@
 
 /* V261: keep seven customer actions readable on narrow phones without changing tablet/desktop behavior. */
 @media(max-width:430px){.kinto-mobile-app-nav{inset-inline:5px;padding:6px 4px;gap:1px}.kinto-mobile-app-nav button,.kinto-mobile-app-nav a{padding-inline:0;border-radius:12px;font-size:6.5px}.kinto-mobile-app-nav i{font-size:17px}.kinto-mobile-app-nav .kinto-mobile-badge{margin-inline-start:6px}}
+
+/* V263: target rendered labels directly so dashboard/button typography cannot override app-nav labels. */
+@media(max-width:1024px){.kinto-mobile-app-nav button>span,.kinto-mobile-app-nav a>span{font-size:7px!important;line-height:1!important;font-weight:800!important;white-space:nowrap!important}}
+@media(max-width:430px){.kinto-mobile-app-nav button>span,.kinto-mobile-app-nav a>span{font-size:6px!important}}
