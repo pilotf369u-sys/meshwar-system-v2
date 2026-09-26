@@ -19,9 +19,9 @@ function sync(){
  if(!nav)return;
  const active=$('.tabs-nav .tab-btn.active')?.dataset.tab||'';
  if(active)nav.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('is-active',x.dataset.tab===active));
- const cart=badge('kintoLocalCartCount'),chat=badge('chatUnreadBadge'),notifications=badge('notificationUnreadBadge');
- const cartBadge=$('[data-badge="cart"]',nav),accountBadge=$('[data-badge="account"]',nav),accountCount=chat+notifications;
- [[cartBadge,cart],[accountBadge,accountCount]].forEach(([el,n])=>{if(!el)return;el.textContent=n>99?'99+':String(n);el.classList.toggle('is-visible',n>0)})
+ const cart=badge('kintoLocalCartCount'),chat=badge('chatUnreadBadge');
+ const cartBadge=$('[data-badge="cart"]',nav),chatBadge=$('[data-badge="chat"]',nav);
+ [[cartBadge,cart],[chatBadge,chat]].forEach(([el,n])=>{if(!el)return;el.textContent=n>99?'99+':String(n);el.classList.toggle('is-visible',n>0)})
 }
 function observeCounter(id){
  const el=document.getElementById(id);
@@ -45,8 +45,9 @@ function build(){
  nav.innerHTML=`<a href="index.html" aria-label="الرئيسية"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
  <button type="button" data-stores aria-label="المتاجر"><i class="fa-solid fa-store"></i><span>المتاجر</span></button>
  <button type="button" class="kinto-mobile-cart" data-tab="drafts" aria-label="السلة"><i class="fa-solid fa-cart-shopping"></i><span>السلة</span><b class="kinto-mobile-badge" data-badge="cart"></b></button>
- <button type="button" data-tab="activeOrders" aria-label="طلباتي"><i class="fa-solid fa-box"></i><span>طلباتي</span></button>
- <button type="button" data-account aria-label="حسابي"><i class="fa-solid fa-user"></i><span>حسابي</span><b class="kinto-mobile-badge" data-badge="account"></b></button>`;
+ <button type="button" data-tab="chatHelp" aria-label="الدردشة"><i class="fa-solid fa-comments"></i><span>الدردشة</span><b class="kinto-mobile-badge" data-badge="chat"></b></button>
+ <button type="button" data-tab="customerFavorites" aria-label="مفضلاتي"><i class="fa-solid fa-heart"></i><span>مفضلاتي</span></button>
+ <button type="button" data-account aria-label="حسابي"><i class="fa-solid fa-user"></i><span>حسابي</span></button>`;
  document.body.appendChild(nav);
  const storesMenu=document.createElement('div');storesMenu.className='kinto-mobile-stores-menu';storesMenu.innerHTML='<a href="local-stores.html"><i class="fa-solid fa-store"></i><span>المتاجر المحلية</span></a><a href="global-stores.html"><i class="fa-solid fa-earth-americas"></i><span>المتاجر العالمية</span></a>';document.body.appendChild(storesMenu);
  $('[data-stores]',nav)?.addEventListener('click',()=>storesMenu.classList.toggle('is-open'));
