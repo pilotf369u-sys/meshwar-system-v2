@@ -653,16 +653,18 @@ loadLocalPublicStores();
   body{padding-bottom:86px!important}
   #kintoHomeHeader{display:none!important}
   .fixed-order-btn{bottom:92px!important;left:12px!important;z-index:2147482000!important}
-  #kintoMobileAppNav{position:fixed;left:10px;right:10px;bottom:8px;z-index:2147483000;display:grid;grid-template-columns:repeat(6,1fr);align-items:stretch;gap:4px;padding:7px;border:1px solid rgba(212,175,55,.28);border-radius:24px;background:rgba(4,22,43,.97);box-shadow:0 12px 32px rgba(0,0,0,.38);direction:rtl}
-  #kintoMobileAppNav a,#kintoMobileAppNav button{min-width:0;min-height:58px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border-radius:17px;color:#f3e7bd;text-decoration:none;font-size:11px;font-weight:800;line-height:1.1}
+  #kintoMobileAppNav{position:fixed;left:10px;right:10px;bottom:8px;z-index:2147483000;display:grid;grid-template-columns:repeat(6,1fr);align-items:stretch;gap:2px;padding:7px;border:1px solid rgba(212,175,55,.28);border-radius:24px;background:rgba(4,22,43,.97);box-shadow:0 12px 32px rgba(0,0,0,.38);direction:rtl}
+  #kintoMobileAppNav a,#kintoMobileAppNav button{min-width:0;min-height:58px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:17px;color:#f3e7bd;text-decoration:none;font-size:7px;font-weight:800;line-height:1}
   #kintoMobileStoresMenu{position:fixed;right:18px;bottom:88px;z-index:2147483001;display:none;min-width:180px;padding:8px;border:1px solid rgba(212,175,55,.32);border-radius:16px;background:#082f29;box-shadow:0 12px 28px rgba(0,0,0,.35)}
   #kintoMobileStoresMenu.open{display:grid;gap:6px}
   #kintoMobileStoresMenu a{padding:11px 12px;border-radius:11px;color:#f3e7bd;text-decoration:none;font-weight:800;font-size:12px;background:rgba(255,255,255,.05)}
-  #kintoMobileAppNav a i{font-size:20px}
+  #kintoMobileAppNav a i,#kintoMobileAppNav button i{font-size:18px}
   #kintoMobileCart,#kintoMobileChat{position:relative}
   #kintoMobileCartBadge,#kintoMobileChatBadge{position:absolute;top:3px;left:50%;margin-left:8px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;display:none;align-items:center;justify-content:center;background:#dc2626;color:#fff;border:2px solid #04162b;font-size:8px;font-weight:950;line-height:1}
   #kintoMobileCartBadge.show,#kintoMobileChatBadge.show{display:flex}
+  #kintoMobileAppNav a>span,#kintoMobileAppNav button>span{font-size:7px!important;line-height:1!important;font-weight:800!important;white-space:nowrap!important}
   #kintoMobileAppNav a[data-active="true"]{background:linear-gradient(145deg,#f7d568,#dcae32);color:#17352c}
+  @media(max-width:430px){#kintoMobileAppNav a>span,#kintoMobileAppNav button>span{font-size:6px!important}}
 }
 </style>
 <nav id="kintoMobileAppNav" aria-label="تنقل KINTO للجوال">
