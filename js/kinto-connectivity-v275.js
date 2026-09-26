@@ -22,5 +22,24 @@
   window.addEventListener('offline',offline);
   window.addEventListener('online',online);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+  function isKintoApp(){
+    return window.matchMedia('(display-mode: standalone)').matches||
+      window.matchMedia('(display-mode: fullscreen)').matches||
+      String(document.referrer||'').startsWith('android-app://com.kinto.app');
+  }
+  function syncOrientationGuard(){
+    const id='kintoPortraitGuardV275';
+    let guard=document.getElementById(id);
+    const landscape=window.innerWidth>window.innerHeight;
+    if(!isKintoApp()||!landscape){if(guard)guard.remove();return}
+    guard=document.createElement('div');
+    guard.id=id;
+    guard.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#0a2f23;color:#fff;display:grid;place-items:center;padding:28px;box-sizing:border-box;direction:rtl;font-family:system-ui,-apple-system,Segoe UI,Tahoma,sans-serif';
+    guard.innerHTML='<div style="text-align:center;max-width:340px"><div style="font-size:34px;margin-bottom:14px">↻</div><div style="font-size:20px;font-weight:900;margin-bottom:8px">استخدم KINTO بالوضع العمودي</div><div style="font-size:14px;line-height:1.8;opacity:.82">أدر الهاتف للوضع العمودي للمتابعة.</div></div>';
+    document.body.appendChild(guard);
+  }
+  window.addEventListener('resize',syncOrientationGuard,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(syncOrientationGuard,80),{passive:true});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',syncOrientationGuard,{once:true});else syncOrientationGuard();
   window.KintoConnectivityV275=Object.freeze({isOffline:()=>!navigator.onLine});
 })();
