@@ -7,7 +7,7 @@
   .kinto-customer-header .customer-header-main{padding:8px 10px!important;min-height:54px}
   .kinto-customer-header .customer-brand{margin-inline:auto!important}
   .kinto-mobile-app-nav{position:fixed;z-index:1180;inset-inline:8px;bottom:max(8px,env(safe-area-inset-bottom));min-height:72px;padding:7px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:stretch;gap:2px;border:1px solid rgba(212,175,55,.28);border-radius:24px;background:rgba(4,22,43,.97);box-shadow:0 12px 32px rgba(0,0,0,.38);contain:layout paint}
-  .kinto-mobile-app-nav button,.kinto-mobile-app-nav a{position:relative;min-width:0;border:0;border-radius:14px;background:transparent;color:#c7d7d2;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:800 9px/1.05 "Segoe UI",Tahoma,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  .kinto-mobile-app-nav button,.kinto-mobile-app-nav a{position:relative;min-width:0;border:0;border-radius:14px;background:transparent;color:#c7d7d2;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:800 7px/1 "Segoe UI",Tahoma,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   .kinto-mobile-app-nav i{font-size:18px;color:#f3e7bd}
   .kinto-mobile-app-nav .is-active{background:linear-gradient(145deg,#f5dc84,#dca62c);color:#17372f;box-shadow:0 5px 14px rgba(217,155,39,.22)}
   .kinto-mobile-app-nav .is-active i{color:#17372f}
@@ -28,4 +28,4 @@
 @media(max-width:1024px){.kinto-mobile-stores-menu{position:fixed;z-index:1181;inset-inline:16px;bottom:88px;padding:8px;border:1px solid rgba(242,200,91,.34);border-radius:16px;background:#073c33;box-shadow:0 10px 28px rgba(0,0,0,.26)}.kinto-mobile-stores-menu.is-open{display:grid;grid-template-columns:1fr 1fr;gap:7px}.kinto-mobile-stores-menu a{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;border-radius:12px;background:rgba(255,255,255,.06);color:#f3e7bd;text-decoration:none;font-size:11px;font-weight:850}.kinto-mobile-stores-menu i{color:#d9c990}}
 
 /* V261: keep seven customer actions readable on narrow phones without changing tablet/desktop behavior. */
-@media(max-width:430px){.kinto-mobile-app-nav{inset-inline:5px;padding:6px 4px;gap:1px}.kinto-mobile-app-nav button,.kinto-mobile-app-nav a{padding-inline:1px;border-radius:12px;font-size:8px}.kinto-mobile-app-nav i{font-size:17px}.kinto-mobile-app-nav .kinto-mobile-badge{margin-inline-start:6px}}
+@media(max-width:430px){.kinto-mobile-app-nav{inset-inline:5px;padding:6px 4px;gap:1px}.kinto-mobile-app-nav button,.kinto-mobile-app-nav a{padding-inline:0;border-radius:12px;font-size:6.5px}.kinto-mobile-app-nav i{font-size:17px}.kinto-mobile-app-nav .kinto-mobile-badge{margin-inline-start:6px}}
