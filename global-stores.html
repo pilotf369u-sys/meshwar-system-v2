@@ -22,10 +22,25 @@ async function syncHeaderAuth(){const account=document.getElementById('kintoHead
 syncHeaderAuth();
 </script>
 <main>
-<section class="hero"><div class="hero-card"><div class="eyebrow">KINTO GLOBAL STORES</div><h1>🌍 المتاجر العالمية</h1><p>استكشف أشهر المتاجر العالمية واطلب ما تحتاجه بضغطة زر واحدة لتصلك مشترياتك مباشرة إلى باب منزلك. اختر متجرك المفضل، تصفح أحدث المنتجات والعروض، ودع KINTO يجعل تجربة التسوق أسهل وأقرب إليك.</p><div class="tools"><input id="storeSearch" class="search" type="search" placeholder="ابحث عن متجر..." autocomplete="off"><div class="count"><span id="storeCount">0</span>&nbsp; متجر</div></div><nav class="filters" id="globalStoreFilters" aria-label="تصنيفات المتاجر العالمية"><button class="filter-btn active" type="button" data-filter="all" aria-pressed="true">الكل</button><button class="filter-btn" type="button" data-filter="المتاجر الشاملة" aria-pressed="false">المتاجر الشاملة</button><button class="filter-btn" type="button" data-filter="الأزياء والملابس" aria-pressed="false">الأزياء والملابس</button><button class="filter-btn" type="button" data-filter="الرياضة والأحذية" aria-pressed="false">الرياضة والأحذية</button><button class="filter-btn" type="button" data-filter="التجميل والعناية" aria-pressed="false">التجميل والعناية</button><button class="filter-btn" type="button" data-filter="المنزل والأطفال والسوبر ماركت" aria-pressed="false">المنزل والأطفال والسوبر ماركت</button></nav></div></section>
+<section class="hero"><div class="hero-card"><a class="kinto-global-hero-logo-v258" href="index.html" aria-label="KINTO الرئيسية"><img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" alt="KINTO"></a><div class="eyebrow">KINTO GLOBAL STORES</div><h1><i class="fa-solid fa-earth-americas" aria-hidden="true"></i> المتاجر العالمية</h1><p>استكشف المتاجر العالمية واطلب منتجك واترك منصة KINTO تتولى أمر طلبك إلى أن يصل باب بيتك.</p><div class="tools"><input id="storeSearch" class="search" type="search" placeholder="ابحث عن متجر..." autocomplete="off"><div class="count"><span id="storeCount">0</span>&nbsp; متجر</div></div><nav class="filters" id="globalStoreFilters" aria-label="تصنيفات المتاجر العالمية"><button class="filter-btn active" type="button" data-filter="all" aria-pressed="true">الكل</button><button class="filter-btn" type="button" data-filter="المتاجر الشاملة" aria-pressed="false">المتاجر الشاملة</button><button class="filter-btn" type="button" data-filter="الأزياء والملابس" aria-pressed="false">الأزياء والملابس</button><button class="filter-btn" type="button" data-filter="الرياضة والأحذية" aria-pressed="false">الرياضة والأحذية</button><button class="filter-btn" type="button" data-filter="التجميل والعناية" aria-pressed="false">التجميل والعناية</button><button class="filter-btn" type="button" data-filter="المنزل والأطفال والسوبر ماركت" aria-pressed="false">المنزل والأطفال والسوبر ماركت</button></nav></div></section>
 <div class="wrap" id="directory"></div>
 </main>
 <a class="floating-order" href="index.html?openOrder=1" aria-label="طلب منتج"><span class="cart" aria-hidden="true">🛒</span><span>طلب منتج</span></a>
+<style id="kintoGlobalCompactHeroV258">
+.kinto-global-hero-logo-v258{display:none}
+@media(max-width:1024px){
+ .hero{margin:10px auto 10px!important;padding:10px 12px!important}
+ .hero-card{position:relative;padding:14px 14px 10px!important;border-radius:22px!important}
+ .kinto-global-hero-logo-v258{position:absolute;left:14px;top:12px;width:50px;height:50px;display:block;border-radius:50%;overflow:hidden;border:1px solid rgba(229,185,63,.45);background:#fff;box-shadow:0 7px 18px rgba(0,0,0,.18)}
+ .kinto-global-hero-logo-v258 img{display:block;width:100%;height:100%;object-fit:cover}
+ .hero .eyebrow{font-size:9px!important;padding-left:58px}
+ .hero h1{font-size:25px!important;margin:5px 0 5px!important;line-height:1.2}.hero h1 i{font-size:.8em;color:#f3d77b}
+ .hero p{font-size:12px!important;line-height:1.55!important;max-width:calc(100% - 4px)}
+ .hero .tools{margin-top:9px!important;gap:7px!important;flex-wrap:nowrap!important}.hero .search{min-width:0!important;padding:9px 11px!important;border-radius:12px!important;font-size:12px!important}.hero .count{padding:0 10px!important;border-radius:12px!important;font-size:12px!important;white-space:nowrap}
+ .hero .filters{margin-top:4px!important;padding:7px 0 0!important;gap:6px!important}.hero .filter-btn{padding:7px 10px!important;font-size:10px!important}
+}
+@media(max-width:600px){.kinto-global-hero-logo-v258{width:46px;height:46px;left:13px;top:12px}.hero h1{font-size:23px!important}}
+</style>
 <style id="kintoGlobalMobileAppNavV257">
 @media(min-width:1025px){#kintoMobileAppNav,#kintoMobileStoresMenu{display:none!important}}
 @media(max-width:1024px){
