@@ -88,7 +88,7 @@
         const customerId = getSessionCustomerId();
         if (!customerId) return null;
         const supabase = await ensureOrderSupabase();
-        const { data, error } = await supabase.from('customers').select('*').eq('id', customerId).maybeSingle();
+        const { data, error } = await supabase.from('customers').select('id,created_at,name,phone,email,country,address,code,cart_items,state,secondary_phone,rewards_log,wallet_balance,wallet_currency,rewards_count,current_cycle_delivered').eq('id', customerId).maybeSingle();
         if (error) throw error;
         return data || null;
     }
