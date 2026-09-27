@@ -634,8 +634,16 @@ loadLocalPublicStores();
     const pb = document.getElementById('meshwarPromoPlayBtn');
 
     if (v) {
+        v.autoplay = false;
+        v.removeAttribute('autoplay');
+        v.pause();
+        try { v.currentTime = 0; } catch (_) {}
         v.disablePictureInPicture = true;
         v.disableRemotePlayback = true;
+        v.addEventListener('loadedmetadata', () => {
+            v.pause();
+            try { v.currentTime = 0; } catch (_) {}
+        }, { once: true });
         v.addEventListener('enterpictureinpicture', () => {
             document.exitPictureInPicture?.().catch(() => {});
         });
