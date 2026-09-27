@@ -616,25 +616,22 @@ async function loadLocalPublicStores(){const grid=document.getElementById('local
 loadLocalPublicStores();
 </script>
 
-<script>/* KINTO_PROMO_VIDEO_PLAY_TRACE_V278 */
+<script>/* KINTO_PROMO_VIDEO_MOBILE_TRACE_V280 */
 (function(){
-  const v=document.getElementById('meshwarPromoVideo');
-  if(!v||window.__kintoPromoTraceV278)return;
-  window.__kintoPromoTraceV278=true;
-  const nativePlay=HTMLMediaElement.prototype.play;
-  HTMLMediaElement.prototype.play=function(...args){
-    if(this===v){
-      console.group('[KINTO VIDEO TRACE] play() called');
-      console.log('time',new Date().toISOString(),'src',this.currentSrc||this.src,'paused',this.paused,'readyState',this.readyState);
-      console.trace('play() caller');
-      console.groupEnd();
-    }
-    return nativePlay.apply(this,args);
-  };
-  ['play','playing','pause','loadstart','loadedmetadata','loadeddata','canplay','canplaythrough','emptied','suspend','waiting'].forEach(type=>{
-    v.addEventListener(type,()=>console.log('[KINTO VIDEO EVENT]',type,{time:new Date().toISOString(),src:v.currentSrc||v.src,paused:v.paused,readyState:v.readyState,networkState:v.networkState}),true);
-  });
-  console.log('[KINTO VIDEO TRACE] installed',{src:v.currentSrc||v.src,autoplay:v.autoplay,paused:v.paused});
+ const v=document.getElementById('meshwarPromoVideo'); if(!v||window.__kintoVideoTraceV280)return;
+ window.__kintoVideoTraceV280=true;
+ const logs=[]; let jsCalls=0;
+ const snap=(tag)=>{const x={t:new Date().toISOString(),tag,jsCalls,paused:v.paused,ended:v.ended,ready:v.readyState,net:v.networkState,src:v.currentSrc||v.src,orientation:screen.orientation?.type||'',angle:screen.orientation?.angle??'',fullscreen:document.fullscreenElement===v||document.webkitFullscreenElement===v};logs.push(x);while(logs.length>80)logs.shift();localStorage.setItem('kintoVideoTraceV280',JSON.stringify(logs));};
+ const nativePlay=HTMLMediaElement.prototype.play;
+ HTMLMediaElement.prototype.play=function(...args){if(this===v){jsCalls++;snap('JS_PLAY_CALL');}return nativePlay.apply(this,args)};
+ ['play','playing','pause','loadstart','loadedmetadata','loadeddata','canplay','canplaythrough','emptied','suspend','waiting','webkitbeginfullscreen','webkitendfullscreen'].forEach(e=>v.addEventListener(e,()=>snap('EVENT_'+e),true));
+ ['orientationchange','resize','visibilitychange','fullscreenchange','webkitfullscreenchange'].forEach(e=>window.addEventListener(e,()=>snap('WINDOW_'+e),true));
+ window.KintoShowVideoTrace=function(){
+   const data=localStorage.getItem('kintoVideoTraceV280')||'[]';
+   const w=window.open('','_blank'); if(!w){alert(data);return}
+   w.document.write('<meta name="viewport" content="width=device-width"><title>KINTO Video Trace</title><pre style="white-space:pre-wrap;word-break:break-word;font:13px monospace;padding:12px">'+data.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))+'</pre>');
+ };
+ snap('TRACE_INSTALLED');
 })();
 </script>
 <script>/* KINTO_PROMO_VIDEO_CONTROLS */
