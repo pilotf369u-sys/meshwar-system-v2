@@ -616,6 +616,27 @@ async function loadLocalPublicStores(){const grid=document.getElementById('local
 loadLocalPublicStores();
 </script>
 
+<script>/* KINTO_PROMO_VIDEO_PLAY_TRACE_V278 */
+(function(){
+  const v=document.getElementById('meshwarPromoVideo');
+  if(!v||window.__kintoPromoTraceV278)return;
+  window.__kintoPromoTraceV278=true;
+  const nativePlay=HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play=function(...args){
+    if(this===v){
+      console.group('[KINTO VIDEO TRACE] play() called');
+      console.log('time',new Date().toISOString(),'src',this.currentSrc||this.src,'paused',this.paused,'readyState',this.readyState);
+      console.trace('play() caller');
+      console.groupEnd();
+    }
+    return nativePlay.apply(this,args);
+  };
+  ['play','playing','pause','loadstart','loadedmetadata','loadeddata','canplay','canplaythrough','emptied','suspend','waiting'].forEach(type=>{
+    v.addEventListener(type,()=>console.log('[KINTO VIDEO EVENT]',type,{time:new Date().toISOString(),src:v.currentSrc||v.src,paused:v.paused,readyState:v.readyState,networkState:v.networkState}),true);
+  });
+  console.log('[KINTO VIDEO TRACE] installed',{src:v.currentSrc||v.src,autoplay:v.autoplay,paused:v.paused});
+})();
+</script>
 <script>/* KINTO_PROMO_VIDEO_CONTROLS */
 (function(){
     const v = document.getElementById('meshwarPromoVideo');
