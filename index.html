@@ -618,24 +618,7 @@ loadLocalPublicStores();
 </script>
 
 
-<script>/* KINTO_MOBILE_PROMO_STATIC_V283 */
-(function(){
-  const coarse=window.matchMedia?.('(max-width:900px) and (pointer:coarse)').matches;
-  if(!coarse)return;
-  const frame=document.getElementById('meshwarVideoFrame');
-  const v=document.getElementById('meshwarPromoVideo');
-  if(!frame||!v)return;
-  const poster=String(v.poster||'').trim();
-  if(poster)frame.style.setProperty('--kinto-mobile-promo-poster','url("'+poster.replace(/"/g,'%22')+'")');
-  frame.classList.add('kinto-mobile-promo-static');
-  try{v.pause()}catch(_){}
-  v.removeAttribute('autoplay');
-  v.removeAttribute('controls');
-  v.removeAttribute('src');
-  v.querySelectorAll('source').forEach(n=>n.removeAttribute('src'));
-  try{v.load()}catch(_){}
-})();
-</script>
+
 <script>/* KINTO_PROMO_VIDEO_CONTROLS */
 (function(){
     const v = document.getElementById('meshwarPromoVideo');
