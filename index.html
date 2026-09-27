@@ -223,9 +223,9 @@
 
       <button id="meshwarPromoPlayBtn"
               type="button"
-              class="hidden"
-              aria-hidden="true"
-              tabindex="-1">⏯ تشغيل / إيقاف</button>
+              aria-label="تشغيل الفيديو"
+              style="position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);z-index:5;width:64px;height:64px;border-radius:999px;border:1px solid rgba(229,185,63,.8);background:rgba(3,43,37,.88);color:#f3d77b;font-size:28px;display:flex;align-items:center;justify-content:center;cursor:pointer"
+              >▶</button>
 
     </div>
 
@@ -654,10 +654,19 @@ loadLocalPublicStores();
         sb.textContent = v.muted ? '🔇 تشغيل الصوت' : '🔊 كتم الصوت';
     });
 
+    const syncPlayButton = () => {
+        if (!pb || !v) return;
+        pb.textContent = v.paused ? '▶' : '❚❚';
+        pb.setAttribute('aria-label', v.paused ? 'تشغيل الفيديو' : 'إيقاف الفيديو');
+    };
     pb?.addEventListener('click', () => {
         if (!v) return;
         v.paused ? v.play().catch(() => {}) : v.pause();
+        setTimeout(syncPlayButton, 0);
     });
+    v?.addEventListener('play', syncPlayButton);
+    v?.addEventListener('pause', syncPlayButton);
+    syncPlayButton();
 })();
 </script>
 <script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>
