@@ -50,22 +50,6 @@
   const parse=v=>{if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return v;try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}};
   const safeUrl=(v,{hash=true}={})=>{const s=String(v||'').trim();if(!s)return'';if(hash&&s.startsWith('#'))return s;return /^(https?:\/\/|\/|\.\/|\.\.\/|[A-Za-z0-9_-]+\/)/i.test(s)?s:''};
   const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-  function cleanVideoUrl(value){const s=String(value||'').trim();if(!s)return'';if(/^https?:\/\//i.test(s)||(/^(\/|\.\/|\.\.\/|[A-Za-z0-9_-]+\/)/.test(s)&&!s.includes('http')))return s;const hits=[...s.matchAll(/https?:\/\/[^\s]+/gi)];return hits.length?hits[hits.length-1][0]:s}
-  function youtubeEmbedUrl(value){
-    const raw=cleanVideoUrl(value);if(!raw)return'';
-    try{
-      const u=new URL(raw,location.href),host=u.hostname.replace(/^www\./,'').toLowerCase();let id='';
-      if(host==='youtu.be')id=u.pathname.split('/').filter(Boolean)[0]||'';
-      else if(host==='youtube.com'||host==='m.youtube.com'||host==='music.youtube.com'){
-        if(u.pathname==='/watch')id=u.searchParams.get('v')||'';
-        else{const m=u.pathname.match(/^\/(?:embed|shorts|live)\/([^/?#]+)/);id=m?.[1]||''}
-      }
-      id=id.replace(/[^A-Za-z0-9_-]/g,'');
-      return id?`https://www.youtube.com/embed/${id}?rel=0&playsinline=1`:'';
-    }catch{return''}
-  }
-  function heroNodes(){const section=document.querySelector('body > nav + section');if(!section)return{};const actions=[...section.querySelectorAll('button,a')].filter(e=>/طلب منتج مباشر|المتاجر المحلية/.test(e.textContent||''));return{title:section.querySelector('h2'),subtitle:section.querySelector('p'),primary:actions[0],secondary:actions[1]}}
-  function navigate(url){const u=safeUrl(url);if(!u)return;if(u==='#orderModal'){const m=document.getElementById('orderModal');if(m)m.style.display='block';return}if(u.startsWith('#')){document.querySelector(u)?.scrollIntoView({behavior:'smooth',block:'start'});return}location.href=u}
   function metaDescription(){let e=document.querySelector('meta[name="description"]');if(!e){e=document.createElement('meta');e.name='description';document.head.appendChild(e)}return e}
   function favicon(){let e=document.querySelector('link[rel~="icon"]');if(!e){e=document.createElement('link');e.rel='icon';document.head.appendChild(e)}return e}
   function socialAnchor(footer,label,icon){let a=footer?.querySelector(`a[aria-label="${label}"]`);if(!a&&footer){const wrap=footer.querySelector('.flex.items-center.gap-3');if(!wrap)return null;a=document.createElement('a');a.setAttribute('aria-label',label);a.className='flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-lg text-slate-200 transition hover:scale-110';a.innerHTML=`<i class="fa-brands fa-${icon}"></i>`;wrap.appendChild(a)}return a}
