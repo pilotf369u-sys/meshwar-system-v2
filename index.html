@@ -631,6 +631,11 @@ loadLocalPublicStores();
    const w=window.open('','_blank'); if(!w){alert(data);return}
    w.document.write('<meta name="viewport" content="width=device-width"><title>KINTO Video Trace</title><pre style="white-space:pre-wrap;word-break:break-word;font:13px monospace;padding:12px">'+data.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))+'</pre>');
  };
+ const btn=document.createElement('button');
+ btn.type='button'; btn.id='kintoVideoTraceButtonV281'; btn.textContent='فحص الفيديو';
+ btn.style.cssText='position:fixed;right:8px;bottom:8px;z-index:2147483647;padding:7px 10px;border:1px solid #d4af37;border-radius:999px;background:#0a2f23;color:#f6d365;font:12px sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.25)';
+ btn.addEventListener('click',()=>window.KintoShowVideoTrace());
+ document.body.appendChild(btn);
  snap('TRACE_INSTALLED');
 })();
 </script>
