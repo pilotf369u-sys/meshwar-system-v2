@@ -23,7 +23,7 @@ create or replace function public.admin_save_account_v297(
 ) returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, private, extensions, pg_temp
 as $$
 declare
   v_admin jsonb;
