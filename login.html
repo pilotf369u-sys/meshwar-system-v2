@@ -20,7 +20,7 @@ button:active{transform:translateY(0)}
 p{text-align:center;margin:18px 0 0;color:#94a3b8;font-size:13px}a{color:#38bdf8;text-decoration:none;font-weight:700}a:hover{color:#7dd3fc}
 @media(max-width:520px){body{padding:14px}.box{padding:28px 20px;border-radius:20px}h2{font-size:24px}}
 </style>
-</head><body><div class="box"><img id="loginBrandLogo" class="login-logo" src="images/kinto-header-logo-v158.jpeg" alt="KINTO"><h2>تسجيل الدخول</h2><form id="loginForm"><input type="text" id="phone" autocomplete="username" placeholder="رقم الهاتف أو كود الدخول"><input type="password" id="password" autocomplete="current-password" placeholder="كلمة المرور"><button id="loginSubmitBtn" type="submit">دخول</button></form><p><a id="loginSupportLink" href="index.html?openRegistration=1">ليس لديك حساب؟ سجّل حسابك عبر الدعم</a></p></div>
+</head><body><div class="box"><img id="loginBrandLogo" class="login-logo" src="images/kinto-header-logo-v158.jpeg" alt="KINTO"><h2>تسجيل الدخول</h2><form id="loginForm"><input type="text" id="phone" autocomplete="username" enterkeyhint="next" placeholder="رقم الهاتف أو كود الدخول"><input type="password" id="password" autocomplete="current-password" enterkeyhint="go" placeholder="كلمة المرور"><button id="loginSubmitBtn" type="submit">دخول</button></form><p><a id="loginSupportLink" href="index.html?openRegistration=1">ليس لديك حساب؟ سجّل حسابك عبر الدعم</a></p></div>
 <script src="js/employee-session-v143.js?v=20260921-v143"></script>
 <script src="js/admin-session-v147.js?v=20260922-v147"></script>
 <script src="js/branch-session-v148.js?v=20260922-v148"></script>
@@ -55,5 +55,12 @@ async function secureAwareLogin(){
  if(role==='vendor'){try{const v=await findVendorByRpc(inputId,passwordInput);if(v){saveVendorSession(v);location.href='vendor-dashboard.html';return}}catch(e){return alert('تعذر تسجيل دخول المتجر: '+(e.message||e))}return alert('كلمة المرور غير صحيحة.')}
  return alert('نوع الحساب غير مدعوم.');
 }
-window.login=secureAwareLogin;document.getElementById('loginForm')?.addEventListener('submit',async e=>{e.preventDefault();try{await secureAwareLogin()}finally{const b=document.getElementById('loginSubmitBtn');if(b)b.disabled=false}});hydrateLoginBrandAndSupport();
+window.login=secureAwareLogin;
+const loginForm=document.getElementById('loginForm'),loginPhone=document.getElementById('phone'),loginPassword=document.getElementById('password');
+async function submitLoginForm(){if(loginForm?.dataset.submitting==='1')return;loginForm.dataset.submitting='1';const b=document.getElementById('loginSubmitBtn');if(b)b.disabled=true;try{await secureAwareLogin()}finally{loginForm.dataset.submitting='';if(b)b.disabled=false}}
+loginForm?.addEventListener('submit',e=>{e.preventDefault();submitLoginForm()});
+loginPhone?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();loginPassword?.focus()}});
+loginPassword?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitLoginForm()}});
+loginPassword?.addEventListener('input',()=>{const identity=String(loginPhone?.value||'').trim(),password=String(loginPassword?.value||'');if(!identity||!password)return;clearTimeout(window.__kintoLoginAutoTimer);window.__kintoLoginAutoTimer=setTimeout(()=>{if(document.activeElement===loginPassword&&password===String(loginPassword?.value||'')&&identity===String(loginPhone?.value||'').trim())submitLoginForm()},700)});
+hydrateLoginBrandAndSupport();
 </script></body></html>
