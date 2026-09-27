@@ -616,25 +616,27 @@ async function loadLocalPublicStores(){const grid=document.getElementById('local
 loadLocalPublicStores();
 </script>
 
-<script>/* KINTO_PROMO_VIDEO_PLAY_TRACE_V278 */
+<script>/* KINTO_PROMO_VIDEO_PLAY_TRACE_V279 */
 (function(){
   const v=document.getElementById('meshwarPromoVideo');
-  if(!v||window.__kintoPromoTraceV278)return;
-  window.__kintoPromoTraceV278=true;
+  if(!v||window.__kintoPromoTraceV279)return;
+  window.__kintoPromoTraceV279=true;
+  let jsPlayCalls=0;
+  const box=document.createElement('pre');
+  box.id='kintoPromoTracePanel';
+  box.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;max-height:34vh;overflow:auto;margin:0;padding:9px;border:1px solid #d4af37;border-radius:10px;background:rgba(0,20,15,.94);color:#fff;font:11px/1.45 monospace;direction:ltr;white-space:pre-wrap;pointer-events:none';
+  document.body.appendChild(box);
+  const rows=[];
+  const log=(msg)=>{rows.push(new Date().toLocaleTimeString()+' '+msg);while(rows.length>12)rows.shift();box.textContent='KINTO VIDEO TRACE V279\n'+rows.join('\n')};
   const nativePlay=HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play=function(...args){
-    if(this===v){
-      console.group('[KINTO VIDEO TRACE] play() called');
-      console.log('time',new Date().toISOString(),'src',this.currentSrc||this.src,'paused',this.paused,'readyState',this.readyState);
-      console.trace('play() caller');
-      console.groupEnd();
-    }
+    if(this===v){jsPlayCalls++;const stack=(new Error()).stack||'';log('JS play() #'+jsPlayCalls+' | '+stack.replace(/\n/g,' <- ').slice(0,420));}
     return nativePlay.apply(this,args);
   };
-  ['play','playing','pause','loadstart','loadedmetadata','loadeddata','canplay','canplaythrough','emptied','suspend','waiting'].forEach(type=>{
-    v.addEventListener(type,()=>console.log('[KINTO VIDEO EVENT]',type,{time:new Date().toISOString(),src:v.currentSrc||v.src,paused:v.paused,readyState:v.readyState,networkState:v.networkState}),true);
+  ['play','playing','pause','loadstart','loadedmetadata','loadeddata','canplay','emptied','waiting'].forEach(type=>{
+    v.addEventListener(type,()=>log('EVENT '+type+' | jsPlayCalls='+jsPlayCalls+' paused='+v.paused+' ready='+v.readyState),true);
   });
-  console.log('[KINTO VIDEO TRACE] installed',{src:v.currentSrc||v.src,autoplay:v.autoplay,paused:v.paused});
+  log('installed autoplay='+v.autoplay+' paused='+v.paused);
 })();
 </script>
 <script>/* KINTO_PROMO_VIDEO_CONTROLS */
