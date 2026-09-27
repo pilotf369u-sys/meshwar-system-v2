@@ -194,7 +194,17 @@
     <div id="meshwarVideoFrame"
          class="mw-home-video-card overflow-hidden rounded-3xl border border-amber-400/20 bg-black shadow-2xl shadow-amber-400/5">
 
-      <!-- CMS owns the promo media. Keep this frame reserved from first paint; no static fallback video. -->
+      <video id="meshwarPromoVideo"
+             class="aspect-[16/5] min-h-[180px] w-full object-cover sm:aspect-[16/6]"
+             muted
+             loop
+             playsinline
+             webkit-playsinline
+             disablepictureinpicture
+             controlslist="nofullscreen noremoteplayback nodownload"
+             preload="metadata">
+        <source src="videos/promo.mp4" type="video/mp4">
+      </video>
 
       <button id="meshwarPromoSoundBtn"
               type="button"
@@ -608,26 +618,22 @@ loadLocalPublicStores();
 
 
 
-<script>/* KINTO_PROMO_VIDEO_CONTROLS_V2: delegated so CMS-created video stays protected */
+<script>/* KINTO_PROMO_VIDEO_CONTROLS */
 (function(){
-    const frame = document.getElementById('meshwarVideoFrame');
+    const v = document.getElementById('meshwarPromoVideo');
     const sb = document.getElementById('meshwarPromoSoundBtn');
     const pb = document.getElementById('meshwarPromoPlayBtn');
 
-    function video(){ return frame?.querySelector('#meshwarPromoVideo') || null; }
-    function protect(v){
-        if (!v || v.dataset.kintoInlineProtected === '1') return;
-        v.dataset.kintoInlineProtected = '1';
-        v.autoplay = false;
-        v.removeAttribute('autoplay');
-        v.controls = false;
-        v.removeAttribute('controls');
-        v.playsInline = true;
+    sb?.addEventListener('click', () => {
+        if (!v) return;
+        v.muted = !v.muted;
+        sb.textContent = v.muted ? '🔇 تشغيل الصوت' : '🔊 كتم الصوت';
+    });
+
+    if (v) {
+        v.disablePictureInPicture = true;
         v.setAttribute('playsinline', '');
         v.setAttribute('webkit-playsinline', '');
-        v.disablePictureInPicture = true;
-        v.setAttribute('disablepictureinpicture', '');
-        v.setAttribute('controlslist', 'nofullscreen noremoteplayback nodownload');
         v.addEventListener('play', () => { if (pb) pb.textContent = '⏸ إيقاف الفيديو'; });
         v.addEventListener('pause', () => { if (pb) pb.textContent = '▶ تشغيل الفيديو'; });
         v.addEventListener('webkitbeginfullscreen', () => { v.pause(); }, true);
@@ -636,19 +642,8 @@ loadLocalPublicStores();
             document.exitPictureInPicture?.().catch(() => {});
         });
     }
-
-    const observer = new MutationObserver(() => protect(video()));
-    if (frame) observer.observe(frame, {childList:true, subtree:true});
-    protect(video());
-
-    sb?.addEventListener('click', () => {
-        const v = video(); if (!v) return;
-        v.muted = !v.muted;
-        sb.textContent = v.muted ? '🔇 تشغيل الصوت' : '🔊 كتم الصوت';
-    });
     pb?.addEventListener('click', () => {
-        const v = video(); if (!v) return;
-        protect(v);
+        if (!v) return;
         if (v.paused) v.play().catch(() => {});
         else v.pause();
     });
