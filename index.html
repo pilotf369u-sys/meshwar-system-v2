@@ -681,7 +681,9 @@ loadLocalPublicStores();
 
 <style id="kintoMobileAppNavV222">
 @media (min-width:769px){#kintoMobileAppNav{display:none!important}}
-@media (max-width:768px){
+@media (max-width:768px), (orientation:landscape) and (max-height:600px) and (pointer:coarse){
+  #kintoHomeHeader{display:none!important}
+  #kintoMobileAppNav{display:grid!important}
   body{padding-bottom:86px!important}
   #kintoHomeHeader{display:none!important}
   .fixed-order-btn{bottom:92px!important;left:12px!important;z-index:2147482000!important}
