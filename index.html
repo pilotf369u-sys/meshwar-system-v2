@@ -199,7 +199,9 @@
              muted
              loop
              playsinline
-             controls
+             webkit-playsinline
+             disablepictureinpicture
+             controlslist="nofullscreen noremoteplayback nodownload"
              preload="metadata">
         <source src="videos/promo.mp4" type="video/mp4">
       </video>
@@ -212,9 +214,7 @@
 
       <button id="meshwarPromoPlayBtn"
               type="button"
-              class="hidden"
-              aria-hidden="true"
-              tabindex="-1">⏯ تشغيل / إيقاف</button>
+              aria-label="تشغيل الفيديو">▶ تشغيل الفيديو</button>
 
     </div>
 
@@ -629,9 +629,22 @@ loadLocalPublicStores();
         sb.textContent = v.muted ? '🔇 تشغيل الصوت' : '🔊 كتم الصوت';
     });
 
+    if (v) {
+        v.disablePictureInPicture = true;
+        v.setAttribute('playsinline', '');
+        v.setAttribute('webkit-playsinline', '');
+        v.addEventListener('play', () => { if (pb) pb.textContent = '⏸ إيقاف الفيديو'; });
+        v.addEventListener('pause', () => { if (pb) pb.textContent = '▶ تشغيل الفيديو'; });
+        v.addEventListener('webkitbeginfullscreen', () => { v.pause(); }, true);
+        v.addEventListener('enterpictureinpicture', () => {
+            v.pause();
+            document.exitPictureInPicture?.().catch(() => {});
+        });
+    }
     pb?.addEventListener('click', () => {
         if (!v) return;
-        v.paused ? v.play().catch(() => {}) : v.pause();
+        if (v.paused) v.play().catch(() => {});
+        else v.pause();
     });
 })();
 </script>
