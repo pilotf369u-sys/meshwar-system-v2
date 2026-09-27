@@ -361,17 +361,9 @@
         window.KintoSupabaseReady = ensureMainSupabase();
 
         function getStoredCustomerId() {
-            const direct = String(localStorage.getItem('meshwar_customer_id') || '').trim();
-            if (direct) return direct;
-            const viewing = String(localStorage.getItem('viewingCustomerId') || '').trim();
-            if (viewing) return viewing;
-            try {
-                const user = JSON.parse(localStorage.getItem('loggedInUser') || '{}');
-                if (user && user.id != null) return String(user.id).trim();
-            } catch (e) {
-                console.warn('Invalid customer session object:', e);
-            }
-            return '';
+            // V291 SECURITY: browser storage is navigation/cache state only, never identity.
+            // The only trusted customer id on the home page comes from the verified V150 session RPC.
+            return String(currentHomeCustomer?.id || '').trim();
         }
 
         // INDEX_AUTH_HEADER_RUNTIME_LOCK_V53 — keep one canonical auth zone and rebuild it from the verified state.
@@ -423,31 +415,20 @@
 
         async function restoreCustomerSession() {
             ensureCustomerAuthInHeader();
-            const authLink = document.getElementById('authLink');
-            const authText = document.getElementById('authText');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const customerId = getStoredCustomerId();
-            if (!customerId) {
-                currentHomeCustomer = null;
-                document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
-                renderCustomerAuthState(false, null);
-                window.KintoPublicCustomerNavigationV157?.sync?.();
-                return null;
-            }
             try {
                 const supabase = await ensureMainSupabase();
-                const { data: customer, error } = await supabase.from('customers').select('id,name,phone,code,country,secondary_phone').eq('id', customerId).maybeSingle();
-                if (error) throw error;
-                if (!customer) throw new Error('العميل غير موجود');
+                const customer = await window.KintoCustomerSessionV150?.identity?.(supabase);
+                if (!customer?.id) throw new Error('CUSTOMER_SESSION_INVALID');
                 currentHomeCustomer = customer;
+                // Compatibility mirrors only after server-side session verification.
                 localStorage.setItem('meshwar_customer_id', String(customer.id));
                 localStorage.setItem('viewingCustomerId', String(customer.id));
                 localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, name: customer.name || '', code: customer.code || '', country: customer.country || '', secondary_phone: customer.secondary_phone || '' }));
                 document.documentElement.dataset.kintoCustomerLoggedIn = 'true';
                 renderCustomerAuthState(true, customer);
+                window.KintoPublicCustomerNavigationV157?.sync?.();
                 return customer;
             } catch (e) {
-                console.error('Customer session restore failed:', e);
                 currentHomeCustomer = null;
                 document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
                 localStorage.removeItem('meshwar_customer_id');
@@ -458,7 +439,6 @@
                 return null;
             }
         }
-
         document.addEventListener('DOMContentLoaded',()=>{
             ensureCustomerAuthInHeader();
         },{once:true});
@@ -468,7 +448,13 @@
            
         });
 
-        function logout() {
+        async function logout() {
+            try {
+                const supabase = await ensureMainSupabase();
+                await window.KintoCustomerSessionV150?.logout?.(supabase);
+            } catch (e) {
+                console.warn('Customer session revoke skipped:', e);
+            }
             currentHomeCustomer = null;
             document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
             localStorage.removeItem('meshwar_customer_id');
@@ -494,12 +480,16 @@
         }
 
         async function submitOrder() {
-            const customerId = String(currentHomeCustomer?.id || getStoredCustomerId() || '').trim();
+            const supabase = await ensureMainSupabase();
+            const verifiedCustomer = await window.KintoCustomerSessionV150?.identity?.(supabase);
+            const customerId = String(verifiedCustomer?.id || '').trim();
             if (!customerId) {
-                alert('الرجاء تسجيل الدخول أولاً');
+                currentHomeCustomer = null;
+                alert('انتهت جلسة الدخول. الرجاء تسجيل الدخول مجدداً.');
                 window.location.href = 'login.html';
                 return;
             }
+            currentHomeCustomer = verifiedCustomer;
 
             const urlField = document.getElementById('pUrl');
             const colorField = document.getElementById('pColor');
@@ -515,19 +505,7 @@
             if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'جاري حفظ الطلب...'; }
 
             try {
-                const supabase = await ensureMainSupabase();
-                const { data: customer, error: customerError } = await supabase
-                    .from('customers')
-                    .select('id,name,phone')
-                    .eq('id', customerId)
-                    .maybeSingle();
-                if (customerError) {
-                    console.error('Supabase customer lookup failed:', customerError);
-                    throw customerError;
-                }
-                if (!customer) throw new Error('العميل غير موجود في Supabase');
-                currentHomeCustomer = customer;
-
+                const customer = verifiedCustomer;
                 const orderCode = await generateMainOrderCode(supabase);
                 const payload = {
                     order_code: orderCode,
