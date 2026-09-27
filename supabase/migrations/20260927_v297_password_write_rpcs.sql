@@ -36,7 +36,7 @@ declare
 begin
   select public.admin_session_identity_v147(p_admin_session_token) into v_admin;
   if not coalesce((v_admin->>'ok')::boolean,false)
-     or lower(trim(coalesce(v_admin->>'role',''))) not in ('admin','أدمن','ادمن') then
+     or lower(trim(coalesce(v_admin->'admin'->>'role',''))) not in ('admin','أدمن','ادمن') then
     return jsonb_build_object('ok',false,'error','ADMIN_SESSION_INVALID');
   end if;
 
