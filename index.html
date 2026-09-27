@@ -209,9 +209,7 @@
              muted
              loop
              playsinline
-             webkit-playsinline
-             disablepictureinpicture
-             disableremoteplayback
+             controls
              preload="metadata">
         <source src="videos/promo.mp4" type="video/mp4">
       </video>
@@ -633,6 +631,29 @@ loadLocalPublicStores();
     const v = document.getElementById('meshwarPromoVideo');
     const sb = document.getElementById('meshwarPromoSoundBtn');
     const pb = document.getElementById('meshwarPromoPlayBtn');
+    let userRequestedFullscreen = false;
+
+    // Chrome Android may promote a playing, visible video to fullscreen on rotation.
+    // Allow fullscreen only when the user explicitly requests it from the video controls.
+    v?.addEventListener('pointerdown', () => {
+        userRequestedFullscreen = true;
+        window.setTimeout(() => { userRequestedFullscreen = false; }, 1500);
+    }, { passive: true });
+
+    document.addEventListener('fullscreenchange', () => {
+        const fullscreenVideo = document.fullscreenElement === v;
+        if (fullscreenVideo && !userRequestedFullscreen) {
+            document.exitFullscreen?.().catch?.(() => {});
+        }
+        userRequestedFullscreen = false;
+    });
+
+    v?.addEventListener('webkitbeginfullscreen', () => {
+        if (!userRequestedFullscreen && typeof v.webkitExitFullscreen === 'function') {
+            try { v.webkitExitFullscreen(); } catch (_) {}
+        }
+        userRequestedFullscreen = false;
+    });
 
     sb?.addEventListener('click', () => {
         if (!v) return;
