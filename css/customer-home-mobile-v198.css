@@ -14,8 +14,8 @@
   #kintoHomeHeader + section{padding:10px 10px 0!important}
   .mw-home-hero-grid{display:flex!important;flex-direction:column!important;gap:10px!important;padding:10px!important;border-radius:18px!important;background:rgba(7,55,47,.88)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
   .mw-home-copy{min-height:0!important}
-  #meshwarVideoFrame{min-height:0!important;aspect-ratio:16/7!important;border-radius:14px!important}
-  #meshwarPromoVideo{min-height:0!important;width:100%!important;height:auto!important;aspect-ratio:16/7!important;object-fit:cover!important}
+  #meshwarVideoFrame{position:relative!important;width:100%!important;height:auto!important;min-height:0!important;aspect-ratio:16/8!important;border-radius:14px!important;overflow:hidden!important}
+  #meshwarPromoVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;aspect-ratio:auto!important;object-fit:cover!important}
 
   #kintoFeaturedStoreSlot{width:100%!important;min-height:0!important;margin:12px 0!important;padding:12px!important;grid-template-columns:72px minmax(0,1fr)!important;gap:10px!important;text-align:right!important;border-radius:16px!important}
   #kintoFeaturedStoreSlot .kinto-featured-logo-wrap{width:72px!important;height:64px!important;margin:0!important}
@@ -48,5 +48,4 @@
   #kintoHomeHeader .top-inner{align-items:center!important}
   #kintoHomeHeader .brand img{width:38px!important;height:38px!important}
   #kintoHomeHeader .account-btn{min-height:36px!important;font-size:9px!important}
-  #meshwarVideoFrame,#meshwarPromoVideo{aspect-ratio:16/8!important}
 }
