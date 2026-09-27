@@ -210,6 +210,8 @@
              loop
              playsinline
              controls
+             disablepictureinpicture
+             disableremoteplayback
              preload="metadata">
         <source src="videos/promo.mp4" type="video/mp4">
       </video>
@@ -631,6 +633,14 @@ loadLocalPublicStores();
     const v = document.getElementById('meshwarPromoVideo');
     const sb = document.getElementById('meshwarPromoSoundBtn');
     const pb = document.getElementById('meshwarPromoPlayBtn');
+
+    if (v) {
+        v.disablePictureInPicture = true;
+        v.disableRemotePlayback = true;
+        v.addEventListener('enterpictureinpicture', () => {
+            document.exitPictureInPicture?.().catch(() => {});
+        });
+    }
     sb?.addEventListener('click', () => {
         if (!v) return;
         v.muted = !v.muted;
