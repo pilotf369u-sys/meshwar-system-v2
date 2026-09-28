@@ -67,35 +67,34 @@ end $$;
 drop trigger if exists trg_kinto_loyalty_order_v310 on public.orders;
 create trigger trg_kinto_loyalty_order_v310 before update of status,total_price,currency on public.orders for each row execute function public.kinto_loyalty_order_v310();
 
-create or replace function public.customer_loyalty_summary_v310(p_session_token text) returns jsonb language plpgsql security definer set search_path=public as $$
-declare i jsonb;cid text;begin i:=public.customer_session_identity_v150(p_session_token);cid:=nullif(i->'customer'->>'id','');
- if coalesce((i->>'ok')::boolean,false) is not true or cid is null then raise exception 'invalid customer session';end if;
+create or replace function public.customer_loyalty_summary_v310(p_session_token text) returns jsonb language plpgsql security definer set search_path=public,private,extensions,pg_temp as $
+declare cid text;begin cid:=private.require_customer_session_v150(p_session_token); if coalesce(cid,'')='' then raise exception 'invalid customer session';end if;
  return jsonb_build_object('wallets',coalesce((select jsonb_agg(jsonb_build_object('currency',currency,'points',points) order by currency) from public.kinto_loyalty_wallets where customer_id=cid),'[]'::jsonb),
  'history',coalesce((select jsonb_agg(jsonb_build_object('event_type',event_type,'points',points,'currency',currency,'order_id',order_id,'created_at',created_at) order by created_at desc) from (select * from public.kinto_loyalty_ledger where customer_id=cid order by created_at desc limit 50)h),'[]'::jsonb));end $$;
 revoke all on function public.customer_loyalty_summary_v310(text) from public;grant execute on function public.customer_loyalty_summary_v310(text) to anon,authenticated;
 
 create or replace function public.admin_loyalty_campaign_v310(p_session_token text,p_multiplier numeric,p_name text default null,p_starts_at timestamptz default null,p_ends_at timestamptz default null) returns jsonb language plpgsql security definer set search_path=public as $$
-declare i jsonb;begin i:=public.admin_session_identity_v147(p_session_token);if coalesce((i->>'ok')::boolean,false) is not true or coalesce(i->'admin'->>'id','')='' then raise exception 'invalid admin session';end if;
+declare aid text;begin aid:=private.require_admin_session_v147(p_session_token);if coalesce(aid,'')='' then raise exception 'invalid admin session';end if;
  if p_multiplier<1 or p_multiplier>10 then raise exception 'multiplier must be 1..10';end if;if p_starts_at is not null and p_ends_at is not null and p_ends_at<=p_starts_at then raise exception 'invalid campaign window';end if;
  update public.kinto_loyalty_settings set multiplier=p_multiplier,campaign_name=nullif(trim(p_name),''),campaign_starts_at=p_starts_at,campaign_ends_at=p_ends_at,updated_at=now() where id=1;
  return jsonb_build_object('ok',true,'multiplier',p_multiplier,'name',nullif(trim(p_name),''));end $$;
 revoke all on function public.admin_loyalty_campaign_v310(text,numeric,text,timestamptz,timestamptz) from public;grant execute on function public.admin_loyalty_campaign_v310(text,numeric,text,timestamptz,timestamptz) to anon,authenticated;
 
-create or replace function public.admin_loyalty_grant_points_v310(p_session_token text,p_customer_id text,p_points bigint,p_currency text,p_reason text) returns jsonb language plpgsql security definer set search_path=public as $$
-declare i jsonb;aid text;c text;begin i:=public.admin_session_identity_v147(p_session_token);aid:=nullif(i->'admin'->>'id','');if coalesce((i->>'ok')::boolean,false) is not true or aid is null then raise exception 'invalid admin session';end if;
+create or replace function public.admin_loyalty_grant_points_v310(p_session_token text,p_customer_id text,p_points bigint,p_currency text,p_reason text) returns jsonb language plpgsql security definer set search_path=public,private,extensions,pg_temp as $
+declare aid text;c text;begin aid:=private.require_admin_session_v147(p_session_token);if coalesce(aid,'')='' then raise exception 'invalid admin session';end if;
  if p_points<=0 or nullif(trim(p_reason),'') is null then raise exception 'positive integer points and reason required';end if;c:=upper(trim(p_currency));if c in('$','US$')then c:='USD';end if;if c in('TL','₺')then c:='TRY';end if;if c not in('USD','IQD','TRY')then raise exception 'unsupported currency';end if;
  insert into public.kinto_loyalty_wallets(customer_id,currency,points) values(p_customer_id,c,p_points) on conflict(customer_id,currency) do update set points=public.kinto_loyalty_wallets.points+excluded.points,updated_at=now();
  insert into public.kinto_loyalty_ledger(customer_id,event_type,points,currency,note,actor_id) values(p_customer_id,'admin_bonus',p_points,c,trim(p_reason),aid);return jsonb_build_object('ok',true,'points',p_points,'currency',c);end $$;
 revoke all on function public.admin_loyalty_grant_points_v310(text,text,bigint,text,text) from public;grant execute on function public.admin_loyalty_grant_points_v310(text,text,bigint,text,text) to anon,authenticated;
 
-create or replace function public.employee_loyalty_overview_v310(p_session_token text) returns jsonb language plpgsql security definer set search_path=public as $$
-declare i jsonb;begin i:=public.employee_session_identity_v143(p_session_token);if coalesce((i->>'ok')::boolean,false) is not true or coalesce(i->'employee'->>'id','')='' then raise exception 'invalid employee session';end if;
+create or replace function public.employee_loyalty_overview_v310(p_session_token text) returns jsonb language plpgsql security definer set search_path=public,private,extensions,pg_temp as $
+declare eid text;begin eid:=private.require_employee_session_v143(p_session_token);if coalesce(eid,'')='' then raise exception 'invalid employee session';end if;
  return jsonb_build_object('wallets',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'points',points) order by customer_id,currency) from public.kinto_loyalty_wallets),'[]'::jsonb),
  'settings',(select jsonb_build_object('earn_rate',earn_rate,'multiplier',public.kinto_loyalty_multiplier_v310(),'campaign_name',campaign_name) from public.kinto_loyalty_settings where id=1));end $$;
 revoke all on function public.employee_loyalty_overview_v310(text) from public;grant execute on function public.employee_loyalty_overview_v310(text) to anon,authenticated;
 
-create or replace function public.admin_loyalty_overview_v310(p_session_token text) returns jsonb language plpgsql security definer set search_path=public as $$
-declare i jsonb;begin i:=public.admin_session_identity_v147(p_session_token);if coalesce((i->>'ok')::boolean,false) is not true or coalesce(i->'admin'->>'id','')='' then raise exception 'invalid admin session';end if;
+create or replace function public.admin_loyalty_overview_v310(p_session_token text) returns jsonb language plpgsql security definer set search_path=public,private,extensions,pg_temp as $
+declare aid text;begin aid:=private.require_admin_session_v147(p_session_token);if coalesce(aid,'')='' then raise exception 'invalid admin session';end if;
  return jsonb_build_object('wallets',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'points',points) order by customer_id,currency) from public.kinto_loyalty_wallets),'[]'::jsonb),
  'settings',(select jsonb_build_object('earn_rate',earn_rate,'multiplier',public.kinto_loyalty_multiplier_v310(),'campaign_name',campaign_name) from public.kinto_loyalty_settings where id=1));end $$;
 revoke all on function public.admin_loyalty_overview_v310(text) from public;grant execute on function public.admin_loyalty_overview_v310(text) to anon,authenticated;
