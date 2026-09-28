@@ -55,11 +55,11 @@ async function employee(){
   if(!panel||!session?.token||typeof ensureEmployeeSupabase!=='function')return;
   try{
     const sb=await ensureEmployeeSupabase(),{data,error}=await sb.rpc('employee_loyalty_overview_v310',{p_session_token:session.token});if(error)throw error;
-    const body=document.getElementById('rewardsTableBody'),head=panel.querySelector('thead tr'),customers=typeof cloudCustomers!=='undefined'?cloudCustomers:[];
+    const body=document.getElementById('rewardsTableBody'),head=panel.querySelector('thead tr'),customers=data?.customers||[];
     const h=panel.querySelector('h3');if(h)h.textContent='🎁 مكافآت KINTO';
     const p=panel.querySelector('p.mini');if(p)p.textContent='عرض فقط: نقاط وكوبونات KINTO محمية من السيرفر. لا يملك الموظف صلاحية منح أو خصم المكافآت.';
     if(head)head.innerHTML='<th>العميل</th><th>الهاتف</th><th>حالة مكافآت KINTO</th>';
-    if(body)body.innerHTML=customers.map(c=>'<tr><td>'+esc(c.name||'---')+'</td><td>'+esc(c.phone||'---')+'</td><td>'+aggregate(data,c.id)+'</td></tr>').join('')||'<tr><td colspan="3">لا توجد بيانات.</td></tr>';
+    if(body)body.innerHTML=customers.map(c=>'<tr><td>'+esc(c.name||'---')+'</td><td>'+esc(c.phone||'---')+'</td><td>'+aggregate(data,c.id)+'</td></tr>').join('')||'<tr><td colspan="3">لا توجد بيانات.</td></tr>';const count=document.getElementById('count-rewards');if(count)count.textContent=String(customers.filter(c=>aggregate(data,c.id)!=='لا توجد نقاط بعد').length);
   }catch(e){console.warn('Employee KINTO overview failed',e)}
 }
 async function admin(){
@@ -67,10 +67,10 @@ async function admin(){
   if(!panel||!session?.token||typeof ensureCustomerSupabase!=='function')return;
   try{
     const sb=await ensureCustomerSupabase(),{data,error}=await sb.rpc('admin_loyalty_overview_v310',{p_session_token:session.token});if(error)throw error;
-    const body=document.getElementById('adminRewardTableBody'),head=panel.querySelector('thead tr'),customers=typeof adminRewardCustomers!=='undefined'?adminRewardCustomers:[];
+    const body=document.getElementById('adminRewardTableBody'),head=panel.querySelector('thead tr'),customers=data?.customers||[];
     const h=panel.querySelector('h3');if(h)h.textContent='🎁 مكافآت KINTO';
     if(head)head.innerHTML='<th>العميل</th><th>الهاتف</th><th>الحالة</th><th>منح استثنائي</th>';
-    if(body)body.innerHTML=customers.map(c=>{const id=encodeURIComponent(String(c.id));return '<tr><td>'+esc(c.name||'---')+'</td><td>'+esc(c.phone||'---')+'</td><td>'+aggregate(data,c.id)+'</td><td><input id="kp-'+id+'" type="number" min="1" step="1" placeholder="نقاط" style="width:75px"><select id="kc-'+id+'"><option>IQD</option><option>TRY</option><option>USD</option></select><input id="kr-'+id+'" placeholder="سبب إلزامي" style="width:120px"><button type="button" onclick="KintoPointsV310.grant(\''+id+'\')">منح</button></td></tr>'}).join('')||'<tr><td colspan="4">لا توجد بيانات.</td></tr>';
+    if(body)body.innerHTML=customers.map(c=>{const id=encodeURIComponent(String(c.id));return '<tr><td>'+esc(c.name||'---')+'</td><td>'+esc(c.phone||'---')+'</td><td>'+aggregate(data,c.id)+'</td><td><input id="kp-'+id+'" type="number" min="1" step="1" placeholder="نقاط" style="width:75px"><select id="kc-'+id+'"><option>IQD</option><option>TRY</option><option>USD</option></select><input id="kr-'+id+'" placeholder="سبب إلزامي" style="width:120px"><button type="button" onclick="KintoPointsV310.grant(\''+id+'\')">منح</button></td></tr>'}).join('')||'<tr><td colspan="4">لا توجد بيانات.</td></tr>';const count=document.getElementById('admin-count-rewards');if(count)count.textContent=String(customers.filter(c=>aggregate(data,c.id)!=='لا توجد نقاط بعد').length);
   }catch(e){console.warn('Admin KINTO overview failed',e)}
 }
 async function grant(encoded){
@@ -83,8 +83,8 @@ async function grant(encoded){
   await admin();alert('تم منح نقاط KINTO وتسجيل العملية.');
 }
 window.KintoPointsV310=Object.freeze({customer,employee,admin,grant,redeem});
-const oe=window.loadRewardsManagementTable;if(typeof oe==='function')window.loadRewardsManagementTable=async function(){await oe.apply(this,arguments);await employee()};
-const oa=window.loadAdminRewards;if(typeof oa==='function')window.loadAdminRewards=async function(){await oa.apply(this,arguments);await admin()};
+if(typeof window.loadRewardsManagementTable==='function')window.loadRewardsManagementTable=employee;
+if(typeof window.loadAdminRewards==='function')window.loadAdminRewards=admin;
 if(typeof window.customerOrderMoneyBreakdown==='function'){const base=window.customerOrderMoneyBreakdown;window.customerOrderMoneyBreakdown=function(o){const x=base(o)||{},discount=Math.max(0,Number(o?.reward_discount_amount)||0);if('productTotal'in x){x.rewardDiscount=discount;x.grandTotal=x.productTotal===null?null:Math.max(0,Number(x.productTotal)-discount)+Math.max(0,Number(x.externalShippingFee)||0)+Math.max(0,Number(x.deliveryFee)||0)}return x}}
 setTimeout(()=>{customer();employee();admin()},0);
 })();
