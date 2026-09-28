@@ -27,5 +27,10 @@ async function customer(){
  }catch(e){console.warn('KINTO rewards unavailable',e);box.innerHTML='<small>تعذر تحميل مكافآت المتاجر حالياً.</small>'}
 }
 if(typeof window.customerOrderMoneyBreakdown==='function'){const base=window.customerOrderMoneyBreakdown;window.customerOrderMoneyBreakdown=function(o){const x=base(o)||{},discount=Math.max(0,Number(o?.reward_discount_amount)||0);if('productTotal'in x){x.rewardDiscount=discount;x.grandTotal=x.productTotal===null?null:Math.max(0,Number(x.productTotal)-discount)+Math.max(0,Number(x.externalShippingFee)||0)+Math.max(0,Number(x.deliveryFee)||0)}return x}}
-window.KintoStoreRewardsV310={refreshCustomer:customer};setTimeout(customer,0);setInterval(lockLegacyRewardMutations,1500);
+function neutralizeLegacyCustomerRewards(){
+ window.renderCustomerRewardSummary=()=>customer();
+ const usage=document.getElementById('customerUsageCount');if(usage)usage.closest('div')?.style.setProperty('display','none','important');
+ const modal=document.getElementById('rewardsModal');if(modal){const h=modal.querySelector('h3');if(h)h.textContent='سجل كوبونات KINTO';}
+}
+window.KintoStoreRewardsV310={refreshCustomer:customer};setTimeout(()=>{neutralizeLegacyCustomerRewards();customer()},0);setInterval(()=>{lockLegacyRewardMutations();neutralizeLegacyCustomerRewards()},1500);
 })();
