@@ -273,6 +273,30 @@ function start(){observer.observe(document.body,{subtree:true,childList:true,att
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 </script>
+
+<script>
+/* ADMIN_TRANSIENT_SEARCH_V328 — admin search must never survive page/session restoration. */
+(function(){
+  function clearRestoredAdminSearchV328(reload){
+    const input=document.getElementById('orderSearchInput');
+    if(!input)return;
+    const hadValue=String(input.value||'').length>0;
+    input.value='';
+    input.defaultValue='';
+    if(hadValue&&reload&&typeof loadAdminOrders==='function'){
+      if(typeof orderPage!=='undefined')orderPage=1;
+      loadAdminOrders();
+    }
+  }
+  clearRestoredAdminSearchV328(false);
+  document.addEventListener('DOMContentLoaded',()=>clearRestoredAdminSearchV328(false),{once:true});
+  window.addEventListener('pageshow',()=>{
+    clearRestoredAdminSearchV328(true);
+    requestAnimationFrame(()=>clearRestoredAdminSearchV328(true));
+    setTimeout(()=>clearRestoredAdminSearchV328(true),80);
+  });
+})();
+</script>
 </body></html>
 <style>
 .admin-parcel-preview{max-width:100%;max-height:72vh;object-fit:contain;border-radius:10px;border:1px solid #cbd5e1}
