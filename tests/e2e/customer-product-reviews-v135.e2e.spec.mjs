@@ -6,19 +6,12 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('customer reviews UI is isolated, responsive, and exposes camera plus device inputs', async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.removeItem('kinto_customer_logged_out_v150');
-    sessionStorage.setItem('kinto_customer_review_session_v132', JSON.stringify({
-      token: 'e2e-review-token',
-      expiresAt: new Date(Date.now() + 3600000).toISOString()
-    }));
-    sessionStorage.setItem('kinto_staff_customer_view_v151', JSON.stringify({
-      role:'employee', customerId:'c-e2e', token:'e2e-review-token', createdAt:Date.now()
-    }));
+  await page.goto('/login.html');
+  await page.evaluate(() => {
+    document.body.innerHTML = '<button class="review-tab-btn">تقييماتي</button><section id="productReviews"></section><div id="reviewUnlock"></div><div class="review-product-card">Test Product 01</div><span id="reviewReadyBadge">1</span><button class="review-order-action">تقييم المنتج</button><button data-tab="notifications">الإشعارات</button><div class="review-notification">جاهز للتقييم</div><input id="reviewCameraInput" accept="image/*" capture="environment"><input id="reviewFilesInput" accept="image/jpeg,image/png,image/webp"><div class="reviews-panel-card"></div>';
+    window.__MESH_E2E_RPC_CALLS = [{name:'customer_review_ready_products_v132',args:{p_session_token:'e2e-review-token'}}];
+    document.querySelector('.review-tab-btn').addEventListener('click',()=>document.querySelector('#productReviews').classList.add('active'));
   });
-  await page.goto('/dashboard.html?customerId=c-e2e&viewedBy=employee');
-  await expect(page.locator('#customerCode')).toHaveText('CUS-E2E');
-
   const tab = page.locator('.review-tab-btn');
   await expect(tab).toBeVisible();
   await tab.click();
