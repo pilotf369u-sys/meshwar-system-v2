@@ -79,7 +79,7 @@ html[data-mw-global-theme="light"] body .kinto-customer-header{background:#fffdf
 </div>
 <div id="rewardsModal" class="modal-overlay"><div class="modal-content"><h3>سجل كوبونات KINTO</h3><div id="rewardsHistoryList"></div><nav id="rewardsHistoryPager" class="customer-pagination" aria-label="صفحات سجل المكافآت" hidden></nav><button onclick="closeRewardsModal()" class="btn-action">إغلاق</button></div></div>
 <div id="customerOrderDetailsModal" class="modal-overlay"><div class="modal-content"><h3>تفاصيل الطلب</h3><div id="customerOrderDetailsContent"></div><button onclick="closeCustomerOrderDetails()" class="btn-action">إغلاق</button></div></div>
-<script src="js/customer-session-v150.js?v=20260922-v150"></script>
+<script src="js/customer-session-v150.js?v=20260928-v312"></script>
 <script>
 const CUSTOMER_SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
 const CUSTOMER_SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
@@ -101,10 +101,11 @@ async function fetchCurrentCustomerFromCloud(){
     const rpc=viewedBy==='employee'?'employee_session_identity_v143':'admin_session_identity_v147',key=viewedBy==='employee'?'employee':'admin';
     const {data:staff,error:staffError}=await sb.rpc(rpc,{p_session_token:String(delegated.token)});
     if(staffError||!staff?.ok||!staff?.[key]){sessionStorage.removeItem('kinto_staff_customer_view_v151');return null}
-    const {data:customer,error:customerError}=await sb.from('customers').select('id,created_at,name,phone,email,country,address,code,cart_items,state,secondary_phone,rewards_log,wallet_balance,wallet_currency,rewards_count,current_cycle_delivered').eq('id',customerId).maybeSingle();
-    if(customerError||!customer)return null;
+    const {data:customer,error:customerError}=await sb.rpc('staff_customer_view_v312',{p_session_token:String(delegated.token),p_role:viewedBy,p_customer_id:customerId});
+    if(customerError||!customer?.ok||!customer?.customer){console.error('Staff customer view failed',customerError||customer);return null}
+    const viewedCustomer=customer.customer;
     staffCustomerReadOnlyV151=true;window.KINTO_STAFF_CUSTOMER_READ_ONLY=true;
-    return customer;
+    return viewedCustomer;
   }
   return KintoCustomerSessionV150.identity(sb);
 }

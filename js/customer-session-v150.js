@@ -15,9 +15,17 @@
   async function identity(supabase){
     const session=read();
     if(!session)return null;
-    const {data,error}=await supabase.rpc('customer_session_identity_v150',{p_session_token:session.token});
-    if(error||!data?.ok||!data?.customer){sessionStorage.removeItem(STORAGE_KEY);return null}
-    return data.customer;
+    let lastError=null;
+    for(let attempt=0;attempt<2;attempt++){
+      const {data,error}=await supabase.rpc('customer_session_identity_v150',{p_session_token:session.token});
+      if(!error&&data?.ok&&data?.customer)return data.customer;
+      lastError=error||new Error('CUSTOMER_SESSION_IDENTITY_EMPTY');
+      if(attempt===0)await new Promise(resolve=>setTimeout(resolve,180));
+    }
+    const code=String(lastError?.code||''),message=String(lastError?.message||lastError||'');
+    console.error('Customer session identity failed',{code,message});
+    if(/REVIEW_SESSION_(INVALID|REQUIRED)|CUSTOMER_SESSION_INVALID/i.test(message))sessionStorage.removeItem(STORAGE_KEY);
+    return null;
   }
   async function logout(supabase){
     const session=read();
