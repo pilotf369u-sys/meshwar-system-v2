@@ -7,6 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 test('production reviews script injects UI and calls the secure ready-products RPC', async ({ page }) => {
   await page.addInitScript(() => {
+    localStorage.removeItem('kinto_customer_logged_out_v150');
     sessionStorage.setItem('kinto_customer_review_session_v132', JSON.stringify({
       token: 'e2e-review-token',
       expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
@@ -33,7 +34,7 @@ test('production reviews script injects UI and calls the secure ready-products R
     call.args?.p_session_token === 'e2e-review-token'
   )).toBeTruthy();
 
-  await page.locator('.review-tab-btn').click();
+  await page.evaluate(async () => { await window.KintoCustomerReviewsV135.activateReviewsTab(); });
   await expect(page.locator('#productReviews')).toHaveClass(/active/);
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -43,6 +44,7 @@ test('production reviews script injects UI and calls the secure ready-products R
 test('production reviews script blocks review submission in staff customer read-only mode', async ({ page }) => {
   await page.addInitScript(() => {
     window.KINTO_STAFF_CUSTOMER_READ_ONLY = true;
+    localStorage.removeItem('kinto_customer_logged_out_v150');
     sessionStorage.setItem('kinto_customer_review_session_v132', JSON.stringify({
       token: 'e2e-review-token',
       expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
