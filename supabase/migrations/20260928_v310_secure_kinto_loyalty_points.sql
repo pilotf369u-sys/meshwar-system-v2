@@ -27,7 +27,7 @@ create or replace function public.kinto_loyalty_multiplier_v310() returns numeri
  from public.kinto_loyalty_settings where id=1 $$;
 
 create or replace function public.kinto_loyalty_order_v310() returns trigger language plpgsql security definer set search_path=public as $$
-declare c text;r numeric;m numeric;x numeric;whole bigint;carry numeric;bal bigint;usep bigint;cancelled boolean;
+declare c text;r numeric;m numeric;x numeric;whole bigint;carry numeric;bal bigint;eligible bigint;usep bigint;cancelled boolean;
 begin
  c:=upper(trim(coalesce(new.currency,'USD'))); if c in('$','US$') then c:='USD'; end if; if c in('TL','₺') then c:='TRY'; end if;
  if new.status='تم التسليم' and coalesce(old.status,'')<>'تم التسليم' and coalesce(new.total_price,0)>0
@@ -45,7 +45,8 @@ begin
  and not exists(select 1 from public.kinto_loyalty_ledger where order_id=new.id and event_type='redeem') then
   insert into public.kinto_loyalty_wallets(customer_id,currency) values(new.customer_id,c) on conflict do nothing;
   select points into bal from public.kinto_loyalty_wallets where customer_id=new.customer_id and currency=c for update;
-  usep:=least(coalesce(bal,0),floor(new.total_price)::bigint);
+  select coalesce(sum(points),0)::bigint into eligible from public.kinto_loyalty_ledger where customer_id=new.customer_id and currency=c and created_at<coalesce(new.created_at,now());
+  usep:=least(coalesce(bal,0),greatest(coalesce(eligible,0),0),floor(new.total_price)::bigint);
   if usep>0 then
    update public.kinto_loyalty_wallets set points=points-usep,updated_at=now() where customer_id=new.customer_id and currency=c;
    insert into public.kinto_loyalty_ledger(customer_id,order_id,event_type,points,currency,base_amount,note) values(new.customer_id,new.id,'redeem',-usep,c,new.total_price,'automatic_first_later_order');
