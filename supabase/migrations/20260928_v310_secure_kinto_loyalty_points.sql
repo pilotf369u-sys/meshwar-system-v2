@@ -86,3 +86,15 @@ declare i jsonb;aid uuid;c text;begin i:=public.admin_session_identity_v147(p_se
  insert into public.kinto_loyalty_wallets(customer_id,currency,points) values(p_customer_id,c,p_points) on conflict(customer_id,currency) do update set points=public.kinto_loyalty_wallets.points+excluded.points,updated_at=now();
  insert into public.kinto_loyalty_ledger(customer_id,event_type,points,currency,note,actor_id) values(p_customer_id,'admin_bonus',p_points,c,trim(p_reason),aid);return jsonb_build_object('ok',true,'points',p_points,'currency',c);end $$;
 revoke all on function public.admin_loyalty_grant_points_v310(text,uuid,bigint,text,text) from public;grant execute on function public.admin_loyalty_grant_points_v310(text,uuid,bigint,text,text) to anon,authenticated;
+
+create or replace function public.employee_loyalty_overview_v310(p_session_token text) returns jsonb language plpgsql security definer set search_path=public as $$
+declare i jsonb;begin i:=public.employee_session_identity_v143(p_session_token);if coalesce((i->>'ok')::boolean,false) is not true or coalesce(i->'employee'->>'id','')='' then raise exception 'invalid employee session';end if;
+ return jsonb_build_object('wallets',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'points',points) order by customer_id,currency) from public.kinto_loyalty_wallets),'[]'::jsonb),
+ 'settings',(select jsonb_build_object('earn_rate',earn_rate,'multiplier',public.kinto_loyalty_multiplier_v310(),'campaign_name',campaign_name) from public.kinto_loyalty_settings where id=1));end $$;
+revoke all on function public.employee_loyalty_overview_v310(text) from public;grant execute on function public.employee_loyalty_overview_v310(text) to anon,authenticated;
+
+create or replace function public.admin_loyalty_overview_v310(p_session_token text) returns jsonb language plpgsql security definer set search_path=public as $$
+declare i jsonb;begin i:=public.admin_session_identity_v147(p_session_token);if coalesce((i->>'ok')::boolean,false) is not true or coalesce(i->'admin'->>'id','')='' then raise exception 'invalid admin session';end if;
+ return jsonb_build_object('wallets',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'points',points) order by customer_id,currency) from public.kinto_loyalty_wallets),'[]'::jsonb),
+ 'settings',(select jsonb_build_object('earn_rate',earn_rate,'multiplier',public.kinto_loyalty_multiplier_v310(),'campaign_name',campaign_name) from public.kinto_loyalty_settings where id=1));end $$;
+revoke all on function public.admin_loyalty_overview_v310(text) from public;grant execute on function public.admin_loyalty_overview_v310(text) to anon,authenticated;
