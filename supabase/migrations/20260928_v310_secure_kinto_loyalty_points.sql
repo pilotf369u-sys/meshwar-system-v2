@@ -84,11 +84,12 @@ alter table public.kinto_loyalty_ledger enable row level security;
 revoke all on public.kinto_loyalty_settings,public.kinto_store_loyalty_settings,public.kinto_loyalty_wallets,public.kinto_loyalty_coupons,public.kinto_loyalty_ledger from public,anon,authenticated;
 
 create or replace function public.kinto_normalize_currency_v310(v text) returns text
-language plpgsql immutable security definer set search_path=public as $
+language plpgsql immutable security definer set search_path=public as $$
 declare c text;
 begin
- c:=upper(trim(coalesce(nullif(v,''),'IQD')));
+ c:=upper(trim(coalesce(nullif(v,''),'IQD'));
  if c in('
+end $$;
 revoke all on function public.kinto_normalize_currency_v310(text) from public,anon,authenticated;
 
 create or replace function public.kinto_order_store_id_v310(o public.orders) returns text
@@ -121,8 +122,6 @@ begin
  update public.kinto_loyalty_wallets set progress_points=progress_points+coalesce(p_whole_points,0),
    fractional_carry=greatest(0,least(coalesce(p_fraction,0),.99999999)),updated_at=now()
  where customer_id=p_customer_id and store_id=p_store_id and currency=c returning progress_points into cur;
- -- V310 coupon tiers 1000/3000/5000 are IQD-only. Other currencies still earn
- -- their own 1% balance and are preserved for future currency-specific tiers.
  if c='IQD' then
    while cur>=unit loop
      insert into public.kinto_loyalty_coupons(customer_id,store_id,currency,points,source_order_id,expires_at,funded_by)
@@ -171,20 +170,20 @@ create trigger trg_kinto_loyalty_order_v310 before update of status on public.or
 
 create or replace function public.customer_loyalty_summary_v310(p_session_token text) returns jsonb
 language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
-declare cid text;visible_days integer;
+declare cid text;visible_days integer;ratio numeric;unit bigint;
 begin
  cid:=private.require_customer_session_v150(p_session_token); if coalesce(cid,'')='' then raise exception 'invalid customer session'; end if;
- select expired_visible_days into visible_days from public.kinto_loyalty_settings where id=1;
+ select expired_visible_days,max_order_ratio,coupon_unit into visible_days,ratio,unit from public.kinto_loyalty_settings where id=1;
  return jsonb_build_object(
- 'wallets',coalesce((select jsonb_agg(jsonb_build_object('store_id',w.store_id,'store_name',coalesce(s.store_name,s.name,w.store_id),'currency',w.currency,'progress_points',w.progress_points) order by coalesce(s.store_name,s.name,w.store_id),w.currency)
+ 'wallets',coalesce((select jsonb_agg(jsonb_build_object('store_id',w.store_id,'store_name',coalesce(s.store_name,w.store_id),'currency',w.currency,'progress_points',w.progress_points) order by coalesce(s.store_name,w.store_id),w.currency)
    from public.kinto_loyalty_wallets w left join public.local_stores s on s.id::text=w.store_id where w.customer_id=cid),'[]'::jsonb),
- 'coupons',coalesce((select jsonb_agg(jsonb_build_object('id',q.id,'store_id',q.store_id,'store_name',coalesce(s.store_name,s.name,q.store_id),'currency',q.currency,'points',q.points,
+ 'coupons',coalesce((select jsonb_agg(jsonb_build_object('id',q.id,'store_id',q.store_id,'store_name',coalesce(s.store_name,q.store_id),'currency',q.currency,'points',q.points,
    'status',case when q.status='used' then 'used' when q.expires_at<=now() then 'expired' else 'active' end,'issued_at',q.issued_at,'expires_at',q.expires_at,'used_at',q.used_at,'used_order_id',q.used_order_id) order by q.issued_at desc)
    from public.kinto_loyalty_coupons q left join public.local_stores s on s.id::text=q.store_id
    where q.customer_id=cid and (q.status='used' or q.expires_at>now()-make_interval(days=>visible_days))),'[]'::jsonb),
  'eligible_orders',coalesce((select jsonb_agg(jsonb_build_object('id',o.id,'order_code',coalesce(o.order_code,o.reference_order_no,o.id::text),'store_id',public.kinto_order_store_id_v310(o),
    'currency',public.kinto_normalize_currency_v310(o.currency),'product_total',coalesce(o.total_price,0),
-   'max_coupon',case when public.kinto_normalize_currency_v310(o.currency)='IQD' then floor(coalesce(o.total_price,0)*.10/1000)*1000 else 0 end,
+   'max_coupon',case when public.kinto_normalize_currency_v310(o.currency)='IQD' then floor(coalesce(o.total_price,0)*ratio/unit)*unit else 0 end,
    'redeemable_now',public.kinto_normalize_currency_v310(o.currency)='IQD','status',o.status) order by o.created_at desc)
    from public.orders o where o.customer_id::text=cid and public.kinto_order_store_id_v310(o) is not null
    and o.status in('بانتظار موافقة العميل','قيد الطلب','بانتظار الدفع','تمت الموافقة - بانتظار الدفع','تمت الموافقة')
@@ -240,7 +239,7 @@ revoke all on function public.employee_loyalty_overview_v310(text) from public;g
 
 create or replace function public.admin_grant_loyalty_v310(p_session_token text,p_customer_id text,p_store_id text,p_currency text,p_points bigint,p_funded_by text,p_reason text) returns jsonb
 language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
-declare aid text;c text;reason text;fund text;units bigint;i bigint;exp timestamptz;
+declare aid text;c text;reason text;fund text;units bigint;i bigint;exp timestamptz;unit bigint;days integer;
 begin
  aid:=private.require_admin_session_v147(p_session_token);if coalesce(aid,'')='' then raise exception 'invalid admin session';end if;
  if coalesce(trim(p_customer_id),'')='' or coalesce(trim(p_store_id),'')='' then raise exception 'customer and store are required';end if;
@@ -251,10 +250,11 @@ begin
  if not exists(select 1 from public.local_stores where id::text=p_store_id) then raise exception 'store not found';end if;
  c:=public.kinto_normalize_currency_v310(p_currency);
  if c<>'IQD' then raise exception 'KINTO_V310_ADMIN_GRANT_TIERS_IQD_ONLY'; end if;
- units:=p_points/1000;exp:=now()+interval '30 days';
+ select coupon_unit,coupon_days into unit,days from public.kinto_loyalty_settings where id=1;
+ units:=p_points/unit;exp:=now()+make_interval(days=>days);
  for i in 1..units loop
    insert into public.kinto_loyalty_coupons(customer_id,store_id,currency,points,status,issued_at,expires_at,funded_by)
-   values(p_customer_id,p_store_id,c,1000,'active',now(),exp,fund);
+   values(p_customer_id,p_store_id,c,unit,'active',now(),exp,fund);
  end loop;
  insert into public.kinto_loyalty_ledger(customer_id,store_id,event_type,points,currency,note,actor_id,funded_by,funding_snapshot)
  values(p_customer_id,p_store_id,'admin_adjustment',p_points,c,reason,aid,fund,jsonb_build_object('vendor_points',case when fund='vendor' then p_points else 0 end,'kinto_points',case when fund='kinto' then p_points else 0 end));
@@ -273,6 +273,7 @@ begin
 end $$;
 revoke all on function public.admin_loyalty_overview_v310(text) from public;grant execute on function public.admin_loyalty_overview_v310(text) to anon,authenticated;
 ,'US
+end $$;
 revoke all on function public.kinto_normalize_currency_v310(text) from public,anon,authenticated;
 
 create or replace function public.kinto_order_store_id_v310(o public.orders) returns text
@@ -356,9 +357,9 @@ begin
  cid:=private.require_customer_session_v150(p_session_token); if coalesce(cid,'')='' then raise exception 'invalid customer session'; end if;
  select expired_visible_days into visible_days from public.kinto_loyalty_settings where id=1;
  return jsonb_build_object(
- 'wallets',coalesce((select jsonb_agg(jsonb_build_object('store_id',w.store_id,'store_name',coalesce(s.store_name,s.name,w.store_id),'currency',w.currency,'progress_points',w.progress_points) order by coalesce(s.store_name,s.name,w.store_id),w.currency)
+ 'wallets',coalesce((select jsonb_agg(jsonb_build_object('store_id',w.store_id,'store_name',coalesce(s.store_name,w.store_id),'currency',w.currency,'progress_points',w.progress_points) order by coalesce(s.store_name,w.store_id),w.currency)
    from public.kinto_loyalty_wallets w left join public.local_stores s on s.id::text=w.store_id where w.customer_id=cid),'[]'::jsonb),
- 'coupons',coalesce((select jsonb_agg(jsonb_build_object('id',q.id,'store_id',q.store_id,'store_name',coalesce(s.store_name,s.name,q.store_id),'currency',q.currency,'points',q.points,
+ 'coupons',coalesce((select jsonb_agg(jsonb_build_object('id',q.id,'store_id',q.store_id,'store_name',coalesce(s.store_name,q.store_id),'currency',q.currency,'points',q.points,
    'status',case when q.status='used' then 'used' when q.expires_at<=now() then 'expired' else 'active' end,'issued_at',q.issued_at,'expires_at',q.expires_at,'used_at',q.used_at,'used_order_id',q.used_order_id) order by q.issued_at desc)
    from public.kinto_loyalty_coupons q left join public.local_stores s on s.id::text=q.store_id
    where q.customer_id=cid and (q.status='used' or q.expires_at>now()-make_interval(days=>visible_days))),'[]'::jsonb),
@@ -449,7 +450,7 @@ revoke all on function public.admin_loyalty_overview_v310(text) from public;gran
 ) then c:='USD'; end if;
  if c in('TL','₺') then c:='TRY'; end if;
  return c;
-end $;
+end $$;
 revoke all on function public.kinto_normalize_currency_v310(text) from public,anon,authenticated;
 
 create or replace function public.kinto_order_store_id_v310(o public.orders) returns text
@@ -533,9 +534,9 @@ begin
  cid:=private.require_customer_session_v150(p_session_token); if coalesce(cid,'')='' then raise exception 'invalid customer session'; end if;
  select expired_visible_days into visible_days from public.kinto_loyalty_settings where id=1;
  return jsonb_build_object(
- 'wallets',coalesce((select jsonb_agg(jsonb_build_object('store_id',w.store_id,'store_name',coalesce(s.store_name,s.name,w.store_id),'currency',w.currency,'progress_points',w.progress_points) order by coalesce(s.store_name,s.name,w.store_id),w.currency)
+ 'wallets',coalesce((select jsonb_agg(jsonb_build_object('store_id',w.store_id,'store_name',coalesce(s.store_name,w.store_id),'currency',w.currency,'progress_points',w.progress_points) order by coalesce(s.store_name,w.store_id),w.currency)
    from public.kinto_loyalty_wallets w left join public.local_stores s on s.id::text=w.store_id where w.customer_id=cid),'[]'::jsonb),
- 'coupons',coalesce((select jsonb_agg(jsonb_build_object('id',q.id,'store_id',q.store_id,'store_name',coalesce(s.store_name,s.name,q.store_id),'currency',q.currency,'points',q.points,
+ 'coupons',coalesce((select jsonb_agg(jsonb_build_object('id',q.id,'store_id',q.store_id,'store_name',coalesce(s.store_name,q.store_id),'currency',q.currency,'points',q.points,
    'status',case when q.status='used' then 'used' when q.expires_at<=now() then 'expired' else 'active' end,'issued_at',q.issued_at,'expires_at',q.expires_at,'used_at',q.used_at,'used_order_id',q.used_order_id) order by q.issued_at desc)
    from public.kinto_loyalty_coupons q left join public.local_stores s on s.id::text=q.store_id
    where q.customer_id=cid and (q.status='used' or q.expires_at>now()-make_interval(days=>visible_days))),'[]'::jsonb),
