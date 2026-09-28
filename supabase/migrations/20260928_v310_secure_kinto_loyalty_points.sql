@@ -174,7 +174,7 @@ begin
        'restored_original_expiry',true
      )
    );
-   new.loyalty_points_redeemed:=0;new.reward_discount_amount:=0;new.reward_discount_currency:=null;new.reward_discount_snapshot:=null;
+   new.loyalty_points_redeemed:=0;new.reward_discount_amount:=0;new.reward_discount_currency:=null;new.reward_discount_snapshot:='{}'::jsonb;
  end if;
  return new;
 end $$;
