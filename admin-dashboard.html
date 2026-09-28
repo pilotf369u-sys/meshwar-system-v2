@@ -269,6 +269,43 @@ function start(){observer.observe(document.body,{subtree:true,childList:true,att
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 </script>
+
+<script>
+/* ADMIN_COUNTERS_FROM_EMPLOYEE_V331
+   Isolated counter renderer: same orders/status counting contract as employee dashboard.
+   Does not modify search, order loading, status transitions, rewards, auth, or realtime. */
+(function(){
+  async function refreshAdminCountersFromEmployeeV331(){
+    try{
+      const sb=await ensureCustomerSupabase();
+      const {data,error}=await sb.from('orders').select('status,customer_id,branch_id,branch_name').limit(10000);
+      if(error)throw error;
+      const rows=data||[],deliveredByCustomer={};
+      rows.forEach(o=>{
+        if(o.status==='تم التسليم'){
+          const cid=String(o.customer_id||'').trim();
+          if(cid)deliveredByCustomer[cid]=(deliveredByCustomer[cid]||0)+1;
+        }
+      });
+      const next={};
+      Object.entries(ADMIN_PIPELINES).forEach(([k,p])=>{
+        if(p.all){next[k]=rows.length;return}
+        if(p.rewards){next[k]=Object.values(deliveredByCustomer).filter(n=>n>=5).length;return}
+        if(p.branch){
+          next[k]=rows.filter(o=>(p.statuses||[]).includes(o.status)&&(String(o.branch_id||'').trim()||String(o.branch_name||'').trim())).length;
+          return;
+        }
+        next[k]=rows.filter(o=>(p.statuses||[]).includes(o.status)).length;
+      });
+      globalAdminPipelineCounts=next;
+      Object.entries(next).forEach(([k,n])=>{const el=document.getElementById('admin-count-'+k);if(el)el.innerText=n});
+    }catch(e){console.error('Admin counters V331 error:',e)}
+  }
+  window.refreshAdminPipelineCounts=refreshAdminCountersFromEmployeeV331;
+  const run=()=>refreshAdminCountersFromEmployeeV331();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+})();
+</script>
 </body></html>
 <style>
 .admin-parcel-preview{max-width:100%;max-height:72vh;object-fit:contain;border-radius:10px;border:1px solid #cbd5e1}
