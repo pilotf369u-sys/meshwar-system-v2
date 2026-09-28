@@ -287,6 +287,26 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   Object.assign(window,{switchAdminPipeline});
 })();
 </script>
+
+<script>
+/* ADMIN_SEARCH_RESET_V325 — search is transient UI state, never session state. */
+(function(){
+  function resetAdminOrderSearchV325(){
+    const input=document.getElementById('orderSearchInput');
+    if(!input)return;
+    input.value='';
+    input.defaultValue='';
+    input.setAttribute('autocomplete','new-password');
+  }
+  resetAdminOrderSearchV325();
+  document.addEventListener('DOMContentLoaded',resetAdminOrderSearchV325,{once:true});
+  window.addEventListener('pageshow',()=>{
+    resetAdminOrderSearchV325();
+    if(typeof orderPage!=='undefined')orderPage=1;
+    if(typeof loadAdminOrders==='function'&&typeof currentAdminCloud!=='undefined'&&currentAdminCloud)loadAdminOrders();
+  });
+})();
+</script>
 </body></html>
 <style>
 .admin-parcel-preview{max-width:100%;max-height:72vh;object-fit:contain;border-radius:10px;border:1px solid #cbd5e1}
