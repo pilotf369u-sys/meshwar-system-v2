@@ -203,7 +203,7 @@ test('V310 replaces legacy V112 rewards with store-scoped secure KINTO coupons',
     expect(source).toContain('kinto-points-v310.js?v=20260928-v310');
   }
   expect(kinto).toContain("customer_loyalty_summary_v310");
-  expect(kinto).toContain("customer_redeem_loyalty_v310");
+  expect(kinto).toContain("customer_apply_coupon_v310");
   expect(migration).toContain('kinto_loyalty_coupons');
   expect(migration).toContain('kinto_store_loyalty_settings');
   expect(migration).toContain('max_order_ratio');
