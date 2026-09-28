@@ -700,3 +700,43 @@ Object.assign(window,{switchAdminPipeline,adminBranchFilterChanged,syncAdminBran
  Object.assign(window,{viewAdminPod:view,closeAdminPodViewer:close});
 })();
 </script>
+
+
+<script>
+/* ADMIN_COUNTERS_FINAL_OVERRIDE_V332 — MUST remain last.
+   admin-dashboard.html contains legacy scripts after an early </body>; they were overwriting V331. */
+(function(){
+  async function employeeEquivalentAdminCountersV332(){
+    try{
+      const sb=await ensureCustomerSupabase();
+      const {data,error}=await sb.from('orders').select('status,customer_id,branch_id,branch_name').limit(10000);
+      if(error)throw error;
+      const rows=data||[],deliveredByCustomer={};
+      rows.forEach(o=>{
+        if(o.status==='تم التسليم'){
+          const cid=String(o.customer_id||'').trim();
+          if(cid)deliveredByCustomer[cid]=(deliveredByCustomer[cid]||0)+1;
+        }
+      });
+      const next={};
+      Object.entries(ADMIN_PIPELINES).forEach(([k,p])=>{
+        if(k==='all'||p.all){next[k]=rows.length;return}
+        if(p.rewards){next[k]=Object.values(deliveredByCustomer).filter(n=>n>=5).length;return}
+        if(p.branch){
+          next[k]=rows.filter(o=>(p.statuses||[]).includes(o.status)&&(String(o.branch_id||'').trim()||String(o.branch_name||'').trim())).length;
+          return;
+        }
+        next[k]=rows.filter(o=>(p.statuses||[]).includes(o.status)).length;
+      });
+      globalAdminPipelineCounts=next;
+      Object.entries(next).forEach(([k,n])=>{
+        const el=document.getElementById('admin-count-'+k);
+        if(el)el.textContent=String(n);
+      });
+    }catch(e){console.error('Admin counters V332 error:',e)}
+  }
+  refreshAdminPipelineCounts=employeeEquivalentAdminCountersV332;
+  window.refreshAdminPipelineCounts=employeeEquivalentAdminCountersV332;
+  employeeEquivalentAdminCountersV332();
+})();
+</script>
