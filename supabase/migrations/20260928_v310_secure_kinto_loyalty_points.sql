@@ -124,10 +124,10 @@ begin
     select earn_rate into r from public.kinto_loyalty_settings where id=1;
     insert into public.kinto_loyalty_wallets(customer_id,currency) values(new.customer_id::text,c) on conflict do nothing;
     select fractional_carry into carry from public.kinto_loyalty_wallets
-      where customer_id=new.customer_id and currency=c for update;
+      where customer_id=new.customer_id::text and currency=c for update;
     x:=coalesce(new.total_price,0)*coalesce(r,.01)+coalesce(carry,0);
     whole:=floor(x);carry:=x-whole;
-    perform public.kinto_credit_points_v310(new.customer_id::text,c,whole,carry,new.id,'delivered_order',null);
+    perform public.kinto_credit_points_v310(new.customer_id::text,c,whole,carry,new.id::text,'delivered_order',null);
     insert into public.kinto_loyalty_ledger(customer_id,order_id,event_type,points,currency,note)
       values(new.customer_id::text,new.id::text,'earn',whole,c,'1_percent_after_delivery');
     new.loyalty_points_earned:=whole;
@@ -175,7 +175,7 @@ begin
       where customer_id=cid and (status='used' or expires_at>now()-make_interval(days=>visible_days))
     ),'[]'::jsonb),
     'eligible_orders',coalesce((select jsonb_agg(jsonb_build_object(
-      'id',id,'order_code',coalesce(order_code,reference_order_no,id),'currency',public.kinto_normalize_currency_v310(currency),
+      'id',id,'order_code',coalesce(order_code,reference_order_no,id::text),'currency',public.kinto_normalize_currency_v310(currency),
       'product_total',coalesce(total_price,0),'max_coupon',floor(coalesce(total_price,0)*.10/1000)*1000,'status',status
     ) order by created_at desc)
       from public.orders where customer_id::text=cid
@@ -212,7 +212,7 @@ begin
           where customer_id=cid and currency=c and status='active' and expires_at>now()
           order by expires_at,issued_at for update skip locked limit need)q;
   if coalesce(cnt,0)<>need then raise exception 'insufficient active coupons'; end if;
-  update public.kinto_loyalty_coupons set status='used',used_order_id=o.id,used_at=now() where id=any(ids);
+  update public.kinto_loyalty_coupons set status='used',used_order_id=o.id::text,used_at=now() where id=any(ids);
   update public.orders set loyalty_points_redeemed=p_points,reward_discount_amount=p_points,
     reward_discount_currency=c,
     reward_discount_snapshot=jsonb_build_object('amount',p_points,'currency',c,'source','kinto_coupon_v310','points',p_points,'coupon_ids',to_jsonb(ids))
