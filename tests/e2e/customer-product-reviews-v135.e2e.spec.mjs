@@ -12,8 +12,11 @@ test('customer reviews UI is isolated, responsive, and exposes camera plus devic
       token: 'e2e-review-token',
       expiresAt: new Date(Date.now() + 3600000).toISOString()
     }));
+    sessionStorage.setItem('kinto_staff_customer_view_v151', JSON.stringify({
+      role:'employee', customerId:'c-e2e', token:'e2e-review-token', createdAt:Date.now()
+    }));
   });
-  await page.goto('/dashboard.html');
+  await page.goto('/dashboard.html?customerId=c-e2e&viewedBy=employee');
   await expect(page.locator('#customerCode')).toHaveText('CUS-E2E');
 
   const tab = page.locator('.review-tab-btn');
