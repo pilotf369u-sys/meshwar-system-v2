@@ -17,7 +17,7 @@ create table if not exists public.kinto_loyalty_settings(
 insert into public.kinto_loyalty_settings(id) values(1) on conflict(id) do nothing;
 
 create table if not exists public.kinto_loyalty_wallets(
-  customer_id text not null references public.customers(id) on delete cascade,
+  customer_id text not null,
   currency text not null,
   progress_points bigint not null default 0 check(progress_points>=0 and progress_points<1000),
   fractional_carry numeric(20,8) not null default 0 check(fractional_carry>=0 and fractional_carry<1),
@@ -27,14 +27,14 @@ create table if not exists public.kinto_loyalty_wallets(
 
 create table if not exists public.kinto_loyalty_coupons(
   id uuid primary key default gen_random_uuid(),
-  customer_id text not null references public.customers(id) on delete cascade,
+  customer_id text not null,
   currency text not null,
   points bigint not null default 1000 check(points=1000),
-  source_order_id text references public.orders(id) on delete set null,
+  source_order_id text,
   status text not null default 'active' check(status in('active','used')),
   issued_at timestamptz not null default now(),
   expires_at timestamptz not null,
-  used_order_id text references public.orders(id) on delete set null,
+  used_order_id text,
   used_at timestamptz
 );
 create index if not exists kinto_loyalty_coupons_customer_idx on public.kinto_loyalty_coupons(customer_id,currency,issued_at);
@@ -42,8 +42,8 @@ create index if not exists kinto_loyalty_coupons_active_idx on public.kinto_loya
 
 create table if not exists public.kinto_loyalty_ledger(
   id uuid primary key default gen_random_uuid(),
-  customer_id text not null references public.customers(id) on delete cascade,
-  order_id text references public.orders(id) on delete set null,
+  customer_id text not null,
+  order_id text,
   event_type text not null check(event_type in('earn','redeem','restore','admin_bonus')),
   points bigint not null,
   currency text not null,
@@ -120,28 +120,28 @@ begin
   if new.status='تم التسليم'
      and coalesce(old.status,'')<>'تم التسليم'
      and coalesce(new.total_price,0)>0
-     and not exists(select 1 from public.kinto_loyalty_ledger where order_id=new.id and event_type='earn') then
+     and not exists(select 1 from public.kinto_loyalty_ledger where order_id=new.id::text and event_type='earn') then
     select earn_rate into r from public.kinto_loyalty_settings where id=1;
-    insert into public.kinto_loyalty_wallets(customer_id,currency) values(new.customer_id,c) on conflict do nothing;
+    insert into public.kinto_loyalty_wallets(customer_id,currency) values(new.customer_id::text,c) on conflict do nothing;
     select fractional_carry into carry from public.kinto_loyalty_wallets
       where customer_id=new.customer_id and currency=c for update;
     x:=coalesce(new.total_price,0)*coalesce(r,.01)+coalesce(carry,0);
     whole:=floor(x);carry:=x-whole;
-    perform public.kinto_credit_points_v310(new.customer_id,c,whole,carry,new.id,'delivered_order',null);
+    perform public.kinto_credit_points_v310(new.customer_id::text,c,whole,carry,new.id,'delivered_order',null);
     insert into public.kinto_loyalty_ledger(customer_id,order_id,event_type,points,currency,note)
-      values(new.customer_id,new.id,'earn',whole,c,'1_percent_after_delivery');
+      values(new.customer_id::text,new.id::text,'earn',whole,c,'1_percent_after_delivery');
     new.loyalty_points_earned:=whole;
   end if;
 
   if coalesce(new.status,'') in('ملغي','ملغي من قبل العميل','رفض الطلب','مرفوض')
      and coalesce(old.status,'') not in('ملغي','ملغي من قبل العميل','رفض الطلب','مرفوض')
      and coalesce(new.loyalty_points_redeemed,0)>0
-     and not exists(select 1 from public.kinto_loyalty_ledger where order_id=new.id and event_type='restore') then
+     and not exists(select 1 from public.kinto_loyalty_ledger where order_id=new.id::text and event_type='restore') then
     update public.kinto_loyalty_coupons
       set status='active',used_order_id=null,used_at=null
-      where used_order_id=new.id and status='used';
+      where used_order_id=new.id::text and status='used';
     insert into public.kinto_loyalty_ledger(customer_id,order_id,event_type,points,currency,note)
-      values(new.customer_id,new.id,'restore',new.loyalty_points_redeemed,
+      values(new.customer_id::text,new.id::text,'restore',new.loyalty_points_redeemed,
              coalesce(new.reward_discount_currency,c),'cancelled_order_original_expiry_restored');
     new.loyalty_points_redeemed:=0;
     new.reward_discount_amount:=0;
@@ -178,7 +178,7 @@ begin
       'id',id,'order_code',coalesce(order_code,reference_order_no,id),'currency',public.kinto_normalize_currency_v310(currency),
       'product_total',coalesce(total_price,0),'max_coupon',floor(coalesce(total_price,0)*.10/1000)*1000,'status',status
     ) order by created_at desc)
-      from public.orders where customer_id=cid
+      from public.orders where customer_id::text=cid
         and status in('بانتظار موافقة العميل','قيد الطلب','بانتظار الدفع','تمت الموافقة - بانتظار الدفع','تمت الموافقة')
         and coalesce(reward_discount_amount,0)=0
     ),'[]'::jsonb)
@@ -196,8 +196,8 @@ begin
   cid:=private.require_customer_session_v150(p_session_token);
   if coalesce(cid,'')='' then raise exception 'invalid customer session'; end if;
   if p_points not in(1000,3000,5000) then raise exception 'invalid coupon tier'; end if;
-  select * into o from public.orders where id=p_order_id for update;
-  if not found or o.customer_id<>cid then raise exception 'order not found'; end if;
+  select * into o from public.orders where id::text=p_order_id for update;
+  if not found or o.customer_id::text<>cid then raise exception 'order not found'; end if;
   if o.status not in('بانتظار موافقة العميل','قيد الطلب','بانتظار الدفع','تمت الموافقة - بانتظار الدفع','تمت الموافقة') then
     raise exception 'coupon not allowed at this order stage';
   end if;
@@ -218,7 +218,7 @@ begin
     reward_discount_snapshot=jsonb_build_object('amount',p_points,'currency',c,'source','kinto_coupon_v310','points',p_points,'coupon_ids',to_jsonb(ids))
     where id=o.id;
   insert into public.kinto_loyalty_ledger(customer_id,order_id,event_type,points,currency,note)
-    values(cid,o.id,'redeem',-p_points,c,'customer_selected_coupon');
+    values(cid,o.id::text,'redeem',-p_points,c,'customer_selected_coupon');
   return jsonb_build_object('ok',true,'points',p_points,'currency',c,'order_id',o.id);
 end $$;
 revoke all on function public.customer_apply_coupon_v310(text,text,bigint) from public;
