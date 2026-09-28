@@ -5,6 +5,7 @@ test.beforeEach(async ({ page }) => {
   await installMocks(page);
   await page.goto('/login.html');
   await page.evaluate(() => {
+    window.ensureCustomerPortalSupabase = async () => window.__meshwarSupabaseClient;
     document.body.innerHTML = `
       <nav class="tabs-nav">
         <button class="tab-btn" data-tab="orders">طلباتي</button>
@@ -18,6 +19,12 @@ test.beforeEach(async ({ page }) => {
       token: 'e2e-review-token',
       expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
     }));
+  });
+  await page.evaluate(async () => {
+    if (!window.__meshwarSupabaseClient) {
+      const mod = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+      window.__meshwarSupabaseClient = mod.createClient('https://hsmmbloouskqdnptiiad.supabase.co', 'e2e-anon');
+    }
   });
   await page.addScriptTag({ url: '/js/customer-product-reviews-v135.js' });
   await page.waitForFunction(() =>
