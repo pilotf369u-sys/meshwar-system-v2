@@ -207,21 +207,8 @@ end $$;
 revoke all on function public.customer_apply_coupon_v310(text,text,bigint) from public;
 grant execute on function public.customer_apply_coupon_v310(text,text,bigint) to anon,authenticated;
 
-create or replace function public.vendor_loyalty_overview_v310(p_session_token text) returns jsonb
-language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
-declare sid text;st record;
-begin
- select store_id::text into sid from private.require_vendor_session(p_session_token); -- validated vendor session, store-bound
- if coalesce(sid,'')='' then raise exception 'invalid vendor session';end if;
- insert into public.kinto_store_loyalty_settings(store_id) values(sid) on conflict do nothing;
- select * into st from public.kinto_store_loyalty_settings where store_id=sid;
- return jsonb_build_object('store_id',sid,'enabled',st.enabled,'earn_rate',st.earn_rate,'campaign_label',st.campaign_label,
- 'wallets',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'progress_points',progress_points)) from public.kinto_loyalty_wallets where store_id=sid),'[]'::jsonb),
- 'coupons',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'points',points,'status',case when status='used' then 'used' when expires_at<=now() then 'expired' else 'active' end,'expires_at',expires_at)) from public.kinto_loyalty_coupons where store_id=sid),'[]'::jsonb));
-end $$;
-
--- Vendor RPC names are intentionally granted only after the exact V95 vendor-session validator is
--- confirmed in the live schema. UI work can land safely first; do not expose a guessed validator.
+-- Vendor control RPCs are added only after binding them to the exact V95 vendor-session validator.
+-- No guessed vendor authorization function is created or exposed by this migration.
 
 create or replace function public.employee_loyalty_overview_v310(p_session_token text) returns jsonb
 language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
