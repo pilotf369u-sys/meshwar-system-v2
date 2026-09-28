@@ -136,16 +136,7 @@ function clearBarcodeSearchInput(){
   input.dispatchEvent(new Event('input',{bubbles:true}));
   input.focus();
 }
-function prepareBarcodeScannerBurst(event){
-  const input=event?.target||document.getElementById('orderSearch');
-  if(!input||event.ctrlKey||event.metaKey||event.altKey||String(event.key||'').length!==1)return;
-  const now=Date.now();
-  const gap=now-barcodeScannerLastKeyAt;
-  barcodeScannerLastKeyAt=now;
-  if(input.value&&gap>180&&input.selectionStart===input.selectionEnd){
-    const existing=cleanBarcodeScannerInput(input.value);
-    if(existing&&/^(?:MW-?)?[A-Z0-9-]*\d[A-Z0-9-]*$/.test(existing))input.value='';
-  }
+function prepareBarcodeScannerBurst(event){/* V327: manual typing must never be cleared; camera/scanner paths already inject scanned values explicitly. */
 }
 function cleanBarcodeScannerInput(value){let cleaned=dashboardArabicDigitsToLatin(value).normalize('NFKD').replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g,'').replace(/[\r\n\t\s]+/g,'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/-{2,}/g,'-');cleaned=cleaned.replace(/^-+/, '-').replace(/-+$/, '');if(/^-[0-9]+$/.test(cleaned))cleaned='MW'+cleaned;else if(/^MW[0-9]+$/.test(cleaned))cleaned='MW-'+cleaned.slice(2);return cleaned}
 let html5QrCode=null;
