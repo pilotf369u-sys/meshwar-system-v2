@@ -106,7 +106,7 @@ html.branch-history-restoring #historyBody:empty::before{content:'جاري تح�
   <button type="button" class="branch-tab" data-branch-tab="history" onclick="branchLuxuryTab('history',this)">📜 السجل</button>
 </nav>
 <div id="branchOrdersSection" class="section-title">📦 إدارة شحنات الفرع</div>
-<div class="toolbar"><input id="orderSearch" placeholder="MW / Sipariş / الباركود / العميل / الهاتف / المندوب" oninput="branchBarcodeSearchInput(event)" onkeyup="branchBarcodeSearchKeyup(event)" onkeydown="prepareBarcodeScannerBurst(event);handleSearchKeydown(event)" autocomplete="off"><button type="button" data-clear-search="orderSearch" title="مسح البحث" aria-label="مسح البحث" onclick="clearBarcodeSearchInput()" style="width:36px;height:36px;padding:0;border-radius:50%;background:#64748b;color:#fff;font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">×</button><button class="blue" type="button" onclick="startCameraScanner()">📷 مسح بالكاميرا</button><select id="statusFilter" onchange="resetPage()"><option value="">كل الحالات</option><option>مخزن محلي</option><option>جاري التوصيل مع المندوب</option><option>توزيع داخلي</option><option>تم التسليم</option><option>رفض الطلب</option></select><input id="dateFrom" type="date" onchange="resetPage()"><input id="dateTo" type="date" onchange="resetPage()"><select id="pageSize" onchange="changePageSize(this.value)"><option value="20" selected>20</option><option value="50">50</option></select><button class="blue" onclick="loadOrders()">تحديث</button><span style="border-right:1px solid #ccc;height:28px"></span><select id="bulkCourier"><option value="">اختر مندوباً للإسناد الجماعي</option></select><button class="green" onclick="bulkAssign()">إسناد الشحنات المحددة لمندوب</button><button class="purple" onclick="openCourierModal()">+ إضافة مندوب جديد</button></div>
+<div class="toolbar"><input id="orderSearch" placeholder="MW / Sipariş / الباركود / العميل / الهاتف / المندوب" oninput="branchBarcodeSearchInput(event)" onkeyup="branchBarcodeSearchKeyup(event)" onkeydown="prepareBarcodeScannerBurst(event);armNextBarcodeScanV327(event);handleSearchKeydown(event)" autocomplete="off"><button type="button" data-clear-search="orderSearch" title="مسح البحث" aria-label="مسح البحث" onclick="clearBarcodeSearchInput()" style="width:36px;height:36px;padding:0;border-radius:50%;background:#64748b;color:#fff;font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">×</button><button class="blue" type="button" onclick="startCameraScanner()">📷 مسح بالكاميرا</button><select id="statusFilter" onchange="resetPage()"><option value="">كل الحالات</option><option>مخزن محلي</option><option>جاري التوصيل مع المندوب</option><option>توزيع داخلي</option><option>تم التسليم</option><option>رفض الطلب</option></select><input id="dateFrom" type="date" onchange="resetPage()"><input id="dateTo" type="date" onchange="resetPage()"><select id="pageSize" onchange="changePageSize(this.value)"><option value="20" selected>20</option><option value="50">50</option></select><button class="blue" onclick="loadOrders()">تحديث</button><span style="border-right:1px solid #ccc;height:28px"></span><select id="bulkCourier"><option value="">اختر مندوباً للإسناد الجماعي</option></select><button class="green" onclick="bulkAssign()">إسناد الشحنات المحددة لمندوب</button><button class="purple" onclick="openCourierModal()">+ إضافة مندوب جديد</button></div>
 <div id="scanResultCard" class="scan-card" aria-live="polite"></div>
 <div style="overflow:auto"><table><thead><tr><th><input id="selectAll" type="checkbox" onchange="toggleAll(this.checked)"></th><th>رقم الشحنة / Sipariş</th><th>العميل / الهاتف / الكود</th><th>السعر / الدفع / التحصيل</th><th>أجرة التوصيل</th><th>صافي العهدة</th><th>الحالة</th><th>المندوب</th><th>تحديث</th></tr></thead><tbody id="ordersBody"><tr><td colspan="9">جاري التحميل...</td></tr></tbody></table></div><div id="ordersPager" class="pager"></div>
 <div id="branchCourierSection" class="section-title">💰 محاسبة المندوبين والذمم المالية</div><div id="accountSummary" class="account-grid"></div><div style="overflow:auto"><table><thead><tr><th>المندوب</th><th>الهاتف</th><th>قيد التوصيل</th><th>المسلّم غير المقفل</th><th>التحصيل عند الباب</th><th>أجور التوصيل</th><th>صافي العهدة</th><th>الإجراءات</th></tr></thead><tbody id="accountingBody"><tr><td colspan="8">جاري حساب الذمم...</td></tr></tbody></table></div>
@@ -136,7 +136,24 @@ function clearBarcodeSearchInput(){
   input.dispatchEvent(new Event('input',{bubbles:true}));
   input.focus();
 }
-function prepareBarcodeScannerBurst(event){/* V327: manual typing must never be cleared; camera/scanner paths already inject scanned values explicitly. */
+let barcodeBurstV327={lastAt:0,fastKeys:0,armed:false};
+function prepareBarcodeScannerBurst(event){
+  const input=event?.target;if(!input||event.ctrlKey||event.metaKey||event.altKey||String(event.key||'').length!==1)return;
+  const now=Date.now(),gap=now-barcodeBurstV327.lastAt;
+  if(gap>120){barcodeBurstV327.fastKeys=0;barcodeBurstV327.armed=false}
+  else barcodeBurstV327.fastKeys++;
+  barcodeBurstV327.lastAt=now;
+  /* A real scanner emits several keys in a rapid burst. Never clear on the first/slow manual key. */
+  if(barcodeBurstV327.fastKeys>=3)barcodeBurstV327.armed=true;
+  if(barcodeBurstV327.armed&&input.value&&gap>25&&gap<120&&input.selectionStart===input.selectionEnd){
+    /* Keep the current burst intact; replacement of a completed scan is handled by Enter/select below. */
+  }
+}
+function armNextBarcodeScanV327(event){
+  if(event?.key!=='Enter')return;
+  const input=event.target;if(!input)return;
+  if(barcodeBurstV327.armed){setTimeout(()=>{try{input.select()}catch{}},0)}
+  barcodeBurstV327={lastAt:0,fastKeys:0,armed:false};
 }
 function cleanBarcodeScannerInput(value){let cleaned=dashboardArabicDigitsToLatin(value).normalize('NFKD').replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g,'').replace(/[\r\n\t\s]+/g,'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/-{2,}/g,'-');cleaned=cleaned.replace(/^-+/, '-').replace(/-+$/, '');if(/^-[0-9]+$/.test(cleaned))cleaned='MW'+cleaned;else if(/^MW[0-9]+$/.test(cleaned))cleaned='MW-'+cleaned.slice(2);return cleaned}
 let html5QrCode=null;
