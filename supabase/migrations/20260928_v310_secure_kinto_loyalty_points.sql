@@ -15,8 +15,6 @@ create unique index if not exists kinto_loyalty_one_redeem_per_order on public.k
 create unique index if not exists kinto_loyalty_one_restore_per_order on public.kinto_loyalty_ledger(order_id,event_type) where event_type='restore' and order_id is not null;
 alter table public.orders add column if not exists loyalty_points_earned bigint not null default 0;
 alter table public.orders add column if not exists loyalty_points_redeemed bigint not null default 0;
-alter table public.orders add column if not exists loyalty_discount numeric(20,4) not null default 0;
-alter table public.orders add column if not exists loyalty_currency text;
 alter table public.kinto_loyalty_settings enable row level security;
 alter table public.kinto_loyalty_wallets enable row level security;
 alter table public.kinto_loyalty_ledger enable row level security;
@@ -43,7 +41,7 @@ begin
    values(new.customer_id,new.id,'earn',whole,c,new.total_price,r,m,'delivered_order'); end if;
   new.loyalty_points_earned:=whole;
  end if;
- if coalesce(new.total_price,0)>0 and coalesce(new.loyalty_points_redeemed,0)=0 and coalesce(new.loyalty_discount,0)=0 and new.status<>'تم التسليم'
+ if coalesce(new.total_price,0)>0 and coalesce(new.loyalty_points_redeemed,0)=0 and coalesce(new.reward_discount_amount,0)=0 and new.status<>'تم التسليم'
  and not exists(select 1 from public.kinto_loyalty_ledger where order_id=new.id and event_type='redeem') then
   insert into public.kinto_loyalty_wallets(customer_id,currency) values(new.customer_id,c) on conflict do nothing;
   select points into bal from public.kinto_loyalty_wallets where customer_id=new.customer_id and currency=c for update;
@@ -51,16 +49,17 @@ begin
   if usep>0 then
    update public.kinto_loyalty_wallets set points=points-usep,updated_at=now() where customer_id=new.customer_id and currency=c;
    insert into public.kinto_loyalty_ledger(customer_id,order_id,event_type,points,currency,base_amount,note) values(new.customer_id,new.id,'redeem',-usep,c,new.total_price,'automatic_first_later_order');
-   new.loyalty_points_redeemed:=usep;new.loyalty_discount:=usep;new.loyalty_currency:=c;
+   new.loyalty_points_redeemed:=usep;new.reward_discount_amount:=usep;new.reward_discount_currency:=c;
+   new.reward_discount_snapshot:=jsonb_build_object('amount',usep,'currency',c,'source','kinto_points_v310','points',usep);
   end if;
  end if;
  cancelled:=coalesce(new.status,'') in('ملغي','ملغي من قبل العميل','رفض الطلب','مرفوض');
  if cancelled and not(coalesce(old.status,'') in('ملغي','ملغي من قبل العميل','رفض الطلب','مرفوض')) and coalesce(new.loyalty_points_redeemed,0)>0
  and not exists(select 1 from public.kinto_loyalty_ledger where order_id=new.id and event_type='restore') then
-  insert into public.kinto_loyalty_wallets(customer_id,currency,points) values(new.customer_id,coalesce(new.loyalty_currency,c),new.loyalty_points_redeemed)
+  insert into public.kinto_loyalty_wallets(customer_id,currency,points) values(new.customer_id,coalesce(new.reward_discount_currency,c),new.loyalty_points_redeemed)
   on conflict(customer_id,currency) do update set points=public.kinto_loyalty_wallets.points+excluded.points,updated_at=now();
-  insert into public.kinto_loyalty_ledger(customer_id,order_id,event_type,points,currency,note) values(new.customer_id,new.id,'restore',new.loyalty_points_redeemed,coalesce(new.loyalty_currency,c),'cancelled_order_restore');
-  new.loyalty_points_redeemed:=0;new.loyalty_discount:=0;new.loyalty_currency:=null;
+  insert into public.kinto_loyalty_ledger(customer_id,order_id,event_type,points,currency,note) values(new.customer_id,new.id,'restore',new.loyalty_points_redeemed,coalesce(new.reward_discount_currency,c),'cancelled_order_restore');
+  new.loyalty_points_redeemed:=0;new.reward_discount_amount:=0;new.reward_discount_currency:=null;new.reward_discount_snapshot:=null;
  end if;
  return new;
 end $$;
