@@ -2,8 +2,15 @@
 (()=>{'use strict';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const fmt=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0});
-const style=document.createElement('style');style.textContent='.reward-order-control-v112{display:none!important}.kinto-points-v310{padding:10px 0}.kp-store{padding:10px;border:1px solid #d6b65c55;border-radius:12px;margin:7px 0}.kp-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:7px}.kp-btn{border:1px solid #d6b65c88;border-radius:9px;padding:7px 10px;cursor:pointer}.kp-btn:disabled{opacity:.4;cursor:not-allowed}.kp-chip{display:inline-block;padding:4px 7px;border-radius:999px;margin:2px;border:1px solid #d6b65c55}.kp-expired{opacity:.58}.kp-used{opacity:.72}.kinto-points-v310 small{display:block;margin-top:4px}';document.head.appendChild(style);
+const style=document.createElement('style');style.textContent='#adminRewardPanel button,#rewardPanel button{display:none!important}#adminRewardPanel input,#rewardPanel input,#rewardPanel select{display:none!important}.reward-order-control-v112{display:none!important}.kinto-points-v310{padding:10px 0}.kp-store{padding:10px;border:1px solid #d6b65c55;border-radius:12px;margin:7px 0}.kp-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:7px}.kp-btn{border:1px solid #d6b65c88;border-radius:9px;padding:7px 10px;cursor:pointer}.kp-btn:disabled{opacity:.4;cursor:not-allowed}.kp-chip{display:inline-block;padding:4px 7px;border-radius:999px;margin:2px;border:1px solid #d6b65c55}.kp-expired{opacity:.58}.kp-used{opacity:.72}.kinto-points-v310 small{display:block;margin-top:4px}';document.head.appendChild(style);
 window.applyV112OrderReward=()=>alert('تم إلغاء الخصم اليدوي. مكافآت كل متجر مستقلة ويثبتها السيرفر.');
+function lockLegacyRewardMutations(){
+ const admin=document.getElementById('adminRewardPanel'),employee=document.getElementById('rewardPanel');
+ [admin,employee].filter(Boolean).forEach(p=>{p.querySelectorAll('button,input,select').forEach(el=>el.disabled=true)});
+ window.changeAdminReward=()=>alert('مكافآت KINTO ممولة من المتجر ولا تقبل منحاً أو سحباً يدوياً عاماً.');
+ window.changeReward=()=>alert('لوحة الموظف للمتابعة فقط. لا يمكن تعديل مكافآت KINTO يدوياً.');
+}
+setTimeout(lockLegacyRewardMutations,0);
 const sessionCustomer=()=>window.KintoCustomerSessionV150?.read?.();
 const storeName=(data,sid)=>data.wallets?.find(x=>String(x.store_id)===String(sid))?.store_name||data.coupons?.find(x=>String(x.store_id)===String(sid))?.store_name||'المتجر';
 const activeTotal=(data,sid,cur)=>data.coupons.filter(x=>x.status==='active'&&String(x.store_id)===String(sid)&&x.currency===cur).reduce((s,x)=>s+Number(x.points||0),0);
@@ -20,5 +27,5 @@ async function customer(){
  }catch(e){console.warn('KINTO rewards unavailable',e);box.innerHTML='<small>تعذر تحميل مكافآت المتاجر حالياً.</small>'}
 }
 if(typeof window.customerOrderMoneyBreakdown==='function'){const base=window.customerOrderMoneyBreakdown;window.customerOrderMoneyBreakdown=function(o){const x=base(o)||{},discount=Math.max(0,Number(o?.reward_discount_amount)||0);if('productTotal'in x){x.rewardDiscount=discount;x.grandTotal=x.productTotal===null?null:Math.max(0,Number(x.productTotal)-discount)+Math.max(0,Number(x.externalShippingFee)||0)+Math.max(0,Number(x.deliveryFee)||0)}return x}}
-window.KintoStoreRewardsV310={refreshCustomer:customer};setTimeout(customer,0);
+window.KintoStoreRewardsV310={refreshCustomer:customer};setTimeout(customer,0);setInterval(lockLegacyRewardMutations,1500);
 })();
