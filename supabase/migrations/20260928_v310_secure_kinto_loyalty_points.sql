@@ -91,10 +91,14 @@ revoke all on function public.kinto_normalize_currency_v310(text) from public,an
 
 create or replace function public.kinto_order_store_id_v310(o public.orders) returns text
 language plpgsql stable security definer set search_path=public as $$
-declare d jsonb;
+declare d jsonb;stores jsonb;sid text;
 begin
  d:=case when jsonb_typeof(o.details::jsonb)='object' then o.details::jsonb else '{}'::jsonb end;
- return nullif(trim(coalesce(d->>'store_id','')),'');
+ sid:=nullif(trim(coalesce(d->>'store_id','')),'');
+ if sid is not null then return sid; end if;
+ -- A bundle parent can contain several stores and must never be credited as one store.
+ if coalesce(d->>'source','')='local_cart_bundle' then return null; end if;
+ return null;
 exception when others then return null;
 end $$;
 revoke all on function public.kinto_order_store_id_v310(public.orders) from public,anon,authenticated;
