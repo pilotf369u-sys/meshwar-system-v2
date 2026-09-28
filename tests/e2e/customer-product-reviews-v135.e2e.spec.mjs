@@ -6,10 +6,13 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('customer reviews UI is isolated, responsive, and exposes camera plus device inputs', async ({ page }) => {
-  await page.addInitScript(() => sessionStorage.setItem('kinto_customer_review_session_v132', JSON.stringify({
-    token: 'e2e-review-token',
-    expiresAt: new Date(Date.now() + 3600000).toISOString()
-  })));
+  await page.addInitScript(() => {
+    localStorage.removeItem('kinto_customer_logged_out_v150');
+    sessionStorage.setItem('kinto_customer_review_session_v132', JSON.stringify({
+      token: 'e2e-review-token',
+      expiresAt: new Date(Date.now() + 3600000).toISOString()
+    }));
+  });
   await page.goto('/dashboard.html');
   await expect(page.locator('#customerCode')).toHaveText('CUS-E2E');
 
