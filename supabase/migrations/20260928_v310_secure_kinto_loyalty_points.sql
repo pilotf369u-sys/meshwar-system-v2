@@ -87,8 +87,10 @@ create or replace function public.kinto_normalize_currency_v310(v text) returns 
 language plpgsql immutable security definer set search_path=public as $$
 declare c text;
 begin
- c:=upper(trim(coalesce(nullif(v,''),'IQD'));
- if c in('
+ c:=upper(trim(coalesce(nullif(v,''),'IQD')));
+ if c in('$','US$') then c:='USD'; end if;
+ if c in('TL','₺') then c:='TRY'; end if;
+ return c;
 end $$;
 revoke all on function public.kinto_normalize_currency_v310(text) from public,anon,authenticated;
 
