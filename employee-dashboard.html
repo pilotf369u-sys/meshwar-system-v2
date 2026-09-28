@@ -24,7 +24,7 @@
 <div id="employeeWorkspaceHint" class="employee-workspace-hint">معالجة الشحنات — استخدم حالات الطلبات للتنقل بين مراحل الدورة.</div>
 <div id="pipelineTabs" class="pipeline-tabs"></div>
 <div id="ordersPanel" class="orders-panel">
-<div class="toolbar"><b>بحث / باركود:</b><input id="employeeOrderSearch" type="text" placeholder="MW / Sipariş No / العميل / الهاتف" oninput="employeeBarcodeSearchInput(event)" onkeyup="employeeBarcodeSearchKeyup(event)" onkeydown="prepareBarcodeScannerBurst(event);handlePipelineSearchKeydown(event)" autocomplete="off"><button type="button" data-clear-search="employeeOrderSearch" title="مسح البحث" aria-label="مسح البحث" onclick="clearBarcodeSearchInput()" style="width:36px;height:36px;padding:0;border-radius:50%;background:#64748b;color:#fff;font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">×</button><button class="btn btn-blue" type="button" onclick="startCameraScanner()">📷 مسح بالكاميرا</button><b>عدد العناصر:</b><select id="employeeOrderPageSize" onchange="changePipelinePageSize(this.value)"><option value="20" selected>20</option><option value="40">40</option></select><span id="activePipelineLabel" class="employee-badge"></span></div>
+<div class="toolbar"><b>بحث / باركود:</b><input id="employeeOrderSearch" type="text" placeholder="MW / Sipariş No / العميل / الهاتف" oninput="employeeBarcodeSearchInput(event)" onkeyup="employeeBarcodeSearchKeyup(event)" onkeydown="prepareBarcodeScannerBurst(event);armNextBarcodeScanV327(event);handlePipelineSearchKeydown(event)" autocomplete="off"><button type="button" data-clear-search="employeeOrderSearch" title="مسح البحث" aria-label="مسح البحث" onclick="clearBarcodeSearchInput()" style="width:36px;height:36px;padding:0;border-radius:50%;background:#64748b;color:#fff;font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">×</button><button class="btn btn-blue" type="button" onclick="startCameraScanner()">📷 مسح بالكاميرا</button><b>عدد العناصر:</b><select id="employeeOrderPageSize" onchange="changePipelinePageSize(this.value)"><option value="20" selected>20</option><option value="40">40</option></select><span id="activePipelineLabel" class="employee-badge"></span></div>
 <div id="branchTools" class="branch-tools"><b>الفرع:</b><select id="branchFilter" onchange="onBranchFilterChange()"><option value="">كل الفروع</option></select><button class="btn btn-green" onclick="exportSelectedBranchCsv()"><i class="fa-solid fa-file-excel"></i> تصدير Excel</button><button class="btn btn-blue" onclick="printSelectedBranchReport()"><i class="fa-solid fa-print"></i> طباعة / PDF</button></div>
 <div class="table-wrap"><table><thead><tr><th>رقم الطلب / Sipariş / باركود</th><th>العميل / الكود</th><th>الكمية</th><th>السعر / الدفع</th><th>الفرع</th><th>الحالة</th><th>التواصل</th><th>حفظ</th></tr></thead><tbody id="pipelineOrdersBody"><tr><td colspan="8">جاري التحميل...</td></tr></tbody></table></div>
 <div class="pagination-bar"><button id="pipelinePrev" onclick="changePipelinePage(-1)">السابق</button><span id="pipelinePages"></span><button id="pipelineNext" onclick="changePipelinePage(1)">التالي</button><span id="pipelineCountInfo" class="mini"></span></div>
@@ -56,7 +56,24 @@ function clearBarcodeSearchInput(){
   input.dispatchEvent(new Event('input',{bubbles:true}));
   input.focus();
 }
-function prepareBarcodeScannerBurst(event){/* V327: manual typing must never be cleared; camera/scanner paths already inject scanned values explicitly. */
+let barcodeBurstV327={lastAt:0,fastKeys:0,armed:false};
+function prepareBarcodeScannerBurst(event){
+  const input=event?.target;if(!input||event.ctrlKey||event.metaKey||event.altKey||String(event.key||'').length!==1)return;
+  const now=Date.now(),gap=now-barcodeBurstV327.lastAt;
+  if(gap>120){barcodeBurstV327.fastKeys=0;barcodeBurstV327.armed=false}
+  else barcodeBurstV327.fastKeys++;
+  barcodeBurstV327.lastAt=now;
+  /* A real scanner emits several keys in a rapid burst. Never clear on the first/slow manual key. */
+  if(barcodeBurstV327.fastKeys>=3)barcodeBurstV327.armed=true;
+  if(barcodeBurstV327.armed&&input.value&&gap>25&&gap<120&&input.selectionStart===input.selectionEnd){
+    /* Keep the current burst intact; replacement of a completed scan is handled by Enter/select below. */
+  }
+}
+function armNextBarcodeScanV327(event){
+  if(event?.key!=='Enter')return;
+  const input=event.target;if(!input)return;
+  if(barcodeBurstV327.armed){setTimeout(()=>{try{input.select()}catch{}},0)}
+  barcodeBurstV327={lastAt:0,fastKeys:0,armed:false};
 }
 function cleanBarcodeScannerInput(value){let cleaned=dashboardArabicDigitsToLatin(value).normalize('NFKD').replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g,'').replace(/[\r\n\t\s]+/g,'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/-{2,}/g,'-');cleaned=cleaned.replace(/^-+/, '-').replace(/-+$/, '');if(/^-[0-9]+$/.test(cleaned))cleaned='MW'+cleaned;else if(/^MW[0-9]+$/.test(cleaned))cleaned='MW-'+cleaned.slice(2);return cleaned}
 let html5QrCode=null;
