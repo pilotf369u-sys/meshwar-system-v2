@@ -44,7 +44,8 @@ create table if not exists public.kinto_loyalty_coupons(
   issued_at timestamptz not null default now(),
   expires_at timestamptz not null,
   used_order_id text,
-  used_at timestamptz
+  used_at timestamptz,
+  funded_by text not null default 'vendor' check(funded_by in('vendor','kinto'))
 );
 create index if not exists kinto_loyalty_coupons_customer_store_idx on public.kinto_loyalty_coupons(customer_id,store_id,currency,issued_at);
 create index if not exists kinto_loyalty_coupons_active_store_idx on public.kinto_loyalty_coupons(customer_id,store_id,currency,expires_at) where status='active';
@@ -61,7 +62,8 @@ create table if not exists public.kinto_loyalty_ledger(
   eligible_product_total numeric(20,4),
   note text,
   actor_id text,
-  funded_by text check(funded_by is null or funded_by in('vendor','kinto')),
+  funded_by text check(funded_by is null or funded_by in('vendor','kinto','mixed')),
+  funding_snapshot jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 create unique index if not exists kinto_loyalty_one_earn_per_store_order
@@ -92,13 +94,13 @@ revoke all on function public.kinto_normalize_currency_v310(text) from public,an
 
 create or replace function public.kinto_order_store_id_v310(o public.orders) returns text
 language plpgsql stable security definer set search_path=public as $$
-declare d jsonb;stores jsonb;sid text;
+declare d jsonb;sid text;
 begin
  d:=case when jsonb_typeof(o.details::jsonb)='object' then o.details::jsonb else '{}'::jsonb end;
- sid:=nullif(trim(coalesce(d->>'store_id','')),'');
- if sid is not null then return sid; end if;
  -- A bundle parent can contain several stores and must never be credited as one store.
  if coalesce(d->>'source','')='local_cart_bundle' then return null; end if;
+ sid:=nullif(trim(coalesce(d->>'store_id','')),'');
+ if sid is not null then return sid; end if;
  return null;
 exception when others then return null;
 end $$;
@@ -119,8 +121,8 @@ begin
    fractional_carry=greatest(0,least(coalesce(p_fraction,0),.99999999)),updated_at=now()
  where customer_id=p_customer_id and store_id=p_store_id and currency=c returning progress_points into cur;
  while cur>=unit loop
-   insert into public.kinto_loyalty_coupons(customer_id,store_id,currency,points,source_order_id,expires_at)
-   values(p_customer_id,p_store_id,c,unit,p_source_order_id,now()+make_interval(days=>days));
+   insert into public.kinto_loyalty_coupons(customer_id,store_id,currency,points,source_order_id,expires_at,funded_by)
+   values(p_customer_id,p_store_id,c,unit,p_source_order_id,now()+make_interval(days=>days),'vendor');
    cur:=cur-unit;n:=n+1;
  end loop;
  update public.kinto_loyalty_wallets set progress_points=cur,updated_at=now()
@@ -186,7 +188,7 @@ grant execute on function public.customer_loyalty_summary_v310(text) to anon,aut
 
 create or replace function public.customer_apply_coupon_v310(p_session_token text,p_order_id text,p_points bigint) returns jsonb
 language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
-declare cid text;o public.orders%rowtype;c text;sid text;ratio numeric;unit bigint;need integer;ids uuid[];cnt integer;cap bigint;
+declare cid text;o public.orders%rowtype;c text;sid text;ratio numeric;unit bigint;need integer;ids uuid[];cnt integer;cap bigint;vendor_points bigint:=0;kinto_points bigint:=0;fund text;
 begin
  cid:=private.require_customer_session_v150(p_session_token); if coalesce(cid,'')='' then raise exception 'invalid customer session'; end if;
  if p_points not in(1000,3000,5000) then raise exception 'invalid coupon tier'; end if;
@@ -201,12 +203,14 @@ begin
    (select id,expires_at,issued_at from public.kinto_loyalty_coupons where customer_id=cid and store_id=sid and currency=c and status='active' and expires_at>now()
     order by expires_at,issued_at for update skip locked limit need)q;
  if coalesce(cnt,0)<>need then raise exception 'insufficient active store coupons';end if;
+ select coalesce(sum(points) filter(where funded_by='vendor'),0),coalesce(sum(points) filter(where funded_by='kinto'),0) into vendor_points,kinto_points from public.kinto_loyalty_coupons where id=any(ids);
+ fund:=case when vendor_points>0 and kinto_points>0 then 'mixed' when kinto_points>0 then 'kinto' else 'vendor' end;
  update public.kinto_loyalty_coupons set status='used',used_order_id=o.id::text,used_at=now() where id=any(ids);
  update public.orders set loyalty_points_redeemed=p_points,reward_discount_amount=p_points,reward_discount_currency=c,
-   reward_discount_snapshot=jsonb_build_object('amount',p_points,'currency',c,'source','kinto_store_coupon_v310','funded_by','vendor','store_id',sid,'points',p_points,'coupon_ids',to_jsonb(ids),'product_total',o.total_price,'shipping_discount',0)
+   reward_discount_snapshot=jsonb_build_object('amount',p_points,'currency',c,'source','kinto_store_coupon_v310','funded_by',fund,'vendor_points',vendor_points,'kinto_points',kinto_points,'store_id',sid,'points',p_points,'coupon_ids',to_jsonb(ids),'product_total',o.total_price,'shipping_discount',0)
  where id=o.id;
- insert into public.kinto_loyalty_ledger(customer_id,store_id,order_id,event_type,points,currency,eligible_product_total,note)
- values(cid,sid,o.id::text,'redeem',-p_points,c,o.total_price,'customer_selected_store_coupon');
+ insert into public.kinto_loyalty_ledger(customer_id,store_id,order_id,event_type,points,currency,eligible_product_total,note,funded_by,funding_snapshot)
+ values(cid,sid,o.id::text,'redeem',-p_points,c,o.total_price,'customer_selected_store_coupon',fund,jsonb_build_object('vendor_points',vendor_points,'kinto_points',kinto_points,'coupon_ids',to_jsonb(ids)));
  return jsonb_build_object('ok',true,'points',p_points,'currency',c,'store_id',sid,'order_id',o.id);
 end $$;
 revoke all on function public.customer_apply_coupon_v310(text,text,bigint) from public;
@@ -238,11 +242,11 @@ begin
  if not exists(select 1 from public.local_stores where id::text=p_store_id) then raise exception 'store not found';end if;
  c:=public.kinto_normalize_currency_v310(p_currency);units:=p_points/1000;exp:=now()+interval '30 days';
  for i in 1..units loop
-   insert into public.kinto_loyalty_coupons(customer_id,store_id,currency,points,status,issued_at,expires_at)
-   values(p_customer_id,p_store_id,c,1000,'active',now(),exp);
+   insert into public.kinto_loyalty_coupons(customer_id,store_id,currency,points,status,issued_at,expires_at,funded_by)
+   values(p_customer_id,p_store_id,c,1000,'active',now(),exp,fund);
  end loop;
- insert into public.kinto_loyalty_ledger(customer_id,store_id,event_type,points,currency,note,actor_id,funded_by)
- values(p_customer_id,p_store_id,'admin_adjustment',p_points,c,reason,aid,fund);
+ insert into public.kinto_loyalty_ledger(customer_id,store_id,event_type,points,currency,note,actor_id,funded_by,funding_snapshot)
+ values(p_customer_id,p_store_id,'admin_adjustment',p_points,c,reason,aid,fund,jsonb_build_object('vendor_points',case when fund='vendor' then p_points else 0 end,'kinto_points',case when fund='kinto' then p_points else 0 end));
  return jsonb_build_object('ok',true,'customer_id',p_customer_id,'store_id',p_store_id,'points',p_points,'currency',c,'funded_by',fund,'expires_at',exp);
 end $$;
 revoke all on function public.admin_grant_loyalty_v310(text,text,text,text,bigint,text,text) from public;
