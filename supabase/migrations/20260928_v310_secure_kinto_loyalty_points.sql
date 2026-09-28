@@ -232,7 +232,8 @@ begin
   if coalesce(eid,'')='' then raise exception 'invalid employee session'; end if;
   return jsonb_build_object(
     'wallets',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'progress_points',progress_points) order by customer_id,currency) from public.kinto_loyalty_wallets),'[]'::jsonb),
-    'coupons',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'status',case when status='used' then 'used' when expires_at<=now() then 'expired' else 'active' end,'points',points,'expires_at',expires_at)) from public.kinto_loyalty_coupons),'[]'::jsonb)
+    'coupons',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'status',case when status='used' then 'used' when expires_at<=now() then 'expired' else 'active' end,'points',points,'expires_at',expires_at)) from public.kinto_loyalty_coupons),'[]'::jsonb),
+    'customers',coalesce((select jsonb_agg(jsonb_build_object('id',id,'name',name,'phone',phone,'code',code) order by name) from public.customers),'[]'::jsonb)
   );
 end $$;
 revoke all on function public.employee_loyalty_overview_v310(text) from public;
@@ -246,7 +247,8 @@ begin
   if coalesce(aid,'')='' then raise exception 'invalid admin session'; end if;
   return jsonb_build_object(
     'wallets',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'progress_points',progress_points) order by customer_id,currency) from public.kinto_loyalty_wallets),'[]'::jsonb),
-    'coupons',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'status',case when status='used' then 'used' when expires_at<=now() then 'expired' else 'active' end,'points',points,'expires_at',expires_at,'used_order_id',used_order_id)) from public.kinto_loyalty_coupons),'[]'::jsonb)
+    'coupons',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'currency',currency,'status',case when status='used' then 'used' when expires_at<=now() then 'expired' else 'active' end,'points',points,'expires_at',expires_at,'used_order_id',used_order_id)) from public.kinto_loyalty_coupons),'[]'::jsonb),
+    'customers',coalesce((select jsonb_agg(jsonb_build_object('id',id,'name',name,'phone',phone,'code',code) order by name) from public.customers),'[]'::jsonb)
   );
 end $$;
 revoke all on function public.admin_loyalty_overview_v310(text) from public;
