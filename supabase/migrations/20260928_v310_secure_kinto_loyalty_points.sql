@@ -61,6 +61,7 @@ create table if not exists public.kinto_loyalty_ledger(
   eligible_product_total numeric(20,4),
   note text,
   actor_id text,
+  funded_by text check(funded_by is null or funded_by in('vendor','kinto')),
   created_at timestamptz not null default now()
 );
 create unique index if not exists kinto_loyalty_one_earn_per_store_order
@@ -223,6 +224,29 @@ begin
  'coupons',coalesce((select jsonb_agg(jsonb_build_object('customer_id',customer_id,'store_id',store_id,'currency',currency,'status',case when status='used' then 'used' when expires_at<=now() then 'expired' else 'active' end,'points',points,'expires_at',expires_at)) from public.kinto_loyalty_coupons),'[]'::jsonb));
 end $$;
 revoke all on function public.employee_loyalty_overview_v310(text) from public;grant execute on function public.employee_loyalty_overview_v310(text) to anon,authenticated;
+
+create or replace function public.admin_grant_loyalty_v310(p_session_token text,p_customer_id text,p_store_id text,p_currency text,p_points bigint,p_funded_by text,p_reason text) returns jsonb
+language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
+declare aid text;c text;reason text;fund text;units bigint;i bigint;exp timestamptz;
+begin
+ aid:=private.require_admin_session_v147(p_session_token);if coalesce(aid,'')='' then raise exception 'invalid admin session';end if;
+ if coalesce(trim(p_customer_id),'')='' or coalesce(trim(p_store_id),'')='' then raise exception 'customer and store are required';end if;
+ if p_points not in(1000,3000,5000) then raise exception 'allowed grant tiers are 1000, 3000 or 5000';end if;
+ fund:=lower(trim(coalesce(p_funded_by,'')));if fund not in('vendor','kinto') then raise exception 'invalid funding source';end if;
+ reason:=trim(coalesce(p_reason,''));if length(reason)<3 then raise exception 'grant reason is required';end if;
+ if not exists(select 1 from public.customers where id::text=p_customer_id) then raise exception 'customer not found';end if;
+ if not exists(select 1 from public.local_stores where id::text=p_store_id) then raise exception 'store not found';end if;
+ c:=public.kinto_normalize_currency_v310(p_currency);units:=p_points/1000;exp:=now()+interval '30 days';
+ for i in 1..units loop
+   insert into public.kinto_loyalty_coupons(customer_id,store_id,currency,points,status,issued_at,expires_at)
+   values(p_customer_id,p_store_id,c,1000,'active',now(),exp);
+ end loop;
+ insert into public.kinto_loyalty_ledger(customer_id,store_id,event_type,points,currency,note,actor_id,funded_by)
+ values(p_customer_id,p_store_id,'admin_adjustment',p_points,c,reason,aid,fund);
+ return jsonb_build_object('ok',true,'customer_id',p_customer_id,'store_id',p_store_id,'points',p_points,'currency',c,'funded_by',fund,'expires_at',exp);
+end $$;
+revoke all on function public.admin_grant_loyalty_v310(text,text,text,text,bigint,text,text) from public;
+grant execute on function public.admin_grant_loyalty_v310(text,text,text,text,bigint,text,text) to anon,authenticated;
 
 create or replace function public.admin_loyalty_overview_v310(p_session_token text) returns jsonb
 language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
