@@ -13,8 +13,8 @@ test('production reviews script injects UI and calls the secure ready-products R
     }));
   });
 
-  await page.goto('/dashboard.html');
-  await page.waitForFunction(() => window.KintoCustomerReviewsV135?.version === 'v135');
+  await page.goto('/dashboard.html', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.KintoCustomerReviewsV135?.version === 'v135', null, { timeout: 10000 });
 
   await expect(page.locator('.review-tab-btn')).toBeVisible();
   await expect(page.locator('#productReviews')).toBeAttached();
@@ -48,8 +48,8 @@ test('production reviews script blocks review submission in staff customer read-
     }));
   });
 
-  await page.goto('/dashboard.html');
-  await page.waitForFunction(() => window.KintoCustomerReviewsV135?.version === 'v135');
+  await page.goto('/dashboard.html', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.KintoCustomerReviewsV135?.version === 'v135', null, { timeout: 10000 });
   await expect(page.locator('.review-tab-btn')).toBeVisible();
 
   const before = await page.evaluate(() => (window.__MESH_E2E_RPC_CALLS || []).filter(
