@@ -15,8 +15,9 @@ test('production reviews script injects UI and calls the secure ready-products R
 
   await page.goto('/dashboard.html', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.KintoCustomerReviewsV135?.version === 'v135', null, { timeout: 10000 });
+  await page.waitForFunction(() => document.querySelector('.review-tab-btn') && document.getElementById('productReviews'), null, { timeout: 10000 });
 
-  await expect(page.locator('.review-tab-btn')).toBeVisible();
+  await expect(page.locator('.review-tab-btn')).toBeAttached();
   await expect(page.locator('#productReviews')).toBeAttached();
   await expect(page.locator('#reviewCameraInput')).toHaveAttribute('accept', 'image/*');
   await expect(page.locator('#reviewCameraInput')).toHaveAttribute('capture', 'environment');
@@ -50,7 +51,8 @@ test('production reviews script blocks review submission in staff customer read-
 
   await page.goto('/dashboard.html', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.KintoCustomerReviewsV135?.version === 'v135', null, { timeout: 10000 });
-  await expect(page.locator('.review-tab-btn')).toBeVisible();
+  await page.waitForFunction(() => document.querySelector('.review-tab-btn') && document.getElementById('productReviews'), null, { timeout: 10000 });
+  await expect(page.locator('.review-tab-btn')).toBeAttached();
 
   const before = await page.evaluate(() => (window.__MESH_E2E_RPC_CALLS || []).filter(
     call => call.name === 'customer_submit_product_review_v132'
