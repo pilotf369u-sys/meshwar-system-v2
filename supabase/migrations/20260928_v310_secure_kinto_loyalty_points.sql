@@ -96,12 +96,13 @@ revoke all on function public.kinto_normalize_currency_v310(text) from public,an
 
 create or replace function public.kinto_order_store_id_v310(o public.orders) returns text
 language plpgsql stable security definer set search_path=public as $$
-declare d jsonb;sid text;
+declare d jsonb;sid text;multi_store_text text;
 begin
  d:=case when jsonb_typeof(o.details::jsonb)='object' then o.details::jsonb else '{}'::jsonb end;
  -- V97/V101 local-cart rows are already one independently numbered order per store.
- -- Only reject an actual multi-store parent; source=local_cart_bundle alone is not a parent marker.
- if coalesce((d->>'multi_store')::boolean,false) then return null; end if;
+ -- Only reject an actual multi-store parent; parse legacy marker defensively so malformed metadata cannot break order updates.
+ multi_store_text:=lower(trim(coalesce(d->>'multi_store','')));
+ if multi_store_text in('true','t','1','yes','y','on') then return null; end if;
  sid:=nullif(trim(coalesce(d->>'store_id','')),'');
  if sid is not null and (coalesce(d->>'source','')<>'local_cart_bundle' or coalesce(d->>'checkout_contract','')='independent_vendor_orders') then return sid; end if;
  return null;
@@ -161,8 +162,18 @@ begin
  and coalesce(new.loyalty_points_redeemed,0)>0 and sid is not null
  and not exists(select 1 from public.kinto_loyalty_ledger where order_id=new.id::text and store_id=sid and event_type='restore') then
    update public.kinto_loyalty_coupons set status='active',used_order_id=null,used_at=null where used_order_id=new.id::text and store_id=sid and status='used';
-   insert into public.kinto_loyalty_ledger(customer_id,store_id,order_id,event_type,points,currency,note)
-   values(new.customer_id::text,sid,new.id::text,'restore',new.loyalty_points_redeemed,coalesce(new.reward_discount_currency,c),'cancelled_order_original_expiry_restored');
+   insert into public.kinto_loyalty_ledger(customer_id,store_id,order_id,event_type,points,currency,note,funded_by,funding_snapshot)
+   values(
+     new.customer_id::text,sid,new.id::text,'restore',new.loyalty_points_redeemed,coalesce(new.reward_discount_currency,c),
+     'cancelled_order_original_expiry_restored',
+     nullif(coalesce(new.reward_discount_snapshot->>'funded_by',''),''),
+     jsonb_build_object(
+       'vendor_points',coalesce((new.reward_discount_snapshot->>'vendor_points')::numeric,0),
+       'kinto_points',coalesce((new.reward_discount_snapshot->>'kinto_points')::numeric,0),
+       'coupon_ids',coalesce(new.reward_discount_snapshot->'coupon_ids','[]'::jsonb),
+       'restored_original_expiry',true
+     )
+   );
    new.loyalty_points_redeemed:=0;new.reward_discount_amount:=0;new.reward_discount_currency:=null;new.reward_discount_snapshot:=null;
  end if;
  return new;
