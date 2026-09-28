@@ -202,7 +202,7 @@ create or replace function public.customer_loyalty_summary_v310(p_session_token 
 language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
 declare cid text;visible_days integer;ratio numeric;unit bigint;
 begin
- cid:=private.require_customer_session_v150(p_session_token); if coalesce(cid,'')='' then raise exception 'invalid customer session'; end if;
+ cid:=private.require_customer_review_session(p_session_token)::text; if coalesce(cid,'')='' then raise exception 'invalid customer session'; end if;
  select expired_visible_days,max_order_ratio,coupon_unit into visible_days,ratio,unit from public.kinto_loyalty_settings where id=1;
  return jsonb_build_object(
  'wallets',coalesce((select jsonb_agg(jsonb_build_object('store_id',w.store_id,'store_name',coalesce(s.store_name,w.store_id),'currency',w.currency,'progress_points',w.progress_points) order by coalesce(s.store_name,w.store_id),w.currency)
@@ -226,7 +226,7 @@ create or replace function public.customer_apply_coupon_v310(p_session_token tex
 language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
 declare cid text;o public.orders%rowtype;c text;sid text;ratio numeric;unit bigint;need integer;ids uuid[];cnt integer;cap bigint;vendor_points bigint:=0;kinto_points bigint:=0;fund text;
 begin
- cid:=private.require_customer_session_v150(p_session_token); if coalesce(cid,'')='' then raise exception 'invalid customer session'; end if;
+ cid:=private.require_customer_review_session(p_session_token)::text; if coalesce(cid,'')='' then raise exception 'invalid customer session'; end if;
  if p_points not in(1000,3000,5000) then raise exception 'invalid coupon tier'; end if;
  select * into o from public.orders where id::text=p_order_id for update;
  if not found or o.customer_id::text<>cid then raise exception 'order not found'; end if;
