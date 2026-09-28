@@ -97,10 +97,11 @@ language plpgsql stable security definer set search_path=public as $$
 declare d jsonb;sid text;
 begin
  d:=case when jsonb_typeof(o.details::jsonb)='object' then o.details::jsonb else '{}'::jsonb end;
- -- A bundle parent can contain several stores and must never be credited as one store.
- if coalesce(d->>'source','')='local_cart_bundle' then return null; end if;
+ -- V97/V101 local-cart rows are already one independently numbered order per store.
+ -- Only reject an actual multi-store parent; source=local_cart_bundle alone is not a parent marker.
+ if coalesce((d->>'multi_store')::boolean,false) then return null; end if;
  sid:=nullif(trim(coalesce(d->>'store_id','')),'');
- if sid is not null then return sid; end if;
+ if sid is not null and (coalesce(d->>'source','')<>'local_cart_bundle' or coalesce(d->>'checkout_contract','')='independent_vendor_orders') then return sid; end if;
  return null;
 exception when others then return null;
 end $$;
