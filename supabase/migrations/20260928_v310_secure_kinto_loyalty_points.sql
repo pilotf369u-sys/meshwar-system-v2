@@ -88,7 +88,7 @@ language plpgsql immutable security definer set search_path=public as $$
 declare c text;
 begin
  c:=upper(trim(coalesce(v,'IQD'))); if c in('$','US$') then c:='USD'; end if; if c in('TL','₺') then c:='TRY'; end if;
- if c not in('USD','IQD','TRY') then raise exception 'unsupported currency'; end if; return c;
+ if c<>'IQD' then raise exception 'KINTO_V310_REWARDS_REQUIRE_IQD'; end if; return c;
 end $$;
 revoke all on function public.kinto_normalize_currency_v310(text) from public,anon,authenticated;
 
@@ -114,6 +114,7 @@ create or replace function public.kinto_credit_points_v310(
 declare c text;unit bigint;days integer;cur bigint;n bigint:=0;
 begin
  if coalesce(p_customer_id,'')='' or coalesce(p_store_id,'')='' then raise exception 'customer/store required'; end if;
+ if not exists(select 1 from public.local_stores s where s.id::text=p_store_id and upper(trim(coalesce(nullif(s.exchange_target_currency,''),nullif(s.default_currency,''),'IQD')))='IQD') then raise exception 'KINTO_V310_STORE_REWARDS_REQUIRE_IQD'; end if;
  if coalesce(p_whole_points,0)<0 then raise exception 'negative points not allowed'; end if;
  c:=public.kinto_normalize_currency_v310(p_currency);
  select coupon_unit,coupon_days into unit,days from public.kinto_loyalty_settings where id=1;
