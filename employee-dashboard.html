@@ -781,3 +781,25 @@ html{background:var(--emp-navy);color-scheme:dark}body{background:radial-gradien
   switchPipeline=window.switchPipeline;
 })();
 </script>
+<script id="employee-sidebar-counts-v364">
+(()=>{
+  window.refreshPipelineCounts=async function(){
+    try{
+      const sb=await ensureEmployeeSupabase();
+      const {data,error}=await sb.from('orders').select('status,branch_id,branch_name').limit(10000);
+      if(error)throw error;
+      const rows=data||[],next={};
+      Object.entries(PIPELINES).forEach(([k,p])=>{
+        if(p.all){next[k]=rows.length;return}
+        if(p.rewards){next[k]=employeeRewardRows.length;return}
+        if(p.branchAny){next[k]=rows.filter(o=>cloudId(o.branch_id)||String(o.branch_name||'').trim()).length;return}
+        next[k]=rows.filter(o=>(p.statuses||[]).includes(o.status)).length;
+      });
+      globalPipelineCounts=next;
+      Object.entries(next).forEach(([k,n])=>{const el=document.getElementById('count-'+k);if(el)el.innerText=n});
+    }catch(e){console.error('Employee sidebar counters:',e)}
+  };
+  refreshPipelineCounts=window.refreshPipelineCounts;
+  window.addEventListener('load',()=>setTimeout(()=>refreshPipelineCounts(),0));
+})();
+</script>
