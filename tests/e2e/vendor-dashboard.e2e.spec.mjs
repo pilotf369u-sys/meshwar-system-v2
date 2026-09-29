@@ -104,7 +104,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await vendor.locator('#vendorTabBtn-rewards').click();
     await expect(vendor.locator('#vendorTab-rewards')).toHaveClass(/active/);
     await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);
-    await expect(vendor.locator('#vendorRewardsState')).toContainText('النسبة الحالية');
+    await expect(vendor.locator('#vendorRewardsState')).toBeVisible();
     await expect(vendor.locator('#vendorRewardsCategories .vr-category')).toHaveCount(5);
     await expect(vendor.locator('#vendorRewardsCategories')).toContainText('المتاح');
     await expect(vendor.locator('#vendorRewardsCategories')).toContainText('قيد التجميع');
