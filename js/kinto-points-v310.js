@@ -18,5 +18,14 @@ async function customer(){
  }catch(e){console.warn('KINTO rewards unavailable',e);box.innerHTML='<small>تعذر تحميل مكافآت المتاجر حالياً.</small>'}
 }
 if(typeof window.customerOrderMoneyBreakdown==='function'){const base=window.customerOrderMoneyBreakdown;window.customerOrderMoneyBreakdown=function(o){const x=base(o)||{},discount=Math.max(0,Number(o?.reward_discount_amount)||0);if('productTotal'in x){x.rewardDiscount=discount;x.grandTotal=x.productTotal===null?null:Math.max(0,Number(x.productTotal)-discount)+Math.max(0,Number(x.externalShippingFee)||0)+Math.max(0,Number(x.deliveryFee)||0)}return x}}
-window.KintoStoreRewardsV310={refreshCustomer:customer};setTimeout(customer,0);
+async function applyCouponToOrder(orderId,points){
+ const session=sessionCustomer();if(!session?.token||!orderId)return{ok:false,error:'missing_session_or_order'};
+ const sb=await ensureCustomerPortalSupabase();
+ const {error}=await sb.rpc('customer_apply_coupon_v310',{p_session_token:session.token,p_order_id:orderId,p_points:Number(points)});
+ if(error)throw error;
+ await customer();
+ if(typeof loadCustomerOrdersFromCloud==='function'&&window.currentCustomerCloud?.id)await loadCustomerOrdersFromCloud(window.currentCustomerCloud.id);
+ return{ok:true}
+}
+window.KintoStoreRewardsV310={refreshCustomer:customer,applyCouponToOrder};setTimeout(customer,0);
 })();
