@@ -202,6 +202,7 @@ Object.assign(window,{switchCustomerTab,openCustomerOrderDetails,closeCustomerOr
 <script src="js/customer-local-cart-v125.js?v=20260909-v125"></script>
 <script src="js/kinto-bundle-ui-v93.js?v=20260905-v118"></script>
 <script defer src="js/kinto-points-v310.js?v=20260928-v310"></script>
+<script>/* CUSTOMER_REWARDS_DRAWER_V336 — isolated cache-safe bridge; protected drawer URL remains unchanged. */document.addEventListener('click',function(event){const button=event.target?.closest?.('[data-account-rewards]');if(!button)return;event.preventDefault();event.stopImmediatePropagation();window.KintoCustomerNavigationV156?.close?.(false);const target=document.getElementById('rewardStatusBadge')?.closest('.info-card')||document.getElementById('rewardStatusBadge');window.KintoStoreRewardsV310?.refreshCustomer?.();if(target)setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'center'}),50)},true);</script>
 <script id="kinto-v93-bundle-adapter">
 /* KINTO_V93_BUNDLE_ADAPTER — canonical Bundle details + invoice bridge. */
 (()=>{'use strict';
