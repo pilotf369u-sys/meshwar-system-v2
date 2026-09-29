@@ -14,10 +14,18 @@ async function customer(){
  const stores=[...new Set([...wallets.map(x=>String(x.store_id)),...coupons.map(x=>String(x.store_id))])].filter(Boolean);
  box.innerHTML='<div class="kinto-points-v310"><b>⭐ مكافآتي</b><small>مكافآت كل متجر مستقلة. الكوبون صالح 30 يوماً، والشحن لا يدخل في الخصم.</small>'+
  (stores.length?stores.map(sid=>{const ws=wallets.filter(x=>String(x.store_id)===sid),curr=[...new Set([...ws.map(x=>x.currency),...coupons.filter(x=>String(x.store_id)===sid).map(x=>x.currency)])],available=curr.map(c=>fmt(activeTotal(data,sid,c))+' '+esc(c)).join(' / ')||'0',progress=ws.map(w=>fmt(w.progress_points)+' / 1,000 '+esc(w.currency)).join(' · ')||'0 / 1,000';
- const eligible=orders.filter(o=>String(o.store_id)===sid);return '<div class="kp-store"><b>'+esc(storeName(data,sid))+'</b><div>المتاح: '+available+'</div><small>التقدم: '+progress+'</small><div>'+history(data,sid)+'</div>'+(eligible.length?'<div class="kp-row"><select data-kp-order="'+esc(sid)+'">'+eligible.map(o=>'<option value="'+esc(o.id)+'" data-cur="'+esc(o.currency)+'" data-cap="'+Number(o.max_coupon||0)+'">'+esc(o.order_code)+' · حد '+fmt(o.max_coupon)+' '+esc(o.currency)+'</option>').join('')+'</select>'+[1000,3000,5000].map(n=>'<button class="kp-btn" data-kp-use="'+n+'" data-store="'+esc(sid)+'">'+fmt(n)+'</button>').join('')+'</div>':'')+'</div>'}).join(''):'<small>لا توجد مكافآت متجر حتى الآن.</small>')+'</div>';
- box.querySelectorAll('[data-kp-use]').forEach(b=>b.addEventListener('click',async()=>{const sid=b.dataset.store,sel=box.querySelector('[data-kp-order="'+CSS.escape(sid)+'"]');if(!sel)return;const opt=sel.options[sel.selectedIndex],points=Number(b.dataset.kpUse),cur=opt.dataset.cur,cap=Number(opt.dataset.cap||0);if(points>cap||points>activeTotal(data,sid,cur))return alert('هذا المستوى غير متاح لهذا الطلب أو لهذا المتجر.');if(!confirm('استخدام '+fmt(points)+' نقطة من مكافآت '+storeName(data,sid)+'؟'))return;b.disabled=true;try{const {error}=await sb.rpc('customer_apply_coupon_v310',{p_session_token:session.token,p_order_id:sel.value,p_points:points});if(error)throw error;await customer();if(typeof loadCustomerOrdersFromCloud==='function'&&window.currentCustomerCloud?.id)await loadCustomerOrdersFromCloud(window.currentCustomerCloud.id)}catch(e){alert(e.message||e)}finally{b.disabled=false}}));
+ return '<div class="kp-store"><b>'+esc(storeName(data,sid))+'</b><div>المتاح: '+available+'</div><small>التقدم: '+progress+'</small><div>'+history(data,sid)+'</div></div>'}).join(''):'<small>لا توجد مكافآت متجر حتى الآن.</small>')+'</div>';
  }catch(e){console.warn('KINTO rewards unavailable',e);box.innerHTML='<small>تعذر تحميل مكافآت المتاجر حالياً.</small>'}
 }
 if(typeof window.customerOrderMoneyBreakdown==='function'){const base=window.customerOrderMoneyBreakdown;window.customerOrderMoneyBreakdown=function(o){const x=base(o)||{},discount=Math.max(0,Number(o?.reward_discount_amount)||0);if('productTotal'in x){x.rewardDiscount=discount;x.grandTotal=x.productTotal===null?null:Math.max(0,Number(x.productTotal)-discount)+Math.max(0,Number(x.externalShippingFee)||0)+Math.max(0,Number(x.deliveryFee)||0)}return x}}
-window.KintoStoreRewardsV310={refreshCustomer:customer};setTimeout(customer,0);
+async function applyCouponToOrder(orderId,points){
+ const session=sessionCustomer();if(!session?.token||!orderId)return{ok:false,error:'missing_session_or_order'};
+ const sb=await ensureCustomerPortalSupabase();
+ const {error}=await sb.rpc('customer_apply_coupon_v310',{p_session_token:session.token,p_order_id:orderId,p_points:Number(points)});
+ if(error)throw error;
+ await customer();
+ if(typeof loadCustomerOrdersFromCloud==='function'&&window.currentCustomerCloud?.id)await loadCustomerOrdersFromCloud(window.currentCustomerCloud.id);
+ return{ok:true}
+}
+window.KintoStoreRewardsV310={refreshCustomer:customer,applyCouponToOrder};setTimeout(customer,0);
 })();
