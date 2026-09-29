@@ -28,8 +28,10 @@ function ensureUi(){
 }
 function setTab(tab){
   if(tab!=='shipping'){ $('vendorTab-shipping')?.classList.remove('active');$('vendorTabBtn-shipping')?.classList.remove('active');return nativeSetTab?.(tab)}
-  // Keep dynamically injected rewards mutually exclusive with the shipping panel.
-  ['orders','finance','products','rewards'].forEach(name=>{document.getElementById('vendorTab-'+name)?.classList.remove('active');document.getElementById('vendorTabBtn-'+name)?.classList.remove('active')});
+  // Shipping must be mutually exclusive with every tab, including dynamically injected tabs
+  // such as promotions, P&L, categories and rewards.
+  document.querySelectorAll('.vendor-tab-panel').forEach(panel=>panel.classList.remove('active'));
+  document.querySelectorAll('.vendor-main-tab').forEach(button=>button.classList.remove('active'));
   $('vendorTab-shipping')?.classList.add('active');$('vendorTabBtn-shipping')?.classList.add('active');void load();
 }
 function readCompany(key){const root=document.querySelector(`[data-shipping-company="${CSS.escape(key)}"]`);if(!root)return null;return{key,company_name:root.querySelector('[data-field="name"]')?.value.trim()||'',phone:root.querySelector('[data-field="phone"]')?.value.trim()||'',tracking_url:root.querySelector('[data-field="url"]')?.value.trim()||'',is_active:root.querySelector('[data-field="active"]')?.checked!==false,sort_order:Number(root.querySelector('[data-field="sort"]')?.value)||0}}
