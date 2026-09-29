@@ -1,0 +1,50 @@
+/* V344: Store-owned rewards controls. All reads/writes use the verified vendor session RPCs. */
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const fmt=n=>Number(n||0).toLocaleString('en-US');
+let state=null,loading=false,saving=false,nativeSetTab=null;
+const session=()=>window.MeshwarVendorV94?.session?.();
+const runtime=()=>window.MeshwarVendorRuntime;
+const notice=(message,bad=false)=>runtime()?.showNotice?.(message,bad);
+function ensureUi(){
+  const nav=document.querySelector('.vendor-main-tabs'),main=document.querySelector('#dashboardView main');
+  if(!nav||!main||$('vendorTab-rewards'))return false;
+  const style=document.createElement('style');style.id='vendorRewardsV344Style';
+  style.textContent='#vendorTab-rewards .vr-card{border:1px solid rgba(245,196,81,.27);background:rgba(255,255,255,.045);border-radius:16px;padding:16px;margin-bottom:12px}#vendorTab-rewards .vr-categories{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}#vendorTab-rewards .vr-category{border:1px solid rgba(245,196,81,.26);border-radius:12px;padding:12px 6px;text-align:center}#vendorTab-rewards .vr-category b{display:block;font-size:18px;color:#f5c451}#vendorTab-rewards .vr-category small{display:block;font-size:11px}#vendorTab-rewards .vr-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:end}#vendorTab-rewards input[type=number]{width:105px;color:#172033;padding:9px;border-radius:9px}#vendorTab-rewards button{border-radius:9px;padding:9px 14px;background:#b88d31;color:#101f1a;font-weight:800}#vendorTab-rewards button:disabled{opacity:.5}@media(max-width:760px){#vendorTab-rewards .vr-categories{grid-template-columns:repeat(2,minmax(0,1fr))}#vendorTab-rewards .vr-category small{font-size:10px}}';
+  document.head.appendChild(style);
+  const button=document.createElement('button');button.id='vendorTabBtn-rewards';button.className='vendor-main-tab';button.type='button';button.textContent='🎁 مكافآت المتجر';button.onclick=()=>window.setVendorTab('rewards');nav.appendChild(button);
+  const panel=document.createElement('section');panel.id='vendorTab-rewards';panel.className='vendor-tab-panel';
+  panel.innerHTML='<div class="vr-card"><h2 class="text-xl font-black">مكافآت المتجر</h2><p class="text-sm">مكافآت متجرك مستقلة. تتحمل قيمة الخصم الممول من المتجر، بما في ذلك المتجر باشتراك شهري.</p><div id="vendorRewardsState" role="status">جاري التحميل...</div><div class="vr-actions"><label>نسبة الكسب عند التسليم القادم<br><input id="vendorRewardsRate" type="number" min="0" max="10" step="0.1" inputmode="decimal"> %</label><button id="vendorRewardsSave" type="button">حفظ النسبة وتفعيل الكسب</button><button id="vendorRewardsPause" type="button">إيقاف الكسب الجديد</button><button id="vendorRewardsReload" type="button">تحديث</button></div><p class="text-xs mt-3">التغيير لا يمس المكافآت المكتسبة سابقًا. عند الإيقاف، تبقى الكوبونات الصادرة صالحة إلى نهاية مدتها، والتقدم محفوظ.</p></div><div class="vr-card"><h3 class="font-black mb-3">تصنيف المكافآت</h3><div id="vendorRewardsCategories" class="vr-categories"></div><div id="vendorRewardsProgress" class="text-xs mt-3"></div></div>';
+  main.appendChild(panel);
+  $('vendorRewardsReload').onclick=load;
+  $('vendorRewardsSave').onclick=()=>save(true);
+  $('vendorRewardsPause').onclick=()=>save(false);
+  return true;
+}
+function render(){if(!state)return;
+  $('vendorRewardsState').textContent=`الحالة: ${state.enabled?'الكسب مفعّل':'الكسب متوقف'} · النسبة الحالية: ${Number(state.earn_rate)*100}% · الحد الأعلى: ${Number(state.max_earn_rate)*100}%`;
+  $('vendorRewardsRate').value=String(Number(state.earn_rate)*100);
+  $('vendorRewardsRate').max=String(Number(state.max_earn_rate)*100);
+  const labels={available:'المتاح',progress:'قيد التجميع',used:'المستخدمة',expired:'منتهية الصلاحية',admin:'ممنوحة من الإدارة'};
+  const groups=Object.fromEntries(Object.keys(labels).map(k=>[k,[]]));
+  for(const row of state.coupons||[])if(groups[row.category])groups[row.category].push(`${fmt(row.points)} ${row.currency} · ${fmt(row.count)} كوبون`);
+  for(const row of state.progress||[])groups.progress.push(`${fmt(row.points)} ${row.currency} · ${fmt(row.customers)} عميل`);
+  $('vendorRewardsCategories').innerHTML=Object.entries(labels).map(([key,label])=>`<div class="vr-category"><small>${label}</small><b>${groups[key].length?groups[key].map(s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;')).join('<br>'):'0'}</b></div>`).join('');
+  $('vendorRewardsProgress').textContent='التصنيف خاص بمتجرك فقط. الممنوحة من الإدارة تُعرض منفصلة حسب مصدرها، بما فيها ما استُخدم أو انتهت صلاحيته.';
+}
+async function load(){if(loading)return;const token=session()?.token;if(!token)return notice('سجّل الدخول مجدداً لعرض مكافآت المتجر.',true);
+  loading=true;try{const {data,error}=await runtime().sb.rpc('vendor_loyalty_overview_v344',{p_session_token:token});if(error)throw error;state=data;render()}
+  catch(e){console.error('Vendor rewards load failed',e);$('vendorRewardsState').textContent='تعذر تحميل المكافآت. تحقق من تطبيق ترحيل V344.';notice('تعذر تحميل مكافآت المتجر.',true)}finally{loading=false}}
+async function save(enabled){if(saving||!state)return;const token=session()?.token;if(!token)return notice('سجّل الدخول مجدداً لحفظ المكافآت.',true);
+  const percent=Number($('vendorRewardsRate').value),cap=Number(state.max_earn_rate)*100;
+  if(!Number.isFinite(percent)||percent<0||percent>cap||(enabled&&percent===0))return notice(`اختر نسبة أكبر من صفر ولا تتجاوز ${cap}%.`,true);
+  const message=enabled?`تطبيق نسبة ${percent}% عند التسليم القادم لمتجرك؟`:'إيقاف كسب مكافآت جديدة عند التسليم؟ تبقى المكافآت والكوبونات السابقة محفوظة.';
+  if(!confirm(message))return;
+  saving=true;$('vendorRewardsSave').disabled=$('vendorRewardsPause').disabled=true;
+  try{const {data,error}=await runtime().sb.rpc('vendor_save_loyalty_v344',{p_session_token:token,p_expected_updated_at:state.updated_at,p_enabled:enabled,p_earn_rate:percent/100});if(error)throw error;state=data;render();notice(enabled?'تم حفظ النسبة للتسليم القادم.':'تم إيقاف الكسب الجديد مع بقاء المكافآت السابقة.')}
+  catch(e){console.error('Vendor rewards save failed',e);notice(String(e.message||e).includes('VERSION_CONFLICT')?'تغيرت الإعدادات في جلسة أخرى؛ سنعرض أحدث نسخة.':'تعذر حفظ إعدادات المكافآت.',true);await load()}
+  finally{saving=false;$('vendorRewardsSave').disabled=$('vendorRewardsPause').disabled=false}}
+function setTab(tab){$('vendorTab-rewards')?.classList.toggle('active',tab==='rewards');$('vendorTabBtn-rewards')?.classList.toggle('active',tab==='rewards');if(tab==='rewards'){document.querySelectorAll('.vendor-tab-panel:not(#vendorTab-rewards),.vendor-main-tab:not(#vendorTabBtn-rewards)').forEach(el=>el.classList.remove('active'));void load();return}return nativeSetTab?.(tab)}
+function install(){if(!ensureUi())return false;nativeSetTab=window.setVendorTab?.bind(window);window.setVendorTab=setTab;return true}
+let attempts=0;const timer=setInterval(()=>{if(runtime()&&window.MeshwarVendorV94&&window.setVendorTab&&install()){clearInterval(timer);return}if(++attempts>160)clearInterval(timer)},100);
+})();
