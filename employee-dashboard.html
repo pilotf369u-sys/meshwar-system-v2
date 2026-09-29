@@ -278,28 +278,39 @@ let employeeRewardRows=[];
 function renderEmployeeRewardRows(){
  const body=document.getElementById('rewardsTableBody');if(!body)return;
  const term=String(document.getElementById('employeeRewardSearch')?.value||'').trim().toLowerCase();
- const rows=employeeRewardRows.filter(r=>!term||[r.customer_name,r.customer_id,r.store_name,r.store_id,r.currency].some(v=>String(v||'').toLowerCase().includes(term)));
+ const rows=employeeRewardRows.filter(r=>!term||[r.customer_name,r.customer_phone,r.customer_code,r.customer_id,r.store_name,r.store_id,r.currency].some(v=>String(v||'').toLowerCase().includes(term)));
  const fmt=n=>Number(n||0).toLocaleString('en-US');
- body.innerHTML=rows.map(r=>`<tr><td>${escapeHtml(r.customer_name||r.customer_id||'---')}</td><td>${escapeHtml(r.store_name||r.store_id||'---')}</td><td>${escapeHtml(r.currency||'---')}</td><td>${fmt(r.progress_points)} / 1,000</td><td>${fmt(r.active)}</td><td>${fmt(r.used)}</td><td>${fmt(r.expired)}</td><td>${fmt(r.admin)}</td></tr>`).join('')||'<tr><td colspan="8">لا توجد مكافآت KINTO مطابقة.</td></tr>';
+ body.innerHTML=rows.map(r=>`<tr><td><b>${escapeHtml(r.customer_name||'---')}</b><div class="mini">${escapeHtml(r.customer_phone||r.customer_code||'')}</div></td><td>${escapeHtml(r.store_name||'---')}</td><td>${escapeHtml(r.currency||'IQD')}</td><td>${fmt(r.progress_points)} / 1,000</td><td>${fmt(r.active)}</td><td>${fmt(r.used)}</td><td>${fmt(r.expired)}</td><td>${fmt(r.admin)}</td></tr>`).join('')||'<tr><td colspan="8">لا توجد نتائج مطابقة.</td></tr>';
  const count=document.getElementById('employeeRewardCount');if(count)count.textContent=`${rows.length} سجل`;
 }
 async function loadRewardsManagementTable(){
  const body=document.getElementById('rewardsTableBody');if(!body)return;
- body.innerHTML='<tr><td colspan="8">جاري تحميل مكافآت KINTO...</td></tr>';
+ body.innerHTML='<tr><td colspan="8">جاري تحميل العملاء...</td></tr>';
  try{
   const session=window.KintoEmployeeSessionV143?.read?.()||JSON.parse(sessionStorage.getItem('meshwar_employee_session_v143')||'null');
   if(!session?.token)throw new Error('جلسة الموظف غير متاحة');
-  const sb=await ensureEmployeeSupabase(),{data,error}=await sb.rpc('employee_loyalty_overview_v310',{p_session_token:session.token});if(error)throw error;
-  const wallets=data?.wallets||[],coupons=data?.coupons||[];
-  const [customersResult,storesResult]=await Promise.all([sb.from('customers').select('id,name,phone,code').limit(2000),sb.from('local_stores').select('*').limit(2000)]);
-  const customers=new Map((customersResult.data||[]).map(x=>[String(x.id),x]));
-  const stores=new Map((storesResult.data||[]).map(x=>[String(x.id),x]));
-  const key=x=>[String(x.customer_id||''),String(x.store_id||''),String(x.currency||'')].join('|'),map=new Map();
-  wallets.forEach(w=>map.set(key(w),{...w,active:0,used:0,expired:0,admin:0}));
-  coupons.forEach(x=>{const k=key(x),r=map.get(k)||{customer_id:x.customer_id,store_id:x.store_id,currency:x.currency,progress_points:0,active:0,used:0,expired:0,admin:0};r[x.status]=(r[x.status]||0)+Number(x.points||0);if(x.funded_by==='kinto')r.admin+=Number(x.points||0);map.set(k,r)});
-  employeeRewardRows=[...map.values()].map(r=>{const cu=customers.get(String(r.customer_id))||{},st=stores.get(String(r.store_id))||{};return{...r,customer_name:cu.name||cu.code||cu.phone||r.customer_id,store_name:st.store_name||st.name||r.store_id}}).sort((a,b)=>String(a.customer_name).localeCompare(String(b.customer_name),'ar'));
+  const sb=await ensureEmployeeSupabase();
+  const {data:customerRows,error:customerError}=await sb.from('customers').select('id,name,phone,code').limit(2000);
+  if(customerError)throw customerError;
+  employeeRewardRows=(customerRows||[]).map(c=>({customer_id:c.id,customer_name:c.name||c.code||c.phone||c.id,customer_phone:c.phone||'',customer_code:c.code||'',store_id:'',store_name:'---',currency:'IQD',progress_points:0,active:0,used:0,expired:0,admin:0}));
   renderEmployeeRewardRows();
- }catch(e){console.error('KINTO employee rewards:',e);body.innerHTML=`<tr><td colspan="8" style="color:red">${escapeHtml(e.message||e)}</td></tr>`}
+  try{
+   const {data,error}=await sb.rpc('employee_loyalty_overview_v310',{p_session_token:session.token});if(error)throw error;
+   const wallets=data?.wallets||[],coupons=data?.coupons||[];
+   const {data:storeRows}=await sb.from('local_stores').select('*').limit(2000);
+   const customers=new Map((customerRows||[]).map(x=>[String(x.id),x])),stores=new Map((storeRows||[]).map(x=>[String(x.id),x]));
+   const key=x=>[String(x.customer_id||''),String(x.store_id||''),String(x.currency||'')].join('|'),map=new Map();
+   wallets.forEach(w=>map.set(key(w),{...w,active:0,used:0,expired:0,admin:0}));
+   coupons.forEach(x=>{const k=key(x),r=map.get(k)||{customer_id:x.customer_id,store_id:x.store_id,currency:x.currency,progress_points:0,active:0,used:0,expired:0,admin:0};r[x.status]=(r[x.status]||0)+Number(x.points||0);if(x.funded_by==='kinto')r.admin+=Number(x.points||0);map.set(k,r)});
+   if(map.size){
+    const rewardedCustomers=new Set();
+    const rewardRows=[...map.values()].map(r=>{rewardedCustomers.add(String(r.customer_id));const cu=customers.get(String(r.customer_id))||{},st=stores.get(String(r.store_id))||{};return{...r,customer_name:cu.name||cu.code||cu.phone||r.customer_id,customer_phone:cu.phone||'',customer_code:cu.code||'',store_name:st.store_name||st.name||r.store_id}});
+    const zeroRows=employeeRewardRows.filter(r=>!rewardedCustomers.has(String(r.customer_id)));
+    employeeRewardRows=[...rewardRows,...zeroRows].sort((a,b)=>String(a.customer_name).localeCompare(String(b.customer_name),'ar'));
+    renderEmployeeRewardRows();
+   }
+  }catch(e){console.warn('KINTO employee reward detail unavailable; customer directory remains visible.',e)}
+ }catch(e){console.error('KINTO employee customers:',e);body.innerHTML=`<tr><td colspan="8" style="color:red">${escapeHtml(e.message||e)}</td></tr>`}
 }
 window.changeReward=undefined;
 Object.assign(window,{loadRewardsManagementTable});
