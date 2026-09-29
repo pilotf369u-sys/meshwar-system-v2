@@ -758,3 +758,26 @@ html{background:var(--emp-navy);color-scheme:dark}body{background:radial-gradien
   switchPipeline=window.switchPipeline;
 })();
 </script>
+<script id="employee-rewards-refresh-v363">
+(()=>{
+  const employeeId=String(new URLSearchParams(location.search).get('employeeId')||'').trim();
+  const pipelineKey='kinto_employee_active_pipeline_v118:'+employeeId;
+  const normalizeRewardView=async()=>{
+    if(activePipeline!=='rewards')return;
+    document.getElementById('ordersPanel')?.classList.add('hidden');
+    document.getElementById('rewardPanel')?.classList.add('show');
+    setActivePipelineButton('rewards');
+    const label=document.getElementById('activePipelineLabel');if(label)label.innerText=PIPELINES.rewards?.label||'🎁 مكافآت KINTO';
+    await loadRewardsManagementTable();
+  };
+  window.addEventListener('load',()=>setTimeout(normalizeRewardView,0));
+  const originalRemember=window.switchPipeline;
+  window.switchPipeline=async function(key){
+    const result=await originalRemember(key);
+    try{sessionStorage.setItem(pipelineKey,key)}catch{}
+    if(key==='rewards')await normalizeRewardView();
+    return result;
+  };
+  switchPipeline=window.switchPipeline;
+})();
+</script>
