@@ -87,11 +87,7 @@ language plpgsql security definer set search_path=public,private,extensions,pg_t
 declare sid text;
 begin
  -- Reuse the same server-authoritative vendor session resolver used by secure vendor order RPCs.
- select store_id::text into sid
- from private.vendor_sessions
- where token_hash=encode(extensions.digest(coalesce(p_session_token,''),'sha256'),'hex')
-   and revoked_at is null and expires_at>now()
- limit 1;
+ sid:=private.require_vendor_session(p_session_token)::text;
  if coalesce(sid,'')='' then raise exception 'VENDOR_SESSION_INVALID'; end if;
  return jsonb_build_object(
   'unread',coalesce((select count(*) from public.kinto_admin_notification_recipients r where r.store_id=sid and r.read_at is null),0),
@@ -113,11 +109,7 @@ create or replace function public.vendor_notification_action_v391(
 language plpgsql security definer set search_path=public,private,extensions,pg_temp as $$
 declare sid text;a text;
 begin
- select store_id::text into sid
- from private.vendor_sessions
- where token_hash=encode(extensions.digest(coalesce(p_session_token,''),'sha256'),'hex')
-   and revoked_at is null and expires_at>now()
- limit 1;
+ sid:=private.require_vendor_session(p_session_token)::text;
  if coalesce(sid,'')='' then raise exception 'VENDOR_SESSION_INVALID'; end if;
  a:=lower(trim(coalesce(p_action,'')));
  if a not in('read','accepted','rejected') then raise exception 'invalid action'; end if;
