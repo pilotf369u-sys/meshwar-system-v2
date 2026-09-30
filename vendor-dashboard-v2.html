@@ -15,7 +15,7 @@
     .field:focus{border-color:rgba(56,189,248,.6);box-shadow:0 0 0 3px rgba(56,189,248,.1)}
     .light body{background:#f8fafc}.light .glass{background:rgba(255,255,255,.86);border-color:#e2e8f0}.light .field{background:#fff;color:#0f172a;border-color:#cbd5e1}.light .vendor-muted{color:#64748b!important}.light .vendor-text{color:#0f172a!important}
 
-    .vendor-main-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin-bottom:1rem}
+    .vendor-main-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem;margin-bottom:1rem}
     .vendor-main-tab{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#cbd5e1;border-radius:1rem;padding:.9rem 1rem;font-weight:900;transition:.2s ease;cursor:pointer}
     .vendor-main-tab:hover{transform:translateY(-1px);border-color:rgba(56,189,248,.35);background:rgba(56,189,248,.08)}
     .vendor-main-tab.active{color:#fff;border-color:rgba(56,189,248,.55);background:linear-gradient(135deg,rgba(14,165,233,.28),rgba(79,70,229,.24));box-shadow:0 10px 30px rgba(14,165,233,.12)}
@@ -107,6 +107,7 @@
       <button id="vendorTabBtn-orders" type="button" class="vendor-main-tab active" onclick="setVendorTab('orders')">📦 إدارة الطلبات</button>
       <button id="vendorTabBtn-finance" type="button" class="vendor-main-tab" onclick="setVendorTab('finance')">💰 الحساب المالي</button>
       <button id="vendorTabBtn-products" type="button" class="vendor-main-tab" onclick="setVendorTab('products')">🛍️ المنتجات والمخزون</button>
+      <button id="vendorTabBtn-notifications" type="button" class="vendor-main-tab" onclick="setVendorTab('notifications')">🔔 إشعارات الإدارة <span id="vendorNotificationsBadge" class="vendor-order-count hidden">0</span></button>
     </nav>
 
     <section id="vendorTab-orders" class="vendor-tab-panel active">
@@ -136,6 +137,16 @@
           <button type="button" class="vendor-order-filter" data-finance-filter="paid" onclick="setVendorFinanceFilter('paid')">المدفوع</button>
         </div>
         <div class="vendor-table-wrap"><table class="vendor-responsive-table text-sm"><colgroup><col style="width:18%"><col style="width:18%"><col style="width:15%"><col style="width:14%"><col style="width:18%"><col style="width:17%"></colgroup><thead class="border-b border-white/10 text-slate-400"><tr><th>رقم الطلب</th><th>المبلغ الكلي</th><th>العمولة (%)</th><th>أخرى</th><th>المبلغ الصافي</th><th>حالة الدفع</th></tr></thead><tbody id="vendorFinanceBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="vendorTab-notifications" class="vendor-tab-panel">
+      <div class="glass rounded-3xl p-4 md:p-5">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div><h2 class="vendor-text text-lg font-black">🔔 إشعارات الإدارة</h2><p class="vendor-muted mt-1 text-xs text-slate-400">الرسائل والتنبيهات الرسمية المرسلة إلى متجرك.</p></div>
+          <button type="button" onclick="loadVendorNotifications()" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black">تحديث</button>
+        </div>
+        <div id="vendorNotificationsList" class="grid gap-3"><div class="vendor-muted text-sm text-slate-400">جاري تحميل الإشعارات...</div></div>
       </div>
     </section>
 
@@ -233,7 +244,7 @@ async function loadDashboardOrders(){
   const secureOrdersLoader=window.MeshwarVendorV94?.loadOrders;
   return secureOrdersLoader?secureOrdersLoader():loadOrders();
 }
-async function openDashboard(){if(!vendorStore)return;$('loginView').classList.add('hidden');$('dashboardView').classList.remove('hidden');$('storeName').textContent=vendorStore.store_name||'المتجر';$('storeMeta').textContent=[vendorStore.specialty,vendorStore.governorate].filter(Boolean).join(' • ');$('storeLogo').src=vendorStore.logo_url||PLACEHOLDER;$('storeLogo').onerror=()=>{$('storeLogo').src=PLACEHOLDER};$('exchangeRate').value=vendorStore.exchange_rate||1;$('exchangeBase').value='USD';$('exchangeTarget').value=vendorStore.exchange_target_currency||'IQD';renderExchangePreview();await Promise.all([loadProducts(),loadDashboardOrders(),loadFinance()]);await setupVendorOrdersRealtime()}
+async function openDashboard(){if(!vendorStore)return;$('loginView').classList.add('hidden');$('dashboardView').classList.remove('hidden');$('storeName').textContent=vendorStore.store_name||'المتجر';$('storeMeta').textContent=[vendorStore.specialty,vendorStore.governorate].filter(Boolean).join(' • ');$('storeLogo').src=vendorStore.logo_url||PLACEHOLDER;$('storeLogo').onerror=()=>{$('storeLogo').src=PLACEHOLDER};$('exchangeRate').value=vendorStore.exchange_rate||1;$('exchangeBase').value='USD';$('exchangeTarget').value=vendorStore.exchange_target_currency||'IQD';renderExchangePreview();await Promise.all([loadProducts(),loadDashboardOrders(),loadFinance(),loadVendorNotifications()]);await setupVendorOrdersRealtime()}
 function toggleTheme(){document.documentElement.classList.toggle('dark');document.documentElement.classList.toggle('light')}
 
 async function loadProducts(){if(!vendorStore)return;const{data,error}=await sb.from('local_products').select('*').eq('store_id',vendorStore.id).order('created_at',{ascending:false});if(error){showNotice('تعذر تحميل المنتجات: '+error.message,true);return}products=data||[];await syncProductPricingSnapshots();renderProducts();renderStats()}
@@ -317,7 +328,34 @@ function exportVendorPaidStatement(){
   setTimeout(()=>{try{statementWindow.print()}catch(e){console.warn('Statement print failed:',e)}},350);
 }
 let activeVendorTab='orders',activeVendorOrderFilter='all';
-function setVendorTab(tab){const allowed=['orders','finance','products'];if(!allowed.includes(tab))tab='orders';activeVendorTab=tab;allowed.forEach(name=>{document.getElementById('vendorTab-'+name)?.classList.toggle('active',name===tab);document.getElementById('vendorTabBtn-'+name)?.classList.toggle('active',name===tab)});if(tab==='orders')window.renderVendorOrders();if(tab==='finance')renderFinance()}
+function setVendorTab(tab){const allowed=['orders','finance','products','notifications'];if(!allowed.includes(tab))tab='orders';activeVendorTab=tab;allowed.forEach(name=>{document.getElementById('vendorTab-'+name)?.classList.toggle('active',name===tab);document.getElementById('vendorTabBtn-'+name)?.classList.toggle('active',name===tab)});if(tab==='orders')window.renderVendorOrders();if(tab==='finance')renderFinance();if(tab==='notifications')loadVendorNotifications()}
+
+function vendorSecureSession(){try{const s=JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null');return s?.token?s:null}catch{return null}}
+function vendorNotificationKind(kind){return ({campaign:'حملة KINTO',warning:'تنبيه',policy:'سياسة',action_required:'يتطلب إجراء',announcement:'إعلان'})[kind]||'إشعار'}
+function renderVendorNotifications(items){
+ const box=$('vendorNotificationsList');if(!box)return;
+ box.innerHTML=(items||[]).map(n=>`<article class="rounded-2xl border ${n.read_at?'border-white/10 bg-white/5':'border-amber-400/30 bg-amber-500/10'} p-4">
+   <div class="flex flex-wrap items-start justify-between gap-2"><div><span class="text-xs font-black text-amber-300">${esc(vendorNotificationKind(n.kind))}</span><h3 class="vendor-text mt-1 font-black">${esc(n.title)}</h3></div><small class="vendor-muted text-slate-400">${new Date(n.created_at).toLocaleString('ar')}</small></div>
+   <p class="vendor-muted mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-300">${esc(n.body)}</p>
+   <div class="mt-3 flex flex-wrap gap-2">
+    ${!n.read_at?`<button type="button" onclick="vendorNotificationAction('${esc(n.id)}','read')" class="rounded-lg bg-sky-600 px-3 py-2 text-xs font-black">تمت القراءة</button>`:''}
+    ${n.kind==='campaign'||n.kind==='action_required'?`<button type="button" onclick="vendorNotificationAction('${esc(n.id)}','accepted')" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-black">قبول</button><button type="button" onclick="vendorNotificationAction('${esc(n.id)}','rejected')" class="rounded-lg bg-rose-600 px-3 py-2 text-xs font-black">رفض</button>`:''}
+    ${n.response?`<span class="rounded-lg border border-white/10 px-3 py-2 text-xs font-black">${n.response==='accepted'?'تم القبول':'تم الرفض'}</span>`:''}
+   </div></article>`).join('')||'<div class="vendor-muted rounded-2xl border border-white/10 p-5 text-center text-slate-400">لا توجد إشعارات حالياً.</div>';
+}
+async function loadVendorNotifications(){
+ const s=vendorSecureSession();if(!s)return;
+ const{data,error}=await sb.rpc('vendor_notifications_v391',{p_session_token:s.token,p_limit:100});
+ if(error){console.warn('Vendor notifications:',error);return}
+ const badge=$('vendorNotificationsBadge'),unread=Number(data?.unread||0);if(badge){badge.textContent=String(unread);badge.classList.toggle('hidden',unread<1)}
+ renderVendorNotifications(data?.items||[]);
+}
+async function vendorNotificationAction(id,action){
+ const s=vendorSecureSession();if(!s)return requireSecureVendorLogin();
+ const{error}=await sb.rpc('vendor_notification_action_v391',{p_session_token:s.token,p_notification_id:id,p_action:action});
+ if(error)return showNotice('تعذر تحديث الإشعار: '+error.message,true);
+ await loadVendorNotifications();
+}
 function setVendorOrderFilter(filter){activeVendorOrderFilter=filter||'all';document.querySelectorAll('[data-order-filter]').forEach(btn=>btn.classList.toggle('active',btn.dataset.orderFilter===activeVendorOrderFilter));window.renderVendorOrders()}
 function updateVendorOrderCounters(){const keys=['all','pending','delivery','delivered','returns'];keys.forEach(key=>{const el=document.querySelector(`[data-order-count="${key}"]`);if(!el)return;const n=key==='all'?orders.length:orders.reduce((sum,o)=>{const prev=activeVendorOrderFilter;activeVendorOrderFilter=key;const hit=vendorOrderMatchesFilter(o);activeVendorOrderFilter=prev;return sum+(hit?1:0)},0);el.textContent=String(n);el.setAttribute('aria-label',`${n} طلب`)})}
 function vendorOrderMatchesFilter(o){const status=String(o?.status||'').trim();if(activeVendorOrderFilter==='all')return true;if(activeVendorOrderFilter==='delivered')return isDeliveredOrder(status);if(activeVendorOrderFilter==='returns')return /مرتجع|ارجاع|إرجاع|مرفوض|رفض|ملغي|ملغى|return/i.test(status);if(activeVendorOrderFilter==='delivery')return /مندوب|قيد التوصيل|تم الشحن|شحن|توزيع|فرع|delivery|courier/i.test(status)&&!isDeliveredOrder(status);if(activeVendorOrderFilter==='pending')return /انتظار|بانتظار|موافقة|تدقيق|جديد|pending|approval/i.test(status);return true}
@@ -354,7 +392,7 @@ async function setupVendorOrdersRealtime(){
     .subscribe(status=>{if(['CHANNEL_ERROR','TIMED_OUT'].includes(status))console.warn('Vendor realtime status:',status)});
 }
 window.addEventListener('beforeunload',()=>{try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime unload cleanup:',e)}});
-Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct,saveExchangeRate,loadOrders,printShippingLabel,openVendorOrderDetails,closeVendorOrderDetails,setVendorTab,setVendorOrderFilter,setVendorFinanceFilter,exportVendorPaidStatement});
+Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct,saveExchangeRate,loadOrders,printShippingLabel,openVendorOrderDetails,closeVendorOrderDetails,setVendorTab,setVendorOrderFilter,setVendorFinanceFilter,exportVendorPaidStatement,loadVendorNotifications,vendorNotificationAction});
 window.MeshwarVendorRuntime={
   sb,
   getStore:()=>vendorStore,
