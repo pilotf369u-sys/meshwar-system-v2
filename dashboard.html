@@ -181,7 +181,7 @@ function customerDecisionRewardHtml(offer,i,o){
  return `<div class="customer-decision-reward"><strong>🎁 لديك مكافأة متاحة لهذا المتجر</strong><br>المتاح: ${escapeHtml(Number(offer.available).toLocaleString('en-US'))} ${escapeHtml(offer.currency)} · الحد المسموح لهذا الطلب: ${escapeHtml(Number(offer.maxCoupon).toLocaleString('en-US'))} ${escapeHtml(offer.currency)}<br><button type="button" onclick="window.opener.applyCustomerDecisionReward(${i},${offer.usable},window)">استخدام ${escapeHtml(Number(offer.usable).toLocaleString('en-US'))} ${escapeHtml(offer.currency)} من مكافآتي</button></div>`
 }
 async function applyCustomerDecisionReward(i,points,page){
- if(customerDecisionPageBusy)return;const o=currentCustomerOrdersGlobal[i];if(!o)return;
+ const o=currentCustomerOrdersGlobal[i];if(!o)return;
  const button=page?.document?.querySelector('.customer-decision-reward button');if(button)button.disabled=true;
  try{
   if(!window.KintoStoreRewardsV310?.applyCouponToOrder)throw new Error('خدمة المكافآت غير جاهزة');
