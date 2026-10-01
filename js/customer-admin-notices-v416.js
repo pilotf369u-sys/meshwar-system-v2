@@ -31,7 +31,8 @@ function row(n){
   const h=document.createElement('strong');h.textContent='المتاجر المرتبطة:';content.append(h);
   const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:7px';
   for(const store of n.stores){
-   const chip=document.createElement('span');chip.textContent=store.name||'متجر';
+   const chip=document.createElement('a');chip.textContent=store.name||'متجر';
+   if(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(String(store.id||''))){chip.href='store.html?storeId='+encodeURIComponent(String(store.id));chip.title='فتح المتجر'}else{chip.removeAttribute('href')}
    chip.style.cssText='display:inline-block;border:1px solid currentColor;border-radius:8px;padding:4px 8px;font-size:12px;max-width:100%;overflow-wrap:anywhere';
    wrap.append(chip);
   }
