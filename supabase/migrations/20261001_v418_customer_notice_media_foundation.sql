@@ -11,7 +11,7 @@ create table if not exists public.kinto_customer_notice_assets_v418(
  bucket_id text not null default 'kinto-customer-notice-media'
   check(bucket_id='kinto-customer-notice-media'),
  object_path text not null unique
-  check(object_path ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}\\.(jpg|png|webp|gif)$'),
+  check(object_path ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}[.](jpg|png|webp|gif)$'),
  mime_type text not null check(mime_type in ('image/jpeg','image/png','image/webp','image/gif')),
  byte_size integer not null check(byte_size between 1 and 5242880),
  created_at timestamptz not null default now()
