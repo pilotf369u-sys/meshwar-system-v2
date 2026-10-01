@@ -31,7 +31,7 @@ end $$;
 revoke all on function public.admin_prepare_customer_notice_delete_v425(text,uuid) from public,anon,authenticated;
 grant execute on function public.admin_prepare_customer_notice_delete_v425(text,uuid) to anon,authenticated;
 -- Service-role-only finalization; caller must verify Storage object was removed or absent.
-create or replace function private.finalize_customer_notice_delete_v425(p_notice_id uuid)
+create or replace function public.finalize_customer_notice_delete_v425(p_notice_id uuid)
 returns boolean language plpgsql security definer
 set search_path=public,private,extensions,pg_temp as $$
 begin
@@ -44,8 +44,7 @@ begin
  delete from public.kinto_customer_admin_notices where id=p_notice_id;
  return true;
 end $$;
-revoke all on function private.finalize_customer_notice_delete_v425(uuid) from public,anon,authenticated;
-grant execute on function private.finalize_customer_notice_delete_v425(uuid) to service_role;
--- Never expose a public finalizer: Edge Functions use a service-role connection
--- with an explicit private schema RPC or trusted server-side SQL adapter.
+revoke all on function public.finalize_customer_notice_delete_v425(uuid) from public,anon,authenticated;
+grant execute on function public.finalize_customer_notice_delete_v425(uuid) to service_role;
+-- This public-schema RPC is callable ONLY by service_role; no anon/authenticated grant.
 commit;
