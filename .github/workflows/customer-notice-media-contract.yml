@@ -23,4 +23,4 @@ jobs:
       - run: node --check js/admin-customer-notices-v415.js
       - run: node --check js/customer-admin-notices-v416.js
       - run: node --check js/customer-notice-media-prepare-v424.js
-      - run: node --test ci/customer-notice-media-v424-contract.test.mjs ci/customer-notice-delete-v425-contract.test.mjs
+      - run: node --test ci/customer-notice-media-v424-contract.test.mjs ci/customer-notice-delete-v425-contract.test.mjs ci/customer-notice-atomic-v428-contract.test.mjs
