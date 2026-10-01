@@ -30,9 +30,14 @@ function row(n){
   const h=document.createElement('strong');h.textContent='المتاجر المرتبطة:';content.append(h);
   const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:7px';
   for(const store of n.stores){
-   const chip=document.createElement('a');chip.textContent=store.name||'متجر';
+   const chip=document.createElement('a');chip.style.display='inline-flex';chip.style.alignItems='center';chip.style.gap='6px';
+   const name=document.createElement('span');name.textContent=store.name||'متجر';
+   if(typeof store.logo_url==='string' && /^https:\/\/[^\\s"'<>]+$/i.test(store.logo_url)){
+    const logo=document.createElement('img');logo.src=store.logo_url;logo.alt='';logo.loading='lazy';logo.referrerPolicy='no-referrer';logo.style.cssText='width:28px;height:28px;object-fit:cover;border-radius:50%;background:#fff';logo.onerror=()=>logo.remove();chip.append(logo);
+   }
+   chip.append(name);
    if(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(String(store.id||''))){chip.href='store.html?storeId='+encodeURIComponent(String(store.id));chip.title='فتح المتجر'}else{chip.removeAttribute('href')}
-   chip.style.cssText='display:inline-block;border:1px solid currentColor;border-radius:8px;padding:4px 8px;font-size:12px;max-width:100%;overflow-wrap:anywhere';
+   chip.style.cssText+=';border:1px solid currentColor;border-radius:8px;padding:4px 8px;font-size:12px;max-width:100%;overflow-wrap:anywhere';
    wrap.append(chip);
   }
   content.append(wrap);
