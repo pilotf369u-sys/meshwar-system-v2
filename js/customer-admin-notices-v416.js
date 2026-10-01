@@ -16,6 +16,7 @@ function badge(){
  if(!b){b=document.createElement('span');b.id='kintoAdminNoticeBadgeV416';b.className='tab-badge';b.title='إشعارات الإدارة غير المقروءة';tab.appendChild(b)}
  b.textContent=unread>99?'99+':String(unread);b.hidden=!unread;b.classList.toggle('show',unread>0);
 }
+function noticeSubtabKey(){return 'kinto_notice_subtab_v432:'+String(token()?'customer':'guest')}
 function mountSubtabs(){
  const container=$('notificationsContainer'),pager=$('notificationsPager');
  if(!container||!container.parentElement)return null;
@@ -31,9 +32,9 @@ function mountSubtabs(){
  const orders=document.createElement('div');orders.id='kintoOrderNoticePanelV430';
  host.insertBefore(nav,container);host.insertBefore(admin,container);
  host.insertBefore(orders,container);orders.append(container);if(pager)orders.append(pager);
- const activate=which=>{const isAdmin=which==='admin';admin.hidden=!isAdmin;orders.hidden=isAdmin;adminBtn.setAttribute('aria-pressed',String(isAdmin));orderBtn.setAttribute('aria-pressed',String(!isAdmin));adminBtn.style.background=isAdmin?'#b99b52':'transparent';adminBtn.style.color=isAdmin?'#0a2f23':'inherit';orderBtn.style.background=isAdmin?'transparent':'#b99b52';orderBtn.style.color=isAdmin?'inherit':'#0a2f23';};
+ const activate=which=>{const isAdmin=which==='admin';try{sessionStorage.setItem(noticeSubtabKey(),isAdmin?'admin':'orders')}catch{};admin.hidden=!isAdmin;orders.hidden=isAdmin;adminBtn.setAttribute('aria-pressed',String(isAdmin));orderBtn.setAttribute('aria-pressed',String(!isAdmin));adminBtn.style.background=isAdmin?'#b99b52':'transparent';adminBtn.style.color=isAdmin?'#0a2f23':'inherit';orderBtn.style.background=isAdmin?'transparent':'#b99b52';orderBtn.style.color=isAdmin?'inherit':'#0a2f23';};
  adminBtn.onclick=()=>{activate('admin');load(page)};orderBtn.onclick=()=>activate('orders');
- nav.append(adminBtn,orderBtn);activate('admin');return admin;
+ nav.append(adminBtn,orderBtn);let saved='admin';try{saved=sessionStorage.getItem(noticeSubtabKey())==='orders'?'orders':'admin'}catch{}activate(saved);return admin;
 }
 function row(n){
  const el=document.createElement('article');el.className='notification-item';
@@ -129,6 +130,11 @@ function init(){
  // This preserves both independent feeds without a mutation race.
  if(!$('notificationsContainer'))return;
  mountSubtabs();
+ $('kintoNoticeCloseV431')?.addEventListener('click',()=>{
+  const button=document.querySelector('.tabs-nav [data-tab="activeOrders"]');
+  if(button)button.click();
+  document.getElementById('activeOrders')?.scrollIntoView({block:'start'});
+ });
  document.addEventListener('click',e=>{if(e.target.closest('[data-tab="notifications"]')||e.target.closest('#notifications .panel-head .chip'))setTimeout(()=>load(1),150)});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(page)});
  // Customer session may be established asynchronously after DOMContentLoaded.
