@@ -44,3 +44,13 @@ B. Submit an architecture-only PR and confirm tests; no production changes.
 C. Build G1 isolated migration in a separate PR, leave unapplied until Omar explicitly runs and verifies it.
 D. Build G2 merchant wizard behind OFF flag; G3 admin inbox; G4 storefront, each independently tested.
 E. Only after financial sign-off build G5 checkout bridge and gift stock lifecycle; run concurrency tests.
+
+## Critical corrected checkout seam (third-pass)
+12. Exact frontend call at `js/local-cart-v93.js:52` is `rpc/checkout_independent_vendor_orders_v101` (NOT the older unsuffixed v97 function). Request body: `p_customer_id`, `p_customer_name`, `p_customer_phone`, `p_customer_shipping`, `p_items`; each item currently carries only store_id, product_id, selected_options and quantity. This is the decisive integration target to audit against its latest SQL definition and any subsequent wrapper. Do not append campaign data to this request or replace this RPC until G5 signed off. This discovery supersedes any suggestion that v97 is the current frontend entry point.
+13. `js/local-cart-v93.js:51-52` groups selected items by store, expects independent returned orders, and only removes submitted cart item keys after checkout. Campaign should preserve the success/failure and cart cleanup semantics, especially when an ordinary store and a campaign store coexist.
+14. Frontend currently sends a customer ID from cart scope; campaign eligibility must require server-verified customer identity and cannot rely on this ID as proof of ownership.
+
+## Morning handoff (no user action needed for documentation)
+- PR #706 remains architecture-only. Read this audit and map first.
+- Next engineering task: locate the last definition of `checkout_independent_vendor_orders_v101`, compare customer-session validation and stock/payment triggers, and identify the precise order invoice renderer. Write tests before changing checkout.
+- SQL: NONE to run yet. Discussion: only unresolved campaign financial policy, before G5. Merge: architecture PR can be reviewed independently; no campaign feature is live.
