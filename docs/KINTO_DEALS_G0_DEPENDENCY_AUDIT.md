@@ -54,3 +54,11 @@ E. Only after financial sign-off build G5 checkout bridge and gift stock lifecyc
 - PR #706 remains architecture-only. Read this audit and map first.
 - Next engineering task: locate the last definition of `checkout_independent_vendor_orders_v101`, compare customer-session validation and stock/payment triggers, and identify the precise order invoice renderer. Write tests before changing checkout.
 - SQL: NONE to run yet. Discussion: only unresolved campaign financial policy, before G5. Merge: architecture PR can be reviewed independently; no campaign feature is live.
+
+## Fourth-pass precise SQL wrapper and invoice mapping
+15. `supabase/migrations/20260905_v101_checkout_shipping_destination_fallback.sql:221-251` confirms v101 is a SECURITY DEFINER wrapper validating `p_customer_shipping`, setting transaction-local `app.checkout_customer_shipping`, then delegating to `public.checkout_independent_vendor_orders(p_customer_id,p_customer_name,p_customer_phone,p_items)`. Thus both v101 and underlying v97 definition (including later replacements, if any) must be audited together. Replacing the wrapper carelessly would lose shipping destination propagation.
+16. `js/vendor-v94-multistore-orders.js:117-125` has `hydrateVendorCanonicalInvoice`, `vendorRewardGrand`, `storeInvoiceDocument`, `finalizeInvoiceFrame`. This is the existing merchant **per-store** invoice renderer. It already handles reward discounts, shipping and totals; campaign financial display needs an additive, reviewed snapshot adapter rather than another invoice implementation.
+17. `admin-dashboard.html:265-276` has an existing admin notifications module that calls `admin_vendor_notifications_v391`. It is separate from `admin-customer-notices-v415.js` outbound customer notices. Campaign submission can surface in the admin area, but the direction must be merchant -> admin, not confused with admin -> vendor or admin -> customer messages.
+
+## Baseline CI artifact
+`ci/kinto-deals-g0-baseline-contract.test.mjs` is a read-only Node test asserting existing source contracts. Run `node --test ci/kinto-deals-g0-baseline-contract.test.mjs` on the branch. These are regression sentinels, not proof of live Supabase schema or E2E functionality.
