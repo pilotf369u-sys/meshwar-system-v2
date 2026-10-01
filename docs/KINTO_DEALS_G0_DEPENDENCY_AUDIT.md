@@ -62,3 +62,16 @@ E. Only after financial sign-off build G5 checkout bridge and gift stock lifecyc
 
 ## Baseline CI artifact
 `ci/kinto-deals-g0-baseline-contract.test.mjs` is a read-only Node test asserting existing source contracts. Run `node --test ci/kinto-deals-g0-baseline-contract.test.mjs` on the branch. These are regression sentinels, not proof of live Supabase schema or E2E functionality.
+
+## Fifth-pass high-priority collision discovered: existing KINTO campaigns
+18. `supabase/migrations/20260930_v405_campaign_auto_vendor_notification.sql` already defines ADMIN-created campaigns via `admin_create_kinto_campaign_v400`, writing `public.kinto_campaigns` and `public.kinto_campaign_stores`, and sends admin -> participating VENDOR notifications. This is the reverse of DEALS' merchant -> ADMIN submission requirement. **Never reuse this RPC or its notification direction.**
+19. `supabase/migrations/20261001_v411_campaign_instant_order_discount.sql` already adds `orders.kinto_campaign_id`, `kinto_campaign_discount_amount`, `kinto_campaign_discount_currency`, `kinto_campaign_discount_snapshot` and a `kinto_campaign_order_discount_v411` order-insert hook. It chooses a deterministic eligible existing campaign and funds an IQD product discount from KINTO. Merchant-funded DEALS must have a distinct namespace, e.g. `kinto_deals_v1_*`, and cannot appropriate these columns, trigger or accounting semantics. **G5 blocker:** audit trigger order, combined discount ceiling, and whether existing campaign can coexist with a merchant deal; no silent stacking.
+20. `supabase/migrations/20260902_local_cart_bundle_variant_stock_fix_v93.sql` replaces the earlier bundle stock lifecycle and deducts total, variant and matrix stock in one transaction. This is more current than the base v93 file. Gifts with options need all three stock dimensions, not only `local_products.stock_quantity`.
+21. `supabase/migrations/20260922_v150_customer_session_identity.sql` exposes `customer_session_identity_v150(p_session_token)` backed by `private.require_customer_review_session`. New redemption RPC must use this server-side verified identity pattern, not cart scope/customer_id.
+22. Existing `meshwar_local_stock_status_lifecycle` in `20260821_local_store_variant_stock_lifecycle.sql` also handles paid/rejected legacy orders. Audit trigger predicates for independent orders to prevent duplicate gift deduction.
+
+### Newly isolated owner decision
+If an order qualifies simultaneously for an existing ADMIN-funded KINTO campaign (v411) and a merchant-funded DEAL, choose explicit policy before integration: coexist with separate capped funding/snapshots, or mutually exclusive with a documented priority. Do not silently remove an existing customer benefit.
+
+### Collision-safe naming
+Use merchant deals-specific `kinto_deals_v1_...` names for tables, RPCs, events, feature flag and invoice snapshot. The existing `kinto_campaigns` is occupied and must not be altered by an initial DEALS schema.
