@@ -30,12 +30,12 @@ async function storeLoad(p=1){
  box.textContent='جاري التحميل...';
  try{
   const sb=await client(),q=String($('acnStoreSearchV420').value||'').trim().replace(/[,%()]/g,' ').slice(0,70);
-  let req=sb.from('local_stores').select('id,name',{count:'exact'});
-  if(q)req=req.ilike('name','%'+q+'%');
+  let req=sb.from('local_stores').select('id,store_name',{count:'exact'});
+  if(q)req=req.ilike('store_name','%'+q+'%');
   const {data,error,count}=await req.order('id').range((p-1)*8,p*8-1);
   if(serial!==storeSerial)return;if(error)throw error;
   storeRows=data||[];storeTotal=count||0;
-  box.innerHTML=storeRows.map(x=>'<label style="display:flex;gap:8px;padding:6px"><input class="acn-store-v420" type="checkbox" value="'+esc(x.id)+'" '+(linkedStores.has(String(x.id))?'checked':'')+'><span>'+esc(x.name||'متجر')+'</span></label>').join('')||'لا توجد متاجر';
+  box.innerHTML=storeRows.map(x=>'<label style="display:flex;gap:8px;padding:6px"><input class="acn-store-v420" type="checkbox" value="'+esc(x.id)+'" '+(linkedStores.has(String(x.id))?'checked':'')+'><span>'+esc(x.store_name||'متجر')+'</span></label>').join('')||'لا توجد متاجر';
   const nav=$('acnStorePagerV420');nav.textContent='';
   const prev=document.createElement('button');prev.textContent='السابق';prev.disabled=p<=1;prev.onclick=()=>storeLoad(p-1);
   const num=document.createElement('span');num.textContent=' '+p+' / '+Math.max(1,Math.ceil(storeTotal/8))+' ';
