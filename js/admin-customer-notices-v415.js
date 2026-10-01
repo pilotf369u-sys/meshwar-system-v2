@@ -1,0 +1,55 @@
+/* V415: isolated admin customer notice composer; never modifies existing notifications. */
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let selected=new Map(),people=[],page=1,total=0,historyPage=1,searchSerial=0,busy=false;
+const token=()=>window.KintoAdminSessionV147?.read()?.token||'';
+const client=()=>window.ensureCustomerSupabase();
+async function peopleLoad(p=1){
+ const serial=++searchSerial;page=p;const box=$('acnPeople');box.textContent='جاري التحميل...';
+ try{
+ const sb=await client(),q=String($('acnSearch').value||'').trim().replace(/[,%()]/g,' ').slice(0,70);
+ let req=sb.from('customers').select('id,name,code,phone',{count:'exact'});
+ if(q){const term='%'+q+'%';req=req.or('name.ilike.'+term+',code.ilike.'+term+',phone.ilike.'+term)}
+ const {data,error,count}=await req.order('id',{ascending:true}).range((p-1)*8,p*8-1);
+ if(serial!==searchSerial)return;if(error)throw error;people=data||[];total=count||0;renderPeople();
+ }catch(e){if(serial===searchSerial)box.textContent='تعذر تحميل العملاء: '+e.message}
+}
+function renderPeople(){
+ $('acnPeople').innerHTML=people.map(c=>'<label style="display:flex;gap:8px;align-items:center;padding:7px;border-bottom:1px solid #52645c"><input type="checkbox" class="acn-person" value="'+esc(c.id)+'" '+(selected.has(String(c.id))?'checked':'')+'><span>'+esc(c.name||'عميل')+' — '+esc(c.code||c.id)+' — '+esc(c.phone||'')+'</span></label>').join('')||'لا توجد نتائج';
+ $('acnSelected').textContent='المحددون: '+selected.size;
+ $('acnPeoplePager').textContent='';
+ const b=document.createElement('button');b.textContent='السابق';b.disabled=page<=1;b.onclick=()=>peopleLoad(page-1);
+ const n=document.createElement('span');n.textContent=' '+page+' / '+Math.max(1,Math.ceil(total/8))+' ';
+ const a=document.createElement('button');a.textContent='التالي';a.disabled=page*8>=total;a.onclick=()=>peopleLoad(page+1);
+ $('acnPeoplePager').append(b,n,a);
+}
+async function historyLoad(p=1){
+ historyPage=p;try{
+ const sb=await client(),{data,error}=await sb.rpc('admin_customer_notices_v415',{p_session_token:token(),p_page:p,p_page_size:8});if(error)throw error;
+ $('acnHistory').innerHTML=(data.items||[]).map(n=>'<tr><td>'+esc(n.title)+'<div class="mini">'+esc(n.body)+'</div></td><td>'+esc(n.kind)+'</td><td>'+Number(n.recipients||0)+'</td><td>'+Number(n.read_count||0)+'</td><td>'+esc(new Date(n.created_at).toLocaleString('en-GB'))+'</td></tr>').join('')||'<tr><td colspan="5">لا توجد إشعارات.</td></tr>';
+ const nav=$('acnHistoryPager');nav.textContent='';
+ const prev=document.createElement('button');prev.textContent='السابق';prev.disabled=p<=1;prev.onclick=()=>historyLoad(p-1);
+ const span=document.createElement('span');span.textContent=' '+p+' / '+Math.max(1,Math.ceil(Number(data.total||0)/8))+' ';
+ const next=document.createElement('button');next.textContent='التالي';next.disabled=p*8>=Number(data.total||0);next.onclick=()=>historyLoad(p+1);nav.append(prev,span,next);
+ }catch(e){$('acnMessage').textContent='تعذر تحميل السجل: '+e.message}
+}
+async function send(){
+ if(busy)return;const all=$('acnAll').checked,title=$('acnTitle').value.trim(),body=$('acnBody').value.trim(),kind=$('acnKind').value;
+ if(title.length<2||title.length>160||body.length<2||body.length>4000)return $('acnMessage').textContent='تحقق من العنوان والنص.';
+ if(!all&&(!selected.size||selected.size>500))return $('acnMessage').textContent='حدد بين 1 و500 عميل.';
+ if(!confirm('تأكيد إرسال الإشعار إلى '+(all?'جميع العملاء':selected.size+' عميل')+'؟'))return;
+ busy=true;$('acnSend').disabled=true;$('acnMessage').textContent='جاري الإرسال...';
+ try{
+ const sb=await client(),{data,error}=await sb.rpc('admin_send_customer_notice_v414',{p_session_token:token(),p_request_key:crypto.randomUUID(),p_title:title,p_body:body,p_kind:kind,p_customer_ids:all?null:[...selected.keys()],p_all_customers:all});
+ if(error)throw error;$('acnMessage').textContent='تم الإرسال إلى '+data.recipients+' عميل.';selected.clear();renderPeople();await historyLoad(1);
+ }catch(e){$('acnMessage').textContent='فشل الإرسال: '+e.message}finally{busy=false;$('acnSend').disabled=false}
+}
+window.adminCustomerNoticesLoadV415=()=>Promise.all([peopleLoad(1),historyLoad(1)]);
+window.addEventListener('DOMContentLoaded',()=>{
+ $('acnSearch')?.addEventListener('input',()=>{clearTimeout(window.__acnTimer);window.__acnTimer=setTimeout(()=>peopleLoad(1),250)});
+ $('acnPeople')?.addEventListener('change',e=>{if(!e.target.matches('.acn-person'))return;const c=people.find(x=>String(x.id)===e.target.value);if(!c)return;if(e.target.checked)selected.set(String(c.id),c);else selected.delete(String(c.id));$('acnSelected').textContent='المحددون: '+selected.size});
+ $('acnSend')?.addEventListener('click',send);
+ $('acnAll')?.addEventListener('change',e=>{$('acnPicker').hidden=e.target.checked});
+});
+})();
