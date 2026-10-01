@@ -60,8 +60,8 @@ Deno.serve(async req=>{
    const path=notice+'/'+crypto.randomUUID()+'.'+TYPES[file.type];
    const {error:uploadError}=await sb.storage.from(BUCKET).upload(path,b,{contentType:file.type,upsert:false});
    if(uploadError)throw uploadError;
-   const {error:insertError}=await sb.from('kinto_customer_notice_assets_v418').insert({notice_id:notice,bucket_id:BUCKET,object_path:path,mime_type:file.type,byte_size:file.size});
-   if(insertError){
+   const {data:attached,error:insertError}=await sb.rpc('attach_customer_notice_media_v428',{p_notice_id:notice,p_admin_id:String(admin.admin.id),p_object_path:path,p_mime_type:file.type,p_byte_size:file.size});
+   if(insertError||attached!==true){
     const {error:cleanupError}=await sb.storage.from(BUCKET).remove([path]);
     if(cleanupError)console.error('notice-media-orphan-needs-reconciliation',path,cleanupError);
     throw insertError;
