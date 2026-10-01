@@ -24,3 +24,23 @@ Isolated campaign tables and merchant/admin RPCs -> public active campaign read 
 
 ## Explicit execution status
 Only documentation PR #706 updated. No migration generated/applied, no live schema changed, no PR merged, no GitHub CI claimed green.
+
+## Second-pass entry points and isolation findings
+7. `vendor-dashboard.html` is a shell loading `vendor-dashboard-v2.html` and injecting optional vendor scripts into its frame; the actual merchant tab markup lives in `vendor-dashboard-v2.html`. Campaign wizard should use an isolated script and container in the inner frame, with shell injection audited before implementation. Existing notifications tab exists (`vendorTab-notifications`), but that is **merchant-facing**, not the required admin campaign-submission inbox.
+8. `js/local-cart-v93.js` implements global multi-store cart, scoped item keys, `checkout()`, and `buildStores()`. `js/customer-local-cart-v125.js` is a dashboard bridge, not the canonical checkout engine. Campaign selection must not assume one cart equals one store; preserve grouping and only decorate the eligible store's independent order.
+9. `supabase/migrations/20261001_v420_customer_notice_linked_stores.sql` adds `kinto_customer_notice_stores_v420` and `admin_send_customer_notice_v420`, with optional up-to-20 linked stores. This is an **admin-authorized outbound customer notice**, not a merchant-to-admin inbox. New campaign review events need a distinct admin inbox/read-state path, then an explicit admin action can reuse v420.
+10. `supabase/migrations/20260921_v140_checkout_group_finance.sql` adds `checkout_group_finance`, a checkout-group-level external shipping envelope with collector segment. A merchant's free-shipping campaign must not zero or rewrite this group-level fee.
+11. `supabase/migrations/20260905_v112_multicurrency_rewards_order_discount.sql` adds existing per-order loyalty discount columns and reward snapshot. Campaign discounts must be distinct and have a documented stacking rule; do not repurpose loyalty columns.
+
+## Concrete handoff: independent work vs owner sign-off
+**Safe to prepare on feature branch without SQL or production deployment:** documentation, isolated CSS and mock-data campaign preview, client-side form draft validation, admin inbox UI mock, non-destructive CI contract tests, test matrix and feature-flag scaffolding default OFF. Do not wire real product ordering until G0 complete.
+**Requires Omar to run SQL (only after review):** one additive campaign schema/RPC migration, separate later integration migration only if necessary; supply exact file, prerequisites, expected success, and rollback/disable behavior.
+**Requires explicit product/financial discussion:** whether repeated same SKU counts toward N, per-customer campaign-use versus quantity cap, cancel-before-payment and paid return/reversal, gift allocation timing, compatibility with loyalty coupon and store shipping discount, whether an admin approval is required to activate (distinct from admin promotion).
+**Requires live smoke test after every activation:** merchant isolation, admin inbox badge, existing admin customer notice, ordinary cart, mixed-store cart, order payment/status, stock, each store's existing invoice, shipping and mobile.
+
+## Strict work order after this document
+A. Finish G0 read-only call graph with exact current checkout function and frontend RPC invocation, all order trigger names, invoice render sources, merchant session and admin authorization.
+B. Submit an architecture-only PR and confirm tests; no production changes.
+C. Build G1 isolated migration in a separate PR, leave unapplied until Omar explicitly runs and verifies it.
+D. Build G2 merchant wizard behind OFF flag; G3 admin inbox; G4 storefront, each independently tested.
+E. Only after financial sign-off build G5 checkout bridge and gift stock lifecycle; run concurrency tests.
