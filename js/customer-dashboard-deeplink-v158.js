@@ -3,7 +3,7 @@ const allowed=new Set(['activeOrders','orderHistory','chatHelp','notifications',
 const reviewSessionKey='kinto_customer_review_session_v132';
 const readClass='kinto-notification-read',unreadClass='kinto-notification-unread';
 const UNREAD_WINDOW_MS=24*60*60*1000;
-let syncBusy=false,syncQueued=false,observerMute=false,observerTimer=0;
+let syncBusy=false,syncQueued=false,observerMute=false,observerTimer=0,restoringHistory=false;
 function tabSessionKey(){const params=new URLSearchParams(location.search),customerId=String(params.get('customerId')||params.get('id')||'session').trim();return'kinto_customer_dashboard_tab:'+customerId}
 function target(){const value=String(new URLSearchParams(location.search).get('tab')||window.__kintoCustomerInitialTab||sessionStorage.getItem(tabSessionKey())||'').trim();return value==='favorites'?'customerFavorites':value}
 function finishTabRestore(){document.documentElement.classList.remove('customer-tab-restoring');document.documentElement.classList.add('customer-tab-ready')}
@@ -30,7 +30,28 @@ async function syncAuthoritative(){if(syncBusy){syncQueued=true;return}const ses
 async function markOneRead(node){if(!node||node.dataset.readAcknowledged==='1'||node.dataset.readAcknowledged==='pending')return;decorateOrderKeys();const key=String(node.dataset.notificationKey||'').trim(),sessionToken=token();if(!key||!sessionToken)return;node.dataset.readAcknowledged='pending';try{const client=await sb();if(!client){node.dataset.readAcknowledged='0';return}const{error}=await client.rpc('customer_mark_notifications_read_v155',{p_session_token:sessionToken,p_notification_keys:[key]});if(error)throw error;paintRead(node,true);await syncAuthoritative()}catch(error){node.dataset.readAcknowledged='0';console.warn('[KINTO Notifications] item acknowledgement failed',error);await syncAuthoritative()}}
 function observeNotifications(){const box=document.getElementById('notificationsContainer');if(!box||box.__kintoNotificationObserver)return;const observer=new MutationObserver(mutations=>{if(observerMute)return;const relevant=mutations.some(m=>m.type==='childList'||(m.type==='attributes'&&m.attributeName==='data-notification-key'));if(!relevant)return;clearTimeout(observerTimer);observerTimer=setTimeout(syncAuthoritative,30)});observer.observe(box,{childList:true,subtree:false,attributes:true,attributeFilter:['data-notification-key']});box.__kintoNotificationObserver=observer}
 function installNotifications(){injectStyles();removeMarkAll();if(typeof renderCloudNotifications==='function'&&!renderCloudNotifications.__notificationOrderV169){const base=renderCloudNotifications;renderCloudNotifications=function(...args){const result=base.apply(this,args);setTimeout(()=>{observeNotifications();syncAuthoritative()},0);return result};renderCloudNotifications.__notificationOrderV169=true;window.renderCloudNotifications=renderCloudNotifications}document.addEventListener('click',event=>{const notice=event.target.closest('#notificationsContainer .notification-item');if(notice)markOneRead(notice)},true);let attempts=0;const bootTimer=setInterval(()=>{attempts+=1;removeMarkAll();observeNotifications();if(document.getElementById('notificationsContainer'))syncAuthoritative();if(token()&&document.getElementById('notificationsContainer')||attempts>=30)clearInterval(bootTimer)},300);setInterval(()=>{if(!document.hidden)syncAuthoritative()},3000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(syncAuthoritative,100)})}
-function rememberTab(){document.addEventListener('click',event=>{const button=event.target.closest('.tabs-nav [data-tab]');if(!button)return;const tab=String(button.dataset.tab||'').trim();if(!allowed.has(tab))return;try{sessionStorage.setItem(tabSessionKey(),tab)}catch{}const url=new URL(location.href);url.searchParams.set('tab',tab);history.replaceState(history.state,'',url.pathname+url.search+url.hash)},true)}
+function rememberTab(){
+ document.addEventListener('click',event=>{
+  const button=event.target.closest('.tabs-nav [data-tab]');if(!button)return;
+  const tab=String(button.dataset.tab||'').trim();if(!allowed.has(tab))return;
+  try{sessionStorage.setItem(tabSessionKey(),tab)}catch{}
+  if(restoringHistory)return;
+  const url=new URL(location.href),previous=url.searchParams.get('tab')||document.querySelector('.tabs-nav .tab-btn.active')?.dataset.tab||'activeOrders';
+  if(previous===tab)return;
+  if(tab==='notifications'&&previous!=='notifications'){
+   const old=new URL(url.href);old.searchParams.set('tab',previous);
+   history.replaceState({...history.state,kintoCustomerTab:previous},'',old.pathname+old.search+old.hash);
+   url.searchParams.set('tab',tab);history.pushState({...history.state,kintoCustomerTab:tab},'',url.pathname+url.search+url.hash);
+  }else{url.searchParams.set('tab',tab);history.replaceState({...history.state,kintoCustomerTab:tab},'',url.pathname+url.search+url.hash)}
+ },true);
+ window.addEventListener('popstate',()=>{
+  const tab=new URL(location.href).searchParams.get('tab')||'activeOrders';
+  if(!allowed.has(tab))return;
+  const button=document.querySelector('.tabs-nav [data-tab="'+tab+'"]');if(!button)return;
+  restoringHistory=true;button.click();restoringHistory=false;
+  document.getElementById(tab)?.scrollIntoView({block:'start'});
+ });
+}
 function start(){installNotifications();rememberTab();let attempts=0;if(reveal())return;const timer=setInterval(()=>{attempts+=1;if(reveal()){clearInterval(timer);return}if(attempts>=40){clearInterval(timer);finishTabRestore()}},125)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
