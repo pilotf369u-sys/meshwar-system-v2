@@ -37,7 +37,7 @@ function row(n){
   const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:7px';
   for(const store of n.stores){
    const chip=document.createElement('a');chip.style.cssText='display:inline-flex;align-items:center;gap:7px;border:1px solid currentColor;border-radius:9px;padding:5px 8px;font-size:12px;max-width:100%;overflow-wrap:anywhere;text-decoration:none;color:inherit';
-   if(typeof store.logo_url==='string'&&/^https:\/\/[^\s"<>]+$/i.test(store.logo_url)){
+   if(typeof store.logo_url==='string'&&(/^(https:\/\/[^\s"<>]+)$/i.test(store.logo_url)||/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(store.logo_url))){
     const logo=document.createElement('img');logo.src=store.logo_url;logo.alt='';logo.loading='lazy';logo.referrerPolicy='no-referrer';logo.style.cssText='width:28px;height:28px;object-fit:cover;border-radius:50%;flex-shrink:0';logo.onerror=()=>logo.remove();chip.append(logo);
    }
    const name=document.createElement('span');name.textContent=store.name||'متجر';chip.append(name);
