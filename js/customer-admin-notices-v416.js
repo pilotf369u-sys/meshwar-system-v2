@@ -66,7 +66,11 @@ async function load(p=1){
  area.textContent='جاري تحميل تبليغات الإدارة...';
  try{
  const sb=await ensureCustomerPortalSupabase();
- const {data,error}=await sb.rpc('customer_admin_notices_v422',{p_session_token:t,p_page:p,p_page_size:8});
+ let {data,error}=await sb.rpc('customer_admin_notices_v422',{p_session_token:t,p_page:p,p_page_size:8});
+ // V422 is optional. V420 is the deployed, customer-scoped feed and must remain usable.
+ if(error && (error.code==='PGRST202'||/Could not find the function|schema cache|customer_admin_notices_v422/i.test(String(error.message||'')))){
+  ({data,error}=await sb.rpc('customer_admin_notices_v420',{p_session_token:t,p_page:p,p_page_size:8}));
+ }
  if(error)throw error;if(seq!==request)return;
  if(!data||data.ok===false)throw new Error(data?.message||'استجابة الإشعارات غير متاحة');
  total=Number(data?.total||0);unread=Number(data?.unread||0);badge();
