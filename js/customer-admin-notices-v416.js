@@ -36,7 +36,11 @@ function row(n){
   const h=document.createElement('strong');h.textContent='المتاجر المرتبطة:';content.append(h);
   const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:7px';
   for(const store of n.stores){
-   const chip=document.createElement('a');chip.textContent=store.name||'متجر';
+   const chip=document.createElement('a');chip.style.cssText='display:inline-flex;align-items:center;gap:7px;border:1px solid currentColor;border-radius:9px;padding:5px 8px;font-size:12px;max-width:100%;overflow-wrap:anywhere;text-decoration:none;color:inherit';
+   if(typeof store.logo_url==='string'&&/^https:\/\/[^\\s"<>]+$/i.test(store.logo_url)){
+    const logo=document.createElement('img');logo.src=store.logo_url;logo.alt='';logo.loading='lazy';logo.referrerPolicy='no-referrer';logo.style.cssText='width:28px;height:28px;object-fit:cover;border-radius:50%;flex-shrink:0';logo.onerror=()=>logo.remove();chip.append(logo);
+   }
+   const name=document.createElement('span');name.textContent=store.name||'متجر';chip.append(name);
    if(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(String(store.id||''))){chip.href='store.html?storeId='+encodeURIComponent(String(store.id));chip.title='فتح المتجر'}else{chip.removeAttribute('href')}
    chip.style.cssText='display:inline-block;border:1px solid currentColor;border-radius:8px;padding:4px 8px;font-size:12px;max-width:100%;overflow-wrap:anywhere';
    wrap.append(chip);
@@ -62,7 +66,7 @@ async function load(p=1){
  area.textContent='جاري تحميل تبليغات الإدارة...';
  try{
  const sb=await ensureCustomerPortalSupabase();
- const {data,error}=await sb.rpc('customer_admin_notices_v420',{p_session_token:t,p_page:p,p_page_size:8});
+ const {data,error}=await sb.rpc('customer_admin_notices_v422',{p_session_token:t,p_page:p,p_page_size:8});
  if(error)throw error;if(seq!==request)return;
  if(!data||data.ok===false)throw new Error(data?.message||'استجابة الإشعارات غير متاحة');
  total=Number(data?.total||0);unread=Number(data?.unread||0);badge();
