@@ -14,7 +14,26 @@ function badge(){
  const tab=document.querySelector('[data-tab="notifications"]');if(!tab)return;
  let b=$('kintoAdminNoticeBadgeV416');
  if(!b){b=document.createElement('span');b.id='kintoAdminNoticeBadgeV416';b.className='tab-badge';b.title='إشعارات الإدارة غير المقروءة';tab.appendChild(b)}
- b.textContent=unread?String(unread):'';b.hidden=!unread;
+ b.textContent=unread>99?'99+':String(unread);b.hidden=!unread;b.classList.toggle('show',unread>0);
+}
+function mountSubtabs(){
+ const container=$('notificationsContainer'),pager=$('notificationsPager');
+ if(!container||!container.parentElement)return null;
+ let admin=$('kintoAdminNoticePanelV430');
+ if(admin)return admin;
+ const host=container.parentElement;
+ const nav=document.createElement('nav');nav.id='kintoNoticeSubtabsV430';nav.setAttribute('aria-label','تصنيف إشعارات العميل');
+ nav.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px';
+ const adminBtn=document.createElement('button'),orderBtn=document.createElement('button');
+ for(const b of [adminBtn,orderBtn]){b.type='button';b.style.cssText='border:1px solid #b99b52;border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:700;font-size:13px;background:transparent;color:inherit'}
+ adminBtn.textContent='تبليغات الإدارة';orderBtn.textContent='إشعارات الطلبات';
+ admin=document.createElement('div');admin.id='kintoAdminNoticePanelV430';
+ const orders=document.createElement('div');orders.id='kintoOrderNoticePanelV430';
+ host.insertBefore(nav,container);host.insertBefore(admin,container);
+ host.insertBefore(orders,container);orders.append(container);if(pager)orders.append(pager);
+ const activate=which=>{const isAdmin=which==='admin';admin.hidden=!isAdmin;orders.hidden=isAdmin;adminBtn.setAttribute('aria-pressed',String(isAdmin));orderBtn.setAttribute('aria-pressed',String(!isAdmin));adminBtn.style.background=isAdmin?'#b99b52':'transparent';adminBtn.style.color=isAdmin?'#0a2f23':'inherit';orderBtn.style.background=isAdmin?'transparent':'#b99b52';orderBtn.style.color=isAdmin?'inherit':'#0a2f23';};
+ adminBtn.onclick=()=>{activate('admin');load(page)};orderBtn.onclick=()=>activate('orders');
+ nav.append(adminBtn,orderBtn);activate('admin');return admin;
 }
 function row(n){
  const el=document.createElement('article');el.className='notification-item';
@@ -77,7 +96,7 @@ async function load(p=1){
  if(!t){const old=$('kintoAdminNoticeAreaV416');if(old)old.remove();unread=0;lastToken='';lastSignature='';displayedPage=0;badge();return;}
  const seq=++request;pending=true;page=p;lastToken=t;lastLoad=Date.now();
  let area=$('kintoAdminNoticeAreaV416');
- if(!area){area=document.createElement('section');area.id='kintoAdminNoticeAreaV416';area.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;margin:12px 0;padding:10px;border:1px solid #b99b52;border-radius:12px;background:#0a2f23;color:#f8eed0';container.before(area)}
+ if(!area){area=document.createElement('section');area.id='kintoAdminNoticeAreaV416';area.style.cssText='display:block;visibility:visible;opacity:1;margin:12px 0;padding:10px;border:1px solid #b99b52;border-radius:12px;background:#0a2f23;color:#f8eed0';(mountSubtabs()||container.parentElement).append(area)}
  if(!lastSignature||displayedPage!==p)area.textContent='جاري تحميل تبليغات الإدارة...';
  try{
  const sb=await ensureCustomerPortalSupabase();
@@ -109,6 +128,7 @@ function init(){
  // Mount outside #notificationsContainer: renderCloudNotifications clears its innerHTML.
  // This preserves both independent feeds without a mutation race.
  if(!$('notificationsContainer'))return;
+ mountSubtabs();
  document.addEventListener('click',e=>{if(e.target.closest('[data-tab="notifications"]')||e.target.closest('#notifications .panel-head .chip'))setTimeout(()=>load(1),150)});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(page)});
  // Customer session may be established asynchronously after DOMContentLoaded.
