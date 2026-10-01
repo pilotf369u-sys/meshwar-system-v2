@@ -1,10 +1,9 @@
 /* V416 — additive admin notices in the EXISTING customer notification panel. */
 (()=>{
 'use strict';
-const KEY='kinto_customer_review_session_v132';
 const $=id=>document.getElementById(id);
 let page=1, total=0, unread=0, pending=false, request=0, lastToken='', lastLoad=0;
-function token(){try{const s=JSON.parse(sessionStorage.getItem(KEY)||'null');return s?.token&&s?.expiresAt&&Date.parse(s.expiresAt)>Date.now()?String(s.token):''}catch{return''}}
+function token(){try{const s=window.KintoCustomerSessionV150?.read?.();return s?.token?String(s.token):''}catch{return''}}
 function badge(){
  const tab=document.querySelector('[data-tab="notifications"]');if(!tab)return;
  let b=$('kintoAdminNoticeBadgeV416');
