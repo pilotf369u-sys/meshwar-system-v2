@@ -27,6 +27,16 @@ function row(n){
  const source=document.createElement('small');source.textContent='إدارة KINTO · '+(n.kind||'announcement');
  const body=document.createElement('div');body.textContent=n.body||'';body.style.cssText='white-space:pre-wrap;margin:7px 0;font-size:13px;line-height:1.65';
  content.append(source,body);
+ if(Array.isArray(n.stores)&&n.stores.length){
+  const h=document.createElement('strong');h.textContent='المتاجر المرتبطة:';content.append(h);
+  const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:7px';
+  for(const store of n.stores){
+   const chip=document.createElement('span');chip.textContent=store.name||'متجر';
+   chip.style.cssText='display:inline-block;border:1px solid currentColor;border-radius:8px;padding:4px 8px;font-size:12px;max-width:100%;overflow-wrap:anywhere';
+   wrap.append(chip);
+  }
+  content.append(wrap);
+ }
  if(!n.read_at){
   const btn=document.createElement('button');btn.type='button';btn.textContent='تعليم كمقروء';btn.className='btn-details';
   btn.addEventListener('click',async()=>{
@@ -45,7 +55,7 @@ async function load(p=1){
  area.textContent='جاري تحميل تبليغات الإدارة...';
  try{
  const sb=await ensureCustomerPortalSupabase();
- const {data,error}=await sb.rpc('customer_admin_notices_v414',{p_session_token:t,p_page:p,p_page_size:8});
+ const {data,error}=await sb.rpc('customer_admin_notices_v420',{p_session_token:t,p_page:p,p_page_size:8});
  if(error)throw error;if(seq!==request)return;
  total=Number(data?.total||0);unread=Number(data?.unread||0);badge();
  area.textContent='';
