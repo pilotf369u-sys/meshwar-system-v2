@@ -46,4 +46,6 @@ begin
 end $$;
 revoke all on function private.finalize_customer_notice_delete_v425(uuid) from public,anon,authenticated;
 grant execute on function private.finalize_customer_notice_delete_v425(uuid) to service_role;
+-- Never expose a public finalizer: Edge Functions use a service-role connection
+-- with an explicit private schema RPC or trusted server-side SQL adapter.
 commit;
