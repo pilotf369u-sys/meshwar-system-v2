@@ -3,7 +3,13 @@
 'use strict';
 const $=id=>document.getElementById(id);
 let page=1, total=0, unread=0, pending=false, request=0, lastToken='', lastLoad=0;
-function token(){try{const s=window.KintoCustomerSessionV150?.read?.();return s?.token?String(s.token):''}catch{return''}}
+function token(){try{
+ const s=window.KintoCustomerSessionV150?.read?.();
+ if(s?.token)return String(s.token);
+ const raw=sessionStorage.getItem('kinto_customer_review_session_v132');
+ const legacy=raw?JSON.parse(raw):null;
+ return legacy?.token?String(legacy.token):'';
+ }catch{return''}}
 function badge(){
  const tab=document.querySelector('[data-tab="notifications"]');if(!tab)return;
  let b=$('kintoAdminNoticeBadgeV416');
@@ -52,12 +58,13 @@ async function load(p=1){
  if(!t){const old=$('kintoAdminNoticeAreaV416');if(old)old.remove();unread=0;lastToken='';badge();return;}
  const seq=++request;pending=true;page=p;lastToken=t;lastLoad=Date.now();
  let area=$('kintoAdminNoticeAreaV416');
- if(!area){area=document.createElement('section');area.id='kintoAdminNoticeAreaV416';container.before(area)}
+ if(!area){area=document.createElement('section');area.id='kintoAdminNoticeAreaV416';area.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;margin:12px 0;padding:10px;border:1px solid #b99b52;border-radius:12px;background:#0a2f23;color:#f8eed0';container.before(area)}
  area.textContent='جاري تحميل تبليغات الإدارة...';
  try{
  const sb=await ensureCustomerPortalSupabase();
  const {data,error}=await sb.rpc('customer_admin_notices_v420',{p_session_token:t,p_page:p,p_page_size:8});
  if(error)throw error;if(seq!==request)return;
+ if(!data||data.ok===false)throw new Error(data?.message||'استجابة الإشعارات غير متاحة');
  total=Number(data?.total||0);unread=Number(data?.unread||0);badge();
  area.textContent='';
  if(total){
@@ -79,7 +86,7 @@ function init(){
  // Mount outside #notificationsContainer: renderCloudNotifications clears its innerHTML.
  // This preserves both independent feeds without a mutation race.
  if(!$('notificationsContainer'))return;
- document.addEventListener('click',e=>{if(e.target.closest('[data-tab="notifications"]'))setTimeout(()=>load(1),150)});
+ document.addEventListener('click',e=>{if(e.target.closest('[data-tab="notifications"]')||e.target.closest('#notifications .panel-head .chip'))setTimeout(()=>load(1),150)});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(page)});
  // Customer session may be established asynchronously after DOMContentLoaded.
  load(1);
