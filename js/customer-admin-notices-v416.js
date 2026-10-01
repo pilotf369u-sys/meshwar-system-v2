@@ -55,7 +55,22 @@ function row(n){
    catch(e){btn.disabled=false;console.warn('Customer admin notice read:',e)}
   });content.append(btn);
  }
- details.append(content);el.append(details);return el;
+ details.append(content);el.append(details);
+ let mediaLoaded=false;
+ details.addEventListener('toggle',async()=>{
+  if(!details.open||mediaLoaded||!token())return;
+  mediaLoaded=true;
+  try{
+   const sb=await ensureCustomerPortalSupabase(),form=new FormData();
+   form.append('action','read');form.append('session_token',token());form.append('notice_id',n.id);
+   const {data,error}=await sb.functions.invoke('customer-notice-media-v427',{body:form});
+   if(error||data?.ok!==true)throw error||new Error(data?.error||'MEDIA_FAILED');
+   if(data.has_media&&typeof data.url==='string'&&data.url.startsWith('https://')){
+    const img=document.createElement('img');img.alt='صورة الإشعار';img.loading='lazy';img.referrerPolicy='no-referrer';img.style.cssText='display:block;max-width:100%;max-height:380px;width:auto;height:auto;object-fit:contain;border-radius:10px;margin:8px 0';img.src=data.url;
+    content.insertBefore(img,content.children[2]||null);
+   }
+  }catch(e){mediaLoaded=false;console.warn('Notice media unavailable',e)}
+ });return el;
 }
 async function load(p=1){
  const t=token(),container=$('notificationsContainer');if(!container||pending)return;

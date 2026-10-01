@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let linkedStores=new Map(),storeRows=[],storePage=1,storeTotal=0,storeSerial=0;
-let selected=new Map(),people=[],page=1,total=0,historyPage=1,searchSerial=0,busy=false;
+let selected=new Map(),people=[],page=1,total=0,historyPage=1,searchSerial=0,busy=false,mediaFile=null;
 const token=()=>window.KintoAdminSessionV147?.read()?.token||'';
 const client=()=>window.ensureCustomerSupabase();
 async function peopleLoad(p=1){
@@ -57,11 +57,20 @@ async function send(){
  if(busy)return;const all=$('acnAll').checked,title=$('acnTitle').value.trim(),body=$('acnBody').value.trim(),kind=$('acnKind').value;
  if(title.length<2||title.length>160||body.length<2||body.length>4000)return $('acnMessage').textContent='تحقق من العنوان والنص.';
  if(!all&&(!selected.size||selected.size>500))return $('acnMessage').textContent='حدد بين 1 و500 عميل.';
+ if($('acnMediaV427')?.files?.length&&!mediaFile)return $('acnMessage').textContent='انتظر تجهيز الصورة أو اختر صورة صالحة.';
  if(!confirm('تأكيد إرسال الإشعار إلى '+(all?'جميع العملاء':selected.size+' عميل')+'؟'))return;
  busy=true;$('acnSend').disabled=true;$('acnMessage').textContent='جاري الإرسال...';
  try{
  const sb=await client(),{data,error}=await sb.rpc('admin_send_customer_notice_v420',{p_session_token:token(),p_request_key:crypto.randomUUID(),p_title:title,p_body:body,p_kind:kind,p_customer_ids:all?null:[...selected.keys()],p_all_customers:all,p_store_ids:[...linkedStores.keys()]});
- if(error)throw error;$('acnMessage').textContent='تم الإرسال إلى '+data.recipients+' عميل.';selected.clear();linkedStores.clear();$('acnStoreSelectedV420').textContent='المتاجر المحددة: 0';renderPeople();await storeLoad(1);await historyLoad(1);
+ if(error)throw error;
+ let mediaMessage='';
+ if(mediaFile){
+  const form=new FormData();form.append('action','upload');form.append('session_token',token());form.append('notice_id',data.notice_id);form.append('file',mediaFile);
+  const result=await sb.functions.invoke('customer-notice-media-v427',{body:form});
+  if(result.error||result.data?.ok!==true)mediaMessage=' لكن تعذر إرفاق الصورة؛ الإشعار النصي أُرسل بالفعل.';
+ }
+ $('acnMessage').textContent='تم الإرسال إلى '+data.recipients+' عميل.'+mediaMessage;
+ mediaFile=null;$('acnMediaV427').value='';$('acnMediaPreviewV427').textContent='';selected.clear();linkedStores.clear();$('acnStoreSelectedV420').textContent='المتاجر المحددة: 0';renderPeople();await storeLoad(1);await historyLoad(1);
  }catch(e){$('acnMessage').textContent='فشل الإرسال: '+e.message}finally{busy=false;$('acnSend').disabled=false}
 }
 window.adminCustomerNoticesLoadV415=()=>Promise.all([peopleLoad(1),historyLoad(1),storeLoad(1)]);
@@ -76,6 +85,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   else linkedStores.delete(String(store.id));
   $('acnStoreSelectedV420').textContent='المتاجر المحددة: '+linkedStores.size;
  });
+ $('acnMediaV427')?.addEventListener('change',async e=>{
+  mediaFile=null;const preview=$('acnMediaPreviewV427');preview.textContent='';const file=e.target.files?.[0];if(!file)return;
+  const current=file;preview.textContent='جاري تجهيز الصورة...';
+  try{const prepared=await window.KintoNoticeMediaPrepareV424.prepare(file);
+   if(e.target.files?.[0]!==current)return;
+   mediaFile=prepared;preview.textContent='الصورة جاهزة ('+Math.ceil(prepared.size/1024)+' KB).';
+  }catch(err){preview.textContent=err.message;e.target.value='';}
+ });
  $('acnSend')?.addEventListener('click',send);
  $('acnHistory')?.addEventListener('click',async event=>{
  const button=event.target.closest('.acn-delete');if(!button||busy)return;
@@ -84,8 +101,8 @@ window.addEventListener('DOMContentLoaded',()=>{
  busy=true;button.disabled=true;
  try{
  const sb=await client();
- const {data,error}=await sb.rpc('admin_delete_customer_notice_v417',{p_session_token:token(),p_notice_id:id});
- if(error)throw error;
+ const {data,error}=await sb.functions.invoke('customer-notice-delete-v425',{body:{session_token:token(),notice_id:id}});
+ if(error||data?.ok!==true)throw error||new Error(data?.error||'DELETE_FAILED');
  $('acnMessage').textContent=data?.deleted?'حُذف الإشعار ومستلموه.':'الإشعار محذوف مسبقاً.';
  await historyLoad(1);
  }catch(e){$('acnMessage').textContent='تعذر الحذف: '+e.message;button.disabled=false}
