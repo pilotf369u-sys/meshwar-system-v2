@@ -27,7 +27,7 @@ function renderPeople(){
 async function historyLoad(p=1){
  historyPage=p;try{
  const sb=await client(),{data,error}=await sb.rpc('admin_customer_notices_v415',{p_session_token:token(),p_page:p,p_page_size:8});if(error)throw error;
- $('acnHistory').innerHTML=(data.items||[]).map(n=>'<tr><td>'+esc(n.title)+'<div class="mini">'+esc(n.body)+'</div></td><td>'+esc(n.kind)+'</td><td>'+Number(n.recipients||0)+'</td><td>'+Number(n.read_count||0)+'</td><td>'+esc(new Date(n.created_at).toLocaleString('en-GB'))+'</td></tr>').join('')||'<tr><td colspan="5">لا توجد إشعارات.</td></tr>';
+ $('acnHistory').innerHTML=(data.items||[]).map(n=>'<tr><td>'+esc(n.title)+'<div class="mini">'+esc(n.body)+'</div></td><td>'+esc(n.kind)+'</td><td>'+Number(n.recipients||0)+'</td><td>'+Number(n.read_count||0)+'</td><td>'+esc(new Date(n.created_at).toLocaleString('en-GB'))+'</td><td><button type="button" class="acn-delete" data-id="'+esc(n.id)+'">حذف</button></td></tr>').join('')||'<tr><td colspan="6">لا توجد إشعارات.</td></tr>';
  const nav=$('acnHistoryPager');nav.textContent='';
  const prev=document.createElement('button');prev.textContent='السابق';prev.disabled=p<=1;prev.onclick=()=>historyLoad(p-1);
  const span=document.createElement('span');span.textContent=' '+p+' / '+Math.max(1,Math.ceil(Number(data.total||0)/8))+' ';
@@ -50,6 +50,20 @@ window.addEventListener('DOMContentLoaded',()=>{
  $('acnSearch')?.addEventListener('input',()=>{clearTimeout(window.__acnTimer);window.__acnTimer=setTimeout(()=>peopleLoad(1),250)});
  $('acnPeople')?.addEventListener('change',e=>{if(!e.target.matches('.acn-person'))return;const c=people.find(x=>String(x.id)===e.target.value);if(!c)return;if(e.target.checked)selected.set(String(c.id),c);else selected.delete(String(c.id));$('acnSelected').textContent='المحددون: '+selected.size});
  $('acnSend')?.addEventListener('click',send);
+ $('acnHistory')?.addEventListener('click',async event=>{
+ const button=event.target.closest('.acn-delete');if(!button||busy)return;
+ const id=button.dataset.id;
+ if(!/^[0-9a-f-]{36}$/i.test(id)||!confirm('حذف هذا الإشعار نهائياً من جميع العملاء وسجل القراءة؟'))return;
+ busy=true;button.disabled=true;
+ try{
+ const sb=await client();
+ const {data,error}=await sb.rpc('admin_delete_customer_notice_v417',{p_session_token:token(),p_notice_id:id});
+ if(error)throw error;
+ $('acnMessage').textContent=data?.deleted?'حُذف الإشعار ومستلموه.':'الإشعار محذوف مسبقاً.';
+ await historyLoad(1);
+ }catch(e){$('acnMessage').textContent='تعذر الحذف: '+e.message;button.disabled=false}
+ finally{busy=false}
+ });
  $('acnAll')?.addEventListener('change',e=>{$('acnPicker').hidden=e.target.checked});
 });
 })();
