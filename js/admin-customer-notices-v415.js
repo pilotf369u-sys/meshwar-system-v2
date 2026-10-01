@@ -101,8 +101,8 @@ window.addEventListener('DOMContentLoaded',()=>{
  busy=true;button.disabled=true;
  try{
  const sb=await client();
- const {data,error}=await sb.rpc('admin_delete_customer_notice_v417',{p_session_token:token(),p_notice_id:id});
- if(error)throw error;
+ const {data,error}=await sb.functions.invoke('customer-notice-delete-v425',{body:{session_token:token(),notice_id:id}});
+ if(error||data?.ok!==true)throw error||new Error(data?.error||'DELETE_FAILED');
  $('acnMessage').textContent=data?.deleted?'حُذف الإشعار ومستلموه.':'الإشعار محذوف مسبقاً.';
  await historyLoad(1);
  }catch(e){$('acnMessage').textContent='تعذر الحذف: '+e.message;button.disabled=false}
