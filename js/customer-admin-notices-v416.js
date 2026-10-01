@@ -12,17 +12,30 @@ function badge(){
  b.textContent=unread?String(unread):'';b.hidden=!unread;
 }
 function row(n){
- const el=document.createElement('article');el.className='notification-item';el.style.marginBottom='8px';
- const title=document.createElement('b');title.textContent=n.title||'إشعار الإدارة';
- const tag=document.createElement('small');tag.textContent=' · إدارة KINTO · '+new Date(n.created_at).toLocaleString('en-GB');
- const body=document.createElement('div');body.textContent=n.body||'';body.style.whiteSpace='pre-wrap';
- el.append(title,tag,body);
- if(!n.read_at){const btn=document.createElement('button');btn.type='button';btn.textContent='تعليم كمقروء';btn.className='btn-details';btn.addEventListener('click',async()=>{
- if(!token()||btn.disabled)return;btn.disabled=true;
- try{const sb=await ensureCustomerPortalSupabase();const {error}=await sb.rpc('customer_read_admin_notice_v414',{p_session_token:token(),p_notice_id:n.id});if(error)throw error;await load(page)}
- catch(e){btn.disabled=false;console.warn('Customer admin notice read:',e)}
- });el.append(btn)}
- return el;
+ const el=document.createElement('article');el.className='notification-item';
+ el.style.cssText='margin-bottom:7px;padding:9px 11px;max-width:100%;min-width:0';
+ const details=document.createElement('details');details.style.width='100%';
+ const summary=document.createElement('summary');
+ summary.style.cssText='cursor:pointer;display:flex;align-items:center;gap:8px;min-width:0;list-style-position:inside';
+ const title=document.createElement('strong');title.textContent=n.title||'إشعار الإدارة';
+ title.style.cssText='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px';
+ const date=document.createElement('small');date.textContent=new Date(n.created_at).toLocaleDateString('en-GB');
+ date.style.cssText='flex-shrink:0;font-size:10px;opacity:.75';
+ const arrow=document.createElement('span');arrow.textContent='⌄';arrow.setAttribute('aria-hidden','true');
+ summary.append(title,date,arrow);details.append(summary);
+ const content=document.createElement('div');content.style.cssText='padding:9px 4px 3px;overflow-wrap:anywhere';
+ const source=document.createElement('small');source.textContent='إدارة KINTO · '+(n.kind||'announcement');
+ const body=document.createElement('div');body.textContent=n.body||'';body.style.cssText='white-space:pre-wrap;margin:7px 0;font-size:13px;line-height:1.65';
+ content.append(source,body);
+ if(!n.read_at){
+  const btn=document.createElement('button');btn.type='button';btn.textContent='تعليم كمقروء';btn.className='btn-details';
+  btn.addEventListener('click',async()=>{
+   if(!token()||btn.disabled)return;btn.disabled=true;
+   try{const sb=await ensureCustomerPortalSupabase();const {error}=await sb.rpc('customer_read_admin_notice_v414',{p_session_token:token(),p_notice_id:n.id});if(error)throw error;await load(page)}
+   catch(e){btn.disabled=false;console.warn('Customer admin notice read:',e)}
+  });content.append(btn);
+ }
+ details.append(content);el.append(details);return el;
 }
 async function load(p=1){
  const t=token(),container=$('notificationsContainer');if(!t||!container||pending)return;
