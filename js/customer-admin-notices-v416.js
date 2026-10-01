@@ -49,10 +49,11 @@ function row(n){
  details.append(content);el.append(details);return el;
 }
 async function load(p=1){
- const t=token(),container=$('notificationsContainer');if(!t||!container||pending)return;
+ const t=token(),container=$('notificationsContainer');if(!container||pending)return;
+ if(!t){const old=$('kintoAdminNoticeAreaV416');if(old)old.remove();unread=0;badge();return;}
  const seq=++request;pending=true;page=p;
  let area=$('kintoAdminNoticeAreaV416');
- if(!area){area=document.createElement('section');area.id='kintoAdminNoticeAreaV416';container.prepend(area)}
+ if(!area){area=document.createElement('section');area.id='kintoAdminNoticeAreaV416';container.before(area)}
  area.textContent='جاري تحميل تبليغات الإدارة...';
  try{
  const sb=await ensureCustomerPortalSupabase();
@@ -74,15 +75,11 @@ async function load(p=1){
 }
 function init(){
  const panel=$('notifications');if(!panel)return;
- // The existing order/review renderer may replace its children: reattach additively.
- const container=$('notificationsContainer');if(!container)return;
- let scheduled=false;
- new MutationObserver(()=>{
- if(scheduled||!panel.classList.contains('active')||$('kintoAdminNoticeAreaV416'))return;
- scheduled=true;queueMicrotask(()=>{scheduled=false;if(!$('kintoAdminNoticeAreaV416'))load(page)})
- }).observe(container,{childList:true});
+ // Mount outside #notificationsContainer: renderCloudNotifications clears its innerHTML.
+ // This preserves both independent feeds without a mutation race.
+ if(!$('notificationsContainer'))return;
  document.addEventListener('click',e=>{if(e.target.closest('[data-tab="notifications"]'))setTimeout(()=>load(1),150)});
- document.addEventListener('visibilitychange',()=>{if(!document.hidden&&token())load(page)});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(page)});
  if(token())load(1);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
