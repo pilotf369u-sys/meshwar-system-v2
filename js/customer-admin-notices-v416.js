@@ -13,10 +13,10 @@ function badge(){
 }
 function row(n){
  const el=document.createElement('article');el.className='notification-item';
- el.style.cssText='margin-bottom:7px;padding:9px 11px;max-width:100%;min-width:0';
- const details=document.createElement('details');details.style.width='100%';
+ el.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;margin:8px 0;padding:10px 12px;max-width:100%;min-width:0;background:#103d31;color:#f8eed0;border:1px solid #b99b52;border-radius:12px';
+ const details=document.createElement('details');details.style.cssText='display:block!important;visibility:visible!important;width:100%;color:inherit';
  const summary=document.createElement('summary');
- summary.style.cssText='cursor:pointer;display:flex;align-items:center;gap:8px;min-width:0;list-style-position:inside';
+ summary.style.cssText='display:flex!important;visibility:visible!important;cursor:pointer;align-items:center;gap:8px;min-width:0;list-style-position:inside;color:inherit';
  const title=document.createElement('strong');title.textContent=n.title||'إشعار الإدارة';
  title.style.cssText='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px';
  const date=document.createElement('small');date.textContent=new Date(n.created_at).toLocaleDateString('en-GB');
@@ -63,14 +63,16 @@ async function load(p=1){
  area.textContent='';
  if(total){
  const h=document.createElement('h3');h.textContent='تبليغات إدارة KINTO';area.append(h);
- for(const n of data.items||[])area.append(row(n));
+ const items=Array.isArray(data?.items)?data.items:[];
+ if(!items.length){const warning=document.createElement('p');warning.textContent='عدد الإشعارات موجود لكن تفاصيلها لم تصل؛ يرجى تحديث الصفحة أو إبلاغ الدعم.';area.append(warning);console.warn('Customer notice feed count/items mismatch',{total,page:p})}
+ for(const n of items)area.append(row(n));
  const nav=document.createElement('nav');nav.className='customer-pagination';
  const prev=document.createElement('button');prev.type='button';prev.textContent='السابق';prev.disabled=p<=1;prev.onclick=()=>load(p-1);
  const count=document.createElement('span');count.textContent=' '+p+' / '+Math.max(1,Math.ceil(total/8))+' ';
  const next=document.createElement('button');next.type='button';next.textContent='التالي';next.disabled=p*8>=total;next.onclick=()=>load(p+1);
  nav.append(prev,count,next);area.append(nav);
  }
- }catch(e){area.textContent='تعذر تحميل تبليغات الإدارة حالياً.';console.warn('Customer admin notices:',e)}
+ }catch(e){area.textContent='تعذر تحميل تبليغات الإدارة حالياً: '+String(e?.message||'خطأ اتصال');console.warn('Customer admin notices:',e)}
  finally{pending=false}
 }
 function init(){
