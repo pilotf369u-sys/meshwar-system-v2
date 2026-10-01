@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-let page=1, total=0, unread=0, pending=false, request=0, lastToken='', lastLoad=0;
+let page=1, total=0, unread=0, pending=false, request=0, lastToken='', lastLoad=0, lastSignature='', displayedPage=0;
 function token(){try{
  const s=window.KintoCustomerSessionV150?.read?.();
  if(s?.token)return String(s.token);
@@ -74,23 +74,27 @@ function row(n){
 }
 async function load(p=1){
  const t=token(),container=$('notificationsContainer');if(!container||pending)return;
- if(!t){const old=$('kintoAdminNoticeAreaV416');if(old)old.remove();unread=0;lastToken='';badge();return;}
+ if(!t){const old=$('kintoAdminNoticeAreaV416');if(old)old.remove();unread=0;lastToken='';lastSignature='';displayedPage=0;badge();return;}
  const seq=++request;pending=true;page=p;lastToken=t;lastLoad=Date.now();
  let area=$('kintoAdminNoticeAreaV416');
  if(!area){area=document.createElement('section');area.id='kintoAdminNoticeAreaV416';area.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;margin:12px 0;padding:10px;border:1px solid #b99b52;border-radius:12px;background:#0a2f23;color:#f8eed0';container.before(area)}
- area.textContent='جاري تحميل تبليغات الإدارة...';
+ if(!lastSignature||displayedPage!==p)area.textContent='جاري تحميل تبليغات الإدارة...';
  try{
  const sb=await ensureCustomerPortalSupabase();
  let {data,error}=await sb.rpc('customer_admin_notices_v420',{p_session_token:t,p_page:p,p_page_size:8});
  if(error)throw error;if(seq!==request)return;
  if(!data||data.ok===false)throw new Error(data?.message||'استجابة الإشعارات غير متاحة');
  total=Number(data?.total||0);unread=Number(data?.unread||0);badge();
+ const signature=JSON.stringify([t,p,total,unread,data?.items]);
+ if(signature===lastSignature&&displayedPage===p)return;
+ lastSignature=signature;displayedPage=p;
+ const expanded=new Set([...area.querySelectorAll('details[open]')].map(d=>d.dataset.noticeId).filter(Boolean));
  area.textContent='';
  if(total){
  const h=document.createElement('h3');h.textContent='تبليغات إدارة KINTO';area.append(h);
  const items=Array.isArray(data?.items)?data.items:[];
  if(!items.length){const warning=document.createElement('p');warning.textContent='عدد الإشعارات موجود لكن تفاصيلها لم تصل؛ يرجى تحديث الصفحة أو إبلاغ الدعم.';area.append(warning);console.warn('Customer notice feed count/items mismatch',{total,page:p})}
- for(const n of items)area.append(row(n));
+ for(const n of items){const card=row(n);const detail=card.querySelector('details');detail.dataset.noticeId=String(n.id);if(expanded.has(String(n.id)))detail.open=true;area.append(card)}
  const nav=document.createElement('nav');nav.className='customer-pagination';
  const prev=document.createElement('button');prev.type='button';prev.textContent='السابق';prev.disabled=p<=1;prev.onclick=()=>load(p-1);
  const count=document.createElement('span');count.textContent=' '+p+' / '+Math.max(1,Math.ceil(total/8))+' ';
