@@ -3,7 +3,7 @@
 'use strict';
 const KEY='kinto_customer_review_session_v132';
 const $=id=>document.getElementById(id);
-let page=1, total=0, unread=0, pending=false, request=0;
+let page=1, total=0, unread=0, pending=false, request=0, lastToken='', lastLoad=0;
 function token(){try{const s=JSON.parse(sessionStorage.getItem(KEY)||'null');return s?.token&&s?.expiresAt&&Date.parse(s.expiresAt)>Date.now()?String(s.token):''}catch{return''}}
 function badge(){
  const tab=document.querySelector('[data-tab="notifications"]');if(!tab)return;
@@ -50,8 +50,8 @@ function row(n){
 }
 async function load(p=1){
  const t=token(),container=$('notificationsContainer');if(!container||pending)return;
- if(!t){const old=$('kintoAdminNoticeAreaV416');if(old)old.remove();unread=0;badge();return;}
- const seq=++request;pending=true;page=p;
+ if(!t){const old=$('kintoAdminNoticeAreaV416');if(old)old.remove();unread=0;lastToken='';badge();return;}
+ const seq=++request;pending=true;page=p;lastToken=t;lastLoad=Date.now();
  let area=$('kintoAdminNoticeAreaV416');
  if(!area){area=document.createElement('section');area.id='kintoAdminNoticeAreaV416';container.before(area)}
  area.textContent='جاري تحميل تبليغات الإدارة...';
@@ -80,7 +80,20 @@ function init(){
  if(!$('notificationsContainer'))return;
  document.addEventListener('click',e=>{if(e.target.closest('[data-tab="notifications"]'))setTimeout(()=>load(1),150)});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(page)});
- if(token())load(1);
+ // Customer session may be established asynchronously after DOMContentLoaded.
+ load(1);
+ let attempts=0;
+ const bootstrap=setInterval(()=>{
+  if(!document.body.isConnected||attempts++>=30){clearInterval(bootstrap);return}
+  const t=token();
+  if(t&&(!lastToken||lastToken!==t)){clearInterval(bootstrap);load(1)}
+ },1000);
+ setInterval(()=>{
+  if(document.hidden)return;
+  const t=token();
+  if(t!==lastToken){load(1);return}
+  if(t&&Date.now()-lastLoad>60000)load(page);
+ },15000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
