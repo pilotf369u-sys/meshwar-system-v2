@@ -117,6 +117,16 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(!$('kdDraftForm'))return;
  $('kdSearchButton').addEventListener('click',search);
  $('kdRefreshDrafts').addEventListener('click',listDrafts);
+ window.addEventListener('kinto-deals-revision-created',async e=>{
+  await listDrafts();
+  const campaignId=e.detail?.campaignId;
+  if(!campaignId)return;
+  try{
+   const data=await rpc('kinto_deals_v1_vendor_drafts_g4',{p_campaign_id:campaignId,p_limit:1});
+   if(data?.items?.length===1)await restoreDraft(data.items[0]);
+   else setMsg('أُنشئت نسخة جديدة. اضغط تحديث المسودات لاستعادتها.');
+  }catch(err){setMsg('أُنشئت نسخة جديدة؛ تعذرت استعادتها تلقائياً: '+err.message,true)}
+ });
  listDrafts();
  $('kdGift').addEventListener('change',e=>state.gift=e.target.value||null);
  $('kdKind').addEventListener('change',syncKind);
