@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(!campaignId)return;
   try{
    const data=await rpc('kinto_deals_v1_vendor_drafts_g4',{p_campaign_id:campaignId,p_limit:1});
-   if(data?.items?.length===1)await restoreDraft(data.items[0]);
+   if(data?.items?.length===1){await restoreDraft(data.items[0]);setMsg('أُنشئت نسخة تعديل مستقلة. راجع سبب الرفض وعدّل الحقول والتواريخ، ثم احفظها وأرسلها للإدارة من قائمة المسودات.')}
    else setMsg('أُنشئت نسخة جديدة. اضغط تحديث المسودات لاستعادتها.');
   }catch(err){setMsg('أُنشئت نسخة جديدة؛ تعذرت استعادتها تلقائياً: '+err.message,true)}
  });
