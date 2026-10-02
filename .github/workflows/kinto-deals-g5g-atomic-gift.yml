@@ -1,0 +1,17 @@
+name: kinto-deals-g5g-atomic-gift
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261002_kinto_deals_v1_g5g_atomic_gift_checkout_off.sql'
+      - 'supabase/migrations/20261002_kinto_deals_v1_g5d_to_g5g_ONE_RUN_OFF.sql'
+      - 'ci/kinto-deals-g5g-atomic-gift.test.mjs'
+      - '.github/workflows/kinto-deals-g5g-atomic-gift.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node ci/kinto-deals-g5g-atomic-gift.test.mjs
