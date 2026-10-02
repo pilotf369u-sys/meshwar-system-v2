@@ -1,0 +1,18 @@
+name: KINTO Deals G4I exact restore
+on:
+  pull_request:
+    paths:
+      - 'js/vendor-kinto-deals-g4c-draft.js'
+      - 'ci/kinto-deals-g4i-exact-restore.test.mjs'
+      - '.github/workflows/kinto-deals-g4i-exact-restore.yml'
+  workflow_dispatch:
+jobs:
+  g4i-exact-restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check js/vendor-kinto-deals-g4c-draft.js
+      - run: node --test ci/kinto-deals-g4i-exact-restore.test.mjs
