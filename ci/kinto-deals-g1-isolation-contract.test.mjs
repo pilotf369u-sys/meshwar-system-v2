@@ -42,3 +42,9 @@ test('submissions and reserved redemptions cannot spoof store or customer-order 
   assert.match(sql,/trg_kinto_deals_v1_submission_store/);
   assert.match(sql,/trg_kinto_deals_v1_redemption_store/);
 });
+
+test('PL/pgSQL function bodies have matching dollar quote markers',()=>{
+ const marker=String.fromCharCode(36)+'deals'+String.fromCharCode(36);
+ assert.equal(sql.split('as '+marker).length-1,4);
+ assert.equal(sql.split(marker+';').length-1,4);
+});
