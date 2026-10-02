@@ -33,3 +33,12 @@ test('redemption ledger is reserved but no checkout or order hook exists',()=>{
   assert.match(sql,/customer_id uuid not null references public\.customers/);
   assert.doesNotMatch(sql,/create trigger[^;]*on public\.orders/i);
 });
+
+test('submissions and reserved redemptions cannot spoof store or customer-order pairing',()=>{
+  assert.match(sql,/DEALS_RELATED_STORE_MISMATCH/);
+  assert.match(sql,/DEALS_REDEMPTION_CUSTOMER_ORDER_MISMATCH/);
+  assert.match(sql,/DEALS_REDEMPTION_GIFT_STORE_MISMATCH/);
+  assert.match(sql,/o\.id = new\.order_id and o\.customer_id = new\.customer_id/);
+  assert.match(sql,/trg_kinto_deals_v1_submission_store/);
+  assert.match(sql,/trg_kinto_deals_v1_redemption_store/);
+});
