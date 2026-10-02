@@ -1,0 +1,20 @@
+name: KINTO Deals G1 Isolation
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261002_kinto_deals_v1_g1_isolated_off.sql'
+      - 'ci/kinto-deals-g1-isolation-contract.test.mjs'
+      - '.github/workflows/kinto-deals-g1-isolation.yml'
+  workflow_dispatch:
+jobs:
+  deals-g1-isolation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check ci/kinto-deals-g1-isolation-contract.test.mjs
+      - run: node --test ci/kinto-deals-g1-isolation-contract.test.mjs
