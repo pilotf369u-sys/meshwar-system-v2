@@ -2,7 +2,7 @@
 select jsonb_pretty(jsonb_build_object(
  'feature_off',coalesce((select not enabled from public.kinto_deals_v1_flags where key='merchant_deals_enabled'),false),
  'segment_sync_definition',(
-  select pg_get_functiondef('private.v94_sync_order_segments(uuid)'::regprocedure)),
+  select coalesce(jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'definition',pg_get_functiondef(p.oid))),'[]'::jsonb) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='private' and p.proname='v94_sync_order_segments'),
  'order_segment_triggers',(
   select coalesce(jsonb_agg(jsonb_build_object('name',t.tgname,
    'definition',pg_get_triggerdef(t.oid),'function',pg_get_functiondef(t.tgfoid))
