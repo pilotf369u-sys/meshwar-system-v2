@@ -25,5 +25,9 @@ test('media is local preview only and has type and size guard',()=>{
 });
 test('mobile responsive and no false real admin submission',()=>{
  assert.match(source,/@media\(max-width:640px\)/);
- assert.match(source,/لا يوجد إرسال فعلي للإدارة/);
+ assert.match(source,/لم تُرسل بيانات أو إشعارات فعلياً/);
+ assert.match(source,/تبقى بانتظار الموافقة/);
+ assert.match(source,/تمت الموافقة — مجدولة/);
+ assert.match(source,/مرفوضة.*السبب/);
+ assert.match(source,/إشعار ترويجي للعملاء قرار آخر منفصل للأدمن/);
 });
