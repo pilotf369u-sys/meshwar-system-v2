@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const token=()=>{try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null')?.token||''}catch{return''}};
-const state={selected:new Map(),catalog:new Map(),gift:null,campaignId:null,updatedAt:null,busy:false};
+const state={selected:new Map(),catalog:new Map(),gift:null,campaignId:null,updatedAt:null,termsSnapshot:{},giftOptions:{},busy:false};
 const rpc=async(name,args)=>{const sb=window.MeshwarVendorRuntime?.sb;if(!sb||!token())throw Error('جلسة التاجر غير متاحة. سجّل الدخول مجدداً.');const {data,error}=await sb.rpc(name,{p_session_token:token(),...args});if(error)throw error;return data};
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e};
 const setMsg=(message,bad=false)=>{const e=$('kdDraftMessage');if(e){e.textContent=message;e.className='text-sm mt-3 '+(bad?'text-rose-300':'text-amber-200')}};
@@ -62,7 +62,7 @@ async function restoreDraft(item){
   $('kdKind').value=item.kind;$('kdStart').value=localDate(item.starts_at);$('kdEnd').value=localDate(item.ends_at);
   $('kdThreshold').value=item.threshold_units??2;$('kdUses').value=item.max_uses_per_customer??1;
   $('kdUnits').value=item.max_units_per_customer??2;$('kdTotal').value=item.max_total_redemptions??'';
-  state.campaignId=item.id;state.updatedAt=item.updated_at;syncKind();renderSelected();
+  state.campaignId=item.id;state.updatedAt=item.updated_at;state.termsSnapshot=item.terms_snapshot||{};state.giftOptions=item.gift_selected_options||{};syncKind();renderSelected();
   setMsg('استعدنا المسودة للتعديل. لن تُحفظ التغييرات حتى تضغط «حفظ المسودة فقط».');
  }catch(e){setMsg('تعذرت الاستعادة: '+e.message,true)}
 }
@@ -79,11 +79,11 @@ async function save(){
   const draft={title:$('kdTitle').value.trim(),description:$('kdDescription').value.trim(),kind,
    starts_at:dateValue('kdStart'),ends_at:dateValue('kdEnd'),
    threshold_units:limited?null:Number($('kdThreshold').value),
-   gift_product_id:limited?null:(state.gift||null),gift_selected_options:{},
+   gift_product_id:limited?null:(state.gift||null),gift_selected_options:limited?{}:state.giftOptions,
    max_uses_per_customer:Number($('kdUses').value),
    max_units_per_customer:limited?Number($('kdUnits').value):null,
    max_total_redemptions:$('kdTotal').value?Number($('kdTotal').value):null,
-   terms_snapshot:{},product_ids:[...state.selected.keys()]};
+   terms_snapshot:state.termsSnapshot,product_ids:[...state.selected.keys()]};
   const data=await rpc('kinto_deals_v1_vendor_save_draft_g4',{p_campaign_id:state.campaignId,p_expected_updated_at:state.updatedAt,p_draft:draft});
   state.campaignId=data.campaign_id;state.updatedAt=data.updated_at;
   setMsg('تم حفظ المسودة على الخادم. رقمها: '+data.campaign_id+' — لم تُرسل للإدارة ولم تُنشر.');
