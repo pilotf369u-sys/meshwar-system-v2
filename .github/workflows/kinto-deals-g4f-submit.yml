@@ -1,0 +1,17 @@
+name: KINTO Deals G4F submit
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261002_kinto_deals_v1_g4f_vendor_submit_off.sql'
+      - 'ci/kinto-deals-g4f-submit.test.mjs'
+      - '.github/workflows/kinto-deals-g4f-submit.yml'
+  workflow_dispatch:
+jobs:
+  g4f-submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test ci/kinto-deals-g4f-submit.test.mjs
