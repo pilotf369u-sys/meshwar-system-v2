@@ -12,6 +12,7 @@ test('G3A authenticates and guards both admin endpoints',()=>{
  assert.match(sql,/for update/i);
  assert.match(sql,/DEALS_STALE_OR_ALREADY_REVIEWED/);
  assert.match(sql,/DEALS_SUPERSEDED_SUBMISSION/);
+ assert.match(sql,/DEALS_CAMPAIGN_PERIOD_ENDED/);
  assert.match(sql,/DEALS_REJECTION_REASON_REQUIRED/);
  assert.match(sql,/submission_id uuid not null unique/);
 });
