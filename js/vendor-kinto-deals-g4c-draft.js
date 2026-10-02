@@ -1,4 +1,4 @@
-/* G4C isolated merchant draft composer: RPC only, never submits or publishes. */
+/* G4I merchant draft composer: verified RPCs only; submit is separate from publication. */
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
@@ -65,12 +65,18 @@ async function submitDraft(item){
 async function restoreDraft(item){
  if(state.busy)return;
  try{
-  const ids=item.product_ids||[],wanted=[...new Set([...ids,...(item.gift_product_id?[item.gift_product_id]:[])])];
-  const data=await rpc('kinto_deals_v1_vendor_products_g4',{p_search:'',p_limit:50});
-  for(const p of data.items||[])state.catalog.set(p.id,p);
-  // A large catalog may not contain all old products. Never silently save an incomplete draft.
-  const missing=wanted.filter(id=>!state.catalog.has(id));
-  if(missing.length)throw Error('بعض المنتجات القديمة خارج أول 50 نتيجة. ابحث عنها بالاسم أو الباركود أولاً ثم أعد الاستعادة. لم نغيّر المسودة.');
+  // G4H returns exact metadata for this store's saved draft, regardless of catalog size.
+  // Fail closed if the migration has not yet been applied or a product is missing.
+  const ids=item.product_ids||[];
+  if(!Array.isArray(item.products))throw Error('تحديث G4H مطلوب على Supabase قبل استعادة هذه المسودة. لم نغيّر بياناتها.');
+  const hydrated=new Map(item.products.map(p=>[p.id,p]));
+  const missing=ids.filter(id=>!hydrated.has(id));
+  if(missing.length||hydrated.size!==ids.length)throw Error('بيانات منتجات المسودة غير مكتملة؛ لا يمكن استعادتها بأمان.');
+  if(item.gift_product_id){
+   if(!item.gift_product||item.gift_product.id!==item.gift_product_id)throw Error('تعذر استعادة بيانات الهدية؛ لم نغيّر المسودة.');
+   hydrated.set(item.gift_product.id,item.gift_product);
+  }
+  for(const p of hydrated.values())state.catalog.set(p.id,p);
   state.selected.clear();
   for(const id of ids)state.selected.set(id,state.catalog.get(id));
   state.gift=item.gift_product_id||null;
