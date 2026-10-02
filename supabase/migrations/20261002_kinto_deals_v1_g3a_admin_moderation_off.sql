@@ -77,6 +77,8 @@ begin
  select * into v_c from public.kinto_deals_v1_campaigns where id=v_s.campaign_id for update;
  if not found or v_c.store_id<>v_s.store_id or v_c.status<>'submitted' then
    raise exception 'DEALS_CAMPAIGN_NOT_SUBMITTED' using errcode='40001'; end if;
+ if p_decision='approved' and v_c.ends_at<=clock_timestamp() then
+   raise exception 'DEALS_CAMPAIGN_PERIOD_ENDED' using errcode='22023'; end if;
  if exists(select 1 from public.kinto_deals_v1_submissions s2
   where s2.campaign_id=v_s.campaign_id and s2.id<>v_s.id
   and s2.submitted_at>v_s.submitted_at) then
