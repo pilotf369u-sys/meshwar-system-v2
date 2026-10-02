@@ -13,4 +13,9 @@ test('admin decisions require confirmation and rejection reason',()=>{
  assert.match(html,/\.value\.trim\(\)\.length<3/);
  assert.match(html,/confirm\(/);
  assert.match(html,/viewport/);
+ assert.match(html,/عرض تفاصيل وصور الحملة والمنتجات/);
+ assert.match(html,/object-fit:contain/);
+ assert.match(html,/باركود:/);
+ assert.match(html,/الهدية:/);
+ assert.match(html,/data:image\/svg\+xml/);
 });
