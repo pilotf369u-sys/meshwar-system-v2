@@ -4,7 +4,6 @@ begin;
 -- G5G: upgrade internal reservation to recognize exactly one immutable zero-net gift.
 -- Caller MUST invoke in same PostgreSQL transaction immediately after canonical V101/V97.
 -- Feature OFF. This migration does not activate campaigns, gifts, stock or invoices.
-begin;
 create or replace function private.kinto_deals_v1_reserve_canonical_order_g5(
  p_session_token text,p_campaign_id uuid,p_order_id uuid)
 returns jsonb language plpgsql security definer
