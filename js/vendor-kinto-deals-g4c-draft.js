@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const token=()=>{try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null')?.token||''}catch{return''}};
-const state={selected:new Map(),gift:null,campaignId:null,updatedAt:null,busy:false};
+const state={selected:new Map(),catalog:new Map(),gift:null,campaignId:null,updatedAt:null,busy:false};
 const rpc=async(name,args)=>{const sb=window.MeshwarVendorRuntime?.sb;if(!sb||!token())throw Error('جلسة التاجر غير متاحة. سجّل الدخول مجدداً.');const {data,error}=await sb.rpc(name,{p_session_token:token(),...args});if(error)throw error;return data};
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e};
 const setMsg=(message,bad=false)=>{const e=$('kdDraftMessage');if(e){e.textContent=message;e.className='text-sm mt-3 '+(bad?'text-rose-300':'text-amber-200')}};
@@ -12,8 +12,7 @@ const renderSelected=()=>{
  for(const p of state.selected.values()){const row=el('div',p.product_name,'rounded-lg bg-white/5 p-2 text-xs');const b=el('button','إزالة','mr-3 text-rose-300');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);renderSelected()});row.append(b);box.append(row)}
  $('kdSelectedCount').textContent=String(state.selected.size);
  const gift=$('kdGift');gift.replaceChildren();gift.append(el('option','بلا هدية'));gift.firstChild.value='';
- for(const p of state.selected.values()){ /* selected paid items are never gifts */ }
- for(const p of state.results||[]){if(state.selected.has(p.id))continue;const o=el('option',p.product_name+' — '+(p.barcode||'بلا باركود'));o.value=p.id;gift.append(o)}
+ for(const p of state.catalog.values()){if(state.selected.has(p.id))continue;const o=el('option',p.product_name+' — '+(p.barcode||'بلا باركود'));o.value=p.id;gift.append(o)}
  gift.value=state.gift&&!state.selected.has(state.gift)?state.gift:'';if(!gift.value)state.gift=null;
 };
 async function search(){
@@ -21,6 +20,7 @@ async function search(){
  try{
   const data=await rpc('kinto_deals_v1_vendor_products_g4',{p_search:$('kdSearch').value.trim(),p_limit:50});
   state.results=data.items||[];
+  for(const p of state.results)state.catalog.set(p.id,p);
   for(const p of state.results){
    const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 p-2 text-xs');
    if(p.image_url){const img=el('img');img.src=p.image_url;img.alt='';img.loading='lazy';img.className='h-10 w-10 rounded-lg object-contain';row.append(img)}
