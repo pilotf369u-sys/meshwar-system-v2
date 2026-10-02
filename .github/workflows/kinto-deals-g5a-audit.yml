@@ -1,0 +1,11 @@
+name: KINTO Deals G5A audit
+on: pull_request
+jobs:
+  g5a-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test ci/kinto-deals-g5a-audit.test.mjs
