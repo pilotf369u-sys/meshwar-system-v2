@@ -1,0 +1,16 @@
+name: kinto-deals-g5e-gift-line
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261002_kinto_deals_v1_g5e_private_gift_line_off.sql'
+      - 'ci/kinto-deals-g5e-gift-line.test.mjs'
+      - '.github/workflows/kinto-deals-g5e-gift-line.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node ci/kinto-deals-g5e-gift-line.test.mjs
