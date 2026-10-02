@@ -151,6 +151,46 @@ revoke all on function public.kinto_deals_v1_validate_campaign(),
  public.kinto_deals_v1_validate_product(), public.kinto_deals_v1_immutable_store()
  from public, anon, authenticated;
 
+-- Freeze the campaign's store in review/redemption records. An RPC cannot
+-- submit another merchant's store ID even if it later receives write authority.
+create or replace function public.kinto_deals_v1_validate_related_store()
+returns trigger language plpgsql
+set search_path = public, pg_temp as $
+declare v_store uuid;
+begin
+  select c.store_id into v_store
+  from public.kinto_deals_v1_campaigns c where c.id = new.campaign_id;
+  if v_store is null or new.store_id is distinct from v_store then
+    raise exception 'DEALS_RELATED_STORE_MISMATCH' using errcode='23514';
+  end if;
+  if tg_table_name = 'kinto_deals_v1_redemptions' then
+    if not exists (
+      select 1 from public.orders o
+      where o.id = new.order_id and o.customer_id = new.customer_id
+    ) then
+      raise exception 'DEALS_REDEMPTION_CUSTOMER_ORDER_MISMATCH' using errcode='23514';
+    end if;
+    if new.gift_product_id is not null and not exists (
+      select 1 from public.local_products p
+      where p.id = new.gift_product_id and p.store_id = v_store
+    ) then
+      raise exception 'DEALS_REDEMPTION_GIFT_STORE_MISMATCH' using errcode='23514';
+    end if;
+  end if;
+  return new;
+end;
+$;
+create trigger trg_kinto_deals_v1_submission_store
+before insert or update of campaign_id,store_id
+on public.kinto_deals_v1_submissions for each row
+execute function public.kinto_deals_v1_validate_related_store();
+create trigger trg_kinto_deals_v1_redemption_store
+before insert or update of campaign_id,store_id,customer_id,order_id,gift_product_id
+on public.kinto_deals_v1_redemptions for each row
+execute function public.kinto_deals_v1_validate_related_store();
+revoke all on function public.kinto_deals_v1_validate_related_store()
+ from public, anon, authenticated;
+
 -- All new objects are closed to anon/authenticated; verified SECURITY DEFINER
 -- session-bound endpoints will be reviewed in a separate migration.
 alter table public.kinto_deals_v1_flags enable row level security;
