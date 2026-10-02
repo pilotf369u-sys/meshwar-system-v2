@@ -16,7 +16,7 @@ Status: proposed technical handoff; follows approved #711/#712 contract and merg
 ## Live preflight result — constraints confirmed 2026-10-02
 - Omar ran the read-only preflight. Live G1 constraints confirm campaign status is restricted to draft/submitted/active/paused/expired/rejected/archived; submission review_state is restricted to pending/acknowledged/rejected; campaign/product/submission FKs and same-store structural constraints are present as expected.
 - Therefore G3 will treat existing submission acknowledged as the persisted approval decision for V1 and derive the merchant-facing label «تمت الموافقة — مجدولة» from acknowledged + starts_at in the future. It will NOT attempt to write a new unsupported approved_scheduled database value. Rejected remains rejected with an additive mandatory rejection reason/audit metadata.
-- Still required from the preflight before executable SQL: session_functions and g1_permissions/flag outputs, so live admin/vendor verifier signatures and closed browser grants are verified rather than assumed.
+- Consolidated live preflight received: private.require_admin_session_v147(text) returns text (SECURITY DEFINER); private.require_vendor_session(text) returns uuid (SECURITY DEFINER); admin_send_customer_notice_v420(text,uuid,text,text,text,text[],boolean,text[]) returns jsonb. All five DEALS tables: RLS=true, policies=0, all anon/authenticated CRUD privileges false. merchant_deals_enabled=false. Existing vendor notification recipients store_id is text, so any notification bridge must cast the verified uuid explicitly. No customer broadcast on approval.
 
 ## Data and security review before SQL
 1. Inspect existing G1 five tables, columns, FKs, RLS and grants; avoid assuming approval columns already exist.
