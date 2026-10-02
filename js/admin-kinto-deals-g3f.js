@@ -62,10 +62,9 @@ async function load(){
 document.addEventListener('DOMContentLoaded',()=>{
  const sidebar=document.querySelector('.sidebar'),main=document.querySelector('.main-content');if(!sidebar||!main)return;
  const link=el('a','حملات التجار — المراجعة');link.href='#kintoDealsG3f';link.addEventListener('click',e=>{
- e.preventDefault();document.querySelectorAll('.main-content > .card').forEach(x=>x.classList.remove('active-section'));
- const panel=document.getElementById('kintoDealsG3f');panel.style.display='block';open=true;panel.scrollIntoView({behavior:'smooth'});load();
+ e.preventDefault();const panel=document.getElementById('kintoDealsG3f');window.showSection('kintoDealsG3f');open=true;panel.scrollIntoView({behavior:'smooth'});load();
  });sidebar.append(link);
- const panel=el('section');panel.id='kintoDealsG3f';panel.className='kd3f';panel.style.display='none';
+ const panel=el('section');panel.id='kintoDealsG3f';panel.className='card kd3f';
  panel.append(el('h2','مراجعة حملات التجار'),el('p','بانتظار المراجعة: '));
  panel.lastChild.append(Object.assign(el('strong','—'),{className:'kd-count'}));
  const refresh=el('button','تحديث');refresh.onclick=load;panel.append(refresh);
