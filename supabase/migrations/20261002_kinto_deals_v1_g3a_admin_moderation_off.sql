@@ -95,7 +95,7 @@ begin
  (submission_id,campaign_id,store_id,revision,decision,reason,reviewer_id)
  values(v_s.id,v_s.campaign_id,v_s.store_id,v_s.revision,p_decision,v_reason,v_admin);
  return jsonb_build_object('ok',true,'submission_id',v_s.id,'campaign_id',v_s.campaign_id,
- 'decision',p_decision,'merchant_notice_pending',true,'customer_broadcast_sent',false);
+ 'decision',p_decision,'decision_event_recorded',true,'merchant_push_sent',false,'customer_broadcast_sent',false);
 end;
 $deals$;
 revoke all on function public.kinto_deals_v1_admin_inbox_g3(text) from public,anon,authenticated;
