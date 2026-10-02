@@ -5,7 +5,7 @@ Status: AGREED with Omar, 2026-10-02. Design review required before G2 merchant 
 - Exactly one merchant store owns each deal. Never touch legacy checkout, auth, shipping, stock, invoice, or existing admin-funded KINTO campaign paths until separately audited and signed off.
 - Feature flag remains OFF by default. Server-authoritative eligibility, verified customer identity, ownership, time, pricing, stock, concurrency, replay protection, and per-customer redemption limits. Additive migrations, scoped PRs, green gates, checkpoint/rollback.
 - Existing independent per-store invoices remain the ONLY invoice system. On a qualifying order, merchant-selected free gift is shown on that store's existing invoice at full price plus a matching 100% campaign discount. Snapshot original terms; other stores are unaffected.
-- Merchant submits a deal to an ADMIN inbox automatically; admin separately chooses whether to broadcast through existing customer notices. Merchant cannot broadcast to customers directly.
+- Merchant submission is NEVER publication: create an automatic ADMIN review request and independent unread/pending campaign count. Campaign remains non-public and non-redeemable until explicit ADMIN approval; rejection blocks publication and returns a reason to merchant. Approved campaign may become storefront-visible only inside its valid scheduled window and subject to feature/stock/safety gates. ADMIN customer-notice broadcast is a SECOND, separate opt-in decision after approval, using existing customer notices. Merchant cannot broadcast to customers directly. Material changes after approval must return to pending review; no merchant bypass. Admin may stop/unpublish a campaign, without altering confirmed orders.
 
 ## Campaign modes (no mandatory discount, gift, or shipping)
 1. Choose N paid products from a merchant-selected set (e.g. 4 out of 10) to unlock merchant-preselected gift, if configured.
@@ -52,5 +52,5 @@ Four responsive stages, premium KINTO dark green #0a2f23 and gold:
 - G1 additive isolated five-table schema, RLS, no browser grants, feature OFF: PR #707 MERGED. SQL quoting corrected in PR #708 MERGED; Omar reported running corrected SQL successfully in Supabase.
 - Live G1 consolidated read-only postflight reported by Omar: deals_tables=5, rls_enabled=5, feature_enabled=false, policies_count=0, browser_grants=0. Existing checkout v101, kinto_campaigns, orders were present.
 - G2 NEXT: show merchant wizard visual design for Omar's approval BEFORE adopting; isolated test branch, no activation, no legacy order edits.
-- G3 admin inbox; G4 storefront; G5 authoritative checkout bridge after audit/signoff; G6 existing per-store invoice adapter and gated rollout.
+- G3 mandatory admin moderation inbox + independent pending counter, approve/reject with reason, audit and separate customer-notice broadcast; G4 approved-only storefront; G5 authoritative checkout bridge after audit/signoff; G6 existing per-store invoice adapter and gated rollout.
 - Keep separate checkpoint before each merge. Omar runs required Supabase SQL himself. No silent migrations, feature enablement, or deployment of unfinished purchase flow.
