@@ -1,5 +1,6 @@
 -- G5G integration: install AFTER G5D, G5E and G5F. Flag remains OFF.
 -- Upgrade reservation then checkout atomically. No change to canonical V101/V97.
+begin;
 -- G5G: upgrade internal reservation to recognize exactly one immutable zero-net gift.
 -- Caller MUST invoke in same PostgreSQL transaction immediately after canonical V101/V97.
 -- Feature OFF. This migration does not activate campaigns, gifts, stock or invoices.
