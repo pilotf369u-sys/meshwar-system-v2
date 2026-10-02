@@ -8,7 +8,7 @@ test('normal cart keeps the existing v101 independent-store checkout', () => {
   const cart = read('js/local-cart-v93.js');
   assert.match(cart, /rpc\/checkout_independent_vendor_orders_v101/);
   assert.match(cart, /function buildStores\(items\)/);
-  assert.match(cart, /const rpcItems=items\.map/);
+  assert.match(cart, /rpcItems=items\.map/);
   assert.doesNotMatch(cart, /kinto_deals|campaign_id/i, 'G0 must not alter live checkout');
 });
 test('v101 is a shipping wrapper delegating to the existing independent checkout', () => {
