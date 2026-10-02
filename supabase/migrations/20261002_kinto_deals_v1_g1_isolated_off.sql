@@ -97,7 +97,7 @@ create index if not exists kinto_deals_v1_redemptions_customer_idx
 -- These triggers touch only new DEALS tables; no existing order/product triggers change.
 create or replace function public.kinto_deals_v1_validate_campaign()
 returns trigger language plpgsql
-set search_path = public, pg_temp as $
+set search_path = public, pg_temp as $deals$
 begin
   if new.gift_product_id is not null and not exists (
     select 1 from public.local_products p
@@ -107,7 +107,7 @@ begin
   end if;
   return new;
 end;
-$;
+$deals$;
 create trigger trg_kinto_deals_v1_validate_campaign
 before insert or update of store_id,gift_product_id
 on public.kinto_deals_v1_campaigns for each row
@@ -115,7 +115,7 @@ execute function public.kinto_deals_v1_validate_campaign();
 
 create or replace function public.kinto_deals_v1_validate_product()
 returns trigger language plpgsql
-set search_path = public, pg_temp as $
+set search_path = public, pg_temp as $deals$
 begin
   if not exists (
     select 1 from public.kinto_deals_v1_campaigns c
@@ -126,7 +126,7 @@ begin
   end if;
   return new;
 end;
-$;
+$deals$;
 create trigger trg_kinto_deals_v1_validate_product
 before insert or update of campaign_id,product_id
 on public.kinto_deals_v1_products for each row
@@ -136,14 +136,14 @@ execute function public.kinto_deals_v1_validate_product();
 -- attached products, gifts, submissions and redemptions could silently change owner.
 create or replace function public.kinto_deals_v1_immutable_store()
 returns trigger language plpgsql
-set search_path = public, pg_temp as $
+set search_path = public, pg_temp as $deals$
 begin
   if new.store_id is distinct from old.store_id then
     raise exception 'DEALS_STORE_IMMUTABLE' using errcode='23514';
   end if;
   return new;
 end;
-$;
+$deals$;
 create trigger trg_kinto_deals_v1_immutable_store
 before update of store_id on public.kinto_deals_v1_campaigns
 for each row execute function public.kinto_deals_v1_immutable_store();
@@ -155,7 +155,7 @@ revoke all on function public.kinto_deals_v1_validate_campaign(),
 -- submit another merchant's store ID even if it later receives write authority.
 create or replace function public.kinto_deals_v1_validate_related_store()
 returns trigger language plpgsql
-set search_path = public, pg_temp as $
+set search_path = public, pg_temp as $deals$
 declare v_store uuid;
 begin
   select c.store_id into v_store
@@ -179,7 +179,7 @@ begin
   end if;
   return new;
 end;
-$;
+$deals$;
 create trigger trg_kinto_deals_v1_submission_store
 before insert or update of campaign_id,store_id
 on public.kinto_deals_v1_submissions for each row
