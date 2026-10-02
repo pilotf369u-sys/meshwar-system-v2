@@ -9,6 +9,10 @@ Status: proposed technical handoff; follows approved #711/#712 contract and merg
 - rejected -> merchant sees reason and can edit/resubmit as a new review revision; material edit to approved deal requires re-review before revised terms become visible. Preserve prior confirmed order snapshots.
 - admin may stop/unpublish; merchant may pause/retire under scoped rules. Never auto-approve pending requests on timeout.
 
+## Confirmed G1 compatibility constraint
+- Existing G1 submission review_state permits only pending / acknowledged / rejected, while campaign status permits draft / submitted / active / paused / expired / rejected / archived. It has no explicit approved_scheduled value, reviewer, rejection reason, or review revision. G3 MUST additively model these (or derive approved_scheduled from acknowledged approval + future starts_at) and MUST NOT write unsupported enum/check values. The existing acknowledged state must be defined precisely before implementation.
+- Existing admin verifier is called as private.require_admin_session_v147(text) in v405; vendor verifier is private.require_vendor_session(text) in v344. Confirm signatures and actual live schema via docs/KINTO_DEALS_G3_PREFLIGHT_READONLY.sql before drafting executable G3 migration.
+
 ## Data and security review before SQL
 1. Inspect existing G1 five tables, columns, FKs, RLS and grants; avoid assuming approval columns already exist.
 2. Inspect actual admin session verifier and vendor verifier signatures and notification schema. Do not trust client-supplied store_id or reviewer_id.
