@@ -7,7 +7,7 @@ returns jsonb language plpgsql security definer
 set search_path=public,private,pg_temp as $deals$
 declare
  v_customer uuid;v_c public.kinto_deals_v1_campaigns%rowtype;
- v_count integer;v_distinct integer;v_units integer;v_qualifying integer;
+ v_count integer;v_units integer;v_qualifying integer;
  v_used integer;v_allocated integer;v_latest public.kinto_deals_v1_submissions%rowtype;
 begin
  v_customer:=private.require_customer_review_session(p_session_token);
@@ -44,8 +44,7 @@ begin
    and coalesce(p.is_out_of_stock,false)=false)) then
   return jsonb_build_object('eligible',false,'reason','store_or_product_unavailable','binding',false);
  end if;
- select count(distinct (x->>'product_id')::uuid)::integer,
-  coalesce(sum((x->>'quantity')::integer),0)::integer into v_distinct,v_units
+ select coalesce(sum((x->>'quantity')::integer),0)::integer into v_units
  from jsonb_array_elements(p_paid_items) x
  where exists(select 1 from public.kinto_deals_v1_products cp
   where cp.campaign_id=v_c.id and cp.product_id=(x->>'product_id')::uuid);
@@ -53,6 +52,12 @@ begin
  from jsonb_array_elements(p_paid_items) x
  where exists(select 1 from public.kinto_deals_v1_products cp
   where cp.campaign_id=v_c.id and cp.product_id=(x->>'product_id')::uuid);
+ if v_c.kind='limited_purchase' and exists(
+  select 1 from jsonb_array_elements(p_paid_items) x
+  where not exists(select 1 from public.kinto_deals_v1_products cp
+   where cp.campaign_id=v_c.id and cp.product_id=(x->>'product_id')::uuid)) then
+  return jsonb_build_object('eligible',false,'reason','exclusive_items_only','binding',false);
+ end if;
  v_qualifying:=case when v_c.kind='choose_n' then v_count else v_units end;
  if (v_c.kind='choose_n' and v_count<v_c.threshold_units)
   or (v_c.kind='buy_n' and v_units<v_c.threshold_units)
