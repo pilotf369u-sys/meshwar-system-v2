@@ -2,7 +2,7 @@
 -- Run manually only after PR approval and preflight. No hooks on orders,
 -- checkout, existing campaigns, stock, shipping, invoices or auth.
 begin;
-create extension if not exists pgcrypto;
+-- gen_random_uuid() is built into supported PostgreSQL; no extension changes.
 
 create table if not exists public.kinto_deals_v1_flags (
   key text primary key check (key = 'merchant_deals_enabled'),
