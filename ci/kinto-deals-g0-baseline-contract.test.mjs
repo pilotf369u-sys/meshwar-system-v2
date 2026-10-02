@@ -39,3 +39,21 @@ test('merchant campaign entry belongs in actual vendor frame, not a duplicate in
   assert.match(frame, /vendorTab-notifications/);
   assert.match(invoice, /function storeInvoiceDocument\(/);
 });
+
+test('merchant deals must not hijack the existing KINTO-funded campaign hook', () => {
+  const sql = read('supabase/migrations/20261001_v411_campaign_instant_order_discount.sql');
+  assert.match(sql, /before insert on public\.orders/);
+  assert.match(sql, /'funded_by','kinto'/);
+  assert.match(sql, /new\.kinto_campaign_discount_snapshot:=jsonb_build_object/);
+});
+test('variant and matrix stock are both accounted for at payment', () => {
+  const sql = read('supabase/migrations/20260902_local_cart_bundle_variant_stock_fix_v93.sql');
+  assert.match(sql, /for update/);
+  assert.match(sql, /meshwar_adjust_variant_stock/);
+  assert.match(sql, /meshwar_adjust_matrix_stock/);
+  assert.match(sql, /bundle_stock_lifecycle_state/);
+});
+test('verified customer identity RPC exists separately from cart scope', () => {
+  const sql = read('supabase/migrations/20260922_v150_customer_session_identity.sql');
+  assert.match(sql, /private\.require_customer_review_session\(p_session_token\)/);
+});
