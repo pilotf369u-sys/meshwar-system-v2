@@ -19,8 +19,8 @@ begin
    p.base_price,p.discount_price,p.is_out_of_stock,p.stock_quantity
   from public.local_products p
   where p.store_id=v_store
-   and (v_query='' or p.product_name ilike '%'||replace(replace(replace(v_query,'\','\\'),'%','\%'),'_','\_')||'%' escape '\'
-    or p.barcode ilike '%'||replace(replace(replace(v_query,'\','\\'),'%','\%'),'_','\_')||'%' escape '\')
+   and (v_query='' or position(lower(v_query) in lower(coalesce(p.product_name,'')))>0
+    or position(lower(v_query) in lower(coalesce(p.barcode,'')))>0)
   order by p.product_name,p.id limit p_limit
  ) q;
  return jsonb_build_object('store_id',v_store,'items',v_rows,'read_only',true);
