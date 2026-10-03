@@ -29,7 +29,12 @@ const renderGiftResults=()=>{
 };
 const renderSelected=()=>{
  const box=$('kdSelected');box.replaceChildren();
- for(const p of state.selected.values()){const row=el('div',p.product_name,'rounded-lg bg-white/5 p-2 text-xs');const b=el('button','إزالة','mr-3 text-rose-300');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);renderSelected()});row.append(b);box.append(row)}
+ for(const p of state.selected.values()){
+  const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-2 text-xs');
+  if(p.image_url){const img=el('img');img.src=p.image_url;img.alt=p.product_name||'';img.loading='lazy';img.className='h-12 w-12 shrink-0 rounded-lg object-contain bg-white/5';row.append(img)}
+  const info=el('span',(p.product_name||'منتج')+' | '+(p.barcode||'—')+' | '+(p.base_price??'—')+' '+(p.currency||''),'min-w-0 flex-1 break-words');row.append(info);
+  const b=el('button','إزالة','shrink-0 rounded-lg border border-rose-300/40 px-2 py-1 text-rose-200');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);renderSelected()});row.append(b);box.append(row);
+ }
  $('kdSelectedCount').textContent=String(state.selected.size);
  if(state.gift&&state.selected.has(state.gift))state.gift=null;
  const gift=$('kdGift');gift.replaceChildren();const empty=el('option','بلا هدية');empty.value='';gift.append(empty);
