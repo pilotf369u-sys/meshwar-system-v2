@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  panel.append(el('h2','مراجعة حملات التجار'),el('p','بانتظار المراجعة: '));
  panel.lastChild.append(Object.assign(el('strong','—'),{className:'kd-count'}));
  const refresh=el('button','تحديث');refresh.onclick=load;panel.append(refresh);
- const status=el('p');status.className='kd-status';panel.append(status);
+ const category=el('div');category.className='kd-pager';category.setAttribute('aria-label','تصنيف قائمة المراجعة');category.append(el('strong','قيد المراجعة فقط'));panel.append(category);const status=el('p');status.className='kd-status';panel.append(status);
  const search=el('input');search.type='search';search.placeholder='بحث باسم الحملة أو المتجر';search.setAttribute('aria-label','بحث باسم الحملة أو المتجر');search.className='kd-search';search.addEventListener('input',()=>{adminQuery=search.value.trim();adminPage=1;renderInbox()});panel.append(search);const items=el('div');items.className='kd-items';panel.append(items);const pager=el('div');pager.className='kd-pager';panel.append(pager);main.append(panel);
  refreshCount();window.addEventListener('focus',()=>{refreshCount();if(open&&!panel.querySelector('.entry .entry'))load()});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshCount();if(open&&!panel.querySelector('.entry .entry'))load()}});
  window.setInterval(()=>{if(document.hidden||!token())return;refreshCount();if(open&&!panel.querySelector('.entry .entry')&&!busy)load()},30000);
