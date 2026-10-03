@@ -7,6 +7,13 @@ const state={selected:new Map(),catalog:new Map(),giftResults:new Map(),gift:nul
 const rpc=async(name,args)=>{const sb=window.MeshwarVendorRuntime?.sb;if(!sb)throw Error('اتصال الحملات لم يجهز بعد. أعد تحديث قائمة المسودات بعد اكتمال تحميل اللوحة.');if(!token())throw Error('رمز جلسة الحملات الآمنة غير موجود في هذا التبويب؛ تسجيل دخول لوحة المتجر وحده لا يثبت جلسة الحملات. لم تتغير مسوداتك.');const {data,error}=await sb.rpc(name,{p_session_token:token(),...args});if(error)throw error;return data};
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e};
 const setMsg=(message,bad=false)=>{const e=$('kdDraftMessage');if(e){e.textContent=message;e.className='text-sm mt-3 '+(bad?'text-rose-300':'text-amber-200')}};
+const setResultsVisible=(kind,visible)=>{
+ const gift=kind==='gift',box=$(gift?'kdGiftResults':'kdSearchResults'),toggle=$(gift?'kdGiftToggle':'kdSearchToggle');
+ box.classList.toggle('hidden',!visible);box.classList.toggle('grid',visible);
+ toggle.classList.remove('hidden');toggle.textContent=(visible?'إخفاء':'إظهار')+(gift?' نتائج الهدايا':' نتائج المنتجات');
+ toggle.setAttribute('aria-expanded',String(visible));
+};
+const toggleResults=kind=>setResultsVisible(kind,$(kind==='gift'?'kdGiftResults':'kdSearchResults').classList.contains('hidden'));
 const renderGiftResults=()=>{
  const box=$('kdGiftResults');if(!box)return;box.replaceChildren();
  for(const p of state.giftResults.values()){
@@ -17,7 +24,7 @@ const renderGiftResults=()=>{
   const selected=state.gift===p.id;
   const button=el('button',selected?'إلغاء الهدية':'اختيار هدية','shrink-0 rounded-lg border px-2 py-2 '+(selected?'border-emerald-400 text-emerald-200':'border-amber-400/40 text-amber-100'));
   button.type='button';button.setAttribute('aria-pressed',String(selected));
-  button.addEventListener('click',()=>{state.gift=state.gift===p.id?null:p.id;renderSelected()});row.append(button);box.append(row);
+  button.addEventListener('click',()=>{state.gift=state.gift===p.id?null:p.id;renderSelected();if(state.gift)setResultsVisible('gift',false)});row.append(button);box.append(row);
  }
 };
 const renderSelected=()=>{
@@ -49,7 +56,7 @@ async function searchGift(){
   const data=await rpc('kinto_deals_v1_vendor_products_g4',{p_search:$('kdGiftSearch').value.trim(),p_limit:50});
   state.giftResults=new Map((data.items||[]).map(p=>[p.id,p]));
   for(const p of state.giftResults.values())state.catalog.set(p.id,p);
-  renderSelected();status.textContent=state.giftResults.size?'اختر الهدية من البطاقات أدناه.':'لا توجد نتائج مطابقة للهدية.';
+  renderSelected();setResultsVisible('gift',true);status.textContent=state.giftResults.size?'اختر الهدية من البطاقات أدناه.':'لا توجد نتائج مطابقة للهدية.';
  }catch(e){status.textContent='تعذر البحث عن الهدية: '+e.message}
 }
 async function search(){
@@ -63,9 +70,9 @@ async function search(){
    if(p.image_url){const img=el('img');img.src=p.image_url;img.alt='';img.loading='lazy';img.className='h-10 w-10 rounded-lg object-contain';row.append(img)}
    const info=el('span',p.product_name+' | '+(p.barcode||'—')+' | '+p.base_price+' '+(p.currency||''),'flex-1');row.append(info);
    const b=el('button',state.selected.has(p.id)?'محدد':'إضافة','rounded-lg border border-amber-400/40 px-3 py-2');b.type='button';
-   b.addEventListener('click',()=>{if(state.selected.has(p.id))state.selected.delete(p.id);else if(state.selected.size<50){state.selected.set(p.id,p);if(state.gift===p.id)state.gift=null}else return setMsg('الحد الأقصى 50 منتجاً.',true);renderSelected();b.textContent=state.selected.has(p.id)?'محدد':'إضافة'});row.append(b);box.append(row);
+   b.addEventListener('click',()=>{if(state.selected.has(p.id))state.selected.delete(p.id);else if(state.selected.size<50){state.selected.set(p.id,p);if(state.gift===p.id)state.gift=null}else return setMsg('الحد الأقصى 50 منتجاً.',true);renderSelected();b.textContent=state.selected.has(p.id)?'محدد':'إضافة';if(state.selected.has(p.id))setResultsVisible('paid',false)});row.append(b);box.append(row);
   }
-  renderSelected();setMsg('نتائج البحث من منتجات متجرك فقط. اختر المنتجات المدفوعة والهدية بشكل منفصل.');
+  renderSelected();setResultsVisible('paid',true);setMsg('نتائج البحث من منتجات متجرك فقط. اختر المنتجات المدفوعة والهدية بشكل منفصل.');
  }catch(e){setMsg(e.message,true)}
 }
 const localDate=value=>{const d=new Date(value);const offset=d.getTimezoneOffset()*60000;return new Date(d.getTime()-offset).toISOString().slice(0,16)};
@@ -155,6 +162,8 @@ async function save(){
 document.addEventListener('DOMContentLoaded',()=>{
  if(!$('kdDraftForm'))return;
  $('kdSearchButton').addEventListener('click',search);
+ $('kdSearchToggle').addEventListener('click',()=>toggleResults('paid'));
+ $('kdGiftToggle').addEventListener('click',()=>toggleResults('gift'));
  $('kdGiftSearchButton').addEventListener('click',searchGift);
  $('kdGiftSearch').addEventListener('focus',()=>{if(!state.giftResults.size)searchGift()},{once:true});
  $('kdGiftSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchGift()}});
