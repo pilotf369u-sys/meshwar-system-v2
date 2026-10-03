@@ -41,5 +41,5 @@ async function load(){
   }
  }catch(e){if(current===seq)status.textContent='تعذر تحميل حالة الحملات: '+e.message}
 }
-document.addEventListener('DOMContentLoaded',()=>{const host=document.getElementById('kintoDealsVendorG3g');host?.querySelector('[data-refresh]')?.addEventListener('click',load);document.getElementById('vendorTabBtn-deals')?.addEventListener('click',load)});
+document.addEventListener('DOMContentLoaded',()=>{const host=document.getElementById('kintoDealsVendorG3g');host?.querySelector('[data-refresh]')?.addEventListener('click',load);document.getElementById('vendorTabBtn-deals')?.addEventListener('click',load);window.addEventListener('kinto-deals-vendor-submitted',load);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&document.getElementById('vendorTab-deals')?.offsetParent)load()})});
 })();
