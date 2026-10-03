@@ -129,6 +129,20 @@ document.addEventListener('DOMContentLoaded',()=>{
   }catch(err){setMsg('أُنشئت نسخة جديدة؛ تعذرت استعادتها تلقائياً: '+err.message,true)}
  });
  listDrafts();
+ // Keep campaign help entirely within the mobile viewport, independent of RTL alignment.
+ document.querySelectorAll('.kd-kind-help').forEach(help=>{
+  const position=()=>{
+   const tip=help.querySelector('.kd-kind-tip');if(!tip)return;
+   const r=help.getBoundingClientRect(),w=Math.min(240,window.innerWidth-24);
+   const x=Math.max(12,Math.min(window.innerWidth-w-12,r.right-w));
+   const estimated=tip.getBoundingClientRect().height||150;
+   const y=r.bottom+7+estimated>window.innerHeight?Math.max(12,r.top-estimated-7):r.bottom+7;
+   tip.style.setProperty('--kd-tip-x',x+'px');tip.style.setProperty('--kd-tip-y',y+'px');
+  };
+  help.addEventListener('pointerenter',position);
+  help.addEventListener('focus',position);
+  help.addEventListener('click',position);
+ });
  $('kdGift').addEventListener('change',e=>state.gift=e.target.value||null);
  document.querySelectorAll('input[name="kdKindChoice"]').forEach(radio=>radio.addEventListener('change',()=>{if(radio.checked){$('kdKind').value=radio.value;syncKind()}}));
  $('kdDraftForm').addEventListener('submit',e=>{e.preventDefault();save()});
