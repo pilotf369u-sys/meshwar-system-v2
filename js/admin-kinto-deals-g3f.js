@@ -76,7 +76,21 @@ document.addEventListener('DOMContentLoaded',()=>{
  const refresh=el('button','تحديث');refresh.onclick=load;panel.append(refresh);
  const category=el('div');category.className='kd-pager';category.setAttribute('aria-label','تصنيف قائمة المراجعة');category.append(el('strong','قيد المراجعة فقط'));panel.append(category);const status=el('p');status.className='kd-status';panel.append(status);
  const search=el('input');search.type='search';search.placeholder='بحث باسم الحملة أو المتجر';search.setAttribute('aria-label','بحث باسم الحملة أو المتجر');search.className='kd-search';search.addEventListener('input',()=>{adminQuery=search.value.trim();adminPage=1;renderInbox()});panel.append(search);const items=el('div');items.className='kd-items';panel.append(items);const pager=el('div');pager.className='kd-pager';panel.append(pager);main.append(panel);
- const requested=new URLSearchParams(location.search).get('section');if(requested==='kintoDealsG3f'){open=true;status.textContent='بانتظار جاهزية جلسة الأدمن لتحميل الحملات...'}
+ // The master dashboard can restore its section from sessionStorage at window.load,
+ // even when the URL has no section parameter. Follow the actual active section.
+ const activateIfVisible=()=>{
+   const active=panel.classList.contains('active-section');
+   if(!active){open=false;return}
+   if(!open){open=true;if(!loaded)status.textContent='بانتظار جاهزية جلسة الأدمن لتحميل الحملات...'}
+   if(!loaded&&!loading&&token())load();
+ };
+ const requested=new URLSearchParams(location.search).get('section');
+ if(requested==='kintoDealsG3f'){open=true;status.textContent='بانتظار جاهزية جلسة الأدمن لتحميل الحملات...'}
+ // Master section restoration runs on window.load, after this deferred script's DOMContentLoaded.
+ window.addEventListener('load',()=>setTimeout(activateIfVisible,0));
+ const activeObserver=new MutationObserver(activateIfVisible);
+ activeObserver.observe(panel,{attributes:true,attributeFilter:['class']});
+ activateIfVisible();
  // Admin authentication and Supabase bootstrap can finish after DOMContentLoaded on a cold refresh.
  // Retry the initial inbox only; never destroy a successfully rendered list or poll details.
  const initialLoad=setInterval(()=>{if(!open||loaded){if(loaded)clearInterval(initialLoad);return}if(++initialRetries>20){clearInterval(initialLoad);return}if(token()&&!loading)load()},1500);
