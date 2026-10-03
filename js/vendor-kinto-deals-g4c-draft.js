@@ -186,6 +186,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   else window.addEventListener('load',()=>{if(window.MeshwarVendorRuntime?.sb)listDrafts();else status.textContent='اتصال الحملات غير جاهز. اضغط تحديث القائمة.'},{once:true});
  };
  loadWhenReady();
+ // Limit explanations are explicit tap targets; native title tooltips do not work on mobile.
+ document.querySelectorAll('.kd-limit-help').forEach(button=>{
+  const tip=$(button.getAttribute('aria-controls'));if(!tip)return;
+  button.addEventListener('click',event=>{
+   event.preventDefault();event.stopPropagation();
+   const opening=tip.hidden;
+   document.querySelectorAll('.kd-limit-help').forEach(other=>{other.setAttribute('aria-expanded','false');const otherTip=$(other.getAttribute('aria-controls'));if(otherTip)otherTip.hidden=true});
+   tip.hidden=!opening;button.setAttribute('aria-expanded',String(opening));
+  });
+ });
+ document.addEventListener('click',event=>{if(event.target.closest('.kd-limit-help,.kd-limit-tip'))return;document.querySelectorAll('.kd-limit-help').forEach(button=>{button.setAttribute('aria-expanded','false');const tip=$(button.getAttribute('aria-controls'));if(tip)tip.hidden=true})});
  // Help is portaled to document.body: no transformed/overflowing vendor panel can clip it.
  let openHelp=null;
  const closeHelp=()=>{if(!openHelp)return;openHelp.tip.classList.remove('kd-tip-visible');openHelp=null};
