@@ -91,6 +91,7 @@ async function restoreDraft(item){
 const dateValue=id=>{const v=$(id).value;if(!v)throw Error('حدد بداية الحملة ونهايتها.');return new Date(v).toISOString()};
 function syncKind(){
  const kind=$('kdKind').value,limited=kind==='limited_purchase';
+ const radio=document.querySelector('input[name="kdKindChoice"][value="'+kind+'"]');if(radio)radio.checked=true;
  $('kdThresholdWrap').hidden=limited;$('kdGiftWrap').hidden=limited;
  $('kdUnitsWrap').hidden=!limited;
 }
@@ -129,7 +130,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  });
  listDrafts();
  $('kdGift').addEventListener('change',e=>state.gift=e.target.value||null);
- $('kdKind').addEventListener('change',syncKind);
+ document.querySelectorAll('input[name="kdKindChoice"]').forEach(radio=>radio.addEventListener('change',()=>{if(radio.checked){$('kdKind').value=radio.value;syncKind()}}));
  $('kdDraftForm').addEventListener('submit',e=>{e.preventDefault();save()});
  syncKind();
 });
