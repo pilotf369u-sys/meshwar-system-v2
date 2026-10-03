@@ -9,6 +9,11 @@ declare
  v_d jsonb;
  v_paid boolean;
  v_cancel boolean;
+ v_r public.kinto_deals_v1_redemptions%rowtype;
+ v_c public.kinto_deals_v1_campaigns%rowtype;
+ v_used integer;
+ v_prior_units integer;
+ v_allocated integer;
 begin
  if new.status is not distinct from old.status then return new;end if;
  -- Fast no-op for every ordinary order: no reservation, no action.
@@ -24,6 +29,29 @@ begin
   and old.status<>'تم التسديد'
   and coalesce(v_d->>'bundle_stock_lifecycle_state','')<>'deducted';
  if v_paid then
+  -- Payment is the allocation race winner, not the earliest pending order.
+  -- A rejected confirmation rolls back this status change AND V93 stock deduction.
+  select * into v_r from public.kinto_deals_v1_redemptions
+   where order_id=new.id and state='pending' for update;
+  if found then
+   select * into v_c from public.kinto_deals_v1_campaigns
+    where id=v_r.campaign_id for update;
+   select count(*)::integer,coalesce(sum(qualifying_units),0)::integer
+    into v_used,v_prior_units from public.kinto_deals_v1_redemptions
+    where campaign_id=v_r.campaign_id and customer_id=v_r.customer_id
+      and state='confirmed';
+   select count(*)::integer into v_allocated from public.kinto_deals_v1_redemptions
+    where campaign_id=v_r.campaign_id and state='confirmed';
+   if v_used>=v_c.max_uses_per_customer
+     or (v_c.kind='limited_purchase'
+       and v_c.max_units_per_customer is not null
+       and v_prior_units+v_r.qualifying_units>v_c.max_units_per_customer)
+     or (v_c.max_total_redemptions is not null
+       and v_allocated>=v_c.max_total_redemptions) then
+    raise exception 'نفد المنتج، حظ أوفر في حملات أخرى قريباً'
+      using errcode='P0001',hint='DEALS_PAID_ALLOCATION_EXHAUSTED';
+   end if;
+  end if;
   update public.kinto_deals_v1_redemptions r
    set state='confirmed',updated_at=now(),
     frozen_snapshot=r.frozen_snapshot||jsonb_build_object(
