@@ -3,7 +3,7 @@
 'use strict';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const token=()=>window.KintoAdminSessionV147?.read()?.token||'';
-let busy=false,open=false,serial=0;
+let busy=false,open=false,serial=0,inbox=[],adminPage=1,adminQuery='';const adminPageSize=6;
 const updateBadge=n=>{const badge=document.querySelector('.kd3f-nav-count');if(!badge)return;const count=Math.max(0,Number(n)||0);badge.textContent=String(count);badge.hidden=count===0};
 async function refreshCount(){try{if(!token())return;const data=await rpc('kinto_deals_v1_admin_inbox_g3',{p_session_token:token()});updateBadge(data?.pending_count)}catch{/* Leave last confirmed count; moderation remains manual on error. */}};
 const rpc=async(name,args)=>{
@@ -14,7 +14,7 @@ const rpc=async(name,args)=>{
 };
 const css=document.createElement('style');
 css.textContent='.kd3f{background:#0a2f23;color:#f8f5e9;border-radius:12px;padding:16px;margin:12px 0}.kd3f h2{color:#dec17e}.kd3f button{background:#d6b66b;color:#123226;border-radius:8px;margin:5px;padding:9px}.kd3f button:disabled{opacity:.45}.kd3f textarea{width:100%;min-height:65px;background:#092b21;color:#fff;border:1px solid #8b996f;border-radius:8px;padding:8px}.kd3f .entry{border:1px solid #52735b;padding:12px;border-radius:10px;margin:12px 0}.kd3f .products{display:flex;gap:8px;flex-wrap:wrap}.kd3f .prod{width:150px;background:#153d2e;padding:8px;border-radius:8px}.kd3f .prod img{width:100%;height:90px;object-fit:contain}.kd3f .hero{height:170px;position:relative;overflow:hidden;display:grid;place-items:center}.kd3f .hero img{width:100%;height:100%;object-fit:contain;position:relative}.kd3f .hero img:first-child{position:absolute;inset:0;object-fit:cover;filter:blur(16px);opacity:.4}.kd3f .message{white-space:pre-wrap;color:#f4d28c}';
-css.textContent+='.kd3f-nav-count:not([hidden]){display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-inline-start:6px;padding:0 4px;border-radius:99px;background:#d6b66b;color:#102b22;font-size:12px;font-weight:800}';document.head.append(css);
+css.textContent+='.kd3f-nav-count:not([hidden]){display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-inline-start:6px;padding:0 4px;border-radius:99px;background:#d6b66b;color:#102b22;font-size:12px;font-weight:800}';css.textContent+='.kd3f .kd-search{width:100%;min-height:40px;padding:9px;border:1px solid #52735b;border-radius:8px;background:#092b21;color:#fff}.kd3f .kd-pager{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px}';document.head.append(css);
 function el(tag,textValue){const x=document.createElement(tag);if(textValue!==undefined)x.textContent=String(textValue);return x}
 function detailCard(parent,d){
  const detail=el('div');detail.className='entry';
@@ -45,6 +45,12 @@ function detailCard(parent,d){
  }
  detail.append(msg);parent.append(detail)
 }
+function renderInbox(){const panel=document.getElementById('kintoDealsG3f');if(!panel)return;const box=panel.querySelector('.kd-items');box.replaceChildren();const matches=inbox.filter(item=>[item.title_snapshot,item.store_name,item.store_name_snapshot].some(x=>String(x||'').toLocaleLowerCase().includes(adminQuery.toLocaleLowerCase())));const pages=Math.max(1,Math.ceil(matches.length/adminPageSize));adminPage=Math.min(adminPage,pages);const pager=panel.querySelector('.kd-pager');pager.replaceChildren();pager.append(el('span','النتائج: '+matches.length+' | الصفحة '+adminPage+' من '+pages));for(const [label,delta] of [['السابق',-1],['التالي',1]]){const b=el('button',label);b.disabled=adminPage+delta<1||adminPage+delta>pages;b.onclick=()=>{adminPage+=delta;renderInbox()};pager.append(b)}if(!matches.length)box.append(el('p','لا توجد حملات تطابق البحث.'));
+ for(const item of matches.slice((adminPage-1)*adminPageSize,adminPage*adminPageSize)){
+ const entry=el('div');entry.className='entry';entry.append(el('h3',item.title_snapshot),el('p','المتجر: '+(item.store_name||item.store_name_snapshot||'—')+' | رقم النسخة: '+item.revision+' | أُرسل: '+new Date(item.submitted_at).toLocaleString('ar-IQ')));
+ const btn=el('button','عرض التفاصيل');btn.onclick=async()=>{if(busy)return;btn.disabled=true;try{const d=await rpc('kinto_deals_v1_admin_detail_g3',{p_session_token:token(),p_submission_id:item.submission_id});entry.replaceChildren();detailCard(entry,d)}catch(e){panel.querySelector('.kd-status').textContent='تعذر جلب التفاصيل: '+e.message;btn.disabled=false}};entry.append(btn);box.append(entry)
+ }
+}
 async function load(){
  const panel=document.getElementById('kintoDealsG3f');if(!panel||!open)return;
  const id=++serial,box=panel.querySelector('.kd-items'),status=panel.querySelector('.kd-status');
@@ -55,10 +61,7 @@ async function load(){
  if(id!==serial)return;
  panel.querySelector('.kd-count').textContent=data.pending_count??0;updateBadge(data.pending_count);
  status.textContent=(data.items||[]).length?'اضغط عرض التفاصيل لمراجعة المنتجات والهدية.':'لا توجد حملات تنتظر المراجعة.';
- for(const item of data.items||[]){
- const entry=el('div');entry.className='entry';entry.append(el('h3',item.title_snapshot),el('p','رقم النسخة: '+item.revision+' | أُرسل: '+new Date(item.submitted_at).toLocaleString('ar-IQ')));
- const btn=el('button','عرض التفاصيل');btn.onclick=async()=>{if(busy)return;btn.disabled=true;try{const d=await rpc('kinto_deals_v1_admin_detail_g3',{p_session_token:token(),p_submission_id:item.submission_id});entry.replaceChildren();detailCard(entry,d)}catch(e){status.textContent='تعذر جلب التفاصيل: '+e.message;btn.disabled=false}};entry.append(btn);box.append(entry)
- }
+ inbox=data.items||[];adminPage=1;renderInbox();
  }catch(e){if(id===serial)status.textContent='تعذر تحميل الحملات: '+e.message}
 }
 document.addEventListener('DOMContentLoaded',()=>{
@@ -71,7 +74,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  panel.lastChild.append(Object.assign(el('strong','—'),{className:'kd-count'}));
  const refresh=el('button','تحديث');refresh.onclick=load;panel.append(refresh);
  const status=el('p');status.className='kd-status';panel.append(status);
- const items=el('div');items.className='kd-items';panel.append(items);main.append(panel);
+ const search=el('input');search.type='search';search.placeholder='بحث باسم الحملة أو المتجر';search.setAttribute('aria-label','بحث باسم الحملة أو المتجر');search.className='kd-search';search.addEventListener('input',()=>{adminQuery=search.value.trim();adminPage=1;renderInbox()});panel.append(search);const items=el('div');items.className='kd-items';panel.append(items);const pager=el('div');pager.className='kd-pager';panel.append(pager);main.append(panel);
  refreshCount();window.addEventListener('focus',()=>{refreshCount();if(open&&!panel.querySelector('.entry .entry'))load()});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshCount();if(open&&!panel.querySelector('.entry .entry'))load()}});
  window.setInterval(()=>{if(document.hidden||!token())return;refreshCount();if(open&&!panel.querySelector('.entry .entry')&&!busy)load()},30000);
 });
