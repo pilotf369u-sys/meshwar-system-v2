@@ -4,4 +4,9 @@ for(const x of ['after update of status on public.orders',"r.state='pending'","n
 assert.ok(!/update\s+public\.orders/i.test(s));
 assert.ok(!/update\s+public\.local_products/i.test(s));
 assert.ok(!/state\s*=\s*'reversed'/i.test(s));
+const quota=readFileSync('supabase/migrations/20261003_kinto_deals_v1_g5i_paid_only_campaign_quota_off.sql','utf8');
+assert.equal((quota.match(/state='confirmed'/g)||[]).length>=2,true);
+assert.ok(!quota.includes("state in ('pending','confirmed')"));
+assert.ok(s.includes("DEALS_PAID_ALLOCATION_EXHAUSTED"));
+assert.ok(s.includes("for update"));
 console.log('G5I payment lifecycle static contract PASS (13 checks)');
