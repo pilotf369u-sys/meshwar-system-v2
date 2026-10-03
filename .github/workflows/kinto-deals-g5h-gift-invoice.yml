@@ -1,0 +1,16 @@
+name: kinto-deals-g5h-gift-invoice
+on:
+  pull_request:
+    paths:
+      - 'js/vendor-v94-multistore-orders.js'
+      - 'ci/kinto-deals-g5h-gift-invoice.test.mjs'
+      - '.github/workflows/kinto-deals-g5h-gift-invoice.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node ci/kinto-deals-g5h-gift-invoice.test.mjs
