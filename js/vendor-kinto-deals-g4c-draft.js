@@ -14,7 +14,7 @@ const renderSelected=()=>{
  const gift=$('kdGift');gift.replaceChildren();gift.append(el('option','بلا هدية'));gift.firstChild.value='';
  for(const p of state.giftResults.values()){if(state.selected.has(p.id))continue;const o=el('option',p.product_name+' — '+(p.barcode||'بلا باركود'));o.value=p.id;gift.append(o)}
  if(state.gift&&state.catalog.has(state.gift)&&!state.giftResults.has(state.gift))state.giftResults.set(state.gift,state.catalog.get(state.gift));
- if(state.gift&&!Array.from(gift.options).some(o=>o.value===state.gift)&&state.giftResults.has(state.gift)){const p=state.giftResults.get(state.gift),o=el('option',p.product_name);o.value=p.id;gift.append(o)}
+ if(state.gift&&![...gift.options].some(o=>o.value===state.gift)&&state.giftResults.has(state.gift)){const p=state.giftResults.get(state.gift),o=el('option',p.product_name);o.value=p.id;gift.append(o)}
  gift.value=state.gift&&!state.selected.has(state.gift)?state.gift:'';if(!gift.value)state.gift=null;
 };
 async function searchGift(){
