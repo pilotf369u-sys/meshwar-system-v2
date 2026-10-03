@@ -4,7 +4,7 @@
 const $=id=>document.getElementById(id);
 const token=()=>{try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null')?.token||''}catch{return''}};
 const state={selected:new Map(),catalog:new Map(),gift:null,campaignId:null,updatedAt:null,termsSnapshot:{},giftOptions:{},busy:false};
-const rpc=async(name,args)=>{const sb=window.MeshwarVendorRuntime?.sb;if(!sb||!token())throw Error('جلسة التاجر غير متاحة. سجّل الدخول مجدداً.');const {data,error}=await sb.rpc(name,{p_session_token:token(),...args});if(error)throw error;return data};
+const rpc=async(name,args)=>{const sb=window.MeshwarVendorRuntime?.sb;if(!sb)throw Error('اتصال الحملات لم يجهز بعد. أعد تحديث قائمة المسودات بعد اكتمال تحميل اللوحة.');if(!token())throw Error('رمز جلسة الحملات الآمنة غير موجود في هذا التبويب؛ تسجيل دخول لوحة المتجر وحده لا يثبت جلسة الحملات. لم تتغير مسوداتك.');const {data,error}=await sb.rpc(name,{p_session_token:token(),...args});if(error)throw error;return data};
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e};
 const setMsg=(message,bad=false)=>{const e=$('kdDraftMessage');if(e){e.textContent=message;e.className='text-sm mt-3 '+(bad?'text-rose-300':'text-amber-200')}};
 const renderSelected=()=>{
@@ -129,20 +129,30 @@ document.addEventListener('DOMContentLoaded',()=>{
   }catch(err){setMsg('أُنشئت نسخة جديدة؛ تعذرت استعادتها تلقائياً: '+err.message,true)}
  });
  listDrafts();
- // Keep campaign help entirely within the mobile viewport, independent of RTL alignment.
+ // Help is portaled to document.body: no transformed/overflowing vendor panel can clip it.
+ let openHelp=null;
+ const closeHelp=()=>{if(!openHelp)return;openHelp.tip.classList.remove('kd-tip-visible');openHelp=null};
  document.querySelectorAll('.kd-kind-help').forEach(help=>{
-  const position=()=>{
-   const tip=help.querySelector('.kd-kind-tip');if(!tip)return;
-   const r=help.getBoundingClientRect(),w=Math.min(240,window.innerWidth-24);
+  const tip=help.querySelector('.kd-kind-tip');if(!tip)return;
+  document.body.appendChild(tip);
+  const show=()=>{
+   closeHelp();tip.classList.add('kd-tip-visible');
+   const r=help.getBoundingClientRect(),w=tip.getBoundingClientRect().width,ht=tip.getBoundingClientRect().height;
+   const vv=window.visualViewport,top=vv?vv.offsetTop:0,bottom=top+(vv?vv.height:window.innerHeight);
    const x=Math.max(12,Math.min(window.innerWidth-w-12,r.right-w));
-   const estimated=tip.getBoundingClientRect().height||150;
-   const y=r.bottom+7+estimated>window.innerHeight?Math.max(12,r.top-estimated-7):r.bottom+7;
-   tip.style.setProperty('--kd-tip-x',x+'px');tip.style.setProperty('--kd-tip-y',y+'px');
+   const y=r.bottom+8+ht<=bottom-8?r.bottom+8:Math.max(top+8,r.top-ht-8);
+   tip.style.left=x+'px';tip.style.top=y+'px';openHelp={help,tip};
   };
-  help.addEventListener('pointerenter',position);
-  help.addEventListener('focus',position);
-  help.addEventListener('click',position);
+  help.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'||e.pointerType==='pen')show()});
+  help.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'||e.pointerType==='pen')closeHelp()});
+  help.addEventListener('focus',show);
+  help.addEventListener('blur',closeHelp);
+  help.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(openHelp?.help===help)closeHelp();else show()});
  });
+ document.addEventListener('pointerdown',e=>{if(openHelp&&!openHelp.help.contains(e.target))closeHelp()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHelp()});
+ window.addEventListener('scroll',closeHelp,true);
+ window.addEventListener('resize',closeHelp);
  $('kdGift').addEventListener('change',e=>state.gift=e.target.value||null);
  document.querySelectorAll('input[name="kdKindChoice"]').forEach(radio=>radio.addEventListener('change',()=>{if(radio.checked){$('kdKind').value=radio.value;syncKind()}}));
  $('kdDraftForm').addEventListener('submit',e=>{e.preventDefault();save()});
