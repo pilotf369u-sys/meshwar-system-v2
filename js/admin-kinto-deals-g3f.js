@@ -3,7 +3,7 @@
 'use strict';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const token=()=>window.KintoAdminSessionV147?.read()?.token||'';
-let busy=false,open=false,serial=0,inbox=[],adminPage=1,adminQuery='',loaded=false;const adminPageSize=6;
+let busy=false,open=false,serial=0,inbox=[],adminPage=1,adminQuery='',loaded=false,loading=false,initialRetries=0;const adminPageSize=6;
 const updateBadge=n=>{const badge=document.querySelector('.kd3f-nav-count');if(!badge)return;const count=Math.max(0,Number(n)||0);badge.textContent=String(count);badge.hidden=count===0};
 async function refreshCount(){try{if(!token())return;const data=await rpc('kinto_deals_v1_admin_inbox_g3',{p_session_token:token()});updateBadge(data?.pending_count)}catch{/* Leave last confirmed count; moderation remains manual on error. */}};
 const rpc=async(name,args)=>{
@@ -52,8 +52,8 @@ function renderInbox(){const panel=document.getElementById('kintoDealsG3f');if(!
  }
 }
 async function load(){
- const panel=document.getElementById('kintoDealsG3f');if(!panel||!open)return;
- const id=++serial,box=panel.querySelector('.kd-items'),status=panel.querySelector('.kd-status');
+ const panel=document.getElementById('kintoDealsG3f');if(!panel||!open||loading)return;
+ loading=true;const id=++serial,box=panel.querySelector('.kd-items'),status=panel.querySelector('.kd-status');
  if(!loaded)status.textContent='جاري تحميل الطلبات المحمية...';
  try{
  if(!token())throw Error('جلسة الأدمن غير متاحة. سجّل الدخول من جديد.');
@@ -63,6 +63,7 @@ async function load(){
  status.textContent=(data.items||[]).length?'اضغط عرض التفاصيل لمراجعة المنتجات والهدية. البحث باسم المتجر متاح عندما يعيده سجل المراجعة؛ الاسم الكامل يظهر داخل التفاصيل.':'لا توجد حملات تنتظر المراجعة.';
  const next=data.items||[];const changed=!loaded||JSON.stringify(next)!==JSON.stringify(inbox);inbox=next;loaded=true;if(changed){adminPage=Math.min(adminPage,Math.max(1,Math.ceil(inbox.length/adminPageSize)));renderInbox()}
  }catch(e){if(id===serial)status.textContent='تعذر تحميل الحملات: '+e.message}
+ finally{loading=false}
 }
 document.addEventListener('DOMContentLoaded',()=>{
  const sidebar=document.querySelector('.sidebar'),main=document.querySelector('.main-content');if(!sidebar||!main)return;
@@ -75,8 +76,12 @@ document.addEventListener('DOMContentLoaded',()=>{
  const refresh=el('button','تحديث');refresh.onclick=load;panel.append(refresh);
  const category=el('div');category.className='kd-pager';category.setAttribute('aria-label','تصنيف قائمة المراجعة');category.append(el('strong','قيد المراجعة فقط'));panel.append(category);const status=el('p');status.className='kd-status';panel.append(status);
  const search=el('input');search.type='search';search.placeholder='بحث باسم الحملة أو المتجر';search.setAttribute('aria-label','بحث باسم الحملة أو المتجر');search.className='kd-search';search.addEventListener('input',()=>{adminQuery=search.value.trim();adminPage=1;renderInbox()});panel.append(search);const items=el('div');items.className='kd-items';panel.append(items);const pager=el('div');pager.className='kd-pager';panel.append(pager);main.append(panel);
- const requested=new URLSearchParams(location.search).get('section');if(requested==='kintoDealsG3f'){open=true;load()}
- refreshCount();window.addEventListener('focus',refreshCount);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCount()});
+ const requested=new URLSearchParams(location.search).get('section');if(requested==='kintoDealsG3f'){open=true;status.textContent='بانتظار جاهزية جلسة الأدمن لتحميل الحملات...'}
+ // Admin authentication and Supabase bootstrap can finish after DOMContentLoaded on a cold refresh.
+ // Retry the initial inbox only; never destroy a successfully rendered list or poll details.
+ const initialLoad=setInterval(()=>{if(!open||loaded){if(loaded)clearInterval(initialLoad);return}if(++initialRetries>20){clearInterval(initialLoad);return}if(token()&&!loading)load()},1500);
+ if(open&&token())load();
+ refreshCount();window.addEventListener('focus',()=>{refreshCount();if(open&&!loaded&&!loading&&token())load()});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshCount();if(open&&!loaded&&!loading&&token())load()}});
  window.setInterval(()=>{if(document.hidden||!token())return;refreshCount()},30000);
 });
 })();
