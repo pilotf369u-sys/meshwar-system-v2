@@ -8,5 +8,6 @@ const quota=readFileSync('supabase/migrations/20261003_kinto_deals_v1_g5i_paid_o
 assert.equal((quota.match(/state='confirmed'/g)||[]).length>=2,true);
 assert.ok(!quota.includes("state in ('pending','confirmed')"));
 assert.ok(s.includes("DEALS_PAID_ALLOCATION_EXHAUSTED"));
-assert.ok(s.includes("for update"));
+assert.ok(s.includes("for update nowait"));
+assert.ok(s.includes("DEALS_CANONICAL_STOCK_DEDUCTION_REQUIRED"));
 console.log('G5I payment lifecycle static contract PASS (13 checks)');
