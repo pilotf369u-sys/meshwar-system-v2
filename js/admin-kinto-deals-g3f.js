@@ -47,7 +47,7 @@ function detailCard(parent,d){
 }
 function renderInbox(){const panel=document.getElementById('kintoDealsG3f');if(!panel)return;const box=panel.querySelector('.kd-items');box.replaceChildren();const matches=inbox.filter(item=>[item.title_snapshot,item.store_name,item.store_name_snapshot].some(x=>String(x||'').toLocaleLowerCase().includes(adminQuery.toLocaleLowerCase())));const pages=Math.max(1,Math.ceil(matches.length/adminPageSize));adminPage=Math.min(adminPage,pages);const pager=panel.querySelector('.kd-pager');pager.replaceChildren();pager.append(el('span','النتائج: '+matches.length+' | الصفحة '+adminPage+' من '+pages));for(const [label,delta] of [['السابق',-1],['التالي',1]]){const b=el('button',label);b.disabled=adminPage+delta<1||adminPage+delta>pages;b.onclick=()=>{adminPage+=delta;renderInbox()};pager.append(b)}if(!matches.length)box.append(el('p','لا توجد حملات تطابق البحث.'));
  for(const item of matches.slice((adminPage-1)*adminPageSize,adminPage*adminPageSize)){
- const entry=el('div');entry.className='entry';entry.append(el('h3',item.title_snapshot),el('p','المتجر: '+(item.store_name||item.store_name_snapshot||'—')+' | رقم النسخة: '+item.revision+' | أُرسل: '+new Date(item.submitted_at).toLocaleString('ar-IQ')));
+ const entry=el('div');entry.className='entry';entry.append(el('h3',item.title_snapshot),el('p',(item.store_name||item.store_name_snapshot?'المتجر: '+(item.store_name||item.store_name_snapshot)+' | ':'')+'رقم النسخة: '+item.revision+' | أُرسل: '+new Date(item.submitted_at).toLocaleString('ar-IQ')));
  const btn=el('button','عرض التفاصيل');btn.onclick=async()=>{if(busy)return;btn.disabled=true;try{const d=await rpc('kinto_deals_v1_admin_detail_g3',{p_session_token:token(),p_submission_id:item.submission_id});entry.replaceChildren();detailCard(entry,d)}catch(e){panel.querySelector('.kd-status').textContent='تعذر جلب التفاصيل: '+e.message;btn.disabled=false}};entry.append(btn);box.append(entry)
  }
 }
@@ -60,7 +60,7 @@ async function load(){
  const data=await rpc('kinto_deals_v1_admin_inbox_g3',{p_session_token:token()});
  if(id!==serial)return;
  panel.querySelector('.kd-count').textContent=data.pending_count??0;updateBadge(data.pending_count);
- status.textContent=(data.items||[]).length?'اضغط عرض التفاصيل لمراجعة المنتجات والهدية.':'لا توجد حملات تنتظر المراجعة.';
+ status.textContent=(data.items||[]).length?'اضغط عرض التفاصيل لمراجعة المنتجات والهدية. البحث باسم المتجر متاح عندما يعيده سجل المراجعة؛ الاسم الكامل يظهر داخل التفاصيل.':'لا توجد حملات تنتظر المراجعة.';
  inbox=data.items||[];adminPage=1;renderInbox();
  }catch(e){if(id===serial)status.textContent='تعذر تحميل الحملات: '+e.message}
 }
