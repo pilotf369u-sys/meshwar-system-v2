@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const token=()=>{try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null')?.token||''}catch{return''}};
-const state={selected:new Map(),catalog:new Map(),gift:null,campaignId:null,updatedAt:null,termsSnapshot:{},giftOptions:{},busy:false};
+const state={selected:new Map(),catalog:new Map(),giftResults:new Map(),gift:null,campaignId:null,updatedAt:null,termsSnapshot:{},giftOptions:{},busy:false};
 const rpc=async(name,args)=>{const sb=window.MeshwarVendorRuntime?.sb;if(!sb)throw Error('اتصال الحملات لم يجهز بعد. أعد تحديث قائمة المسودات بعد اكتمال تحميل اللوحة.');if(!token())throw Error('رمز جلسة الحملات الآمنة غير موجود في هذا التبويب؛ تسجيل دخول لوحة المتجر وحده لا يثبت جلسة الحملات. لم تتغير مسوداتك.');const {data,error}=await sb.rpc(name,{p_session_token:token(),...args});if(error)throw error;return data};
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e};
 const setMsg=(message,bad=false)=>{const e=$('kdDraftMessage');if(e){e.textContent=message;e.className='text-sm mt-3 '+(bad?'text-rose-300':'text-amber-200')}};
@@ -12,9 +12,20 @@ const renderSelected=()=>{
  for(const p of state.selected.values()){const row=el('div',p.product_name,'rounded-lg bg-white/5 p-2 text-xs');const b=el('button','إزالة','mr-3 text-rose-300');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);renderSelected()});row.append(b);box.append(row)}
  $('kdSelectedCount').textContent=String(state.selected.size);
  const gift=$('kdGift');gift.replaceChildren();gift.append(el('option','بلا هدية'));gift.firstChild.value='';
- for(const p of state.catalog.values()){if(state.selected.has(p.id))continue;const o=el('option',p.product_name+' — '+(p.barcode||'بلا باركود'));o.value=p.id;gift.append(o)}
+ for(const p of state.giftResults.values()){if(state.selected.has(p.id))continue;const o=el('option',p.product_name+' — '+(p.barcode||'بلا باركود'));o.value=p.id;gift.append(o)}
+ if(state.gift&&state.catalog.has(state.gift)&&!state.giftResults.has(state.gift))state.giftResults.set(state.gift,state.catalog.get(state.gift));
+ if(state.gift&&![...gift.options].some(o=>o.value===state.gift)&&state.giftResults.has(state.gift)){const p=state.giftResults.get(state.gift),o=el('option',p.product_name);o.value=p.id;gift.append(o)}
  gift.value=state.gift&&!state.selected.has(state.gift)?state.gift:'';if(!gift.value)state.gift=null;
 };
+async function searchGift(){
+ const status=$('kdGiftStatus');status.textContent='جاري البحث عن الهدية...';
+ try{
+  const data=await rpc('kinto_deals_v1_vendor_products_g4',{p_search:$('kdGiftSearch').value.trim(),p_limit:50});
+  state.giftResults=new Map((data.items||[]).map(p=>[p.id,p]));
+  for(const p of state.giftResults.values())state.catalog.set(p.id,p);
+  renderSelected();status.textContent=state.giftResults.size?'اختر الهدية من القائمة أدناه.':'لا توجد نتائج مطابقة للهدية.';
+ }catch(e){status.textContent='تعذر البحث عن الهدية: '+e.message}
+}
 async function search(){
  const box=$('kdSearchResults');box.replaceChildren();setMsg('جاري البحث...');
  try{
@@ -33,10 +44,10 @@ async function search(){
 }
 const localDate=value=>{const d=new Date(value);const offset=d.getTimezoneOffset()*60000;return new Date(d.getTime()-offset).toISOString().slice(0,16)};
 async function listDrafts(){
- const box=$('kdDraftList');if(!box)return;box.replaceChildren();box.append(el('p','جاري تحميل المسودات...'));
+ const box=$('kdDraftList');if(!box)return;const status=$('kdDraftLoadStatus');status.textContent='جاري تحميل المسودات...';
  try{
   const data=await rpc('kinto_deals_v1_vendor_drafts_g4',{p_campaign_id:null,p_limit:30});
-  box.replaceChildren();
+  box.replaceChildren();status.textContent='';
   if(!data?.items?.length){box.append(el('p','لا توجد مسودات محفوظة.','text-xs text-slate-400'));return}
   for(const item of data.items){
    const row=el('div',undefined,'flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 p-2');
@@ -46,7 +57,7 @@ async function listDrafts(){
    const submit=el('button','إرسال للإدارة','rounded-lg border border-emerald-400/50 px-3 py-2 text-xs font-bold text-emerald-200');submit.type='button';
    submit.addEventListener('click',()=>submitDraft(item));row.append(submit);box.append(row);
   }
- }catch(e){box.replaceChildren();setMsg('تعذر تحميل المسودات: '+e.message,true)}
+ }catch(e){status.textContent='تعذر تحميل المسودات: '+e.message+' — اضغط تحديث القائمة للمحاولة مجدداً.'}
 }
 async function submitDraft(item){
  if(state.busy)return;
@@ -80,6 +91,7 @@ async function restoreDraft(item){
   state.selected.clear();
   for(const id of ids)state.selected.set(id,state.catalog.get(id));
   state.gift=item.gift_product_id||null;
+  if(state.gift&&state.catalog.has(state.gift))state.giftResults.set(state.gift,state.catalog.get(state.gift));
   $('kdTitle').value=item.title||'';$('kdDescription').value=item.description||'';
   $('kdKind').value=item.kind;$('kdStart').value=localDate(item.starts_at);$('kdEnd').value=localDate(item.ends_at);
   $('kdThreshold').value=item.threshold_units??2;$('kdUses').value=item.max_uses_per_customer??1;
@@ -117,6 +129,8 @@ async function save(){
 document.addEventListener('DOMContentLoaded',()=>{
  if(!$('kdDraftForm'))return;
  $('kdSearchButton').addEventListener('click',search);
+ $('kdGiftSearchButton').addEventListener('click',searchGift);
+ $('kdGiftSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchGift()}});
  $('kdRefreshDrafts').addEventListener('click',listDrafts);
  window.addEventListener('kinto-deals-revision-created',async e=>{
   await listDrafts();
@@ -128,7 +142,14 @@ document.addEventListener('DOMContentLoaded',()=>{
    else setMsg('أُنشئت نسخة جديدة. اضغط تحديث المسودات لاستعادتها.');
   }catch(err){setMsg('أُنشئت نسخة جديدة؛ تعذرت استعادتها تلقائياً: '+err.message,true)}
  });
- listDrafts();
+ // Initial draft read waits for the vendor runtime; product/gift searches remain independent.
+ const loadWhenReady=()=>{
+  if(window.MeshwarVendorRuntime?.sb){listDrafts();return}
+  const status=$('kdDraftLoadStatus');status.textContent='بانتظار اكتمال اتصال لوحة التاجر...';
+  if(document.readyState==='complete'){status.textContent='اتصال الحملات غير جاهز. اضغط تحديث القائمة بعد اكتمال اللوحة.'}
+  else window.addEventListener('load',()=>{if(window.MeshwarVendorRuntime?.sb)listDrafts();else status.textContent='اتصال الحملات غير جاهز. اضغط تحديث القائمة.'},{once:true});
+ };
+ loadWhenReady();
  // Help is portaled to document.body: no transformed/overflowing vendor panel can clip it.
  let openHelp=null;
  const closeHelp=()=>{if(!openHelp)return;openHelp.tip.classList.remove('kd-tip-visible');openHelp=null};
