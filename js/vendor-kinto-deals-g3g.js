@@ -3,20 +3,10 @@
 'use strict';
 const token=()=>{try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null')?.token||''}catch{return''}};
 const names={pending_review:'قيد المراجعة',rejected:'مرفوضة',approved_scheduled:'تمت الموافقة — مجدولة',approved_not_published:'تمت الموافقة — بانتظار النشر',active:'نشطة',paused:'متوقفة مؤقتاً',expired:'منتهية'};
-let seq=0;
-async function load(){
- const host=document.getElementById('kintoDealsVendorG3g');if(!host)return;
- const current=++seq,status=host.querySelector('[data-status]'),items=host.querySelector('[data-items]');
- status.textContent='جاري تحميل حالات حملات متجرك...';items.replaceChildren();
- try{
-  if(!token())throw Error('جلسة التاجر الآمنة غير متاحة؛ يرجى تسجيل الدخول مجدداً.');
-  const sb=window.MeshwarVendorRuntime?.sb;if(!sb)throw Error('اتصال التاجر غير جاهز.');
-  const {data,error}=await sb.rpc('kinto_deals_v1_vendor_review_feed_g3',{p_session_token:token(),p_limit:50});
-  if(error)throw error;if(current!==seq)return;
-  host.querySelector('[data-count]').textContent=String(data?.pending_count??0);
-  const rows=data?.items||[];
-  status.textContent=rows.length?'الحالات من الخادم؛ الموافقة لا تعني النشر قبل تفعيل الحملات.':'لا توجد حملات مقدمة للمراجعة بعد.';
-  for(const row of rows){
+let seq=0,feed=[],page=1,filter='all',query='';const pageSize=6;
+function renderFeed(){const host=document.getElementById('kintoDealsVendorG3g');if(!host)return;const items=host.querySelector('[data-items]');items.replaceChildren();const filtered=feed.filter(row=>(filter==='all'||(filter==='approved'?String(row.display_state).startsWith('approved'):row.display_state===filter))&&String(row.title_snapshot||'').toLocaleLowerCase().includes(query.toLocaleLowerCase()));const pages=Math.max(1,Math.ceil(filtered.length/pageSize));page=Math.min(page,pages);const pager=host.querySelector('[data-pager]');pager.replaceChildren();pager.append(Object.assign(document.createElement('span'),{textContent:'النتائج: '+filtered.length+' | الصفحة '+page+' من '+pages}));for(const [caption,delta] of [['السابق',-1],['التالي',1]]){const b=document.createElement('button');b.type='button';b.textContent=caption;b.disabled=page+delta<1||page+delta>pages;b.className='rounded-lg border border-amber-400/40 px-3 py-1 disabled:opacity-40';b.addEventListener('click',()=>{page+=delta;renderFeed()});pager.append(b)}if(!filtered.length){const empty=document.createElement('p');empty.textContent='لا توجد حملات تطابق البحث.';items.append(empty)}
+const status=host.querySelector('[data-status]'),sb=window.MeshwarVendorRuntime?.sb;
+  for(const row of filtered.slice((page-1)*pageSize,page*pageSize)){
    const card=document.createElement('article');card.className='rounded-xl border border-white/10 bg-white/5 p-3';
    const title=document.createElement('h3');title.className='font-black';title.textContent=row.title_snapshot||'حملة';
    const state=document.createElement('p');state.className='text-sm text-amber-300 mt-1';state.textContent=names[row.display_state]||'حالة غير معروفة';
@@ -39,7 +29,21 @@ async function load(){
    }
    items.append(card);
   }
+}
+async function load(){
+ const host=document.getElementById('kintoDealsVendorG3g');if(!host)return;
+ const current=++seq,status=host.querySelector('[data-status]'),items=host.querySelector('[data-items]');
+ status.textContent='جاري تحميل حالات حملات متجرك...';items.replaceChildren();
+ try{
+  if(!token())throw Error('جلسة التاجر الآمنة غير متاحة؛ يرجى تسجيل الدخول مجدداً.');
+  const sb=window.MeshwarVendorRuntime?.sb;if(!sb)throw Error('اتصال التاجر غير جاهز.');
+  const {data,error}=await sb.rpc('kinto_deals_v1_vendor_review_feed_g3',{p_session_token:token(),p_limit:50});
+  if(error)throw error;if(current!==seq)return;
+  host.querySelector('[data-count]').textContent=String(data?.pending_count??0);
+  const rows=data?.items||[];
+  status.textContent=rows.length?'البحث والصفحات ضمن السجلات المحمّلة (حتى 50 حالياً). الموافقة لا تعني النشر.':'لا توجد حملات مقدمة للمراجعة بعد.';
+  feed=rows;page=1;renderFeed();
  }catch(e){if(current===seq)status.textContent='تعذر تحميل حالة الحملات: '+e.message}
 }
-document.addEventListener('DOMContentLoaded',()=>{const host=document.getElementById('kintoDealsVendorG3g');host?.querySelector('[data-refresh]')?.addEventListener('click',load);document.getElementById('vendorTabBtn-deals')?.addEventListener('click',load);window.addEventListener('kinto-deals-vendor-submitted',load);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&document.getElementById('vendorTab-deals')?.offsetParent)load()})});
+document.addEventListener('DOMContentLoaded',()=>{const host=document.getElementById('kintoDealsVendorG3g');host?.querySelector('[data-refresh]')?.addEventListener('click',load);host?.querySelector('[data-search]')?.addEventListener('input',e=>{query=e.target.value.trim();page=1;renderFeed()});host?.querySelector('[data-filter]')?.addEventListener('change',e=>{filter=e.target.value;page=1;renderFeed()});document.getElementById('vendorTabBtn-deals')?.addEventListener('click',load);window.addEventListener('kinto-deals-vendor-submitted',load);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&document.getElementById('vendorTab-deals')?.offsetParent)load()})});
 })();
