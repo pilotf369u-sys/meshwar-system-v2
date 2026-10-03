@@ -107,7 +107,7 @@ async function submitDraft(item){
   if(state.campaignId===item.id){state.campaignId=null;state.updatedAt=null;state.selected.clear();state.gift=null;$('kdDraftForm').reset();syncKind();renderSelected()}
   setMsg('تم إرسال الحملة للإدارة، وهي الآن قيد المراجعة. لم تُنشر للعملاء.');
   await listDrafts();
-  const refresh=document.getElementById('kdG3gRefresh');if(refresh)refresh.click();
+  window.dispatchEvent(new CustomEvent('kinto-deals-vendor-submitted',{detail:{campaignId:item.id}}));
  }catch(e){setMsg('تعذر إرسال الحملة: '+e.message,true)}
  finally{state.busy=false;$('kdSave').disabled=false}
 }
