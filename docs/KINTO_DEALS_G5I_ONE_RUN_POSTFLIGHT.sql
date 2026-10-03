@@ -15,8 +15,7 @@ with checks as (
  union all select 'reservation_counts_confirmed_only',
    (select count(*)=2 from regexp_matches(
     pg_get_functiondef('private.kinto_deals_v1_reserve_canonical_order_g5(text,uuid,uuid)'::regprocedure),
-    'state=''confirmed''','g'))
+    'state[[:space:]]*=[[:space:]]*''confirmed''','g'))
  union all select 'payment_quota_has_nonblocking_lock',
-   position('for update nowait' in lower(pg_get_functiondef(
-    'private.kinto_deals_v1_redemption_lifecycle_g5i()'::regprocedure)))>0
+   lower(pg_get_functiondef('private.kinto_deals_v1_redemption_lifecycle_g5i()'::regprocedure)) ~ 'for[[:space:]]+update[[:space:]]+nowait'
 ) select * from checks order by check_name;
