@@ -28,14 +28,19 @@ begin
  v_cancel:=new.status in ('ملغي','ملغي من قبل العميل','رفض الطلب','مرفوض')
   and old.status<>'تم التسديد'
   and coalesce(v_d->>'bundle_stock_lifecycle_state','')<>'deducted';
+ if new.status='تم التسديد' and not v_paid then
+  raise exception 'DEALS_CANONICAL_STOCK_DEDUCTION_REQUIRED' using errcode='P0001';
+ end if;
  if v_paid then
   -- Payment is the allocation race winner, not the earliest pending order.
   -- A rejected confirmation rolls back this status change AND V93 stock deduction.
+  -- NOWAIT avoids a lock-order cycle: checkout takes campaign then order;
+  -- payment already holds order and must never wait on campaign.
   select * into v_r from public.kinto_deals_v1_redemptions
    where order_id=new.id and state='pending' for update;
   if found then
    select * into v_c from public.kinto_deals_v1_campaigns
-    where id=v_r.campaign_id for update;
+    where id=v_r.campaign_id for update nowait;
    select count(*)::integer,coalesce(sum(qualifying_units),0)::integer
     into v_used,v_prior_units from public.kinto_deals_v1_redemptions
     where campaign_id=v_r.campaign_id and customer_id=v_r.customer_id
