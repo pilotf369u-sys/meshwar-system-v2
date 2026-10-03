@@ -7,23 +7,49 @@ const state={selected:new Map(),catalog:new Map(),giftResults:new Map(),gift:nul
 const rpc=async(name,args)=>{const sb=window.MeshwarVendorRuntime?.sb;if(!sb)throw Error('اتصال الحملات لم يجهز بعد. أعد تحديث قائمة المسودات بعد اكتمال تحميل اللوحة.');if(!token())throw Error('رمز جلسة الحملات الآمنة غير موجود في هذا التبويب؛ تسجيل دخول لوحة المتجر وحده لا يثبت جلسة الحملات. لم تتغير مسوداتك.');const {data,error}=await sb.rpc(name,{p_session_token:token(),...args});if(error)throw error;return data};
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e};
 const setMsg=(message,bad=false)=>{const e=$('kdDraftMessage');if(e){e.textContent=message;e.className='text-sm mt-3 '+(bad?'text-rose-300':'text-amber-200')}};
+const renderGiftResults=()=>{
+ const box=$('kdGiftResults');if(!box)return;box.replaceChildren();
+ for(const p of state.giftResults.values()){
+  if(state.selected.has(p.id))continue;
+  const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 p-2 text-xs');
+  if(p.image_url){const img=el('img');img.src=p.image_url;img.alt=p.product_name||'';img.loading='lazy';img.className='h-12 w-12 shrink-0 rounded-lg object-contain bg-white/5';row.append(img)}
+  const info=el('span',p.product_name+' | '+(p.barcode||'—')+' | '+p.base_price+' '+(p.currency||''),'min-w-0 flex-1 break-words');row.append(info);
+  const selected=state.gift===p.id;
+  const button=el('button',selected?'إلغاء الهدية':'اختيار هدية','shrink-0 rounded-lg border px-2 py-2 '+(selected?'border-emerald-400 text-emerald-200':'border-amber-400/40 text-amber-100'));
+  button.type='button';button.setAttribute('aria-pressed',String(selected));
+  button.addEventListener('click',()=>{state.gift=state.gift===p.id?null:p.id;renderSelected()});row.append(button);box.append(row);
+ }
+};
 const renderSelected=()=>{
  const box=$('kdSelected');box.replaceChildren();
  for(const p of state.selected.values()){const row=el('div',p.product_name,'rounded-lg bg-white/5 p-2 text-xs');const b=el('button','إزالة','mr-3 text-rose-300');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);renderSelected()});row.append(b);box.append(row)}
  $('kdSelectedCount').textContent=String(state.selected.size);
- const gift=$('kdGift');gift.replaceChildren();gift.append(el('option','بلا هدية'));gift.firstChild.value='';
- for(const p of state.giftResults.values()){if(state.selected.has(p.id))continue;const o=el('option',p.product_name+' — '+(p.barcode||'بلا باركود'));o.value=p.id;gift.append(o)}
- if(state.gift&&state.catalog.has(state.gift)&&!state.giftResults.has(state.gift))state.giftResults.set(state.gift,state.catalog.get(state.gift));
- if(state.gift&&![...gift.options].some(o=>o.value===state.gift)&&state.giftResults.has(state.gift)){const p=state.giftResults.get(state.gift),o=el('option',p.product_name);o.value=p.id;gift.append(o)}
- gift.value=state.gift&&!state.selected.has(state.gift)?state.gift:'';if(!gift.value)state.gift=null;
+ if(state.gift&&state.selected.has(state.gift))state.gift=null;
+ const gift=$('kdGift');gift.replaceChildren();const empty=el('option','بلا هدية');empty.value='';gift.append(empty);
+ if(state.gift){
+  const p=state.catalog.get(state.gift)||state.giftResults.get(state.gift);
+  if(p){const option=el('option',p.product_name);option.value=p.id;gift.append(option);gift.value=p.id}
+  else state.gift=null;
+ }
+ const chosen=$('kdGiftChosen');chosen.replaceChildren();
+ if(state.gift){
+  const p=state.catalog.get(state.gift);
+  if(p){
+   const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-900/20 p-2 text-xs');
+   if(p.image_url){const img=el('img');img.src=p.image_url;img.alt=p.product_name||'';img.className='h-12 w-12 rounded-lg object-contain';row.append(img)}
+   row.append(el('span','الهدية المختارة: '+p.product_name,'min-w-0 flex-1'));
+   const clear=el('button','إزالة','rounded-lg border border-rose-300/40 px-2 py-1');clear.type='button';clear.addEventListener('click',()=>{state.gift=null;renderSelected()});row.append(clear);chosen.append(row);
+  }
+ }
+ renderGiftResults();
 };
 async function searchGift(){
- const status=$('kdGiftStatus');status.textContent='جاري البحث عن الهدية...';
+ const status=$('kdGiftStatus'),box=$('kdGiftResults');status.textContent='جاري البحث عن الهدية...';box.replaceChildren();
  try{
   const data=await rpc('kinto_deals_v1_vendor_products_g4',{p_search:$('kdGiftSearch').value.trim(),p_limit:50});
   state.giftResults=new Map((data.items||[]).map(p=>[p.id,p]));
   for(const p of state.giftResults.values())state.catalog.set(p.id,p);
-  renderSelected();status.textContent=state.giftResults.size?'اختر الهدية من القائمة أدناه.':'لا توجد نتائج مطابقة للهدية.';
+  renderSelected();status.textContent=state.giftResults.size?'اختر الهدية من البطاقات أدناه.':'لا توجد نتائج مطابقة للهدية.';
  }catch(e){status.textContent='تعذر البحث عن الهدية: '+e.message}
 }
 async function search(){
@@ -130,6 +156,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(!$('kdDraftForm'))return;
  $('kdSearchButton').addEventListener('click',search);
  $('kdGiftSearchButton').addEventListener('click',searchGift);
+ $('kdGiftSearch').addEventListener('focus',()=>{if(!state.giftResults.size)searchGift()},{once:true});
  $('kdGiftSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchGift()}});
  $('kdRefreshDrafts').addEventListener('click',listDrafts);
  window.addEventListener('kinto-deals-revision-created',async e=>{
@@ -174,7 +201,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHelp()});
  window.addEventListener('scroll',closeHelp,true);
  window.addEventListener('resize',closeHelp);
- $('kdGift').addEventListener('change',e=>state.gift=e.target.value||null);
+ $('kdGift').addEventListener('change',e=>{state.gift=e.target.value||null;renderSelected()});
  document.querySelectorAll('input[name="kdKindChoice"]').forEach(radio=>radio.addEventListener('change',()=>{if(radio.checked){$('kdKind').value=radio.value;syncKind()}}));
  $('kdDraftForm').addEventListener('submit',e=>{e.preventDefault();save()});
  syncKind();
