@@ -4,6 +4,8 @@
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const token=()=>window.KintoAdminSessionV147?.read()?.token||'';
 let busy=false,open=false,serial=0;
+const updateBadge=n=>{const badge=document.querySelector('.kd3f-nav-count');if(!badge)return;const count=Math.max(0,Number(n)||0);badge.textContent=String(count);badge.hidden=count===0};
+async function refreshCount(){try{if(!token())return;const data=await rpc('kinto_deals_v1_admin_inbox_g3',{p_session_token:token()});updateBadge(data?.pending_count)}catch{/* Leave last confirmed count; moderation remains manual on error. */}};
 const rpc=async(name,args)=>{
  const sb=await window.ensureCustomerSupabase();
  const {data,error}=await sb.rpc(name,args);
@@ -12,7 +14,7 @@ const rpc=async(name,args)=>{
 };
 const css=document.createElement('style');
 css.textContent='.kd3f{background:#0a2f23;color:#f8f5e9;border-radius:12px;padding:16px;margin:12px 0}.kd3f h2{color:#dec17e}.kd3f button{background:#d6b66b;color:#123226;border-radius:8px;margin:5px;padding:9px}.kd3f button:disabled{opacity:.45}.kd3f textarea{width:100%;min-height:65px;background:#092b21;color:#fff;border:1px solid #8b996f;border-radius:8px;padding:8px}.kd3f .entry{border:1px solid #52735b;padding:12px;border-radius:10px;margin:12px 0}.kd3f .products{display:flex;gap:8px;flex-wrap:wrap}.kd3f .prod{width:150px;background:#153d2e;padding:8px;border-radius:8px}.kd3f .prod img{width:100%;height:90px;object-fit:contain}.kd3f .hero{height:170px;position:relative;overflow:hidden;display:grid;place-items:center}.kd3f .hero img{width:100%;height:100%;object-fit:contain;position:relative}.kd3f .hero img:first-child{position:absolute;inset:0;object-fit:cover;filter:blur(16px);opacity:.4}.kd3f .message{white-space:pre-wrap;color:#f4d28c}';
-document.head.append(css);
+css.textContent+='.kd3f-nav-count:not([hidden]){display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-inline-start:6px;padding:0 4px;border-radius:99px;background:#d6b66b;color:#102b22;font-size:12px;font-weight:800}';document.head.append(css);
 function el(tag,textValue){const x=document.createElement(tag);if(textValue!==undefined)x.textContent=String(textValue);return x}
 function detailCard(parent,d){
  const detail=el('div');detail.className='entry';
@@ -51,7 +53,7 @@ async function load(){
  if(!token())throw Error('جلسة الأدمن غير متاحة. سجّل الدخول من جديد.');
  const data=await rpc('kinto_deals_v1_admin_inbox_g3',{p_session_token:token()});
  if(id!==serial)return;
- panel.querySelector('.kd-count').textContent=data.pending_count??0;
+ panel.querySelector('.kd-count').textContent=data.pending_count??0;updateBadge(data.pending_count);
  status.textContent=(data.items||[]).length?'اضغط عرض التفاصيل لمراجعة المنتجات والهدية.':'لا توجد حملات تنتظر المراجعة.';
  for(const item of data.items||[]){
  const entry=el('div');entry.className='entry';entry.append(el('h3',item.title_snapshot),el('p','رقم النسخة: '+item.revision+' | أُرسل: '+new Date(item.submitted_at).toLocaleString('ar-IQ')));
@@ -63,12 +65,14 @@ document.addEventListener('DOMContentLoaded',()=>{
  const sidebar=document.querySelector('.sidebar'),main=document.querySelector('.main-content');if(!sidebar||!main)return;
  const link=el('a','حملات التجار — المراجعة');link.href='#kintoDealsG3f';link.addEventListener('click',e=>{
  e.preventDefault();const panel=document.getElementById('kintoDealsG3f');window.showSection('kintoDealsG3f');open=true;panel.scrollIntoView({behavior:'smooth'});load();
- });sidebar.append(link);
+ });const badge=el('span','');badge.className='kd3f-nav-count';badge.hidden=true;badge.setAttribute('aria-label','حملات تنتظر المراجعة');link.append(' ',badge);const logout=sidebar.querySelector('.logout-link');if(logout)sidebar.insertBefore(link,logout);else sidebar.append(link);
  const panel=el('section');panel.id='kintoDealsG3f';panel.className='card kd3f';
  panel.append(el('h2','مراجعة حملات التجار'),el('p','بانتظار المراجعة: '));
  panel.lastChild.append(Object.assign(el('strong','—'),{className:'kd-count'}));
  const refresh=el('button','تحديث');refresh.onclick=load;panel.append(refresh);
  const status=el('p');status.className='kd-status';panel.append(status);
  const items=el('div');items.className='kd-items';panel.append(items);main.append(panel);
+ refreshCount();window.addEventListener('focus',()=>{refreshCount();if(open&&!panel.querySelector('.entry .entry'))load()});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshCount();if(open&&!panel.querySelector('.entry .entry'))load()}});
+ window.setInterval(()=>{if(document.hidden||!token())return;refreshCount();if(open&&!panel.querySelector('.entry .entry')&&!busy)load()},30000);
 });
 })();
