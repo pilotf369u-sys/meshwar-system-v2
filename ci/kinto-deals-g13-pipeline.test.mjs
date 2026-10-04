@@ -23,6 +23,9 @@ test('public image uses exact campaign publication gate and disables caching',()
  assert.match(src,/Cache-Control':'no-store/);
  assert.match(gate,/kinto_deals_v1_public_feed_g7/);
  assert.match(gate,/campaign_id/);
+ assert.match(gate,/from public\.kinto_deals_v1_public_feed_g7\(v_store_id\) as f/);
+ assert.match(gate,/f\.campaign_id=p_campaign_id/);
+ assert.doesNotMatch(gate,/jsonb_array_elements|G13_PUBLIC_FEED_MUST_RETURN_JSON/);
  assert.match(gate,/G13_REQUIRES_G10_PUBLIC_FEED_UUID_SIGNATURE/);
  const attach=read('supabase/migrations/20261004_kinto_deals_v1_g13b_attach_ad.sql');
  assert.match(attach,/G13_REQUIRES_G4_VENDOR_DRAFT_SIGNATURE/);
