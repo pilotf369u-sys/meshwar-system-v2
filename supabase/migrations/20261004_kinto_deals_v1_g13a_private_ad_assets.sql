@@ -20,7 +20,11 @@ create table if not exists public.kinto_deals_v1_ad_assets_g13 (
  attached_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
  constraint kinto_deals_g13_object_path check(
-  split_part(object_path, '/', 1) = campaign_id::text and object_path ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}[.]webp
+  split_part(object_path, '/', 1) = campaign_id::text
+  and right(object_path,5) = '.webp'
+  and length(split_part(object_path, '/', 2)) = 41
+  and array_length(string_to_array(object_path,'/'),1) = 2
+ )
 );
 create table if not exists public.kinto_deals_v1_ad_cleanup_g13 (
  object_path text primary key,
