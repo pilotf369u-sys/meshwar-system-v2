@@ -22,8 +22,8 @@ async function feed(){try{const r=await fetch(URL,{method:'POST',cache:'no-store
 function badge(){const x=document.createElement('span');x.className='kd-g7-badge';x.textContent='✦ عروض';x.setAttribute('aria-label','توجد عروض منشورة لهذا المتجر');return x}
 function directory(rows){const eligible=new Set(rows.map(r=>String(r.store_id)));const root=document.getElementById('storesGrid');const spotlight=document.getElementById('kintoOfficialStoreSpotlight');if(!root&&!spotlight)return;let busy=false;
 function paint(){if(busy)return;busy=true;try{
- for(const card of root?root.querySelectorAll('article.card'):[]){const a=card.querySelector('a[href*="storeId="]');let id='';try{id=new URL(a?.getAttribute('href')||'',location.href).searchParams.get('storeId')||''}catch{}const old=card.querySelector('.kd-g7-badge');if(eligible.has(id)){if(!old)card.prepend(badge())}else old?.remove()}
- if(spotlight){const a=spotlight.querySelector('a[href*="storeId="]');let id='';try{id=new URL(a?.getAttribute('href')||'',location.href).searchParams.get('storeId')||''}catch{}const old=spotlight.querySelector('.kd-g7-badge');if(eligible.has(id)){if(!old)spotlight.prepend(badge())}else old?.remove()}
+ for(const card of root?root.querySelectorAll('article.card'):[]){const a=card.querySelector('a[href*="storeId="]');let id=card.dataset.kintoStoreId||'';if(!id)try{id=new URL(a?.getAttribute('href')||'',location.href).searchParams.get('storeId')||''}catch{}const old=card.querySelector('.kd-g7-badge');if(eligible.has(id)){if(!old)card.insertBefore(badge(),card.firstChild)}else old?.remove()}
+ if(spotlight){const a=spotlight.querySelector('a[href*="storeId="]');let id=spotlight.dataset.kintoStoreId||'';if(!id)try{id=new URL(a?.getAttribute('href')||'',location.href).searchParams.get('storeId')||''}catch{}const old=spotlight.querySelector('.kd-g7-badge');if(eligible.has(id)){if(!old)spotlight.insertBefore(badge(),spotlight.firstChild)}else old?.remove()}
 }finally{busy=false}}
 paint();for(const el of [root,spotlight])if(el)new MutationObserver(()=>queueMicrotask(paint)).observe(el,{childList:true,subtree:true});
 }
