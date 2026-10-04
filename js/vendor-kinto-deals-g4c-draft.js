@@ -99,12 +99,13 @@ async function listDrafts(){
 }
 async function submitDraft(item){
  if(state.busy)return;
+ if(state.campaignId===item.id&&$('kdAdImage')?.files?.length&&!adImageUploaded){setMsg('الصورة المختارة معاينة محلية فقط. اضغط «رفع الصورة» وانتظر رسالة نجاح الرفع قبل إرسال الحملة.',true);return}
  if(!window.confirm('إرسال الحملة «'+item.title+'» لمراجعة الإدارة؟ سيتم قفل تعديل هذه المسودة، ولن تُنشر إلا وفق بوابات الموافقة والنشر المستقلة. تأكد أنك حفظت آخر تغييراتك أولاً.'))return;
  state.busy=true;$('kdSave').disabled=true;
  try{
   const data=await rpc('kinto_deals_v1_vendor_submit_g4',{p_campaign_id:item.id,p_expected_updated_at:item.updated_at});
   if(!data?.ok||data.review_state!=='pending')throw Error('لم يؤكد الخادم استلام طلب المراجعة.');
-  if(state.campaignId===item.id){state.campaignId=null;state.updatedAt=null;clearAdPreview();$('kdAdImage').value='';state.selected.clear();state.gift=null;$('kdDraftForm').reset();syncKind();renderSelected()}
+  if(state.campaignId===item.id){state.campaignId=null;state.updatedAt=null;clearAdPreview();adImageUploaded=false;$('kdAdImage').value='';state.selected.clear();state.gift=null;$('kdDraftForm').reset();syncKind();renderSelected()}
   setMsg('تم إرسال الحملة للإدارة، وهي الآن قيد المراجعة. لم تُنشر للعملاء.');
   await listDrafts();
   window.dispatchEvent(new CustomEvent('kinto-deals-vendor-submitted',{detail:{campaignId:item.id}}));
@@ -125,7 +126,7 @@ async function restoreDraft(item){
    if(!item.gift_product||item.gift_product.id!==item.gift_product_id)throw Error('تعذر استعادة بيانات الهدية؛ لم نغيّر المسودة.');
    hydrated.set(item.gift_product.id,item.gift_product);
   }
-  clearAdPreview();$('kdAdImage').value='';
+  clearAdPreview();adImageUploaded=false;$('kdAdImage').value='';
   for(const p of hydrated.values())state.catalog.set(p.id,p);
   state.selected.clear();
   for(const id of ids)state.selected.set(id,state.catalog.get(id));
@@ -142,6 +143,7 @@ async function restoreDraft(item){
 
 // G13: merchant advertising image is independent of products, gifts and coupons.
 let adPreviewUrl=null;
+let adImageUploaded=false;
 function clearAdPreview(){
  if(adPreviewUrl)URL.revokeObjectURL(adPreviewUrl);
  adPreviewUrl=null;
@@ -168,7 +170,8 @@ async function uploadAdImage(){
   if(!response.ok||result?.ok!==true)throw Error(result?.error||'فشل رفع الصورة');
   clearAdPreview();adPreviewUrl=URL.createObjectURL(image);
   const preview=$('kdAdPreview');preview.src=adPreviewUrl;preview.hidden=false;
-  status.textContent='تم رفع صورة الإعلان إلى مسودة الحملة. لا تظهر للعميل قبل الموافقة والنشر.';
+  adImageUploaded=true;
+  status.textContent='✓ تم حفظ الصورة على الخادم بنجاح. يمكنك الآن إرسال الحملة للإدارة؛ تظهر للعميل بعد الموافقة والنشر.';
  }catch(error){status.textContent='تعذر رفع الصورة: '+error.message}
  finally{state.busy=false;button.disabled=false}
 }
@@ -265,7 +268,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  document.querySelectorAll('input[name="kdKindChoice"]').forEach(radio=>radio.addEventListener('change',()=>{if(radio.checked){$('kdKind').value=radio.value;syncKind()}}));
  $('kdDraftForm').addEventListener('submit',e=>{e.preventDefault();save()});
  $('kdAdUpload')?.addEventListener('click',uploadAdImage);
- $('kdAdImage')?.addEventListener('change',()=>{clearAdPreview();const file=$('kdAdImage').files?.[0];if(file){adPreviewUrl=URL.createObjectURL(file);$('kdAdPreview').src=adPreviewUrl;$('kdAdPreview').hidden=false;$('kdAdStatus').textContent='معاينة محلية فقط؛ اضغط رفع الصورة بعد حفظ المسودة.'}});
+ $('kdAdImage')?.addEventListener('change',()=>{clearAdPreview();const file=$('kdAdImage').files?.[0];adImageUploaded=false;if(file){adPreviewUrl=URL.createObjectURL(file);$('kdAdPreview').src=adPreviewUrl;$('kdAdPreview').hidden=false;$('kdAdStatus').textContent='هذه معاينة محلية وليست صورة محفوظة. احفظ المسودة، ثم اضغط «رفع الصورة» وانتظر علامة ✓ قبل إرسال الحملة.'}});
  syncKind();
 });
 })();
