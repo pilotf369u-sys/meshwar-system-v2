@@ -7,12 +7,10 @@ Deno.serve(async req=>{
  const url=Deno.env.get('SUPABASE_URL'),key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
  if(!url||!key)return new Response(null,{status:503});
  const sb=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
- // Reuse G10's existing approval, publication, store and expiry gates; never use raw campaign status alone.
- const {data:feed,error:feedError}=await sb.rpc('kinto_deals_v1_public_feed_g7',{p_store_id:null});
- if(feedError||!Array.isArray(feed)||!feed.some(x=>x.campaign_id===id))return new Response(null,{status:404,headers:{'Cache-Control':'no-store'}});
- const {data:asset,error:assetError}=await sb.from('kinto_deals_v1_ad_assets_g13').select('object_path').eq('campaign_id',id).maybeSingle();
- if(assetError||!asset?.object_path)return new Response(null,{status:404,headers:{'Cache-Control':'no-store'}});
- const {data:file,error:downloadError}=await sb.storage.from('kinto-merchant-campaign-ads').download(asset.object_path);
+ // Exact-campaign SQL gate retains all G10 approval, publication and date conditions.
+ const {data:path,error:pathError}=await sb.rpc('kinto_deals_v1_public_ad_path_g13',{p_campaign_id:id});
+ if(pathError||!path)return new Response(null,{status:404,headers:{'Cache-Control':'no-store'}});
+ const {data:file,error:downloadError}=await sb.storage.from('kinto-merchant-campaign-ads').download(path);
  if(downloadError||!file)return new Response(null,{status:404,headers:{'Cache-Control':'no-store'}});
  return new Response(file.stream(),{status:200,headers:{'Content-Type':'image/webp','Cache-Control':'public, max-age=30','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});
 });
