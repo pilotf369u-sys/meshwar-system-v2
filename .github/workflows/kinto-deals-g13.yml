@@ -1,0 +1,20 @@
+name: KINTO Deals G13 image gate
+on:
+  pull_request:
+    paths:
+      - 'ci/kinto-deals-g13-*.test.mjs'
+      - 'js/kinto-deals-merchant-ad-image-g13.js'
+      - 'js/kinto-deals-customer-g7.js'
+      - 'supabase/functions/kinto-deals-ad-*/**'
+      - 'supabase/migrations/*g13*.sql'
+      - '.github/workflows/kinto-deals-g13.yml'
+  workflow_dispatch:
+jobs:
+  image-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test ci/kinto-deals-g13-image-preparation.test.mjs ci/kinto-deals-g13-pipeline.test.mjs

@@ -104,7 +104,7 @@ async function submitDraft(item){
  try{
   const data=await rpc('kinto_deals_v1_vendor_submit_g4',{p_campaign_id:item.id,p_expected_updated_at:item.updated_at});
   if(!data?.ok||data.review_state!=='pending')throw Error('لم يؤكد الخادم استلام طلب المراجعة.');
-  if(state.campaignId===item.id){state.campaignId=null;state.updatedAt=null;state.selected.clear();state.gift=null;$('kdDraftForm').reset();syncKind();renderSelected()}
+  if(state.campaignId===item.id){state.campaignId=null;state.updatedAt=null;clearAdPreview();$('kdAdImage').value='';state.selected.clear();state.gift=null;$('kdDraftForm').reset();syncKind();renderSelected()}
   setMsg('تم إرسال الحملة للإدارة، وهي الآن قيد المراجعة. لم تُنشر للعملاء.');
   await listDrafts();
   window.dispatchEvent(new CustomEvent('kinto-deals-vendor-submitted',{detail:{campaignId:item.id}}));
@@ -125,6 +125,7 @@ async function restoreDraft(item){
    if(!item.gift_product||item.gift_product.id!==item.gift_product_id)throw Error('تعذر استعادة بيانات الهدية؛ لم نغيّر المسودة.');
    hydrated.set(item.gift_product.id,item.gift_product);
   }
+  clearAdPreview();$('kdAdImage').value='';
   for(const p of hydrated.values())state.catalog.set(p.id,p);
   state.selected.clear();
   for(const id of ids)state.selected.set(id,state.catalog.get(id));
@@ -138,6 +139,40 @@ async function restoreDraft(item){
   setMsg('استعدنا المسودة للتعديل. لن تُحفظ التغييرات حتى تضغط «حفظ المسودة فقط».');
  }catch(e){setMsg('تعذرت الاستعادة: '+e.message,true)}
 }
+
+// G13: merchant advertising image is independent of products, gifts and coupons.
+let adPreviewUrl=null;
+function clearAdPreview(){
+ if(adPreviewUrl)URL.revokeObjectURL(adPreviewUrl);
+ adPreviewUrl=null;
+ const preview=$('kdAdPreview');
+ if(preview){preview.hidden=true;preview.removeAttribute('src')}
+}
+async function uploadAdImage(){
+ const status=$('kdAdStatus'),button=$('kdAdUpload'),file=$('kdAdImage')?.files?.[0];
+ if(state.busy)return;
+ if(!state.campaignId){status.textContent='احفظ المسودة أولاً ثم ارفع صورتها.';return}
+ if(!file){status.textContent='اختر صورة الإعلان أولاً.';return}
+ if(!token()){status.textContent='جلسة التاجر غير متاحة. سجّل الدخول مجدداً.';return}
+ state.busy=true;button.disabled=true;
+ try{
+  status.textContent='جاري ضغط الصورة...';
+  const image=await window.KintoMerchantAdImageG13.prepare(file);
+  status.textContent='جاري رفع صورة WebP ('+Math.ceil(image.size/1024)+'KB)...';
+  const form=new FormData();
+  form.set('session_token',token());form.set('campaign_id',state.campaignId);form.set('file',image);
+  const response=await fetch('https://hsmmbloouskqdnptiiad.supabase.co/functions/v1/kinto-deals-ad-media-g13',{
+   method:'POST',headers:{apikey:'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH'},body:form
+  });
+  const result=await response.json();
+  if(!response.ok||result?.ok!==true)throw Error(result?.error||'فشل رفع الصورة');
+  clearAdPreview();adPreviewUrl=URL.createObjectURL(image);
+  const preview=$('kdAdPreview');preview.src=adPreviewUrl;preview.hidden=false;
+  status.textContent='تم رفع صورة الإعلان إلى مسودة الحملة. لا تظهر للعميل قبل الموافقة والنشر.';
+ }catch(error){status.textContent='تعذر رفع الصورة: '+error.message}
+ finally{state.busy=false;button.disabled=false}
+}
+
 const dateValue=id=>{const v=$(id).value;if(!v)throw Error('حدد بداية الحملة ونهايتها.');return new Date(v).toISOString()};
 function syncKind(){
  const kind=$('kdKind').value,limited=kind==='limited_purchase';
@@ -229,6 +264,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  $('kdGift').addEventListener('change',e=>{state.gift=e.target.value||null;renderSelected()});
  document.querySelectorAll('input[name="kdKindChoice"]').forEach(radio=>radio.addEventListener('change',()=>{if(radio.checked){$('kdKind').value=radio.value;syncKind()}}));
  $('kdDraftForm').addEventListener('submit',e=>{e.preventDefault();save()});
+ $('kdAdUpload')?.addEventListener('click',uploadAdImage);
+ $('kdAdImage')?.addEventListener('change',()=>{clearAdPreview();const file=$('kdAdImage').files?.[0];if(file){adPreviewUrl=URL.createObjectURL(file);$('kdAdPreview').src=adPreviewUrl;$('kdAdPreview').hidden=false;$('kdAdStatus').textContent='معاينة محلية فقط؛ اضغط رفع الصورة بعد حفظ المسودة.'}});
  syncKind();
 });
 })();
