@@ -7,6 +7,9 @@ test('merchant ad remains in a separate private bucket',()=>{
  assert.match(sql,/kinto-merchant-campaign-ads/);
  assert.match(sql,/false,204800/);
  assert.match(sql,/enable row level security/);
+ assert.equal((sql.match(/commit;/g)||[]).length,1);
+ assert.match(sql,/G13_BUCKET_CONFIG_INVALID/);
+ assert.match(sql,/kinto_g13_ad_path/);
  assert.doesNotMatch(sql,/customer-notice-media|coupon/);
 });
 test('upload checks draft ownership, status, image signature and dimensions',()=>{
