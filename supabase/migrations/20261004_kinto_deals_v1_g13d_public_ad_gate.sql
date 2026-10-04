@@ -1,10 +1,13 @@
 -- G13D: reuse the deployed G10 public feed, rather than duplicating publication rules.
 begin;
-do $ begin
+do $g13check$ begin
  if to_regprocedure('public.kinto_deals_v1_public_feed_g7(uuid)') is null then
   raise exception 'G13_REQUIRES_G10_PUBLIC_FEED_UUID_SIGNATURE';
  end if;
-end $;
+ if (select prorettype from pg_proc where oid=to_regprocedure('public.kinto_deals_v1_public_feed_g7(uuid)')) not in ('json'::regtype,'jsonb'::regtype) then
+  raise exception 'G13_PUBLIC_FEED_MUST_RETURN_JSON';
+ end if;
+end $g13check$;
 create or replace function public.kinto_deals_v1_public_ad_path_g13(p_campaign_id uuid)
 returns text language plpgsql stable security definer
 set search_path=public,private,pg_temp as $fn$
