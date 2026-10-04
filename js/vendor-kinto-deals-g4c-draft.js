@@ -150,13 +150,13 @@ function clearAdPreview(){
  const preview=$('kdAdPreview');
  if(preview){preview.hidden=true;preview.removeAttribute('src')}
 }
-async function uploadAdImage(){
+async function uploadAdImage(automatic=false){
  const status=$('kdAdStatus'),button=$('kdAdUpload'),file=$('kdAdImage')?.files?.[0];
- if(state.busy)return;
- if(!state.campaignId){status.textContent='احفظ المسودة أولاً ثم ارفع صورتها.';return}
- if(!file){status.textContent='اختر صورة الإعلان أولاً.';return}
- if(!token()){status.textContent='جلسة التاجر غير متاحة. سجّل الدخول مجدداً.';return}
- state.busy=true;button.disabled=true;
+ if(state.busy&&!automatic)return;
+ if(!state.campaignId){status.textContent='احفظ المسودة أولاً.';return false}
+ if(!file){status.textContent='اختر صورة الإعلان أولاً.';return false}
+ if(!token()){status.textContent='جلسة التاجر غير متاحة. سجّل الدخول مجدداً.';return false}
+ if(!automatic)state.busy=true;button.disabled=true;
  try{
   status.textContent='جاري ضغط الصورة...';
   const image=await window.KintoMerchantAdImageG13.prepare(file);
@@ -171,9 +171,10 @@ async function uploadAdImage(){
   clearAdPreview();adPreviewUrl=URL.createObjectURL(image);
   const preview=$('kdAdPreview');preview.src=adPreviewUrl;preview.hidden=false;
   adImageUploaded=true;
-  status.textContent='✓ تم حفظ الصورة على الخادم بنجاح. يمكنك الآن إرسال الحملة للإدارة؛ تظهر للعميل بعد الموافقة والنشر.';
- }catch(error){status.textContent='تعذر رفع الصورة: '+error.message}
- finally{state.busy=false;button.disabled=false}
+  status.textContent='✓ تم حفظ صورة الحملة على الخادم بنجاح.';
+  return true;
+ }catch(error){status.textContent='تعذر رفع الصورة: '+error.message;return false}
+ finally{if(!automatic)state.busy=false;button.disabled=false}
 }
 
 const dateValue=id=>{const v=$(id).value;if(!v)throw Error('حدد بداية الحملة ونهايتها.');return new Date(v).toISOString()};
@@ -197,7 +198,12 @@ async function save(){
    terms_snapshot:state.termsSnapshot,product_ids:[...state.selected.keys()]};
   const data=await rpc('kinto_deals_v1_vendor_save_draft_g4',{p_campaign_id:state.campaignId,p_expected_updated_at:state.updatedAt,p_draft:draft});
   state.campaignId=data.campaign_id;state.updatedAt=data.updated_at;
-  setMsg('تم حفظ المسودة على الخادم. رقمها: '+data.campaign_id+' — لم تُرسل للإدارة ولم تُنشر.');
+  if($('kdAdImage')?.files?.length&&!adImageUploaded){
+   setMsg('تم حفظ المسودة؛ جاري تجهيز ورفع الصورة تلقائياً...');
+   const uploaded=await uploadAdImage(true);
+   if(!uploaded){setMsg('حُفظت المسودة، لكن تعذر رفع الصورة. اضغط «حفظ المسودة» مرة أخرى لإعادة المحاولة دون إنشاء حملة جديدة.',true);return}
+  }
+  setMsg('✓ تم حفظ المسودة'+(adImageUploaded?' وصورتها':'')+' بنجاح. لم تُرسل للإدارة ولم تُنشر.');
   await listDrafts();
  }catch(e){setMsg('تعذر حفظ المسودة: '+e.message,true)}
  finally{state.busy=false;$('kdSave').disabled=false}
@@ -267,8 +273,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  $('kdGift').addEventListener('change',e=>{state.gift=e.target.value||null;renderSelected()});
  document.querySelectorAll('input[name="kdKindChoice"]').forEach(radio=>radio.addEventListener('change',()=>{if(radio.checked){$('kdKind').value=radio.value;syncKind()}}));
  $('kdDraftForm').addEventListener('submit',e=>{e.preventDefault();save()});
- $('kdAdUpload')?.addEventListener('click',uploadAdImage);
- $('kdAdImage')?.addEventListener('change',()=>{clearAdPreview();const file=$('kdAdImage').files?.[0];adImageUploaded=false;if(file){adPreviewUrl=URL.createObjectURL(file);$('kdAdPreview').src=adPreviewUrl;$('kdAdPreview').hidden=false;$('kdAdStatus').textContent='هذه معاينة محلية وليست صورة محفوظة. احفظ المسودة، ثم اضغط «رفع الصورة» وانتظر علامة ✓ قبل إرسال الحملة.'}});
+ $('kdAdUpload')?.addEventListener('click',()=>uploadAdImage());
+ $('kdAdImage')?.addEventListener('change',()=>{clearAdPreview();const file=$('kdAdImage').files?.[0];adImageUploaded=false;if(file){adPreviewUrl=URL.createObjectURL(file);$('kdAdPreview').src=adPreviewUrl;$('kdAdPreview').hidden=false;$('kdAdStatus').textContent='معاينة الصورة المختارة؛ ستُضغط وتُرفع تلقائياً عند الضغط على «حفظ المسودة».'}});
  syncKind();
 });
 })();
