@@ -20,7 +20,23 @@ create table if not exists public.kinto_deals_v1_ad_assets_g13 (
  attached_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
  constraint kinto_deals_g13_object_path check(
-  object_path ~ ('^' || campaign_id::text || '/[0-9a-f-]{36}\\.webp$'))
+  split_part(object_path, '/', 1) = campaign_id::text and object_path ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}[.]webp)
+);
+create table if not exists public.kinto_deals_v1_ad_cleanup_g13 (
+ object_path text primary key,
+ campaign_id uuid not null,
+ queued_at timestamptz not null default now(),
+ attempts integer not null default 0,
+ last_error text,
+ cleaned_at timestamptz
+);
+alter table public.kinto_deals_v1_ad_assets_g13 enable row level security;
+alter table public.kinto_deals_v1_ad_cleanup_g13 enable row level security;
+revoke all on public.kinto_deals_v1_ad_assets_g13 from public,anon,authenticated;
+revoke all on public.kinto_deals_v1_ad_cleanup_g13 from public,anon,authenticated;
+-- No browser storage policies: service-role Edge Function must verify merchant ownership.
+commit;
+)
 );
 create table if not exists public.kinto_deals_v1_ad_cleanup_g13 (
  object_path text primary key,
