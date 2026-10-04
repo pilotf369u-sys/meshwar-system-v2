@@ -6,7 +6,7 @@ Apply G13A, G13B, G13C, G13D, G13E migrations in order. Deploy the three G13 Edg
 
 Verify ownership rejection, submitted-draft rejection, malformed WebP rejection, replacement cleanup, approval and individual publication, expiry 404, and dedicated-bucket-only deletion. No checkout or coupon changes. Stable rollback branch: kinto-deals-public-display-stable-g12.
 
-Before applying G13B/G13D, run this read-only signature check in Supabase SQL Editor and confirm both return rows with json/jsonb result types:
+Before applying G13B/G13D, run this read-only signature check in Supabase SQL Editor and confirm the vendor draft RPC returns jsonb and the public feed RPC returns TABLE(campaign_id uuid, ...):
 
 ```sql
 select p.oid::regprocedure as signature, pg_get_function_result(p.oid) as result_type
