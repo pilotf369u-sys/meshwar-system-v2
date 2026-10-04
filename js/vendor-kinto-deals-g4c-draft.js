@@ -125,6 +125,7 @@ async function restoreDraft(item){
    if(!item.gift_product||item.gift_product.id!==item.gift_product_id)throw Error('تعذر استعادة بيانات الهدية؛ لم نغيّر المسودة.');
    hydrated.set(item.gift_product.id,item.gift_product);
   }
+  clearAdPreview();$('kdAdImage').value='';
   for(const p of hydrated.values())state.catalog.set(p.id,p);
   state.selected.clear();
   for(const id of ids)state.selected.set(id,state.catalog.get(id));
