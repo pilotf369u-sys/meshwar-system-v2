@@ -2,6 +2,11 @@
 begin;
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values('kinto-merchant-campaign-ads','kinto-merchant-campaign-ads',false,204800,array['image/webp']) on conflict(id) do nothing;
+do $ begin
+ if not exists(select 1 from storage.buckets where id='kinto-merchant-campaign-ads' and public=false and file_size_limit=204800 and allowed_mime_types @> array['image/webp']::text[]) then
+  raise exception 'G13_PRIVATE_BUCKET_CONFIGURATION_INVALID';
+ end if;
+end $;
 create table if not exists public.kinto_deals_v1_ad_assets_g13(
  campaign_id uuid primary key references public.kinto_deals_v1_campaigns(id) on delete cascade,
  object_path text not null unique,
