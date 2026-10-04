@@ -11,7 +11,7 @@ begin
  where c.id=p_campaign_id;
  if v_path is null then return null;end if;
  if exists (
-  select 1 from jsonb_array_elements(public.kinto_deals_v1_public_feed_g7(v_store_id)) as f(item)
+  select 1 from jsonb_array_elements(to_jsonb(public.kinto_deals_v1_public_feed_g7(v_store_id))) as f(item)
   where f.item->>'campaign_id'=p_campaign_id::text
  ) then return v_path;end if;
  return null;
