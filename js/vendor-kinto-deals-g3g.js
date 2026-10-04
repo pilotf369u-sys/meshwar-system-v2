@@ -44,7 +44,7 @@ async function load(){
   host.querySelector('[data-count]').textContent=String(data?.pending_count??0);
   const rows=data?.items||[];
   status.textContent=rows.length?'البحث والصفحات ضمن السجلات المحمّلة (حتى 50 حالياً). الموافقة لا تعني النشر.':'لا توجد حملات مقدمة للمراجعة بعد.';
-  feed=rows;liveCampaignIds=new Set();page=1;updateCounts();renderFeed();
+  feed=rows;liveCampaignIds=new Set();page=1;
   // G13 follow-up: the public feed is the authoritative published-and-live gate.
   // This only corrects the merchant-facing label; review decisions stay unchanged.
   try {
@@ -53,9 +53,9 @@ async function load(){
    if(!publicError&&Array.isArray(published)){
     const now=Date.now();
     liveCampaignIds=new Set(published.filter(r=>r.campaign_id&&new Date(r.starts_at).getTime()<=now&&new Date(r.ends_at).getTime()>now).map(r=>String(r.campaign_id)));
-    renderFeed();
    }
   }catch{/* Preserve review labels if public feed cannot be read. */}
+  if(current===seq){updateCounts();renderFeed();}
  }catch(e){if(current===seq)status.textContent='تعذر تحميل حالة الحملات: '+e.message}
 }
 document.addEventListener('DOMContentLoaded',()=>{const host=document.getElementById('kintoDealsVendorG3g');host?.querySelector('[data-refresh]')?.addEventListener('click',load);host?.querySelector('[data-search]')?.addEventListener('input',e=>{query=e.target.value.trim();page=1;renderFeed()});host?.querySelectorAll('[data-filter-button]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filterButton;page=1;renderFeed()}));host?.querySelector('[data-filter]')?.addEventListener('change',e=>{filter=e.target.value;page=1;renderFeed()});document.getElementById('vendorTabBtn-deals')?.addEventListener('click',load);window.addEventListener('kinto-deals-vendor-submitted',load);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&document.getElementById('vendorTab-deals')?.offsetParent)load()})});
