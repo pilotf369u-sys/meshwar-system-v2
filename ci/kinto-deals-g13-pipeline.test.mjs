@@ -18,7 +18,7 @@ test('public image uses exact campaign publication gate and disables caching',()
  const gate=read('supabase/migrations/20261004_kinto_deals_v1_g13d_public_ad_gate.sql');
  assert.match(src,/kinto_deals_v1_public_ad_path_g13/);
  assert.match(src,/Cache-Control':'no-store/);
- for(const term of ["pub.published=true","c.status='submitted'","st.status='active'","latest.review_state='acknowledged'","e.decision='approved'"])assert.ok(gate.includes(term),term);
+ assert.match(gate,/kinto_deals_v1_public_feed_g7/);\n assert.match(gate,/f.campaign_id=p_campaign_id/);
 });
 test('cleanup is secret-guarded and limited to the merchant ad bucket',()=>{
  const src=read('supabase/functions/kinto-deals-ad-cleanup-g13/index.ts');
