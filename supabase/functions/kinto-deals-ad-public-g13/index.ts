@@ -12,5 +12,5 @@ Deno.serve(async req=>{
  if(pathError||!path)return new Response(null,{status:404,headers:{'Cache-Control':'no-store'}});
  const {data:file,error:downloadError}=await sb.storage.from('kinto-merchant-campaign-ads').download(path);
  if(downloadError||!file)return new Response(null,{status:404,headers:{'Cache-Control':'no-store'}});
- return new Response(file.stream(),{status:200,headers:{'Content-Type':'image/webp','Cache-Control':'public, max-age=30','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});
+ return new Response(file.stream(),{status:200,headers:{'Content-Type':'image/webp','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});
 });
