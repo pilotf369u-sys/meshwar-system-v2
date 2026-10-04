@@ -2,7 +2,7 @@
 begin;
 create or replace function public.kinto_deals_v1_admin_publication_status_g9(
  p_session_token text,p_campaign_id uuid default null)
-returns jsonb language plpgsql stable security definer
+returns jsonb language plpgsql volatile security definer
 set search_path=public,private,pg_temp as $g9$
 declare v_admin text;v_display boolean;v_published boolean;v_at timestamptz;
 begin
