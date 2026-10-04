@@ -14,6 +14,7 @@ const rpc=async(name,args)=>{
 };
 const css=document.createElement('style');
 css.textContent='.kd3f{background:#0a2f23;color:#f8f5e9;border-radius:12px;padding:16px;margin:12px 0}.kd3f h2{color:#dec17e}.kd3f button{background:#d6b66b;color:#123226;border-radius:8px;margin:5px;padding:9px}.kd3f button:disabled{opacity:.45}.kd3f textarea{width:100%;min-height:65px;background:#092b21;color:#fff;border:1px solid #8b996f;border-radius:8px;padding:8px}.kd3f .entry{border:1px solid #52735b;padding:12px;border-radius:10px;margin:12px 0}.kd3f .products{display:flex;gap:8px;flex-wrap:wrap}.kd3f .prod{width:150px;background:#153d2e;padding:8px;border-radius:8px}.kd3f .prod img{width:100%;height:90px;object-fit:contain}.kd3f .hero{height:170px;position:relative;overflow:hidden;display:grid;place-items:center}.kd3f .hero img{width:100%;height:100%;object-fit:contain;position:relative}.kd3f .hero img:first-child:not(:last-child){position:absolute;inset:0;object-fit:cover;filter:blur(16px);opacity:.4}.kd3f .message{white-space:pre-wrap;color:#f4d28c}';
+css.textContent+='.kd3f .kd-g14-private-preview{display:flex;align-items:center;justify-content:center;min-height:80px;max-height:240px;padding:8px;margin:8px 0;background:#102d25!important;border:1px solid #52735b;border-radius:9px;overflow:hidden}.kd3f .kd-g14-private-preview img{flex:none!important;max-width:100%!important;max-height:220px!important;object-fit:contain!important;filter:none!important;opacity:1!important}';
 css.textContent+='.kd3f .entry{padding:10px 12px;margin:7px 0}.kd3f .entry h3{margin:0 0 5px;font-size:15px}.kd3f .entry>p{font-size:12px;margin:3px 0}.kd3f .entry>button{padding:6px 11px;margin:5px 0}.kd3f-nav-count:not([hidden]){display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-inline-start:6px;padding:0 4px;border-radius:99px;background:#d6b66b;color:#102b22;font-size:12px;font-weight:800}';css.textContent+='.kd3f .kd-review-tabs button[aria-pressed="true"]{background:#f1d48d;color:#092b21;outline:2px solid #f1d48d}.kd3f .kd-search{width:100%;min-height:40px;padding:9px;border:1px solid #52735b;border-radius:8px;background:#092b21;color:#fff}.kd3f .kd-pager{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px}';document.head.append(css);
 function el(tag,textValue){const x=document.createElement(tag);if(textValue!==undefined)x.textContent=String(textValue);return x}
 function detailCard(parent,d,readOnly=false){
@@ -32,8 +33,11 @@ function detailCard(parent,d,readOnly=false){
   if(!(data instanceof Blob)||!data.size)throw Error('الصورة غير متاحة');
   if(!detail.isConnected)return;
   url=URL.createObjectURL(data);
-  const hero=el('div');hero.className='hero';
-  const im=el('img');im.src=url;im.alt='صورة إعلان الحملة قبل النشر';hero.append(im);
+  const hero=el('div');hero.className='kd-g14-private-preview';
+  const im=el('img');im.alt='صورة إعلان الحملة قبل النشر';
+  im.style.cssText='display:block!important;width:auto!important;max-width:100%!important;height:auto!important;max-height:220px!important;object-fit:contain!important;position:static!important;filter:none!important;opacity:1!important;background:transparent!important;margin:auto!important';
+  im.onerror=()=>{hero.replaceWith(el('p','تعذر عرض ملف صورة الإعلان؛ يرجى فحص صيغة الصورة.'));URL.revokeObjectURL(url);delete detail.dataset.adPreviewUrl};
+  im.src=url;hero.append(im);
   adStatus.replaceWith(hero);
   detail.dataset.adPreviewUrl=url;
  }catch{if(detail.isConnected)adStatus.textContent='لا توجد صورة إعلان قابلة للمعاينة لهذه الحملة.'}
