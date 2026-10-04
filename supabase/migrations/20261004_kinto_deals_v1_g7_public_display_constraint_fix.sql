@@ -30,9 +30,7 @@ as $feed$
    select s.id,s.review_state from public.kinto_deals_v1_submissions s
    where s.campaign_id=c.id order by s.submitted_at desc,s.id desc limit 1
  ) latest on true
- where coalesce((select f.enabled from public.kinto_deals_v1_display_settings_g7 f
-                 where f.setting_key='public_display'),false)
-   and pub.published=true and pub.published_at is not null
+ where pub.published=true and pub.published_at is not null
    and c.status='submitted' and st.status='active'
    and c.starts_at<=statement_timestamp() and c.ends_at>statement_timestamp()
    and latest.review_state='acknowledged'
