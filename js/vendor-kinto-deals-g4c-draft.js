@@ -104,7 +104,7 @@ async function submitDraft(item){
  try{
   const data=await rpc('kinto_deals_v1_vendor_submit_g4',{p_campaign_id:item.id,p_expected_updated_at:item.updated_at});
   if(!data?.ok||data.review_state!=='pending')throw Error('لم يؤكد الخادم استلام طلب المراجعة.');
-  if(state.campaignId===item.id){state.campaignId=null;state.updatedAt=null;state.selected.clear();state.gift=null;$('kdDraftForm').reset();syncKind();renderSelected()}
+  if(state.campaignId===item.id){state.campaignId=null;state.updatedAt=null;clearAdPreview();$('kdAdImage').value='';state.selected.clear();state.gift=null;$('kdDraftForm').reset();syncKind();renderSelected()}
   setMsg('تم إرسال الحملة للإدارة، وهي الآن قيد المراجعة. لم تُنشر للعملاء.');
   await listDrafts();
   window.dispatchEvent(new CustomEvent('kinto-deals-vendor-submitted',{detail:{campaignId:item.id}}));
