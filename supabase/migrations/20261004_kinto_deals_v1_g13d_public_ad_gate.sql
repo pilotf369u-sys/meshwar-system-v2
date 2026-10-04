@@ -4,9 +4,6 @@ do $g13check$ begin
  if to_regprocedure('public.kinto_deals_v1_public_feed_g7(uuid)') is null then
   raise exception 'G13_REQUIRES_G10_PUBLIC_FEED_UUID_SIGNATURE';
  end if;
- if (select prorettype from pg_proc where oid=to_regprocedure('public.kinto_deals_v1_public_feed_g7(uuid)')) not in ('json'::regtype,'jsonb'::regtype) then
-  raise exception 'G13_PUBLIC_FEED_MUST_RETURN_JSON';
- end if;
 end $g13check$;
 create or replace function public.kinto_deals_v1_public_ad_path_g13(p_campaign_id uuid)
 returns text language plpgsql stable security definer
@@ -19,8 +16,8 @@ begin
  where c.id=p_campaign_id;
  if v_path is null then return null;end if;
  if exists (
-  select 1 from jsonb_array_elements(to_jsonb(public.kinto_deals_v1_public_feed_g7(v_store_id))) as f(item)
-  where f.item->>'campaign_id'=p_campaign_id::text
+  select 1 from public.kinto_deals_v1_public_feed_g7(v_store_id) as f
+  where f.campaign_id=p_campaign_id
  ) then return v_path;end if;
  return null;
 end;$fn$;
