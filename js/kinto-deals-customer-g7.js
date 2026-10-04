@@ -91,9 +91,9 @@ const css=document.createElement('style');css.id='kintoMerchantDealsG7Style';css
 /* G14: compact real product thumbnails; gift styles are not changed. */
 @media(min-width:1100px){.kd-g14-modal{width:min(1280px,98vw);max-width:98vw}.kd-g14-layout{grid-template-columns:minmax(0,1fr) minmax(155px,19%);gap:12px}.kd-g14-info .kd-g14-products{grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}}
 .kd-g14-info .kd-g14-products{margin:5px 0 8px}
-.kd-g14-info .kd-g14-products>.kd-g14-product{min-width:0;padding:3px 2px 5px;border:0;border-radius:6px;background:#173d30;font-size:10px;line-height:1.25}
+.kd-g14-info .kd-g14-products>.kd-g14-product{min-width:0;padding:3px 2px 5px;border:0;border-radius:6px;background:#dbe6d8;font-size:10px;line-height:1.25}
 .kd-g14-info .kd-g14-products>.kd-g14-product>img{box-sizing:border-box;display:block;width:100%;height:62px;max-height:none;margin:0 0 4px;border:0;border-radius:4px;background:#dbe6d8;object-fit:contain;object-position:center;mix-blend-mode:multiply}
-.kd-g14-info .kd-g14-products>.kd-g14-product>div{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:25px;overflow-wrap:anywhere;color:#f0f3ec}
+.kd-g14-info .kd-g14-products>.kd-g14-product>div{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:25px;overflow-wrap:anywhere;color:#173d30}
 @media(min-width:901px) and (max-width:1099px){.kd-g14-info .kd-g14-products{grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}}
 @media(min-width:651px) and (max-width:900px){.kd-g14-info .kd-g14-products{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}}
 @media(max-width:650px){.kd-g14-info .kd-g14-products{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.kd-g14-info .kd-g14-products>.kd-g14-product>img{height:72px}}
