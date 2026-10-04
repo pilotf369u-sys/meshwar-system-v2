@@ -1,10 +1,10 @@
 -- G13B: attach a compressed ad only to an editable draft owned by the verified vendor session.
 begin;
-do $ begin
+do $g13check$ begin
  if to_regprocedure('public.kinto_deals_v1_vendor_drafts_g4(text,uuid,integer)') is null then
   raise exception 'G13_REQUIRES_G4_VENDOR_DRAFT_SIGNATURE';
  end if;
-end $;
+end $g13check$;
 create or replace function public.kinto_deals_v1_attach_ad_g13(
  p_session_token text,p_campaign_id uuid,p_object_path text,p_byte_size integer,p_width integer,p_height integer)
 returns jsonb language plpgsql volatile security definer
