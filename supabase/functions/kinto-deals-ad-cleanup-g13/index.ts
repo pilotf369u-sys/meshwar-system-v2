@@ -21,6 +21,7 @@ Deno.serve(async req=>{
     if(campaignError)throw campaignError;
     if(campaign&&new Date(campaign.ends_at)>new Date())continue;
    }
+   if(!item.object_path.startsWith(item.campaign_id+'/')||!item.object_path.endsWith('.webp'))throw Error('INVALID_OWNED_PATH');
    const {error:removeError}=await sb.storage.from('kinto-merchant-campaign-ads').remove([item.object_path]);
    if(removeError)throw removeError;
    // Conditional deletion protects a concurrent replacement.
