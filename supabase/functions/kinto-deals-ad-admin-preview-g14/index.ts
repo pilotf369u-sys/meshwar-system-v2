@@ -19,5 +19,5 @@ Deno.serve(async req=>{
  if(assetError||!asset?.object_path)return new Response(null,{status:404,headers});
  const {data:file,error:downloadError}=await sb.storage.from('kinto-merchant-campaign-ads').download(asset.object_path);
  if(downloadError||!file)return new Response(null,{status:404,headers});
- return new Response(file.stream(),{status:200,headers:{...headers,'Content-Type':'image/webp','Content-Security-Policy':"default-src 'none'; sandbox"}});
+ return new Response(file.stream(),{status:200,headers:{...headers,'Content-Type':'application/octet-stream','Content-Disposition':'inline; filename="campaign-preview.webp"','Content-Security-Policy':"default-src 'none'; sandbox"}});
 });
