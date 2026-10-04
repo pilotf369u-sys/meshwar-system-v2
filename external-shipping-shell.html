@@ -16,7 +16,7 @@
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
   params.delete('screen');
-  params.set('_v',BUILD);
+  params.set('_v',screen==='admin'?'20261004-admin-g6-review-tabs':BUILD);
   const qs=params.toString(),frame=document.getElementById('app');
   if(screen==='customer'){location.replace(target+(qs?'?'+qs:''));return}
   frame.src=target+(qs?'?'+qs:'');
