@@ -29,7 +29,7 @@ function detailCard(parent,d,readOnly=false){
  if(d.gift){const g=el('p','الهدية: '+d.gift.name+' | باركود: '+(d.gift.barcode||'—'));detail.append(g);if(d.gift.image_url){let im=el('img');im.src=d.gift.image_url;im.alt='صورة الهدية';im.style.cssText='height:85px;max-width:130px;object-fit:contain';detail.append(im)}}
  detail.append(el('p','الوصف: '+(d.description||'—')));
  const terms=el('details');terms.append(el('summary','الشروط التفصيلية'),el('pre',JSON.stringify(d.terms_snapshot||{},null,2)));terms.style.whiteSpace='pre-wrap';detail.append(terms);
- if(readOnly){detail.append(el('p','القرار محفوظ في السجل — عرض فقط، دون إجراءات مراجعة جديدة.'));parent.append(detail);return}
+ if(readOnly){detail.append(el('p','القرار محفوظ في السجل — لا يمكن إعادة اتخاذ قرار المراجعة.'));parent.append(detail);if(d.review_state==='acknowledged')publicationControls(parent,d);return}
  const reason=el('textarea');reason.maxLength=1000;reason.placeholder='سبب الرفض (3 أحرف على الأقل)';detail.append(reason);
  const msg=el('div');msg.className='message';
  for(const [decision,label] of [['approved','موافقة'],['rejected','رفض']]){
@@ -45,6 +45,50 @@ function detailCard(parent,d,readOnly=false){
  };detail.append(btn)
  }
  detail.append(msg);parent.append(detail)
+}
+async function publicationControls(parent,d){
+ const section=el('div');section.className='kd-g9-publication';section.append(el('h4','نشر الإعلان — مستقل عن الموافقة وعن تفعيل البيع'));
+ const state=el('p','جارٍ قراءة حالة النشر من الخادم...');state.className='message';section.append(state);parent.append(section);
+ const campaignId=d.campaign_id;
+ const approved=d.review_state==='acknowledged';
+ async function refresh(){
+  section.querySelectorAll('button').forEach(b=>b.remove());
+  try{
+   const x=await rpc('kinto_deals_v1_admin_publication_status_g9',{p_session_token:token(),p_campaign_id:campaignId});
+   state.textContent='حالة الحملة: '+(x.published?'منشورة':'غير منشورة')+' | عرض الإعلانات العام: '+(x.display_enabled?'مفعّل':'متوقف')+'. الموافقة وحدها لا تنشر.';
+   const action=x.published?'unpublish':'publish';
+   if(!x.published&&!approved){state.textContent+=' النشر متاح للحملة المعتمدة فقط.';return}
+   const btn=el('button',x.published?'إيقاف نشر هذا الإعلان':'نشر هذا الإعلان');btn.type='button';
+   btn.onclick=async()=>{
+    if(busy||!confirm(x.published?'إيقاف نشر هذا الإعلان؟':'نشر هذه الحملة المعتمدة؟ يتحقق الخادم مجدداً من الشروط والمدة.'))return;
+    busy=true;btn.disabled=true;
+    try{await rpc('kinto_deals_v1_admin_publication_g8',{p_session_token:token(),p_campaign_id:campaignId,p_action:action});await refresh()}
+    catch(e){state.textContent='لم يتغير النشر: '+e.message;btn.disabled=false}
+    finally{busy=false}
+   };section.append(btn);
+  }catch(e){state.textContent='تعذر قراءة حالة النشر؛ أزرار النشر معطلة: '+e.message}
+ }
+ await refresh();
+}
+async function displayControls(parent){
+ const area=el('div');area.className='kd-g9-global';const label=el('p','جارٍ التحقق من بوابة عرض الإعلانات...');area.append(label);parent.append(area);
+ async function refresh(){
+  area.querySelectorAll('button').forEach(b=>b.remove());
+  try{
+   const x=await rpc('kinto_deals_v1_admin_publication_status_g9',{p_session_token:token(),p_campaign_id:null});
+   label.textContent='بوابة ظهور إعلانات التجار للعملاء: '+(x.display_enabled?'مفعّلة':'مغلقة')+' (مستقلة عن تشغيل البيع).';
+   const action=x.display_enabled?'disable_display':'enable_display';
+   const btn=el('button',x.display_enabled?'إيقاف عرض جميع الإعلانات':'تفعيل عرض الإعلانات المنشورة');btn.type='button';
+   btn.onclick=async()=>{
+    if(busy||!confirm(x.display_enabled?'إخفاء جميع إعلانات الحملات عن العملاء؟':'إظهار الحملات المنشورة والمؤهلة للعملاء؟ لا يفعّل محرك البيع.'))return;
+    busy=true;btn.disabled=true;
+    try{await rpc('kinto_deals_v1_admin_publication_g8',{p_session_token:token(),p_campaign_id:null,p_action:action});await refresh()}
+    catch(e){label.textContent='لم يتغير إعداد العرض: '+e.message;btn.disabled=false}
+    finally{busy=false}
+   };area.append(btn);
+  }catch(e){label.textContent='تعذر قراءة بوابة العرض؛ التحكم معطل: '+e.message}
+ }
+ await refresh();
 }
 function renderInbox(){const panel=document.getElementById('kintoDealsG3f');if(!panel)return;const box=panel.querySelector('.kd-items');box.replaceChildren();const source=reviewFilter==='pending'?inbox:historyItems;const matches=source.filter(item=>[item.title_snapshot,item.store_name,item.store_name_snapshot].some(x=>String(x||'').toLocaleLowerCase().includes(adminQuery.toLocaleLowerCase())));const pages=Math.max(1,Math.ceil(matches.length/adminPageSize));adminPage=Math.min(adminPage,pages);const pager=panel.querySelector('.kd-pagination');pager.replaceChildren();pager.append(el('span','النتائج: '+matches.length+' | الصفحة '+adminPage+' من '+pages));for(const [label,delta] of [['السابق',-1],['التالي',1]]){const b=el('button',label);b.disabled=adminPage+delta<1||adminPage+delta>pages;b.onclick=()=>{adminPage+=delta;renderInbox()};pager.append(b)}if(!matches.length)box.append(el('p','لا توجد حملات تطابق البحث.'));
  for(const item of matches.slice((adminPage-1)*adminPageSize,adminPage*adminPageSize)){
@@ -79,12 +123,12 @@ async function load(prefetchedItems){
 document.addEventListener('DOMContentLoaded',()=>{
  const sidebar=document.querySelector('.sidebar'),main=document.querySelector('.main-content');if(!sidebar||!main)return;
  const link=el('a','حملات التجار — المراجعة');link.href='#kintoDealsG3f';link.dataset.adminSection='kintoDealsG3f';link.addEventListener('click',e=>{
- e.preventDefault();const panel=document.getElementById('kintoDealsG3f');open=true;if(typeof window.showAdminMasterSection==='function')window.showAdminMasterSection('kintoDealsG3f');else{window.showSection('kintoDealsG3f');document.querySelectorAll('.sidebar a.active').forEach(a=>a.classList.remove('active'));link.classList.add('active')}panel.scrollIntoView({behavior:'smooth'});load();
+ e.preventDefault();const panel=document.getElementById('kintoDealsG3f');open=true;if(typeof window.showAdminMasterSection==='function')window.showAdminMasterSection('kintoDealsG3f');else{window.showSection('kintoDealsG3f');document.querySelectorAll('.sidebar a.active').forEach(a=>a.classList.remove('active'));link.classList.add('active')}panel.scrollIntoView({behavior:'smooth'});publicationArea.replaceChildren();displayControls(publicationArea);load();
  });const badge=el('span','');badge.className='kd3f-nav-count';badge.hidden=true;badge.setAttribute('aria-label','حملات تنتظر المراجعة');link.append(' ',badge);const logout=sidebar.querySelector('.logout-link');if(logout)sidebar.insertBefore(link,logout);else sidebar.append(link);
  const panel=el('section');panel.id='kintoDealsG3f';panel.className='card kd3f';
  panel.append(el('h2','مراجعة حملات التجار'),el('p','بانتظار المراجعة: '));
  panel.lastChild.append(Object.assign(el('strong','—'),{className:'kd-count'}));
- const refresh=el('button','تحديث');refresh.onclick=()=>reviewFilter==='pending'?load():loadHistory();panel.append(refresh);
+ const publicationArea=el('div');panel.append(publicationArea);const refreshPublication=el('button','تحديث حالة نشر الإعلانات');refreshPublication.type='button';refreshPublication.onclick=()=>{publicationArea.replaceChildren();displayControls(publicationArea)};panel.append(refreshPublication);const refresh=el('button','تحديث');refresh.onclick=()=>reviewFilter==='pending'?load():loadHistory();panel.append(refresh);
  const category=el('div');category.className='kd-pager kd-review-tabs';category.setAttribute('role','group');category.setAttribute('aria-label','تصنيف الحملات');for(const [state,label] of [['all','الكل'],['pending','قيد المراجعة'],['approved','موافق عليها'],['rejected','مرفوضة']]){const b=el('button',label);b.type='button';b.dataset.reviewState=state;b.setAttribute('aria-pressed',String(state===reviewFilter));b.onclick=()=>{reviewFilter=state;adminPage=1;category.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));if(state==='pending'){renderInbox();load()}else{historyItems=[];loadHistory()}};category.append(b)}panel.append(category);const status=el('p');status.className='kd-status';panel.append(status);
  const search=el('input');search.type='search';search.placeholder='بحث باسم الحملة أو المتجر';search.setAttribute('aria-label','بحث باسم الحملة أو المتجر');search.className='kd-search';search.addEventListener('input',()=>{adminQuery=search.value.trim();adminPage=1;renderInbox()});panel.append(search);const items=el('div');items.className='kd-items';panel.append(items);const pager=el('div');pager.className='kd-pager kd-pagination';panel.append(pager);main.append(panel);
  // The master dashboard can restore its section from sessionStorage at window.load,
@@ -92,7 +136,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const activateIfVisible=()=>{
    const active=panel.classList.contains('active-section');
    if(!active){open=false;return}
-   if(!open){open=true;if(!loaded)status.textContent='بانتظار جاهزية جلسة الأدمن لتحميل الحملات...'}
+   if(!open){open=true;if(!loaded)status.textContent='بانتظار جاهزية جلسة الأدمن لتحميل الحملات...';publicationArea.replaceChildren();if(token())displayControls(publicationArea)}
    if(!loaded&&!loading&&token())load();
  };
  const requested=new URLSearchParams(location.search).get('section');
