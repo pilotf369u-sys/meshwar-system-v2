@@ -1,5 +1,5 @@
 -- G15: public display stops at the earlier of expiry or allocated campaign quota.
--- Read-only gate. Pending and confirmed allocations reserve capacity; released/reversed do not.
+-- Read-only gate. Only confirmed (paid) redemptions consume quota; pending carts/orders do not.
 -- No change to order, checkout, stock, redemption writes or feature activation.
 begin;
 create or replace function public.kinto_deals_v1_public_feed_g7(p_store_id uuid default null)
@@ -25,12 +25,12 @@ as $feed$
      c.max_total_redemptions is null
      or (
        select count(*) from public.kinto_deals_v1_redemptions r
-       where r.campaign_id=c.id and r.state in ('pending','confirmed')
+       where r.campaign_id=c.id and r.state='confirmed'
      ) < c.max_total_redemptions
    )
    and (p_store_id is null or c.store_id=p_store_id)
  order by c.ends_at asc,c.id asc limit 200
 $feed$;
 comment on function public.kinto_deals_v1_public_feed_g7(uuid) is
-'Published approved live campaigns only; hides expired or fully allocated campaigns. Pending and confirmed redemptions consume display quota.';
+'Published approved live campaigns only; hides expired or fully allocated campaigns. Only confirmed paid redemptions consume display quota.';
 commit;
