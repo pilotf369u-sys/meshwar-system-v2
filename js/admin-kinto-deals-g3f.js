@@ -21,8 +21,23 @@ function detailCard(parent,d,readOnly=false){
  detail.append(el('h3',d.title),el('p','المتجر: '+(d.store_name||'—')+' | النوع: '+d.kind+' | المراجعة: '+d.revision),
  el('p','من '+new Date(d.starts_at).toLocaleString('ar-IQ')+' إلى '+new Date(d.ends_at).toLocaleString('ar-IQ')),
  el('p','الحد الكلي: '+(d.max_total_redemptions??'غير محدد')+' | للعميل: '+d.max_uses_per_customer+' | المطلوب: '+(d.threshold_units??'لا ينطبق')));
- if(d.campaign_image_url){const hero=el('div');hero.className='hero';for(let i=0;i<2;i++){let im=el('img');im.src=d.campaign_image_url;im.alt=i?'صورة الحملة':'';hero.append(im)}detail.append(hero)}
- else detail.append(el('p','صورة الحملة غير متاحة بعد؛ مخزن وسائط الحملات لم يُفعّل.'));
+ // Private draft ad: fetch only after the admin session is verified server-side.
+ const adStatus=el('p','جارٍ تحميل صورة الإعلان الخاصة بالمراجعة...');detail.append(adStatus);
+ (async()=>{let url=null;try{
+  const sb=await window.ensureCustomerSupabase();
+  const {data,error}=await sb.functions.invoke('kinto-deals-ad-admin-preview-g14',{
+   body:{submission_id:d.submission_id,session_token:token()}
+  });
+  if(error)throw error;
+  if(!(data instanceof Blob)||!data.size)throw Error('الصورة غير متاحة');
+  if(!detail.isConnected)return;
+  url=URL.createObjectURL(data);
+  const hero=el('div');hero.className='hero';
+  const im=el('img');im.src=url;im.alt='صورة إعلان الحملة قبل النشر';hero.append(im);
+  adStatus.replaceWith(hero);
+  detail.dataset.adPreviewUrl=url;
+ }catch{if(detail.isConnected)adStatus.textContent='لا توجد صورة إعلان قابلة للمعاينة لهذه الحملة.'}
+ })();
  const products=el('div');products.className='products';
  for(const p of d.products||[]){const x=el('div');x.className='prod';if(p.image_url){const im=el('img');im.src=p.image_url;im.alt='صورة المنتج';im.loading='lazy';x.append(im)}x.append(el('div',p.name),el('small','باركود: '+(p.barcode||'—')));products.append(x)}
  detail.append(el('h4','المنتجات المؤهلة'),products);
@@ -73,7 +88,7 @@ async function publicationControls(parent,d){
 function renderInbox(){const panel=document.getElementById('kintoDealsG3f');if(!panel)return;const box=panel.querySelector('.kd-items');box.replaceChildren();const source=reviewFilter==='pending'?inbox:historyItems;const matches=source.filter(item=>[item.title_snapshot,item.store_name,item.store_name_snapshot].some(x=>String(x||'').toLocaleLowerCase().includes(adminQuery.toLocaleLowerCase())));const pages=Math.max(1,Math.ceil(matches.length/adminPageSize));adminPage=Math.min(adminPage,pages);const pager=panel.querySelector('.kd-pagination');pager.replaceChildren();pager.append(el('span','النتائج: '+matches.length+' | الصفحة '+adminPage+' من '+pages));for(const [label,delta] of [['السابق',-1],['التالي',1]]){const b=el('button',label);b.disabled=adminPage+delta<1||adminPage+delta>pages;b.onclick=()=>{adminPage+=delta;renderInbox()};pager.append(b)}if(!matches.length)box.append(el('p','لا توجد حملات تطابق البحث.'));
  for(const item of matches.slice((adminPage-1)*adminPageSize,adminPage*adminPageSize)){
  const entry=el('div');entry.className='entry';entry.append(el('h3',item.title_snapshot),el('p',(item.store_name||item.store_name_snapshot?'المتجر: '+(item.store_name||item.store_name_snapshot)+' | ':'')+'رقم النسخة: '+item.revision+' | أُرسل: '+new Date(item.submitted_at).toLocaleString('ar-IQ')));
- const btn=el('button','عرض التفاصيل');btn.onclick=async()=>{if(busy)return;btn.disabled=true;try{const d=await rpc('kinto_deals_v1_admin_detail_g3',{p_session_token:token(),p_submission_id:item.submission_id});entry.replaceChildren();entry.dataset.detailOpen='true';const close=el('button','إغلاق التفاصيل والعودة للقائمة');close.type='button';close.setAttribute('aria-label','إغلاق تفاصيل الحملة والعودة إلى قائمة المراجعة');close.onclick=()=>{delete entry.dataset.detailOpen;renderInbox()};entry.append(close);detailCard(entry,d,!(reviewFilter==='pending'||item.review_state==='pending'||d.review_state==='pending'))}catch(e){panel.querySelector('.kd-status').textContent='تعذر جلب التفاصيل: '+e.message;btn.disabled=false}};entry.append(btn);box.append(entry)
+ const btn=el('button','عرض التفاصيل');btn.onclick=async()=>{if(busy)return;btn.disabled=true;try{const d=await rpc('kinto_deals_v1_admin_detail_g3',{p_session_token:token(),p_submission_id:item.submission_id});entry.replaceChildren();entry.dataset.detailOpen='true';const close=el('button','إغلاق التفاصيل والعودة للقائمة');close.type='button';close.setAttribute('aria-label','إغلاق تفاصيل الحملة والعودة إلى قائمة المراجعة');close.onclick=()=>{entry.querySelectorAll('[data-ad-preview-url]').forEach(x=>URL.revokeObjectURL(x.dataset.adPreviewUrl));delete entry.dataset.detailOpen;renderInbox()};entry.append(close);detailCard(entry,d,!(reviewFilter==='pending'||item.review_state==='pending'||d.review_state==='pending'))}catch(e){panel.querySelector('.kd-status').textContent='تعذر جلب التفاصيل: '+e.message;btn.disabled=false}};entry.append(btn);box.append(entry)
  }
 }
 async function loadHistory(){
