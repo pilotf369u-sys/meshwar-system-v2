@@ -1,4 +1,4 @@
-/* G13 merchant campaign ad image preparation. No upload or checkout side effects. */
+/* G13 local merchant advertising image preparation only. */
 (function () {
   'use strict';
   var maxBytes = 200 * 1024;
