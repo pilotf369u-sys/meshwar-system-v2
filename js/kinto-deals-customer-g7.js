@@ -52,6 +52,17 @@ const css=document.createElement('style');css.id='kintoMerchantDealsG7Style';css
 .kd-g14-copy{min-width:0}
 @media(min-width:651px){.kd-g7-item{grid-template-columns:minmax(90px,18%) minmax(0,1fr) auto;max-height:none}.kd-g14-copy p{-webkit-line-clamp:1}}
 @media(max-width:650px){.kd-g14-modal{width:100%;max-height:94dvh;padding:10px}.kd-g14-layout{grid-template-columns:minmax(0,1fr)}.kd-g14-side{display:contents}.kd-g14-side .kd-g14-photo{display:none!important}.kd-g14-products{grid-template-columns:repeat(3,minmax(0,1fr))}.kd-g14-product img{height:58px}.kd-g7-item .kd-g14-copy h3{font-size:12px}.kd-g7-item .kd-g14-copy p{font-size:10px}.kd-g14-mini img{width:27px;height:27px}}
+
+/* G14 reference stage 1: campaign banner only; modal/product cards remain untouched. */
+.kd-g7-item{border-color:#c6a14a;box-shadow:inset 0 0 0 1px rgba(246,206,104,.08);transition:border-color .2s ease}
+.kd-g7-item:hover{border-color:#f1cf73}
+.kd-g14-mini{overflow:visible;flex-wrap:wrap;gap:6px;align-items:center}
+.kd-g14-mini .kd-g14-gift-tile{display:inline-flex;flex:none;align-items:center;gap:6px;position:relative;max-width:170px;padding:3px 5px;border:1px solid #e5ba50;border-radius:8px;background:#1d4937;color:#fce5a3}
+.kd-g14-gift-tile .kd-g14-gift-label{font-size:11px;font-weight:800;white-space:nowrap;color:#ffdb72}
+.kd-g14-mini .kd-g14-gift-tile img{width:48px;height:48px;flex:none;object-fit:contain;object-position:center;background:#f5f5f2;border:1px solid #d8b34f;border-radius:5px}
+.kd-g14-mini .kd-g14-gift-tile img,.kd-g14-mini>img{aspect-ratio:1/1}
+.kd-g14-mini .kd-g14-gift-tile img{margin:0}
+@media(max-width:650px){.kd-g14-mini{gap:4px}.kd-g14-mini .kd-g14-gift-tile{padding:2px 4px;gap:4px;max-width:112px}.kd-g14-gift-tile .kd-g14-gift-label{font-size:9px}.kd-g14-mini .kd-g14-gift-tile img{width:34px;height:34px}.kd-g7-item{gap:7px}.kd-g14-action{min-height:26px}}
 `;document.head.append(css);
 const live=()=>new Date();
 const valid=r=>r&&r.campaign_id&&r.store_id&&r.title&&r.starts_at&&r.ends_at&&new Date(r.starts_at)<=live()&&new Date(r.ends_at)>live();
@@ -96,7 +107,7 @@ function details(r,previous){
 }
 for(const r of rows){const card=document.createElement('article');card.className='kd-g7-item';card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label','تفاصيل حملة '+r.title);const cover=document.createElement('div');cover.className='kd-g14-cover';cover.textContent='✦';image(r,cover);card.append(cover);const copy=document.createElement('div');copy.className='kd-g14-copy';const title=document.createElement('h3');title.textContent=String(r.title).slice(0,140);copy.append(title);if(r.description){const p=document.createElement('p');p.textContent=String(r.description).slice(0,250);copy.append(p)}const date=document.createElement('small');date.textContent='متاح حتى '+new Date(r.ends_at).toLocaleDateString('ar-IQ');copy.append(date);
 const mini=document.createElement('div');mini.className='kd-g14-mini';copy.append(mini);
-getDetail(r).then(data=>{if(!mini.isConnected)return;mini.replaceChildren();const products=(data.products||[]).slice(0,4);for(const p of products){if(!p.image_url)continue;const pic=document.createElement('img');pic.src=p.image_url;pic.alt=p.name||'منتج مشمول';pic.loading='lazy';pic.onerror=()=>pic.remove();mini.append(pic)}const remaining=(data.products||[]).length-products.length;if(remaining>0){const more=document.createElement('span');more.textContent='+'+remaining;mini.append(more)}if(data.gift){const gift=document.createElement('span');gift.textContent='🎁 هدية';mini.append(gift)}}).catch(()=>mini.remove());
+getDetail(r).then(data=>{if(!mini.isConnected)return;mini.replaceChildren();const products=(data.products||[]).slice(0,4);for(const p of products){if(!p.image_url)continue;const pic=document.createElement('img');pic.src=p.image_url;pic.alt=p.name||'منتج مشمول';pic.loading='lazy';pic.onerror=()=>pic.remove();mini.append(pic)}const remaining=(data.products||[]).length-products.length;if(remaining>0){const more=document.createElement('span');more.textContent='+'+remaining;mini.append(more)}if(data.gift){const gift=document.createElement('span');gift.className='kd-g14-gift-tile';const label=document.createElement('strong');label.className='kd-g14-gift-label';label.textContent='🎁 الهدية';gift.append(label);if(data.gift.image_url){const pic=document.createElement('img');pic.src=data.gift.image_url;pic.alt=data.gift.name||'الهدية';pic.loading='lazy';pic.decoding='async';pic.onerror=()=>pic.remove();gift.append(pic)}mini.prepend(gift)}}).catch(()=>mini.remove());
 card.append(copy);const action=document.createElement('span');action.className='kd-g14-action';action.textContent='عرض التفاصيل ‹';card.append(action);card.addEventListener('click',()=>details(r,card));card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();details(r,card)}});list.append(card)}section.append(h,list);hero.insertAdjacentElement('afterend',section)}
 feed().then(rows=>{if(isDirectory)directory(rows);else store(rows.filter(r=>String(r.store_id)===String(storeId)))}).catch(()=>{});
 })();
