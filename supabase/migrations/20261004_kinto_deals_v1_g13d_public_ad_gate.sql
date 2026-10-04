@@ -1,5 +1,10 @@
 -- G13D: reuse the deployed G10 public feed, rather than duplicating publication rules.
 begin;
+do $ begin
+ if to_regprocedure('public.kinto_deals_v1_public_feed_g7(uuid)') is null then
+  raise exception 'G13_REQUIRES_G10_PUBLIC_FEED_UUID_SIGNATURE';
+ end if;
+end $;
 create or replace function public.kinto_deals_v1_public_ad_path_g13(p_campaign_id uuid)
 returns text language plpgsql stable security definer
 set search_path=public,private,pg_temp as $fn$
