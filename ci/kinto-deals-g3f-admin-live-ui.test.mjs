@@ -4,7 +4,9 @@ import {readFileSync} from 'node:fs';
 const ui=readFileSync(new URL('../js/admin-kinto-deals-g3f.js',import.meta.url),'utf8');
 const html=readFileSync(new URL('../admin-dashboard.html',import.meta.url),'utf8');
 test('isolated admin script and existing navigation',()=>{
- assert.match(html,/admin-kinto-deals-g3f\.js/);
+ assert.match(html,/G10: embedded admin campaign UI synchronized/);
+ assert.match(html,/حالة الإعلان:/);
+ assert.doesNotMatch(html,/إيقاف عرض جميع الإعلانات|تحديث حالة نشر الإعلانات/);
  assert.match(ui,/showSection\('kintoDealsG3f'\)/);
  assert.match(ui,/KintoAdminSessionV147\?\.read\(\)\?\.token/);
  assert.match(ui,/ensureCustomerSupabase\(\)/);
