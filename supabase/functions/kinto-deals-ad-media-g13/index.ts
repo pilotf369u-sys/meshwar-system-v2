@@ -32,8 +32,16 @@ Deno.serve(async request=>{
   const path=campaign+'/'+crypto.randomUUID()+'.webp';
   const {error:uploadError}=await sb.storage.from(BUCKET).upload(path,bytes,{contentType:'image/webp',upsert:false});
   if(uploadError)throw uploadError;
-  const {data,error}=await sb.rpc('kinto_deals_v1_attach_ad_g13',{p_session_token:session,p_campaign_id:campaign,p_object_path:path,p_byte_size:bytes.length,p_width:width,p_height:height});
-  if(error||data?.ok!==true){await sb.storage.from(BUCKET).remove([path]);return reply(origin,403,{ok:false,error:'ATTACH_DENIED'})}
+  let data;
+  try {
+   const attached=await sb.rpc('kinto_deals_v1_attach_ad_g13',{p_session_token:session,p_campaign_id:campaign,p_object_path:path,p_byte_size:bytes.length,p_width:width,p_height:height});
+   if(attached.error||attached.data?.ok!==true)throw Error('ATTACH_DENIED');
+   data=attached.data;
+  }catch(error){
+   const {error:cleanupError}=await sb.storage.from(BUCKET).remove([path]);
+   if(cleanupError)console.error('G13_ORPHAN_CLEANUP_FAILED',path,cleanupError);
+   return reply(origin,403,{ok:false,error:'ATTACH_DENIED'});
+  }
   return reply(origin,201,{ok:true,campaign_id:campaign});
  }catch(e){console.error('G13_UPLOAD',e);return reply(origin,500,{ok:false,error:'UPLOAD_FAILED'})}
 });
