@@ -222,8 +222,9 @@ async function save(){
    max_uses_per_customer:Number($('kdUses').value),
    max_units_per_customer:limited?Number($('kdUnits').value):null,
    max_total_redemptions:$('kdTotal').value?Number($('kdTotal').value):null,
-   terms_snapshot:state.termsSnapshot,product_ids:[...state.selected.keys()],product_options:Object.fromEntries([...state.selected.keys()].map(id=>[id,state.selectedOptions.get(id)||{}]))};
-  const data=await rpc('kinto_deals_v1_vendor_save_draft_g4',{p_campaign_id:state.campaignId,p_expected_updated_at:state.updatedAt,p_draft:draft});
+   terms_snapshot:state.termsSnapshot,product_ids:[...state.selected.keys()]};
+  const productOptions=Object.fromEntries([...state.selected.keys()].map(id=>[id,state.selectedOptions.get(id)||{}]));
+  const data=await rpc('kinto_deals_v1_vendor_save_draft_g20',{p_campaign_id:state.campaignId,p_expected_updated_at:state.updatedAt,p_draft:draft,p_product_options:productOptions});
   state.campaignId=data.campaign_id;state.updatedAt=data.updated_at;
 
   if($('kdAdImage')?.files?.length&&!adImageUploaded){
