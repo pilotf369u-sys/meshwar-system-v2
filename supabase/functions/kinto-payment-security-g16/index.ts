@@ -17,8 +17,8 @@ Deno.serve(async req=>{
   const {data:admin,error:ae}=await sb.rpc('admin_session_identity_v147',{p_session_token:session});
   if(ae||admin?.ok!==true)return out(401,{ok:false,error:'ADMIN_DENIED'});
   const adminId=String(admin.admin.id);
-  const {data:recoveryMode}=await sb.from('kinto_security_recovery_g19').select('emergency_backup_until').eq('singleton',true).maybeSingle();
-  const backupModeActive=Boolean(backupEmail&&recoveryMode?.emergency_backup_until&&new Date(recoveryMode.emergency_backup_until).getTime()>Date.now());
+  const {data:recoveryMode}=await sb.from('kinto_security_recovery_g19').select('emergency_backup_until,emergency_target_admin_id').eq('singleton',true).maybeSingle();
+  const backupModeActive=Boolean(backupEmail&&recoveryMode?.emergency_backup_until&&String(recoveryMode?.emergency_target_admin_id||'')===adminId&&new Date(recoveryMode.emergency_backup_until).getTime()>Date.now());
   const otpDestination=backupModeActive?backupEmail!:email;
   if(b.action==='account_delete_request'){
    const accountId=String(b.account_id||'').trim(),accountType=String(b.account_type||'employee').trim();
