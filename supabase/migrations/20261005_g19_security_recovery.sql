@@ -29,6 +29,7 @@ create table if not exists public.kinto_security_audit_g19 (
   event_type text not null,
   actor_admin_id text,
   recovery_challenge_id uuid,
+  target_admin_id text,
   created_at timestamptz not null default now()
 );
 
@@ -39,5 +40,24 @@ alter table public.kinto_security_audit_g19 enable row level security;
 revoke all on public.kinto_security_recovery_g19 from public,anon,authenticated;
 revoke all on public.kinto_security_recovery_challenges_g19 from public,anon,authenticated;
 revoke all on public.kinto_security_audit_g19 from public,anon,authenticated;
+
+
+create or replace function private.g19_revoke_admin_sessions(p_admin_id text default null)
+returns integer
+language plpgsql
+security definer
+set search_path=public,private,extensions,pg_temp
+as $
+declare v_rows integer;
+begin
+  update public.admin_sessions_v147
+     set revoked_at=now()
+   where revoked_at is null
+     and (p_admin_id is null or admin_id=p_admin_id);
+  get diagnostics v_rows=row_count;
+  return v_rows;
+end;
+$;
+revoke all on function private.g19_revoke_admin_sessions(text) from public,anon,authenticated;
 
 commit;
