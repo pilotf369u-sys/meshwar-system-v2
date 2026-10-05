@@ -8,7 +8,7 @@ returns jsonb language plpgsql security definer
 set search_path=public,private,pg_temp as $g20$
 declare
  v_customer uuid; v_campaign public.kinto_deals_v1_campaigns%rowtype;
- v_checkout jsonb; v_order_id uuid; v_units integer; v_distinct integer;
+ v_checkout jsonb; v_order_id uuid; v_units integer; v_distinct integer; v_canonical_items jsonb;
 begin
  v_customer:=private.require_customer_review_session(p_session_token);
  if v_customer is null then raise exception 'DEALS_CUSTOMER_SESSION_REQUIRED' using errcode='28000'; end if;
@@ -27,7 +27,7 @@ begin
   where jsonb_typeof(x.item)<>'object'
    or coalesce(x.item->>'product_id','') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
    or coalesce(x.item->>'store_id','') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-   or coalesce(x.item->>'quantity','') !~ '^([1-9][0-9]{0,2}|1000)$'
+   or coalesce(x.item->>'quantity','') <> '1'
    or (x.item ? 'selected_options' and jsonb_typeof(x.item->'selected_options')<>'object')
  ) then raise exception 'DEALS_DIRECT_ORDER_ITEM_INVALID' using errcode='22023'; end if;
  if exists(
@@ -36,6 +36,21 @@ begin
    or not exists(select 1 from public.kinto_deals_v1_products cp
       where cp.campaign_id=v_campaign.id and cp.product_id=(x.item->>'product_id')::uuid)
  ) then raise exception 'DEALS_DIRECT_ORDER_CAMPAIGN_SCOPE_INVALID' using errcode='P0001'; end if;
+
+ -- Browser-supplied variants are not authoritative. Rebuild canonical items from campaign rows.
+ select jsonb_agg(jsonb_build_object(
+   'store_id',v_campaign.store_id,
+   'product_id',cp.product_id,
+   'quantity',1,
+   'selected_options',coalesce(cp.selected_options,'{}'::jsonb)
+  ) order by ord.n)
+ into v_canonical_items
+ from jsonb_array_elements(p_items) with ordinality ord(item,n)
+ join public.kinto_deals_v1_products cp
+   on cp.campaign_id=v_campaign.id and cp.product_id=(ord.item->>'product_id')::uuid;
+ if jsonb_array_length(v_canonical_items)<>jsonb_array_length(p_items) then
+  raise exception 'DEALS_DIRECT_ORDER_CANONICAL_ITEMS_INVALID' using errcode='P0001';
+ end if;
 
  select coalesce(sum((x.item->>'quantity')::integer),0)::integer,
         count(distinct (x.item->>'product_id')::uuid)::integer
@@ -50,7 +65,7 @@ begin
 
  -- Proven idempotent atomic path. V97 remains authoritative for prices and stock preflight.
  v_checkout:=public.kinto_deals_v1_checkout_no_gift_g5d(
-   p_session_token,p_campaign_id,p_request_id,p_customer_shipping,p_items);
+   p_session_token,p_campaign_id,p_request_id,p_customer_shipping,v_canonical_items);
  v_order_id:=nullif(v_checkout->'deal'->>'order_id','')::uuid;
  if v_order_id is null then raise exception 'DEALS_DIRECT_ORDER_CANONICAL_ORDER_MISSING' using errcode='P0001'; end if;
 
