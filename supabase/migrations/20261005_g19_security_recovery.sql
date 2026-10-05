@@ -51,17 +51,7 @@ returns integer
 language plpgsql
 security definer
 set search_path=public,private,extensions,pg_temp
-as $
-declare v_rows integer;
-begin
-  update public.admin_sessions_v147
-     set revoked_at=now()
-   where revoked_at is null
-     and (p_admin_id is null or admin_id=p_admin_id);
-  get diagnostics v_rows=row_count;
-  return v_rows;
-end;
-$;
+as E'declare v_rows integer;\nbegin\n  update public.admin_sessions_v147\n     set revoked_at=now()\n   where revoked_at is null\n     and (p_admin_id is null or admin_id=p_admin_id);\n  get diagnostics v_rows=row_count;\n  return v_rows;\nend;';
 revoke all on function private.g19_revoke_admin_sessions(text) from public,anon,authenticated;
 
 commit;
