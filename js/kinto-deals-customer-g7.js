@@ -3,7 +3,7 @@
 const URL='https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/rpc/kinto_deals_v1_public_feed_g7';
 const KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
 const storeId=new URLSearchParams(location.search).get('storeId');
-const G20_RPC='kinto_deals_v1_direct_order_g20';
+const G20_RPC='kinto_deals_v1_direct_order_g20';\nconst CUSTOMER_SESSION_KEY='kinto_customer_review_session_v132';
 const isStore=/\/store\.html$/i.test(location.pathname);
 const isDirectory=/\/local-stores\.html$/i.test(location.pathname);
 if(!isStore&&!isDirectory)return;
