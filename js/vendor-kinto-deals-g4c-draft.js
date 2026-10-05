@@ -72,16 +72,16 @@ async function loadProductOptions(productId){
   const raw=rows?.[0]?.options||{};return {color:Array.isArray(raw.colors)?raw.colors:[],size:Array.isArray(raw.sizes)?raw.sizes:[],volume:Array.isArray(raw.volumes)?raw.volumes:[]};
  }catch(e){setMsg('تعذر تحميل مواصفات المنتج: '+e.message,true);return null}
 }
-async function attachProductOptionControls(row,p){
- const opts=await loadProductOptions(p.id);if(!opts)return;
+async function attachProductOptionControls(row,p,raw){
+ const opts={color:Array.isArray(raw?.colors)?raw.colors:[],size:Array.isArray(raw?.sizes)?raw.sizes:[],volume:Array.isArray(raw?.volumes)?raw.volumes:[]};
  const required=Object.entries(opts).filter(([,values])=>values.length);if(!required.length){state.selectedOptions.set(p.id,{});return}
  const wrap=el('div',undefined,'flex flex-wrap gap-1 basis-full ps-12');
  for(const [key,values] of required){
-  const select=el('select',undefined,'rounded-md border border-amber-400/30 bg-slate-900 px-2 py-1 text-xs');
-  select.dataset.option=key;const empty=el('option','اختر '+optionLabel[key]);empty.value='';select.append(empty);
+  const select=el('select',undefined,'rounded-md border border-amber-400/30 bg-slate-900 px-2 py-1 text-xs');select.dataset.option=key;
+  const empty=el('option','اختر '+optionLabel[key]);empty.value='';select.append(empty);
   for(const value of values){const op=el('option',String(value));op.value=String(value);select.append(op)}
-  select.addEventListener('change',()=>{const current={...(state.selectedOptions.get(p.id)||{})};if(select.value)current[key]=select.value;else delete current[key];state.selectedOptions.set(p.id,current)});
-  wrap.append(select);
+  const frozen=state.selectedOptions.get(p.id)||{};if(frozen[key])select.value=frozen[key];
+  select.addEventListener('change',()=>{const current={...(state.selectedOptions.get(p.id)||{})};if(select.value)current[key]=select.value;else delete current[key];state.selectedOptions.set(p.id,current)});wrap.append(select);
  }
  row.append(wrap);
 }
