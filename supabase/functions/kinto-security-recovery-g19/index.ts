@@ -25,16 +25,35 @@ Deno.serve(async req=>{
  const sb=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
  try{
   const b=await req.json(),action=String(b.action||'');
-  if(action==='setup'){
+  if(action==='setup_request'){
    const session=String(b.session_token||''),d=String(b.recovery_key_digest||'').trim().toLowerCase();
    if(session.length<20||session.length>512||!/^[0-9a-f]{64}$/.test(d))return out(400,{ok:false,error:'INVALID_SETUP'});
    const {data:admin,error:ae}=await sb.rpc('admin_session_identity_v147',{p_session_token:session});
    if(ae||admin?.ok!==true)return out(401,{ok:false,error:'ADMIN_DENIED'});
    const {data:old}=await sb.from('kinto_security_recovery_g19').select('singleton').eq('singleton',true).maybeSingle();
    if(old)return out(409,{ok:false,error:'RECOVERY_ALREADY_CONFIGURED'});
+   const expires=new Date(Date.now()+10*60*1000).toISOString();
+   const a=new Uint32Array(1);crypto.getRandomValues(a);const otp=String(100000+(a[0]%900000));
+   const {data:ch,error:ce}=await sb.from('kinto_security_recovery_challenges_g19').insert({requested_by_admin_id:String(admin.admin.id),code_hash:await digest(d+key),email_code_hash:await digest(otp+key),email_sent_at:new Date().toISOString(),expires_at:expires}).select('id').single();
+   if(ce)return out(500,{ok:false,error:'SETUP_CHALLENGE_FAILED'});
+   const mail=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+resend,'Content-Type':'application/json'},body:JSON.stringify({from:'KINTO Security <onboarding@resend.dev>',to:[backup],subject:'KINTO — تأكيد بريد الاسترداد الاحتياطي',html:`<div dir="rtl"><h2>KINTO Security</h2><p>رمز تأكيد إعداد بريد الاسترداد الاحتياطي:</p><p style="font-size:30px;font-weight:700;letter-spacing:5px">${otp}</p><p>صالح لمدة 10 دقائق ولمرة واحدة.</p></div>`})});
+   if(!mail.ok){await sb.from('kinto_security_recovery_challenges_g19').update({consumed_at:new Date().toISOString()}).eq('id',ch.id);return out(502,{ok:false,error:'EMAIL_FAILED'})}
+   return out(200,{ok:true,challenge_id:ch.id,expires_in_seconds:600});
+  }
+  if(action==='setup_verify'){
+   const session=String(b.session_token||''),id=String(b.challenge_id||''),d=String(b.recovery_key_digest||'').trim().toLowerCase(),otp=String(b.code||'').trim();
+   if(session.length<20||!/^[0-9a-f]{64}$/.test(d)||!/^[0-9]{6}$/.test(otp))return out(400,{ok:false,error:'INVALID_SETUP'});
+   const {data:admin,error:ae}=await sb.rpc('admin_session_identity_v147',{p_session_token:session});
+   if(ae||admin?.ok!==true)return out(401,{ok:false,error:'ADMIN_DENIED'});
+   const {data:ch}=await sb.from('kinto_security_recovery_challenges_g19').select('*').eq('id',id).maybeSingle();
+   if(!ch||ch.requested_by_admin_id!==String(admin.admin.id)||ch.consumed_at||new Date(ch.expires_at).getTime()<=Date.now()||Number(ch.attempts)>=5)return out(400,{ok:false,error:'SETUP_CHALLENGE_INVALID'});
+   if(await digest(d+key)!==ch.code_hash||await digest(otp+key)!==ch.email_code_hash){await sb.from('kinto_security_recovery_challenges_g19').update({attempts:Number(ch.attempts)+1}).eq('id',id);return out(400,{ok:false,error:'SETUP_PROOF_INVALID'})}
+   const {data:old}=await sb.from('kinto_security_recovery_g19').select('singleton').eq('singleton',true).maybeSingle();
+   if(old)return out(409,{ok:false,error:'RECOVERY_ALREADY_CONFIGURED'});
    const {error:ie}=await sb.from('kinto_security_recovery_g19').insert({singleton:true,recovery_key_hash:await digest(d+key),enabled:true});
    if(ie)return out(500,{ok:false,error:'SETUP_FAILED'});
-   await sb.from('kinto_security_audit_g19').insert({event_type:'RECOVERY_CONFIGURED',actor_admin_id:String(admin.admin.id)});
+   await sb.from('kinto_security_recovery_challenges_g19').update({consumed_at:new Date().toISOString()}).eq('id',id);
+   await sb.from('kinto_security_audit_g19').insert({event_type:'RECOVERY_CONFIGURED',actor_admin_id:String(admin.admin.id),recovery_challenge_id:id});
    return out(200,{ok:true});
   }
   if(action==='begin'){
