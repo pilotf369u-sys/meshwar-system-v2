@@ -37,6 +37,20 @@ Deno.serve(async req=>{
    await sb.from('kinto_security_audit_g19').insert({event_type:'RECOVERY_CONFIGURED',actor_admin_id:String(admin.admin.id)});
    return out(200,{ok:true});
   }
+  if(action==='begin'){
+   const d=String(b.recovery_key_digest||'').trim().toLowerCase(),target=String(b.target_admin_id||'').trim();
+   if(!/^[0-9a-f]{64}$/.test(d)||!target)return out(400,{ok:false,error:'RECOVERY_DENIED'});
+   const {data:cfg}=await sb.from('kinto_security_recovery_g19').select('recovery_key_hash,enabled').eq('singleton',true).maybeSingle();
+   if(!cfg?.enabled||await digest(d+key)!==cfg.recovery_key_hash)return out(400,{ok:false,error:'RECOVERY_DENIED'});
+   const {data:actor}=await sb.from('employees').select('id,role').eq('id',target).maybeSingle();
+   if(!actor||!['admin','أدمن','ادمن'].includes(String(actor.role||'').toLowerCase().trim()))return out(400,{ok:false,error:'RECOVERY_DENIED'});
+   const expires=new Date(Date.now()+10*60*1000).toISOString();
+   const nonce=crypto.randomUUID(),codeHash=await digest(nonce+key);
+   const {data:ch,error:ce}=await sb.from('kinto_security_recovery_challenges_g19').insert({requested_by_admin_id:target,code_hash:codeHash,expires_at:expires}).select('id').single();
+   if(ce)return out(500,{ok:false,error:'CHALLENGE_FAILED'});
+   await sb.from('kinto_security_audit_g19').insert({event_type:'RECOVERY_CHALLENGE_OPENED',target_admin_id:target,recovery_challenge_id:ch.id});
+   return out(200,{ok:true,challenge_id:ch.id,expires_in_seconds:600});
+  }
   if(action==='status'){
    const {data}=await sb.from('kinto_security_recovery_g19').select('enabled,configured_at,emergency_backup_until').eq('singleton',true).maybeSingle();
    return out(200,{ok:true,configured:!!data,enabled:!!data?.enabled,emergency_backup_until:data?.emergency_backup_until||null});
