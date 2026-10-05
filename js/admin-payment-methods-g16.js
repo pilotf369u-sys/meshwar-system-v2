@@ -16,7 +16,7 @@ const customerMessage=m=>['تعليمات التحويل (معاينة إدار�
  'اسم المستفيد: '+(m.recipient_name||''),'رقم الحساب: '+(m.account_reference||''),
  'حوّل فقط إلى البيانات المعروضة داخل طلبك في KINTO بعد اعتمادها أمنياً. لا تعتمد على أي رقم حساب يُرسل عبر الدردشة أو واتساب.',
  'أرفق إيصال التحويل داخل طلبك؛ إرسال الإيصال لا يعني تأكيد التسديد، ويؤكده الموظف بعد التحقق.',
- m.instructions?'تعليمات إضافية: '+m.instructions:''].filter(Boolean).join('\\n');
+ m.instructions?'تعليمات إضافية: '+m.instructions:''].filter(Boolean).join('\n');
 function bankBadge(provider){
  const b=bankIdentity(provider),wrap=document.createElement('span');
  wrap.className='g16-bank-mark';wrap.textContent=b.mark;wrap.title=b.matched?'رمز تلقائي للمصرف (ليس شعاره الرسمي)':'رمز افتراضي حتى اعتماد شعار المصرف';
