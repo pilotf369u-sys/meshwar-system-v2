@@ -60,7 +60,7 @@ begin
    'deal_campaign_id',v_campaign.id,'deal_campaign_title',v_campaign.title,
    'deal_order_kind',v_campaign.kind,'deal_order_contract','g20-direct-campaign-order-v1'
   ))::text
- where o.id=v_order_id and o.customer_id=v_customer::text;
+ where o.id=v_order_id and o.customer_id::text=v_customer::text;
 
  return v_checkout||jsonb_build_object(
   'direct_campaign_order',true,'campaign_order_id',v_order_id,
