@@ -31,4 +31,17 @@ end;
 $g20$;
 revoke all on function public.kinto_deals_v1_vendor_set_product_options_g20(text,uuid,jsonb) from public,anon,authenticated;
 grant execute on function public.kinto_deals_v1_vendor_set_product_options_g20(text,uuid,jsonb) to anon,authenticated;
+
+create or replace function public.kinto_deals_v1_vendor_save_draft_g20(
+ p_session_token text,p_campaign_id uuid,p_expected_updated_at timestamptz,p_draft jsonb,p_product_options jsonb)
+returns jsonb language plpgsql security definer set search_path=public,private,pg_temp as $g20save$
+declare v_result jsonb; v_id uuid;
+begin
+ v_result:=public.kinto_deals_v1_vendor_save_draft_g4(p_session_token,p_campaign_id,p_expected_updated_at,p_draft);
+ v_id:=(v_result->>'campaign_id')::uuid;
+ perform public.kinto_deals_v1_vendor_set_product_options_g20(p_session_token,v_id,coalesce(p_product_options,'{}'::jsonb));
+ return v_result;
+end;$g20save$;
+revoke all on function public.kinto_deals_v1_vendor_save_draft_g20(text,uuid,timestamptz,jsonb,jsonb) from public,anon,authenticated;
+grant execute on function public.kinto_deals_v1_vendor_save_draft_g20(text,uuid,timestamptz,jsonb,jsonb) to anon,authenticated;
 commit;
