@@ -225,8 +225,7 @@ async function save(){
    terms_snapshot:state.termsSnapshot,product_ids:[...state.selected.keys()],product_options:Object.fromEntries([...state.selected.keys()].map(id=>[id,state.selectedOptions.get(id)||{}]))};
   const data=await rpc('kinto_deals_v1_vendor_save_draft_g4',{p_campaign_id:state.campaignId,p_expected_updated_at:state.updatedAt,p_draft:draft});
   state.campaignId=data.campaign_id;state.updatedAt=data.updated_at;
-  const productOptions=Object.fromEntries([...state.selected.keys()].map(id=>[id,state.selectedOptions.get(id)||{}]));
-  await rpc('kinto_deals_v1_vendor_set_product_options_g20',{p_campaign_id:state.campaignId,p_product_options:productOptions});
+
   if($('kdAdImage')?.files?.length&&!adImageUploaded){
    setMsg('تم حفظ المسودة؛ جاري تجهيز ورفع الصورة تلقائياً...');
    const uploaded=await uploadAdImage(true);
