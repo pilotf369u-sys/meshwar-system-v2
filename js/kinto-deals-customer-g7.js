@@ -3,6 +3,7 @@
 const URL='https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/rpc/kinto_deals_v1_public_feed_g7';
 const KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
 const storeId=new URLSearchParams(location.search).get('storeId');
+const G20_RPC='kinto_deals_v1_direct_order_g20';
 const isStore=/\/store\.html$/i.test(location.pathname);
 const isDirectory=/\/local-stores\.html$/i.test(location.pathname);
 if(!isStore&&!isDirectory)return;
@@ -115,6 +116,7 @@ const url=r=>'https://hsmmbloouskqdnptiiad.supabase.co/functions/v1/kinto-deals-
 function image(r,frame){const img=document.createElement('img');img.className='kd-g13-ad';img.alt='إعلان '+String(r.title).slice(0,100);img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';img.onerror=()=>img.remove();img.onload=()=>{if(frame.classList.contains('kd-g14-cover'))frame.firstChild?.nodeType===3&&frame.firstChild.remove()};img.src=url(r);frame.append(img)}
 const detailCache=new Map();
 async function getDetail(r){if(detailCache.has(r.campaign_id))return detailCache.get(r.campaign_id);const request=fetch('https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/rpc/kinto_deals_v1_public_detail_g14',{method:'POST',cache:'no-store',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({p_campaign_id:r.campaign_id})}).then(async response=>{if(!response.ok)throw Error('DETAIL_UNAVAILABLE');const data=await response.json();if(!data||data.campaign_id!==r.campaign_id)throw Error('NOT_PUBLISHED');return data}).catch(e=>{detailCache.delete(r.campaign_id);throw e});detailCache.set(r.campaign_id,request);return request}
+function dealOptions(p){const o=p&&typeof p.options==='object'?p.options:{};const clean=v=>Array.isArray(v)?[...new Set(v.map(x=>String(x||'').trim()).filter(Boolean))]:[];return{color:clean(o.colors),size:clean(o.sizes),volume:clean(o.volumes)}}
 function productCard(p){const box=document.createElement('div');box.className='kd-g14-product';if(p.image_url){const pic=document.createElement('img');pic.src=p.image_url;pic.alt=p.name||'صورة منتج';pic.loading='lazy';pic.onerror=()=>pic.remove();box.append(pic)}const name=document.createElement('div');name.textContent=p.name||'منتج';box.append(name);return box}
 function details(r,previous){
  const backdrop=document.createElement('div');backdrop.className='kd-g14-backdrop';
