@@ -20,6 +20,8 @@ create table if not exists public.kinto_security_recovery_challenges_g19 (
   id uuid primary key default gen_random_uuid(),
   requested_by_admin_id text,
   code_hash text not null,
+  email_code_hash text,
+  email_sent_at timestamptz,
   expires_at timestamptz not null,
   attempts smallint not null default 0 check (attempts between 0 and 5),
   consumed_at timestamptz,
