@@ -51,6 +51,19 @@ Deno.serve(async req=>{
    await sb.from('kinto_security_audit_g19').insert({event_type:'RECOVERY_CHALLENGE_OPENED',target_admin_id:target,recovery_challenge_id:ch.id});
    return out(200,{ok:true,challenge_id:ch.id,expires_in_seconds:600});
   }
+  if(action==='send_backup_code'){
+   const id=String(b.challenge_id||'').trim();
+   const {data:ch}=await sb.from('kinto_security_recovery_challenges_g19').select('id,expires_at,consumed_at,email_sent_at').eq('id',id).maybeSingle();
+   if(!ch||ch.consumed_at||new Date(ch.expires_at).getTime()<=Date.now())return out(400,{ok:false,error:'CHALLENGE_INVALID'});
+   if(ch.email_sent_at)return out(409,{ok:false,error:'CODE_ALREADY_SENT'});
+   const a=new Uint32Array(1);crypto.getRandomValues(a);const otp=String(a[0]%1000000).padStart(6,'0');
+   const {error:ue}=await sb.from('kinto_security_recovery_challenges_g19').update({email_code_hash:await digest(otp+key),email_sent_at:new Date().toISOString()}).eq('id',id).is('email_sent_at',null);
+   if(ue)return out(500,{ok:false,error:'CHALLENGE_UPDATE_FAILED'});
+   const mail=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+resend,'Content-Type':'application/json'},body:JSON.stringify({from:'KINTO Security <onboarding@resend.dev>',to:[backup],subject:'KINTO — Emergency Recovery',html:`<div dir="rtl"><h2>KINTO Security</h2><p>رمز تأكيد الاسترداد الطارئ:</p><p style="font-size:30px;font-weight:700;letter-spacing:5px">${otp}</p><p>صالح لمدة 10 دقائق. لا تشاركه مع أي شخص.</p></div>`})});
+   if(!mail.ok){console.error('G19_BACKUP_MAIL_FAILED',{status:mail.status});return out(502,{ok:false,error:'EMAIL_FAILED'})}
+   await sb.from('kinto_security_audit_g19').insert({event_type:'BACKUP_OTP_SENT',recovery_challenge_id:id});
+   return out(200,{ok:true});
+  }
   if(action==='status'){
    const {data}=await sb.from('kinto_security_recovery_g19').select('enabled,configured_at,emergency_backup_until').eq('singleton',true).maybeSingle();
    return out(200,{ok:true,configured:!!data,enabled:!!data?.enabled,emergency_backup_until:data?.emergency_backup_until||null});
