@@ -148,8 +148,10 @@ async function restoreDraft(item){
   }
   clearAdPreview();adImageUploaded=false;$('kdAdImage').value='';
   for(const p of hydrated.values())state.catalog.set(p.id,p);
-  state.selected.clear();
+  state.selected.clear();state.selectedOptions.clear();
   for(const id of ids)state.selected.set(id,state.catalog.get(id));
+  const restoredOptions=await rpc('kinto_deals_v1_vendor_draft_options_g20',{p_campaign_id:item.id});
+  for(const id of ids)state.selectedOptions.set(id,restoredOptions?.[id]||{});
   state.gift=item.gift_product_id||null;
   if(state.gift&&state.catalog.has(state.gift))state.giftResults.set(state.gift,state.catalog.get(state.gift));
   $('kdTitle').value=item.title||'';$('kdDescription').value=item.description||'';
