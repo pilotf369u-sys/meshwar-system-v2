@@ -46,7 +46,7 @@ Deno.serve(async req=>{
    if(await digest(otp+key)!==c.code_hash){await sb.from('kinto_payment_email_challenges_g16').update({attempts:Number(c.attempts)+1}).eq('id',id);return out(400,{ok:false,error:'CODE_INVALID'});}
    const p=c.payload;
    if(c.method_id){
-    const {error:e}=await sb.from('kinto_payment_methods_g16').update({recipient_name:p.recipient_name||null,account_reference:p.account_reference,is_enabled:false,destination_verified_at:new Date().toISOString(),destination_verified_by:adminId,updated_at:new Date().toISOString()}).eq('id',c.method_id).eq('method_type','manual');if(e)return out(500,{ok:false,error:'APPLY_FAILED'});
+    const {error:e}=await sb.from('kinto_payment_methods_g16').update({label:p.label,provider:p.provider,recipient_name:p.recipient_name||null,account_reference:p.account_reference,instructions:p.instructions||null,is_enabled:false,destination_verified_at:new Date().toISOString(),destination_verified_by:adminId,updated_at:new Date().toISOString()}).eq('id',c.method_id).eq('method_type','manual');if(e)return out(500,{ok:false,error:'APPLY_FAILED'});
    }else{
     const {error:e}=await sb.from('kinto_payment_methods_g16').insert({method_type:'manual',label:p.label,provider:p.provider,recipient_name:p.recipient_name||null,account_reference:p.account_reference,instructions:p.instructions||null,is_enabled:false,destination_verified_at:new Date().toISOString(),destination_verified_by:adminId});if(e)return out(500,{ok:false,error:'APPLY_FAILED'});
    }
