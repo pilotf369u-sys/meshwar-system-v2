@@ -44,6 +44,10 @@ Deno.serve(async req=>{
    if(!cfg?.enabled||await digest(d+key)!==cfg.recovery_key_hash)return out(400,{ok:false,error:'RECOVERY_DENIED'});
    const {data:actor}=await sb.from('employees').select('id,role').eq('id',target).maybeSingle();
    if(!actor||!['admin','أدمن','ادمن'].includes(String(actor.role||'').toLowerCase().trim()))return out(400,{ok:false,error:'RECOVERY_DENIED'});
+   const since=new Date(Date.now()-15*60*1000).toISOString();
+   const {count}=await sb.from('kinto_security_recovery_challenges_g19').select('id',{count:'exact',head:true}).gte('created_at',since);
+   if((count||0)>=3)return out(429,{ok:false,error:'RECOVERY_RATE_LIMITED'});
+   await sb.from('kinto_security_recovery_challenges_g19').update({consumed_at:new Date().toISOString()}).is('consumed_at',null).lt('expires_at',new Date().toISOString());
    const expires=new Date(Date.now()+10*60*1000).toISOString();
    const nonce=crypto.randomUUID(),codeHash=await digest(nonce+key);
    const {data:ch,error:ce}=await sb.from('kinto_security_recovery_challenges_g19').insert({requested_by_admin_id:target,code_hash:codeHash,expires_at:expires}).select('id').single();
@@ -60,11 +64,19 @@ Deno.serve(async req=>{
    const {error:ue}=await sb.from('kinto_security_recovery_challenges_g19').update({email_code_hash:await digest(otp+key),email_sent_at:new Date().toISOString()}).eq('id',id).is('email_sent_at',null);
    if(ue)return out(500,{ok:false,error:'CHALLENGE_UPDATE_FAILED'});
    const mail=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+resend,'Content-Type':'application/json'},body:JSON.stringify({from:'KINTO Security <onboarding@resend.dev>',to:[backup],subject:'KINTO — Emergency Recovery',html:`<div dir="rtl"><h2>KINTO Security</h2><p>رمز تأكيد الاسترداد الطارئ:</p><p style="font-size:30px;font-weight:700;letter-spacing:5px">${otp}</p><p>صالح لمدة 10 دقائق. لا تشاركه مع أي شخص.</p></div>`})});
-   if(!mail.ok){console.error('G19_BACKUP_MAIL_FAILED',{status:mail.status});return out(502,{ok:false,error:'EMAIL_FAILED'})}
+   if(!mail.ok){
+    console.error('G19_BACKUP_MAIL_FAILED',{status:mail.status});
+    await sb.from('kinto_security_recovery_challenges_g19').update({email_code_hash:null,email_sent_at:null}).eq('id',id);
+    return out(502,{ok:false,error:'EMAIL_FAILED'});
+   }
    await sb.from('kinto_security_audit_g19').insert({event_type:'BACKUP_OTP_SENT',recovery_challenge_id:id});
    return out(200,{ok:true});
   }
   if(action==='status'){
+   const session=String(b.session_token||'');
+   if(session.length<20||session.length>512)return out(401,{ok:false,error:'ADMIN_DENIED'});
+   const {data:admin,error:ae}=await sb.rpc('admin_session_identity_v147',{p_session_token:session});
+   if(ae||admin?.ok!==true)return out(401,{ok:false,error:'ADMIN_DENIED'});
    const {data}=await sb.from('kinto_security_recovery_g19').select('enabled,configured_at,emergency_backup_until').eq('singleton',true).maybeSingle();
    return out(200,{ok:true,configured:!!data,enabled:!!data?.enabled,emergency_backup_until:data?.emergency_backup_until||null});
   }
