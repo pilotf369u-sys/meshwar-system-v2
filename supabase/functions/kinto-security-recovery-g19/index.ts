@@ -25,6 +25,18 @@ Deno.serve(async req=>{
  const sb=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
  try{
   const b=await req.json(),action=String(b.action||'');
+  if(action==='setup'){
+   const session=String(b.session_token||''),d=String(b.recovery_key_digest||'').trim().toLowerCase();
+   if(session.length<20||session.length>512||!/^[0-9a-f]{64}$/.test(d))return out(400,{ok:false,error:'INVALID_SETUP'});
+   const {data:admin,error:ae}=await sb.rpc('admin_session_identity_v147',{p_session_token:session});
+   if(ae||admin?.ok!==true)return out(401,{ok:false,error:'ADMIN_DENIED'});
+   const {data:old}=await sb.from('kinto_security_recovery_g19').select('singleton').eq('singleton',true).maybeSingle();
+   if(old)return out(409,{ok:false,error:'RECOVERY_ALREADY_CONFIGURED'});
+   const {error:ie}=await sb.from('kinto_security_recovery_g19').insert({singleton:true,recovery_key_hash:await digest(d+key),enabled:true});
+   if(ie)return out(500,{ok:false,error:'SETUP_FAILED'});
+   await sb.from('kinto_security_audit_g19').insert({event_type:'RECOVERY_CONFIGURED',actor_admin_id:String(admin.admin.id)});
+   return out(200,{ok:true});
+  }
   if(action==='status'){
    const {data}=await sb.from('kinto_security_recovery_g19').select('enabled,configured_at,emergency_backup_until').eq('singleton',true).maybeSingle();
    return out(200,{ok:true,configured:!!data,enabled:!!data?.enabled,emergency_backup_until:data?.emergency_backup_until||null});
