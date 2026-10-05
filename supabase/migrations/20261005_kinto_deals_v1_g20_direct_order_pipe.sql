@@ -37,6 +37,12 @@ begin
       where cp.campaign_id=v_campaign.id and cp.product_id=(x.item->>'product_id')::uuid)
  ) then raise exception 'DEALS_DIRECT_ORDER_CAMPAIGN_SCOPE_INVALID' using errcode='P0001'; end if;
 
+ -- A campaign product is one unit only; reject repeated product ids instead of turning duplicates into quantity.
+ if (select count(*) from jsonb_array_elements(p_items)) <>
+    (select count(distinct (x.item->>'product_id')::uuid) from jsonb_array_elements(p_items) x(item)) then
+  raise exception 'DEALS_DIRECT_ORDER_DUPLICATE_PRODUCT' using errcode='22023';
+ end if;
+
  -- Browser-supplied variants are not authoritative. Rebuild canonical items from campaign rows.
  select jsonb_agg(jsonb_build_object(
    'store_id',v_campaign.store_id,
