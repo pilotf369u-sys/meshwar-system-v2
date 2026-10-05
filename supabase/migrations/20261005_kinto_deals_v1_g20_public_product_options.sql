@@ -12,3 +12,5 @@ revoke all on function public.kinto_deals_v1_product_options_g20(uuid) from publ
 grant execute on function public.kinto_deals_v1_product_options_g20(uuid) to anon,authenticated,service_role;
 notify pgrst,'reload schema';
 commit;
+
+-- G20 UI consumes this projection only for option labels; canonical checkout validates the submitted selection.
