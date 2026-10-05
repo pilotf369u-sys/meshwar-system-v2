@@ -132,7 +132,7 @@ function details(r,previous){
  if(r.description){const p=document.createElement('p');p.textContent=r.description;side.append(p)}
  const until=document.createElement('small');until.textContent='متاح حتى '+new Date(r.ends_at).toLocaleDateString('ar-IQ')+' أو نفاد عدد الاستفادات';side.append(until);
  const content=document.createElement('div');content.textContent='جارٍ تحميل تفاصيل الحملة...';content.setAttribute('aria-live','polite');info.append(content);layout.append(info,side);dialog.append(layout);
- getDetail(r).then(data=>{if(!content.isConnected)return;content.replaceChildren();
+ getDetail(r).then(async data=>{if(!content.isConnected)return;content.replaceChildren();
  const heading=(label)=>{const h=document.createElement('h4');h.textContent=label;h.style.color='#f5d478';content.append(h)};
  if(data.gift){heading('🎁 الهدية المحددة');const gift=document.createElement('div');gift.className='kd-g14-gift';gift.append(productCard(data.gift));content.append(gift)}
  const kinds={choose_n:'اختر '+data.threshold_units+' من المنتجات المشمولة',buy_n:'اشترِ '+data.threshold_units+' من نفس المنتج',limited_purchase:'عرض بكمية محدودة لكل عميل'};heading(kinds[data.kind]||'المنتجات المشمولة');
