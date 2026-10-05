@@ -64,6 +64,24 @@ async function searchGift(){
   renderSelected();setResultsVisible('gift',true);status.textContent=state.giftResults.size?'اختر الهدية من البطاقات أدناه.':'لا توجد نتائج مطابقة للهدية.';
  }catch(e){status.textContent='تعذر البحث عن الهدية: '+e.message}
 }
+async function loadProductOptions(productId){
+ try{
+  const rows=await rpc('kinto_deals_v1_vendor_product_options_g20',{p_product_ids:[productId]});
+  const raw=rows?.[0]?.options||{};return {color:Array.isArray(raw.colors)?raw.colors:[],size:Array.isArray(raw.sizes)?raw.sizes:[],volume:Array.isArray(raw.volumes)?raw.volumes:[]};
+ }catch(e){setMsg('تعذر تحميل مواصفات المنتج: '+e.message,true);return null}
+}
+async function chooseProductOptions(p){
+ const opts=await loadProductOptions(p.id);if(!opts)return false;
+ const required=Object.entries(opts).filter(([,v])=>v.length);
+ if(!required.length){state.selectedOptions.set(p.id,{});return true}
+ const chosen={};
+ for(const [key,values] of required){
+  const answer=window.prompt('اختر '+optionLabel[key]+' للمنتج «'+p.product_name+'»:\n'+values.map((v,i)=>(i+1)+'- '+v).join('\n'));
+  const index=Number(answer)-1;if(!Number.isInteger(index)||!values[index]){setMsg('لم يتم اختيار مواصفات المنتج؛ لم يُضف للحملة.',true);return false}
+  chosen[key]=String(values[index]);
+ }
+ state.selectedOptions.set(p.id,chosen);return true;
+}
 async function search(){
  const box=$('kdSearchResults');box.replaceChildren();setMsg('جاري البحث...');
  try{
@@ -75,7 +93,7 @@ async function search(){
    if(p.image_url){const img=el('img');img.src=p.image_url;img.alt='';img.loading='lazy';img.className='h-10 w-10 rounded-lg object-contain';row.append(img)}
    const info=el('span',p.product_name+' | '+(p.barcode||'—')+' | '+p.base_price+' '+(p.currency||''),'flex-1');row.append(info);
    const b=el('button',state.selected.has(p.id)?'محدد':'إضافة','rounded-lg border border-amber-400/40 px-3 py-2');b.type='button';
-   b.addEventListener('click',()=>{if(state.selected.has(p.id))state.selected.delete(p.id);else if(state.selected.size<50){state.selected.set(p.id,p);if(state.gift===p.id)state.gift=null}else return setMsg('الحد الأقصى 50 منتجاً.',true);renderSelected();b.textContent=state.selected.has(p.id)?'محدد':'إضافة';/* G20: keep product results open for fast multi-select. */});row.append(b);box.append(row);
+   b.addEventListener('click',async()=>{if(state.selected.has(p.id)){state.selected.delete(p.id);state.selectedOptions.delete(p.id)}else if(state.selected.size<50){if(!await chooseProductOptions(p))return;state.selected.set(p.id,p);if(state.gift===p.id)state.gift=null}else return setMsg('الحد الأقصى 50 منتجاً.',true);renderSelected();b.textContent=state.selected.has(p.id)?'محدد':'إضافة';/* G20: keep product results open for fast multi-select. */});row.append(b);box.append(row);
   }
   renderSelected();setResultsVisible('paid',true);setMsg('نتائج البحث من منتجات متجرك فقط. اختر المنتجات المدفوعة والهدية بشكل منفصل.');
  }catch(e){setMsg(e.message,true)}
