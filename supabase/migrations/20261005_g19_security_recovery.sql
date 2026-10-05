@@ -11,7 +11,9 @@ create table if not exists public.kinto_security_recovery_g19 (
   rotated_at timestamptz,
   last_recovered_at timestamptz,
   last_recovered_by text,
-  emergency_backup_until timestamptz
+  emergency_backup_until timestamptz,
+  emergency_target_admin_id text,
+  emergency_activated_at timestamptz
 );
 
 create table if not exists public.kinto_security_recovery_challenges_g19 (
