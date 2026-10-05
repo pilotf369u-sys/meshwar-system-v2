@@ -6,7 +6,7 @@ function code(){const a=new Uint32Array(1);crypto.getRandomValues(a);return Stri
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'',headers={'Access-Control-Allow-Origin':origins.includes(origin)?origin:origins[0],'Access-Control-Allow-Headers':'content-type','Access-Control-Allow-Methods':'POST,OPTIONS','Vary':'Origin','Content-Type':'application/json'};
  const out=(n:number,x:unknown)=>new Response(JSON.stringify(x),{status:n,headers});
- if(req.method==='OPTIONS')return new Response('',{status:204,headers});
+ if(req.method==='OPTIONS')return new Response(null,{status:204,headers});
  if(req.method!=='POST'||!origins.includes(origin))return out(403,{ok:false,error:'DENIED'});
  const url=Deno.env.get('SUPABASE_URL'),key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),resend=Deno.env.get('RESEND_API_KEY'),email=Deno.env.get('KINTO_SECURITY_EMAIL');
  if(!url||!key||!resend||!email)return out(503,{ok:false,error:'UNCONFIGURED'});
