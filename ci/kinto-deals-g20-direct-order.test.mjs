@@ -1,4 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+const vendor=fs.readFileSync(new URL('../js/vendor-kinto-deals-g4c-draft.js',import.meta.url),'utf8');
+const atomic=fs.readFileSync(new URL('../supabase/migrations/20261005_kinto_deals_v1_g20_vendor_draft_product_options.sql',import.meta.url),'utf8');
 const employee=fs.readFileSync(new URL('../employee-dashboard.html',import.meta.url),'utf8');
 const sql=fs.readFileSync('supabase/migrations/20261005_kinto_deals_v1_g20_direct_order_pipe.sql','utf8');
 test('reuses canonical checkout, not a second order engine',()=>{assert.match(sql,/kinto_deals_v1_checkout_no_gift_g5d\(/);assert.doesNotMatch(sql,/insert\s+into\s+public\.orders/i);});
@@ -24,4 +26,11 @@ test('G20 rejects duplicate campaign products so one selected product is exactly
 test('employee pipeline marks campaign orders without changing order status',()=>{
  assert.match(employee,/deal_campaign_id/);
  assert.match(employee,/>حملة</);
+});
+
+test('merchant draft and frozen variants use one atomic G20 RPC',()=>{
+ assert.match(vendor,/kinto_deals_v1_vendor_save_draft_g20/);
+ assert.doesNotMatch(vendor,/kinto_deals_v1_vendor_set_product_options_g20/);
+ assert.match(atomic,/kinto_deals_v1_vendor_save_draft_g4/);
+ assert.match(atomic,/kinto_deals_v1_vendor_set_product_options_g20/);
 });
