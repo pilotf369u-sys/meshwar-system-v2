@@ -11,15 +11,15 @@ const bankIdentity=name=>{
  const known=[['ziraat','Ziraat','Z'],['vakif','VakıfBank','V'],['isbank','İşbank','İ'],['garanti','Garanti BBVA','G'],['akbank','Akbank','A'],['yapikredi','Yapı Kredi','Y'],['qnb','QNB','Q'],['kuveytturk','Kuveyt Türk','K'],['halkbank','Halkbank','H'],['turkiyefinans','Türkiye Finans','T'],['الرافدين','الرافدين','ر'],['الرشيد','الرشيد','ر'],['كيكارد','Qi Card','Qi'],['fibabanka','Fibabanka','F']];
  const hit=known.find(x=>n.includes(x[0]));return {name:hit?.[1]||String(name||'مصرف غير محدد'),mark:hit?.[2]||'▣',matched:!!hit};
 };
-const customerMessage=m=>['تعليمات التحويل (معاينة إدارية فقط — غير متصلة بطلبات العملاء):',
+const customerMessage=m=>['تعليمات التحويل:',
  'وسيلة الدفع: '+(m.label||''),'المصرف / المزود: '+(m.provider||''),
  'اسم المستفيد: '+(m.recipient_name||''),'رقم الحساب: '+(m.account_reference||''),
- 'حوّل فقط إلى البيانات المعروضة داخل طلبك في KINTO بعد اعتمادها أمنياً. لا تعتمد على أي رقم حساب يُرسل عبر الدردشة أو واتساب.',
+ 'حوّل المبلغ فقط إلى بيانات الحساب المعروضة داخل طلبك في KINTO. لا تعتمد على أي رقم حساب يُرسل عبر الدردشة أو واتساب.',
  'أرفق إيصال التحويل داخل طلبك؛ إرسال الإيصال لا يعني تأكيد التسديد، ويؤكده الموظف بعد التحقق.',
  m.instructions?'تعليمات إضافية: '+m.instructions:''].filter(Boolean).join('\n');
 function bankBadge(provider){
  const b=bankIdentity(provider),wrap=document.createElement('span');
- wrap.className='g16-bank-mark';wrap.textContent=b.mark;wrap.title=b.matched?'رمز تلقائي للمصرف (ليس شعاره الرسمي)':'رمز افتراضي حتى اعتماد شعار المصرف';
+ wrap.className='g16-bank-mark';wrap.textContent=b.mark;wrap.title=b.matched?b.name:'المصرف';
  return wrap;
 }
 
