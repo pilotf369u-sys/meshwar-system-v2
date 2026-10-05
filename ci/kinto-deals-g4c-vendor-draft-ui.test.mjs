@@ -9,7 +9,7 @@ test('merchant draft form is isolated and labeled as draft-only',()=>{
  assert.match(html,/حفظ المسودة فقط/);
 });
 test('verified session, product search and save RPCs remain isolated',()=>{
- for(const s of ['meshwar_vendor_session_v95','kinto_deals_v1_vendor_products_g4','kinto_deals_v1_vendor_save_draft_g4','p_expected_updated_at','p_campaign_id','p_draft'])assert.ok(js.includes(s),s);
+ for(const s of ['meshwar_vendor_session_v95','kinto_deals_v1_vendor_products_g4','kinto_deals_v1_vendor_save_draft_g20','p_expected_updated_at','p_campaign_id','p_draft'])assert.ok(js.includes(s),s);
  assert.doesNotMatch(js,/\.from\(|innerHTML|admin_decide|submit_campaign|checkout|localStorage/);
  assert.match(js,/state\.busy/);
  assert.match(js,/state\.selected\.has\(p\.id\)/);
