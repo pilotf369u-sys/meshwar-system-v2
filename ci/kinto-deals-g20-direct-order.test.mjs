@@ -14,3 +14,8 @@ test('G20 server enforces one unit and merchant-frozen selected options',()=>{
  assert.match(sql,/p_customer_shipping,v_canonical_items\)/);
  assert.doesNotMatch(sql,/p_customer_shipping,p_items\);/);
 });
+
+test('G20 rejects duplicate campaign products so one selected product is exactly one unit',()=>{
+ assert.match(sql,/DEALS_DIRECT_ORDER_DUPLICATE_PRODUCT/);
+ assert.match(sql,/count\(distinct \(x\.item->>'product_id'\)::uuid\)/);
+});
