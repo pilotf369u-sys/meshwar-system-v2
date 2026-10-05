@@ -34,7 +34,7 @@ Deno.serve(async req=>{
    const {data:c,error:ce}=await sb.from('kinto_payment_email_challenges_g16').insert({admin_id:adminId,method_id:methodId,payload:clean,code_hash:hash,expires_at:expires}).select('id').single();
    if(ce)return out(500,{ok:false,error:'CHALLENGE_CREATE_FAILED'});
    const mail=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+resend,'Content-Type':'application/json'},body:JSON.stringify({from:'KINTO Security <onboarding@resend.dev>',to:[email],subject:'KINTO — رمز تأكيد تغيير بيانات التحويل',html:`<div dir="rtl" style="font-family:Arial,sans-serif"><h2>KINTO Security</h2><p>رمز تأكيد تغيير بيانات التحويل المالي:</p><p style="font-size:30px;font-weight:700;letter-spacing:5px">${otp}</p><p>صالح لمدة 10 دقائق ولمرة واحدة. إذا لم تطلب هذا التغيير فلا تستخدم الرمز.</p></div>`})});
-   if(!mail.ok){await sb.from('kinto_payment_email_challenges_g16').update({consumed_at:new Date().toISOString()}).eq('id',c.id);return out(502,{ok:false,error:'EMAIL_SEND_FAILED'});}
+   if(!mail.ok){let reason='';try{const j=await mail.json();reason=String(j?.message||j?.name||'').slice(0,240)}catch{};console.error('G16_RESEND_SEND_FAILED',{status:mail.status,reason});await sb.from('kinto_payment_email_challenges_g16').update({consumed_at:new Date().toISOString()}).eq('id',c.id);return out(502,{ok:false,error:'EMAIL_SEND_FAILED',provider_status:mail.status});}
    return out(200,{ok:true,challenge_id:c.id,expires_in_seconds:600});
   }
   if(b.action==='verify'){
