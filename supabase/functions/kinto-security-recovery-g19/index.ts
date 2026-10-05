@@ -91,6 +91,26 @@ Deno.serve(async req=>{
    await sb.from('kinto_security_audit_g19').insert({event_type:'BACKUP_OTP_SENT',recovery_challenge_id:id});
    return out(200,{ok:true});
   }
+  if(action==='confirm_backup_code'){
+   const session=String(b.session_token||''),id=String(b.challenge_id||'').trim(),otp=String(b.code||'').trim();
+   if(session.length<20||session.length>512||!/^[0-9]{6}$/.test(otp))return out(400,{ok:false,error:'INVALID_CONFIRMATION'});
+   const {data:admin,error:ae}=await sb.rpc('admin_session_identity_v147',{p_session_token:session});
+   if(ae||admin?.ok!==true)return out(401,{ok:false,error:'ADMIN_DENIED'});
+   const adminId=String(admin.admin.id);
+   const {data:ch}=await sb.from('kinto_security_recovery_challenges_g19').select('id,requested_by_admin_id,email_code_hash,expires_at,attempts,consumed_at').eq('id',id).maybeSingle();
+   if(!ch||ch.requested_by_admin_id!==adminId||ch.consumed_at||!ch.email_code_hash||new Date(ch.expires_at).getTime()<=Date.now())return out(400,{ok:false,error:'CHALLENGE_INVALID'});
+   if(Number(ch.attempts)>=5)return out(429,{ok:false,error:'CHALLENGE_LOCKED'});
+   if(await digest(otp+key)!==ch.email_code_hash){
+    await sb.from('kinto_security_recovery_challenges_g19').update({attempts:Number(ch.attempts)+1}).eq('id',id).eq('attempts',Number(ch.attempts));
+    return out(400,{ok:false,error:'CODE_INVALID'});
+   }
+   const now=new Date().toISOString(),until=new Date(Date.now()+24*60*60*1000).toISOString();
+   const {error:stateError}=await sb.from('kinto_security_recovery_g19').update({emergency_backup_until:until,emergency_target_admin_id:adminId,emergency_activated_at:now,last_recovered_at:now,last_recovered_by:adminId}).eq('singleton',true).eq('enabled',true);
+   if(stateError)return out(500,{ok:false,error:'RECOVERY_STATE_FAILED'});
+   await sb.from('kinto_security_recovery_challenges_g19').update({consumed_at:now}).eq('id',id).is('consumed_at',null);
+   await sb.from('kinto_security_audit_g19').insert({event_type:'BACKUP_CHANNEL_CONFIRMED',actor_admin_id:adminId,target_admin_id:adminId,recovery_challenge_id:id});
+   return out(200,{ok:true,emergency_until:until});
+  }
   if(action==='status'){
    const session=String(b.session_token||'');
    if(session.length<20||session.length>512)return out(401,{ok:false,error:'ADMIN_DENIED'});
