@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
-const employee=readFileSync(new URL('../employee-dashboard.html',import.meta.url),'utf8');
+const employee=fs.readFileSync(new URL('../employee-dashboard.html',import.meta.url),'utf8');
 const sql=fs.readFileSync('supabase/migrations/20261005_kinto_deals_v1_g20_direct_order_pipe.sql','utf8');
 test('reuses canonical checkout, not a second order engine',()=>{assert.match(sql,/kinto_deals_v1_checkout_no_gift_g5d\(/);assert.doesNotMatch(sql,/insert\s+into\s+public\.orders/i);});
 test('campaign/store scope is server enforced',()=>{assert.match(sql,/kinto_deals_v1_products/);assert.match(sql,/DEALS_DIRECT_ORDER_CAMPAIGN_SCOPE_INVALID/);assert.match(sql,/v_campaign\.store_id/);});
