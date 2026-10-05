@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const token=()=>{try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null')?.token||''}catch{return''}};
-const state={selected:new Map(),catalog:new Map(),giftResults:new Map(),gift:null,campaignId:null,updatedAt:null,termsSnapshot:{},giftOptions:{},busy:false};
+const state={selected:new Map(),selectedOptions:new Map(),catalog:new Map(),giftResults:new Map(),gift:null,campaignId:null,updatedAt:null,termsSnapshot:{},giftOptions:{},busy:false};
 const rpc=async(name,args)=>{const sb=window.MeshwarVendorRuntime?.sb;if(!sb)throw Error('اتصال الحملات لم يجهز بعد. أعد تحديث قائمة المسودات بعد اكتمال تحميل اللوحة.');if(!token())throw Error('رمز جلسة الحملات الآمنة غير موجود في هذا التبويب؛ تسجيل دخول لوحة المتجر وحده لا يثبت جلسة الحملات. لم تتغير مسوداتك.');const {data,error}=await sb.rpc(name,{p_session_token:token(),...args});if(error)throw error;return data};
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e};
 const setMsg=(message,bad=false)=>{const e=$('kdDraftMessage');if(e){e.textContent=message;e.className='text-sm mt-3 '+(bad?'text-rose-300':'text-amber-200')}};
@@ -27,13 +27,13 @@ const renderGiftResults=()=>{
   button.addEventListener('click',()=>{state.gift=state.gift===p.id?null:p.id;renderSelected();if(state.gift)setResultsVisible('gift',false)});row.append(button);box.append(row);
  }
 };
-const renderSelected=()=>{
+const optionLabel={color:'اللون',size:'المقاس',volume:'الحجم'};\nconst renderSelected=()=>{
  const box=$('kdSelected');box.replaceChildren();
  for(const p of state.selected.values()){
   const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-2 text-xs');
   if(p.image_url){const img=el('img');img.src=p.image_url;img.alt=p.product_name||'';img.loading='lazy';img.className='h-12 w-12 shrink-0 rounded-lg object-contain bg-white/5';row.append(img)}
   const info=el('span',(p.product_name||'منتج')+' | '+(p.barcode||'—')+' | '+(p.base_price??'—')+' '+(p.currency||''),'min-w-0 flex-1 break-words');row.append(info);
-  const b=el('button','إزالة','shrink-0 rounded-lg border border-rose-300/40 px-2 py-1 text-rose-200');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);renderSelected()});row.append(b);box.append(row);
+  const frozen=state.selectedOptions.get(p.id)||{};const specs=Object.entries(frozen).filter(([,v])=>v).map(([k,v])=>(optionLabel[k]||k)+': '+v).join(' · ');if(specs)row.append(el('small',specs,'text-amber-200'));\n  const b=el('button','إزالة','shrink-0 rounded-lg border border-rose-300/40 px-2 py-1 text-rose-200');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);state.selectedOptions.delete(p.id);renderSelected()});row.append(b);box.append(row);
  }
  $('kdSelectedCount').textContent=String(state.selected.size);
  if(state.gift&&state.selected.has(state.gift))state.gift=null;
