@@ -17,6 +17,36 @@ Deno.serve(async req=>{
   const {data:admin,error:ae}=await sb.rpc('admin_session_identity_v147',{p_session_token:session});
   if(ae||admin?.ok!==true)return out(401,{ok:false,error:'ADMIN_DENIED'});
   const adminId=String(admin.admin.id);
+  if(b.action==='account_delete_request'){
+   const accountId=String(b.account_id||'').trim(),accountType=String(b.account_type||'employee').trim();
+   if(!accountId||!['employee','admin'].includes(accountType))return out(400,{ok:false,error:'INVALID_ACCOUNT'});
+   if(accountId===adminId)return out(400,{ok:false,error:'SELF_DELETE_DENIED'});
+   const since=new Date(Date.now()-15*60*1000).toISOString();
+   const {count}=await sb.from('kinto_employee_email_challenges_g17').select('id',{count:'exact',head:true}).eq('admin_id',adminId).gte('created_at',since);
+   if((count||0)>=3)return out(429,{ok:false,error:'RATE_LIMIT'});
+   await sb.from('kinto_employee_email_challenges_g17').update({consumed_at:new Date().toISOString()}).eq('admin_id',adminId).is('consumed_at',null);
+   const otp=code(),hash=await digest(otp+key),expires=new Date(Date.now()+10*60*1000).toISOString();
+   const {data:c,error:ce}=await sb.from('kinto_employee_email_challenges_g17').insert({admin_id:adminId,payload:{security_action:'delete_account',account_id:accountId,account_type:accountType},code_hash:hash,expires_at:expires}).select('id').single();
+   if(ce)return out(500,{ok:false,error:'CHALLENGE_CREATE_FAILED'});
+   const mail=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+resend,'Content-Type':'application/json'},body:JSON.stringify({from:'KINTO Security <onboarding@resend.dev>',to:[email],subject:'KINTO — رمز تأكيد حذف حساب إداري',html:`<div dir="rtl" style="font-family:Arial,sans-serif"><h2>KINTO Security</h2><p>رمز تأكيد حذف حساب ${accountType==='admin'?'أدمن':'موظف'}:</p><p style="font-size:30px;font-weight:700;letter-spacing:5px">${otp}</p><p>صالح لمدة 10 دقائق ولمرة واحدة. إذا لم تطلب الحذف فلا تستخدم الرمز.</p></div>`})});
+   if(!mail.ok){let reason='';try{const j=await mail.json();reason=String(j?.message||j?.name||'').slice(0,240)}catch{};console.error('G18_RESEND_SEND_FAILED',{status:mail.status,reason});await sb.from('kinto_employee_email_challenges_g17').update({consumed_at:new Date().toISOString()}).eq('id',c.id);return out(502,{ok:false,error:'EMAIL_SEND_FAILED',provider_status:mail.status});}
+   return out(200,{ok:true,challenge_id:c.id,expires_in_seconds:600});
+  }
+  if(b.action==='account_delete_verify'){
+   const id=String(b.challenge_id||''),otp=String(b.code||'').trim();
+   if(!/^[0-9]{6}$/.test(otp))return out(400,{ok:false,error:'INVALID_CODE'});
+   const {data:c}=await sb.from('kinto_employee_email_challenges_g17').select('*').eq('id',id).maybeSingle();
+   if(!c||c.admin_id!==adminId||c.consumed_at||new Date(c.expires_at).getTime()<=Date.now())return out(400,{ok:false,error:'CHALLENGE_INVALID'});
+   if(Number(c.attempts)>=5)return out(429,{ok:false,error:'CHALLENGE_LOCKED'});
+   const p=c.payload||{};
+   if(p.security_action!=='delete_account'||!p.account_id||!['employee','admin'].includes(String(p.account_type)))return out(400,{ok:false,error:'CHALLENGE_INVALID'});
+   if(String(p.account_id)===adminId)return out(400,{ok:false,error:'SELF_DELETE_DENIED'});
+   if(await digest(otp+key)!==c.code_hash){await sb.from('kinto_employee_email_challenges_g17').update({attempts:Number(c.attempts)+1}).eq('id',id);return out(400,{ok:false,error:'CODE_INVALID'});}
+   const {data:deleted,error:de}=await sb.rpc('admin_delete_account_v307',{p_admin_session_token:session,p_account_type:String(p.account_type),p_account_id:String(p.account_id)});
+   if(de||deleted?.ok!==true)return out(400,{ok:false,error:deleted?.error||'ACCOUNT_DELETE_FAILED'});
+   await sb.from('kinto_employee_email_challenges_g17').update({consumed_at:new Date().toISOString()}).eq('id',id);
+   return out(200,{ok:true});
+  }
   if(b.action==='employee_request'){
    const p=b.payload||{},name=String(p.name||'').trim(),phone=String(p.phone||'').trim(),role=String(p.role||'').trim(),permissions=p.permissions||{};
    if(!name||name.length>120||phone.length<5||phone.length>40||!['employee','admin'].includes(role))return out(400,{ok:false,error:'INVALID_EMPLOYEE'});
