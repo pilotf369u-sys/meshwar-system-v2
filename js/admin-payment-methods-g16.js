@@ -3,8 +3,18 @@
 const root=()=>document.getElementById('g16PaymentMethods');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const token=()=>window.KintoAdminSessionV147?.read?.()?.token||'';
-let methods=[],busy=false;
-async function secure(action,payload){const sb=await window.ensureCustomerSupabase();const {data,error}=await sb.functions.invoke('kinto-payment-security-g16',{body:{action,session_token:token(),...payload}});if(error)throw error;if(!data?.ok)throw Error(data?.error||'تعذر التحقق الأمني.');return data;}
+let methods=[],busy=false,pendingChallenge='';
+async function secure(action,payload){
+ const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.functions.invoke('kinto-payment-security-g16',{body:{action,session_token:token(),...payload}});
+ if(error){
+  let detail='';
+  try{const j=await error.context?.json?.();detail=String(j?.error||'')}catch{}
+  const map={EMAIL_SEND_FAILED:'تعذر إرسال رمز الحماية إلى البريد الأمني.',ADMIN_DENIED:'انتهت جلسة الأدمن. سجّل الدخول مجدداً.',RATE_LIMIT:'تم بلوغ حد طلبات رمز الحماية. انتظر قليلاً ثم أعد المحاولة.',UNCONFIGURED:'إعدادات البريد الأمني غير مكتملة.'};
+  throw Error(map[detail]||detail||error.message||'تعذر الاتصال بخدمة التحقق الأمني.');
+ }
+ if(!data?.ok)throw Error(data?.error||'تعذر التحقق الأمني.');return data;
+}
 // Bank identity is inferred locally from the provider name. No third-party logo API,
 // remote image requests or unverified official trademark claims.
 const bankIdentity=name=>{
@@ -66,17 +76,31 @@ function fields(){
  f.elements.accountReference.required=manual;
  document.getElementById('g16GatewayNote').hidden=manual;
 }
+function otpPanel(){
+ let box=document.getElementById('g16OtpPanel');if(box)return box;
+ const f=document.getElementById('g16Form');box=document.createElement('div');box.id='g16OtpPanel';box.hidden=true;box.dir='rtl';
+ box.style.cssText='margin-top:12px;padding:12px;border:1px solid #8a7435;border-radius:10px;background:rgba(255,255,255,.04)';
+ const title=document.createElement('div');title.textContent='تأكيد البريد الأمني';title.style.cssText='font-weight:700;margin-bottom:8px';
+ const note=document.createElement('div');note.textContent='أدخل رمز الحماية المكوّن من 6 أرقام خلال 10 دقائق.';note.style.cssText='font-size:13px;margin-bottom:8px';
+ const input=document.createElement('input');input.id='g16OtpCode';input.inputMode='numeric';input.autocomplete='one-time-code';input.maxLength=6;input.placeholder='رمز الحماية';input.style.cssText='max-width:180px;margin-left:8px';
+ const verify=document.createElement('button');verify.type='button';verify.textContent='تأكيد الرمز';verify.onclick=confirmOtp;
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='إلغاء';cancel.style.marginInlineStart='6px';cancel.onclick=()=>{pendingChallenge='';box.hidden=true;message('تم إلغاء التحقق. لم تتغير بيانات الحساب.')};
+ box.append(title,note,input,verify,cancel);f.insertAdjacentElement('afterend',box);return box;
+}
+function showOtp(challengeId){pendingChallenge=challengeId;const box=otpPanel();box.hidden=false;const input=box.querySelector('#g16OtpCode');input.value='';input.focus();box.scrollIntoView({block:'nearest',behavior:'smooth'});}
+async function confirmOtp(){
+ if(busy||!pendingChallenge)return;const input=document.getElementById('g16OtpCode'),code=String(input?.value||'').trim();
+ if(!/^[0-9]{6}$/.test(code)){message('أدخل رمز الحماية المكوّن من 6 أرقام.',true);input?.focus();return}
+ busy=true;message('جارٍ التحقق من الرمز...');
+ try{await secure('verify',{challenge_id:pendingChallenge,code});pendingChallenge='';otpPanel().hidden=true;paint(await rpc());fill(null);message('تم التحقق من بيانات التحويل. الوسيلة بقيت متوقفة؛ فعّلها بعد مراجعة البيانات.');}
+ catch(e){message(e?.message||'تعذر التحقق من الرمز.',true)}finally{busy=false}
+}
 async function verifyDestination(m,payload){
  if(busy)return;busy=true;message('جارٍ إرسال رمز الحماية إلى البريد الأمني...');
  try{
   const p=payload||{label:m.label,provider:m.provider,recipient_name:m.recipient_name,account_reference:m.account_reference,instructions:m.instructions};
-  const req=await secure('request',{method_id:m?.id||null,payload:p});
-  const code=window.prompt('أرسلنا رمز حماية من 6 أرقام إلى البريد الأمني. أدخل الرمز خلال 10 دقائق:');
-  if(code===null){message('تم إلغاء التحقق. لم تتغير بيانات الحساب.');return}
-  await secure('verify',{challenge_id:req.challenge_id,code:String(code).trim()});
-  paint(await rpc());fill(null);message('تم التحقق من بيانات التحويل. الوسيلة بقيت متوقفة؛ فعّلها بعد مراجعة البيانات.');
- }catch(e){message(e?.message||'تعذر إكمال التحقق الأمني.',true)}
- finally{busy=false}
+  const req=await secure('request',{method_id:m?.id||null,payload:p});showOtp(req.challenge_id);message('تم إرسال رمز الحماية. أدخله في الخانة الظاهرة أدناه.');
+ }catch(e){message(e?.message||'تعذر إكمال التحقق الأمني.',true)}finally{busy=false}
 }
 async function change(action,args){
  if(busy)return;busy=true;message('جارٍ الحفظ...');
