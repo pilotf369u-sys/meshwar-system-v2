@@ -17,6 +17,45 @@ Deno.serve(async req=>{
   const {data:admin,error:ae}=await sb.rpc('admin_session_identity_v147',{p_session_token:session});
   if(ae||admin?.ok!==true)return out(401,{ok:false,error:'ADMIN_DENIED'});
   const adminId=String(admin.admin.id);
+  if(b.action==='recovery_setup'){
+   if(!backupEmail)return out(503,{ok:false,error:'BACKUP_EMAIL_UNCONFIGURED'});
+   const d=String(b.recovery_key_digest||'').trim().toLowerCase();
+   if(!/^[0-9a-f]{64}$/.test(d))return out(400,{ok:false,error:'RECOVERY_KEY_INVALID'});
+   const {data:old}=await sb.from('kinto_security_recovery_g19').select('singleton').eq('singleton',true).maybeSingle();
+   if(old)return out(409,{ok:false,error:'RECOVERY_ALREADY_CONFIGURED'});
+   const {error:e}=await sb.from('kinto_security_recovery_g19').insert({singleton:true,recovery_key_hash:await digest(d+key),enabled:true});
+   if(e)return out(500,{ok:false,error:'RECOVERY_SETUP_FAILED'});
+   await sb.from('kinto_security_audit_g19').insert({event_type:'RECOVERY_CONFIGURED',actor_admin_id:adminId});
+   return out(200,{ok:true});
+  }
+  if(b.action==='recovery_request'){
+   if(!backupEmail)return out(503,{ok:false,error:'BACKUP_EMAIL_UNCONFIGURED'});
+   const d=String(b.recovery_key_digest||'').trim().toLowerCase();
+   if(!/^[0-9a-f]{64}$/.test(d))return out(400,{ok:false,error:'RECOVERY_KEY_INVALID'});
+   const {data:cfg}=await sb.from('kinto_security_recovery_g19').select('recovery_key_hash,enabled').eq('singleton',true).maybeSingle();
+   if(!cfg?.enabled||await digest(d+key)!==cfg.recovery_key_hash)return out(400,{ok:false,error:'RECOVERY_KEY_INVALID'});
+   const since=new Date(Date.now()-30*60*1000).toISOString();
+   const {count}=await sb.from('kinto_security_recovery_challenges_g19').select('id',{count:'exact',head:true}).gte('created_at',since);
+   if((count||0)>=3)return out(429,{ok:false,error:'RECOVERY_RATE_LIMIT'});
+   const otp=code(),hash=await digest(otp+key),expires=new Date(Date.now()+10*60*1000).toISOString();
+   const {data:ch,error:ce}=await sb.from('kinto_security_recovery_challenges_g19').insert({requested_by_admin_id:adminId,code_hash:hash,expires_at:expires}).select('id').single();
+   if(ce)return out(500,{ok:false,error:'CHALLENGE_CREATE_FAILED'});
+   const mail=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+resend,'Content-Type':'application/json'},body:JSON.stringify({from:'KINTO Security <onboarding@resend.dev>',to:[backupEmail],subject:'KINTO — رمز استرداد أمني طارئ',html:`<div dir="rtl"><h2>KINTO Security Recovery</h2><p>رمز الاسترداد الأمني:</p><p style="font-size:30px;font-weight:700;letter-spacing:5px">${otp}</p><p>صالح 10 دقائق ولمرة واحدة.</p></div>`})});
+   if(!mail.ok){await sb.from('kinto_security_recovery_challenges_g19').update({consumed_at:new Date().toISOString()}).eq('id',ch.id);console.error('G19_RECOVERY_EMAIL_FAILED',{status:mail.status});return out(502,{ok:false,error:'EMAIL_SEND_FAILED'});}
+   await sb.from('kinto_security_audit_g19').insert({event_type:'RECOVERY_REQUESTED',actor_admin_id:adminId,recovery_challenge_id:ch.id});
+   return out(200,{ok:true,challenge_id:ch.id,expires_in_seconds:600});
+  }
+  if(b.action==='recovery_verify'){
+   const id=String(b.challenge_id||''),otp=String(b.code||'').trim();
+   if(!/^[0-9]{6}$/.test(otp))return out(400,{ok:false,error:'INVALID_CODE'});
+   const {data:ch}=await sb.from('kinto_security_recovery_challenges_g19').select('*').eq('id',id).maybeSingle();
+   if(!ch||ch.requested_by_admin_id!==adminId||ch.consumed_at||new Date(ch.expires_at).getTime()<=Date.now())return out(400,{ok:false,error:'CHALLENGE_INVALID'});
+   if(Number(ch.attempts)>=5)return out(429,{ok:false,error:'CHALLENGE_LOCKED'});
+   if(await digest(otp+key)!==ch.code_hash){await sb.from('kinto_security_recovery_challenges_g19').update({attempts:Number(ch.attempts)+1}).eq('id',id);return out(400,{ok:false,error:'CODE_INVALID'});}
+   await sb.from('kinto_security_recovery_challenges_g19').update({consumed_at:new Date().toISOString()}).eq('id',id);
+   await sb.from('kinto_security_audit_g19').insert({event_type:'RECOVERY_VERIFIED',actor_admin_id:adminId,recovery_challenge_id:id});
+   return out(200,{ok:true,recovery_verified:true});
+  }
   if(b.action==='account_delete_request'){
    const accountId=String(b.account_id||'').trim(),accountType=String(b.account_type||'employee').trim();
    if(!accountId||!['employee','admin'].includes(accountType))return out(400,{ok:false,error:'INVALID_ACCOUNT'});
