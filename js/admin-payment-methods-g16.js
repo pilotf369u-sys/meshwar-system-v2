@@ -4,6 +4,7 @@ const root=()=>document.getElementById('g16PaymentMethods');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const token=()=>window.KintoAdminSessionV147?.read?.()?.token||'';
 let methods=[],busy=false;
+async function secure(action,payload){const sb=await window.ensureCustomerSupabase();const {data,error}=await sb.functions.invoke('kinto-payment-security-g16',{body:{action,session_token:token(),...payload}});if(error)throw error;if(!data?.ok)throw Error(data?.error||'تعذر التحقق الأمني.');return data;}
 // Bank identity is inferred locally from the provider name. No third-party logo API,
 // remote image requests or unverified official trademark claims.
 const bankIdentity=name=>{
@@ -41,7 +42,7 @@ function paint(data){
   info.innerHTML='<b>'+esc(m.label)+'</b> <small>('+esc(m.method_type==='manual'?'تحويل يدوي':'بوابة مستقبلية')+')</small><p>'+esc(m.provider)+(m.method_type==='manual'?' — '+esc(m.recipient_name||'')+' — '+esc(m.account_reference||''):'')+'</p><small>'+esc(m.is_enabled?'مفعّل':'متوقف')+'</small>';
   const actions=document.createElement('div');
   const edit=document.createElement('button');edit.type='button';edit.textContent='تعديل';edit.onclick=()=>fill(m);actions.append(edit);
-  const toggle=document.createElement('button');toggle.type='button';toggle.textContent=m.is_enabled?'إيقاف':'تفعيل';toggle.disabled=m.method_type==='gateway';toggle.title=m.method_type==='gateway'?'لا يمكن تفعيل بوابة قبل ربطها والتحقق منها':'';toggle.onclick=()=>change('toggle',{p_id:m.id,p_enabled:!m.is_enabled});actions.append(toggle);
+  const toggle=document.createElement('button');toggle.type='button';toggle.textContent=m.is_enabled?'إيقاف':'تفعيل';toggle.disabled=m.method_type==='gateway';toggle.title=m.method_type==='gateway'?'لا يمكن تفعيل بوابة قبل ربطها والتحقق منها':'';toggle.onclick=()=>{if(!m.is_enabled&&m.method_type==='manual'&&!m.destination_verified_at)verifyDestination(m);else change('toggle',{p_id:m.id,p_enabled:!m.is_enabled})};actions.append(toggle);
   const brand=document.createElement('div');brand.className='g16-bank-identity';brand.append(bankBadge(m.provider));const bankText=document.createElement('span');bankText.textContent=bankIdentity(m.provider).name;brand.append(bankText);info.prepend(brand);
   if(m.method_type==='manual'){
    const preview=document.createElement('button');preview.type='button';preview.textContent='معاينة رسالة العميل';preview.onclick=()=>{const out=document.getElementById('g16CustomerPreview');out.hidden=false;out.textContent=customerMessage(m);out.scrollIntoView({block:'nearest',behavior:'smooth'})};actions.append(preview);
@@ -65,6 +66,18 @@ function fields(){
  f.elements.accountReference.required=manual;
  document.getElementById('g16GatewayNote').hidden=manual;
 }
+async function verifyDestination(m,payload){
+ if(busy)return;busy=true;message('جارٍ إرسال رمز الحماية إلى البريد الأمني...');
+ try{
+  const p=payload||{label:m.label,provider:m.provider,recipient_name:m.recipient_name,account_reference:m.account_reference,instructions:m.instructions};
+  const req=await secure('request',{method_id:m?.id||null,payload:p});
+  const code=window.prompt('أرسلنا رمز حماية من 6 أرقام إلى البريد الأمني. أدخل الرمز خلال 10 دقائق:');
+  if(code===null){message('تم إلغاء التحقق. لم تتغير بيانات الحساب.');return}
+  await secure('verify',{challenge_id:req.challenge_id,code:String(code).trim()});
+  paint(await rpc());fill(null);message('تم التحقق من بيانات التحويل. الوسيلة بقيت متوقفة؛ فعّلها بعد مراجعة البيانات.');
+ }catch(e){message(e?.message||'تعذر إكمال التحقق الأمني.',true)}
+ finally{busy=false}
+}
 async function change(action,args){
  if(busy)return;busy=true;message('جارٍ الحفظ...');
  try{const data=await rpc(action,args);paint(data);message('تم الحفظ بنجاح.');if(action==='create'||action==='update')fill(null)}
@@ -86,7 +99,13 @@ window.addEventListener('DOMContentLoaded',()=>{
  f.addEventListener('submit',e=>{
   e.preventDefault();const x=f.elements;
   const args={p_label:x.methodLabel.value.trim(),p_provider:x.methodProvider.value.trim(),p_recipient_name:x.recipientName.value.trim(),p_account_reference:x.accountReference.value.trim(),p_instructions:x.instructions.value.trim()};
-  if(x.methodId.value)change('update',{...args,p_id:x.methodId.value});
+  if(x.methodType.value==='manual'){
+   const current=methods.find(m=>m.id===x.methodId.value);
+   if(!current)return verifyDestination(null,{label:args.p_label,provider:args.p_provider,recipient_name:args.p_recipient_name,account_reference:args.p_account_reference,instructions:args.p_instructions});
+   const sensitive=current.recipient_name!==args.p_recipient_name||current.account_reference!==args.p_account_reference;
+   if(sensitive)return verifyDestination(current,{label:args.p_label,provider:args.p_provider,recipient_name:args.p_recipient_name,account_reference:args.p_account_reference,instructions:args.p_instructions});
+   change('update',{...args,p_id:x.methodId.value});
+  }else if(x.methodId.value)change('update',{...args,p_id:x.methodId.value});
   else change('create',{...args,p_method_type:x.methodType.value});
  });
  fields();
