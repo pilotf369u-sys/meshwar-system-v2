@@ -9,7 +9,7 @@
     <link rel="shortcut icon" type="image/jpeg" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg">
     <style id="kintoFirstPaintV26">:root{color-scheme:dark;background-color:#063b32!important}html,body{min-height:100%;background-color:#063b32!important}#meshwarStoreTabs,.meshwar-store-tabs,[id*="StoreTabs"],[class*="store-tabs"],.nav-container{display:none!important;visibility:hidden!important}html:not(.kinto-ready) *,html:not(.kinto-ready) *::before,html:not(.kinto-ready) *::after{transition:none!important;animation:none!important}html.kinto-ready body>*{transition:none!important}.kinto-boot-logo{opacity:1!important;visibility:visible!important;object-fit:contain!important}.kinto-boot-logo--nav{width:48px;height:48px}.kinto-boot-logo--featured{width:96px;height:96px}.kinto-boot-logo--modal{width:64px;height:64px}html.kinto-logo-ready .kinto-boot-logo{opacity:1!important;visibility:visible!important}</style>
     <style id="kintoFeaturedStoreFirstPaintV106">#kintoFeaturedStoreSlot{box-sizing:border-box;width:min(1180px,calc(100% - 32px));min-height:176px;margin:24px auto;padding:22px 26px;display:grid;grid-template-columns:146px minmax(0,1fr);align-items:center;gap:26px;border-radius:24px;visibility:hidden;opacity:0}#kintoFeaturedStoreSlot .kinto-featured-logo-wrap{width:146px;height:120px}#kintoFeaturedStoreSlot .kinto-featured-copy{min-height:120px}@media(max-width:700px){#kintoFeaturedStoreSlot{width:calc(100% - 20px);grid-template-columns:1fr;gap:13px;padding:18px;text-align:center;min-height:300px}#kintoFeaturedStoreSlot .kinto-featured-logo-wrap{width:118px;height:94px;margin:auto}#kintoFeaturedStoreSlot .kinto-featured-copy{min-height:145px}}</style>
-    <style id="kintoVideoFirstPaintV27">#meshwarVideoFrame{box-sizing:border-box;width:100%;min-height:180px;aspect-ratio:16/5;background-color:#063b32!important;overflow:hidden}#meshwarPromoVideo{display:block;width:100%;height:100%;min-height:180px;aspect-ratio:inherit;background-color:#063b32!important;object-fit:cover}@media(min-width:640px){#meshwarVideoFrame{aspect-ratio:16/6}}</style>
+    <style id="kintoVideoFirstPaintV29">#meshwarVideoFrame{position:relative;box-sizing:border-box;width:100%;height:clamp(180px,31.25vw,260px);min-height:0;max-height:260px;background-color:#063b32!important;overflow:hidden;contain:layout paint}#meshwarPromoVideo{position:absolute;inset:0;display:block;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;background-color:#063b32!important;object-fit:cover}@media (orientation:landscape) and (max-height:600px) and (pointer:coarse){#meshwarVideoFrame{height:min(42dvh,180px)!important;min-height:0!important;max-height:180px!important}.mw-home-hero-grid{grid-template-columns:minmax(0,1fr)!important;padding:16px!important;gap:12px!important}.kinto-hero-copy-shell{min-height:0!important}#kintoHomeHeader .top-inner{padding:6px 9px!important}#kintoHomeHeader .brand-copy{display:none!important}#kintoHomeHeader .main-nav{display:none!important}}</style>
     <link rel="preload" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" as="image" fetchpriority="high">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>منصة KINTO - دليل المتاجر والشحن الدولي</title>
@@ -63,15 +63,7 @@
 })();
     </script>
     <link rel="manifest" href="manifest.json">
-    <script>
-    /* KINTO PWA v275: inline registration so external PWA analyzers can discover the worker from HTML. */
-    if ('serviceWorker' in navigator && window.isSecureContext) {
-      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-        .catch(function (error) {
-          console.warn('KINTO PWA service worker registration skipped:', error);
-        });
-    }
-    </script>
+    <script src="js/kinto-pwa-v275.js?v=20261006-app-sync" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/site-identity-v16.css?v=20260828-v27">
     <link rel="stylesheet" href="css/site-identity-v17.css?v=20260828-v27">
@@ -208,9 +200,9 @@
              muted
              loop
              playsinline
-             controls
+             webkit-playsinline
              disablepictureinpicture
-             disableremoteplayback
+             controlslist="nofullscreen noremoteplayback nodownload"
              preload="metadata">
         <source src="videos/promo.mp4" type="video/mp4">
       </video>
@@ -223,9 +215,7 @@
 
       <button id="meshwarPromoPlayBtn"
               type="button"
-              class="hidden"
-              aria-hidden="true"
-              tabindex="-1">⏯ تشغيل / إيقاف</button>
+              aria-label="تشغيل الفيديو">▶ تشغيل الفيديو</button>
 
     </div>
 
@@ -372,17 +362,9 @@
         window.KintoSupabaseReady = ensureMainSupabase();
 
         function getStoredCustomerId() {
-            const direct = String(localStorage.getItem('meshwar_customer_id') || '').trim();
-            if (direct) return direct;
-            const viewing = String(localStorage.getItem('viewingCustomerId') || '').trim();
-            if (viewing) return viewing;
-            try {
-                const user = JSON.parse(localStorage.getItem('loggedInUser') || '{}');
-                if (user && user.id != null) return String(user.id).trim();
-            } catch (e) {
-                console.warn('Invalid customer session object:', e);
-            }
-            return '';
+            // V291 SECURITY: browser storage is navigation/cache state only, never identity.
+            // The only trusted customer id on the home page comes from the verified V150 session RPC.
+            return String(currentHomeCustomer?.id || '').trim();
         }
 
         // INDEX_AUTH_HEADER_RUNTIME_LOCK_V53 — keep one canonical auth zone and rebuild it from the verified state.
@@ -434,31 +416,21 @@
 
         async function restoreCustomerSession() {
             ensureCustomerAuthInHeader();
-            const authLink = document.getElementById('authLink');
-            const authText = document.getElementById('authText');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const customerId = getStoredCustomerId();
-            if (!customerId) {
-                currentHomeCustomer = null;
-                document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
-                renderCustomerAuthState(false, null);
-                window.KintoPublicCustomerNavigationV157?.sync?.();
-                return null;
-            }
             try {
                 const supabase = await ensureMainSupabase();
-                const { data: customer, error } = await supabase.from('customers').select('id,name,phone,code,country,secondary_phone').eq('id', customerId).maybeSingle();
-                if (error) throw error;
-                if (!customer) throw new Error('العميل غير موجود');
+                const customer = await window.KintoCustomerSessionV150?.identity?.(supabase);
+                if (!customer?.id) throw new Error('CUSTOMER_SESSION_INVALID');
                 currentHomeCustomer = customer;
+                // Compatibility mirrors only after server-side session verification.
                 localStorage.setItem('meshwar_customer_id', String(customer.id));
                 localStorage.setItem('viewingCustomerId', String(customer.id));
                 localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, name: customer.name || '', code: customer.code || '', country: customer.country || '', secondary_phone: customer.secondary_phone || '' }));
                 document.documentElement.dataset.kintoCustomerLoggedIn = 'true';
                 renderCustomerAuthState(true, customer);
+                window.KintoPublicCustomerNavigationV157?.sync?.();
+                window.KintoMobileAppNavV319?.sync?.();
                 return customer;
             } catch (e) {
-                console.error('Customer session restore failed:', e);
                 currentHomeCustomer = null;
                 document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
                 localStorage.removeItem('meshwar_customer_id');
@@ -469,7 +441,6 @@
                 return null;
             }
         }
-
         document.addEventListener('DOMContentLoaded',()=>{
             ensureCustomerAuthInHeader();
         },{once:true});
@@ -479,7 +450,13 @@
            
         });
 
-        function logout() {
+        async function logout() {
+            try {
+                const supabase = await ensureMainSupabase();
+                await window.KintoCustomerSessionV150?.logout?.(supabase);
+            } catch (e) {
+                console.warn('Customer session revoke skipped:', e);
+            }
             currentHomeCustomer = null;
             document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
             localStorage.removeItem('meshwar_customer_id');
@@ -505,12 +482,16 @@
         }
 
         async function submitOrder() {
-            const customerId = String(currentHomeCustomer?.id || getStoredCustomerId() || '').trim();
+            const supabase = await ensureMainSupabase();
+            const verifiedCustomer = await window.KintoCustomerSessionV150?.identity?.(supabase);
+            const customerId = String(verifiedCustomer?.id || '').trim();
             if (!customerId) {
-                alert('الرجاء تسجيل الدخول أولاً');
+                currentHomeCustomer = null;
+                alert('انتهت جلسة الدخول. الرجاء تسجيل الدخول مجدداً.');
                 window.location.href = 'login.html';
                 return;
             }
+            currentHomeCustomer = verifiedCustomer;
 
             const urlField = document.getElementById('pUrl');
             const colorField = document.getElementById('pColor');
@@ -526,19 +507,7 @@
             if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'جاري حفظ الطلب...'; }
 
             try {
-                const supabase = await ensureMainSupabase();
-                const { data: customer, error: customerError } = await supabase
-                    .from('customers')
-                    .select('id,name,phone')
-                    .eq('id', customerId)
-                    .maybeSingle();
-                if (customerError) {
-                    console.error('Supabase customer lookup failed:', customerError);
-                    throw customerError;
-                }
-                if (!customer) throw new Error('العميل غير موجود في Supabase');
-                currentHomeCustomer = customer;
-
+                const customer = verifiedCustomer;
                 const orderCode = await generateMainOrderCode(supabase);
                 const payload = {
                     order_code: orderCode,
@@ -623,9 +592,11 @@ document.getElementById('backToLocalStoresBtn')?.addEventListener('click',showLo
 window.showLocalStoreList=showLocalStoreList;
 function renderLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');if(!grid)return;const rows=localPublicStores.filter(s=>localActiveSpecialty==='الكل'||String(s.specialty||'شامل')===localActiveSpecialty);grid.style.display='grid';grid.innerHTML=rows.map(s=>`<article class="local-public-card"><img class="local-public-logo" src="${localEsc(s.logo_url||localPlaceholder)}" onerror="this.onerror=null;this.src='${localEsc(localPlaceholder)}'" alt="${localEsc(s.store_name||'متجر')}"><div class="local-public-name">${localEsc(s.store_name||'متجر محلي')}</div><div class="local-public-meta">${localEsc(s.specialty||s.store_type||'شامل')}</div><div class="local-public-location"><span>${localCountryFlag(s.country)}</span><span>${localEsc(s.governorate||s.country||'غير محدد')}</span></div><div class="local-public-chip">${localEsc(s.default_currency||'')} · متجر نشط</div><button type="button" class="local-public-open" style="pointer-events:auto;cursor:pointer" onclick="openStore('${String(s.store_url||'').replace(/'/g,"\'")}', '${String(s.id||'').replace(/'/g,"\'")}')">✨ فتح المتجر</button></article>`).join('')||'<div class="local-empty">لا توجد متاجر ضمن هذا التخصص حالياً.</div>'}
 function renderLocalSpecialtyFilters(){const box=document.getElementById('localSpecialtyFilters');if(!box)return;const specs=['الكل',...new Set(localPublicStores.map(s=>String(s.specialty||'شامل').trim()).filter(Boolean))];box.replaceChildren(...specs.map(x=>{const label=String(x||'').trim()||'شامل',b=document.createElement('button'),t=document.createElement('span');b.type='button';b.className='local-filter-btn '+(label===localActiveSpecialty?'active':'');b.dataset.specialty=label;b.setAttribute('aria-label',label);b.style.setProperty('color','#ffffff','important');b.style.setProperty('-webkit-text-fill-color','#ffffff','important');b.style.setProperty('opacity','1','important');b.style.setProperty('visibility','visible','important');t.textContent=label;t.style.setProperty('display','inline','important');t.style.setProperty('color','#ffffff','important');t.style.setProperty('-webkit-text-fill-color','#ffffff','important');t.style.setProperty('opacity','1','important');t.style.setProperty('visibility','visible','important');b.replaceChildren(t);b.addEventListener('click',()=>{localActiveSpecialty=label;renderLocalSpecialtyFilters();renderLocalPublicStores()});return b}));box.hidden=false}
-async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false}).range(0,999);if(error)throw error;localPublicStores=data||[];window.KintoLocalPublicStores=localPublicStores;renderLocalSpecialtyFilters();renderLocalPublicStores();window.dispatchEvent(new CustomEvent('kinto:local-stores-data',{detail:{stores:localPublicStores}}));const storeId=new URLSearchParams(window.location.search).get('storeId');if(storeId){await openStore('',storeId)}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class="local-empty">تعذر تحميل المتاجر المحلية حالياً.</div>'}}
+async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false}).range(0,999);if(error)throw error;localPublicStores=data||[];window.KintoLocalPublicStores=localPublicStores;renderLocalSpecialtyFilters();renderLocalPublicStores();window.dispatchEvent(new CustomEvent('kinto:local-stores-data',{detail:{stores:localPublicStores}}));const storeId=new URLSearchParams(window.location.search).get('storeId');if(storeId){await openStore('',storeId)}}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class="local-empty">تعذر تحميل المتاجر المحلية حالياً.</div>'}}
 loadLocalPublicStores();
 </script>
+
+
 
 <script>/* KINTO_PROMO_VIDEO_CONTROLS */
 (function(){
@@ -633,34 +604,32 @@ loadLocalPublicStores();
     const sb = document.getElementById('meshwarPromoSoundBtn');
     const pb = document.getElementById('meshwarPromoPlayBtn');
 
-    if (v) {
-        v.autoplay = false;
-        v.removeAttribute('autoplay');
-        v.pause();
-        try { v.currentTime = 0; } catch (_) {}
-        v.disablePictureInPicture = true;
-        v.disableRemotePlayback = true;
-        v.addEventListener('loadedmetadata', () => {
-            v.pause();
-            try { v.currentTime = 0; } catch (_) {}
-        }, { once: true });
-        v.addEventListener('enterpictureinpicture', () => {
-            document.exitPictureInPicture?.().catch(() => {});
-        });
-    }
     sb?.addEventListener('click', () => {
         if (!v) return;
         v.muted = !v.muted;
         sb.textContent = v.muted ? '🔇 تشغيل الصوت' : '🔊 كتم الصوت';
     });
 
+    if (v) {
+        v.disablePictureInPicture = true;
+        v.setAttribute('playsinline', '');
+        v.setAttribute('webkit-playsinline', '');
+        v.addEventListener('play', () => { if (pb) pb.textContent = '⏸ إيقاف الفيديو'; });
+        v.addEventListener('pause', () => { if (pb) pb.textContent = '▶ تشغيل الفيديو'; });
+        v.addEventListener('webkitbeginfullscreen', () => { v.pause(); }, true);
+        v.addEventListener('enterpictureinpicture', () => {
+            v.pause();
+            document.exitPictureInPicture?.().catch(() => {});
+        });
+    }
     pb?.addEventListener('click', () => {
         if (!v) return;
-        v.paused ? v.play().catch(() => {}) : v.pause();
+        if (v.paused) v.play().catch(() => {});
+        else v.pause();
     });
 })();
 </script>
-<script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>
+<script src="js/local-store-pricing.js?v=20260927-video-pause-v277"></script>
 <script type="module" src="js/local-store-card-v3.js?v=20260829-final-v33"></script>
 <script src="js/local-store-product-details-v4.js?v=20260829-direct-v31bb" data-mw-product-details-v4></script>
 <link rel="stylesheet" href="css/hero-v14-emerald-glass.css?v=20260828-v15-brand-hero"><script src="js/index-featured-campaigns-v1.js?v=20260828-v28-kinto"></script>
@@ -668,13 +637,15 @@ loadLocalPublicStores();
     <script src="js/local-products-pagination-v60.js?v=20260831"></script>
     <script src="js/product-deeplink-v56.js?v=20260831"></script>
 <link rel="stylesheet" href="css/customer-favorites-nav-v148.css?v=20260912-v148">
-<link rel="stylesheet" href="css/customer-home-mobile-v198.css?v=20260927-app-hero-reserve-v288"><script src="js/customer-favorites-nav-v148.js?v=20260912-v148"></script>
-<script src="js/customer-session-v150.js?v=20260922-v150"></script>
+<link rel="stylesheet" href="css/customer-home-mobile-v198.css?v=20260927-hero-reserve-v288"><script src="js/customer-favorites-nav-v148.js?v=20260912-v148"></script>
+<script src="js/customer-session-v150.js?v=20260928-v318"></script>
 <script src="js/public-customer-navigation-v157.js?v=20260925-v214" defer></script>
 
 <style id="kintoMobileAppNavV222">
-@media (min-width:1025px){#kintoMobileAppNav{display:none!important}}
-@media (max-width:1024px){
+@media (min-width:769px){#kintoMobileAppNav{display:none!important}}
+@media (max-width:768px), (orientation:landscape) and (max-height:600px) and (pointer:coarse){
+  #kintoHomeHeader{display:none!important}
+  #kintoMobileAppNav{display:grid!important}
   body{padding-bottom:86px!important}
   #kintoHomeHeader{display:none!important}
   .fixed-order-btn{bottom:92px!important;left:12px!important;z-index:2147482000!important}
@@ -712,9 +683,9 @@ body>.kinto-local-cart-backdrop,
 body>#kintoLocalCartDrawer{display:none!important}
 </style>
 <script src="js/local-cart-v93.js?v=20260909-v125"></script>\n<script id="kintoMobileAppNavRuntimeV222">
-(()=>{const stores=document.getElementById('kintoMobileStores'),storesMenu=document.getElementById('kintoMobileStoresMenu');stores?.addEventListener('click',()=>storesMenu?.classList.toggle('open'));document.addEventListener('click',e=>{if(storesMenu&&!storesMenu.contains(e.target)&&!stores?.contains(e.target))storesMenu.classList.remove('open')});const sync=()=>{const id=typeof window.getStoredCustomerId==='function'?String(window.getStoredCustomerId()||'').trim():String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();const chat=document.getElementById('kintoMobileChat'),favorites=document.getElementById('kintoMobileFavorites'),account=document.getElementById('kintoMobileAccount'),cart=document.getElementById('kintoMobileCart'),orders=document.getElementById('kintoMobileOrders');if(!chat||!favorites||!account||!cart||!orders)return;const dash=tab=>'dashboard.html?customerId='+encodeURIComponent(id)+'&tab='+encodeURIComponent(tab);chat.href=id?dash('chatHelp'):'login.html';favorites.href=id?dash('favorites'):'login.html';account.href=id?'dashboard.html?customerId='+encodeURIComponent(id)+'&openAccount=1':'login.html';cart.href=id?dash('drafts'):'login.html';orders.href=id?dash('activeOrders'):'login.html';const badge=document.getElementById('kintoMobileCartBadge'),count=Number(window.KintoLocalCartV93?.getCount?.()||0);if(badge){badge.textContent=count>99?'99+':String(count);badge.classList.toggle('show',count>0)}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();window.addEventListener('storage',sync);window.addEventListener('kinto:local-cart-change',sync);setTimeout(sync,0);setTimeout(sync,800);
+(()=>{const stores=document.getElementById('kintoMobileStores'),storesMenu=document.getElementById('kintoMobileStoresMenu');stores?.addEventListener('click',()=>storesMenu?.classList.toggle('open'));document.addEventListener('click',e=>{if(storesMenu&&!storesMenu.contains(e.target)&&!stores?.contains(e.target))storesMenu.classList.remove('open')});const sync=()=>{const id=typeof window.getStoredCustomerId==='function'?String(window.getStoredCustomerId()||'').trim():String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim(),hasSession=Boolean(window.KintoCustomerSessionV150?.read?.()),loggedIn=Boolean(id||hasSession);const chat=document.getElementById('kintoMobileChat'),favorites=document.getElementById('kintoMobileFavorites'),account=document.getElementById('kintoMobileAccount'),cart=document.getElementById('kintoMobileCart'),orders=document.getElementById('kintoMobileOrders');if(!chat||!favorites||!account||!cart||!orders)return;const dash=tab=>'dashboard.html?'+new URLSearchParams({...((id)?{customerId:id}:{}),tab}).toString();chat.href=loggedIn?dash('chatHelp'):'login.html';favorites.href=loggedIn?dash('favorites'):'login.html';account.href=loggedIn?'dashboard.html?'+new URLSearchParams({...((id)?{customerId:id}:{}),openAccount:'1'}).toString():'login.html';cart.href=loggedIn?dash('drafts'):'login.html';orders.href=loggedIn?dash('activeOrders'):'login.html';const badge=document.getElementById('kintoMobileCartBadge'),count=Number(window.KintoLocalCartV93?.getCount?.()||0);if(badge){badge.textContent=count>99?'99+':String(count);badge.classList.toggle('show',count>0)}};window.KintoMobileAppNavV319=Object.freeze({sync});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();window.addEventListener('storage',sync);window.addEventListener('kinto:local-cart-change',sync);setTimeout(sync,0);setTimeout(sync,800);
 async function syncChatUnread(){const id=typeof window.getStoredCustomerId==='function'?String(window.getStoredCustomerId()||'').trim():String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim(),badge=document.getElementById('kintoMobileChatBadge');if(!badge||!id)return;try{const sb=await window.ensureMainSupabase();let r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('read_by_customer',false).in('sender_type',['employee','admin']);if(r.error&&/read_by_customer/i.test(String(r.error.message||'')))r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('is_read',false).in('sender_type',['employee','admin']);if(r.error)throw r.error;const n=Number(r.count||0);badge.textContent=n>99?'99+':String(n);badge.classList.toggle('show',n>0)}catch(e){console.warn('Home chat unread count error:',e);badge.classList.remove('show')}}syncChatUnread();setTimeout(syncChatUnread,800)})();
 </script>
-<script src="js/kinto-connectivity-v275.js?v=20260926-v275" defer></script>
+<script src="js/kinto-connectivity-v275.js?v=20261006-app-sync" defer></script>
 </body>
 </html>

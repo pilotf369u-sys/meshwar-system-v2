@@ -2,7 +2,7 @@
  * Only the dedicated offline fallback and KINTO logo are cached.
  * Commerce, auth, customer, store and API responses are never cached.
  */
-const VERSION='kinto-pwa-v275-offline-fallback-1';
+const VERSION='kinto-pwa-v275-offline-fallback-20261006';
 const OFFLINE='/offline.html';
 const OFFLINE_ASSETS=[OFFLINE,'/images/meshwar-logo.png'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{

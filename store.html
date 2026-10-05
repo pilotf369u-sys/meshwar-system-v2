@@ -37,7 +37,7 @@
     .store-state{padding:8px 0;border:0;border-radius:0;background:transparent;text-align:center;color:#d7e4e0}
     @media(max-width:640px){#mwGlobalStoreSearch{padding:9px;border-radius:12px}#mwGlobalStoreSearch button{padding:10px 11px}#mwGlobalStoreSearch input{font-size:13px}#mwCategoryShell{border-radius:12px;padding:8px;margin-inline:-2px}#mwCategoryShell button{font-size:13px;padding:8px 12px}}
   </style>
-</head>
+<style id="kintoCampaignStorePromoV406">#kintoStoreCampaignPromo{position:relative;overflow:hidden;margin:10px 0 0;padding:8px 12px;border:1px solid rgba(244,196,72,.62);border-radius:11px;background:linear-gradient(110deg,#092d24,#15503c,#092d24);color:#ffe28a;font-size:12px;font-weight:900;text-align:center;box-shadow:0 5px 16px rgba(0,0,0,.16)}#kintoStoreCampaignPromo:after{content:"";position:absolute;inset:-35% auto -35% -35%;width:22%;transform:skewX(-18deg);background:linear-gradient(90deg,transparent,rgba(255,230,143,.4),transparent);animation:kintoStoreCampaignShineV406 3.4s ease-in-out infinite;pointer-events:none}@keyframes kintoStoreCampaignShineV406{0%,60%{left:-35%}100%{left:125%}}@media(prefers-reduced-motion:reduce){#kintoStoreCampaignPromo:after{animation:none}}</style></head>
 <body>
   <main class="store-shell">
     <header id="kintoStoreHeader" class="store-nav" aria-label="ترويسة متجر KINTO">
@@ -66,7 +66,7 @@
       <div class="store-hero-identity">
         <img id="localStoreLogo" class="store-hero-logo" alt="شعار المتجر" hidden>
         <div class="store-hero-copy"><h1 id="localStoreProductsTitle" class="store-title">جاري فتح المتجر...</h1>
-        <p id="localStoreProductsMeta" class="store-meta">يتم التحقق من معرف المتجر وتحميل بياناته مباشرة.</p></div>
+        <p id="localStoreProductsMeta" class="store-meta">يتم التحقق من معرف المتجر وتحميل بياناته مباشرة.</p><div id="kintoStoreCampaignPromo" hidden></div></div>
       </div>
     </section>
 
@@ -102,7 +102,7 @@
       grid.innerHTML='<div class="store-state">تعذر فتح المتجر بدون storeId.</div>';
       return;
     }
-    window.__KINTO_STORE_ID__=id;
+    window.__KINTO_STORE_ID__=id;function loadCampaignPromo(){fetch(`${SUPABASE_URL}/rest/v1/rpc/active_kinto_campaigns_v400`,{method:'POST',cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},body:'{}'}).then(r=>r.ok?r.json():[]).then(rows=>{const c=(Array.isArray(rows)?rows:[]).find(x=>Array.isArray(x.store_ids)&&x.store_ids.map(String).includes(id));const el=document.getElementById('kintoStoreCampaignPromo');if(!el||!c)return;el.textContent=String(c.display_text||'').trim()||('اشتري واربح '+Number(c.reward_amount||0).toLocaleString('en-US')+' '+String(c.currency||'IQD'));el.hidden=false}).catch(e=>console.warn('Campaign promo skipped',e))}loadCampaignPromo();
     fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,logo_url,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{
       cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json'}
     }).then(r=>{if(!r.ok)throw new Error(`Store REST ${r.status}`);return r.json()}).then(rows=>{
@@ -175,6 +175,7 @@
 <script id="kintoStoreMobileAppNavRuntimeV252">
 (()=>{const stores=document.getElementById('kintoMobileStores'),menu=document.getElementById('kintoMobileStoresMenu');stores?.addEventListener('click',()=>menu?.classList.toggle('open'));document.addEventListener('click',e=>{if(menu&&!menu.contains(e.target)&&!stores?.contains(e.target))menu.classList.remove('open')});const customerId=()=>String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();const sync=()=>{const id=customerId(),chat=document.getElementById('kintoMobileChat'),favorites=document.getElementById('kintoMobileFavorites'),account=document.getElementById('kintoMobileAccount'),cart=document.getElementById('kintoMobileCart'),orders=document.getElementById('kintoMobileOrders');if(!chat||!favorites||!account||!cart||!orders)return;const dash=tab=>'dashboard.html?customerId='+encodeURIComponent(id)+'&tab='+encodeURIComponent(tab);chat.href=id?dash('chatHelp'):'login.html';favorites.href=id?dash('favorites'):'login.html';account.href=id?'dashboard.html?customerId='+encodeURIComponent(id)+'&openAccount=1':'login.html';cart.href=id?dash('drafts'):'login.html';orders.href=id?dash('activeOrders'):'login.html';const badge=document.getElementById('kintoMobileCartBadge'),count=Number(window.KintoLocalCartV93?.getCount?.()||0);if(badge){badge.textContent=count>99?'99+':String(count);badge.classList.toggle('show',count>0)}};async function unread(){const id=customerId(),badge=document.getElementById('kintoMobileChatBadge');if(!id||!badge)return;try{const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'),sb=window.KintoSupabase||(window.KintoSupabase=mod.createClient('https://hsmmbloouskqdnptiiad.supabase.co','sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH'));let r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('read_by_customer',false).in('sender_type',['employee','admin']);if(r.error&&/read_by_customer/i.test(String(r.error.message||'')))r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('is_read',false).in('sender_type',['employee','admin']);if(r.error)throw r.error;const n=Number(r.count||0);badge.textContent=n>99?'99+':String(n);badge.classList.toggle('show',n>0)}catch(e){console.warn('Store chat unread count error:',e)}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();window.addEventListener('storage',sync);window.addEventListener('kinto:local-cart-change',sync);setTimeout(sync,800);unread();setTimeout(unread,800)})();
 </script>
-<script src="js/kinto-connectivity-v275.js?v=20260926-v275" defer></script>
+<script defer src="js/kinto-deals-customer-g7.js?v=20261005-g20"></script>
+<script src="js/kinto-connectivity-v275.js?v=20261006-app-sync" defer></script>
 </body>
 </html>

@@ -1,0 +1,14 @@
+import {readFileSync} from 'node:fs';import assert from 'node:assert/strict';
+const s=readFileSync('supabase/migrations/20261002_kinto_deals_v1_g5g_atomic_gift_checkout_off.sql','utf8');
+for(const x of ['begin;','commit;','DEALS_GIFT_SNAPSHOT_MISSING','DEALS_GIFT_SNAPSHOT_INVALID','DEALS_UNEXPECTED_GIFT','jsonb_agg(x)','gift_line','gift_fulfilled',"'app.kinto_deals_gift_campaign_id'","'app.kinto_deals_verified_customer_id'",'checkout_independent_vendor_orders_v101','kinto_deals_v1_reserve_canonical_order_g5','DEALS_IDEMPOTENCY_KEY_REUSED'])assert.ok(s.includes(x),x);
+assert.ok(s.indexOf('create or replace function private.kinto_deals_v1_reserve_canonical_order_g5')<s.indexOf('create or replace function public.kinto_deals_v1_checkout_no_gift_g5d'));
+assert.ok(s.indexOf("perform set_config('app.kinto_deals_gift_campaign_id','',true)")>s.indexOf('v_checkout:=public.checkout_independent_vendor_orders_v101'));
+assert.ok(!/create\s+trigger/i.test(s));assert.ok(!/update\s+public\.orders/i.test(s));assert.ok(!/set\s+enabled\s*=\s*true/i.test(s));
+const bundle=readFileSync('supabase/migrations/20261002_kinto_deals_v1_g5d_to_g5g_ONE_RUN_OFF.sql','utf8');
+assert.equal((bundle.match(/^begin;$/gm)||[]).length,1,'single bundle transaction');
+assert.equal((bundle.match(/^commit;$/gm)||[]).length,1,'single bundle commit');
+for(const part of ['SECTION g5d_','SECTION g5e_','SECTION g5f_','SECTION g5g_'])assert.ok(bundle.includes(part),part);
+assert.ok(bundle.indexOf('SECTION g5d_')<bundle.indexOf('SECTION g5e_'));
+assert.ok(bundle.indexOf('SECTION g5e_')<bundle.indexOf('SECTION g5f_'));
+assert.ok(bundle.indexOf('SECTION g5f_')<bundle.indexOf('SECTION g5g_'));
+console.log('G5G and one-run deployment static contract PASS (27 checks)');

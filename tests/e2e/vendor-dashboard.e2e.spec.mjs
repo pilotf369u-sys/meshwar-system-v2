@@ -98,6 +98,25 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await vendor.locator('[data-mw-invoice]').first().click();const invoice=await frameWindow(page,()=>({html:window.__E2E_INVOICE_HTML,closed:window.__E2E_INVOICE_CLOSED}));expect(invoice.closed).toBe(true);expect(invoice.html).toContain('contenteditable="true"');expect(invoice.html).toContain('طباعة / حفظ PDF');expect(invoice.html).toContain('MW-566');
   });
 
+  test('vendor tab regression: every dynamic tab can enter shipping with one active panel',async({page})=>{
+    const vendor=await openVendor(page);
+    const sources=['orders','finance','products','categories','promotions','pl','rewards'];
+    await expect(vendor.locator('#vendorTabBtn-shipping')).toBeAttached();
+    for(const source of sources){
+      const sourceBtn=vendor.locator('#vendorTabBtn-'+source);
+      await expect(sourceBtn, 'missing vendor tab: '+source).toBeAttached();
+      await sourceBtn.click();
+      await expect(vendor.locator('#vendorTab-'+source)).toHaveClass(/active/);
+      await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);
+      await vendor.locator('#vendorTabBtn-shipping').click();
+      await expect(vendor.locator('#vendorTab-shipping')).toHaveClass(/active/);
+      await expect(vendor.locator('#vendorTabBtn-shipping')).toHaveClass(/active/);
+      await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);
+      await expect(vendor.locator('.vendor-main-tab.active')).toHaveCount(1);
+      await expect(vendor.locator('#vendorTab-'+source)).not.toHaveClass(/active/);
+    }
+  });
+
   test('UI: real categories pagination, single active tab and theme consistency',async({page})=>{
     const vendor=await openVendor(page);await vendor.locator('#vendorTabBtn-categories').click();await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);await expect(vendor.locator('#vendorTab-categories')).toHaveClass(/active/);await expect(vendor.locator('#mwCatList .mw-cat-group')).toHaveCount(21);await expect(vendor.locator('#mwVendorPager-categories [data-pager-info]')).toContainText('1–10 من 21');await expect(vendor.locator('#mwCatList .mw-cat-group:not(.mw-page-hidden)')).toHaveCount(10);await vendor.locator('#mwVendorPager-categories [data-page-action="next"]').click();await expect(vendor.locator('#mwVendorPager-categories [data-pager-info]')).toContainText('11–20 من 21');
     await vendor.locator('#vendorTabBtn-orders').click();await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);await expect(vendor.locator('#vendorTab-orders')).toHaveClass(/active/);await expect(vendor.locator('#vendorTab-categories')).not.toHaveClass(/active/);
