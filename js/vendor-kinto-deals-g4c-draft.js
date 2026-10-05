@@ -27,13 +27,15 @@ const renderGiftResults=()=>{
   button.addEventListener('click',()=>{state.gift=state.gift===p.id?null:p.id;renderSelected();if(state.gift)setResultsVisible('gift',false)});row.append(button);box.append(row);
  }
 };
-const optionLabel={color:'اللون',size:'المقاس',volume:'الحجم'};\nconst renderSelected=()=>{
+const optionLabel={color:'اللون',size:'المقاس',volume:'الحجم'};
+const renderSelected=()=>{
  const box=$('kdSelected');box.replaceChildren();
  for(const p of state.selected.values()){
   const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-2 text-xs');
   if(p.image_url){const img=el('img');img.src=p.image_url;img.alt=p.product_name||'';img.loading='lazy';img.className='h-12 w-12 shrink-0 rounded-lg object-contain bg-white/5';row.append(img)}
   const info=el('span',(p.product_name||'منتج')+' | '+(p.barcode||'—')+' | '+(p.base_price??'—')+' '+(p.currency||''),'min-w-0 flex-1 break-words');row.append(info);
-  const frozen=state.selectedOptions.get(p.id)||{};const specs=Object.entries(frozen).filter(([,v])=>v).map(([k,v])=>(optionLabel[k]||k)+': '+v).join(' · ');if(specs)row.append(el('small',specs,'text-amber-200'));\n  const b=el('button','إزالة','shrink-0 rounded-lg border border-rose-300/40 px-2 py-1 text-rose-200');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);state.selectedOptions.delete(p.id);renderSelected()});row.append(b);box.append(row);
+  const frozen=state.selectedOptions.get(p.id)||{};const specs=Object.entries(frozen).filter(([,v])=>v).map(([k,v])=>(optionLabel[k]||k)+': '+v).join(' · ');if(specs)row.append(el('small',specs,'text-amber-200'));
+  const b=el('button','إزالة','shrink-0 rounded-lg border border-rose-300/40 px-2 py-1 text-rose-200');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);state.selectedOptions.delete(p.id);renderSelected()});row.append(b);box.append(row);
  }
  $('kdSelectedCount').textContent=String(state.selected.size);
  if(state.gift&&state.selected.has(state.gift))state.gift=null;
@@ -94,7 +96,8 @@ async function search(){
    const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 p-2 text-xs');
    if(p.image_url){const img=el('img');img.src=p.image_url;img.alt='';img.loading='lazy';img.className='h-10 w-10 rounded-lg object-contain';row.append(img)}
    const info=el('span',p.product_name+' | '+(p.barcode||'—')+' | '+p.base_price+' '+(p.currency||''),'flex-1');row.append(info);
-   await attachProductOptionControls(row,p);\n   const b=el('button',state.selected.has(p.id)?'محدد':'إضافة','rounded-lg border border-amber-400/40 px-3 py-2');b.type='button';
+   await attachProductOptionControls(row,p);
+   const b=el('button',state.selected.has(p.id)?'محدد':'إضافة','rounded-lg border border-amber-400/40 px-3 py-2');b.type='button';
    b.addEventListener('click',async()=>{if(state.selected.has(p.id)){state.selected.delete(p.id);state.selectedOptions.delete(p.id)}else if(state.selected.size<50){const required=[...row.querySelectorAll('select[data-option]')];if(required.some(x=>!x.value))return setMsg('اختر مواصفات المنتج أولاً ثم اضغط إضافة.',true);state.selectedOptions.set(p.id,Object.fromEntries(required.map(x=>[x.dataset.option,x.value])));state.selected.set(p.id,p);if(state.gift===p.id)state.gift=null}else return setMsg('الحد الأقصى 50 منتجاً.',true);renderSelected();b.textContent=state.selected.has(p.id)?'محدد':'إضافة';/* G20: keep product results open for fast multi-select. */});row.append(b);box.append(row);
   }
   renderSelected();setResultsVisible('paid',true);setMsg('نتائج البحث من منتجات متجرك فقط. اختر المنتجات المدفوعة والهدية بشكل منفصل.');
@@ -219,7 +222,9 @@ async function save(){
    max_total_redemptions:$('kdTotal').value?Number($('kdTotal').value):null,
    terms_snapshot:state.termsSnapshot,product_ids:[...state.selected.keys()]};
   const data=await rpc('kinto_deals_v1_vendor_save_draft_g4',{p_campaign_id:state.campaignId,p_expected_updated_at:state.updatedAt,p_draft:draft});
-  state.campaignId=data.campaign_id;state.updatedAt=data.updated_at;\n  const productOptions=Object.fromEntries([...state.selected.keys()].map(id=>[id,state.selectedOptions.get(id)||{}]));\n  await rpc('kinto_deals_v1_vendor_set_product_options_g20',{p_campaign_id:state.campaignId,p_product_options:productOptions});
+  state.campaignId=data.campaign_id;state.updatedAt=data.updated_at;
+  const productOptions=Object.fromEntries([...state.selected.keys()].map(id=>[id,state.selectedOptions.get(id)||{}]));
+  await rpc('kinto_deals_v1_vendor_set_product_options_g20',{p_campaign_id:state.campaignId,p_product_options:productOptions});
   if($('kdAdImage')?.files?.length&&!adImageUploaded){
    setMsg('تم حفظ المسودة؛ جاري تجهيز ورفع الصورة تلقائياً...');
    const uploaded=await uploadAdImage(true);
