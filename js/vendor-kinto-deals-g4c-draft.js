@@ -92,7 +92,7 @@ async function search(){
   const data=await rpc('kinto_deals_v1_vendor_products_g4',{p_search:$('kdSearch').value.trim(),p_limit:50});
   state.results=data.items||[];
   const optionRows=state.results.length?await rpc('kinto_deals_v1_vendor_product_options_g20',{p_product_ids:state.results.map(p=>p.id)}):[];
-  const optionMap=new Map((optionRows||[]).map(r=>[r.product_id,r.options||{}]));
+  const optionMap=new Map((optionRows||[]).map(r=>[r.id,r.options||{}]));
   for(const p of state.results)state.catalog.set(p.id,p);
   for(const p of state.results){
    const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 p-2 text-xs');
