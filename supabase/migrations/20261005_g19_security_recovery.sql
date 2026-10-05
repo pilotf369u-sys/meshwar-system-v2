@@ -10,7 +10,8 @@ create table if not exists public.kinto_security_recovery_g19 (
   configured_at timestamptz not null default now(),
   rotated_at timestamptz,
   last_recovered_at timestamptz,
-  last_recovered_by text
+  last_recovered_by text,
+  emergency_backup_until timestamptz
 );
 
 create table if not exists public.kinto_security_recovery_challenges_g19 (
