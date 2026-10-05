@@ -38,7 +38,7 @@ Deno.serve(async req=>{
    const {data:ch,error:ce}=await sb.from('kinto_security_recovery_challenges_g19').insert({requested_by_admin_id:String(admin.admin.id),code_hash:await digest(d+key),email_code_hash:await digest(otp+key),email_sent_at:new Date().toISOString(),expires_at:expires}).select('id').single();
    if(ce)return out(500,{ok:false,error:'SETUP_CHALLENGE_FAILED'});
    const mail=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+resend,'Content-Type':'application/json'},body:JSON.stringify({from:'KINTO Security <onboarding@resend.dev>',to:[backup],subject:'KINTO — تأكيد بريد الاسترداد الاحتياطي',html:`<div dir="rtl"><h2>KINTO Security</h2><p>رمز تأكيد إعداد بريد الاسترداد الاحتياطي:</p><p style="font-size:30px;font-weight:700;letter-spacing:5px">${otp}</p><p>صالح لمدة 10 دقائق ولمرة واحدة.</p></div>`})});
-   if(!mail.ok){await sb.from('kinto_security_recovery_challenges_g19').update({consumed_at:new Date().toISOString()}).eq('id',ch.id);return out(502,{ok:false,error:'EMAIL_FAILED'})}
+   if(!mail.ok){let reason='unknown';try{const payload=await mail.json();reason=String(payload?.message||payload?.name||payload?.error||'unknown').slice(0,240)}catch{}console.error('G19_RESEND_SEND_FAILED',{status:mail.status,reason});await sb.from('kinto_security_recovery_challenges_g19').update({consumed_at:new Date().toISOString()}).eq('id',ch.id);return out(502,{ok:false,error:'EMAIL_FAILED'})}
    return out(200,{ok:true,challenge_id:ch.id,expires_in_seconds:600});
   }
   if(action==='setup_verify'){
