@@ -1,0 +1,17 @@
+name: kinto-deals-g20-direct-order
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261005_kinto_deals_v1_g20_direct_order_pipe.sql'
+      - 'supabase/migrations/20261005_kinto_deals_v1_g20_campaign_product_options.sql'
+      - 'ci/kinto-deals-g20-direct-order.test.mjs'
+      - '.github/workflows/kinto-deals-g20-direct-order.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test ci/kinto-deals-g20-direct-order.test.mjs

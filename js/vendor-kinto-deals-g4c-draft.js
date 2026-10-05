@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const token=()=>{try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null')?.token||''}catch{return''}};
-const state={selected:new Map(),catalog:new Map(),giftResults:new Map(),gift:null,campaignId:null,updatedAt:null,termsSnapshot:{},giftOptions:{},busy:false};
+const state={selected:new Map(),selectedOptions:new Map(),catalog:new Map(),giftResults:new Map(),gift:null,campaignId:null,updatedAt:null,termsSnapshot:{},giftOptions:{},busy:false};
 const rpc=async(name,args)=>{const sb=window.MeshwarVendorRuntime?.sb;if(!sb)throw Error('اتصال الحملات لم يجهز بعد. أعد تحديث قائمة المسودات بعد اكتمال تحميل اللوحة.');if(!token())throw Error('رمز جلسة الحملات الآمنة غير موجود في هذا التبويب؛ تسجيل دخول لوحة المتجر وحده لا يثبت جلسة الحملات. لم تتغير مسوداتك.');const {data,error}=await sb.rpc(name,{p_session_token:token(),...args});if(error)throw error;return data};
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e};
 const setMsg=(message,bad=false)=>{const e=$('kdDraftMessage');if(e){e.textContent=message;e.className='text-sm mt-3 '+(bad?'text-rose-300':'text-amber-200')}};
@@ -27,13 +27,15 @@ const renderGiftResults=()=>{
   button.addEventListener('click',()=>{state.gift=state.gift===p.id?null:p.id;renderSelected();if(state.gift)setResultsVisible('gift',false)});row.append(button);box.append(row);
  }
 };
+const optionLabel={color:'اللون',size:'المقاس',volume:'الحجم'};
 const renderSelected=()=>{
  const box=$('kdSelected');box.replaceChildren();
  for(const p of state.selected.values()){
   const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-2 text-xs');
   if(p.image_url){const img=el('img');img.src=p.image_url;img.alt=p.product_name||'';img.loading='lazy';img.className='h-12 w-12 shrink-0 rounded-lg object-contain bg-white/5';row.append(img)}
   const info=el('span',(p.product_name||'منتج')+' | '+(p.barcode||'—')+' | '+(p.base_price??'—')+' '+(p.currency||''),'min-w-0 flex-1 break-words');row.append(info);
-  const b=el('button','إزالة','shrink-0 rounded-lg border border-rose-300/40 px-2 py-1 text-rose-200');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);renderSelected()});row.append(b);box.append(row);
+  const frozen=state.selectedOptions.get(p.id)||{};const specs=Object.entries(frozen).filter(([,v])=>v).map(([k,v])=>(optionLabel[k]||k)+': '+v).join(' · ');if(specs)row.append(el('small',specs,'text-amber-200'));
+  const b=el('button','إزالة','shrink-0 rounded-lg border border-rose-300/40 px-2 py-1 text-rose-200');b.type='button';b.addEventListener('click',()=>{state.selected.delete(p.id);state.selectedOptions.delete(p.id);renderSelected()});row.append(b);box.append(row);
  }
  $('kdSelectedCount').textContent=String(state.selected.size);
  if(state.gift&&state.selected.has(state.gift))state.gift=null;
@@ -64,18 +66,41 @@ async function searchGift(){
   renderSelected();setResultsVisible('gift',true);status.textContent=state.giftResults.size?'اختر الهدية من البطاقات أدناه.':'لا توجد نتائج مطابقة للهدية.';
  }catch(e){status.textContent='تعذر البحث عن الهدية: '+e.message}
 }
+async function loadProductOptions(productId){
+ try{
+  const rows=await rpc('kinto_deals_v1_vendor_product_options_g20',{p_product_ids:[productId]});
+  const raw=rows?.[0]?.options||{};return {color:Array.isArray(raw.colors)?raw.colors:[],size:Array.isArray(raw.sizes)?raw.sizes:[],volume:Array.isArray(raw.volumes)?raw.volumes:[]};
+ }catch(e){setMsg('تعذر تحميل مواصفات المنتج: '+e.message,true);return null}
+}
+async function attachProductOptionControls(row,p,raw){
+ const opts={color:Array.isArray(raw?.colors)?raw.colors:[],size:Array.isArray(raw?.sizes)?raw.sizes:[],volume:Array.isArray(raw?.volumes)?raw.volumes:[]};
+ const required=Object.entries(opts).filter(([,values])=>values.length);if(!required.length){state.selectedOptions.set(p.id,{});return}
+ const wrap=el('div',undefined,'flex flex-wrap gap-1 basis-full ps-12');
+ for(const [key,values] of required){
+  const select=el('select',undefined,'rounded-md border border-amber-400/30 bg-slate-900 px-2 py-1 text-xs');select.dataset.option=key;
+  const empty=el('option','اختر '+optionLabel[key]);empty.value='';select.append(empty);
+  for(const value of values){const op=el('option',String(value));op.value=String(value);select.append(op)}
+  const frozen=state.selectedOptions.get(p.id)||{};if(frozen[key])select.value=frozen[key];
+  select.addEventListener('change',()=>{const current={...(state.selectedOptions.get(p.id)||{})};if(select.value)current[key]=select.value;else delete current[key];state.selectedOptions.set(p.id,current)});wrap.append(select);
+ }
+ row.append(wrap);
+}
+
 async function search(){
  const box=$('kdSearchResults');box.replaceChildren();setMsg('جاري البحث...');
  try{
   const data=await rpc('kinto_deals_v1_vendor_products_g4',{p_search:$('kdSearch').value.trim(),p_limit:50});
   state.results=data.items||[];
+  const optionRows=state.results.length?await rpc('kinto_deals_v1_vendor_product_options_g20',{p_product_ids:state.results.map(p=>p.id)}):[];
+  const optionMap=new Map((optionRows||[]).map(r=>[r.id,r.options||{}]));
   for(const p of state.results)state.catalog.set(p.id,p);
   for(const p of state.results){
    const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 p-2 text-xs');
    if(p.image_url){const img=el('img');img.src=p.image_url;img.alt='';img.loading='lazy';img.className='h-10 w-10 rounded-lg object-contain';row.append(img)}
    const info=el('span',p.product_name+' | '+(p.barcode||'—')+' | '+p.base_price+' '+(p.currency||''),'flex-1');row.append(info);
+   await attachProductOptionControls(row,p,optionMap.get(p.id));
    const b=el('button',state.selected.has(p.id)?'محدد':'إضافة','rounded-lg border border-amber-400/40 px-3 py-2');b.type='button';
-   b.addEventListener('click',()=>{if(state.selected.has(p.id))state.selected.delete(p.id);else if(state.selected.size<50){state.selected.set(p.id,p);if(state.gift===p.id)state.gift=null}else return setMsg('الحد الأقصى 50 منتجاً.',true);renderSelected();b.textContent=state.selected.has(p.id)?'محدد':'إضافة';if(state.selected.has(p.id))setResultsVisible('paid',false)});row.append(b);box.append(row);
+   b.addEventListener('click',async()=>{if(state.selected.has(p.id)){state.selected.delete(p.id);state.selectedOptions.delete(p.id)}else if(state.selected.size<50){const required=[...row.querySelectorAll('select[data-option]')];if(required.some(x=>!x.value))return setMsg('اختر مواصفات المنتج أولاً ثم اضغط إضافة.',true);state.selectedOptions.set(p.id,Object.fromEntries(required.map(x=>[x.dataset.option,x.value])));state.selected.set(p.id,p);if(state.gift===p.id)state.gift=null}else return setMsg('الحد الأقصى 50 منتجاً.',true);renderSelected();b.textContent=state.selected.has(p.id)?'محدد':'إضافة';/* G20: keep product results open for fast multi-select. */});row.append(b);box.append(row);
   }
   renderSelected();setResultsVisible('paid',true);setMsg('نتائج البحث من منتجات متجرك فقط. اختر المنتجات المدفوعة والهدية بشكل منفصل.');
  }catch(e){setMsg(e.message,true)}
@@ -128,8 +153,10 @@ async function restoreDraft(item){
   }
   clearAdPreview();adImageUploaded=false;$('kdAdImage').value='';
   for(const p of hydrated.values())state.catalog.set(p.id,p);
-  state.selected.clear();
+  state.selected.clear();state.selectedOptions.clear();
   for(const id of ids)state.selected.set(id,state.catalog.get(id));
+  const restoredOptions=await rpc('kinto_deals_v1_vendor_draft_options_g20',{p_campaign_id:item.id});
+  for(const id of ids)state.selectedOptions.set(id,restoredOptions?.[id]||{});
   state.gift=item.gift_product_id||null;
   if(state.gift&&state.catalog.has(state.gift))state.giftResults.set(state.gift,state.catalog.get(state.gift));
   $('kdTitle').value=item.title||'';$('kdDescription').value=item.description||'';
@@ -196,8 +223,10 @@ async function save(){
    max_units_per_customer:limited?Number($('kdUnits').value):null,
    max_total_redemptions:$('kdTotal').value?Number($('kdTotal').value):null,
    terms_snapshot:state.termsSnapshot,product_ids:[...state.selected.keys()]};
-  const data=await rpc('kinto_deals_v1_vendor_save_draft_g4',{p_campaign_id:state.campaignId,p_expected_updated_at:state.updatedAt,p_draft:draft});
+  const productOptions=Object.fromEntries([...state.selected.keys()].map(id=>[id,state.selectedOptions.get(id)||{}]));
+  const data=await rpc('kinto_deals_v1_vendor_save_draft_g20',{p_campaign_id:state.campaignId,p_expected_updated_at:state.updatedAt,p_draft:draft,p_product_options:productOptions});
   state.campaignId=data.campaign_id;state.updatedAt=data.updated_at;
+
   if($('kdAdImage')?.files?.length&&!adImageUploaded){
    setMsg('تم حفظ المسودة؛ جاري تجهيز ورفع الصورة تلقائياً...');
    const uploaded=await uploadAdImage(true);
