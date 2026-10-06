@@ -83,9 +83,16 @@
         const domGallery=Array.from(d.querySelectorAll('#productImageGallery img,#productImagesPreview img,[data-product-image-gallery] img')).map(img=>String(img.currentSrc||img.src||'').trim());
         const oldImages=uniq([...arr(oldOptions.images),...arr(oldOptions.image_urls),...arr(oldOptions.gallery),...arr(existing.images),...arr(existing.image_urls),String(existing.image_url||'').trim()]);
         const images=uniq([imageUrl,...uploaded,...domGallery,...oldImages]);
-        const colors=win.optionsArray(String($('productColors')?.value||''));
-        const sizes=win.optionsArray(String($('productSizes')?.value||''));
-        const volumes=win.optionsArray(String($('productVolumes')?.value||''));
+        const fieldColors=win.optionsArray(String($('productColors')?.value||''));
+        const fieldSizes=win.optionsArray(String($('productSizes')?.value||''));
+        const fieldVolumes=win.optionsArray(String($('productVolumes')?.value||''));
+        // V39: when the stock editor is present, its keys are the exact option identities
+        // the merchant just edited. Never let a later/legacy text normalization split a
+        // compound option name (e.g. "ازرق فاتح") away from its stock key.
+        const exactKeys=(group,fallback)=>{const keys=Object.keys(variantDraft[group]||{}).map(x=>String(x||'').trim()).filter(Boolean);return keys.length?keys:fallback};
+        const colors=hasVariantEditor?exactKeys('color',fieldColors):fieldColors;
+        const sizes=hasVariantEditor?exactKeys('size',fieldSizes):fieldSizes;
+        const volumes=hasVariantEditor?exactKeys('volume',fieldVolumes):fieldVolumes;
         const taxonomySnapshot=win.MeshwarTaxonomyPersistenceV10?.taxonomySnapshot?.()||{};
         const main=String(taxonomySnapshot.main||$('mwProductMainCategory')?.value||win.__mwTaxonomySelectionV10?.main||'').trim();
         const sub=String(taxonomySnapshot.sub||$('mwProductSubCategory')?.value||win.__mwTaxonomySelectionV10?.sub||'').trim();
