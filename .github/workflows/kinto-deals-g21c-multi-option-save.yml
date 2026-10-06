@@ -1,0 +1,15 @@
+name: KINTO Deals G21C multi-option save fix
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261006_kinto_deals_v1_g21c_multi_option_save_fix.sql'
+      - 'ci/kinto-deals-g21c-multi-option-save.test.mjs'
+      - '.github/workflows/kinto-deals-g21c-multi-option-save.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node --test ci/kinto-deals-g21c-multi-option-save.test.mjs
