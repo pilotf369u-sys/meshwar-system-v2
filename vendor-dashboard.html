@@ -87,6 +87,7 @@
         try{window.MeshwarVendorSettlementPdfDetailsV25?.install(frame.contentWindow)}catch(e){console.error('Vendor settlement PDF details install failed',e)}
         try{window.MeshwarVendorProductEditFieldsV26?.install(frame.contentWindow)}catch(e){console.error('Vendor product edit fields failed',e)}
         // V38: keep V27 installed for its taxonomy/cost compatibility contract; V34 remains the primary full product save.
+        try{window.MeshwarVendorProductSaveSnapshotV27?.install(frame.contentWindow)}catch(e){console.error('Vendor product snapshot failed',e)}
         try{window.MeshwarVendorProductSaveCompleteV34?.install(frame.contentWindow)}catch(e){console.error('Vendor product save failed',e)}
         try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor edit hydration failed',e)}
         injectV94Orders();
