@@ -1,7 +1,7 @@
 /* MESHWAR_VENDOR_EDIT_DIRECT_DOM_V32 */
 (function(){
   'use strict';
-  const VERSION='20261006-v35-single-hydration-no-user-overwrite';
+  const VERSION='20260825-v33-stale-hydration-guard2';
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const STORE_KEY='meshwar_vendor_store';
@@ -109,22 +109,22 @@
   async function hydrate(win,productId){
     const id=String(productId||'').trim();if(!id)return false;
     const [product,categories]=await Promise.all([fetchProduct(win,id),fetchCategories(win)]);if(!product)return false;
-    // V35: wait only until the edit modal is ready, then hydrate exactly once.
-    // Re-applying the database snapshot after the user starts typing can overwrite
-    // several edits made in the same session and make only one change appear saved.
+    let complete=false,matchedOnce=false;
     for(let attempt=0;attempt<18;attempt++){
       const d=win.document,modal=d.getElementById('productModal');
       const currentId=String(d.getElementById('productId')?.value||'').trim();
       const visible=Boolean(modal&&!modal.classList.contains('hidden'));
       if(visible&&currentId===id){
-        const complete=applyVisibleFields(win,product,categories);
-        if(!complete)console.warn('Vendor V35 edit hydration completed with missing optional fields',id);
+        matchedOnce=true;
+        complete=applyVisibleFields(win,product,categories)||complete;
+      }else if(matchedOnce){
+        // The user closed this edit or opened a fresh Add modal. Never hydrate stale product data into it.
         return complete;
       }
       await sleep(attempt<6?60:120);
     }
-    console.warn('Vendor V35 edit hydration could not resolve visible product modal',id);
-    return false;
+    if(!complete)console.warn('Vendor V33 complete edit hydration could not resolve all visible fields',id);
+    return complete;
   }
   function install(win){
     if(!win||win.__mwVendorDirectDomV33Bound)return;
