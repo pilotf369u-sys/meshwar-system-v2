@@ -84,7 +84,7 @@
   },true);
 
   const script=document.createElement('script');
-  script.src='js/local-store-product-details-v4-core.js?v=20261006-v42-authoritative-vendor-stock-save';
+  script.src='js/local-store-product-details-v4-core.js?v=desc-unlimit-v8-1';
   script.dataset.mwProductDetailsV4Core='1';
   script.onload=()=>{
     const variant=document.createElement('script');
