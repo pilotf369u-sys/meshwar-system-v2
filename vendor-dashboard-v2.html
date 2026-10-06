@@ -264,7 +264,7 @@ window.currentProduct=null;
 window.__mwProductModalMode='closed';
 function showNotice(msg,bad=false){const n=$('globalNotice');n.textContent=msg;n.className=`mb-4 rounded-2xl border p-3 text-sm font-bold ${bad?'border-rose-400/20 bg-rose-500/10 text-rose-200':'border-emerald-400/20 bg-emerald-500/10 text-emerald-200'}`;n.classList.remove('hidden');setTimeout(()=>n.classList.add('hidden'),4500)}
 function money(v,c){return `${Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2})} ${c||''}`.trim()}
-function optionsArray(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean)}
+function optionsArray(v){return String(v||'').split(/[,،\n]+/).map(x=>x.trim()).filter(Boolean)}
 function safeOptions(v){if(!v)return{colors:[],sizes:[],volumes:[]};if(typeof v==='object')return{colors:Array.isArray(v.colors)?v.colors:[],sizes:Array.isArray(v.sizes)?v.sizes:[],volumes:Array.isArray(v.volumes)?v.volumes:[]};try{return safeOptions(JSON.parse(v))}catch{return{colors:[],sizes:[],volumes:[]}}}
 function rawOptions(v){if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return{...v};try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?{...x}:{}}catch{return{}}}
 function productPricingSnapshot(product){const pricing=window.MeshwarLocalPricing,vendorUsd=Number(product?.discount_price??product?.base_price);if(!pricing||!Number.isFinite(vendorUsd)||vendorUsd<0)return null;return pricing.pricingSnapshot(vendorUsd,vendorStore?.commission_rate??10,vendorStore?.exchange_rate||1,vendorStore?.exchange_target_currency||vendorStore?.default_currency||'IQD')}
