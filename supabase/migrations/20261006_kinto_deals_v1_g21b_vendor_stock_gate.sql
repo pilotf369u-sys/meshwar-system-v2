@@ -55,31 +55,7 @@ $deals$;
 revoke all on function public.kinto_deals_v1_vendor_products_g4(text,text,integer) from public,anon,authenticated;
 grant execute on function public.kinto_deals_v1_vendor_products_g4(text,text,integer) to anon,authenticated;
 
--- Option projection now exposes only option values that survive the canonical V93 stock probe.
-create or replace function public.kinto_deals_v1_vendor_product_options_g20(
- p_session_token text,p_product_ids uuid[])
-returns jsonb language plpgsql security definer
-set search_path=public,private,pg_temp as $g20$
-declare v_store uuid; v_rows jsonb;
-begin
- v_store:=private.require_vendor_session(p_session_token);
- if v_store is null then raise exception 'DEALS_VENDOR_SESSION_REQUIRED' using errcode='28000'; end if;
- if p_product_ids is null or cardinality(p_product_ids) not between 1 and 50 then raise exception 'DEALS_PRODUCT_LIST_REQUIRED' using errcode='22023'; end if;
- if (select count(*) from public.local_products p where p.store_id=v_store and p.id=any(p_product_ids))<>cardinality(p_product_ids) then
-  raise exception 'DEALS_PRODUCT_OWNERSHIP_REQUIRED' using errcode='23514'; end if;
- select coalesce(jsonb_agg(jsonb_build_object('id',p.id,'options',jsonb_build_object(
-  'colors',coalesce((select jsonb_agg(v) from jsonb_array_elements_text(coalesce(p.options->'colors','[]'::jsonb)) v
-    where private.kinto_deals_v1_option_value_available_g21b(v_store,p.id,'color',v)),'[]'::jsonb),
-  'sizes',coalesce((select jsonb_agg(v) from jsonb_array_elements_text(coalesce(p.options->'sizes','[]'::jsonb)) v
-    where private.kinto_deals_v1_option_value_available_g21b(v_store,p.id,'size',v)),'[]'::jsonb),
-  'volumes',coalesce((select jsonb_agg(v) from jsonb_array_elements_text(coalesce(p.options->'volumes','[]'::jsonb)) v
-    where private.kinto_deals_v1_option_value_available_g21b(v_store,p.id,'volume',v)),'[]'::jsonb)
- )) order by p.id),'[]'::jsonb) into v_rows
- from public.local_products p where p.store_id=v_store and p.id=any(p_product_ids);
- return v_rows;
-end;
-$g20$;
-
+-- Option helper: probes one candidate value through the canonical V93 stock functions.
 create or replace function private.kinto_deals_v1_option_value_available_g21b(
  p_store_id uuid,p_product_id uuid,p_key text,p_value text)
 returns boolean language plpgsql stable security definer
