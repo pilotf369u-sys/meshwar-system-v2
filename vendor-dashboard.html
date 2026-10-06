@@ -43,16 +43,16 @@
   <script src="js/vendor-settlement-pdf-details-v25.js?v=20260824-1435"></script>
   <script src="js/vendor-product-edit-fields-v26.js?v=20260825-native-modal-raceguard1"></script>
   <script src="js/vendor-product-save-snapshot-v27.js?v=20260825-v34-complete-save-bridge1"></script>
-  <script src="js/vendor-product-save-complete-v34.js?v=20261006-v43-stock-editor-save"></script>
+  <script src="js/vendor-product-save-complete-v34.js?v=20260825-v34-required-cost3"></script>
   <script src="js/vendor-ux-realtime-v28.js?v=20260827-v32-realtime-raceguard"></script>
-  <script src="js/vendor-edit-direct-dom-v32.js?v=20261006-v35-single-hydration"></script>
+  <script src="js/vendor-edit-direct-dom-v32.js?v=20260825-v33-stale-hydration-guard2"></script>
 </head>
 <body>
   <div id="vendorBootLoader" role="status" aria-live="polite">
     <div class="vendor-loader-shell" aria-hidden="true"><div class="vendor-loader-top vendor-loader-shimmer"></div><div class="vendor-loader-stats"><div class="vendor-loader-stat vendor-loader-shimmer"></div><div class="vendor-loader-stat vendor-loader-shimmer"></div><div class="vendor-loader-stat vendor-loader-shimmer"></div></div><div class="vendor-loader-panel vendor-loader-shimmer"></div></div>
     <div class="vendor-loader-center"><div class="vendor-loader-box"><span class="vendor-loader-spinner" aria-hidden="true"></span><span class="vendor-loader-text">جاري تجهيز لوحة المتجر...</span></div></div>
   </div>
-  <iframe id="vendorFrame" aria-busy="true" src="vendor-dashboard-v2.html?v=v103-location-status-sync&build=20261006-v44-product-save-bridge" title="لوحة صاحب المتجر"></iframe>
+  <iframe id="vendorFrame" aria-busy="true" src="vendor-dashboard-v2.html?v=20260905-v103-location-status-sync" title="لوحة صاحب المتجر"></iframe>
   <script>
     (function(){
       const frame=document.getElementById('vendorFrame');
@@ -65,13 +65,11 @@
       }
       function revealFallback(error){console.error('Vendor UX/realtime V32 install failed',error);frame.style.visibility='visible';frame.setAttribute('aria-busy','false');document.getElementById('vendorBootLoader')?.remove()}
       function injectKintoSkinLast(){const d=frame.contentDocument;if(!d)return;d.getElementById('mwVendorKintoSkinV167')?.remove();const l=d.createElement('link');l.id='mwVendorKintoSkinV167';l.rel='stylesheet';l.href='css/vendor-kinto-glass-v166.css?v=20260923-v173-mobile';d.head.appendChild(l)}
-      function injectStockEditorsV38(){const d=frame.contentDocument;if(!d)return Promise.resolve();const loads=[];for(const [id,src] of [['mwVendorVariantStockV38','js/local-store-variant-stock-v5.js?v=20261006-v43'],['mwVendorMatrixStockV38','js/local-store-matrix-stock-v6.js?v=20261006-v43']]){const existing=d.getElementById(id);if(existing){loads.push(Promise.resolve());continue}loads.push(new Promise(resolve=>{const s=d.createElement('script');s.id=id;s.src=src;s.async=false;s.onload=resolve;s.onerror=resolve;d.head.appendChild(s)}))}return Promise.all(loads)}
       function injectFeaturedPhase2(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorFeaturedPhase2'))return;const s=d.createElement('script');s.id='mwVendorFeaturedPhase2';s.src='js/vendor-featured-requests-v2.js?v=20260827-v2.0';d.head.appendChild(s)}
       function injectV94Orders(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorV94Orders'))return;const s=d.createElement('script');s.id='mwVendorV94Orders';s.src='js/vendor-v94-multistore-orders.js?v=20260905-v112-rewards';s.onerror=()=>console.error('Vendor V95 segment adapter failed to load');d.body.appendChild(s)}
       function injectShippingV98(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorShippingV98'))return;const s=d.createElement('script');s.id='mwVendorShippingV98';s.src='js/vendor-shipping-settings-v98.js?v=20260905-v98';s.onerror=()=>console.error('Vendor V98 shipping settings failed to load');d.body.appendChild(s)}
       function injectRewardsV344(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorRewardsV344'))return;const s=d.createElement('script');s.id='mwVendorRewardsV344';s.src='js/vendor-loyalty-v344.js?v=20260929-v344';s.onerror=()=>console.error('Vendor rewards V344 failed to load');d.body.appendChild(s)}
       function install(){
-        injectStockEditorsV38().then(()=>{try{window.MeshwarVendorProductSaveCompleteV34?.install(frame.contentWindow)}catch(e){console.error('Vendor product save after stock editors failed',e)}});
         injectFeaturedPhase2();
         try{window.MeshwarVendorBarcodeV11?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode install failed',e)}
         try{window.MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)}catch(e){console.error('Vendor order smart search install failed',e)}
@@ -86,9 +84,8 @@
         try{window.MeshwarVendorFinanceDeliveredV35?.install(frame.contentWindow)}catch(e){console.error('Vendor delivered finance V35 install failed',e)}
         try{window.MeshwarVendorSettlementPdfDetailsV25?.install(frame.contentWindow)}catch(e){console.error('Vendor settlement PDF details install failed',e)}
         try{window.MeshwarVendorProductEditFieldsV26?.install(frame.contentWindow)}catch(e){console.error('Vendor product edit fields failed',e)}
-        // V38: keep V27 installed for its taxonomy/cost compatibility contract; V34 remains the primary full product save.
         try{window.MeshwarVendorProductSaveSnapshotV27?.install(frame.contentWindow)}catch(e){console.error('Vendor product snapshot failed',e)}
-        // V43: authoritative save is installed after the stock-editor scripts finish loading.
+        try{window.MeshwarVendorProductSaveCompleteV34?.install(frame.contentWindow)}catch(e){console.error('Vendor product save failed',e)}
         try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor edit hydration failed',e)}
         injectV94Orders();
         injectShippingV98();
