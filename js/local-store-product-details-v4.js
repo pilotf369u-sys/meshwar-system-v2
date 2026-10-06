@@ -84,7 +84,7 @@
   },true);
 
   const script=document.createElement('script');
-  script.src='js/local-store-product-details-v4-core.js?v=20261006-v41-explicit-option-delimiters';
+  script.src='js/local-store-product-details-v4-core.js?v=20261006-v42-authoritative-vendor-stock-save';
   script.dataset.mwProductDetailsV4Core='1';
   script.onload=()=>{
     const variant=document.createElement('script');
