@@ -5,7 +5,7 @@
   const BUCKET='product-images';
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[c]));
   const parse=v=>{if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return v;try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}};
-  const optionValues=v=>{const a=Array.isArray(v)?v:[v];return[...new Set(a.flatMap(x=>String(x??'').split(/[\s,،]+/)).map(x=>x.trim()).filter(Boolean))]};
+  const optionValues=v=>{const a=Array.isArray(v)?v:[v];return[...new Set(a.flatMap(x=>String(x??'').split(/[,،\n]+/)).map(x=>x.trim()).filter(Boolean))]};
   const isVendor=()=>/vendor-dashboard\.html$/i.test(location.pathname)||!!document.getElementById('productModal');
 
   const css=`
