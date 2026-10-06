@@ -15,6 +15,7 @@ const status=host.querySelector('[data-status]'),sb=window.MeshwarVendorRuntime?
    const date=document.createElement('p');date.className='text-xs text-slate-400 mt-1';date.textContent='نسخة '+row.revision+' | الإرسال: '+new Date(row.submitted_at).toLocaleString('ar-IQ');
    const header=document.createElement('div');header.className='flex flex-wrap items-center justify-between gap-2';header.append(title,state);card.append(header,date);
    if(row.display_state==='rejected'){const reason=document.createElement('p');reason.className='text-sm mt-2';reason.textContent='سبب الرفض: '+(row.rejection_reason||'غير متوفر');card.append(reason)}
+   if(row.display_state==='expired'&&row.ended_reason){const labels={time_expired:'انتهت مدة الحملة',quota_exhausted:'اكتمل عدد مرات الاستفادة',product_out_of_stock:'نفد مخزون منتج',product_variant_out_of_stock:'نفدت تركيبة منتج',gift_out_of_stock:'نفد مخزون الهدية',gift_variant_out_of_stock:'نفدت تركيبة الهدية'};const reason=document.createElement('p');reason.className='text-sm mt-2 text-amber-100';reason.textContent='سبب انتهاء الحملة: '+(labels[row.ended_reason.code]||'لم تعد الحملة قابلة للتنفيذ')+(row.ended_reason.product_name?' — '+row.ended_reason.product_name:'');card.append(reason)}
    if(row.display_state==='rejected'){
     const revise=document.createElement('button');revise.type='button';revise.textContent='إنشاء نسخة للتعديل';revise.className='mt-3 rounded-lg border border-amber-400/50 px-3 py-2 text-xs font-bold text-amber-200';
     revise.addEventListener('click',async()=>{
