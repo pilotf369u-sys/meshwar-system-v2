@@ -72,17 +72,28 @@ async function loadProductOptions(productId){
   const raw=rows?.[0]?.options||{};return {color:Array.isArray(raw.colors)?raw.colors:[],size:Array.isArray(raw.sizes)?raw.sizes:[],volume:Array.isArray(raw.volumes)?raw.volumes:[]};
  }catch(e){setMsg('تعذر تحميل مواصفات المنتج: '+e.message,true);return null}
 }
-async function attachProductOptionControls(row,p,raw){
+async function attachProductOptionControls(row,p,raw,availableCombinations){
  const opts={color:Array.isArray(raw?.colors)?raw.colors:[],size:Array.isArray(raw?.sizes)?raw.sizes:[],volume:Array.isArray(raw?.volumes)?raw.volumes:[]};
  const required=Object.entries(opts).filter(([,values])=>values.length);if(!required.length){state.selectedOptions.set(p.id,{});return}
+ const combos=Array.isArray(availableCombinations)?availableCombinations:[];
  const wrap=el('div',undefined,'flex flex-wrap gap-1 basis-full ps-12');
- for(const [key,values] of required){
-  const select=el('select',undefined,'rounded-md border border-amber-400/30 bg-slate-900 px-2 py-1 text-xs');select.dataset.option=key;
-  const empty=el('option','اختر '+optionLabel[key]);empty.value='';select.append(empty);
-  for(const value of values){const op=el('option',String(value));op.value=String(value);select.append(op)}
-  const frozen=state.selectedOptions.get(p.id)||{};if(frozen[key])select.value=frozen[key];
-  select.addEventListener('change',()=>{const current={...(state.selectedOptions.get(p.id)||{})};if(select.value)current[key]=select.value;else delete current[key];state.selectedOptions.set(p.id,current)});wrap.append(select);
+ const selects=new Map();
+ const refresh=()=>{
+  const chosen=Object.fromEntries([...selects].map(([key,select])=>[key,select.value]).filter(([,value])=>value));
+  for(const [key,select] of selects){
+   const keep=select.value;select.replaceChildren();const empty=el('option','اختر '+optionLabel[key]);empty.value='';select.append(empty);
+   const allowed=new Set(combos.filter(combo=>Object.entries(chosen).every(([k,v])=>k===key||!v||String(combo?.[k]||'')===String(v))).map(combo=>String(combo?.[key]||'')).filter(Boolean));
+   for(const value of opts[key])if(!combos.length||allowed.has(String(value))){const op=el('option',String(value));op.value=String(value);select.append(op)}
+   if([...select.options].some(op=>op.value===keep))select.value=keep;else{select.value='';delete chosen[key]}
+  }
+ };
+ for(const [key] of required){
+  const select=el('select',undefined,'rounded-md border border-amber-400/30 bg-slate-900 px-2 py-1 text-xs');select.dataset.option=key;selects.set(key,select);wrap.append(select);
  }
+ refresh();
+ const frozen=state.selectedOptions.get(p.id)||{};
+ for(const [key,select] of selects)if(frozen[key]){select.value=String(frozen[key]);refresh()}
+ for(const [key,select] of selects)select.addEventListener('change',()=>{refresh();const current=Object.fromEntries([...selects].filter(([,x])=>x.value).map(([k,x])=>[k,x.value]));state.selectedOptions.set(p.id,current)});
  row.append(wrap);
 }
 
@@ -92,13 +103,13 @@ async function search(){
   const data=await rpc('kinto_deals_v1_vendor_products_g4',{p_search:$('kdSearch').value.trim(),p_limit:50});
   state.results=data.items||[];
   const optionRows=state.results.length?await rpc('kinto_deals_v1_vendor_product_options_g20',{p_product_ids:state.results.map(p=>p.id)}):[];
-  const optionMap=new Map((optionRows||[]).map(r=>[r.id,r.options||{}]));
+  const optionMap=new Map((optionRows||[]).map(r=>[r.id,{options:r.options||{},availableCombinations:r.available_combinations||[]}]));
   for(const p of state.results)state.catalog.set(p.id,p);
   for(const p of state.results){
    const row=el('div',undefined,'flex items-center gap-2 rounded-lg border border-white/10 p-2 text-xs');
    if(p.image_url){const img=el('img');img.src=p.image_url;img.alt='';img.loading='lazy';img.className='h-10 w-10 rounded-lg object-contain';row.append(img)}
    const info=el('span',p.product_name+' | '+(p.barcode||'—')+' | '+p.base_price+' '+(p.currency||''),'flex-1');row.append(info);
-   await attachProductOptionControls(row,p,optionMap.get(p.id));
+   {const optionData=optionMap.get(p.id)||{};await attachProductOptionControls(row,p,optionData.options,optionData.availableCombinations)}
    const b=el('button',state.selected.has(p.id)?'محدد':'إضافة','rounded-lg border border-amber-400/40 px-3 py-2');b.type='button';
    b.addEventListener('click',async()=>{if(state.selected.has(p.id)){state.selected.delete(p.id);state.selectedOptions.delete(p.id)}else if(state.selected.size<50){const required=[...row.querySelectorAll('select[data-option]')];if(required.some(x=>!x.value))return setMsg('اختر مواصفات المنتج أولاً ثم اضغط إضافة.',true);state.selectedOptions.set(p.id,Object.fromEntries(required.map(x=>[x.dataset.option,x.value])));state.selected.set(p.id,p);if(state.gift===p.id)state.gift=null}else return setMsg('الحد الأقصى 50 منتجاً.',true);renderSelected();b.textContent=state.selected.has(p.id)?'محدد':'إضافة';/* G20: keep product results open for fast multi-select. */});row.append(b);box.append(row);
   }
