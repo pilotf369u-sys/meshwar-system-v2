@@ -70,8 +70,8 @@
         const variantDraft=readVariantDraft(d),matrixDraft=readMatrixDraft(d);
         const hasVariantEditor=Boolean(d.getElementById('mwVariantStockEditor'));
         const hasMatrixEditor=Boolean(d.getElementById('mwMatrixStockEditor'));
-        if(hasVariantEditor&&!hasMatrixEditor){for(const group of DIMENSIONS){const allocated=sumValues(variantDraft[group]);if(allocated>stock)return win.showNotice(`مجموع مخزون ${group==='color'?'الألوان':group==='size'?'المقاسات':'الأحجام'} (${allocated}) يتجاوز المخزون الكلي (${stock}).`,true)}}
-        if(hasMatrixEditor&&Object.keys(matrixDraft.matrix).length){const allocated=sumValues(matrixDraft.matrix);if(allocated>stock)return win.showNotice(`مجموع مخزون التركيبات (${allocated}) يتجاوز المخزون الكلي (${stock}).`,true)}
+        if(hasVariantEditor&&!hasMatrixEditor){for(const group of DIMENSIONS){const entries=variantDraft[group],allocated=sumValues(entries);if(Object.keys(entries).length&&allocated!==stock)return win.showNotice(`مجموع مخزون ${group==='color'?'الألوان':group==='size'?'المقاسات':'الأحجام'} يجب أن يساوي المخزون الكلي (${stock}). الموزع الآن: ${allocated}.`,true)}}
+        if(hasMatrixEditor&&Object.keys(matrixDraft.matrix).length){const allocated=sumValues(matrixDraft.matrix);if(allocated!==stock)return win.showNotice(`مجموع مخزون التركيبات يجب أن يساوي المخزون الكلي (${stock}). الموزع الآن: ${allocated}.`,true)}
         let imageUrl=String($('productImage')?.value||'').trim()||null;
         const files=Array.from($('productImageFile')?.files||[]);
         const uploaded=[];
