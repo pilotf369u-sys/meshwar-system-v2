@@ -86,14 +86,12 @@
         try{window.MeshwarVendorFinanceDeliveredV35?.install(frame.contentWindow)}catch(e){console.error('Vendor delivered finance V35 install failed',e)}
         try{window.MeshwarVendorSettlementPdfDetailsV25?.install(frame.contentWindow)}catch(e){console.error('Vendor settlement PDF details install failed',e)}
         try{window.MeshwarVendorProductEditFieldsV26?.install(frame.contentWindow)}catch(e){console.error('Vendor product edit fields failed',e)}
-        // V38: V27 legacy post-save PATCH is intentionally not installed. V34 is the single owner of product persistence.
+        // V38: keep V27 installed for its taxonomy/cost compatibility contract; V34 remains the primary full product save.
         try{window.MeshwarVendorProductSaveCompleteV34?.install(frame.contentWindow)}catch(e){console.error('Vendor product save failed',e)}
         try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor edit hydration failed',e)}
         injectV94Orders();
         injectShippingV98();
         injectRewardsV344();
-        // V38: disable the legacy asynchronous edit re-hydration; V35 owns edit hydration once.
-        try{frame.contentWindow.__mwVendorEditReadHydrationBoundV31=true}catch{}
         try{const boot=window.MeshwarVendorUxRealtimeV28?.install(frame);if(boot&&typeof boot.then==='function')boot.catch(revealFallback);else if(!window.MeshwarVendorUxRealtimeV28)revealFallback(new Error('V32 module unavailable'))}catch(e){revealFallback(e)}
         bindActiveTabPersistence();bindV24PlNavigation();injectKintoSkinLast();frame.contentWindow.addEventListener('meshwar:vendor-promotions-ready',restoreVendorUiState);frame.contentWindow.addEventListener('meshwar:vendor-shipping-ready',restoreVendorUiState);restoreVendorUiState();
       }
