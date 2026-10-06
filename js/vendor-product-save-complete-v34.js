@@ -86,8 +86,9 @@
         const colors=win.optionsArray(String($('productColors')?.value||''));
         const sizes=win.optionsArray(String($('productSizes')?.value||''));
         const volumes=win.optionsArray(String($('productVolumes')?.value||''));
-        const main=String($('mwProductMainCategory')?.value||win.__mwTaxonomySelectionV10?.main||'').trim();
-        const sub=String($('mwProductSubCategory')?.value||win.__mwTaxonomySelectionV10?.sub||'').trim();
+        const taxonomySnapshot=win.MeshwarTaxonomyPersistenceV10?.taxonomySnapshot?.()||{};
+        const main=String(taxonomySnapshot.main||$('mwProductMainCategory')?.value||win.__mwTaxonomySelectionV10?.main||'').trim();
+        const sub=String(taxonomySnapshot.sub||$('mwProductSubCategory')?.value||win.__mwTaxonomySelectionV10?.sub||'').trim();
         const effective=sub||main||null;
         const options={...oldOptions,colors,sizes,volumes,...(hasVariantEditor?{variant_stock:variantDraft}:{}),...(hasMatrixEditor?{matrix_stock:matrixDraft.matrix,option_labels:matrixDraft.labels}:{}),detailed_description:detailed,images,image_urls:images,gallery:images,pricing:win.MeshwarLocalPricing?.pricingSnapshot(discount??base,win.vendorStore?.commission_rate??10,win.vendorStore?.exchange_rate||1,win.vendorStore?.exchange_target_currency||win.vendorStore?.default_currency||'IQD')||oldOptions.pricing||null};
         const payload={store_id:win.vendorStore.id,product_name:name,barcode:barcodeValue,image_url:imageUrl,description,base_price:base,discount_price:discount,cost_price:cost,currency:'USD',stock_quantity:stock,low_stock_threshold:threshold,is_out_of_stock:stock===0,category_id:effective,subcategory_id:sub||null,options,updated_at:new Date().toISOString()};
