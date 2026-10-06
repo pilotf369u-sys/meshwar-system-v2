@@ -5,6 +5,19 @@
   const arr=v=>Array.isArray(v)?v.map(x=>String(x??'').trim()).filter(Boolean):[];
   const parse=v=>{if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return{...v};try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?{...x}:{}}catch{return{}}};
   const uniq=v=>[...new Set(v.filter(Boolean))];
+  const DIMENSIONS=['color','size','volume'];
+  function readVariantDraft(d){
+    const out={color:{},size:{},volume:{}};
+    d.querySelectorAll('#mwVariantStockEditor [data-vs-group][data-vs-value]').forEach(input=>{const group=String(input.dataset.vsGroup||''),key=String(input.dataset.vsValue||'').trim(),raw=String(input.value??'').trim(),n=Number(raw);if(out[group]&&key&&raw!==''&&Number.isFinite(n)&&n>=0)out[group][key]=Math.floor(n)});
+    return out;
+  }
+  function readMatrixDraft(d){
+    const matrix={},labels={};
+    d.querySelectorAll('#mwMatrixStockEditor [data-matrix-key]').forEach(input=>{const key=String(input.dataset.matrixKey||'').trim(),raw=String(input.value??'').trim(),n=Number(raw);if(key&&raw!==''&&Number.isFinite(n)&&n>=0)matrix[key]=Math.floor(n)});
+    d.querySelectorAll('#mwMatrixStockEditor [data-option-label]').forEach(input=>{const key=String(input.dataset.optionLabel||'').trim(),value=String(input.value||'').trim();if(DIMENSIONS.includes(key)&&value)labels[key]=value});
+    return{matrix,labels};
+  }
+  const sumValues=o=>Object.values(o||{}).reduce((a,v)=>a+Math.max(0,Math.floor(Number(v)||0)),0);
 
   function install(win){
     if(!win||win.__mwVendorProductSaveCompleteV34)return;
@@ -54,6 +67,11 @@
       try{
         const existing=(Array.isArray(win.products)?win.products:[]).find(p=>String(p.id)===id)||{};
         const oldOptions=parse(existing.options);
+        const variantDraft=readVariantDraft(d),matrixDraft=readMatrixDraft(d);
+        const hasVariantEditor=Boolean(d.getElementById('mwVariantStockEditor'));
+        const hasMatrixEditor=Boolean(d.getElementById('mwMatrixStockEditor'));
+        if(hasVariantEditor&&!hasMatrixEditor){for(const group of DIMENSIONS){const entries=variantDraft[group],allocated=sumValues(entries);if(Object.keys(entries).length&&allocated!==stock)return win.showNotice(`مجموع مخزون ${group==='color'?'الألوان':group==='size'?'المقاسات':'الأحجام'} يجب أن يساوي المخزون الكلي (${stock}). الموزع الآن: ${allocated}.`,true)}}
+        if(hasMatrixEditor&&Object.keys(matrixDraft.matrix).length){const allocated=sumValues(matrixDraft.matrix);if(allocated!==stock)return win.showNotice(`مجموع مخزون التركيبات يجب أن يساوي المخزون الكلي (${stock}). الموزع الآن: ${allocated}.`,true)}
         let imageUrl=String($('productImage')?.value||'').trim()||null;
         const files=Array.from($('productImageFile')?.files||[]);
         const uploaded=[];
@@ -71,7 +89,7 @@
         const main=String($('mwProductMainCategory')?.value||win.__mwTaxonomySelectionV10?.main||'').trim();
         const sub=String($('mwProductSubCategory')?.value||win.__mwTaxonomySelectionV10?.sub||'').trim();
         const effective=sub||main||null;
-        const options={...oldOptions,colors,sizes,volumes,detailed_description:detailed,images,image_urls:images,gallery:images,pricing:win.MeshwarLocalPricing?.pricingSnapshot(discount??base,win.vendorStore?.commission_rate??10,win.vendorStore?.exchange_rate||1,win.vendorStore?.exchange_target_currency||win.vendorStore?.default_currency||'IQD')||oldOptions.pricing||null};
+        const options={...oldOptions,colors,sizes,volumes,...(hasVariantEditor?{variant_stock:variantDraft}:{}),...(hasMatrixEditor?{matrix_stock:matrixDraft.matrix,option_labels:matrixDraft.labels}:{}),detailed_description:detailed,images,image_urls:images,gallery:images,pricing:win.MeshwarLocalPricing?.pricingSnapshot(discount??base,win.vendorStore?.commission_rate??10,win.vendorStore?.exchange_rate||1,win.vendorStore?.exchange_target_currency||win.vendorStore?.default_currency||'IQD')||oldOptions.pricing||null};
         const payload={store_id:win.vendorStore.id,product_name:name,barcode:barcodeValue,image_url:imageUrl,description,base_price:base,discount_price:discount,cost_price:cost,currency:'USD',stock_quantity:stock,low_stock_threshold:threshold,is_out_of_stock:stock===0,category_id:effective,subcategory_id:sub||null,options,updated_at:new Date().toISOString()};
         win.__mwVendorProductSaveV34LastPayload=payload;
         const query=id?win.sb.from('local_products').update(payload).eq('id',id).eq('store_id',win.vendorStore.id):win.sb.from('local_products').insert([payload]);
