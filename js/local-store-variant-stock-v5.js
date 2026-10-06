@@ -4,7 +4,7 @@
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const parse=v=>{if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return v;try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}};
-  const values=v=>{const a=Array.isArray(v)?v:[v];return[...new Set(a.flatMap(x=>String(x??'').split(/[\s,،]+/)).map(x=>x.trim()).filter(Boolean))]};
+  const values=v=>{const a=Array.isArray(v)?v:[v];return[...new Set(a.flatMap(x=>String(x??'').split(/[,،\n]+/)).map(x=>x.trim()).filter(Boolean))]};
   const emptyStock=()=>({color:{},size:{},volume:{}});
   const cleanGroup=g=>{const out={};if(!g||typeof g!=='object'||Array.isArray(g))return out;for(const [k,v] of Object.entries(g)){const key=String(k||'').trim(),n=Number(v);if(key&&Number.isFinite(n)&&n>=0)out[key]=Math.floor(n)}return out};
   const normalizeStock=v=>{const x=parse(v);return{color:cleanGroup(x.color||x.colors),size:cleanGroup(x.size||x.sizes),volume:cleanGroup(x.volume||x.volumes)}};
