@@ -268,7 +268,36 @@ function optionsArray(v){return String(v||'').split(/[,،\n]+/).map(x=>x.trim())
 function safeOptions(v){if(!v)return{colors:[],sizes:[],volumes:[]};if(typeof v==='object')return{colors:Array.isArray(v.colors)?v.colors:[],sizes:Array.isArray(v.sizes)?v.sizes:[],volumes:Array.isArray(v.volumes)?v.volumes:[]};try{return safeOptions(JSON.parse(v))}catch{return{colors:[],sizes:[],volumes:[]}}}
 function rawOptions(v){if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return{...v};try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?{...x}:{}}catch{return{}}}
 function productPricingSnapshot(product){const pricing=window.MeshwarLocalPricing,vendorUsd=Number(product?.discount_price??product?.base_price);if(!pricing||!Number.isFinite(vendorUsd)||vendorUsd<0)return null;return pricing.pricingSnapshot(vendorUsd,vendorStore?.commission_rate??10,vendorStore?.exchange_rate||1,vendorStore?.exchange_target_currency||vendorStore?.default_currency||'IQD')}
-async function syncProductPricingSnapshots(){if(!vendorStore||!products.length||!window.MeshwarLocalPricing)return;await Promise.allSettled(products.map(async p=>{const options=rawOptions(p.options),snapshot=productPricingSnapshot(p);if(!snapshot)return;const current=options.pricing||null;if(current&&JSON.stringify(current)===JSON.stringify(snapshot))return;options.pricing=snapshot;const{error}=await sb.from('local_products').update({options,updated_at:new Date().toISOString()}).eq('id',p.id).eq('store_id',vendorStore.id);if(error){console.warn('Pricing snapshot sync failed:',p.id,error.message);return}p.options=options}))}
+async function syncProductPricingSnapshots(){
+  if(!vendorStore||!products.length||!window.MeshwarLocalPricing)return;
+  await Promise.allSettled(products.map(async p=>{
+    let candidate=p;
+    for(let attempt=0;attempt<3;attempt++){
+      const previousOptions=candidate.options;
+      const options=rawOptions(previousOptions),snapshot=productPricingSnapshot(candidate);
+      if(!snapshot)return;
+      const current=options.pricing||null;
+      if(current&&JSON.stringify(current)===JSON.stringify(snapshot))return;
+      options.pricing=snapshot;
+      // A paid order may have changed stock inside options since this row was loaded.
+      // Only write the pricing snapshot when the complete options value still matches.
+      let query=sb.from('local_products')
+        .update({options,updated_at:new Date().toISOString()})
+        .eq('id',p.id).eq('store_id',vendorStore.id);
+      query=previousOptions==null?query.is('options',null):query.eq('options',JSON.stringify(previousOptions));
+      const {data,error}=await query.select('*');
+      if(error){console.warn('Pricing snapshot sync failed:',p.id,error.message);return}
+      if(data?.length){Object.assign(p,data[0]);return}
+      const {data:fresh,error:readError}=await sb.from('local_products')
+        .select('*').eq('id',p.id).eq('store_id',vendorStore.id).limit(1);
+      if(readError){console.warn('Pricing snapshot refresh failed:',p.id,readError.message);return}
+      if(!fresh?.length)return;
+      candidate=fresh[0];
+      Object.assign(p,candidate);
+    }
+    console.warn('Pricing snapshot sync deferred after concurrent product changes:',p.id);
+  }));
+}
 function storeSession(){try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_store')||'null')}catch{return null}}
 function saveStoreSession(s){sessionStorage.setItem('meshwar_vendor_store',JSON.stringify(s))}
 
