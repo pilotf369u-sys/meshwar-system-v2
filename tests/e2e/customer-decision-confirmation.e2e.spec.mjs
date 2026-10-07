@@ -9,7 +9,9 @@ test('customer decision page is appended only to its dedicated invoice window', 
 
   expect(source).toContain("openCustomerDecisionPage(${index},'approve')");
   expect(source).toContain("openCustomerDecisionPage(${index},'cancel')");
-  expect(source).toContain('window.KintoBundleV93.printInvoice(o)');
+  expect(source).toContain('window.KintoBundleV93.printInvoice(o,{invoiceWindow:existingPage,canonicalOnly:canonical,prepareOrder:');
+  expect(source).toContain('await reconcileCustomerInvoiceV58(o)');
+  expect(source).toContain('_invoicePreparationErrorV59');
   expect(source).toContain("const printActions=main?.querySelector('.actions')");
   expect(source).toContain('printActions.before(section)');
   expect(source).toContain('section.className=\'customer-decision\'');
@@ -26,7 +28,7 @@ test('customer decision page is appended only to its dedicated invoice window', 
 test('decision modal delegates to the existing guarded order mutations', async () => {
   const source = await readFile(path.join(root, 'dashboard.html'), 'utf8');
 
-  expect(source).toContain("if(action==='approve')await approveOrder(i)");
-  expect(source).toContain("else if(action==='cancel')await cancelOrder(i,true)");
+  expect(source).toContain("if(action==='approve'){if(await approveOrder(index,page))page?.close()}");
+  expect(source).toContain("else if(action==='cancel'){await cancelOrder(index,true);page?.close()}");
   expect(source).toContain(".eq('id',o.id).eq('customer_id',currentCustomerCloud.id).eq('status',latest.status)");
 });

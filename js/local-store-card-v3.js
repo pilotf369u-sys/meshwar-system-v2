@@ -31,8 +31,44 @@ const commissionRate=s=>Pricing.commissionFraction(s?.commission_rate);
 const exchangeRate=s=>{const n=Number(s?.exchange_rate);return Number.isFinite(n)&&n>0?n:1};
 const vendorPrice=p=>{const n=Number(p?.discount_price??p?.base_price);return Number.isFinite(n)&&n>=0?n:null};
 const rawOptions=v=>{if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return v;try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}};
-const cleanOptionArray=v=>{const source=Array.isArray(v)?v:[v];return[...new Set(source.flatMap(x=>String(x??'').split(/[\s,،]+/)).map(x=>x.trim()).filter(Boolean))]};
+const cleanOptionArray=v=>{const source=Array.isArray(v)?v:[v];return[...new Set(source.flatMap(x=>String(x??'').split(/[,،\r\n]+/)).map(x=>x.trim()).filter(Boolean))]};
 const productOptions=p=>{const o=rawOptions(p?.options);return{colors:cleanOptionArray(o.colors),sizes:cleanOptionArray(o.sizes),volumes:cleanOptionArray(o.volumes)}};
+
+// Customer visibility only: blank/missing quantities retain total-stock fallback.
+function visibleProductOptions(product,selection={}){
+  const lists=productOptions(product),options=rawOptions(product?.options);
+  const variants=rawOptions(options.variant_stock),matrix=rawOptions(options.matrix_stock);
+  const dimensions=[['color','colors'],['size','sizes'],['volume','volumes']];
+  const active=dimensions.filter(([,plural])=>lists[plural].length);
+  const zero=value=>value!==null&&value!==undefined&&String(value).trim()!==''&&Number.isFinite(Number(value))&&Number(value)===0;
+  const variantZero=(key,plural,value)=>zero(rawOptions(variants[key]||variants[plural])[value]);
+  const compatible=(candidateKey,candidate)=>{
+    const chosen={};
+    const search=index=>{
+      if(index===active.length){
+        if(active.length<2)return true;
+        const key=dimensions.map(([dim])=>chosen[dim]||'').filter(Boolean).join('_');
+        return !zero(matrix[key]);
+      }
+      const [key,plural]=active[index];
+      const values=key===candidateKey?[candidate]:(selection[key]?[selection[key]]:lists[plural]);
+      return values.some(value=>{
+        if(!lists[plural].includes(value)||variantZero(key,plural,value))return false;
+        chosen[key]=value;
+        return search(index+1);
+      });
+    };
+    return search(0);
+  };
+  return Object.fromEntries(dimensions.map(([key,plural])=>[
+    plural,lists[plural].filter(value=>!variantZero(key,plural,value)&&compatible(key,value))
+  ]));
+}
+function hasVisibleProductOptions(product){
+  const original=productOptions(product),visible=visibleProductOptions(product);
+  return Object.keys(original).every(key=>!original[key].length||visible[key].length>0);
+}
+
 const optionSelect=(pid,key,label,values)=>values.length?`<label class="local-v3-option-label">${esc(label)}<select class="local-v3-option-select" data-option="${esc(key)}" data-pid="${esc(pid)}"><option value="">اختر ${esc(label)}</option>${values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('')}</select></label>`:'';
 const storedPricing=(p,s)=>{const snap=rawOptions(p?.options).pricing;if(!snap||snap.pricing_version!=='iqd_ceil_1000_v1')return null;const vendor=vendorPrice(p),commission=Number(s?.commission_rate),rate=exchangeRate(s);if(vendor===null)return null;const sameVendor=Number(snap.vendor_price_usd)===Number(vendor),sameCommission=Number(snap.commission_rate)===(Number.isFinite(commission)&&commission>=0&&commission<100?commission:10),sameRate=Number(snap.exchange_rate)===Number(rate);return sameVendor&&sameCommission&&sameRate?snap:null};
 const customerPriceUsd=(p,s)=>{const snap=storedPricing(p,s);if(snap&&Number.isFinite(Number(snap.customer_price_usd)))return ceilPrice(snap.customer_price_usd);const v=vendorPrice(p);return v===null?null:Pricing.customerPriceUSD(v,s?.commission_rate)};
@@ -72,22 +108,28 @@ function renderCards(grid,store,products,{fromCache=false}={}){
   const cards=(products||[]).map(p=>{
     const base=Number(p.base_price),discount=Number(p.discount_price),hasDiscount=p.discount_price!==null&&p.discount_price!==''&&Number.isFinite(base)&&Number.isFinite(discount)&&base>0&&discount>=0&&discount<base;
     const hasStock=p.stock_quantity!==null&&p.stock_quantity!==undefined&&p.stock_quantity!=='';const stock=hasStock?Math.max(0,Math.floor(Number(p.stock_quantity)||0)):null;
-    const iqd=customerPriceIqd(p,store),oldIqd=hasDiscount?oldCustomerPriceIqd(p,store):null,unavailable=!!p.is_out_of_stock||(hasStock&&stock===0)||iqd===null;
-    const opts=productOptions(p),optionsHtml=[optionSelect(p.id,'color','اللون',opts.colors),optionSelect(p.id,'size','المقاس',opts.sizes),optionSelect(p.id,'volume','الحجم',opts.volumes)].filter(Boolean).join('');
+    const iqd=customerPriceIqd(p,store),oldIqd=hasDiscount?oldCustomerPriceIqd(p,store):null,unavailable=!!p.is_out_of_stock||(hasStock&&stock===0)||!hasVisibleProductOptions(p)||iqd===null;
+    const opts=visibleProductOptions(p),optionsHtml=[optionSelect(p.id,'color','اللون',opts.colors),optionSelect(p.id,'size','المقاس',opts.sizes),optionSelect(p.id,'volume','الحجم',opts.volumes)].filter(Boolean).join('');
     const old=hasDiscount&&oldIqd!==null?`<div class="local-v3-old-row"><span class="local-v3-old" dir="ltr" style="text-decoration: line-through !important; -webkit-text-decoration-line: line-through !important; color: #94a3b8 !important; font-size: 0.85rem; display: inline-block; direction:ltr; unicode-bidi:isolate;">${esc(iqdLabel(oldIqd))}</span></div>`:'';
     const discountPct=hasDiscount?Pricing.discountPercent(base,discount):null;const badge=discountPct!==null?`<span class="local-v3-discount-badge">خصم ${esc(discountPct)}%</span>`:'';
-    const stockNotice=hasStock&&stock>0&&stock<=3?`<div class="local-v3-low-stock">🔥 سارع بالطلب، متبقي ${esc(stock)} قطع فقط!</div>`:unavailable?'<div class="local-v3-sold-out">هذا المنتج غير متوفر حالياً</div>':'';
-    return `<article class="local-v3-card" data-product-card="${esc(p.id)}" data-stock="${hasStock?esc(stock):''}">${badge}<div class="local-v3-img-wrap"><img class="local-v3-img" src="${esc(p.image_url||placeholder)}" onerror="this.onerror=null;this.src='${esc(placeholder)}'" alt="${esc(p.product_name||'منتج')}"></div><div class="local-v3-body"><div class="local-v3-name">${esc(p.product_name||'منتج')}</div><div class="local-v3-desc">${esc(p.description||'')}</div>${stockNotice}<div class="local-v3-price">${unavailable?'غير متوفر':`${old}<div class="local-v3-local"><span class="local-v3-money" dir="ltr">${esc(iqdLabel(iqd))}</span></div><small class="local-v3-note">السعر للقطعة — التوصيل يحدد لاحقاً</small>`}</div><button type="button" class="local-v3-order" ${unavailable?'disabled':''} data-pid="${esc(p.id)}">${unavailable?'نفذت الكمية':'أضف للسلة'}</button></div></article>`;
+    const stockNotice=unavailable?'<div class="local-v3-sold-out">نفدت الكمية</div>':hasStock&&stock>0&&stock<=3?`<div class="local-v3-low-stock">🔥 سارع بالطلب، متبقي ${esc(stock)} قطع فقط!</div>`:'';
+    return `<article class="local-v3-card" data-product-card="${esc(p.id)}" data-stock="${hasStock?esc(stock):''}">${badge}<div class="local-v3-img-wrap"><img class="local-v3-img" src="${esc(p.image_url||placeholder)}" onerror="this.onerror=null;this.src='${esc(placeholder)}'" alt="${esc(p.product_name||'منتج')}"></div><div class="local-v3-body"><div class="local-v3-name">${esc(p.product_name||'منتج')}</div><div class="local-v3-desc">${esc(p.description||'')}</div>${stockNotice}<div class="local-v3-price">${unavailable?'غير متوفر':`${old}<div class="local-v3-local"><span class="local-v3-money" dir="ltr">${esc(iqdLabel(iqd))}</span></div><small class="local-v3-note">السعر للقطعة — التوصيل يحدد لاحقاً</small>`}</div><button type="button" class="local-v3-order" ${unavailable?'disabled':''} data-pid="${esc(p.id)}">${unavailable?'نفدت الكمية':'أضف للسلة'}</button></div></article>`;
   }).join('');
   grid.innerHTML=`${fromCache?'<div class="local-v3-cache-note">يتم عرض نسخة محفوظة مؤقتاً بسبب تعذر الاتصال المباشر.</div>':''}${cards||'<div class="local-v3-state">لا توجد منتجات مضافة لهذا المتجر حالياً.</div>'}`;
   grid.querySelectorAll('[data-product-card]').forEach(card=>card.addEventListener('click',e=>{const action=e.target?.dataset?.qtyAction;if(!action)return;const valueEl=card.querySelector('[data-qty-value]');if(!valueEl)return;const stockRaw=card.dataset.stock,current=Math.max(1,Number(valueEl.textContent)||1),max=stockRaw===''?99:Math.max(1,Number(stockRaw)||1);valueEl.textContent=String(action==='plus'?Math.min(max,current+1):Math.max(1,current-1))}));
-  const addToCart=(productId,selection={},requestedQuantity=1)=>{
+  const addToCart=async(productId,selection={},requestedQuantity=1)=>{
+    let fresh;try{fresh=await window.KintoLocalCartV93.loadStockProduct(productId)}catch(error){alert(error.message||'تعذر التحقق من المخزون.');return false}
+    const cached=(products||[]).find(x=>String(x.id)===String(productId));if(cached)Object.assign(cached,fresh);
     const p=(products||[]).find(x=>String(x.id)===String(productId));if(!p)return false;const opts=productOptions(p);
     for(const [key,values,label] of [['color',opts.colors,'اللون'],['size',opts.sizes,'المقاس'],['volume',opts.volumes,'الحجم']]){if(values.length&&!String(selection[key]||'').trim()){alert('يرجى اختيار '+label+' قبل الإضافة للسلة.');return false}}
-    requestedQuantity=Math.max(1,Math.floor(Number(requestedQuantity)||1));const cart=window.KintoLocalCartV93,unitIqd=customerPriceIqd(p,store),oldUnitIqd=oldCustomerPriceIqd(p,store);if(!cart||typeof cart.add!=='function'){alert('سلة المتاجر المحلية غير جاهزة. أعد تحميل الصفحة.');return false}if(unitIqd===null){alert('سعر المنتج غير صالح.');return false}cart.add({store_id:store.id,store_name:store.store_name||'',product_id:String(p.id),product_name:p.product_name||'',image_url:p.image_url||'',selected_options:{color:String(selection.color||''),size:String(selection.size||''),volume:String(selection.volume||'')},quantity:requestedQuantity,unit_price_local:ceilPrice(unitIqd),old_unit_price_local:oldUnitIqd!==null?ceilPrice(oldUnitIqd):null,currency:'IQD'});return true;
+    const visible=visibleProductOptions(p,selection);
+    if(p.is_out_of_stock||(p.stock_quantity!=null&&p.stock_quantity!==''&&Number(p.stock_quantity)===0)||!hasVisibleProductOptions(p)||[['color','colors'],['size','sizes'],['volume','volumes']].some(([key,plural])=>opts[plural].length&&!visible[plural].includes(String(selection[key]||'')))){
+      alert('الخيار المحدد غير متوفر حاليًا.');return false;
+    }
+    requestedQuantity=Math.max(1,Math.floor(Number(requestedQuantity)||1));const cart=window.KintoLocalCartV93,unitIqd=customerPriceIqd(p,store),oldUnitIqd=oldCustomerPriceIqd(p,store);if(!cart||typeof cart.add!=='function'){alert('سلة المتاجر المحلية غير جاهزة. أعد تحميل الصفحة.');return false}if(unitIqd===null){alert('سعر المنتج غير صالح.');return false}try{cart.add({stock_product:p,store_id:store.id,store_name:store.store_name||'',product_id:String(p.id),product_name:p.product_name||'',image_url:p.image_url||'',selected_options:{color:String(selection.color||''),size:String(selection.size||''),volume:String(selection.volume||'')},quantity:requestedQuantity,unit_price_local:ceilPrice(unitIqd),old_unit_price_local:oldUnitIqd!==null?ceilPrice(oldUnitIqd):null,currency:'IQD'});return true}catch(error){alert(error.message||'الكمية تتجاوز المخزون المتاح.');return false}
   };
-  window.KintoLocalStoreCardV3={getProduct:productId=>(products||[]).find(x=>String(x.id)===String(productId))||null,productOptions,addToCart};
-  grid.querySelectorAll('.local-v3-order[data-pid]').forEach(btn=>btn.addEventListener('click',()=>{if(addToCart(btn.dataset.pid,{},1)){btn.textContent='✓ تمت الإضافة للسلة';setTimeout(()=>{if(btn.isConnected&&!btn.disabled)btn.textContent='أضف للسلة'},900)}}));
+  window.KintoLocalStoreCardV3={getProduct:productId=>(products||[]).find(x=>String(x.id)===String(productId))||null,productOptions,visibleProductOptions,addToCart};
+  grid.querySelectorAll('.local-v3-order[data-pid]').forEach(btn=>btn.addEventListener('click',async()=>{if(await addToCart(btn.dataset.pid,{},1)){btn.textContent='✓ تمت الإضافة للسلة';setTimeout(()=>{if(btn.isConnected&&!btn.disabled)btn.textContent='أضف للسلة'},900)}}));
 }
 
 async function reserveStock(productId,requestedQuantity){

@@ -4,7 +4,7 @@
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const parse=v=>{if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return v;try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}};
-  const values=v=>{const a=Array.isArray(v)?v:[v];return[...new Set(a.flatMap(x=>String(x??'').split(/[\s,،]+/)).map(x=>x.trim()).filter(Boolean))]};
+  const values=v=>{const a=Array.isArray(v)?v:[v];return[...new Set(a.flatMap(x=>String(x??'').split(/[,،\n]+/)).map(x=>x.trim()).filter(Boolean))]};
   const emptyStock=()=>({color:{},size:{},volume:{}});
   const cleanGroup=g=>{const out={};if(!g||typeof g!=='object'||Array.isArray(g))return out;for(const [k,v] of Object.entries(g)){const key=String(k||'').trim(),n=Number(v);if(key&&Number.isFinite(n)&&n>=0)out[key]=Math.floor(n)}return out};
   const normalizeStock=v=>{const x=parse(v);return{color:cleanGroup(x.color||x.colors),size:cleanGroup(x.size||x.sizes),volume:cleanGroup(x.volume||x.volumes)}};
@@ -44,6 +44,25 @@
 
   function editorValues(){const out=emptyStock();document.querySelectorAll('#mwVariantStockEditor [data-vs-group][data-vs-value]').forEach(input=>{const raw=String(input.value??'').trim();if(raw==='')return;const n=Number(raw);if(Number.isFinite(n)&&n>=0)out[input.dataset.vsGroup][input.dataset.vsValue]=Math.floor(n)});return out}
   function optionInputValues(){return{color:values(document.getElementById('productColors')?.value||''),size:values(document.getElementById('productSizes')?.value||''),volume:values(document.getElementById('productVolumes')?.value||'')}}
+  function vendorTotalStock(){return Math.max(0,Math.floor(Number(document.getElementById('productStock')?.value)||0))}
+  function syncEditorCaps(changed){
+    const total=vendorTotalStock();
+    for(const group of ['color','size','volume']){
+      const inputs=[...document.querySelectorAll(`#mwVariantStockEditor [data-vs-group="${group}"]`)];
+      if(!inputs.length)continue;
+      const used=input=>{const raw=String(input.value??'').trim();if(raw==='')return 0;const n=Number(raw);return Number.isFinite(n)&&n>=0?Math.floor(n):0};
+      if(changed&&inputs.includes(changed)){
+        const others=inputs.reduce((sum,input)=>sum+(input===changed?0:used(input)),0);
+        const allowed=Math.max(0,total-others);
+        changed.max=String(allowed);
+        if(used(changed)>allowed)changed.value=String(allowed);
+      }
+      for(const input of inputs){
+        const others=inputs.reduce((sum,other)=>sum+(other===input?0:used(other)),0);
+        input.max=String(Math.max(0,total-others));
+      }
+    }
+  }
   function renderEditor(seed){const box=document.getElementById('mwVariantStockEditor');if(!box)return;const prev=seed?normalizeStock(seed):editorValues(),groups=optionInputValues(),labels={color:'الألوان',size:'المقاسات',volume:'الأحجام'};box.innerHTML=`<div class="mw-variant-stock-title">مخزون الخيارات</div><div class="mw-variant-stock-help">اختياري: اترك الحقل فارغًا لاستخدام المخزون الإجمالي، أدخل 0 لتعطيل الخيار، أو أدخل كمية مستقلة.</div>${Object.entries(groups).map(([key,list])=>list.length?`<div class="mw-variant-stock-group"><div class="mw-variant-stock-group-title">${labels[key]}</div><div class="mw-variant-stock-grid">${list.map(v=>`<label class="mw-variant-stock-row"><span class="mw-variant-stock-name">${esc(v)}</span><input type="number" min="0" step="1" class="field mw-variant-stock-input" data-vs-group="${key}" data-vs-value="${esc(v)}" value="${Object.prototype.hasOwnProperty.call(prev[key],v)?prev[key][v]:''}" placeholder="—"></label>`).join('')}</div></div>`:'').join('')}`}
   function ensureEditor(){const anchor=document.getElementById('productVolumes');if(!anchor)return false;let box=document.getElementById('mwVariantStockEditor');if(!box){box=document.createElement('div');box.id='mwVariantStockEditor';box.className='mw-variant-stock-editor md:col-span-2';anchor.insertAdjacentElement('afterend',box);for(const id of ['productColors','productSizes','productVolumes'])document.getElementById(id)?.addEventListener('input',()=>renderEditor())}if(!box.innerHTML)renderEditor(emptyStock());return true}
   async function seedEditor(productId){if(!productId)return renderEditor(emptyStock());try{const rows=await rest(`local_products?select=options&id=eq.${encodeURIComponent(productId)}&limit=1`),p=Array.isArray(rows)?rows[0]:null,o=parse(p?.options);renderEditor(o.variant_stock)}catch(e){console.warn('Variant stock seed failed',e)}}
@@ -53,7 +72,7 @@
     if(Array.isArray(body))return body.map(x=>patchOne({...x}));return patchOne({...body});
   }
   function wrapVendorSave(){if(typeof window.saveProduct!=='function'||window.saveProduct.__mwVariantWrapped)return false;const original=window.saveProduct;const wrapped=async function(...args){const variant=editorValues(),realFetch=window.fetch;window.fetch=async function(input,init={}){try{const url=typeof input==='string'?input:String(input?.url||''),method=String(init.method||'GET').toUpperCase();if(url.includes('/rest/v1/local_products')&&(method==='POST'||method==='PATCH')&&init.body){const parsed=JSON.parse(init.body);init={...init,body:JSON.stringify(injectVariantIntoBody(parsed,variant))}}}catch(e){console.warn('Variant stock request injection skipped',e)}return realFetch.call(this,input,init)};try{return await original.apply(this,args)}finally{window.fetch=realFetch}};wrapped.__mwVariantWrapped=true;wrapped.__mwMulti=original.__mwMulti;window.saveProduct=wrapped;return true}
-  function startVendor(){ensureEditor();let tries=0;const timer=setInterval(()=>{tries++;ensureEditor();if(wrapVendorSave()||tries>100)clearInterval(timer)},100);document.addEventListener('click',e=>{const add=e.target.closest?.('button[onclick="openProductModal()"]');if(add)setTimeout(()=>renderEditor(emptyStock()),40);const edit=e.target.closest?.('button[onclick^="editProduct("]');if(edit)setTimeout(()=>seedEditor(document.getElementById('productId')?.value),120)},true);new MutationObserver(()=>ensureEditor()).observe(document.body,{childList:true,subtree:true})}
+  function startVendor(){ensureEditor();let tries=0;const timer=setInterval(()=>{tries++;ensureEditor();if(wrapVendorSave()||tries>100)clearInterval(timer)},100);document.addEventListener('input',e=>{if(e.target.matches?.('#mwVariantStockEditor [data-vs-group][data-vs-value]'))syncEditorCaps(e.target);else if(e.target.id==='productStock')syncEditorCaps()},true);document.addEventListener('click',e=>{const add=e.target.closest?.('button[onclick="openProductModal()"]');if(add)setTimeout(()=>{renderEditor(emptyStock());syncEditorCaps()},40);const edit=e.target.closest?.('button[onclick^="editProduct("]');if(edit)setTimeout(async()=>{await seedEditor(document.getElementById('productId')?.value);syncEditorCaps()},120)},true);new MutationObserver(()=>ensureEditor()).observe(document.body,{childList:true,subtree:true})}
 
   function start(){if(document.getElementById('productModal')||/vendor-dashboard\.html$/i.test(location.pathname))startVendor()}
   window.MeshwarVariantStock={enhanceModal,normalizeStock};
