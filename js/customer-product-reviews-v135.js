@@ -599,7 +599,7 @@
     if (!container) return;
     [...container.querySelectorAll('.notification-item:not(.review-notification):not(.review-moderation-notification)')].forEach((node, index) => {
       const order = orders[index]; if (!order) return;
-      node.dataset.notificationKey = `order:${order.id || order.order_code}:${order.status || ''}:${order.updated_at || order.created_at || ''}`;
+      node.dataset.notificationKey = `order:${order.id || order.order_code}:${order.status || ''}:${order.updated_at || order.created_at || ''}:${JSON.stringify(order._stockShortagesV53||[])}`;
     });
   }
 
@@ -699,3 +699,4 @@
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
 })();
+
