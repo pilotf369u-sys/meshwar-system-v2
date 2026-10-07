@@ -117,17 +117,19 @@ function renderCards(grid,store,products,{fromCache=false}={}){
   }).join('');
   grid.innerHTML=`${fromCache?'<div class="local-v3-cache-note">يتم عرض نسخة محفوظة مؤقتاً بسبب تعذر الاتصال المباشر.</div>':''}${cards||'<div class="local-v3-state">لا توجد منتجات مضافة لهذا المتجر حالياً.</div>'}`;
   grid.querySelectorAll('[data-product-card]').forEach(card=>card.addEventListener('click',e=>{const action=e.target?.dataset?.qtyAction;if(!action)return;const valueEl=card.querySelector('[data-qty-value]');if(!valueEl)return;const stockRaw=card.dataset.stock,current=Math.max(1,Number(valueEl.textContent)||1),max=stockRaw===''?99:Math.max(1,Number(stockRaw)||1);valueEl.textContent=String(action==='plus'?Math.min(max,current+1):Math.max(1,current-1))}));
-  const addToCart=(productId,selection={},requestedQuantity=1)=>{
+  const addToCart=async(productId,selection={},requestedQuantity=1)=>{
+    let fresh;try{fresh=await window.KintoLocalCartV93.loadStockProduct(productId)}catch(error){alert(error.message||'تعذر التحقق من المخزون.');return false}
+    const cached=(products||[]).find(x=>String(x.id)===String(productId));if(cached)Object.assign(cached,fresh);
     const p=(products||[]).find(x=>String(x.id)===String(productId));if(!p)return false;const opts=productOptions(p);
     for(const [key,values,label] of [['color',opts.colors,'اللون'],['size',opts.sizes,'المقاس'],['volume',opts.volumes,'الحجم']]){if(values.length&&!String(selection[key]||'').trim()){alert('يرجى اختيار '+label+' قبل الإضافة للسلة.');return false}}
     const visible=visibleProductOptions(p,selection);
     if(p.is_out_of_stock||(p.stock_quantity!=null&&p.stock_quantity!==''&&Number(p.stock_quantity)===0)||!hasVisibleProductOptions(p)||[['color','colors'],['size','sizes'],['volume','volumes']].some(([key,plural])=>opts[plural].length&&!visible[plural].includes(String(selection[key]||'')))){
       alert('الخيار المحدد غير متوفر حاليًا.');return false;
     }
-    requestedQuantity=Math.max(1,Math.floor(Number(requestedQuantity)||1));const cart=window.KintoLocalCartV93,unitIqd=customerPriceIqd(p,store),oldUnitIqd=oldCustomerPriceIqd(p,store);if(!cart||typeof cart.add!=='function'){alert('سلة المتاجر المحلية غير جاهزة. أعد تحميل الصفحة.');return false}if(unitIqd===null){alert('سعر المنتج غير صالح.');return false}cart.add({store_id:store.id,store_name:store.store_name||'',product_id:String(p.id),product_name:p.product_name||'',image_url:p.image_url||'',selected_options:{color:String(selection.color||''),size:String(selection.size||''),volume:String(selection.volume||'')},quantity:requestedQuantity,unit_price_local:ceilPrice(unitIqd),old_unit_price_local:oldUnitIqd!==null?ceilPrice(oldUnitIqd):null,currency:'IQD'});return true;
+    requestedQuantity=Math.max(1,Math.floor(Number(requestedQuantity)||1));const cart=window.KintoLocalCartV93,unitIqd=customerPriceIqd(p,store),oldUnitIqd=oldCustomerPriceIqd(p,store);if(!cart||typeof cart.add!=='function'){alert('سلة المتاجر المحلية غير جاهزة. أعد تحميل الصفحة.');return false}if(unitIqd===null){alert('سعر المنتج غير صالح.');return false}try{cart.add({stock_product:p,store_id:store.id,store_name:store.store_name||'',product_id:String(p.id),product_name:p.product_name||'',image_url:p.image_url||'',selected_options:{color:String(selection.color||''),size:String(selection.size||''),volume:String(selection.volume||'')},quantity:requestedQuantity,unit_price_local:ceilPrice(unitIqd),old_unit_price_local:oldUnitIqd!==null?ceilPrice(oldUnitIqd):null,currency:'IQD'});return true}catch(error){alert(error.message||'الكمية تتجاوز المخزون المتاح.');return false}
   };
   window.KintoLocalStoreCardV3={getProduct:productId=>(products||[]).find(x=>String(x.id)===String(productId))||null,productOptions,visibleProductOptions,addToCart};
-  grid.querySelectorAll('.local-v3-order[data-pid]').forEach(btn=>btn.addEventListener('click',()=>{if(addToCart(btn.dataset.pid,{},1)){btn.textContent='✓ تمت الإضافة للسلة';setTimeout(()=>{if(btn.isConnected&&!btn.disabled)btn.textContent='أضف للسلة'},900)}}));
+  grid.querySelectorAll('.local-v3-order[data-pid]').forEach(btn=>btn.addEventListener('click',async()=>{if(await addToCart(btn.dataset.pid,{},1)){btn.textContent='✓ تمت الإضافة للسلة';setTimeout(()=>{if(btn.isConnected&&!btn.disabled)btn.textContent='أضف للسلة'},900)}}));
 }
 
 async function reserveStock(productId,requestedQuantity){

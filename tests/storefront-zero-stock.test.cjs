@@ -49,7 +49,7 @@ test('products without variants remain available to the visibility helper',()=>{
 
 test('modal option refresh removes zero choices and clears an unavailable selection',()=>{
   const modal=fs.readFileSync(__dirname+'/../js/storefront-product-modal-v145.js','utf8');
-  const refresh=modal.slice(modal.indexOf('  function refreshVisibleOptions(){'),modal.indexOf('  function submit(){'));
+  const refresh=modal.slice(modal.indexOf('  function refreshVisibleOptions(){'),modal.indexOf('  async function submit(){'));
   const select={dataset:{option:'color'},value:'بني محروق',innerHTML:'',closest(){return {childNodes:[{textContent:'اللون'}]}}};
   const add={disabled:false,textContent:''};
   const order={dataset:{pid:'p'},disabled:false};
@@ -66,3 +66,4 @@ test('modal option refresh removes zero choices and clears an unavailable select
   assert.equal(select.innerHTML.includes('جوزي فاتح'),true);
   assert.equal(add.disabled,false);
 });
+
