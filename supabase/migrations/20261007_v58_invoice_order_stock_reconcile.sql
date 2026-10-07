@@ -216,7 +216,7 @@ declare
   revision text; was_changed boolean := false;
 begin
   v_customer_id := private.require_customer_review_session(p_session_token);
-  select * into o from public.orders where id=p_order_id and orders.customer_id=v_customer_id for update;
+  select * into o from public.orders where id=p_order_id and orders.customer_id::text=v_customer_id::text for update;
   if not found then raise exception 'V58_ORDER_NOT_FOUND'; end if;
   if not (o.status=any(array['بانتظار موافقة العميل','بانتظار موافقة الزبون','بانتظار التسعير','تم التسعير / بانتظار موافقة العميل'])) then
     raise exception 'V58_ORDER_NOT_AWAITING_APPROVAL';
