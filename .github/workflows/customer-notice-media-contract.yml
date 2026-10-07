@@ -1,0 +1,26 @@
+name: Customer notice media contract
+on:
+  pull_request:
+    paths:
+      - 'js/admin-customer-notices-v415.js'
+      - 'js/customer-admin-notices-v416.js'
+      - 'js/customer-notice-media-prepare-v424.js'
+      - 'supabase/functions/customer-notice-*/**'
+      - 'supabase/migrations/20261001_v42*.sql'
+      - 'ci/customer-notice-*.test.mjs'
+      - '.github/workflows/customer-notice-media-contract.yml'
+  workflow_dispatch:
+jobs:
+  notice-media-contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check js/admin-customer-notices-v415.js
+      - run: node --check js/customer-admin-notices-v416.js
+      - run: node --check js/customer-notice-media-prepare-v424.js
+      - run: node --test ci/customer-notice-media-v424-contract.test.mjs ci/customer-notice-delete-v425-contract.test.mjs ci/customer-notice-atomic-v428-contract.test.mjs

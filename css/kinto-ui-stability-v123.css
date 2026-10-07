@@ -1,0 +1,23 @@
+/* KINTO V123 — shared anti-flicker/CLS layer. Visual rules are opt-in and role-safe. */
+html.kinto-stability{scrollbar-gutter:stable}
+html.kinto-stability body{min-height:100vh}
+html.kinto-stability .table-wrap,
+html.kinto-stability .orders,
+html.kinto-stability #ordersGrid,
+html.kinto-stability #notificationsContainer,
+html.kinto-stability #activeOrdersTableBody,
+html.kinto-stability #pipelineOrdersBody,
+html.kinto-stability #adminOrdersTableBody{overflow-anchor:none}
+html.kinto-stability .kinto-loading-host{min-height:var(--kinto-reserved-height,160px);transition:min-height .18s ease}
+html.kinto-stability .kinto-skeleton-row td{position:relative;height:74px!important;color:transparent!important;text-shadow:none!important;overflow:hidden}
+html.kinto-stability .kinto-skeleton-row td>*{visibility:hidden!important}
+html.kinto-stability .kinto-skeleton-row td::after,
+html.kinto-stability .kinto-skeleton-block::after{content:"";display:block;width:min(82%,560px);height:13px;margin:auto;border-radius:999px;background:linear-gradient(90deg,rgba(148,163,184,.12) 20%,rgba(245,196,81,.24) 45%,rgba(148,163,184,.12) 70%);background-size:220% 100%;animation:kintoSkeletonSweep 1.25s ease-in-out infinite}
+html.kinto-stability .kinto-skeleton-block{display:grid!important;place-items:center;min-height:150px!important;color:transparent!important;overflow:hidden}
+html.kinto-stability img.order-thumb,
+html.kinto-stability img.detail-image{background:rgba(148,163,184,.08)}
+html.kinto-stability button,
+html.kinto-stability input,
+html.kinto-stability select{font:inherit}
+@keyframes kintoSkeletonSweep{0%{background-position:120% 0}100%{background-position:-120% 0}}
+@media(prefers-reduced-motion:reduce){html.kinto-stability .kinto-skeleton-row td::after,html.kinto-stability .kinto-skeleton-block::after{animation:none}}

@@ -1,0 +1,52 @@
+name: Apply Local Products Pagination V60
+on:
+  push:
+    branches: [feature/local-products-pagination-v60]
+    paths:
+      - 'js/local-products-pagination-v60.js'
+      - '.github/workflows/apply-local-products-pagination-v60.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/local-products-pagination-v60
+          fetch-depth: 0
+      - name: Wire and validate V60 pagination
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          pagination='    <script src="js/local-products-pagination-v60.js?v=20260831"></script>\n'
+          anchor='    <script src="js/product-deeplink-v56.js?v=20260831"></script>'
+          if pagination.strip() not in s:
+              if anchor not in s:
+                  raise SystemExit('product deep-link anchor missing in index.html')
+              s=s.replace(anchor, pagination+anchor, 1)
+          p.write_text(s)
+          PY
+          grep -Fq 'js/local-products-pagination-v60.js?v=20260831' index.html
+          grep -Fq 'const PAGE_SIZE=12' js/local-products-pagination-v60.js
+          grep -Fq "data-product-card" js/local-products-pagination-v60.js
+          grep -Fq "pageForDirectProduct" js/local-products-pagination-v60.js
+          grep -Fq "animation-iteration-count:infinite" js/product-deeplink-v56.js
+          node --check js/local-products-pagination-v60.js
+          node --check js/product-deeplink-v56.js
+          git diff --check
+          changed="$(git diff --name-only)"
+          test "$changed" = "index.html"
+      - name: Commit V60 wiring
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: enable local product pagination V60'
+          git push origin HEAD:feature/local-products-pagination-v60

@@ -1,0 +1,198 @@
+/* Delivery dashboard theme polish v1.4 — CSS-only theme isolation.
+   Dark and Light are explicitly scoped to the real global theme attribute.
+   No DOM, Supabase, event-handler, or delivery-logic changes. */
+
+/* ==================== DARK MODE ONLY ==================== */
+html[data-mw-global-theme="dark"] body{
+  background:radial-gradient(circle at 12% 0%,rgba(245,196,81,.10),transparent 24%),radial-gradient(circle at 88% 5%,rgba(37,99,235,.16),transparent 30%),linear-gradient(145deg,#030712 0%,#07111f 48%,#0b1424 100%)!important;
+  color:#f8fafc!important;
+}
+html[data-mw-global-theme="dark"] .topbar,
+html[data-mw-global-theme="dark"] header,
+html[data-mw-global-theme="dark"] .delivery-header,
+html[data-mw-global-theme="dark"] #deliveryHeader,
+html[data-mw-global-theme="dark"] #deliveryTitle,
+html[data-mw-global-theme="dark"] #identityMeta{
+  height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;
+  line-height:1.5!important;opacity:1!important;visibility:visible!important;
+}
+html[data-mw-global-theme="dark"] .topbar{
+  background:#0f172a!important;border:1px solid #334155!important;box-shadow:0 14px 34px rgba(0,0,0,.30)!important;
+}
+html[data-mw-global-theme="dark"] #deliveryTitle,
+html[data-mw-global-theme="dark"] .topbar #deliveryTitle{
+  color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:900!important;display:block!important;
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+}
+html[data-mw-global-theme="dark"] #identityMeta,
+html[data-mw-global-theme="dark"] .topbar #identityMeta,
+html[data-mw-global-theme="dark"] .delivery-courier-name,
+html[data-mw-global-theme="dark"] span[id*="courier"],
+html[data-mw-global-theme="dark"] span[class*="courier"]{
+  color:#fbbf24!important;-webkit-text-fill-color:#fbbf24!important;font-weight:800!important;
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+}
+html[data-mw-global-theme="dark"] .topbar .btn,
+html[data-mw-global-theme="dark"] .topbar .btn *{color:#fff!important;-webkit-text-fill-color:#fff!important}
+
+html[data-mw-global-theme="dark"] .finance-card{
+  background:linear-gradient(145deg,#1e293b,#0f172a)!important;border:1px solid #334155!important;box-shadow:0 10px 26px rgba(0,0,0,.24)!important;
+}
+html[data-mw-global-theme="dark"] .finance-card .label{color:#cbd5e1!important;-webkit-text-fill-color:#cbd5e1!important;font-weight:800!important}
+html[data-mw-global-theme="dark"] .finance-card .value{color:#f8fafc!important;-webkit-text-fill-color:#f8fafc!important;font-size:25px!important;font-weight:950!important}
+html[data-mw-global-theme="dark"] #cardCollected,
+html[data-mw-global-theme="dark"] #cardFees,
+html[data-mw-global-theme="dark"] #cardNet{color:#fbbf24!important;-webkit-text-fill-color:#fbbf24!important}
+
+html[data-mw-global-theme="dark"] .shipment{
+  background:linear-gradient(145deg,#172033,#0f172a)!important;border:1px solid #334155!important;color:#f1f5f9!important;
+}
+html[data-mw-global-theme="dark"] .shipment-summary,
+html[data-mw-global-theme="dark"] .shipment-summary > div,
+html[data-mw-global-theme="dark"] .shipment-summary b,
+html[data-mw-global-theme="dark"] .shipment-summary span:not(.money):not(.chevron),
+html[data-mw-global-theme="dark"] .summary-address,
+html[data-mw-global-theme="dark"] .shipment-details,
+html[data-mw-global-theme="dark"] .shipment-head{
+  color:#f1f5f9!important;-webkit-text-fill-color:#f1f5f9!important;opacity:1!important;visibility:visible!important;
+}
+html[data-mw-global-theme="dark"] .shipment-summary .muted,
+html[data-mw-global-theme="dark"] .shipment-details .muted{color:#cbd5e1!important;-webkit-text-fill-color:#cbd5e1!important;font-weight:700!important}
+html[data-mw-global-theme="dark"] .code{color:#fbbf24!important;-webkit-text-fill-color:#fbbf24!important;font-weight:950!important}
+html[data-mw-global-theme="dark"] .summary-address{color:#e2e8f0!important;-webkit-text-fill-color:#e2e8f0!important;font-weight:800!important}
+html[data-mw-global-theme="dark"] .money,
+html[data-mw-global-theme="dark"] .shipment-summary .money,
+html[data-mw-global-theme="dark"] .item .money{color:#f59e0b!important;-webkit-text-fill-color:#f59e0b!important;font-weight:950!important}
+html[data-mw-global-theme="dark"] .item{background:#111827!important;border:1px solid #334155!important;color:#f1f5f9!important;-webkit-text-fill-color:#f1f5f9!important}
+html[data-mw-global-theme="dark"] .item b{color:#e2e8f0!important;-webkit-text-fill-color:#e2e8f0!important;font-weight:800!important}
+html[data-mw-global-theme="dark"] .secondary{color:#fbbf24!important;-webkit-text-fill-color:#fbbf24!important;font-weight:800!important}
+
+html[data-mw-global-theme="dark"] .tabs{background:#0f172a!important;border:1px solid #334155!important;box-shadow:0 12px 30px rgba(0,0,0,.26)!important}
+html[data-mw-global-theme="dark"] .tab{background:#1e293b!important;color:#e2e8f0!important;-webkit-text-fill-color:#e2e8f0!important;border:1px solid #334155!important;font-weight:900!important}
+html[data-mw-global-theme="dark"] .tab:hover{background:#26364d!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:#64748b!important}
+html[data-mw-global-theme="dark"] .tab.active{background:#f59e0b!important;color:#111827!important;-webkit-text-fill-color:#111827!important;border-color:#fbbf24!important}
+html[data-mw-global-theme="dark"] .tab.active .badge{background:#111827!important;color:#fbbf24!important;-webkit-text-fill-color:#fbbf24!important}
+html[data-mw-global-theme="dark"] .toolbar,
+html[data-mw-global-theme="dark"] .scanner-panel,
+html[data-mw-global-theme="dark"] .delivery-image-box{background:#0f172a!important;border-color:#334155!important;color:#f1f5f9!important}
+html[data-mw-global-theme="dark"] .edit-box select,
+html[data-mw-global-theme="dark"] .edit-box input,
+html[data-mw-global-theme="dark"] .edit-box textarea,
+html[data-mw-global-theme="dark"] .toolbar input{background:#020617!important;color:#f8fafc!important;-webkit-text-fill-color:#f8fafc!important;border-color:#475569!important}
+
+/* ==================== LIGHT MODE — SUNLIGHT PROOF ====================
+   Overrides the legacy unscoped #delivery-luxury-theme embedded in delivery-dashboard.html. */
+html[data-mw-global-theme="light"] body{
+  background:#e2e8f0!important;background-image:none!important;color:#0f172a!important;
+}
+html[data-mw-global-theme="light"] .topbar{
+  background:#f1f5f9!important;background-image:none!important;border:1px solid #cbd5e1!important;
+  box-shadow:0 5px 18px rgba(15,23,42,.10)!important;color:#0f172a!important;
+}
+html[data-mw-global-theme="light"] #deliveryTitle,
+html[data-mw-global-theme="light"] .topbar #deliveryTitle{
+  color:#0f172a!important;-webkit-text-fill-color:#0f172a!important;font-weight:900!important;
+  height:auto!important;max-height:none!important;overflow:visible!important;line-height:1.5!important;opacity:1!important;visibility:visible!important;
+}
+html[data-mw-global-theme="light"] #identityMeta,
+html[data-mw-global-theme="light"] .topbar #identityMeta,
+html[data-mw-global-theme="light"] .delivery-courier-name,
+html[data-mw-global-theme="light"] span[id*="courier"],
+html[data-mw-global-theme="light"] span[class*="courier"]{
+  color:#b88919!important;-webkit-text-fill-color:#b88919!important;font-weight:900!important;
+  height:auto!important;max-height:none!important;overflow:visible!important;opacity:1!important;visibility:visible!important;
+}
+html[data-mw-global-theme="light"] .topbar .muted{color:#475569!important;-webkit-text-fill-color:#475569!important}
+html[data-mw-global-theme="light"] .topbar .btn,
+html[data-mw-global-theme="light"] .topbar .btn *{color:#fff!important;-webkit-text-fill-color:#fff!important}
+
+html[data-mw-global-theme="light"] .finance-card{
+  background:#e8edf3!important;background-image:none!important;border:1px solid #cbd5e1!important;
+  box-shadow:0 3px 12px rgba(15,23,42,.08)!important;backdrop-filter:none!important;
+}
+html[data-mw-global-theme="light"] .finance-card::after{display:none!important}
+html[data-mw-global-theme="light"] .finance-card .label{color:#334155!important;-webkit-text-fill-color:#334155!important;font-weight:800!important}
+html[data-mw-global-theme="light"] .finance-card .value,
+html[data-mw-global-theme="light"] .finance-card:nth-child(n) .value{color:#0f172a!important;-webkit-text-fill-color:#0f172a!important;text-shadow:none!important;font-weight:950!important}
+html[data-mw-global-theme="light"] #cardCollected,
+html[data-mw-global-theme="light"] #cardFees,
+html[data-mw-global-theme="light"] #cardNet{color:#b88919!important;-webkit-text-fill-color:#b88919!important;font-weight:950!important}
+
+html[data-mw-global-theme="light"] .tabs{
+  background:#e8edf3!important;background-image:none!important;border:1px solid #cbd5e1!important;box-shadow:0 5px 18px rgba(15,23,42,.09)!important;backdrop-filter:none!important;
+}
+html[data-mw-global-theme="light"] .tab{
+  background:#f1f5f9!important;background-image:none!important;color:#1e293b!important;-webkit-text-fill-color:#1e293b!important;border:1px solid #cbd5e1!important;box-shadow:none!important;font-weight:900!important;
+}
+html[data-mw-global-theme="light"] .tab:hover{background:#dbe2ea!important;color:#0f172a!important;-webkit-text-fill-color:#0f172a!important;border-color:#94a3b8!important}
+html[data-mw-global-theme="light"] .tab.active{background:#c59b27!important;background-image:none!important;color:#0f172a!important;-webkit-text-fill-color:#0f172a!important;border-color:#a6750b!important;box-shadow:none!important}
+html[data-mw-global-theme="light"] .tab .badge{background:#cbd5e1!important;color:#1e293b!important;-webkit-text-fill-color:#1e293b!important}
+html[data-mw-global-theme="light"] .tab.active .badge{background:#0f172a!important;color:#f8fafc!important;-webkit-text-fill-color:#f8fafc!important}
+
+html[data-mw-global-theme="light"] .toolbar{
+  background:#f1f5f9!important;background-image:none!important;border:1px solid #cbd5e1!important;box-shadow:0 4px 14px rgba(15,23,42,.08)!important;backdrop-filter:none!important;
+}
+html[data-mw-global-theme="light"] .toolbar input,
+html[data-mw-global-theme="light"] .edit-box select,
+html[data-mw-global-theme="light"] .edit-box input,
+html[data-mw-global-theme="light"] .edit-box textarea{
+  background:#e8edf3!important;color:#0f172a!important;-webkit-text-fill-color:#0f172a!important;border-color:#94a3b8!important;
+}
+html[data-mw-global-theme="light"] .toolbar input::placeholder{color:#475569!important;-webkit-text-fill-color:#475569!important}
+
+html[data-mw-global-theme="light"] .shipment{
+  background:#f1f5f9!important;background-image:none!important;border:1px solid #cbd5e1!important;
+  box-shadow:0 3px 12px rgba(15,23,42,.07)!important;color:#0f172a!important;
+}
+html[data-mw-global-theme="light"] .shipment:hover{background:#dbe2ea!important;border-color:#94a3b8!important;box-shadow:0 6px 16px rgba(15,23,42,.10)!important;transform:none!important}
+html[data-mw-global-theme="light"] .shipment-summary,
+html[data-mw-global-theme="light"] .shipment-summary > div,
+html[data-mw-global-theme="light"] .shipment-summary b,
+html[data-mw-global-theme="light"] .shipment-summary span:not(.money):not(.chevron),
+html[data-mw-global-theme="light"] .summary-address,
+html[data-mw-global-theme="light"] .shipment-details,
+html[data-mw-global-theme="light"] .shipment-head{
+  color:#1e293b!important;-webkit-text-fill-color:#1e293b!important;opacity:1!important;visibility:visible!important;font-weight:700!important;
+}
+html[data-mw-global-theme="light"] .shipment-summary .muted,
+html[data-mw-global-theme="light"] .shipment-details .muted{color:#475569!important;-webkit-text-fill-color:#475569!important;font-weight:700!important}
+html[data-mw-global-theme="light"] .code{color:#b88919!important;-webkit-text-fill-color:#b88919!important;font-weight:950!important}
+html[data-mw-global-theme="light"] .summary-address{color:#1e293b!important;-webkit-text-fill-color:#1e293b!important;font-weight:900!important}
+html[data-mw-global-theme="light"] .money,
+html[data-mw-global-theme="light"] .shipment-summary .money,
+html[data-mw-global-theme="light"] .item .money{color:#b88919!important;-webkit-text-fill-color:#b88919!important;font-weight:950!important;text-shadow:none!important}
+html[data-mw-global-theme="light"] .secondary{color:#92400e!important;-webkit-text-fill-color:#92400e!important;font-weight:900!important}
+html[data-mw-global-theme="light"] .shipment-details{border-top-color:#cbd5e1!important}
+html[data-mw-global-theme="light"] .item,
+html[data-mw-global-theme="light"] .delivery-image-box{
+  background:#e8edf3!important;background-image:none!important;border:1px solid #cbd5e1!important;color:#1e293b!important;-webkit-text-fill-color:#1e293b!important;
+}
+html[data-mw-global-theme="light"] .item b,
+html[data-mw-global-theme="light"] .delivery-image-box b{color:#334155!important;-webkit-text-fill-color:#334155!important;font-weight:800!important}
+html[data-mw-global-theme="light"] .chevron{color:#475569!important;-webkit-text-fill-color:#475569!important}
+html[data-mw-global-theme="light"] .status{background:#dbe2ea!important;color:#1e293b!important;-webkit-text-fill-color:#1e293b!important;border-color:#94a3b8!important;font-weight:900!important}
+html[data-mw-global-theme="light"] .scanner-panel,
+html[data-mw-global-theme="light"] .empty{background:#f1f5f9!important;background-image:none!important;color:#0f172a!important;border-color:#cbd5e1!important}
+html[data-mw-global-theme="light"] .proof-status,
+html[data-mw-global-theme="light"] .loading{color:#475569!important;-webkit-text-fill-color:#475569!important}
+
+/* ==================== KINTO EMERALD DARK V1.5 ====================
+   Must stay last: this file is injected after delivery-dashboard.html. */
+html[data-mw-global-theme="dark"]{background:#0a2f23!important}
+html[data-mw-global-theme="dark"] body{
+  background:radial-gradient(circle at 12% 0%,rgba(245,196,81,.10),transparent 24%),radial-gradient(circle at 88% 5%,rgba(16,185,129,.15),transparent 30%),linear-gradient(145deg,#071f18 0%,#0a2f23 48%,#0d3b2d 100%)!important;
+}
+html[data-mw-global-theme="dark"] .topbar{background:#0a2f23!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .finance-card{background:linear-gradient(145deg,#124b38,#0a2f23)!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .shipment{background:linear-gradient(145deg,#103f30,#0a2f23)!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .item{background:#08281f!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .tabs{background:#08281f!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .tab{background:#103f30!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .tab:hover{background:#165a43!important;border-color:#2f8063!important}
+html[data-mw-global-theme="dark"] .toolbar,
+html[data-mw-global-theme="dark"] .scanner-panel,
+html[data-mw-global-theme="dark"] .delivery-image-box{background:#08281f!important;border-color:#21664f!important}
+html[data-mw-global-theme="dark"] .edit-box select,
+html[data-mw-global-theme="dark"] .edit-box input,
+html[data-mw-global-theme="dark"] .edit-box textarea,
+html[data-mw-global-theme="dark"] .toolbar input{background:#061f18!important;border-color:#2f8063!important}

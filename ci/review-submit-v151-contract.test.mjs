@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const js=readFileSync(new URL('../js/customer-product-reviews-v135.js',import.meta.url),'utf8');
+const sql=readFileSync(new URL('../supabase/migrations/20260912_v151_review_submit_snapshot_compat.sql',import.meta.url),'utf8');
+assert.match(js,/id="reviewComment"[^>]+required/);
+assert.match(js,/if \(!comment\)/);
+assert.match(js,/friendlyReviewError/);
+assert.match(js,/REVIEW_COMMENT_REQUIRED/);
+assert.doesNotMatch(js,/تعليقك[^\n]+اختياري/);
+assert.match(sql,/v_verified := private\.review_delivered_product/);
+assert.match(sql,/if v_comment = ''/);
+assert.match(sql,/raise exception 'REVIEW_COMMENT_REQUIRED'/);
+assert.match(sql,/v_product\.id,/);
+assert.match(sql,/if v_product\.id is not null/);
+assert.doesNotMatch(sql,/if v_product\.id is null then raise exception 'PRODUCT_NOT_FOUND'/);
+assert.doesNotMatch(sql,/(update|insert into|delete from) public\.(orders|local_products|invoices|order_store_segments)/i);
+console.log('Review submit V151 snapshot compatibility contract: OK');

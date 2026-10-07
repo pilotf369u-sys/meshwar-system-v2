@@ -1,0 +1,5 @@
+[functions.product-review-image-upload]
+verify_jwt = false
+
+[functions.kinto-payment-security-g16]
+verify_jwt = false

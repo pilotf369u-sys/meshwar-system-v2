@@ -1,0 +1,77 @@
+/* KINTO V89 — unified dark-glass header quick navigation only. */
+#meshwarHeaderControls .kinto-v87-quick-nav{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:0;
+  min-height:40px;
+  box-sizing:border-box;
+  padding:0 14px;
+  margin:0;
+  border:1px solid rgba(255,224,138,.42);
+  border-radius:14px;
+  background:linear-gradient(145deg,rgba(4,47,40,.86),rgba(7,67,56,.72));
+  color:#ffe08a!important;
+  text-decoration:none!important;
+  font-size:12px;
+  font-weight:900;
+  line-height:1;
+  white-space:nowrap;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  backdrop-filter:blur(16px) saturate(125%);
+  -webkit-backdrop-filter:blur(16px) saturate(125%);
+  box-shadow:0 8px 20px rgba(2,25,21,.22),inset 0 1px rgba(255,255,255,.06),0 0 0 1px rgba(255,224,138,.025);
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease,background .2s ease,color .2s ease;
+}
+#meshwarHeaderControls .kinto-v87-quick-nav::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  top:-65%;
+  bottom:-65%;
+  left:-38%;
+  width:22%;
+  transform:skewX(-18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,224,138,.24),transparent);
+  transition:left .55s ease;
+}
+#meshwarHeaderControls .kinto-v87-quick-nav:hover,
+#meshwarHeaderControls .kinto-v87-quick-nav:focus-visible{
+  transform:translateY(-1px);
+  border-color:rgba(255,224,138,.78);
+  background:linear-gradient(145deg,rgba(6,59,50,.96),rgba(8,78,65,.82));
+  color:#fff1b8!important;
+  box-shadow:0 11px 28px rgba(2,25,21,.28),0 0 18px rgba(229,185,63,.16),0 0 0 1px rgba(255,224,138,.08),inset 0 1px rgba(255,255,255,.08);
+  outline:none;
+}
+#meshwarHeaderControls .kinto-v87-quick-nav:hover::after,
+#meshwarHeaderControls .kinto-v87-quick-nav:focus-visible::after{left:118%;}
+/* V89: all three navigation controls deliberately share one visual identity. */
+#meshwarHeaderControls .kinto-v87-quick-nav--featured{
+  border-color:rgba(255,224,138,.42);
+  background:linear-gradient(145deg,rgba(4,47,40,.86),rgba(7,67,56,.72));
+  color:#ffe08a!important;
+  box-shadow:0 8px 20px rgba(2,25,21,.22),inset 0 1px rgba(255,255,255,.06),0 0 0 1px rgba(255,224,138,.025);
+}
+#meshwarHeaderControls .kinto-v87-quick-nav--featured:hover,
+#meshwarHeaderControls .kinto-v87-quick-nav--featured:focus-visible{
+  border-color:rgba(255,224,138,.78);
+  background:linear-gradient(145deg,rgba(6,59,50,.96),rgba(8,78,65,.82));
+  color:#fff1b8!important;
+  box-shadow:0 11px 28px rgba(2,25,21,.28),0 0 18px rgba(229,185,63,.16),0 0 0 1px rgba(255,224,138,.08),inset 0 1px rgba(255,255,255,.08);
+}
+/* Keep markup untouched while removing all visual icons from the three quick-nav buttons. */
+#meshwarHeaderControls .kinto-v87-nav-icon{display:none!important;}
+@media(max-width:900px){
+  #meshwarHeaderControls .kinto-v87-quick-nav{min-height:36px;padding:0 11px;font-size:10.5px;}
+}
+@media(max-width:640px){
+  #meshwarHeaderControls{gap:5px!important;}
+  #meshwarHeaderControls .kinto-v87-quick-nav{padding:0 9px;}
+}
+@media(prefers-reduced-motion:reduce){
+  #meshwarHeaderControls .kinto-v87-quick-nav,
+  #meshwarHeaderControls .kinto-v87-quick-nav::after{transition:none;}
+}

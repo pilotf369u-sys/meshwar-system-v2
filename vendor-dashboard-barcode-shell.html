@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+  <title>لوحة صاحب المتجر - MeshWar</title>
+  <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617}#vendorFrame{width:100%;height:100%;border:0;display:block}</style>
+  <script src="js/vendor-barcode-smart-search-v11.js?v=barcode-v11"></script>
+</head>
+<body>
+  <iframe id="vendorFrame" src="vendor-dashboard-v2.html?v=20260822-barcode-v11" title="لوحة صاحب المتجر"></iframe>
+  <script>
+    (function(){
+      const frame=document.getElementById('vendorFrame');
+      function install(){try{window.MeshwarVendorBarcodeV11?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode install failed',e)}}
+      frame.addEventListener('load',()=>{install();setTimeout(install,250);setTimeout(install,900)});
+    })();
+  </script>
+</body>
+</html>

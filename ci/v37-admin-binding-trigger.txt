@@ -1,0 +1,1 @@
+V37 admin order price binding mirrors employee-dashboard top-level orders fields: total_price and delivery_fee.

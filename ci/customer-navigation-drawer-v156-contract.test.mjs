@@ -1,0 +1,9 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const html=fs.readFileSync('dashboard.html','utf8'),js=fs.readFileSync('js/customer-navigation-drawer-v156.js','utf8'),css=fs.readFileSync('css/customer-navigation-drawer-v156.css','utf8');
+assert.match(html,/customer-navigation-drawer-v156\.css/);assert.match(html,/customer-navigation-drawer-v156\.js/);
+for(const tab of ['activeOrders','orderHistory','chatHelp','notifications','drafts','productReviews','customerFavorites'])assert.match(js,new RegExp(tab));
+for(const selector of ['#backBtn','#mwGlobalThemeToggle','#customerLogoutBtn'])assert.ok(js.includes(selector));
+assert.ok(js.includes('notificationUnreadBadge'));assert.ok(js.includes('MutationObserver'));assert.ok(!js.includes('innerText==='));
+assert.ok(js.includes('cleanupThemeDuplicates'));assert.ok(js.includes("target:'#userAddress'"));assert.ok(js.includes("target:'#userSecondaryPhone'"));assert.ok(js.includes('revealTarget'));assert.ok(js.includes("rpc('get_site_settings')"));assert.ok(js.includes('whatsapp_active'));assert.ok(js.includes('support_phone'));assert.ok(js.includes('kinto-footer-logo-v1563.png'));assert.match(css,/@media\(max-width:1024px\)/);assert.ok(css.includes('inset-inline-end'));assert.ok(css.includes('html[dir="ltr"]'));assert.ok(css.includes('kintoDrawerShopGlow'));assert.ok(css.includes('overflow:hidden'));assert.ok(css.includes('72vw'));assert.ok(css.includes('kinto-drawer-item--wide'));assert.ok(css.includes('kinto-drawer-footer'));assert.ok(!css.includes('kinto-drawer-footer{margin:auto'));
+assert.ok(fs.existsSync('images/kinto-footer-logo-v1563.png'));
+console.log('V156 customer navigation drawer contract passed');

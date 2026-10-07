@@ -1,0 +1,17 @@
+{
+  "name": "KINTO",
+  "short_name": "KINTO",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#032b25",
+  "theme_color": "#063b32",
+  "icons": [
+    {
+      "src": "images/meshwar-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

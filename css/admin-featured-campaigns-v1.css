@@ -1,0 +1,14 @@
+/* MeshWar Admin Featured Campaigns — Phase 1. Admin CMS only. */
+#featuredCampaignsPanel{grid-column:1/-1}
+.featured-admin-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px}
+.featured-form-card,.featured-list-card{border:1px solid rgba(246,200,95,.18);border-radius:16px;background:rgba(255,255,255,.025);padding:16px}
+.featured-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.featured-field{display:flex;flex-direction:column;gap:6px;min-width:0}.featured-field.full{grid-column:1/-1}
+.featured-field label{font-size:11px;font-weight:900;color:#dbe6f4}
+.featured-field input,.featured-field select{width:100%;margin:0;padding:10px 11px;border-radius:10px;border:1px solid rgba(148,163,184,.22);background:#07111f;color:#f8fafc;outline:none}
+.featured-field input:focus,.featured-field select:focus{border-color:rgba(246,200,95,.65);box-shadow:0 0 0 3px rgba(246,200,95,.07)}
+.featured-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.featured-btn{border:0;border-radius:10px;padding:9px 13px;font-family:inherit;font-weight:900;cursor:pointer}.featured-btn.primary{background:linear-gradient(135deg,#fde7a4,#f6c85f 55%,#d7a62e);color:#17130a}.featured-btn.secondary{background:#1e3a5f;color:#eef6ff}.featured-btn.danger{background:#7f1d1d;color:#fee2e2}.featured-btn.success{background:#166534;color:#dcfce7}
+.featured-table-wrap{overflow:auto;border:1px solid rgba(148,163,184,.16);border-radius:13px}.featured-table{width:100%;border-collapse:collapse;min-width:900px;background:#07111f}.featured-table th,.featured-table td{padding:9px;border-bottom:1px solid rgba(148,163,184,.13);text-align:center;vertical-align:middle;font-size:11px}.featured-table th{background:#0d1a2d;color:#fde7a4;font-weight:900}.featured-table td{color:#e2e8f0}.featured-badge{display:inline-flex;padding:4px 8px;border-radius:999px;font-weight:900}.featured-badge.live{background:rgba(34,197,94,.12);color:#bbf7d0;border:1px solid rgba(34,197,94,.28)}.featured-badge.ended{background:rgba(239,68,68,.10);color:#fecaca;border:1px solid rgba(239,68,68,.24)}.featured-badge.scheduled{background:rgba(59,130,246,.10);color:#bfdbfe;border:1px solid rgba(59,130,246,.25)}.featured-badge.off{background:rgba(148,163,184,.10);color:#cbd5e1;border:1px solid rgba(148,163,184,.22)}
+.featured-empty{padding:24px;text-align:center;color:#94a3b8}.featured-small{font-size:10px;color:#94a3b8;line-height:1.6}.featured-status{margin:10px 0;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);color:#cbd5e1;font-size:11px}.featured-status.ok{color:#bbf7d0;border:1px solid rgba(34,197,94,.25)}.featured-status.err{color:#fecaca;border:1px solid rgba(239,68,68,.25)}.featured-status.warn{color:#fde68a;border:1px solid rgba(246,200,95,.28)}
+@media(max-width:1000px){.featured-admin-grid{grid-template-columns:1fr}.featured-form-grid{grid-template-columns:1fr}.featured-field.full{grid-column:auto}}

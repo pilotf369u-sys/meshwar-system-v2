@@ -1,0 +1,45 @@
+name: Apply Modern UI V54
+on:
+  push:
+    branches: [feature/modern-ui-v54]
+    paths:
+      - 'css/modern-ui-v54.css'
+      - '.github/workflows/apply-modern-ui-v54.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/modern-ui-v54
+          fetch-depth: 0
+      - name: Attach V54 presentation stylesheet only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          tag='<link rel="stylesheet" href="css/modern-ui-v54.css?v=20260831">'
+          if tag not in s:
+              if '</head>' not in s:
+                  raise SystemExit('index.html missing </head>')
+              s=s.replace('</head>', '    '+tag+'\n</head>', 1)
+              p.write_text(s)
+          PY
+          grep -q 'css/modern-ui-v54.css?v=20260831' index.html
+          git diff --check
+          changed="$(git diff --name-only)"
+          test "$changed" = "index.html"
+      - name: Commit feature wiring
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: enable modern glassmorphism UI V54 on feature branch'
+          git push origin HEAD:feature/modern-ui-v54
