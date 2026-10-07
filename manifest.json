@@ -1,15 +1,22 @@
 {
+  "id": "./",
   "name": "KINTO",
   "short_name": "KINTO",
+  "description": "KINTO shopping platform for local and global stores.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#032b25",
   "theme_color": "#063b32",
+  "categories": [
+    "shopping",
+    "business"
+  ],
   "icons": [
     {
       "src": "images/meshwar-logo.png",
-      "sizes": "512x512",
+      "sizes": "2048x2048",
       "type": "image/png",
       "purpose": "any maskable"
     }
