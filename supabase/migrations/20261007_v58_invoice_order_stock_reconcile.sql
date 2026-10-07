@@ -236,8 +236,9 @@ begin
       total_price=(projection->>'total_price')::numeric where id=o.id returning * into o;
     perform set_config('kinto.invoice_adjustment_v58','',true);
     -- The existing segment sync has no input row when every product sold out.
-    update public.order_store_segments seg
-    set items_snapshot='[]'::jsonb,quantity_total=0,subtotal_local=0,updated_at=now()
+    -- V94 requires positive quantities. Remove only the empty, unpaid derived
+    -- projection; the order and its complete invoice history remain persisted.
+    delete from public.order_store_segments seg
     where seg.order_id=o.id and not seg.payment_confirmed
       and not exists (select 1 from jsonb_array_elements(o.details::jsonb->'items') item
                       where item->>'store_id'=seg.store_id::text);

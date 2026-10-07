@@ -2,7 +2,7 @@
 create role anon;create role authenticated;create schema private;
 create table local_products(id uuid primary key,store_id uuid,stock_quantity integer,options jsonb,is_out_of_stock boolean default false);
 create table orders(id uuid primary key,customer_id uuid,status text,total_price numeric,details text,reward_discount_amount numeric default 0,delivery_fee numeric default 2000,currency text default 'IQD',snapshot_cost_price numeric,cost_price numeric);
-create table order_store_segments(order_id uuid,store_id uuid,items_snapshot jsonb,quantity_total integer,subtotal_local numeric,payment_confirmed boolean default false,updated_at timestamptz);
+create table order_store_segments(order_id uuid,store_id uuid,items_snapshot jsonb,quantity_total integer check(quantity_total>0),subtotal_local numeric,payment_confirmed boolean default false,updated_at timestamptz);
 create table segment_log(order_id uuid,total numeric,items jsonb);
 create function private.require_customer_review_session(token text) returns uuid language plpgsql as $$begin if token='owner' then return '11111111-1111-1111-1111-111111111111'::uuid;elsif token='other' then return '22222222-2222-2222-2222-222222222222'::uuid;else raise exception 'CUSTOMER_SESSION_INVALID';end if;end$$;
 create function private.v94_jsonb_object(d jsonb) returns jsonb language sql as $$select case when jsonb_typeof(d)='string' then (d#>>'{}')::jsonb else d end$$;
