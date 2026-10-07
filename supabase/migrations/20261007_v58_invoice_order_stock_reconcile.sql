@@ -140,7 +140,7 @@ revoke all on function private.invoice_stock_projection_v58(public.orders) from 
 
 -- Preserve the installed guard; open only a transaction-scoped, canonical correction.
 create or replace function public.meshwar_independent_vendor_order_guard()
-returns trigger language plpgsql set search_path = public, pg_temp as $function$
+returns trigger language plpgsql security definer set search_path = public, pg_temp as $function$
 declare
   v_old jsonb := coalesce(nullif(old.details::text,'')::jsonb,'{}'::jsonb);
   v_new jsonb := coalesce(nullif(new.details::text,'')::jsonb,v_old);
@@ -170,8 +170,11 @@ begin
     if v_old ? v_key then v_new := jsonb_set(v_new,array[v_key],v_old->v_key,true); end if;
   end loop;
   if new.status='تمت الموافقة - بانتظار الدفع' and old.status is distinct from new.status
+     and coalesce(v_old->>'bundle_stock_lifecycle_state','') <> 'deducted'
+     and old.status <> 'تم التسديد'
      and current_setting('kinto.invoice_approval_v58',true) is distinct from old.id::text then
-    raise exception 'V58_REVIEW_INVOICE_REQUIRED';
+    correction := private.invoice_stock_projection_v58(old);
+    if correction->>'changed'='true' then raise exception 'V58_REVIEW_INVOICE_REQUIRED'; end if;
   end if;
   -- Prevent stale staff forms from reintroducing old quantities/amounts after correction.
   if v_old ? 'stock_adjustment_v58' then
