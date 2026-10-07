@@ -1,0 +1,33 @@
+/* Employee mobile/tablet layout only; desktop and order behavior unchanged. */
+@media (max-width:1100px){
+ body .container{min-width:0!important}
+ body .container .top-nav{display:flex!important;flex-wrap:wrap!important;gap:12px!important;padding:12px!important;align-items:center!important}
+ body .top-nav .employee-header-brand{flex:1 0 100%!important;width:100%!important;min-width:0!important;order:0}
+ body .top-nav .employee-header-copy{flex:1!important;min-width:0!important}
+ body .top-nav .employee-header-copy h2{font-size:18px!important;line-height:1.5!important;word-break:normal!important;overflow-wrap:normal!important}
+ body .top-nav .employee-brand-logo-shell{width:48px!important;height:48px!important;flex:0 0 48px!important}
+ body .top-nav .employee-badge{font-size:11px!important;white-space:nowrap!important}
+ body .top-nav .top-actions{flex:1 1 auto!important;order:1;gap:8px!important}
+ body .top-nav>button{order:1;flex:0 0 auto!important}
+ body .top-nav button{white-space:nowrap!important}
+ body .top-nav .notification-bell{width:38px!important;height:38px!important}
+ body .top-nav .btn{font-size:12px!important;padding:9px 12px!important}
+ body .toolbar{display:flex!important;flex-wrap:wrap!important;gap:8px!important}
+ body .toolbar input{min-width:150px!important;flex:1 1 200px!important;max-width:100%!important}
+ body #ordersPanel .table-wrap,body #rewardPanel .table-wrap{overflow-x:auto!important;max-width:100%!important;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+ body #ordersPanel table{min-width:1200px!important;width:1200px!important;max-width:none!important;table-layout:fixed!important}
+ body #rewardPanel table{min-width:900px!important;table-layout:auto!important}
+ body #ordersPanel th,body #ordersPanel td{font-size:12px!important;padding:8px 6px!important;word-break:normal!important;overflow-wrap:normal!important;white-space:normal!important}
+ body #ordersPanel td input,body #ordersPanel td select{font-size:12px!important;height:36px!important}
+ body #ordersPanel .mw-native-actions button,body #ordersPanel .mw-native-actions a{font-size:11px!important;padding:7px 5px!important;word-break:normal!important}
+ body #ordersPanel .customer-code,body #ordersPanel .qty-badge,body #ordersPanel .collect-due,body #ordersPanel .qty-warning{white-space:nowrap!important;word-break:normal!important}
+ body #ordersPanel .collect-due{font-size:12px!important}
+}
+@media(max-width:620px){
+ body{padding:6px!important}body .container{padding:9px!important}
+ body .top-nav .employee-header-copy h2{font-size:15px!important}
+ body .employee-workspace-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ body .employee-workspace-tab{min-width:0!important;padding:10px 8px!important}
+ body .employee-workspace-tab strong{font-size:12px!important}
+ body .employee-workspace-tab small{font-size:10px!important}
+}
