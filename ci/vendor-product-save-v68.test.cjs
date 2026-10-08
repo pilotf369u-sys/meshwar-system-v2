@@ -1,6 +1,24 @@
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
 const source=fs.readFileSync(require('node:path').join(__dirname,'../js/vendor-product-save-complete-v34.js'),'utf8');
 const clone=x=>JSON.parse(JSON.stringify(x));
+// Exercise the real editor APIs, including the interval before hydration.
+{
+ const boxes={productId:{value:'p'},productColors:{value:'أبيض,أزرق'},productSizes:{value:'S,M'},productVolumes:{value:''},mwVariantStockEditor:{dataset:{}},mwMatrixStockEditor:{dataset:{}}};
+ const variantInputs=[{value:'4',dataset:{vsGroup:'color',vsValue:'أبيض'}},{value:'2',dataset:{vsGroup:'size',vsValue:'S'}},{value:'1',dataset:{vsGroup:'volume',vsValue:'75ml'}}];
+ const matrixInputs=[{value:'2',dataset:{matrixKey:'أبيض_S'}},{value:'3',dataset:{matrixKey:'أبيض_M'}}];
+ const document={readyState:'loading',createElement:()=>({}),head:{appendChild(){}},getElementById:id=>boxes[id],addEventListener(){},querySelectorAll:s=>s.includes('data-vs-group')?variantInputs:s.includes('data-matrix-key')?matrixInputs:[]};
+ const window={},context={window,document,location:{pathname:'/customer'},console};vm.createContext(context);
+ for(const path of ['local-store-variant-stock-v5.js','local-store-matrix-stock-v6.js'])vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../js',path),'utf8'),context);
+ assert.equal(window.MeshwarVariantStock.editorSnapshot(),null);
+ assert.equal(window.MeshwarMatrixStock.editorSnapshot(),null);
+ boxes.mwVariantStockEditor.dataset.stockProductId='p';boxes.mwMatrixStockEditor.dataset.stockProductId='p';
+ const result=clone(window.MeshwarMatrixStock.editorSnapshot());
+ assert.equal(result.variant_stock.color['أبيض'],5);
+ assert.equal(result.variant_stock.size.S,2);assert.equal(result.variant_stock.volume['75ml'],1);
+ assert.equal(result.matrix_stock['أبيض_M'],3);
+ boxes.productId.value='other';
+ assert.equal(window.MeshwarMatrixStock.editorSnapshot(),null);
+}
 async function check({snapshot,collision=false,create=false}={}){
  let row={id:'p',store_id:'s',updated_at:'before',category_id:'category',subcategory_id:'sub',is_featured:true,cost_price:8,image_url:'photo',options:{colors:['وردي','أزرق فاتح','سلفر'],sizes:[],volumes:[],variant_stock:{color:{وردي:3,'أزرق فاتح':5,سلفر:5},size:{},volume:{}},matrix_stock:{},images:['photo'],campaign_extra:{keep:true},detailed_description:'details'}};
  let closed=0,reloads=0,writes=0,alerts=[],saved;

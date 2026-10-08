@@ -53,6 +53,7 @@
       const cost=costRaw===''?NaN:Number(costRaw);
       const stock=Math.max(0,Math.floor(Number($('productStock')?.value||0)));
       const threshold=Math.max(0,Math.floor(Number($('productLowThreshold')?.value||0)));
+      if(win.MeshwarLocalStoreV7?.validateMatrixTotal?.()===false)return;
       const stockSnapshot=win.MeshwarMatrixStock?.editorSnapshot?.()||win.MeshwarVariantStock?.editorSnapshot?.();
       const fields=Object.fromEntries(['productImage','productColors','productSizes','productVolumes','mwProductMainCategory','mwProductSubCategory'].map(key=>[key,$(key)?.value]));
       const files=Array.from($('productImageFile')?.files||[]);
@@ -107,6 +108,7 @@
     win.saveProduct.__mwFinanceV21=true;
     win.saveProduct.__mwVariantWrapped=true;
     win.saveProduct.__mwMatrixWrapped=true;
+    win.saveProduct.__mwV7Wrapped=true;
     win.__mwVendorProductSaveCompleteV34=true;
   }
   window.MeshwarVendorProductSaveCompleteV34={install,VERSION};
