@@ -1,7 +1,7 @@
 /* MESHWAR_VENDOR_PRODUCT_SAVE_COMPLETE_V34 */
 (function(){
   'use strict';
-  const VERSION='20261008-v68-preserve-product-options';
+  const VERSION='20261008-v69-preserve-untouched-options';
   const arr=v=>Array.isArray(v)?v.map(x=>String(x??'').trim()).filter(Boolean):[];
   const parse=v=>{if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return{...v};try{const x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?{...x}:{}}catch{return{}}};
   const uniq=v=>[...new Set(v.filter(Boolean))];
@@ -36,7 +36,26 @@
       const sync=()=>{const next=!modal.classList.contains('hidden');if(next&&!open){const input=ensureCostField();if(input)delete input.dataset.mwCostDirty;setTimeout(hydrateCostField,0);setTimeout(hydrateCostField,160)}open=next};
       new win.MutationObserver(sync).observe(modal,{attributes:true,attributeFilter:['class']});modal.__mwV34CostObserver=true;
     }
-    ensureCostField();bindCostHydration();
+    function bindEditPreservationGuards(){
+      if(d.__mwV34PreservationGuards)return;
+      const reset=event=>{
+        const edit=event.target?.closest?.('button[onclick^="editProduct("]');
+        const add=event.target?.closest?.('button[onclick="openProductModal()"]');
+        if(edit){win.__mwVendorOptionsTouchedV69=false;win.__mwVendorVariantStockTouchedV69=false}
+        if(add){win.__mwVendorOptionsTouchedV69=true;win.__mwVendorVariantStockTouchedV69=true}
+      };
+      const mark=event=>{
+        const el=event.target;
+        if(!el?.closest?.('#productModal'))return;
+        if(['productColors','productSizes','productVolumes'].includes(el.id))win.__mwVendorOptionsTouchedV69=true;
+        if(el.matches?.('#mwVariantStockEditor [data-vs-group],#mwMatrixStockEditor input,[data-matrix-stock]'))win.__mwVendorVariantStockTouchedV69=true;
+      };
+      d.addEventListener('click',reset,true);
+      d.addEventListener('input',mark,true);
+      d.addEventListener('change',mark,true);
+      d.__mwV34PreservationGuards=true;
+    }
+    ensureCostField();bindCostHydration();bindEditPreservationGuards();
     const costDomObserver=new win.MutationObserver(()=>{ensureCostField();bindCostHydration()});costDomObserver.observe(d.documentElement,{childList:true,subtree:true});
 
     win.saveProduct=async function saveProduct(){
@@ -55,6 +74,8 @@
       const threshold=Math.max(0,Math.floor(Number($('productLowThreshold')?.value||0)));
       if(win.MeshwarLocalStoreV7?.validateMatrixTotal?.()===false)return;
       const stockSnapshot=win.MeshwarMatrixStock?.editorSnapshot?.()||win.MeshwarVariantStock?.editorSnapshot?.();
+      const optionsTouched=!id||win.__mwVendorOptionsTouchedV69===true;
+      const variantTouched=!id||win.__mwVendorVariantStockTouchedV69===true;
       const fields=Object.fromEntries(['productImage','productColors','productSizes','productVolumes','mwProductMainCategory','mwProductSubCategory'].map(key=>[key,$(key)?.value]));
       const files=Array.from($('productImageFile')?.files||[]);
       const featured=$('mwProductFeatured')?!!$('mwProductFeatured').checked:null;
@@ -83,16 +104,19 @@
         const domGallery=Array.from(d.querySelectorAll('#productImageGallery img,#productImagesPreview img,[data-product-image-gallery] img')).map(img=>String(img.currentSrc||img.src||'').trim());
         const oldImages=uniq([...arr(oldOptions.images),...arr(oldOptions.image_urls),...arr(oldOptions.gallery),...arr(existing.images),...arr(existing.image_urls),String(existing.image_url||'').trim()]);
         const images=uniq([imageUrl,...uploaded,...domGallery,...oldImages]);
-        const colors=fields.productColors!==undefined?split(fields.productColors):arr(oldOptions.colors);
-        const sizes=fields.productSizes!==undefined?split(fields.productSizes):arr(oldOptions.sizes);
-        const volumes=fields.productVolumes!==undefined?split(fields.productVolumes):arr(oldOptions.volumes);
+        // An edit form may briefly show its empty/default option fields before late hydration finishes.
+        // Existing options are authoritative unless the merchant actually changed an option field.
+        const colors=optionsTouched&&fields.productColors!==undefined?split(fields.productColors):arr(oldOptions.colors);
+        const sizes=optionsTouched&&fields.productSizes!==undefined?split(fields.productSizes):arr(oldOptions.sizes);
+        const volumes=optionsTouched&&fields.productVolumes!==undefined?split(fields.productVolumes):arr(oldOptions.volumes);
         const main=String(fields.mwProductMainCategory||shadow.main||'').trim();
         const sub=String(fields.mwProductSubCategory||shadow.sub||'').trim();
         const preserveCategory=id&&!touched&&!main&&!sub;
         const effective=preserveCategory?existing.category_id:(sub||main||null);
         const options={...oldOptions,colors,sizes,volumes,detailed_description:$('productDetailedDescription')?detailed:(oldOptions.detailed_description||''),images,image_urls:images,gallery:images,pricing:win.MeshwarLocalPricing?.pricingSnapshot(discount??base,vendorStore.commission_rate??10,vendorStore.exchange_rate||1,vendorStore.exchange_target_currency||vendorStore.default_currency||'IQD')||oldOptions.pricing||null};
         
-        if(stockSnapshot)Object.assign(options,stockSnapshot);
+        // Likewise, never replace existing variant/matrix stock with an unseeded editor snapshot.
+        if(stockSnapshot&&variantTouched)Object.assign(options,stockSnapshot);
         const payload={store_id:vendorStore.id,product_name:name,barcode:barcodeValue,image_url:imageUrl,description,base_price:base,discount_price:discount,cost_price:cost,currency:'USD',stock_quantity:stock,low_stock_threshold:threshold,is_out_of_stock:stock===0,category_id:effective,subcategory_id:preserveCategory?existing.subcategory_id:(sub||null),is_featured:featured===null?!!existing.is_featured:featured,options,updated_at:new Date().toISOString()};
         win.__mwVendorProductSaveV34LastPayload=payload;
         let query=id?sb.from('local_products').update(payload).eq('id',id).eq('store_id',vendorStore.id):sb.from('local_products').insert([payload]);
