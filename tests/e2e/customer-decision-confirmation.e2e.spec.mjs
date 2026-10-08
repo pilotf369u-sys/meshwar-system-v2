@@ -18,7 +18,8 @@ test('customer decision page is appended only to its dedicated invoice window', 
   expect(source).toContain('customer-decision-stock-alert');
   expect(source).toContain('طلبت ${issue.requested}، المتاح الآن ${issue.available}');
   expect(source).not.toContain('openCustomerDecisionSupport');
-  expect(source).not.toContain('openCustomerDecisionTerms');
+  expect(source).toContain('openCustomerDecisionTerms');
+  expect(source).toContain('الشروط والمسؤولية');
   expect(source).not.toContain('تحتاج مساعدة؟ تواصل مع الدعم');
   expect(source).not.toContain('اطمئن، شرائك من منصتنا');
   expect(source).toContain('customer-decision-shipping');
