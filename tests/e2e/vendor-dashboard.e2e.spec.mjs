@@ -158,5 +158,32 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await vendor.locator('#vendorTabBtn-orders').click();await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);await expect(vendor.locator('#vendorTab-orders')).toHaveClass(/active/);await expect(vendor.locator('#vendorTab-categories')).not.toHaveClass(/active/);
     await vendor.locator('button[onclick="toggleTheme()"]').click();await expect(vendor.locator('html')).toHaveClass(/light/);await vendor.locator('#vendorTabBtn-products').click();await expect(vendor.locator('html')).toHaveClass(/light/);await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);const lightBg=await frameWindow(page,()=>getComputedStyle(document.body).backgroundColor);expect(lightBg).not.toBe('rgba(0, 0, 0, 0)');await vendor.locator('button[onclick="toggleTheme()"]').click();await expect(vendor.locator('html')).toHaveClass(/dark/);
   });
+  test('repeat save preserves variants when untouched form fields are stale',async({page})=>{
+    const vendor=await openVendor(page);
+    await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
+    await frameWindow(page,async()=>{
+      const p=window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1');
+      p.stock_quantity=34;
+      p.options={...p.options,colors:['وردي','أزرق فاتح','سلفر'],variant_stock:{color:{وردي:4,'أزرق فاتح':20,سلفر:10},size:{},volume:{}},matrix_stock:{},campaign_extra:{keep:true}};
+      await window.MeshwarVendorRuntime.loadProducts();
+    });
+    await vendor.locator('#vendorTabBtn-products').click();
+    for(let n=0;n<3 && !(await vendor.locator('#productsBody button[onclick="editProduct(\\'p-1\\')"]').isVisible());n++)await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();
+    await vendor.locator('#productsBody button[onclick="editProduct(\\'p-1\\')"]').click();
+    await expect(vendor.locator('#productModal')).toHaveClass(/flex/);
+    await frameWindow(page,()=>{
+      document.getElementById('productColors').value='أسود, أبيض, أزرق';
+      document.getElementById('mwVariantStockEditor').innerHTML='';
+      window.__mwVendorOptionsTouchedV69=false;
+      window.__mwVendorVariantStockTouchedV69=false;
+    });
+    await vendor.getByRole('button',{name:'حفظ المنتج'}).click();
+    const saved=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1'));
+    expect(saved.stock_quantity).toBe(34);
+    expect(saved.options.colors).toEqual(['وردي','أزرق فاتح','سلفر']);
+    expect(saved.options.variant_stock.color).toEqual({وردي:4,'أزرق فاتح':20,سلفر:10});
+    expect(saved.options.campaign_extra).toEqual({keep:true});
+  });
+
 });
 
