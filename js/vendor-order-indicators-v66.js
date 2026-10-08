@@ -1,3 +1,4 @@
+function vendorEscapeV67(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 /* Vendor order indicators only; no status, shipping or inventory mutations. */
 
 function vendorElapsedTimeV66(created,now=Date.now()){
@@ -9,7 +10,7 @@ function vendorElapsedTimeV66(created,now=Date.now()){
 function vendorOrderAgeV66(o){
  const age=vendorElapsedTimeV66(o.created_at);
  if(!age)return '';
- return `<button type="button" class="vendor-order-age-v66" dir="ltr" data-order-created-v66="${esc(o.created_at)}" aria-label="عمر الطلب: يوم، ساعة، دقيقة. عرض تاريخ الطلب" aria-expanded="false">${age}</button>`;
+ return `<button type="button" class="vendor-order-age-v66" dir="ltr" data-order-created-v66="${vendorEscapeV67(o.created_at)}" aria-label="عمر الطلب: يوم، ساعة، دقيقة. عرض تاريخ الطلب" aria-expanded="false">${age}</button>`;
 }
 (()=>{
  let popup=null,owner=null;
@@ -36,15 +37,15 @@ function vendorOrderAgeV66(o){
  }),60000);
 })();
 
-(()=>{
- const runtime=window.MeshwarVendorRuntime;if(!runtime)return;
+(function startVendorIndicatorsV67(){
+ const runtime=window.MeshwarVendorRuntime;if(!runtime){setTimeout(startVendorIndicatorsV67,100);return}
  const style=document.createElement('style');style.textContent="\n.vendor-order-age-v66{display:block!important;width:100%;border:0!important;background:transparent!important;color:#f6dc8b!important;font:500 12px/1.5 system-ui!important;font-variant-numeric:tabular-nums;letter-spacing:1px;padding:0 2px 7px!important;margin:0!important;white-space:nowrap!important;cursor:pointer}\nhtml.light .vendor-order-age-v66{color:#713f12!important}\n.vendor-order-date-v66{position:fixed;z-index:10000;max-width:calc(100vw - 24px);padding:12px 16px;border:1px solid #a88b45;border-radius:12px;background:#102433;color:#f6dc8b;box-shadow:0 8px 24px #0005;font:500 13px/1.7 system-ui;text-align:center}\nhtml.light .vendor-order-date-v66{background:#fffaf0;color:#713f12}\n\n.vendor-order-icons-v66{display:flex;justify-content:center;align-items:center;gap:4px;margin-bottom:5px}\n.vendor-order-icons-v66:empty{display:none}\n.vendor-order-icons-v66 button{border:0!important;background:transparent!important;color:#dc2626!important;font-size:22px!important;line-height:1.2;padding:3px 5px!important;cursor:pointer}\n.vendor-order-icons-v66 span{font-size:22px;line-height:1.2;padding:3px 5px}\n#ordersBody .vendor-order-age-v66{margin-bottom:3px!important}\n";document.head.appendChild(style);
  function icons(o){
   const d=(()=>{try{return typeof o.details==='string'?JSON.parse(o.details||'{}'):(o.details||{})}catch{return{}}})();
   const closed=o._v94Paid||[d.bundle_stock_lifecycle_state,d.local_stock_lifecycle_state,d.stock_lifecycle_state].includes('deducted')||['تم التسديد','قيد الطلب','مخزن الشركة','مخزن شركة','تجهيز شحن','تم الشحن','مخزن محلي','مندوب','جاري التوصيل مع المندوب','توزيع داخلي','تم التسليم','رفض التسليم','رفض الطلب','مرفوض','راجع','ملغي من قبل العميل'].includes(String(o.status||'').trim());
   const shortage=!closed&&(o._stockShortagesV53?.length||d.stock_adjustment_v58);
   const campaign=d.deal_campaign_id||o._v66CampaignId;
-  return (shortage?'<button type="button" data-vendor-stock-v66="'+esc(o.id)+'" title="نقص في المخزون — فتح تفاصيل الطلب" aria-label="نقص في المخزون — فتح تفاصيل الطلب">⚠</button>':'')+(campaign?'<span title="طلب عروض" aria-label="طلب عروض" tabindex="0">🎁</span>':'');
+  return (shortage?'<button type="button" data-vendor-stock-v66="'+vendorEscapeV67(o.id)+'" title="نقص في المخزون — فتح تفاصيل الطلب" aria-label="نقص في المخزون — فتح تفاصيل الطلب">⚠</button>':'')+(campaign?'<span title="طلب عروض" aria-label="طلب عروض" tabindex="0">🎁</span>':'');
  }
  function decorate(){
   const body=document.getElementById('ordersBody');if(!body)return;
