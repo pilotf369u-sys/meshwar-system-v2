@@ -8,21 +8,21 @@ async function shellDecorateProducts(page){return page.evaluate(()=>window.Meshw
 test.describe('MeshWar vendor E2E integration gate',()=>{
   test.beforeEach(async({page})=>{await installMocks(page)});
 
-  test('phone Back closes vendor product and order modals before leaving the dashboard',async({page})=>{
+  test('opening product stock fields never mutates browser history or leaves the vendor dashboard',async({page})=>{
     const vendor=await openVendor(page);
     await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorMobileBackV1))).toBe(true);
     await vendor.locator('#vendorTabBtn-products').click();
     await vendor.getByRole('button',{name:'+ منتج جديد'}).click();
     await expect(vendor.locator('#productModal')).toHaveClass(/flex/);
-    await expect.poll(()=>frameWindow(page,()=>Boolean(history.state?.__mwVendorModalBackV1))).toBe(true);
-    await frameWindow(page,()=>history.back());
-    await expect(vendor.locator('#productModal')).toHaveClass(/hidden/);
+    const before=await page.url();
+    await vendor.locator('#productStock').focus();
+    await expect(vendor.locator('#productModal')).toHaveClass(/flex/);
+    expect(await page.url()).toBe(before);
+    await frameWindow(page,()=>window.closeProductModal());
     await vendor.locator('#vendorTabBtn-orders').click();
     await vendor.locator('#ordersBody tr').filter({hasText:'MW-5664'}).getByRole('button',{name:'تفاصيل'}).click();
     await expect(vendor.locator('#vendorOrderDetailsModal')).toHaveClass(/flex/);
-    await expect.poll(()=>frameWindow(page,()=>Boolean(history.state?.__mwVendorModalBackV1))).toBe(true);
-    await frameWindow(page,()=>history.back());
-    await expect(vendor.locator('#vendorOrderDetailsModal')).toHaveClass(/hidden/);
+    expect(await page.url()).toBe(before);
   });
 
   test('stock-only edit retains product metadata and variant quantities after iframe reload',async({page})=>{

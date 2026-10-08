@@ -1,13 +1,12 @@
 /* MESHWAR_VENDOR_MOBILE_BACK_V1 */
 (function(){
   'use strict';
-  const VERSION='20261008-v1-modal-back';
-  const KEY='__mwVendorModalBackV1';
+  const VERSION='20261008-v2-safe-no-history-navigation';
 
   function install(win){
     if(!win||win.__mwVendorMobileBackV1)return;
     const d=win.document;
-    let active=null,closingFromBack=false,syncQueued=false;
+    let active=null,syncQueued=false;
     const nextTick=()=>{if(syncQueued)return;syncQueued=true;win.setTimeout(()=>{syncQueued=false;sync()},0)};
     const isOpen=el=>{
       if(!el||el.hidden||el.classList.contains('hidden'))return false;
@@ -24,24 +23,14 @@
       if(button)return button.click();
       el?.classList?.add('hidden');el?.classList?.remove('flex');if(el?.style)el.style.display='none';
     };
-    const clearSyntheticEntry=()=>{
-      if(win.history.state?.[KEY])win.history.back();
-    };
     const sync=()=>{
       const modal=topModal();
       if(!modal){
-        if(active&&!closingFromBack){active=null;clearSyntheticEntry()}
-        active=null;closingFromBack=false;return;
+        active=null;return;
       }
       if(active?.el===modal)return;
       active={el:modal,token:Date.now()+Math.random()};
-      win.history.pushState({...((win.history.state&&typeof win.history.state==='object')?win.history.state:{}),[KEY]:active.token},'',win.location.href);
     };
-    win.addEventListener('popstate',()=>{
-      if(!active||!isOpen(active.el))return;
-      closingFromBack=true;
-      const modal=active.el;active=null;close(modal);
-    });
     new win.MutationObserver(nextTick).observe(d.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden']});
     d.addEventListener('click',()=>setTimeout(nextTick,0),true);
     const watcher=win.setInterval(nextTick,250);
