@@ -55,6 +55,7 @@
       const subId=String(p.subcategory_id||'').trim(),effective=String(p.category_id||'').trim();let mainId=effective;
       if(subId){const cats=await rest(`store_categories?select=id,parent_id&id=eq.${q(subId)}&store_id=eq.${q(store.id)}&limit=1`),sub=Array.isArray(cats)?cats[0]:null;mainId=String(sub?.parent_id||effective||'').trim()}
       else if(effective){const cats=await rest(`store_categories?select=id,parent_id&id=eq.${q(effective)}&store_id=eq.${q(store.id)}&limit=1`),cat=Array.isArray(cats)?cats[0]:null;if(cat?.parent_id)mainId=String(cat.parent_id)}
+      if(window.__mwTaxonomyTouchedV10||String(document.getElementById('productId')?.value||'')!==String(productId))return;
       window.__mwTaxonomySelectionV10={main:mainId||'',sub:subId||(effective&&effective!==mainId?effective:'')};
     }catch(err){console.warn('V10 taxonomy edit hydration failed',err)}
   }
