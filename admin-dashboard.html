@@ -181,7 +181,51 @@ const refresh=el('button','تحديث');refresh.onclick=()=>reviewFilter==='pend
 });
 })();
 
-</script></head>
+</script><style id="admin-order-age-v65">
+.admin-order-age-v65{display:block!important;width:100%;border:0!important;background:transparent!important;color:#f6dc8b!important;font:500 12px/1.5 system-ui!important;font-variant-numeric:tabular-nums;letter-spacing:1px;padding:0 2px 7px!important;margin:0!important;white-space:nowrap!important;cursor:pointer}
+html[data-mw-theme="light"] .admin-order-age-v65{color:#713f12!important}
+.admin-order-date-v65{position:fixed;z-index:10000;max-width:calc(100vw - 24px);padding:12px 16px;border:1px solid #a88b45;border-radius:12px;background:#102433;color:#f6dc8b;box-shadow:0 8px 24px #0005;font:500 13px/1.7 system-ui;text-align:center}
+html[data-mw-theme="light"] .admin-order-date-v65{background:#fffaf0;color:#713f12}
+</style>
+<script id="admin-order-age-v65">
+function adminElapsedTimeV65(created,now=Date.now()){
+ const time=Date.parse(created);
+ if(!Number.isFinite(time))return '';
+ const minutes=Math.max(0,Math.floor((now-time)/60000));
+ return [Math.floor(minutes/1440),Math.floor(minutes/60)%24,minutes%60].map(n=>String(n).padStart(2,'0')).join(' : ');
+}
+function adminOrderAgeV65(o){
+ const age=adminElapsedTimeV65(o.created_at);
+ if(!age)return '';
+ return `<button type="button" class="admin-order-age-v65" dir="ltr" data-order-created-v65="${esc(o.created_at)}" aria-label="عمر الطلب: يوم، ساعة، دقيقة. عرض تاريخ الطلب" aria-expanded="false">${age}</button>`;
+}
+(()=>{
+ let popup=null,owner=null;
+ function close(){popup?.remove();popup=null;if(owner)owner.setAttribute('aria-expanded','false');owner=null}
+ document.addEventListener('click',event=>{
+  const button=event.target.closest?.('[data-order-created-v65]');
+  if(!button){if(!popup?.contains(event.target))close();return}
+  if(owner===button){close();return}
+  close();owner=button;button.setAttribute('aria-expanded','true');
+  popup=document.createElement('div');popup.className='admin-order-date-v65';popup.setAttribute('role','status');
+  const date=new Date(button.dataset.orderCreatedV65);
+  const formatted=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Istanbul',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(date);
+  popup.textContent='تاريخ الطلب — '+formatted+' (توقيت تركيا)';
+  document.body.appendChild(popup);
+  const rect=button.getBoundingClientRect(),width=popup.offsetWidth;
+  popup.style.left=Math.max(12,Math.min(innerWidth-width-12,rect.left+(rect.width-width)/2))+'px';
+  popup.style.top=Math.max(12,Math.min(innerHeight-popup.offsetHeight-12,rect.bottom+5))+'px';
+ });
+ document.addEventListener('keydown',event=>{if(event.key==='Escape')close()});
+ window.addEventListener('resize',close);
+ document.addEventListener('scroll',close,true);
+ setInterval(()=>document.querySelectorAll('[data-order-created-v65]').forEach(button=>{
+  button.textContent=adminElapsedTimeV65(button.dataset.orderCreatedV65);
+ }),60000);
+})();
+</script>
+<link rel="stylesheet" href="css/admin-mobile-orders-v65.css?v=20261008-v65">
+</head>
 <body onload="initAdminDashboard()">
 <script>/* BLANK_DASHBOARD_RECOVERY_V311 — reveal shell only for a locally valid, unexpired admin session; data still waits for server identity verification. */try{if(window.KintoAdminSessionV147?.read())document.documentElement.classList.remove('admin-auth-pending')}catch(e){console.warn('Admin shell recovery:',e)}</script>
 <div class="sidebar admin-master-sidebar"><div class="admin-brand-header"><span class="admin-brand-logo-shell"><img id="adminBrandLogo" class="admin-brand-logo" width="72" height="72" src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" alt="شعار KINTO" decoding="async"></span><h2>لوحة الإدارة</h2></div><a href="#" data-admin-section="orders" onclick="showAdminMasterSection('orders');return false">إدارة الطلبات</a><a href="#" data-admin-section="pricing" onclick="showAdminMasterSection('pricing');return false">إدارة التسعير والشحن</a><a href="#" data-admin-section="whatsapp" onclick="showAdminMasterSection('whatsapp');return false">إشعارات الواتساب</a><a href="#" data-admin-section="employees" onclick="showAdminMasterSection('employees');return false">إدارة الموظفين</a><a href="#" data-admin-section="delivery" onclick="showAdminMasterSection('delivery');return false">إدارة المندوبين</a><a href="#" data-admin-section="courier-reports" onclick="showAdminMasterSection('courier-reports');return false">تقرير ومتابعة المندوبين</a><a href="#" data-admin-section="branches" onclick="showAdminMasterSection('branches');return false">إدارة الفروع والمخازن</a><a href="#" data-admin-section="branch-reports" onclick="showAdminMasterSection('branch-reports');return false">تقرير ومتابعة الفروع</a><a href="#" data-admin-section="vendor-finance" onclick="showAdminMasterSection('vendor-finance');return false">💰 الحسابات والتقارير المالية</a><a href="#" data-admin-section="local-stores" onclick="showAdminMasterSection('local-stores');return false">🏪 إدارة المتاجر المحلية</a><a href="#" data-admin-section="exchange" onclick="showAdminMasterSection('exchange');return false">أسعار صرف العملات</a><a href="#" data-admin-section="stores" onclick="showAdminMasterSection('stores');return false">إدارة المتاجر</a><a href="#" data-admin-section="customers" onclick="showAdminMasterSection('customers');return false">إدارة العملاء</a><a href="#" data-admin-section="notifications" onclick="showAdminMasterSection('notifications');return false">🔔 إشعارات المتاجر</a><a href="#" data-admin-section="customer-notices" onclick="showAdminMasterSection('customer-notices');return false">🔔 إشعارات العملاء</a><a href="#" data-admin-section="kinto-campaigns" onclick="showAdminMasterSection('kinto-campaigns');return false">✦ حملات KINTO</a><a href="#" data-admin-section="g19SecurityRecovery" onclick="showAdminMasterSection('g19SecurityRecovery');return false">🛡️ الأمان والاسترداد</a><a href="#" data-admin-section="g16PaymentMethods" onclick="showAdminMasterSection('g16PaymentMethods');return false">💳 طرق الدفع</a><a href="#" data-admin-section="content" onclick="showAdminMasterSection('content');return false">إدارة المحتوى</a><a href="login.html" target="_top" class="logout-link" onclick="adminVerifiedLogout(this);return false">تسجيل الخروج</a></div>
@@ -920,3 +964,55 @@ Object.assign(window,{switchAdminPipeline,adminBranchFilterChanged,syncAdminBran
 <script defer src="js/admin-payment-methods-g16.js?v=20261005-g16-inline-otp"></script>
 <script defer src="js/admin-security-recovery-g19.js?v=20261005-g19-ui"></script>
 
+
+<script id="admin-order-indicators-v65">
+function adminStockIconV65(o){const d=parseAdminOrderDetails(o.details),closed=['تم التسديد','قيد الطلب','مخزن الشركة','مخزن شركة','تجهيز شحن','تم الشحن','مخزن محلي','مندوب','جاري التوصيل مع المندوب','توزيع داخلي','تم التسليم','رفض التسليم','رفض الطلب','مرفوض','راجع','ملغي من قبل العميل'].includes(String(o.status||'').trim()),deducted=[d.bundle_stock_lifecycle_state,d.local_stock_lifecycle_state,d.stock_lifecycle_state].includes('deducted'),adjusted=!!d.stock_adjustment_v58&&!closed&&!deducted,label=o._stockShortagesV53?.length?'نقص في المخزون — فتح الفاتورة':'تم تخفيض كميات الطلب حسب المخزون — فتح الفاتورة';const stock=(o._stockShortagesV53?.length||adjusted)?`<button type="button" data-admin-stock-order-id="${esc(o.id)}" title="${label}" aria-label="${label}" style="border:0;background:transparent;color:#dc2626;padding:3px 5px;font-size:22px;line-height:1.2;cursor:pointer">⚠</button>`:'';const campaign=d.deal_campaign_id?'<span title="طلب عروض" aria-label="طلب عروض" tabindex="0" style="display:inline-flex;align-items:center;font-size:22px;line-height:1.2;padding:3px 5px;cursor:help">🎁</span>':'';return stock||campaign?`<span style="display:inline-flex;align-items:center;gap:2px;white-space:nowrap">${stock}${campaign}</span>`:''}
+(()=>{
+ let busy=false,pending=false;
+ function rows(){return typeof adminOrdersCloud==='undefined'?[]:adminOrdersCloud}
+ function decorate(){
+  const body=document.getElementById('adminOrdersTableBody');if(!body)return;
+  for(const o of rows()){
+   const id=encodeURIComponent(String(o.id)),ref=document.getElementById('adminRef-'+id),row=ref?.closest('tr');
+   if(!row||!body.contains(row))continue;
+   const status=document.getElementById('adminStatus-'+id);
+   if(status){
+    let slot=row.querySelector('[data-admin-stock-slot]');
+    if(!slot){slot=document.createElement('div');slot.dataset.adminStockSlot=String(o.id);slot.className='admin-stock-slot-v65';status.before(slot)}
+    const html=adminStockIconV65(o);if(slot.innerHTML!==html)slot.innerHTML=html;
+   }
+   const action=row.querySelector('button[onclick*="saveAdminOrderRow"]')?.closest('td');
+   if(action&&!action.querySelector('[data-order-created-v65]')){
+    action.insertAdjacentHTML('afterbegin',adminOrderAgeV65(o));
+   }
+  }
+ }
+ async function refresh(){
+  if(busy){pending=true;return}
+  if(document.hidden)return;
+  const orders=rows().slice(),api=window.KintoBundleV93;
+  decorate();if(!orders.length||!api?.refreshStockWarnings)return;
+  busy=true;
+  try{
+   try{await api.refreshStockWarnings(orders)}catch{
+    for(let offset=0;offset<orders.length;offset+=4){
+     await Promise.allSettled(orders.slice(offset,offset+4).map(o=>api.refreshStockWarnings([o])));
+    }
+   }
+   decorate();
+  }catch(e){console.warn('Admin stock indicators unavailable',e)}
+  finally{busy=false;if(pending){pending=false;refresh()}}
+ }
+ document.addEventListener('click',e=>{
+  const button=e.target.closest?.('[data-admin-stock-order-id]');if(!button)return;
+  const o=rows().find(x=>String(x.id)===button.dataset.adminStockOrderId);
+  if(o&&window.KintoBundleV93)window.KintoBundleV93.printInvoice(o);
+ });
+ function start(){
+  const body=document.getElementById('adminOrdersTableBody');if(!body)return;
+  new MutationObserver(()=>{decorate();refresh()}).observe(body,{childList:true});
+  refresh();setInterval(refresh,20000);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+</script>
