@@ -450,6 +450,10 @@ window.addEventListener('beforeunload',()=>{try{if(vendorOrdersRealtime)sb.remov
 Object.assign(window,{vendorLogin,vendorLogout,toggleTheme,openProductModal,closeProductModal,editProduct,saveProduct,deleteProduct,saveExchangeRate,loadOrders,printShippingLabel,openVendorOrderDetails,closeVendorOrderDetails,setVendorTab,setVendorOrderFilter,setVendorFinanceFilter,exportVendorPaidStatement,loadVendorNotifV399,renderVendorNotifV399,vendorNotifActionV399});
 window.MeshwarVendorRuntime={
   sb,
+  getProducts:()=>products,
+  loadProducts,
+  optionsArray,
+  uploadProductImage,
   getStore:()=>vendorStore,
   setStore:value=>{vendorStore=value||null},
   saveStoreSession,
@@ -482,3 +486,4 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 <script defer src="js/vendor-order-indicators-v66.js?v=20261008-v67-runtime-ready"></script>
 </body>
 </html>
+

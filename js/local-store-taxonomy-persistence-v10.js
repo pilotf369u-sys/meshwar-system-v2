@@ -98,7 +98,7 @@
     document.addEventListener('click',e=>{
       if(e.target?.closest?.('#addNewProductBtn,button[onclick="openProductModal()"]')){window.__mwTaxonomyTouchedV10=true;window.__mwTaxonomySelectionV10={main:'',sub:''}}
       if(e.target?.closest?.('button[onclick^="editProduct("]')){window.__mwTaxonomyTouchedV10=false;window.__mwTaxonomySelectionV10=null}
-      const save=e.target?.closest?.('button[onclick*="saveProduct"]');if(!save)return;
+      const save=e.target?.closest?.('button[onclick*="saveProduct"]');if(!save||window.__mwVendorProductSaveCompleteV34)return;
       const store=sessionStore(),id=String(document.getElementById('productId')?.value||'').trim(),name=String(document.getElementById('productName')?.value||'').trim(),taxonomy=saveTaxonomySnapshot();
       const skip=Boolean(id&&!window.__mwTaxonomyTouchedV10&&!taxonomy.effective);
       window.__mwTaxonomyV10SaveSnapshot={id,name,storeId:String(store?.id||''),taxonomy,skip,at:Date.now()};
@@ -112,3 +112,4 @@
   if(vendorPage)startVendor();
   window.MeshwarTaxonomyPersistenceV10={VERSION,persistTaxonomy,hydrateTaxonomyForEdit,taxonomySnapshot:saveTaxonomySnapshot};
 })();
+

@@ -227,7 +227,7 @@
       if(edit){const m=String(edit.getAttribute('onclick')||'').match(/editProduct\('([^']+)'\)/);if(m)setTimeout(()=>loadProductTaxonomy(m[1]).catch(console.warn),0)}
       const add=e.target.closest?.('#addNewProductBtn,button[onclick="openProductModal()"]');
       if(add)setTimeout(()=>loadProductTaxonomy('').catch(console.warn),0);
-      const save=e.target.closest?.('button[onclick="saveProduct()"]');
+      const save=e.target.closest?.('button[onclick="saveProduct()"]');if(save&&window.__mwVendorProductSaveCompleteV34)return;
       if(save){
         injectProductFields();
         const id=String(document.getElementById('productId')?.value||'').trim(),name=String(document.getElementById('productName')?.value||'').trim();
