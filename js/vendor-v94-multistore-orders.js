@@ -51,6 +51,7 @@ async function performSegmentOrdersLoad(){
       const[{data,error},legacy]=await Promise.all([runtime.sb.rpc('vendor_list_order_segments',{p_session_token:active.token,p_limit:200,p_offset:0}),fetchLegacy(storeId)]);
       if(error)throw error;
       const segments=(data||[]).map(row=>projectSegment(row,storeId)),segmentOrderIds=new Set(segments.map(o=>String(o._v95OrderId||'')));
+      for(const row of segments){const original=legacy.find(o=>String(o.id)===String(row._v95OrderId));row._v66CampaignId=parse(original?.details).deal_campaign_id||null}
       if(segments.length){const ids=segments.map(o=>o._v95SegmentId),controls=await runtime.sb.rpc('vendor_list_order_shipping_controls',{p_session_token:active.token,p_segment_ids:ids});if(controls.error)throw controls.error;Object.entries(controls.data||{}).forEach(([id,value])=>shippingControlCache.set(String(id),value))}
       rows=[...segments,...legacy.filter(o=>o._v95Source==='legacy-local'||(o._v95Source==='legacy-global'&&o._v94Paid&&!segmentOrderIds.has(String(o.id))))];
     }else{
@@ -60,7 +61,6 @@ async function performSegmentOrdersLoad(){
         return;
       }
     }
-    for(const row of rows){if(row._v95SegmentId){const original=legacy.find(o=>String(o.id)===String(row._v95OrderId));row._v66CampaignId=parse(original?.details).deal_campaign_id||null}}
     runtime.setOrders(rows);renderOrders();runtime.renderFinance();runtime.renderStats();window.MeshwarVendorOrderStatusContrastV18?.decorateStatuses(window);
   }catch(e){
     if(active&&String(e?.message||'').includes('VENDOR_SESSION_INVALID')){clearSession();runtime.requireSecureLogin?.('انتهت جلسة المتجر الآمنة. سجّل الدخول مجدداً لتحديث الطلبات.');return}
