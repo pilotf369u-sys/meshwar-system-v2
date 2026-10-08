@@ -50,9 +50,9 @@
         if(['productColors','productSizes','productVolumes'].includes(el.id))win.__mwVendorOptionsTouchedV69=true;
         if(el.matches?.('#mwVariantStockEditor [data-vs-group],#mwMatrixStockEditor input,[data-matrix-stock]'))win.__mwVendorVariantStockTouchedV69=true;
       };
-      d.addEventListener('click',reset,true);
-      d.addEventListener('input',mark,true);
-      d.addEventListener('change',mark,true);
+      d.addEventListener?.('click',reset,true);
+      d.addEventListener?.('input',mark,true);
+      d.addEventListener?.('change',mark,true);
       d.__mwV34PreservationGuards=true;
     }
     ensureCostField();bindCostHydration();bindEditPreservationGuards();
