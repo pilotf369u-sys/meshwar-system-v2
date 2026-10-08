@@ -8,6 +8,34 @@ async function shellDecorateProducts(page){return page.evaluate(()=>window.Meshw
 test.describe('MeshWar vendor E2E integration gate',()=>{
   test.beforeEach(async({page})=>{await installMocks(page)});
 
+  test('stock-only edit retains product metadata and variant quantities after iframe reload',async({page})=>{
+    const vendor=await openVendor(page);
+    await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
+    await frameWindow(page,async()=>{
+      const p=window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1');
+      p.stock_quantity=29;p.description='preserved description';
+      p.options={...p.options,colors:['وردي','أزرق فاتح','سلفر'],variant_stock:{color:{وردي:3,'أزرق فاتح':5,سلفر:5},size:{},volume:{}},matrix_stock:{},campaign_extra:{keep:true}};
+      await window.MeshwarVendorRuntime.loadProducts();
+      window.editProduct('p-1');
+    });
+    const pink=vendor.locator('#mwVariantStockEditor [data-vs-group="color"][data-vs-value="وردي"]');
+    await expect(pink).toHaveValue('3');
+    await vendor.locator('#productStock').fill('30');await pink.fill('4');
+    await vendor.getByRole('button',{name:'حفظ المنتج'}).click();
+    await expect(vendor.locator('#productModal')).toHaveClass(/hidden/);
+    const saved=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1'));
+    expect(saved.stock_quantity).toBe(30);expect(saved.options.variant_stock.color['وردي']).toBe(4);
+    expect(saved.options.variant_stock.color['أزرق فاتح']).toBe(5);
+    expect(saved.options.campaign_extra).toEqual({keep:true});
+    expect(saved.description).toBe('preserved description');expect(saved.category_id).toBe('sub-a');expect(saved.subcategory_id).toBe('sub-a');
+    await page.evaluate(()=>document.getElementById('vendorFrame').contentWindow.location.reload());
+    await expect(vendor.locator('#dashboardView')).toBeVisible();
+    await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
+    await frameWindow(page,()=>window.editProduct('p-1'));
+    await expect(vendor.locator('#productName')).toHaveValue(saved.product_name);
+    await expect(vendor.locator('#productStock')).toHaveValue('30');await expect(pink).toHaveValue('4');
+  });
+
   test('orders: lifecycle rendering, filters, barcode search, camera, details and label print',async({page})=>{
     const vendor=await openVendor(page);
     await expect(vendor.locator('#ordersBody tr')).toHaveCount(15);
@@ -123,3 +151,4 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await vendor.locator('button[onclick="toggleTheme()"]').click();await expect(vendor.locator('html')).toHaveClass(/light/);await vendor.locator('#vendorTabBtn-products').click();await expect(vendor.locator('html')).toHaveClass(/light/);await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);const lightBg=await frameWindow(page,()=>getComputedStyle(document.body).backgroundColor);expect(lightBg).not.toBe('rgba(0, 0, 0, 0)');await vendor.locator('button[onclick="toggleTheme()"]').click();await expect(vendor.locator('html')).toHaveClass(/dark/);
   });
 });
+
