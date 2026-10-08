@@ -28,6 +28,8 @@ test('customer decision page is appended only to its dedicated invoice window', 
   expect(source).toContain('تأكيد استلام الطلب');
   expect(source).toContain('customer_confirm_order_receipt_v60');
   expect(source).toContain('قيّم المنتجات');
+  expect(source).toContain('printInvoice(cached,{canonicalOnly:true})');
+  expect(source).toContain('void customerReceiptState(o).then');
   expect(source).not.toContain('customer-decision-summary');
   expect(source).not.toContain('عنوان التسليم المسجل');
   expect(source).not.toContain('customerDecisionModal');
