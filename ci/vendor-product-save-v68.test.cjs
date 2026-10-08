@@ -32,6 +32,7 @@ async function check({snapshot,collision=false,create=false}={}){
      then(resolve){if(payload){writes++;saved=payload;if(collision)return resolve({data:[],error:null});row={...row,...payload};return resolve({data:[clone(row)],error:null})}resolve({data:[clone(row)],error:null})}};return q}};
  const win={document,saveProduct(){},MutationObserver:class{observe(){}},closeProductModal(){closed++},alert:x=>alerts.push(x),MeshwarVendorRuntime:{sb,getStore:()=>({id:'s'}),getProducts:()=>[clone(row)],showNotice(){},loadProducts:async()=>{reloads++},optionsArray:s=>s.split(',').filter(Boolean),uploadProductImage:async()=>''}};
  if(snapshot)win.MeshwarVariantStock={editorSnapshot:()=>clone(snapshot)};
+ if(snapshot)win.__mwVendorVariantStockTouchedV69=true;
  vm.runInNewContext(source,{window:win,console:{error(){}},setTimeout(){throw Error('unexpected wait: runtime unavailable')}});
  win.MeshwarVendorProductSaveCompleteV34.install(win);
  assert.equal(win.__mwVendorProductSaveCompleteV34,true);
