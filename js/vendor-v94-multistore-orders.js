@@ -25,7 +25,7 @@ function projectLegacyOrder(o,storeId){
   if(!list.length)return null;
   const storeMeta=Array.isArray(d.stores)?d.stores.find(s=>String(s?.store_id||'').trim()===storeId):null;
   const subtotal=storeSubtotal(list),qty=list.reduce((n,x)=>n+Math.max(1,Number(x.quantity)||1),0),storedStatus=String(d.store_statuses?.[storeId]||'بانتظار التسديد'),paid=String(d.bundle_stock_lifecycle_state||'')==='deducted'||String(o.status||'')==='تم التسديد',first=list[0]||{};
-  return {...o,total_price:subtotal,status:paid?storedStatus:String(o.status||'انتظار رد الموظف'),details:{source:'local_store',v94_vendor_projection:true,store_id:storeId,store_name:storeMeta?.store_name||first.store_name||'المتجر',items:list,product_id:first.product_id||'',product_name:first.product_name||'',product_image:first.product_image||'',quantity:qty,requested_quantity:qty,store_subtotal:subtotal,pricing_snapshot:first.pricing_snapshot||null,commission_rate:Number(first.pricing_snapshot?.commission_rate)||Number(d.commission_rate)||0,vendor_payment_status:d.vendor_payment_status||d.vendor_settlement_status||'pending'},_v94GlobalOrder:true,_v94Paid:paid,_v94StoreStatus:storedStatus,_v95Source:'legacy-global'};
+  return {...o,total_price:subtotal,status:paid?storedStatus:String(o.status||'انتظار رد الموظف'),details:{source:'local_store',v94_vendor_projection:true,deal_campaign_id:d.deal_campaign_id||null,stock_adjustment_v58:d.stock_adjustment_v58||null,bundle_stock_lifecycle_state:d.bundle_stock_lifecycle_state||null,store_id:storeId,store_name:storeMeta?.store_name||first.store_name||'المتجر',items:list,product_id:first.product_id||'',product_name:first.product_name||'',product_image:first.product_image||'',quantity:qty,requested_quantity:qty,store_subtotal:subtotal,pricing_snapshot:first.pricing_snapshot||null,commission_rate:Number(first.pricing_snapshot?.commission_rate)||Number(d.commission_rate)||0,vendor_payment_status:d.vendor_payment_status||d.vendor_settlement_status||'pending'},_v94GlobalOrder:true,_v94Paid:paid,_v94StoreStatus:storedStatus,_v95Source:'legacy-global'};
 }
 
 function projectSegment(row,storeId){
@@ -60,6 +60,7 @@ async function performSegmentOrdersLoad(){
         return;
       }
     }
+    for(const row of rows){if(row._v95SegmentId){const original=legacy.find(o=>String(o.id)===String(row._v95OrderId));row._v66CampaignId=parse(original?.details).deal_campaign_id||null}}
     runtime.setOrders(rows);renderOrders();runtime.renderFinance();runtime.renderStats();window.MeshwarVendorOrderStatusContrastV18?.decorateStatuses(window);
   }catch(e){
     if(active&&String(e?.message||'').includes('VENDOR_SESSION_INVALID')){clearSession();runtime.requireSecureLogin?.('انتهت جلسة المتجر الآمنة. سجّل الدخول مجدداً لتحديث الطلبات.');return}
