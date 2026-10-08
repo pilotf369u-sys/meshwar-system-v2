@@ -35,12 +35,15 @@ jobs:
           grep -q "20260824-v27-payloadfix1" js/local-store-taxonomy-persistence-v10.js
           grep -q "hydrateTaxonomyForEdit" js/local-store-taxonomy-persistence-v10.js
           grep -q "persistTaxonomy" js/local-store-taxonomy-persistence-v10.js
-          grep -q "vendor-product-edit-fields-v26.js?v=20260825-native-modal-raceguard1" vendor-dashboard.html
+          grep -q "vendor-product-edit-fields-v26.js?v=20261008-v68-save" vendor-dashboard.html
           grep -q "MeshwarVendorProductEditFieldsV26?.install" vendor-dashboard.html
           ! grep -q "wrapSaveProduct" js/vendor-product-edit-fields-v26.js
           ! grep -q "wrapEditProduct" js/vendor-product-edit-fields-v26.js
           ! grep -q "win.saveProduct=" js/vendor-product-edit-fields-v26.js
           ! grep -q "win.editProduct=" js/vendor-product-edit-fields-v26.js
+      - name: Verify product save preserves stock and metadata
+        run: node ci/vendor-product-save-v68.test.cjs
       - name: Protect barcode and finance layers
         run: |
           git diff --exit-code "${{ github.event.pull_request.base.sha }}" -- js/vendor-barcode-smart-search-v11.js js/vendor-barcode-margin-autopricing-v22.js js/vendor-finance-cost-save-guard-v21.js js/vendor-finance-pl-invoices-v21.js
+
