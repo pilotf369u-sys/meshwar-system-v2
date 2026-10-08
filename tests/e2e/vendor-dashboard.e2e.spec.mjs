@@ -168,8 +168,8 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
       await window.MeshwarVendorRuntime.loadProducts();
     });
     await vendor.locator('#vendorTabBtn-products').click();
-    for(let n=0;n<3 && !(await vendor.locator('#productsBody button[onclick="editProduct(\\'p-1\\')"]').isVisible());n++)await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();
-    await vendor.locator('#productsBody button[onclick="editProduct(\\'p-1\\')"]').click();
+    for(let n=0;n<3 && !(await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').isVisible());n++)await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();
+    await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
     await expect(vendor.locator('#productModal')).toHaveClass(/flex/);
     await frameWindow(page,()=>{
       document.getElementById('productColors').value='أسود, أبيض, أزرق';
