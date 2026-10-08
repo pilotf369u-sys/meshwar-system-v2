@@ -16,8 +16,8 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
       p.stock_quantity=29;p.description='preserved description';
       p.options={...p.options,colors:['وردي','أزرق فاتح','سلفر'],variant_stock:{color:{وردي:3,'أزرق فاتح':5,سلفر:5},size:{},volume:{}},matrix_stock:{},campaign_extra:{keep:true}};
       await window.MeshwarVendorRuntime.loadProducts();
-      window.editProduct('p-1');
     });
+    await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
     const pink=vendor.locator('#mwVariantStockEditor [data-vs-group="color"][data-vs-value="وردي"]');
     await expect(pink).toHaveValue('3');
     await vendor.locator('#productStock').fill('30');await pink.fill('4');
@@ -31,7 +31,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await page.evaluate(()=>document.getElementById('vendorFrame').contentWindow.location.reload());
     await expect(vendor.locator('#dashboardView')).toBeVisible();
     await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
-    await frameWindow(page,()=>window.editProduct('p-1'));
+    await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
     await expect(vendor.locator('#productName')).toHaveValue(saved.product_name);
     await expect(vendor.locator('#productStock')).toHaveValue('30');await expect(pink).toHaveValue('4');
   });
@@ -103,7 +103,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await vendor.locator('#mwProductMainCategory').selectOption('cat-a');await expect(vendor.locator('#mwProductSubCategory option[value="sub-a"]')).toHaveCount(1);await vendor.locator('#mwProductSubCategory').selectOption('sub-a');await vendor.getByRole('button',{name:'حفظ المنتج'}).click();
     await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.product_name==='E2E Added Product')||null)).not.toBeNull();await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.product_name==='E2E Added Product')?.subcategory_id||'')).toBe('sub-a');await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.product_name==='E2E Added Product')?.cost_price)).toBe(18.5);
     const added=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.product_name==='E2E Added Product'));expect(added.stock_quantity).toBe(17);expect(added.base_price).toBe(44);expect(added.category_id).toBe('sub-a');expect(added.subcategory_id).toBe('sub-a');
-    await frameWindow(page,()=>window.editProduct('p-1'));await expect(vendor.locator('#productModal')).toHaveClass(/flex/);await expect(vendor.locator('#productBarcode')).toHaveValue('LEGACY-SKU-01');await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwTaxonomyV10))).toBe(true);await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwFinanceV21))).toBe(true);
+    await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();await expect(vendor.locator('#productModal')).toHaveClass(/flex/);await expect(vendor.locator('#productBarcode')).toHaveValue('LEGACY-SKU-01');await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwTaxonomyV10))).toBe(true);await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwFinanceV21))).toBe(true);
     await vendor.locator('#productStock').fill('73');await vendor.locator('#mwProductCostPrice').fill('22');await expect(vendor.locator('#productBasePrice')).toHaveValue('28');await vendor.locator('#productBasePrice').fill('31');await vendor.locator('#mwProductMainCategory').selectOption('cat-b');await expect(vendor.locator('#mwProductSubCategory option[value="sub-b"]')).toHaveCount(1);await vendor.locator('#mwProductSubCategory').selectOption('sub-b');await vendor.getByRole('button',{name:'حفظ المنتج'}).click();
     await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1')?.stock_quantity)).toBe(73);await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1')?.subcategory_id||'')).toBe('sub-b');await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1')?.cost_price)).toBe(22);
     const moved=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1'));expect(moved.base_price).toBe(31);expect(moved.barcode).toBe('LEGACY-SKU-01');expect(moved.category_id).toBe('sub-b');expect(moved.subcategory_id).toBe('sub-b');await expect(vendor.locator('#mwVendorPager-products [data-pager-info]')).toContainText('من 24');
