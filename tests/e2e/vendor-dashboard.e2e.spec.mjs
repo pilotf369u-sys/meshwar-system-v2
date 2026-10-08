@@ -18,6 +18,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
       await window.MeshwarVendorRuntime.loadProducts();
     });
     await vendor.locator('#vendorTabBtn-products').click();
+    for(let n=0;n<3 && !(await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').isVisible());n++) await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();
     await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
     const pink=vendor.locator('#mwVariantStockEditor [data-vs-group="color"][data-vs-value="وردي"]');
     await expect(pink).toHaveValue('3');
@@ -33,6 +34,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await expect(vendor.locator('#dashboardView')).toBeVisible();
     await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
     await vendor.locator('#vendorTabBtn-products').click();
+    for(let n=0;n<3 && !(await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').isVisible());n++) await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();
     await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
     await expect(vendor.locator('#productName')).toHaveValue(saved.product_name);
     await expect(vendor.locator('#productStock')).toHaveValue('30');await expect(pink).toHaveValue('4');
