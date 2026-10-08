@@ -17,6 +17,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
       p.options={...p.options,colors:['وردي','أزرق فاتح','سلفر'],variant_stock:{color:{وردي:3,'أزرق فاتح':5,سلفر:5},size:{},volume:{}},matrix_stock:{},campaign_extra:{keep:true}};
       await window.MeshwarVendorRuntime.loadProducts();
     });
+    await vendor.locator('#vendorTabBtn-products').click();
     await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
     const pink=vendor.locator('#mwVariantStockEditor [data-vs-group="color"][data-vs-value="وردي"]');
     await expect(pink).toHaveValue('3');
@@ -31,6 +32,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await page.evaluate(()=>document.getElementById('vendorFrame').contentWindow.location.reload());
     await expect(vendor.locator('#dashboardView')).toBeVisible();
     await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
+    await vendor.locator('#vendorTabBtn-products').click();
     await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
     await expect(vendor.locator('#productName')).toHaveValue(saved.product_name);
     await expect(vendor.locator('#productStock')).toHaveValue('30');await expect(pink).toHaveValue('4');
