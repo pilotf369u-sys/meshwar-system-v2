@@ -46,6 +46,7 @@
   <script src="js/vendor-product-save-complete-v34.js?v=20261008-v69-repeat-save-guard"></script>
   <script src="js/vendor-ux-realtime-v28.js?v=20261008-v68-save"></script>
   <script src="js/vendor-edit-direct-dom-v32.js?v=20261008-v68-edit-guard"></script>
+  <script src="js/vendor-mobile-back-v1.js?v=20261008-v1-modal-back"></script>
 </head>
 <body>
   <div id="vendorBootLoader" role="status" aria-live="polite">
@@ -87,6 +88,7 @@
         try{window.MeshwarVendorProductSaveSnapshotV27?.install(frame.contentWindow)}catch(e){console.error('Vendor product snapshot failed',e)}
         try{window.MeshwarVendorProductSaveCompleteV34?.install(frame.contentWindow)}catch(e){console.error('Vendor product save failed',e)}
         try{window.MeshwarVendorEditDirectDomV32?.install(frame.contentWindow)}catch(e){console.error('Vendor edit hydration failed',e)}
+        try{window.MeshwarVendorMobileBackV1?.install(frame.contentWindow)}catch(e){console.error('Vendor mobile Back handling failed',e)}
         injectV94Orders();
         injectShippingV98();
         injectRewardsV344();
