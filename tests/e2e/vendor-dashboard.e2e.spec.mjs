@@ -13,7 +13,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
     await frameWindow(page,async()=>{
       const p=window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1');
-      p.stock_quantity=29;p.description='preserved description';
+      p.cost_price=8;p.stock_quantity=29;p.description='preserved description';
       p.options={...p.options,colors:['وردي','أزرق فاتح','سلفر'],variant_stock:{color:{وردي:3,'أزرق فاتح':5,سلفر:5},size:{},volume:{}},matrix_stock:{},campaign_extra:{keep:true}};
       await window.MeshwarVendorRuntime.loadProducts();
     });
