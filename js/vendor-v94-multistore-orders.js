@@ -48,7 +48,7 @@ async function performSegmentOrdersLoad(){
   try{
     let rows;
     if(active){
-      const[{data,error},legacy]=await Promise.all([runtime.sb.rpc('vendor_list_order_segments_v161',{p_session_token:active.token,p_limit:200,p_offset:0}),fetchLegacy(storeId)]);
+      const[segmentResult,legacy]=await Promise.all([runtime.sb.rpc('vendor_list_order_segments_v161',{p_session_token:active.token,p_limit:200,p_offset:0}),fetchLegacy(storeId)]);let data=segmentResult.data,error=segmentResult.error;if(!error&&!Array.isArray(data)){const legacyResult=await runtime.sb.rpc('vendor_list_order_segments',{p_session_token:active.token,p_limit:200,p_offset:0});data=legacyResult.data;error=legacyResult.error;}
       if(error)throw error;
       const segments=(data||[]).map(row=>projectSegment(row,storeId)),segmentOrderIds=new Set(segments.map(o=>String(o._v95OrderId||'')));
       for(const row of segments){const original=legacy.find(o=>String(o.id)===String(row._v95OrderId));row._v66CampaignId=parse(original?.details).deal_campaign_id||null}
