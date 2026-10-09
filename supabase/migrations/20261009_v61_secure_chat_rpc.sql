@@ -138,7 +138,7 @@ begin
 
   return jsonb_build_object('items', v_items);
 end;
-$;
+$$;
 
 create or replace function public.employee_chat_send_v61(
   p_session_token text,
