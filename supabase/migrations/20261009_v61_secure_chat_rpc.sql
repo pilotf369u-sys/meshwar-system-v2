@@ -121,8 +121,6 @@ declare
   v_items jsonb;
 begin
   v_employee_id := private.require_employee_session_v143(p_session_token);
-  if p_customer_id is null then raise exception 'CHAT_CUSTOMER_REQUIRED'; end if;
-
   select coalesce(jsonb_agg(jsonb_build_object(
     'id', m.id,
     'created_at', m.created_at,
@@ -136,11 +134,11 @@ begin
   ) order by m.created_at asc), '[]'::jsonb)
   into v_items
   from public.messages m
-  where m.customer_id = p_customer_id;
+  where p_customer_id is null or m.customer_id = p_customer_id;
 
   return jsonb_build_object('items', v_items);
 end;
-$$;
+$;
 
 create or replace function public.employee_chat_send_v61(
   p_session_token text,
