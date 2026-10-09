@@ -386,7 +386,7 @@ function orderExtra(o,...keys){const d=normalizeOrderDetails(o?.details);for(con
 function vendorFinanceOther(o){const d=normalizeOrderDetails(o?.details),n=Number(d.vendor_other_deductions??d.other_deductions??d.store_deductions??d.deductions??0);return Number.isFinite(n)&&n>0?n:0}
 function vendorFinancePaymentStatus(o){const d=normalizeOrderDetails(o?.details),v=String(d.vendor_payment_status||d.vendor_settlement_status||'pending').trim().toLowerCase();return ['paid','مدفوع','settled'].includes(v)?'paid':'pending'}
 function vendorFinanceSnapshot(o){const totalRaw=Number(o?.total_price||0),total=Number.isFinite(totalRaw)&&totalRaw>0?totalRaw:0,rate=orderCommissionRate(o),commission=total*(rate/100),other=vendorFinanceOther(o),net=total-commission-other;return{order:o,total,rate,commission,other,net,paymentStatus:vendorFinancePaymentStatus(o)}}
-function vendorFinancialRows(){return orders.filter(o=>isDeliveredOrder(o.status)).map(vendorFinanceSnapshot)}
+function vendorFinancialRows(){return orders.filter(o=>isDeliveredOrder(o.status)&&normalizeOrderDetails(o?.details).vendor_finance_version==='v161').map(vendorFinanceSnapshot)}
 function financialTotals(){return vendorFinancialRows().reduce((a,r)=>{a.sales+=r.total;a.commission+=r.commission;a.other+=r.other;a.net+=r.net;if(r.paymentStatus==='paid')a.paid+=r.net;else a.pending+=r.net;return a},{sales:0,commission:0,other:0,pending:0,paid:0,net:0})}
 let activeVendorFinanceFilter='all';
 function setVendorFinanceFilter(filter){activeVendorFinanceFilter=['all','pending','paid'].includes(filter)?filter:'all';document.querySelectorAll('[data-finance-filter]').forEach(btn=>btn.classList.toggle('active',btn.dataset.financeFilter===activeVendorFinanceFilter));renderVendorFinanceTable()}
