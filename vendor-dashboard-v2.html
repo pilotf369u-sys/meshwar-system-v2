@@ -479,6 +479,7 @@ window.MeshwarVendorRuntime={
 };
 document.querySelectorAll('[data-finance-filter]').forEach(btn=>{btn.addEventListener('click',()=>setVendorFinanceFilter(btn.dataset.financeFilter||'all'))});
 const vendorPaidStatementBtn=document.querySelector('button[onclick="exportVendorPaidStatement()"]');if(vendorPaidStatementBtn){vendorPaidStatementBtn.removeAttribute('onclick');vendorPaidStatementBtn.addEventListener('click',exportVendorPaidStatement)}
+window.dispatchEvent(new Event('kinto-vendor-runtime-ready'));
 const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 </script>
 <script defer src="js/vendor-kinto-deals-g3g.js?v=20261004-live-state-no-flash"></script>
@@ -486,7 +487,7 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 <script defer src="js/vendor-kinto-deals-g4c-draft.js?v=20261004-g13-auto-upload"></script>
 <script src="js/kinto-bundle-ui-v93.js?v=20261007-v58-invoice-order-match"></script>
 <script defer src="js/vendor-order-indicators-v66.js?v=20261008-v67-runtime-ready"></script>
-<script defer src="js/vendor-settlement-archive-v163.js?v=20261010-v163"></script>
+<script defer src="js/vendor-settlement-archive-v163.js?v=20261010-compact-pager"></script>
 </body>
 </html>
 
