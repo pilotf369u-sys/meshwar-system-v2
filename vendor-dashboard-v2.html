@@ -394,7 +394,7 @@ function renderVendorFinanceTable(){const body=$('vendorFinanceBody');if(!body)r
 async function exportVendorPaidStatement(){
   const rows=vendorFinancialRows().filter(r=>r.paymentStatus==='paid'),cur=financeCurrency();
   if(!rows.length)return showNotice('لا توجد طلبات مدفوعة لإصدار كشف حساب.',true);
-  let platformLogo='';try{const r=await sb.rpc('get_site_settings');platformLogo=String((r.data&&typeof r.data==='object'?r.data.brand_logo_url:'')||'').trim()}catch(e){}
+  let platformLogo='';try{const r=await sb.rpc('get_site_settings');const raw=r.data,settings=typeof raw==='string'?JSON.parse(raw||'{}'):(raw||{});platformLogo=String(settings.brand_logo_url||'').trim()}catch(e){}
   const storeLogo=String(vendorStore?.logo_url||'').trim();
   const totals=rows.reduce((a,r)=>{a.sales+=r.total;a.commission+=r.commission;a.other+=r.other;a.net+=r.net;return a},{sales:0,commission:0,other:0,net:0});
   const statementWindow=window.open('','_blank','width=1000,height=760');
