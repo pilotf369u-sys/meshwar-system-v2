@@ -36,9 +36,9 @@ begin
    coalesce(sum(coalesce((commission_snapshot->>'commission_amount')::numeric,0)),0),
    coalesce(sum(coalesce((commission_snapshot->>'other_deductions')::numeric,0)),0)
  into v_count,v_gross,v_commission,v_other
- from public.order_store_segments
- where id=any(p_segment_ids) and store_id=p_store_id and vendor_settlement_archive_id is null
-   and vendor_payment_status='paid' and commission_snapshot->>'version'='v161' for update;
+ from (select * from public.order_store_segments where id=any(p_segment_ids) and store_id=p_store_id
+   and vendor_settlement_archive_id is null and vendor_payment_status='paid'
+   and commission_snapshot->>'version'='v161' for update) locked;
  if v_count<>array_length(p_segment_ids,1) then raise exception 'V163_ONLY_UNARCHIVED_PAID_V161_SEGMENTS_ALLOWED'; end if;
  v_net:=round(v_gross-v_commission-v_other,2);
  v_no:='KINTO-STL-'||to_char(now(),'YYYYMMDD')||'-'||upper(substr(replace(v_id::text,'-',''),1,8));
