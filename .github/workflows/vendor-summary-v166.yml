@@ -1,0 +1,24 @@
+name: Vendor lifetime summary V166
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'vendor-dashboard-v2.html'
+      - 'js/vendor-dashboard-summary-v166.js'
+      - 'supabase/migrations/20261010_v166_vendor_dashboard_summary.sql'
+      - 'supabase/migrations/20261010_v165_vendor_profit_pagination.sql'
+      - 'ci/vendor-summary-v166.test.cjs'
+      - '.github/workflows/vendor-summary-v166.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save @electric-sql/pglite@0.5.8
+      - run: node --check js/vendor-dashboard-summary-v166.js
+      - run: node ci/vendor-summary-v166.test.cjs
