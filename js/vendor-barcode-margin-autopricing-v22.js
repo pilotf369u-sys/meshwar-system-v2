@@ -20,7 +20,11 @@
 
   async function fetchBarcodeRows(win){
     const sid=String(store(win)?.id||'').trim();if(!sid)return[];
-    return await rest(win,`local_products?select=id,product_name,barcode,stock_quantity&store_id=eq.${q(sid)}&order=created_at.desc`)||[]
+    const rows=await rest(win,`local_products?select=id,product_name,barcode,stock_quantity&store_id=eq.${q(sid)}&order=created_at.desc`)||[];
+    // Preserve legacy codes already loaded by the runtime without querying a missing column.
+    const cached=win.MeshwarVendorRuntime?.getProducts?.()||win.__MESH_E2E_DB?.local_products||[];
+    const legacy=new Map(cached.map(p=>[String(p.id),p.sku]));
+    return rows.map(p=>({...p,sku:p.sku||legacy.get(String(p.id))}));
   }
   async function decorateBarcodes(win){
     const rows=await fetchBarcodeRows(win),map=new Map(rows.map(p=>[String(p.id),p]));
