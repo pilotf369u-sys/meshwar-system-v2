@@ -7,7 +7,7 @@ on:
       - 'employee-dashboard.html'
       - 'admin-dashboard.html'
       - 'branch-dashboard.html'
-      - 'vendor-dashboard-v2.html'
+      - 'vendor-dashboard-v2.html'\n      - 'js/vendor-v94-multistore-orders.js'
       - '.github/workflows/kinto-unified-label-guard.yml'
   push:
     branches:
