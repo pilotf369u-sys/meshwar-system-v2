@@ -134,7 +134,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     const moved=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1'));expect(moved.base_price).toBe(31);expect(moved.barcode).toBe('LEGACY-SKU-01');expect(moved.category_id).toBe('sub-b');expect(moved.subcategory_id).toBe('sub-b');await expect(vendor.locator('#mwVendorPager-products [data-pager-info]')).toContainText('من 24');
   });
 
-  test('finance: V161 balance excludes legacy rows and V164 is the only profit writer',async({page})=>{
+  test('finance: V161 balance excludes legacy rows and V165 is the only profit writer',async({page})=>{
     const vendor=await openVendor(page);await vendor.locator('#vendorTabBtn-finance').click();
     await expect(vendor.locator('#statSales')).toHaveText('0 USD');await expect(vendor.locator('#statCommission')).toHaveText('0 USD');await expect(vendor.locator('#statOther')).toHaveText('0 USD');await expect(vendor.locator('#statPending')).toHaveText('0 USD');await expect(vendor.locator('#statPaid')).toHaveText('0 USD');await expect(vendor.locator('#statNet')).toHaveText('0 USD');
     await expect(vendor.locator('#vendorFinanceBody tr')).toHaveCount(1);
@@ -145,22 +145,22 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
       sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token'}));
       window.__E2E_PROFIT_REPORT={order:{order_code:'KN-000100',currency:'IQD',statement_no:'KINTO-STL-TEST',financial:{gross_amount:123000,commission_amount:12300,other_deductions:0,net_amount:110700},cost_frozen:true,total_cost_local:87500,cost_captured_at:new Date().toISOString(),cost_lines:[{product_name:'Test product',quantity:1,unit_cost_usd:50,exchange_rate:1750,cost_local:87500}]},expenses:[],expense_total:0};
       const original=window.MeshwarVendorRuntime.sb.rpc;
-      window.MeshwarVendorRuntime.sb.rpc=async(name,args)=>name==='vendor_profit_report_v164'?{data:structuredClone(window.__E2E_PROFIT_REPORT),error:null}:original(name,args);
+      window.MeshwarVendorRuntime.sb.rpc=async(name,args)=>name==='vendor_profit_list_v165'?{data:{rows:[{...structuredClone(window.__E2E_PROFIT_REPORT.order),segment_id:'test',expense_total:0,product_count:1,created_at:new Date().toISOString()}],summary:[{currency:'IQD',orders:1,incomplete_orders:window.__E2E_PROFIT_REPORT.order.cost_frozen?0:1,sales:123000,commission:12300,net:110700,cost:window.__E2E_PROFIT_REPORT.order.total_cost_local,expenses:0,profit:window.__E2E_PROFIT_REPORT.order.cost_frozen?23200:null}],page:1,pages:1,total:1},error:null}:original(name,args);
     });
     await vendor.locator('#vendorTabBtn-pl').click();
     await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);
-    const content=vendor.locator('#kintoProfitContentV164');
+    const content=vendor.locator('#vendorTab-pl');
     await expect(content).toContainText('23,200 IQD');
     await expect(content).toContainText('87,500 IQD');
     await expect(content).toContainText('110,700 IQD');
     await expect(vendor.locator('#mwSettlementToolbar,#mwPlSales,#mwPlCogs,#mwPlNet,[data-mw-invoice]')).toHaveCount(0);
     expect(await page.evaluate(()=>Boolean(window.MeshwarVendorFinanceExpensesV23||window.MeshwarVendorFinanceSettlementV24||window.MeshwarVendorFinanceDeliveredV35||window.MeshwarVendorSettlementPdfDetailsV25))).toBe(false);
     await frameWindow(page,()=>{window.__MESH_E2E_STORE.exchange_rate=9999;window.__MESH_E2E_DB.local_products[0].cost_price=999});
-    await vendor.locator('#kintoProfitRefreshV164').click();
+    await vendor.locator('#profitApplyV165').click();
     await expect(content).toContainText('23,200 IQD');
     await expect(content).not.toContainText('633,284');
     await frameWindow(page,()=>{window.__E2E_PROFIT_REPORT.order.cost_frozen=false;window.__E2E_PROFIT_REPORT.order.total_cost_local=null});
-    await vendor.locator('#kintoProfitRefreshV164').click();
+    await vendor.locator('#profitApplyV165').click();
     await expect(content).toContainText('غير مكتمل');
     await expect(content).not.toContainText('23,200 IQD');
   });
