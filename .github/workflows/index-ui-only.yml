@@ -113,7 +113,7 @@ jobs:
           grep -Fq '#mwCategoryShell [data-cat-filter]' js/local-store-global-search-v12.js
       - name: Validate vendor order smart search and employee camera parity
         run: |
-          grep -Fq '<script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1910"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1910"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'vendorOrderSmartSearch' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'Html5Qrcode' js/vendor-order-smart-search-scanner-v13.js
@@ -133,7 +133,7 @@ jobs:
           grep -Fq 'ordersBody' js/vendor-order-smart-search-scanner-v13.js
       - name: Validate vendor lux theme tab isolation and pagination
         run: |
-          grep -Fq '<script src="js/vendor-theme-pagination-v16.js?v=20260822-1910"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-theme-pagination-v16.js?v=20260822-1910"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorThemePaginationV16?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq "orders:{container:'#ordersBody'" js/vendor-theme-pagination-v16.js
           grep -Fq "products:{container:'#productsBody'" js/vendor-theme-pagination-v16.js
@@ -152,7 +152,7 @@ jobs:
           ! grep -Fq "sb.from('local_products')" js/vendor-theme-pagination-v16.js
       - name: Validate vendor V18 order contrast isolation
         run: |
-          grep -Fq '<script src="js/vendor-order-status-contrast-v18.js?v=20260822-1910"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-order-status-contrast-v18.js?v=20260822-1910"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'data-mw-order-status-tone' js/vendor-order-status-contrast-v18.js
           grep -Fiq '#f3f4f6' js/vendor-order-status-contrast-v18.js
@@ -176,7 +176,7 @@ jobs:
       - name: Validate direct vendor barcode entry, native required cost field and unrestricted product description
         run: |
           ! grep -Fq 'location.replace(' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260825-v11-stale-edit-guard2"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-barcode-smart-search-v11.js?v=20261010-v11-stable-decoration"></script>' vendor-dashboard.html
           grep -Fq 'id="vendorFrame"' vendor-dashboard.html
           grep -Fq 'src="vendor-dashboard-v2.html?v=' vendor-dashboard.html
           grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard.html
