@@ -1,0 +1,27 @@
+name: KINTO Unified Label Guard
+on:
+  pull_request:
+    paths:
+      - 'js/kinto-unified-shipping-label-v1.js'
+      - 'ci/kinto-unified-shipping-label-v1.test.cjs'
+      - 'employee-dashboard.html'
+      - 'admin-dashboard.html'
+      - 'branch-dashboard.html'
+      - 'vendor-dashboard-v2.html'
+      - '.github/workflows/kinto-unified-label-guard.yml'
+  push:
+    branches:
+      - 'work/kinto-unified-shipping-labels-20261010'
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation
+        run: node --check js/kinto-unified-shipping-label-v1.js && node --check ci/kinto-unified-shipping-label-v1.test.cjs
+      - name: Collection and role tests
+        run: node ci/kinto-unified-shipping-label-v1.test.cjs
