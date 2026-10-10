@@ -25,16 +25,16 @@ test('slow product thumbnails do not block merchant startup and load when produc
     await expect(vendor.locator('#dashboardView')).toBeVisible();
     await expect(vendor.locator('#vendorOrderSmartSearch')).toBeAttached();
     await vendor.locator('#vendorTabBtn-products').click();
-    const image = vendor.locator('#productsBody img').first();
+    const image = vendor.locator('#productsBody tr:not(.mw-page-hidden) img').first();
     await expect(image).toHaveAttribute('loading', 'lazy');
     await expect(image).toHaveAttribute('decoding', 'async');
-    await expect(image).toBeVisible();
     release();
+    await expect(image).toBeVisible();
     await expect.poll(() => frameWindow(page, () => {
-      const image = document.querySelector('#productsBody img');
+      const image = document.querySelector('#productsBody tr:not(.mw-page-hidden) img');
       return Boolean(image?.complete && image.naturalWidth > 0);
     })).toBe(true);
-    await expect(vendor.locator('#productsBody button').first()).toBeEnabled();
+    await expect(vendor.locator('#productsBody tr:not(.mw-page-hidden) button').first()).toBeEnabled();
   } finally {
     release();
   }
