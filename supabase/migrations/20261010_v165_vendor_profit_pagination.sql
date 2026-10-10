@@ -1,8 +1,17 @@
 -- V165: paginated P&L; immutable unit costs for future V161 checkouts.
 begin;
+create table if not exists private.vendor_profit_units_v165 (
+ order_id uuid not null references public.orders(id),
+ store_id uuid not null references public.local_stores(id),
+ units jsonb not null,
+ captured_at timestamptz not null default now(),
+ primary key(order_id,store_id)
+);
+revoke all on private.vendor_profit_units_v165 from public,anon,authenticated;
+alter table private.vendor_profit_units_v165 enable row level security;
 create or replace function private.vendor_profit_detail_v165(sid uuid,p_segment_id uuid)
 returns jsonb language plpgsql security definer set search_path=public,private,pg_temp as $$
-declare seg record; item jsonb; line jsonb; frozen record;
+declare seg record; item jsonb; unit jsonb; line jsonb; frozen record;
  financial jsonb; archived text; lines jsonb:='[]'; expenses jsonb; expense_total numeric;
  cost numeric; fx numeric; qty numeric; idx integer:=0; cost_total numeric:=0; complete boolean:=true;
 begin
@@ -30,7 +39,11 @@ begin
      idx:=idx+1;cost:=null;fx:=null;qty:=null;
      select p.cost_price into cost from public.local_products p
      where p.id=private.v94_uuid(item->>'product_id') and p.store_id=sid;
-     fx:=nullif(item->'pricing_snapshot'->>'exchange_rate','')::numeric;
+     select x.value into unit from private.vendor_profit_units_v165 u
+     cross join lateral jsonb_array_elements(u.units) x(value)
+     where u.order_id=seg.order_id and u.store_id=sid and x.value->>'product_id'=item->>'product_id' limit 1;
+     if found then fx:=nullif(unit->>'exchange_rate','')::numeric;
+     else fx:=nullif(item->'pricing_snapshot'->>'exchange_rate','')::numeric;end if;
      qty:=nullif(item->>'quantity','')::numeric;
      if cost is null or cost<0 or fx is null or fx<=0 or qty is null or qty<=0 then complete:=false;end if;
      lines:=lines||jsonb_build_array(jsonb_build_object('item_no',idx,'product_id',item->>'product_id',
@@ -142,11 +155,10 @@ begin
  return jsonb_build_object('rows',rows,'summary',summary,'total',n,'page',pg,'page_size',5,'pages',greatest(1,ceil(n/5.0)::integer));
 end $$;
 
--- Record product unit cost at creation, after V161 stamps finance.
--- Do not block checkout for missing costs or modify price, quantity, or state.
+-- Observe creation without modifying checkout prices, quantities, or details.
 create or replace function private.v165_stamp_unit_cost()
 returns trigger language plpgsql security definer set search_path=public,private,pg_temp as $$
-declare d jsonb; item jsonb; items jsonb:='[]'; cost numeric; sid uuid;
+declare d jsonb; item jsonb; units jsonb:='[]'; cost numeric; sid uuid;
 begin
  if current_setting('app.v161_finance_checkout',true) is distinct from 'on' then return new;end if;
  d:=new.details::jsonb;
@@ -156,30 +168,34 @@ begin
   cost:=null;
   select cost_price into cost from public.local_products where id=private.v94_uuid(item->>'product_id') and store_id=sid;
   if cost<0 or cost::text in ('NaN','Infinity','-Infinity') then cost:=null;end if;
-  item:=jsonb_set(item,'{pricing_snapshot}',
-   coalesce(item->'pricing_snapshot','{}'::jsonb)||jsonb_build_object('unit_cost_usd',cost,'cost_snapshot_version','v165'),true);
-  items:=items||jsonb_build_array(item);
+  units:=units||jsonb_build_array(jsonb_build_object('product_id',item->>'product_id',
+   'unit_cost_usd',cost,'exchange_rate',item->'pricing_snapshot'->'exchange_rate'));
  end loop;
- new.details:=jsonb_set(d,'{items}',items)::text;
+ insert into private.vendor_profit_units_v165(order_id,store_id,units)
+ values(new.id,sid,units) on conflict(order_id,store_id) do nothing;
  return new;
 end $$;
 drop trigger if exists trg_v165_stamp_unit_cost on public.orders;
-create trigger trg_v165_stamp_unit_cost before insert on public.orders
+create trigger trg_v165_stamp_unit_cost after insert on public.orders
 for each row execute function private.v165_stamp_unit_cost();
 
 -- Aggregate the saved unit costs using final delivered quantities.
 create or replace function private.v165_freeze_delivered_cost()
 returns trigger language plpgsql security definer set search_path=public,private,pg_temp as $$
-declare item jsonb; lines jsonb:='[]'; cost numeric; fx numeric; qty numeric; total numeric:=0; idx integer:=0;
+declare item jsonb; unit jsonb; lines jsonb:='[]'; cost numeric; fx numeric; qty numeric; total numeric:=0; idx integer:=0;
 begin
  if not coalesce(new.payment_confirmed,false) or new.store_status<>'تم التسليم'
  or coalesce(new.commission_snapshot->>'version','')<>'v161'
  or coalesce(jsonb_typeof(new.items_snapshot),'null')<>'array' or jsonb_array_length(new.items_snapshot)=0
  or exists(select 1 from private.vendor_profit_costs_v164 where segment_id=new.id) then return new;end if;
  for item in select value from jsonb_array_elements(new.items_snapshot) loop
-  if coalesce(item->'pricing_snapshot'->>'cost_snapshot_version','')<>'v165' then return new;end if;
-  cost:=nullif(item->'pricing_snapshot'->>'unit_cost_usd','')::numeric;
-  fx:=nullif(item->'pricing_snapshot'->>'exchange_rate','')::numeric;qty:=nullif(item->>'quantity','')::numeric;
+  select x.value into unit from private.vendor_profit_units_v165 u
+  cross join lateral jsonb_array_elements(u.units) x(value)
+  where u.order_id=new.order_id and u.store_id=new.store_id
+  and x.value->>'product_id'=item->>'product_id' limit 1;
+  if not found then return new;end if;
+  cost:=nullif(unit->>'unit_cost_usd','')::numeric;
+  fx:=nullif(unit->>'exchange_rate','')::numeric;qty:=nullif(item->>'quantity','')::numeric;
   if cost is null or cost<0 or fx is null or fx<=0 or qty is null or qty<=0
   or cost::text in ('NaN','Infinity','-Infinity') or fx::text in ('NaN','Infinity','-Infinity')
   or qty::text in ('NaN','Infinity','-Infinity') then return new;end if;
