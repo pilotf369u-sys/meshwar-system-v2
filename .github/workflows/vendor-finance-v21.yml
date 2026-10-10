@@ -8,6 +8,9 @@ on:
       - 'js/vendor-finance-cost-save-guard-v21.js'
       - 'supabase/migrations/20260822_vendor_cost_pl_invoices_v21.sql'
       - '.github/workflows/vendor-finance-v21.yml'
+      - 'js/vendor-profit-report-v164.js'
+      - 'supabase/migrations/20261010_v164_vendor_profit_single_source.sql'
+      - 'tests/vendor-profit-v164*.cjs'
   pull_request:
     branches: [main]
     paths:
@@ -16,6 +19,9 @@ on:
       - 'js/vendor-finance-cost-save-guard-v21.js'
       - 'supabase/migrations/20260822_vendor_cost_pl_invoices_v21.sql'
       - '.github/workflows/vendor-finance-v21.yml'
+      - 'js/vendor-profit-report-v164.js'
+      - 'supabase/migrations/20261010_v164_vendor_profit_single_source.sql'
+      - 'tests/vendor-profit-v164*.cjs'
 permissions:
   contents: read
 jobs:
@@ -27,14 +33,15 @@ jobs:
         run: |
           node --check js/vendor-finance-pl-invoices-v21.js
           node --check js/vendor-finance-cost-save-guard-v21.js
-          grep -Fq '<script src="js/vendor-finance-pl-invoices-v21.js?v=20260822-2316"></script>' vendor-dashboard.html
+          grep -Fq '<script src="js/vendor-finance-pl-invoices-v21.js?v=20261010-cost-only-v164"></script>' vendor-dashboard.html
           grep -Fq '<script src="js/vendor-finance-cost-save-guard-v21.js?v=20260822-2316"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceV21?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceCostSaveGuardV21?.install(frame.contentWindow)' vendor-dashboard.html
-          grep -Fq 'vendorTabBtn-pl' js/vendor-finance-pl-invoices-v21.js
+          grep -Fq 'KintoVendorProfitV164?.install(frame.contentWindow)' vendor-dashboard.html
+          node --check js/vendor-profit-report-v164.js
           grep -Fq 'mwProductCostPrice' js/vendor-finance-pl-invoices-v21.js
-          grep -Fq 'contenteditable="true"' js/vendor-finance-pl-invoices-v21.js
-          grep -Fq 'طباعة / حفظ PDF' js/vendor-finance-pl-invoices-v21.js
+          ! grep -Fq 'function activatePl' js/vendor-finance-pl-invoices-v21.js
+          ! grep -Fq 'function refresh' js/vendor-finance-pl-invoices-v21.js
           grep -Fq 'persistAfterSuccessfulSave' js/vendor-finance-cost-save-guard-v21.js
           grep -Fq 'button[onclick*="saveProduct"]' js/vendor-finance-cost-save-guard-v21.js
       - name: Validate DB migration is nullable and snapshot-safe
@@ -53,3 +60,11 @@ jobs:
           ! grep -Fq 'MeshwarVendorFinancialKpiIconsV19=' js/vendor-finance-pl-invoices-v21.js
           ! grep -Fq 'MeshwarTaxonomyPersistenceV10=' js/vendor-finance-cost-save-guard-v21.js
           ! grep -Fq 'MeshwarVendorOrderSmartSearchV13=' js/vendor-finance-cost-save-guard-v21.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify V164 actual SQL functions and UI arithmetic
+        run: |
+          npm install --prefix /tmp/kinto-v164-tests --no-audit --no-fund @electric-sql/pglite@0.5.8 jsdom@30.1.2
+          NODE_PATH=/tmp/kinto-v164-tests/node_modules node tests/vendor-profit-v164.cjs
+          NODE_PATH=/tmp/kinto-v164-tests/node_modules node tests/vendor-profit-v164-dom.cjs
