@@ -29,21 +29,21 @@
     @keyframes vendor-shimmer{100%{transform:translateX(100%)}}
     @media(max-width:700px){.vendor-loader-shell{padding:12px}.vendor-loader-stats{grid-template-columns:repeat(2,1fr)}.vendor-loader-stat:nth-child(3){display:none}.vendor-loader-panel{height:58vh}.vendor-loader-top{height:54px}}
   </style>
-  <script src="js/vendor-barcode-smart-search-v11.js?v=20260825-v11-stale-edit-guard2"></script>
-  <script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1910"></script>
-  <script src="js/vendor-theme-pagination-v16.js?v=20260822-1910"></script>
-  <script src="js/vendor-order-status-contrast-v18.js?v=20260822-1910"></script>
-  <script src="js/vendor-financial-kpi-icons-v19.js?v=20260822-1934"></script>
-  <script src="js/vendor-finance-pl-invoices-v21.js?v=20261010-cost-only-v164"></script>
-  <script src="js/vendor-profit-report-v165.js?v=20261010-session-ready-profit"></script>
-  <script src="js/vendor-finance-cost-save-guard-v21.js?v=20260822-2316"></script>
-  <script src="js/vendor-barcode-margin-autopricing-v22.js?v=20260822-2352"></script>
-  <script src="js/vendor-product-edit-fields-v26.js?v=20261008-v68-save"></script>
-  <script src="js/vendor-product-save-snapshot-v27.js?v=20261008-v68-save"></script>
-  <script src="js/vendor-product-save-complete-v34.js?v=20261008-v69-repeat-save-guard"></script>
-  <script src="js/vendor-ux-realtime-v28.js?v=20261008-v68-save"></script>
-  <script src="js/vendor-edit-direct-dom-v32.js?v=20261008-v68-edit-guard"></script>
-  <script src="js/vendor-mobile-back-v1.js?v=20261008-v1-modal-back"></script>
+  <script defer src="js/vendor-barcode-smart-search-v11.js?v=20261010-v11-stable-decoration"></script>
+  <script defer src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1910"></script>
+  <script defer src="js/vendor-theme-pagination-v16.js?v=20260822-1910"></script>
+  <script defer src="js/vendor-order-status-contrast-v18.js?v=20260822-1910"></script>
+  <script defer src="js/vendor-financial-kpi-icons-v19.js?v=20260822-1934"></script>
+  <script defer src="js/vendor-finance-pl-invoices-v21.js?v=20261010-cost-only-v164"></script>
+  <script defer src="js/vendor-profit-report-v165.js?v=20261010-session-ready-profit"></script>
+  <script defer src="js/vendor-finance-cost-save-guard-v21.js?v=20260822-2316"></script>
+  <script defer src="js/vendor-barcode-margin-autopricing-v22.js?v=20261010-v22-canonical-barcode"></script>
+  <script defer src="js/vendor-product-edit-fields-v26.js?v=20261008-v68-save"></script>
+  <script defer src="js/vendor-product-save-snapshot-v27.js?v=20261008-v68-save"></script>
+  <script defer src="js/vendor-product-save-complete-v34.js?v=20261008-v69-repeat-save-guard"></script>
+  <script defer src="js/vendor-ux-realtime-v28.js?v=20261008-v68-save"></script>
+  <script defer src="js/vendor-edit-direct-dom-v32.js?v=20261008-v68-edit-guard"></script>
+  <script defer src="js/vendor-mobile-back-v1.js?v=20261008-v1-modal-back"></script>
 </head>
 <body>
   <div id="vendorBootLoader" role="status" aria-live="polite">
@@ -67,6 +67,9 @@
       function injectShippingV98(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorShippingV98'))return;const s=d.createElement('script');s.id='mwVendorShippingV98';s.src='js/vendor-shipping-settings-v98.js?v=20260905-v98';s.onerror=()=>console.error('Vendor V98 shipping settings failed to load');d.body.appendChild(s)}
       function injectRewardsV344(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorRewardsV344'))return;const s=d.createElement('script');s.id='mwVendorRewardsV344';s.src='js/vendor-loyalty-v344.js?v=20260929-v344';s.onerror=()=>console.error('Vendor rewards V344 failed to load');d.body.appendChild(s)}
       function install(){
+        // A cached iframe can finish before the deferred parent modules.
+        if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',install,{once:true});return}
+
         injectFeaturedPhase2();
         try{window.MeshwarVendorBarcodeV11?.install(frame.contentWindow)}catch(e){console.error('Vendor barcode install failed',e)}
         try{window.MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)}catch(e){console.error('Vendor order smart search install failed',e)}
@@ -93,4 +96,5 @@
   </script>
 </body>
 </html>
+
 
