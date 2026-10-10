@@ -19,6 +19,8 @@ for(const file of ['employee-dashboard.html','admin-dashboard.html','branch-dash
  const html=fs.readFileSync(file,'utf8');
  assert.match(html,/KintoUnifiedShippingLabel\.invoiceCollection\(o\)/,file);
 }
+const vendorBridge=fs.readFileSync('js/vendor-v94-multistore-orders.js','utf8');
+assert.match(vendorBridge,/row\.delivery_payment_type=control\.delivery_payment_type/);
 assert.match(api.render(base),/@page\{size:100mm 100mm/);
 assert.match(api.render(base),/JsBarcode/);
 console.log('KINTO invoice-grounded unified shipping label tests passed');
