@@ -18,7 +18,7 @@ function invoiceCollection(order){
  const isSegment=Boolean(o._v95SegmentId||o.segment_id||o._invoiceStoreScopeV58);
  const segmentId=o._v95SegmentId||o.segment_id;
  const collector=o.external_shipping_collector_segment_id;
- const external=collector&&segmentId&&String(collector)!==String(segmentId)?0:num(o.external_shipping_fee??d.external_shipping_fee);
+ const rawExternal=num(o.external_shipping_fee??d.external_shipping_fee);\n const external=isSegment&&rawExternal>0&&!collector?null:collector&&segmentId&&String(collector)!==String(segmentId)?0:rawExternal;
  const internal=num(o.delivery_fee??d.delivery_fee);
  if(type==='paid_prepaid')return {type,amounts:[]};
  if(type==='product_paid_delivery_cod'){
