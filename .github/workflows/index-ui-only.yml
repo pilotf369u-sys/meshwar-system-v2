@@ -164,7 +164,7 @@ jobs:
           node --check js/vendor-profit-report-v165.js
           grep -Fq '<meta name="meshwar-build"' vendor-dashboard.html
           grep -Fq 'KintoVendorProfitV164?.install(frame.contentWindow)' vendor-dashboard.html
-          grep -Fq 'vendor-profit-report-v165.js?v=20261010-paged-profit' vendor-dashboard.html
+          grep -Fq 'vendor-profit-report-v165.js?v=20261010-session-ready-profit' vendor-dashboard.html
           ! grep -Fq 'vendor-finance-settlement-v24.js' vendor-dashboard.html
           ! grep -Fq 'vendor-finance-delivered-orders-v35.js' vendor-dashboard.html
           ! grep -Fq 'vendor-expenses-panel-v23.js' vendor-dashboard.html
