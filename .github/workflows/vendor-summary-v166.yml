@@ -22,3 +22,4 @@ jobs:
       - run: npm install --no-save @electric-sql/pglite@0.5.8
       - run: node --check js/vendor-dashboard-summary-v166.js
       - run: node ci/vendor-summary-v166.test.cjs
+      - run: node ci/vendor-dashboard-inline-parse.cjs
