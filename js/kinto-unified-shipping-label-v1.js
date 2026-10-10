@@ -15,10 +15,13 @@ function collectionCharges(order){
  const read=(...v)=>{for(const x of v){if(x!==null&&x!==undefined&&x!==''&&Number.isFinite(Number(x))&&Number(x)>=0)return Number(x)}return null};
  const currency=String(o.currency||d.currency||'IQD');
  const products=read(o.total_price,d.total_price),external=read(o.external_shipping_fee,d.external_shipping_fee),internal=read(o.delivery_fee,d.delivery_fee);
+ const externalCollector=o.external_shipping_collector_segment_id;
+ const segmentId=o._v95SegmentId||o.segment_id;
+ const safeExternal=externalCollector&&segmentId&&String(externalCollector)!==String(segmentId)?0:external;
  const make=(state,amount)=>({status:state,amount,currency});
  // An absent amount is never interpreted as zero. External shipping may be
  // assigned to one store segment only; never duplicate a parent order fee.
- return {products:make(status[0],products),externalShipping:make(status[1],external),internalDelivery:make(status[2],internal)};
+ return {products:make(status[0],products),externalShipping:make(status[1],safeExternal),internalDelivery:make(status[2],internal)};
 }
 function render(data){
  const d=data||{}, code=String(d.orderCode||'').trim();
