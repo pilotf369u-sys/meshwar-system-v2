@@ -71,8 +71,14 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     const camera=await frameWindow(page,()=>window.__E2E_CAMERA_START);expect(camera.camera).toEqual({facingMode:'environment'});expect(camera.config).toEqual({fps:10,qrbox:{width:250,height:150}});await shellStopCamera(page);
     await vendor.locator('#vendorOrderSearchClear').click();const row=vendor.locator('#ordersBody tr').filter({hasText:'MW-5664'});
     await row.getByRole('button',{name:'تفاصيل'}).click();await expect(vendor.locator('#vendorOrderDetailsModal')).toHaveClass(/flex/);await expect(vendor.locator('#vendorOrderDetailsBody')).toContainText('MW-5664');await frameWindow(page,()=>window.closeVendorOrderDetails());
-    await frameWindow(page,()=>{window.__E2E_PRINT_HTML='';window.__E2E_PRINT_CLOSED=false;window.open=()=>({document:{write:s=>{window.__E2E_PRINT_HTML+=String(s)},close:()=>{window.__E2E_PRINT_CLOSED=true}}})});
-    await row.getByRole('button',{name:/طباعة الملصق/}).click();const printed=await frameWindow(page,()=>({html:window.__E2E_PRINT_HTML,closed:window.__E2E_PRINT_CLOSED}));expect(printed.closed).toBe(true);expect(printed.html).toContain('MW-5664');expect(printed.html).toContain('MeshWar Cargo');expect(printed.html).toContain('JsBarcode');
+    const popupPromise=page.context().waitForEvent('page');
+    await row.getByRole('button',{name:/طباعة الملصق/}).click();
+    const popup=await popupPromise;
+    await expect(popup.locator('#label')).toContainText('MW-5664');
+    await expect(popup.locator('#label')).toContainText('KINTO');
+    await expect(popup.locator('#label')).not.toContainText('MeshWar Cargo');
+    await expect(popup.locator('#print')).toBeEnabled();
+    await popup.close();
     const tones=[['بانتظار الموافقة','pending'],['قيد التوصيل','transit'],['تم التسليم','success'],['مرتجع','danger'],['ملغي من قبل العميل','danger']];
     for(const[status,tone]of tones){await frameWindow(page,async s=>{const o=window.__MESH_E2E_DB.orders.find(x=>x.id==='o-pending');o.status=s;await window.loadOrders()},status);await search.fill('MW-5664');await shellOrderFilter(page,{highlightExact:true});await expect.poll(()=>frameWindow(page,()=>document.querySelector('#ordersBody tr[data-mw-order-highlight] td[data-label="الحالة"] span')?.dataset.mwOrderStatusTone||'')).toBe(tone);await vendor.locator('#vendorOrderSearchClear').click()}
   });

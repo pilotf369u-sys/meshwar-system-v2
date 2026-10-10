@@ -1,0 +1,23 @@
+name: Unified delivery labels V167
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '*dashboard*.html'
+      - 'js/kinto-shipping-label-v167.js'
+      - 'supabase/migrations/20261010_v167_vendor_shipping_label.sql'
+      - 'ci/shipping-label-v167.test.cjs'
+      - '.github/workflows/shipping-label-v167.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save @electric-sql/pglite@0.5.8
+      - run: node --check js/kinto-shipping-label-v167.js
+      - run: node ci/shipping-label-v167.test.cjs
