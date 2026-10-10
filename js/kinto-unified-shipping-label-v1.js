@@ -7,6 +7,19 @@
 const escape=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const present=v=>v!==null&&v!==undefined&&String(v).trim()!==''&&String(v).trim()!=='---';
 const amount=v=>typeof v==='number'&&Number.isFinite(v)&&v>0?v:null;
+function collectionCharges(order){
+ const o=order||{},d=typeof o.details==='object'&&o.details?o.details:(()=>{try{return JSON.parse(o.details||'{}')}catch{return{}}})();
+ const t=String(o.delivery_payment_type||'');
+ const status=t==='paid_prepaid'?['collected','collected','collected']:t==='cod_full'?['uncollected','uncollected','uncollected']:t==='product_paid_delivery_cod'?['collected','uncollected','uncollected']:null;
+ if(!status)return null;
+ const read=(...v)=>{for(const x of v){if(x!==null&&x!==undefined&&x!==''&&Number.isFinite(Number(x))&&Number(x)>=0)return Number(x)}return null};
+ const currency=String(o.currency||d.currency||'IQD');
+ const products=read(o.total_price,d.total_price),external=read(o.external_shipping_fee,d.external_shipping_fee),internal=read(o.delivery_fee,d.delivery_fee);
+ const make=(state,amount)=>({status:state,amount,currency});
+ // An absent amount is never interpreted as zero. External shipping may be
+ // assigned to one store segment only; never duplicate a parent order fee.
+ return {products:make(status[0],products),externalShipping:make(status[1],external),internalDelivery:make(status[2],internal)};
+}
 function render(data){
  const d=data||{}, code=String(d.orderCode||'').trim();
  if(!code)throw Error('Order code is required');
@@ -39,5 +52,5 @@ function render(data){
  '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script><script>window.addEventListener("load",function(){try{if(window.JsBarcode)JsBarcode("#kintoLabelBarcode",'+JSON.stringify(code)+',{format:"CODE128",displayValue:false,height:36,margin:0})}catch(e){console.error(e)}setTimeout(function(){window.print()},300)});</script></body></html>';
 }
 function print(data){const w=global.open('','_blank','width=700,height=750');if(!w)throw Error('Popup blocked');w.document.open();w.document.write(render(data));w.document.close();return w}
-global.KintoUnifiedShippingLabel={render,print};
+global.KintoUnifiedShippingLabel={render,print,collectionCharges};
 })(window);
