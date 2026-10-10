@@ -79,6 +79,10 @@ test('merchant archive refreshes on return and visible timer without a page relo
  await expect(page.locator('#vendorArchiveResultsV163')).toContainText('لا توجد كشوف');
  await page.evaluate(()=>{window.archiveRecords=[{id:'a',statement_no:'KINTO-STL-NEW',created_at:'2026-10-10T00:00:00Z',net_amount:183600,currency:'IQD',order_count:1}];window.dispatchEvent(new Event('focus'))});
  await expect(page.locator('#vendorArchiveResultsV163')).toContainText('KINTO-STL-NEW');
+ await page.evaluate(()=>{const row=document.querySelector('#vendorArchiveResultsV163 article');window.originalArchiveRow=row;row.querySelector('button').focus()});
+ await page.evaluate(()=>window.archiveTick());
+ await expect.poll(()=>page.evaluate(()=>document.querySelector('#vendorArchiveResultsV163 article')===window.originalArchiveRow)).toBe(true);
+ await expect(page.locator('#vendorArchiveResultsV163 article button')).toBeFocused();
  await page.evaluate(()=>{window.archiveRecords.push({id:'b',statement_no:'KINTO-STL-NEXT',created_at:'2026-10-10T00:00:00Z',net_amount:110700,currency:'IQD',order_count:1});window.archiveTick()});
  await expect(page.locator('#vendorArchiveResultsV163')).toContainText('KINTO-STL-NEXT');
  const before=await page.evaluate(()=>{document.getElementById('vendorTab-finance').classList.remove('active');return window.archiveCalls});
