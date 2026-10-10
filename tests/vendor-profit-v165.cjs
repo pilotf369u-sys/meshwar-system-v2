@@ -88,6 +88,13 @@ async function run(){
  await db.query("update order_store_segments set currency='TRY' where id=$1",[missingSeg]);
  const grouped=(await db.query("select vendor_profit_list_v165('a') r")).rows[0].r.summary;
  assert.equal(grouped.length,2);assert.equal(grouped.find(x=>x.currency==='TRY').profit,null);
+
+ await db.query('delete from private.vendor_profit_costs_v164 where segment_id=$1',[segment]);
+ await db.query('update local_products set cost_price=99');
+ const preview=(await db.query('select vendor_profit_detail_v165($1,$2) r',['a',segment])).rows[0].r;
+ assert.equal(preview.order.cost_lines[0].unit_cost_usd,50);
+ assert.equal(preview.order.cost_lines[0].exchange_rate,1750);
+ assert.equal(preview.order.cost_lines.length,1);
  console.log('PASS V165: five-row server pages, search, currency totals, owner isolation, immutable checkout unit cost, final quantity, archive parity, missing costs and expenses.');
  await db.close();
 }
