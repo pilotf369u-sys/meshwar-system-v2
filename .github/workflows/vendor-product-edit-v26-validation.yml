@@ -45,5 +45,16 @@ jobs:
         run: node ci/vendor-product-save-v68.test.cjs
       - name: Protect barcode and finance layers
         run: |
-          git diff --exit-code "${{ github.event.pull_request.base.sha }}" -- js/vendor-barcode-smart-search-v11.js js/vendor-barcode-margin-autopricing-v22.js js/vendor-finance-cost-save-guard-v21.js js/vendor-finance-pl-invoices-v21.js
+          git diff --exit-code "${{ github.event.pull_request.base.sha }}" -- js/vendor-barcode-smart-search-v11.js js/vendor-barcode-margin-autopricing-v22.js js/vendor-finance-cost-save-guard-v21.js 
 
+      - name: Protect retained V21 product cost functions
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs'),cp=require('node:child_process'),assert=require('node:assert/strict');
+          const path='js/vendor-finance-pl-invoices-v21.js';
+          const before=cp.execFileSync('git',['show','${{ github.event.pull_request.base.sha }}:'+path],{encoding:'utf8'});
+          const after=fs.readFileSync(path,'utf8');
+          // Finance rendering is retired; the product cost editor prefix must remain identical.
+          const prefix=s=>s.split('  function activatePl')[0].split('  // Product cost editing remains independent')[0].trim();
+          assert.equal(prefix(after),prefix(before));
+          NODE

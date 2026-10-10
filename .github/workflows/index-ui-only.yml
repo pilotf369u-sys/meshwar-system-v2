@@ -14,6 +14,7 @@ on:
       - 'js/vendor-order-status-contrast-v18.js'
       - 'js/vendor-finance-settlement-v24.js'
       - 'js/vendor-finance-delivered-orders-v35.js'
+      - 'js/vendor-profit-report-v164.js'
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
@@ -38,6 +39,7 @@ on:
       - 'js/vendor-order-status-contrast-v18.js'
       - 'js/vendor-finance-settlement-v24.js'
       - 'js/vendor-finance-delivered-orders-v35.js'
+      - 'js/vendor-profit-report-v164.js'
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
@@ -155,25 +157,16 @@ jobs:
           grep -Fiq '#e5e7eb' js/vendor-order-status-contrast-v18.js
           ! grep -Fq "sb.from(" js/vendor-order-status-contrast-v18.js
           ! grep -Fq '/rest/v1/' js/vendor-order-status-contrast-v18.js
-      - name: Validate V24/V35 P&L injection lifecycle
+      - name: Validate single V164 P&L writer and iframe lifecycle
         run: |
+          node --check js/vendor-profit-report-v164.js
           grep -Fq '<meta name="meshwar-build"' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-finance-settlement-v24.js?v=20260824-1253"></script>' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-finance-delivered-orders-v35.js?v=20260825-v35-pl-backend-fx3"></script>' vendor-dashboard.html
-          grep -Fq 'MeshwarVendorFinanceSettlementV24?.install(frame.contentWindow)' vendor-dashboard.html
-          grep -Fq 'MeshwarVendorFinanceDeliveredV35?.install(frame.contentWindow)' vendor-dashboard.html
-          grep -Fq 'MeshwarVendorFinanceSettlementV24?.ensureUi(win,{refresh:true})' vendor-dashboard.html
-          grep -Fq "closest?.('#vendorTabBtn-pl')" vendor-dashboard.html
-          grep -Fq "panel.querySelector('.mw-pl-kpis')" js/vendor-finance-settlement-v24.js
-          grep -Fq 'kpis.parentNode.insertBefore(toolbar,kpis)' js/vendor-finance-settlement-v24.js
-          grep -Fq 'function ensureUi(win,{refresh=false}={})' js/vendor-finance-settlement-v24.js
-          grep -Fq "closest?.('#vendorTabBtn-pl')" js/vendor-finance-settlement-v24.js
-          grep -Fq 'new win.MutationObserver' js/vendor-finance-settlement-v24.js
-          grep -Fq "querySelector('#vendorTab-pl .mw-pl-kpis')" js/vendor-finance-settlement-v24.js
-          grep -Fq "rest(win,\`local_stores?select=*&id=eq.\${q(sid)}&limit=1\`)" js/vendor-finance-delivered-orders-v35.js
-          grep -Fq "rate=currentFxRate(win,st),convertCostToLocal=cur==='IQD'" js/vendor-finance-delivered-orders-v35.js
-          grep -Fq "rowCogsIQD=convertCostToLocal?rowCogsUSD*rate:rowCogsUSD" js/vendor-finance-delivered-orders-v35.js
-          grep -Fq 'net=sales-totalCogs-fees' js/vendor-finance-delivered-orders-v35.js
+          grep -Fq 'KintoVendorProfitV164?.install(frame.contentWindow)' vendor-dashboard.html
+          grep -Fq 'vendor-profit-report-v164.js?v=20261010-single-source' vendor-dashboard.html
+          ! grep -Fq 'vendor-finance-settlement-v24.js' vendor-dashboard.html
+          ! grep -Fq 'vendor-finance-delivered-orders-v35.js' vendor-dashboard.html
+          ! grep -Fq 'vendor-expenses-panel-v23.js' vendor-dashboard.html
+          ! grep -Fq 'vendor-settlement-pdf-details-v25.js' vendor-dashboard.html
           grep -Fq "frame.addEventListener('load',install)" vendor-dashboard.html
           ! grep -Fq 'setTimeout(install,250)' vendor-dashboard.html
           ! grep -Fq 'setTimeout(install,900)' vendor-dashboard.html

@@ -134,20 +134,35 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     const moved=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1'));expect(moved.base_price).toBe(31);expect(moved.barcode).toBe('LEGACY-SKU-01');expect(moved.category_id).toBe('sub-b');expect(moved.subcategory_id).toBe('sub-b');await expect(vendor.locator('#mwVendorPager-products [data-pager-info]')).toContainText('من 24');
   });
 
-  test('finance: V161 balance excludes legacy rows while V21 P&L, expenses and editable invoice work',async({page})=>{
+  test('finance: V161 balance excludes legacy rows and V164 is the only profit writer',async({page})=>{
     const vendor=await openVendor(page);await vendor.locator('#vendorTabBtn-finance').click();
     await expect(vendor.locator('#statSales')).toHaveText('0 USD');await expect(vendor.locator('#statCommission')).toHaveText('0 USD');await expect(vendor.locator('#statOther')).toHaveText('0 USD');await expect(vendor.locator('#statPending')).toHaveText('0 USD');await expect(vendor.locator('#statPaid')).toHaveText('0 USD');await expect(vendor.locator('#statNet')).toHaveText('0 USD');
     await expect(vendor.locator('#vendorFinanceBody tr')).toHaveCount(1);
     await expect(vendor.locator('#vendorFinanceBody')).toContainText('لا توجد حركات مالية');await expect(vendor.locator('[data-mw-kpi-icon]')).toHaveCount(6);
 
-    await frameWindow(page,()=>{const paid=window.__MESH_E2E_DB.orders.find(x=>x.id==='o-paid'),unpaid=window.__MESH_E2E_DB.orders.find(x=>x.id==='o-unpaid');paid.snapshot_cost_price=20;unpaid.snapshot_cost_price=25;window.__MESH_E2E_DB.vendor_operating_expenses=[{id:1,store_id:'store-e2e-1',amount:25,currency:'USD',category:'إيجار',note:'E2E',expense_date:'2026-08-22'}]});
-    await expect(vendor.locator('#vendorTabBtn-pl')).toBeAttached();await vendor.locator('#vendorTabBtn-pl').click();await expect(vendor.locator('#vendorTab-pl')).toHaveClass(/active/);await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);
-    await expect.poll(()=>frameWindow(page,()=>window.__mwFinanceV21Last||null)).not.toBeNull();
-    expect(await frameWindow(page,()=>window.__mwFinanceV21Last)).toEqual({sales:300,cogs:90,fees:55,expenses:25,net:130,deliveredCount:2,missing:0,estimated:0});
-    await expect(vendor.locator('#mwPlSales')).toHaveText('300 USD');await expect(vendor.locator('#mwPlCogs')).toHaveText('90 USD');await expect(vendor.locator('#mwPlNet')).toHaveText('130 USD');
-    await vendor.locator('#mwExpenseAmount').fill('10');await vendor.locator('#mwExpenseCategory').fill('تسويق');await vendor.locator('#mwExpenseNote').fill('E2E marketing');await vendor.locator('#mwExpenseAdd').click();await expect(vendor.locator('#mwPlExpenses')).toHaveText('35 USD');await expect(vendor.locator('#mwPlNet')).toHaveText('120 USD');
-    await frameWindow(page,()=>{window.__E2E_INVOICE_HTML='';window.__E2E_INVOICE_CLOSED=false;window.open=()=>({document:{write:s=>{window.__E2E_INVOICE_HTML+=String(s)},close:()=>{window.__E2E_INVOICE_CLOSED=true}}})});
-    await vendor.locator('[data-mw-invoice]').first().click();const invoice=await frameWindow(page,()=>({html:window.__E2E_INVOICE_HTML,closed:window.__E2E_INVOICE_CLOSED}));expect(invoice.closed).toBe(true);expect(invoice.html).toContain('contenteditable="true"');expect(invoice.html).toContain('طباعة / حفظ PDF');expect(invoice.html).toContain('MW-566');
+
+    await frameWindow(page,()=>{
+      sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token'}));
+      window.__E2E_PROFIT_REPORT={order:{order_code:'KN-000100',currency:'IQD',statement_no:'KINTO-STL-TEST',financial:{gross_amount:123000,commission_amount:12300,other_deductions:0,net_amount:110700},cost_frozen:true,total_cost_local:87500,cost_captured_at:new Date().toISOString(),cost_lines:[{product_name:'Test product',quantity:1,unit_cost_usd:50,exchange_rate:1750,cost_local:87500}]},expenses:[],expense_total:0};
+      const original=window.MeshwarVendorRuntime.sb.rpc;
+      window.MeshwarVendorRuntime.sb.rpc=async(name,args)=>name==='vendor_profit_report_v164'?{data:structuredClone(window.__E2E_PROFIT_REPORT),error:null}:original(name,args);
+    });
+    await vendor.locator('#vendorTabBtn-pl').click();
+    await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);
+    const content=vendor.locator('#kintoProfitContentV164');
+    await expect(content).toContainText('23,200 IQD');
+    await expect(content).toContainText('87,500 IQD');
+    await expect(content).toContainText('110,700 IQD');
+    await expect(vendor.locator('#mwSettlementToolbar,#mwPlSales,#mwPlCogs,#mwPlNet,[data-mw-invoice]')).toHaveCount(0);
+    expect(await page.evaluate(()=>Boolean(window.MeshwarVendorFinanceExpensesV23||window.MeshwarVendorFinanceSettlementV24||window.MeshwarVendorFinanceDeliveredV35||window.MeshwarVendorSettlementPdfDetailsV25))).toBe(false);
+    await frameWindow(page,()=>{window.__MESH_E2E_STORE.exchange_rate=9999;window.__MESH_E2E_DB.local_products[0].cost_price=999});
+    await vendor.locator('#kintoProfitRefreshV164').click();
+    await expect(content).toContainText('23,200 IQD');
+    await expect(content).not.toContainText('633,284');
+    await frameWindow(page,()=>{window.__E2E_PROFIT_REPORT.order.cost_frozen=false;window.__E2E_PROFIT_REPORT.order.total_cost_local=null});
+    await vendor.locator('#kintoProfitRefreshV164').click();
+    await expect(content).toContainText('غير مكتمل');
+    await expect(content).not.toContainText('23,200 IQD');
   });
 
   test('vendor tab regression: every dynamic tab can enter shipping with one active panel',async({page})=>{
