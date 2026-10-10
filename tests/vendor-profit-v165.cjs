@@ -24,9 +24,9 @@ async function run(){
  const input={checkout_contract:'independent_vendor_orders',vendor_finance_version:'v161',store_id:store,items:[{product_id:product,product_name:'Unit cost test',quantity:5,pricing_snapshot:{exchange_rate:1750}}]};
  await db.query('insert into orders(id,order_code,details) values($1,$2,$3)',[order,'KN-000100',JSON.stringify(input)]);
  let items=JSON.parse((await db.query('select details from orders where id=$1',[order])).rows[0].details).items;
- assert.equal(items[0].pricing_snapshot.unit_cost_usd,50);
+ assert.equal((await db.query('select units from private.vendor_profit_units_v165 where order_id=$1',[order])).rows[0].units[0].unit_cost_usd,50);
  await db.query('update local_products set cost_price=99');
- items[0].quantity=1;
+ items[0].quantity=1;items[0].pricing_snapshot.exchange_rate=9999;
  await db.query('insert into order_store_segments(id,order_id,store_id,items_snapshot,commission_snapshot,payment_confirmed,store_status,currency,vendor_settlement_archive_id) values($1,$2,$3,$4,$5,true,$6,$7,null)',[segment,order,store,JSON.stringify(items),JSON.stringify(f),'تم التسليم','IQD']);
  let detail=(await db.query('select vendor_profit_detail_v165($1,$2) r',['a',segment])).rows[0].r;
  assert.equal(detail.order.total_cost_local,87500);
@@ -73,7 +73,7 @@ async function run(){
  const missingOrder='20000000-0000-4000-8000-000000000999',missingSeg='10000000-0000-4000-8000-000000000999';
  await db.query('insert into orders(id,order_code,details) values($1,$2,$3)',[missingOrder,'KN-MISSING',JSON.stringify(input)]);
  items=JSON.parse((await db.query('select details from orders where id=$1',[missingOrder])).rows[0].details).items;
- assert.equal(items[0].pricing_snapshot.unit_cost_usd,null);
+ assert.equal((await db.query('select units from private.vendor_profit_units_v165 where order_id=$1',[missingOrder])).rows[0].units[0].unit_cost_usd,null);
  await db.query('update local_products set cost_price=50');
  await db.query('insert into order_store_segments(id,order_id,store_id,items_snapshot,commission_snapshot,payment_confirmed,store_status,currency,vendor_settlement_archive_id) values($1,$2,$3,$4,$5,true,$6,$7,null)',[missingSeg,missingOrder,store,JSON.stringify(items),JSON.stringify(f),'تم التسليم','IQD']);
  detail=(await db.query('select vendor_profit_detail_v165($1,$2) r',['a',missingSeg])).rows[0].r;
