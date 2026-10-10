@@ -457,7 +457,7 @@ function openLocalStoresAdmin(){
   const f=document.getElementById('localStoresFrame');
   if(!f)return;
   const adminId=String(currentAdminCloud?.id||getAdminId?.()||'').trim();
-  const target='local-stores-admin.html?embed=1'+(adminId?'&adminId='+encodeURIComponent(adminId):'');
+  const target='local-stores-admin.html?embed=1&v=20261011-types-v1'+(adminId?'&adminId='+encodeURIComponent(adminId):'');
   if(!f.getAttribute('src'))f.setAttribute('src',target);
 }
 window.addEventListener('load',()=>{if(location.hash==='#local-stores')setTimeout(openLocalStoresAdmin,0)});
@@ -479,7 +479,7 @@ const ADMIN_EMBEDDED_SECTIONS={
 };
 const ADMIN_SECTION_SESSION_KEY='kinto_admin_active_section_v116';
 function setAdminMasterActive(sectionId){document.querySelectorAll('.sidebar a[data-admin-section]').forEach(a=>a.classList.toggle('active',a.dataset.adminSection===sectionId))}
-function ensureAdminEmbeddedSection(sectionId){const cfg=ADMIN_EMBEDDED_SECTIONS[sectionId];if(!cfg)return;const frame=document.getElementById(cfg.frame);if(!frame||frame.getAttribute('src'))return;const adminId=String(currentAdminCloud?.id||getAdminId?.()||'').trim(),u=new URL(cfg.page,location.href);u.searchParams.set('embed','1');if(adminId)u.searchParams.set('adminId',adminId);frame.src=u.pathname.split('/').pop()+u.search}
+function ensureAdminEmbeddedSection(sectionId){const cfg=ADMIN_EMBEDDED_SECTIONS[sectionId];if(!cfg)return;const frame=document.getElementById(cfg.frame);if(!frame||frame.getAttribute('src'))return;const adminId=String(currentAdminCloud?.id||getAdminId?.()||'').trim(),u=new URL(cfg.page,location.href);u.searchParams.set('embed','1');if(cfg.page==='local-stores-admin.html')u.searchParams.set('v','20261011-types-v1');if(adminId)u.searchParams.set('adminId',adminId);frame.src=u.pathname.split('/').pop()+u.search}
 function rememberAdminMasterSection(sectionId){try{sessionStorage.setItem(ADMIN_SECTION_SESSION_KEY,sectionId)}catch{}}
 function readAdminMasterSection(){const urlSection=String(new URLSearchParams(location.search).get('section')||'').trim();if(urlSection)return urlSection;try{return String(sessionStorage.getItem(ADMIN_SECTION_SESSION_KEY)||'').trim()}catch{return''}}
 async function showAdminMasterSection(sectionId){if(!document.getElementById(sectionId))return;showSection(sectionId);setAdminMasterActive(sectionId);rememberAdminMasterSection(sectionId);const u=new URL(location.href);u.searchParams.set('section',sectionId);history.replaceState(history.state,'',u.pathname+u.search+u.hash);ensureAdminEmbeddedSection(sectionId);if(sectionId==='g16PaymentMethods'&&typeof loadAdminPaymentMethodsG16==='function')await loadAdminPaymentMethodsG16();if(sectionId==='vendor-finance'&&typeof loadAdminVendorFinance==='function')await loadAdminVendorFinance();if(sectionId==='notifications'&&typeof adminNotifLoadV393==='function')await adminNotifLoadV393();if(sectionId==='customer-notices'&&typeof adminCustomerNoticesLoadV415==='function')await adminCustomerNoticesLoadV415();if(sectionId==='kinto-campaigns'&&typeof loadKintoCampaignsV402==='function')await loadKintoCampaignsV402()}
