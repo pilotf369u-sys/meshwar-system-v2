@@ -16,8 +16,14 @@
  function searchArchive(q){archiveQuery=String(q||'').trim().toLowerCase();archivePage=1;drawArchive()}
  function pageArchive(delta){archivePage=Math.max(1,archivePage+delta);drawArchive()}
 
-async function render(){archiveBusy=true;archiveError='';drawArchive();try{archiveRows=await load()}catch(e){archiveError='تعذر تحميل الأرشيف: '+(e.message||e)}finally{archiveBusy=false;drawArchive()}}
+async function render(quiet=false){if(archiveBusy||!sess()?.token)return;const previousError=archiveError;let changed=false;archiveBusy=true;archiveError='';if(!quiet)drawArchive();try{const rows=await load();changed=JSON.stringify(rows)!==JSON.stringify(archiveRows);if(changed)archiveRows=rows}catch(e){archiveError='تعذر تحميل الأرشيف: '+(e.message||e)}finally{archiveBusy=false;if(!quiet||changed||archiveError!==previousError)drawArchive()}}
+function refreshVisibleArchive(){if(document.visibilityState!=='hidden'&&document.getElementById('vendorTab-finance')?.classList.contains('active'))render(true)}
 window.KintoVendorArchiveV163={render,search:searchArchive,page:pageArchive,print:id=>{const a=archiveRows.find(y=>String(y.id)===String(id));if(a)print(a)}};
 document.addEventListener('DOMContentLoaded',()=>{drawArchive();if(window.MeshwarVendorRuntime)render();document.getElementById('vendorTabBtn-finance')?.addEventListener('click',render)});
-window.addEventListener('kinto-vendor-runtime-ready',render);
+window.addEventListener('kinto-vendor-runtime-ready',()=>render());
+window.addEventListener('meshwar:vendor-session-ready',refreshVisibleArchive);
+window.addEventListener('focus',refreshVisibleArchive);
+document.addEventListener('visibilitychange',refreshVisibleArchive);
+const archiveRefreshTimer=setInterval(refreshVisibleArchive,30000);
+window.addEventListener('pagehide',()=>clearInterval(archiveRefreshTimer),{once:true});
 })();
