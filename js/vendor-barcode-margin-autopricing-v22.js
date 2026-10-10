@@ -4,7 +4,7 @@
   const SB_URL='https://hsmmbloouskqdnptiiad.supabase.co';
   const SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
   const STORE_KEY='meshwar_vendor_store';
-  const VERSION='20260823-legacy-sku-fallback';
+  const VERSION='20261010-canonical-barcode';
 
   const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
   const q=v=>encodeURIComponent(String(v??''));
@@ -20,8 +20,7 @@
 
   async function fetchBarcodeRows(win){
     const sid=String(store(win)?.id||'').trim();if(!sid)return[];
-    try{return await rest(win,`local_products?select=id,product_name,barcode,sku,stock_quantity&store_id=eq.${q(sid)}&order=created_at.desc`)||[]}
-    catch{return await rest(win,`local_products?select=id,product_name,barcode,stock_quantity&store_id=eq.${q(sid)}&order=created_at.desc`)||[]}
+    return await rest(win,`local_products?select=id,product_name,barcode,stock_quantity&store_id=eq.${q(sid)}&order=created_at.desc`)||[]
   }
   async function decorateBarcodes(win){
     const rows=await fetchBarcodeRows(win),map=new Map(rows.map(p=>[String(p.id),p]));
@@ -30,14 +29,12 @@
       const id=onclick.match(/editProduct\(['"]([^'"]+)['"]\)/)?.[1]||'',p=map.get(String(id));if(!p)return;
       const code=productCode(p);row.dataset.mwSearch=[p.product_name,p.barcode,p.sku].filter(Boolean).join(' ').toLowerCase();
       let label=row.querySelector('[data-mw-barcode-label]');if(!label){label=win.document.createElement('div');label.dataset.mwBarcodeLabel='1';label.className='mt-1 text-[11px] font-bold text-amber-300';row.querySelector('td')?.appendChild(label)}
-      if(label){label.textContent=code?`باركود: ${code}`:'بدون باركود';label.style.opacity=code?'1':'.6'}
+      if(label){const text=code?`باركود: ${code}`:'بدون باركود';if(label.textContent!==text)label.textContent=text;label.style.opacity=code?'1':'.6'}
     });
   }
   async function hydrateBarcode(win,id){
     const sid=String(store(win)?.id||'').trim();if(!sid||!id)return;
-    let rows=[];
-    try{rows=await rest(win,`local_products?select=id,barcode,sku&id=eq.${q(id)}&store_id=eq.${q(sid)}&limit=1`)||[]}
-    catch{rows=await rest(win,`local_products?select=id,barcode&id=eq.${q(id)}&store_id=eq.${q(sid)}&limit=1`)||[]}
+    const rows=await rest(win,`local_products?select=id,barcode&id=eq.${q(id)}&store_id=eq.${q(sid)}&limit=1`)||[]
     let code=productCode(rows[0]);
     if(!code){const cached=win.__MESH_E2E_DB?.local_products?.find?.(p=>String(p.id)===String(id));code=productCode(cached)}
     const el=win.document.getElementById('productBarcode');if(el&&code)el.value=code;
@@ -51,7 +48,6 @@
   async function findByCode(win,value){
     const sid=String(store(win)?.id||'').trim();if(!sid)return null;
     let rows=await rest(win,`local_products?select=id,product_name,barcode,stock_quantity&store_id=eq.${q(sid)}&barcode=eq.${q(value)}&limit=1`)||[];if(rows[0])return rows[0];
-    try{rows=await rest(win,`local_products?select=id,product_name,barcode,sku,stock_quantity&store_id=eq.${q(sid)}&sku=eq.${q(value)}&limit=1`)||[];if(rows[0])return rows[0]}catch{}
     const cached=win.__MESH_E2E_DB?.local_products?.find?.(p=>String(p.store_id)===sid&&productCode(p)===value);return cached||null;
   }
   async function handleSmartSearch(win,e){
@@ -71,3 +67,4 @@
   function install(win){if(!win)return;if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',()=>boot(win),{once:true});else boot(win)}
   window.MeshwarVendorBarcodeMarginV22={install,autoPrice,decorateBarcodes,hydrateBarcode,persistCanonicalBarcode,VERSION};
 })();
+
