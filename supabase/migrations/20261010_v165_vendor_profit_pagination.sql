@@ -36,7 +36,9 @@ begin
  else
    if coalesce(jsonb_typeof(seg.items_snapshot),'null')<>'array' or jsonb_array_length(seg.items_snapshot)=0 then complete:=false; end if;
    for item in select value from jsonb_array_elements(case when jsonb_typeof(seg.items_snapshot)='array' then seg.items_snapshot else '[]'::jsonb end) loop
-     idx:=idx+1;cost:=null;fx:=null;qty:=null;
+     qty:=nullif(item->>'quantity','')::numeric;
+     if qty=0 then continue;end if;
+     idx:=idx+1;cost:=null;fx:=null;
      select p.cost_price into cost from public.local_products p
      where p.id=private.v94_uuid(item->>'product_id') and p.store_id=sid;
      select x.value into unit from private.vendor_profit_units_v165 u
@@ -51,6 +53,7 @@ begin
        'exchange_rate',fx,'cost_local',case when cost>=0 and fx>0 and qty>0 then round(cost*fx*qty,2) else null end));
    end loop;
  end if;
+ if jsonb_array_length(lines)=0 then complete:=false;end if;
  select coalesce(jsonb_agg(to_jsonb(e) order by e.created_at desc),'[]'::jsonb),coalesce(sum(e.amount),0)
  into expenses,expense_total from private.vendor_profit_expenses_v164 e where e.store_id=sid and e.segment_id=seg.id;
  return jsonb_build_object('order',jsonb_build_object('segment_id',seg.id,'order_code',seg.order_code,
@@ -189,6 +192,8 @@ begin
  or coalesce(jsonb_typeof(new.items_snapshot),'null')<>'array' or jsonb_array_length(new.items_snapshot)=0
  or exists(select 1 from private.vendor_profit_costs_v164 where segment_id=new.id) then return new;end if;
  for item in select value from jsonb_array_elements(new.items_snapshot) loop
+  qty:=nullif(item->>'quantity','')::numeric;
+  if qty=0 then continue;end if;
   select x.value into unit from private.vendor_profit_units_v165 u
   cross join lateral jsonb_array_elements(u.units) x(value)
   where u.order_id=new.order_id and u.store_id=new.store_id
@@ -203,6 +208,7 @@ begin
   lines:=lines||jsonb_build_array(jsonb_build_object('item_no',idx,'product_id',item->>'product_id',
    'product_name',item->>'product_name','quantity',qty,'unit_cost_usd',cost,'exchange_rate',fx,'cost_local',round(cost*fx*qty,2)));
  end loop;
+ if idx=0 then return new;end if;
  insert into private.vendor_profit_costs_v164(segment_id,store_id,lines,total_cost_local)
  values(new.id,new.store_id,lines,total) on conflict(segment_id) do nothing;
  return new;
