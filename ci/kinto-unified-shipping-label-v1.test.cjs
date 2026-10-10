@@ -11,7 +11,7 @@ assert.match(label({delivery_payment_type:'cod_full',_invoiceTotals:invoice(1000
 assert.match(label({delivery_payment_type:'cod_full',_v95SegmentId:'seg1',_invoiceTotals:invoice(100000)}),/غير مؤكد/);
 assert.match(label({delivery_payment_type:'cod_full'}),/غير مؤكد/);
 assert.match(label({delivery_payment_type:'product_paid_delivery_cod',external_shipping_fee:15000,delivery_fee:5000,currency:'IQD'}),/20,000 IQD/);
-assert.match(label({delivery_payment_type:'product_paid_delivery_cod',external_shipping_fee:15000,delivery_fee:5000,currency:'IQD',delivery_currency:'USD'}),/15,000 IQD.*5 USD/);
+assert.match(label({delivery_payment_type:'product_paid_delivery_cod',external_shipping_fee:15000,delivery_fee:5000,currency:'IQD',delivery_currency:'USD'}),/15,000 IQD.*5,000 USD/);
 assert.match(label({delivery_payment_type:'product_paid_delivery_cod',external_shipping_fee:15000,currency:'IQD'}),/غير مؤكد/);
 assert.match(label({delivery_payment_type:'product_paid_delivery_cod',external_shipping_fee:15000,delivery_fee:5000,currency:'IQD',_v95SegmentId:'seg1',external_shipping_collector_segment_id:'seg2'}),/5,000 IQD/);
 assert.doesNotMatch(label({delivery_payment_type:'product_paid_delivery_cod',external_shipping_fee:15000,delivery_fee:5000,currency:'IQD',_v95SegmentId:'seg1',external_shipping_collector_segment_id:'seg2'}),/20,000/);
