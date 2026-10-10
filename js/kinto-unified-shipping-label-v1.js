@@ -20,18 +20,19 @@ function render(data){
  field('ملاحظات التوصيل',d.deliveryNotes);field('الفرع',d.branch);
  field('رقم مرجعي',d.referenceOrderNo);field('عدد القطع',d.pieces);field('عدد الطرود',d.parcels);
  field('تاريخ الطلب',d.date);
- const balances=d.verifiedOutstanding||null;
- if(balances&&balances.verified===true){
-   const monetary=[['المنتجات',balances.products],['الشحن الخارجي',balances.externalShipping],['التوصيل الداخلي',balances.internalDelivery]];
-   let total=0,valid=true;
-   for(const [label,v] of monetary){
-     if(v===undefined||v===null||typeof v!=='number'||!Number.isFinite(v)||v<0){valid=false;break}
+ const charges=d.collectionCharges||null;
+ if(charges){
+   const rows=[['المنتجات',charges.products],['الشحن الخارجي',charges.externalShipping],['التوصيل الداخلي',charges.internalDelivery]];
+   let unknown=false,shown=0;
+   for(const [label,item] of rows){
+     if(!item||item.status!=='collected'&&item.status!=='uncollected'){unknown=true;continue}
+     if(item.status==='collected')continue;
+     if(typeof item.amount!=='number'||!Number.isFinite(item.amount)||item.amount<0||!present(item.currency)){unknown=true;continue}
+     if(item.amount>0){field('للتحصيل — '+label,item.amount.toLocaleString('en-US')+' '+item.currency);shown++}
    }
-   if(valid){for(const [label,v] of monetary){if(amount(v)){field('المتبقي — '+label,v.toLocaleString('en-US')+' '+(balances.currency||'IQD'));total+=v}}
-     if(total>0)field('الإجمالي المطلوب تحصيله',total.toLocaleString('en-US')+' '+(balances.currency||'IQD'));
-     else field('التحصيل','مدفوع بالكامل — لا يوجد مبلغ للتحصيل');
-   }else field('التحصيل','يلزم التحقق من المبالغ قبل التسليم');
- }else field('التحصيل','يلزم التحقق من المبالغ قبل التسليم');
+   if(unknown)field('تنبيه التحصيل','توجد بنود لم يتم التحقق من حالتها');
+   else if(!shown)field('التحصيل','لا توجد مبالغ للتحصيل');
+ }else field('التحصيل','يلزم التحقق من حالة التحصيل قبل التسليم');
  const logo=escape(d.logoUrl||'images/kinto-header-logo-v158.jpeg');
  return '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>KINTO — '+escape(code)+'</title>'+
  '<style>@page{size:100mm 100mm;margin:0}*{box-sizing:border-box}body{margin:0;font:10px Arial,sans-serif;color:#111;background:#fff}.sheet{width:100mm;min-height:100mm;padding:3mm;break-after:page}.head{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0a2f23;padding-bottom:2mm}.head img{max-height:12mm;max-width:34mm;object-fit:contain}.head strong{font-size:16px;color:#0a2f23}.code{text-align:center;font-size:15px;font-weight:bold;margin:2mm 0}.barcode{text-align:center}.barcode svg{max-width:90mm;height:13mm}.fields{display:grid;grid-template-columns:1fr 1fr;gap:1mm;margin-top:2mm}.field{border:1px solid #aaa;border-radius:2px;padding:1mm;min-width:0;overflow-wrap:anywhere}.field b{display:block;font-size:8px;color:#444}.field span{font-weight:700;font-size:10px}@media print{body{margin:0}.sheet{width:100mm;min-height:100mm}}</style></head><body><section class="sheet"><header class="head"><img src="'+logo+'" alt="KINTO"><strong>KINTO</strong></header><div class="code">'+escape(code)+'</div><div class="barcode"><svg id="kintoLabelBarcode"></svg></div><div class="fields">'+lines.join('')+'</div></section>'+
