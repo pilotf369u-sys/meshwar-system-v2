@@ -53,3 +53,36 @@ test('V165 mobile: five rows per page, search and on-demand multi-product profit
  expect(calls.filter(x=>x.name==='vendor_profit_add_expense_v165')[0].args.p_segment_id).toBe('seg-0');
  expect(calls.filter(x=>x.name==='vendor_profit_capture_cost_v165')).toHaveLength(1);
 });
+
+test('profit reloads automatically when secure login completes on the restored tab',async({page})=>{
+ await page.goto('/__v165_fixture__');
+ await page.setContent('<main><nav class="vendor-main-tabs"></nav></main>');
+ await page.evaluate(()=>{sessionStorage.removeItem('meshwar_vendor_session_v95');window.MeshwarVendorRuntime={sb:{rpc:async()=>({data:{rows:[],summary:[],page:1,pages:1,total:0}})}}});
+ await page.addScriptTag({path:path.resolve('js/vendor-profit-report-v165.js')});
+ await page.evaluate(()=>window.KintoVendorProfitV164.install(window));
+ await page.locator('#vendorTabBtn-pl').click();
+ await expect(page.locator('#profitStatusV165')).toContainText('أعد تسجيل الدخول');
+ await page.evaluate(()=>{sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'fresh'}));window.dispatchEvent(new Event('meshwar:vendor-session-ready'))});
+ await expect(page.locator('#profitStatusV165')).toHaveText('');
+ await expect(page.locator('#profitRowsV165')).toContainText('لا توجد طلبات مسلّمة');
+});
+test('merchant archive refreshes on return and visible timer without a page reload',async({page})=>{
+ await page.goto('/__v163_live_fixture__');
+ await page.setContent('<section id="vendorTab-finance" class="active"></section><button id="vendorTabBtn-finance">finance</button>');
+ await page.evaluate(()=>{
+  sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'fresh'}));window.archiveCalls=0;window.archiveRecords=[];
+  const nativeTimer=window.setInterval;window.setInterval=(fn,ms)=>{if(ms===30000){window.archiveTick=fn;return 12345}return nativeTimer(fn,ms)};
+  window.MeshwarVendorRuntime={sb:{rpc:async()=>{window.archiveCalls++;return {data:structuredClone(window.archiveRecords)}}}};
+ });
+ await page.addScriptTag({path:path.resolve('js/vendor-settlement-archive-v163.js')});
+ await page.evaluate(()=>window.dispatchEvent(new Event('kinto-vendor-runtime-ready')));
+ await expect(page.locator('#vendorArchiveResultsV163')).toContainText('لا توجد كشوف');
+ await page.evaluate(()=>{window.archiveRecords=[{id:'a',statement_no:'KINTO-STL-NEW',created_at:'2026-10-10T00:00:00Z',net_amount:183600,currency:'IQD',order_count:1}];window.dispatchEvent(new Event('focus'))});
+ await expect(page.locator('#vendorArchiveResultsV163')).toContainText('KINTO-STL-NEW');
+ await page.evaluate(()=>{window.archiveRecords.push({id:'b',statement_no:'KINTO-STL-NEXT',created_at:'2026-10-10T00:00:00Z',net_amount:110700,currency:'IQD',order_count:1});window.archiveTick()});
+ await expect(page.locator('#vendorArchiveResultsV163')).toContainText('KINTO-STL-NEXT');
+ const before=await page.evaluate(()=>{document.getElementById('vendorTab-finance').classList.remove('active');return window.archiveCalls});
+ await page.evaluate(()=>window.archiveTick());expect(await page.evaluate(()=>window.archiveCalls)).toBe(before);
+ await page.evaluate(()=>{document.getElementById('vendorTab-finance').classList.add('active');sessionStorage.removeItem('meshwar_vendor_session_v95')});
+ await page.evaluate(()=>window.archiveTick());expect(await page.evaluate(()=>window.archiveCalls)).toBe(before);
+});
