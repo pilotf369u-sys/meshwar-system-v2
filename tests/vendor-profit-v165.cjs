@@ -27,6 +27,7 @@ async function run(){
  assert.equal((await db.query('select units from private.vendor_profit_units_v165 where order_id=$1',[order])).rows[0].units[0].unit_cost_usd,50);
  await db.query('update local_products set cost_price=99');
  items[0].quantity=1;items[0].pricing_snapshot.exchange_rate=9999;
+ items.push({product_id:'ffffffff-ffff-4fff-8fff-ffffffffffff',product_name:'Unavailable item',quantity:0,pricing_snapshot:{exchange_rate:1750}});
  await db.query('insert into order_store_segments(id,order_id,store_id,items_snapshot,commission_snapshot,payment_confirmed,store_status,currency,vendor_settlement_archive_id) values($1,$2,$3,$4,$5,true,$6,$7,null)',[segment,order,store,JSON.stringify(items),JSON.stringify(f),'تم التسليم','IQD']);
  let detail=(await db.query('select vendor_profit_detail_v165($1,$2) r',['a',segment])).rows[0].r;
  assert.equal(detail.order.total_cost_local,87500);
