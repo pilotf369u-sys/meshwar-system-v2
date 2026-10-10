@@ -136,9 +136,9 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
 
   test('finance: V161 balance excludes legacy rows and V165 is the only profit writer',async({page})=>{
     const vendor=await openVendor(page);await vendor.locator('#vendorTabBtn-finance').click();
-    await expect(vendor.locator('#statSales')).toHaveText('0 USD');await expect(vendor.locator('#statCommission')).toHaveText('0 USD');await expect(vendor.locator('#statOther')).toHaveText('0 USD');await expect(vendor.locator('#statPending')).toHaveText('0 USD');await expect(vendor.locator('#statPaid')).toHaveText('0 USD');await expect(vendor.locator('#statNet')).toHaveText('0 USD');
+    await expect(vendor.locator('#statSales')).toHaveText('0 USD');await expect(vendor.locator('#statCommission')).toHaveText('0 USD');await expect(vendor.locator('#statPending')).toHaveText('0 USD');await expect(vendor.locator('#statPaid')).toHaveText('0 USD');await expect(vendor.locator('#statProfit')).toHaveText('0 USD');
     await expect(vendor.locator('#vendorFinanceBody tr')).toHaveCount(1);
-    await expect(vendor.locator('#vendorFinanceBody')).toContainText('لا توجد حركات مالية');await expect(vendor.locator('[data-mw-kpi-icon]')).toHaveCount(6);
+    await expect(vendor.locator('#vendorFinanceBody')).toContainText('لا توجد حركات مالية');await expect(vendor.locator('[data-mw-kpi-icon]')).toHaveCount(5);
 
 
     await frameWindow(page,()=>{
