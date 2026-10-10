@@ -102,7 +102,7 @@ async function addExpense(w){
 }
 async function write(w,name,args){
  const s=state(w);if(s.detailBusy)return;s.detailBusy=true;s.detailError='';drawDetail(w);
- try{s.detail=await rpc(w,name,{p_segment_id:s.selected,...args});await refresh(w)}
+ try{s.detail=await rpc(w,name,{p_segment_id:s.selected,...args});await refresh(w);w.dispatchEvent(new Event('kinto:vendor-finance-changed'))}
  catch(e){s.detailError='تعذر حفظ العملية: '+e.message}finally{s.detailBusy=false;drawDetail(w)}
 }
 function install(w){if(!w||w.__kintoProfitV165)return;w.__kintoProfitV165=true;mount(w);
