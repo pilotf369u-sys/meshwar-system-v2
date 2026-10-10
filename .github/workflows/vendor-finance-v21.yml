@@ -37,8 +37,8 @@ jobs:
         run: |
           node --check js/vendor-finance-pl-invoices-v21.js
           node --check js/vendor-finance-cost-save-guard-v21.js
-          grep -Fq '<script src="js/vendor-finance-pl-invoices-v21.js?v=20261010-cost-only-v164"></script>' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-finance-cost-save-guard-v21.js?v=20260822-2316"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-finance-pl-invoices-v21.js?v=20261010-cost-only-v164"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-finance-cost-save-guard-v21.js?v=20260822-2316"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceV21?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinanceCostSaveGuardV21?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'KintoVendorProfitV164?.install(frame.contentWindow)' vendor-dashboard.html
