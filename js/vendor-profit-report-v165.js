@@ -105,6 +105,11 @@ async function write(w,name,args){
  try{s.detail=await rpc(w,name,{p_segment_id:s.selected,...args});await refresh(w)}
  catch(e){s.detailError='تعذر حفظ العملية: '+e.message}finally{s.detailBusy=false;drawDetail(w)}
 }
-function install(w){if(!w||w.__kintoProfitV165)return;w.__kintoProfitV165=true;mount(w);if(w.document.getElementById('vendorTab-pl')?.classList.contains('active'))refresh(w)}
+function install(w){if(!w||w.__kintoProfitV165)return;w.__kintoProfitV165=true;mount(w);
+ const onReady=()=>{if(w.document.getElementById('vendorTab-pl')?.classList.contains('active'))refresh(w)};
+ w.addEventListener('meshwar:vendor-session-ready',onReady);
+ w.addEventListener('meshwar:vendor-segment-adapter-ready',onReady);
+ onReady();
+}
 window.KintoVendorProfitV164={install,refresh,calculate};
 })();
