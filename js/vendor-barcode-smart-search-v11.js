@@ -81,7 +81,7 @@
       const barcode=String(p.barcode||'').trim();
       row.dataset.mwSearch=[p.product_name,barcode].filter(Boolean).join(' ').toLowerCase();
       const cell=row.querySelector('[data-mw-barcode-cell]');
-      if(cell){cell.textContent=barcode||'بدون باركود';cell.style.opacity=barcode?'1':'.6'}
+      if(cell){const label=barcode||'بدون باركود';if(cell.textContent!==label)cell.textContent=label;cell.style.opacity=barcode?'1':'.6'}
     });
     filterExistingRows(win);
   }
@@ -187,7 +187,11 @@
     if(!win||win.__mwVendorBarcodeInstalled)return;
     const boot=()=>{
       injectUi(win);installFetchBridge(win);wrapProductFunctions(win);scheduleRefresh(win,true);
-      if(!win.__mwBarcodeObserver){const ob=new win.MutationObserver(()=>{injectUi(win);wrapProductFunctions(win);scheduleRefresh(win)});ob.observe(win.document.documentElement,{childList:true,subtree:true});win.__mwBarcodeObserver=ob}
+      if(!win.__mwBarcodeObserver){const ob=new win.MutationObserver(records=>{
+        const relevant=records.some(record=>[...record.addedNodes,...record.removedNodes].some(node=>node.nodeType===1&&(node.matches('#productsBody,#productName,#productBarcode,#vendorTab-products,tr')||node.querySelector('#productsBody,#productName,#vendorTab-products'))));
+        if(!relevant)return;
+        injectUi(win);wrapProductFunctions(win);scheduleRefresh(win);
+      });ob.observe(win.document.documentElement,{childList:true,subtree:true});win.__mwBarcodeObserver=ob}
       win.__mwVendorBarcodeInstalled=true;
     };
     if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
@@ -195,3 +199,4 @@
 
   window.MeshwarVendorBarcodeV11={install,refreshProductDecorations};
 })();
+

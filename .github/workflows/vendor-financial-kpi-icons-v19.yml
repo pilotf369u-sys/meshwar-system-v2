@@ -16,7 +16,7 @@ jobs:
       - name: Validate V19 syntax and integration
         run: |
           node --check js/vendor-financial-kpi-icons-v19.js
-          grep -Fq '<script src="js/vendor-financial-kpi-icons-v19.js?v=20260822-1934"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-financial-kpi-icons-v19.js?v=20260822-1934"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorFinancialKpiIconsV19?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq "{id:'statSales',icon:'🛒'" js/vendor-financial-kpi-icons-v19.js
           grep -Fq "{id:'statCommission',icon:'🎖️'" js/vendor-financial-kpi-icons-v19.js
