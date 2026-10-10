@@ -44,7 +44,9 @@ begin
      select x.value into unit from private.vendor_profit_units_v165 u
      cross join lateral jsonb_array_elements(u.units) x(value)
      where u.order_id=seg.order_id and u.store_id=sid and x.value->>'product_id'=item->>'product_id' limit 1;
-     if found then fx:=nullif(unit->>'exchange_rate','')::numeric;
+     if found then
+      fx:=nullif(unit->>'exchange_rate','')::numeric;
+      if unit->>'unit_cost_usd' is not null then cost:=(unit->>'unit_cost_usd')::numeric;end if;
      else fx:=nullif(item->'pricing_snapshot'->>'exchange_rate','')::numeric;end if;
      qty:=nullif(item->>'quantity','')::numeric;
      if cost is null or cost<0 or fx is null or fx<=0 or qty is null or qty<=0 then complete:=false;end if;
