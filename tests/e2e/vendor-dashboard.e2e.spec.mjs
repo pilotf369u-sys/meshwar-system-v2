@@ -135,6 +135,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
   });
 
   test('finance: V161 balance excludes legacy rows and V165 is the only profit writer',async({page})=>{
+    await page.addInitScript(()=>sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token',expiresAt:new Date(Date.now()+3600000).toISOString()})));
     const vendor=await openVendor(page);await vendor.locator('#vendorTabBtn-finance').click();
     await expect(vendor.locator('#statSales')).toHaveText('0 USD');await expect(vendor.locator('#statCommission')).toHaveText('0 USD');await expect(vendor.locator('#statPending')).toHaveText('0 USD');await expect(vendor.locator('#statPaid')).toHaveText('0 USD');await expect(vendor.locator('#statProfit')).toHaveText('0 USD');
     await expect(vendor.locator('#vendorFinanceBody tr')).toHaveCount(1);
