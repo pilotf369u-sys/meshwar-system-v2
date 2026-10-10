@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { installMocks, openVendor, frameWindow } from './helpers.mjs';
 test('lifetime cards include archives, remain separate from current finance and refresh without flashing',async({page})=>{
  await installMocks(page);
+ await page.addInitScript(()=>sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token',expiresAt:new Date(Date.now()+3600000).toISOString()})));
  await page.addInitScript(()=>window.addEventListener('kinto-vendor-runtime-ready',()=>{
   window.__E2E_DASHBOARD_SUMMARY_V166={currencies:[{currency:'IQD',orders:2,incomplete_orders:0,invalid_financial_orders:0,sales:327000,commission:32700,pending:0,paid:294300,profit:70175}]};
  }));
