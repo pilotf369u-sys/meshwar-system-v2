@@ -506,7 +506,7 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 <script defer src="js/vendor-settlement-archive-v163.js?v=20261010-live-archive"></script>
 <script defer src="js/vendor-dashboard-summary-v166.js?v=20261010-lifetime"></script>
 
-<script src="js/kinto-unified-shipping-label-v1.js?v=20261011-address-v2"></script>
+<script src="js/kinto-unified-shipping-label-v1.js?v=20261011-vendor-builder-cachefix-v1"></script>
 <script id="kinto-unified-label-printShippingLabel">
 (function(){
  // One shared KINTO label; the vendor button has no independent label renderer.
@@ -515,7 +515,7 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
   const label=window.KintoUnifiedShippingLabel;
   let popup=null;
   try{
-   if(!runtime?.getOrders||!runtime?.labelHelpers||!label)throw Error('ملصق KINTO الموحد غير جاهز');
+   if(!runtime?.getOrders||!runtime?.labelHelpers||!label||typeof label.buildOrderLabel!=='function'||typeof label.print!=='function')throw Error('نسخة ملف ملصق KINTO قديمة؛ يرجى تحديث الصفحة لإكمال الطباعة');
    const o=runtime.getOrders().find(row=>String(row.id)===decodeURIComponent(String(id)));
    if(!o)throw Error('الطلب غير موجود');
    popup=window.open('','_blank','width=700,height=750');
