@@ -51,6 +51,22 @@ function invoiceCollection(order){
  return {type,amounts:null};
 }
 function collectionCharges(order){return invoiceCollection(order)}
+function destination(order){
+ const o=order||{},d=typeof o.details==='object'&&o.details?o.details:(()=>{try{return JSON.parse(o.details||'{}')}catch{return{}}})();
+ const c=o._kintoCustomer||d.customer||{},loc=typeof o.customer_location==='object'&&o.customer_location?o.customer_location:(()=>{try{return JSON.parse(o.customer_location||d.customer_location||'{}')}catch{return{}}})();
+ const pick=(...values)=>values.find(v=>v!=null&&String(v).trim()&&!['---','غير محددة','undefined','null'].includes(String(v).trim()))||'';
+ return {
+ country:pick(c.country,c.country_name,o.country,o.customer_country,d.country,d.customer_country,loc.country),
+ governorate:pick(c.province,c.governorate,c.state,c.city,o._customer_governorate,o.governorate,o.province,o.state,o.city,d.customer_governorate,d.customer_province,d.province,d.governorate,d.state,d.city,loc.province,loc.governorate,loc.city),
+ address:pick(c.address,c.address_details,c.full_address,c.delivery_address,o.customer_address,o.address,o.address_details,o.delivery_address,d.customer_address,d.address,d.address_details,d.full_address,d.delivery_address,loc.address,loc.address_details,loc.full_address),
+ district:pick(c.district,o.district,d.district,loc.district),
+ subdistrict:pick(c.subdistrict,o.subdistrict,d.subdistrict,loc.subdistrict),
+ area:pick(c.area,o.area,d.area,loc.area),
+ neighborhood:pick(c.neighborhood,o.neighborhood,d.neighborhood,loc.neighborhood),
+ street:pick(c.street,o.street,d.street,loc.street),
+ landmark:pick(c.landmark,o.landmark,d.landmark,loc.landmark)
+ };
+}
 function render(data){
  const d=data||{}, code=String(d.orderCode||'').trim();
  if(!code)throw Error('Order code is required');
@@ -58,7 +74,7 @@ function render(data){
  function field(label,value){if(present(value))lines.push('<div class="field"><b>'+escape(label)+'</b><span>'+escape(value)+'</span></div>')}
  field('المتجر',d.storeName);field('المستلم',d.customerName);
  field('الهاتف',d.phone);field('هاتف احتياطي',d.secondaryPhone);
- field('المحافظة',d.governorate);field('القضاء',d.district);field('الناحية',d.subdistrict);
+ field('الدولة / المحافظة',[d.country,d.governorate].filter(present).join(' — '));field('القضاء',d.district);field('الناحية',d.subdistrict);
  field('المنطقة',d.area);field('الحي',d.neighborhood);field('الشارع',d.street);
  field('العنوان التفصيلي',d.address);field('أقرب نقطة دالة',d.landmark);
  field('ملاحظات التوصيل',d.deliveryNotes);field('الفرع',d.branch);
@@ -78,9 +94,9 @@ function render(data){
  }else field('التحصيل','راجع الفاتورة — مبلغ التحصيل غير مؤكد');
  const logo=escape(d.logoUrl||'images/kinto-header-logo-v158.jpeg');
  return '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>KINTO — '+escape(code)+'</title>'+
- '<style>@page{size:100mm 100mm;margin:0}*{box-sizing:border-box}body{margin:0;font:10px Arial,sans-serif;color:#111;background:#fff}.sheet{width:100mm;min-height:100mm;padding:3mm;break-after:page}.head{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0a2f23;padding-bottom:2mm}.head img{max-height:12mm;max-width:34mm;object-fit:contain}.head strong{font-size:16px;color:#0a2f23}.code{text-align:center;font-size:15px;font-weight:bold;margin:2mm 0}.barcode{text-align:center}.barcode svg{max-width:90mm;height:13mm}.fields{display:grid;grid-template-columns:1fr 1fr;gap:1mm;margin-top:2mm}.field{border:1px solid #aaa;border-radius:2px;padding:1mm;min-width:0;overflow-wrap:anywhere}.field b{display:block;font-size:8px;color:#444}.field span{font-weight:700;font-size:10px}@media print{body{margin:0}.sheet{width:100mm;min-height:100mm}}</style></head><body><section class="sheet"><header class="head"><img src="'+logo+'" alt="KINTO"><strong>KINTO</strong></header><div class="code">'+escape(code)+'</div><div class="barcode"><svg id="kintoLabelBarcode"></svg></div><div class="fields">'+lines.join('')+'</div></section>'+
- '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script><script>window.addEventListener("load",function(){try{if(window.JsBarcode)JsBarcode("#kintoLabelBarcode",'+JSON.stringify(code)+',{format:"CODE128",displayValue:false,height:36,margin:0})}catch(e){console.error(e)}setTimeout(function(){window.print()},300)});</script></body></html>';
+ '<style id="kintoPageStyle">@page{size:100mm 100mm;margin:0}</style><style>*{box-sizing:border-box}body{margin:0;font:10px Arial,sans-serif;color:#111;background:#fff}.sheet{width:100mm;max-width:100%;min-height:100mm;padding:3mm;break-after:page}.head{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0a2f23;padding-bottom:2mm}.head img{max-height:10mm;max-width:25mm;object-fit:contain}.head strong{font-size:13px;color:#0a2f23}.head-code{flex:1;min-width:0;max-width:43mm;margin:0 1mm;text-align:center}.code{text-align:center;font-size:10px;font-weight:bold;margin:0;white-space:nowrap}.barcode{text-align:center}.barcode svg{max-width:100%;height:7mm}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1mm;margin-top:2mm}.field{display:flex;align-items:baseline;gap:1mm;border:1px solid #aaa;border-radius:2px;padding:0.7mm;min-width:0;overflow-wrap:anywhere}.field b{flex-shrink:0;display:inline;font-size:8px;color:#444}.field b::after{content:":"}.field span{display:inline;font-weight:700;font-size:9px;min-width:0}@media print{.print-controls{display:none}body{margin:0}.sheet{width:100%;min-height:0}}</style></head><body><div class="print-controls" style="text-align:center;padding:6px;background:#eee"><label>حجم الورق <select id="kintoSize" onchange="kintoSetSize(this.value)"><option value="100mm 100mm">10 × 10 سم</option><option value="80mm 80mm">8 × 8 سم</option><option value="50mm 40mm">5 × 4 سم</option><option value="A4">A4</option><option value="auto">حسب الطابعة</option></select></label><button onclick="window.print()">طباعة</button></div><section class="sheet"><header class="head"><img src="'+logo+'" alt="KINTO"><div class="head-code"><div class="barcode"><svg id="kintoLabelBarcode"></svg></div><div class="code">'+escape(code)+'</div></div><strong>KINTO</strong></header><div class="fields">'+lines.join('')+'</div></section>'+
+ '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script><script>function kintoSetSize(v){if(!["100mm 100mm","80mm 80mm","50mm 40mm","A4","auto"].includes(v))return;document.getElementById("kintoPageStyle").textContent="@page{size:"+v+";margin:0}";var sheet=document.querySelector(".sheet");sheet.style.width=v==="A4"||v==="auto"?"100mm":v.split(" ")[0];sheet.style.maxWidth="100%";}window.addEventListener("load",function(){try{if(window.JsBarcode)JsBarcode("#kintoLabelBarcode",'+JSON.stringify(code)+',{format:"CODE128",displayValue:false,height:36,margin:0})}catch(e){console.error(e)}/* Paper selection is made before printing; never auto-print before user can choose. */});</script></body></html>';
 }
-function print(data){const w=global.open('','_blank','width=700,height=750');if(!w)throw Error('Popup blocked');w.document.open();w.document.write(render(data));w.document.close();return w}
-global.KintoUnifiedShippingLabel={render,print,collectionCharges,invoiceCollection};
+function print(data,popup){const w=popup||global.open('','_blank','width=700,height=750');if(!w)throw Error('Popup blocked');if(typeof w.document.open==='function')w.document.open();w.document.write(render(data));w.document.close();return w}
+global.KintoUnifiedShippingLabel={render,print,collectionCharges,invoiceCollection,destination};
 })(window);

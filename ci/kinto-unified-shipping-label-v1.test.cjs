@@ -22,6 +22,22 @@ for(const file of ['employee-dashboard.html','admin-dashboard.html','branch-dash
 const vendorBridge=fs.readFileSync('js/vendor-v94-multistore-orders.js','utf8');
 assert.match(vendorBridge,/row\.delivery_payment_type=control\.delivery_payment_type/);
 assert.match(label({delivery_payment_type:'product_paid_delivery_cod',external_shipping_fee:15000,delivery_fee:5000,currency:'IQD',_v95SegmentId:'seg1'}),/غير مؤكد/);
+const destination=api.destination({details:{customer:{country:'العراق',province:'بغداد',address:'الكرادة - شارع 42'}}});
+assert.equal(destination.country,'العراق');
+assert.equal(destination.governorate,'بغداد');
+assert.equal(destination.address,'الكرادة - شارع 42');
+assert.match(api.render({...base,...destination}),/الدولة \/ المحافظة/);
+assert.match(api.render({...base,...destination}),/العنوان التفصيلي/);
+for(const file of ['employee-dashboard.html','admin-dashboard.html','branch-dashboard.html','vendor-dashboard-v2.html']){
+ const html=fs.readFileSync(file,'utf8');
+ assert.match(html,/KintoUnifiedShippingLabel\.destination\(o\)/,file);
+}
+const vendorHtml=fs.readFileSync('vendor-dashboard-v2.html','utf8');
+assert.doesNotMatch(vendorHtml,/MeshWar Cargo|@page\\{size:50mm 40mm/, 'legacy vendor label must be removed');
+assert.doesNotMatch(vendorHtml,/original\\?\\.\\(id\\)/, 'vendor label must not fall back to old printer');
+assert.match(vendorHtml,/KintoUnifiedShippingLabel\.print\(data,popup\)/, 'vendor must use unified printer');
+assert.match(api.render(base),/kintoSetSize/);
+assert.doesNotMatch(api.render(base),/setTimeout\(function\(\)\{window\.print\(\)/);
 assert.match(api.render(base),/@page\{size:100mm 100mm/);
 assert.match(api.render(base),/JsBarcode/);
 console.log('KINTO invoice-grounded unified shipping label tests passed');
