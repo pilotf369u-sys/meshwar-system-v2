@@ -67,6 +67,13 @@ function destination(order){
  landmark:pick(c.landmark,o.landmark,d.landmark,loc.landmark)
  };
 }
+function buildOrderLabel(order,opts){
+ const o=order||{},x=opts||{},d=typeof o.details==='object'&&o.details?o.details:(()=>{try{return JSON.parse(o.details||'{}')}catch{return{}}})();
+ const c=o._kintoCustomer||d.customer||{};
+ const pick=(...v)=>v.find(y=>y!==null&&y!==undefined&&String(y).trim()&&String(y).trim()!=='---')||'';
+ const dest=destination(o);
+ return {orderCode:pick(o.order_code,o.id),referenceOrderNo:pick(o.reference_order_no),storeName:pick(x.storeName,o.store_name,d.store_name),customerName:pick(c.name,c.customer_name,o.customer_name,d.customer_name),customerCode:pick(c.code,c.customer_code,o._customer_code,o.customer_code,d.customer_code),phone:pick(c.phone,c.customer_phone,o.customer_phone,o.phone,d.phone),secondaryPhone:pick(c.secondary_phone,c.phone2,o.secondary_phone,d.secondary_phone),...dest,deliveryNotes:pick(o.delivery_notes,d.delivery_notes),branch:pick(o.branch_name,d.branch_name),pieces:x.pieces,parcels:x.parcels,date:o.created_at?new Date(o.created_at).toLocaleDateString('en-GB'):'',invoiceCollection:x.invoiceCollection||invoiceCollection(o)};
+}
 function render(data){
  const d=data||{}, code=String(d.orderCode||'').trim();
  if(!code)throw Error('Order code is required');
@@ -78,7 +85,7 @@ function render(data){
  field('المنطقة',d.area);field('الحي',d.neighborhood);field('الشارع',d.street);
  field('العنوان التفصيلي',d.address);field('أقرب نقطة دالة',d.landmark);
  field('ملاحظات التوصيل',d.deliveryNotes);field('الفرع',d.branch);
- field('رقم مرجعي',d.referenceOrderNo);field('القطع / الطرود','قطع: '+(present(d.pieces)?d.pieces:'—')+' | طرود: '+(present(d.parcels)?d.parcels:'—'));
+ field('رقم مرجعي',d.referenceOrderNo);field('','قطع: '+(present(d.pieces)?d.pieces:'—')+' | طرود: '+(present(d.parcels)?d.parcels:'—'));
  field('تاريخ الطلب',d.date);
  const collection=d.invoiceCollection||d.collectionCharges||null;
  if(collection&&collection.type==='paid_prepaid')field('','واصل');
@@ -98,5 +105,5 @@ function render(data){
  '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script><script>function kintoSetSize(v){if(!["100mm 100mm","80mm 80mm","50mm 40mm","A4","auto"].includes(v))return;document.getElementById("kintoPageStyle").textContent="@page{size:"+v+";margin:0}";var sheet=document.querySelector(".sheet");sheet.style.width=v==="A4"||v==="auto"?"100mm":v.split(" ")[0];sheet.style.maxWidth="100%";}window.addEventListener("load",function(){try{if(window.JsBarcode)JsBarcode("#kintoLabelBarcode",'+JSON.stringify(code)+',{format:"CODE128",displayValue:false,height:36,margin:0})}catch(e){console.error(e)}/* Paper selection is made before printing; never auto-print before user can choose. */});</script></body></html>';
 }
 function print(data,popup){const w=popup||global.open('','_blank','width=700,height=750');if(!w)throw Error('Popup blocked');if(typeof w.document.open==='function')w.document.open();w.document.write(render(data));w.document.close();return w}
-global.KintoUnifiedShippingLabel={render,print,collectionCharges,invoiceCollection,destination};
+global.KintoUnifiedShippingLabel={render,print,collectionCharges,invoiceCollection,destination,buildOrderLabel};
 })(window);
