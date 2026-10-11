@@ -132,6 +132,22 @@
           <article class="rounded-2xl border border-white/10 p-4"><div class="text-xs text-slate-300">عدد الطلبات المسلّمة</div><strong id="vendorGrowthOrders" class="mt-2 block text-lg text-emerald-300">—</strong></article>
         </div>
         <p id="vendorGrowthStatus" class="mt-3 text-xs text-slate-300" role="status">اختر الفترة واضغط عرض الأداء. البيانات من Supabase وليست تقديرية.</p>
+        <section class="mt-5" aria-label="مقارنة الأداء بالفترة السابقة">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="font-bold text-emerald-300">مقارنة الأداء بالفترة السابقة</h3>
+            <p id="vendorGrowthPreviousPeriodV169" class="text-xs text-slate-300"></p>
+          </div>
+          <div id="vendorGrowthComparisonV169" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3"></div>
+          <p class="mt-2 text-xs text-slate-300">تُقارن فترتان متساويتان بعدد الأيام. صافي الربح المثبت لا يشمل الطلبات التي لم تُجمّد تكاليفها؛ والطلبات تُحتسب بتاريخ إنشائها بعد التسليم.</p>
+        </section>
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <label for="vendorGrowthGranularityV169" class="text-sm text-slate-200">تجميع المنحنى حسب:</label>
+          <select id="vendorGrowthGranularityV169" class="field" style="width:auto;min-width:135px">
+            <option value="daily">يومي</option>
+            <option value="weekly">أسبوعي</option>
+            <option value="monthly">شهري</option>
+          </select>
+        </div>
         <div class="mt-5 grid gap-4 lg:grid-cols-2">
           <section class="rounded-2xl border border-white/10 p-4" aria-label="منحنى المبيعات اليومية">
             <h3 class="text-base font-bold text-emerald-300">📈 اتجاه المبيعات اليومي</h3>
@@ -597,7 +613,7 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 <script defer src="js/vendor-dashboard-summary-v166.js?v=20261010-lifetime"></script>
 <script defer src="js/vendor-growth-v167.js?v=20261011-v167-growth"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js" crossorigin="anonymous"></script>
-<script defer src="js/vendor-growth-charts-v168.js?v=20261011-v168-echarts"></script>
+<script defer src="js/vendor-growth-charts-v168.js?v=20261011-v169-compare"></script>
 
 <script src="js/kinto-unified-shipping-label-v1.js?v=20261011-4x5-inch-single-page-v1"></script>
 <script id="kinto-unified-label-printShippingLabel">
