@@ -51,6 +51,22 @@ function invoiceCollection(order){
  return {type,amounts:null};
 }
 function collectionCharges(order){return invoiceCollection(order)}
+function destination(order){
+ const o=order||{},d=typeof o.details==='object'&&o.details?o.details:(()=>{try{return JSON.parse(o.details||'{}')}catch{return{}}})();
+ const c=o._kintoCustomer||d.customer||{},loc=typeof o.customer_location==='object'&&o.customer_location?o.customer_location:(()=>{try{return JSON.parse(o.customer_location||d.customer_location||'{}')}catch{return{}}})();
+ const pick=(...values)=>values.find(v=>v!=null&&String(v).trim()&&!['---','غير محددة','undefined','null'].includes(String(v).trim()))||'';
+ return {
+ country:pick(c.country,c.country_name,o.country,o.customer_country,d.country,d.customer_country,loc.country),
+ governorate:pick(c.province,c.governorate,c.state,c.city,o._customer_governorate,o.governorate,o.province,o.state,o.city,d.customer_governorate,d.customer_province,d.province,d.governorate,d.state,d.city,loc.province,loc.governorate,loc.city),
+ address:pick(c.address,c.address_details,c.full_address,c.delivery_address,o.customer_address,o.address,o.address_details,o.delivery_address,d.customer_address,d.address,d.address_details,d.full_address,d.delivery_address,loc.address,loc.address_details,loc.full_address),
+ district:pick(c.district,o.district,d.district,loc.district),
+ subdistrict:pick(c.subdistrict,o.subdistrict,d.subdistrict,loc.subdistrict),
+ area:pick(c.area,o.area,d.area,loc.area),
+ neighborhood:pick(c.neighborhood,o.neighborhood,d.neighborhood,loc.neighborhood),
+ street:pick(c.street,o.street,d.street,loc.street),
+ landmark:pick(c.landmark,o.landmark,d.landmark,loc.landmark)
+ };
+}
 function render(data){
  const d=data||{}, code=String(d.orderCode||'').trim();
  if(!code)throw Error('Order code is required');
@@ -58,7 +74,7 @@ function render(data){
  function field(label,value){if(present(value))lines.push('<div class="field"><b>'+escape(label)+'</b><span>'+escape(value)+'</span></div>')}
  field('المتجر',d.storeName);field('المستلم',d.customerName);
  field('الهاتف',d.phone);field('هاتف احتياطي',d.secondaryPhone);
- field('المحافظة',d.governorate);field('القضاء',d.district);field('الناحية',d.subdistrict);
+ field('الدولة / المحافظة',[d.country,d.governorate].filter(present).join(' — '));field('القضاء',d.district);field('الناحية',d.subdistrict);
  field('المنطقة',d.area);field('الحي',d.neighborhood);field('الشارع',d.street);
  field('العنوان التفصيلي',d.address);field('أقرب نقطة دالة',d.landmark);
  field('ملاحظات التوصيل',d.deliveryNotes);field('الفرع',d.branch);
@@ -82,5 +98,5 @@ function render(data){
  '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script><script>window.addEventListener("load",function(){try{if(window.JsBarcode)JsBarcode("#kintoLabelBarcode",'+JSON.stringify(code)+',{format:"CODE128",displayValue:false,height:36,margin:0})}catch(e){console.error(e)}setTimeout(function(){window.print()},300)});</script></body></html>';
 }
 function print(data){const w=global.open('','_blank','width=700,height=750');if(!w)throw Error('Popup blocked');w.document.open();w.document.write(render(data));w.document.close();return w}
-global.KintoUnifiedShippingLabel={render,print,collectionCharges,invoiceCollection};
+global.KintoUnifiedShippingLabel={render,print,collectionCharges,invoiceCollection,destination};
 })(window);
