@@ -158,41 +158,6 @@ async function labelCustomerSnapshot(order){
  if(!Object.keys(customer).length)throw new Error('بيانات المستلم غير متاحة في تفاصيل الطلب الآمنة');
  return customer;
 }
-// Only use per-store invoice values; never use the parent order grand total.
-async function labelStoreCollection(order){
- const active=session();
- if(!order?._v95SegmentId||!active?.token)throw new Error('تعذر تحديد فاتورة المتجر');
- let control=shippingControlCache.get(String(order._v95SegmentId));
- if(!control){
-  let result=await runtime.sb.rpc('vendor_get_order_shipping_control',{p_session_token:active.token,p_segment_id:order._v95SegmentId});
-  if(result.error&&String(result.error.message||'').includes('vendor_get_order_shipping_control'))result=await runtime.sb.rpc('vendor_get_order_segment_shipping',{p_session_token:active.token,p_segment_id:order._v95SegmentId});
-  if(result.error)throw result.error;
-  control=result.data;
-  shippingControlCache.set(String(order._v95SegmentId),control);
- }
- const canonical=await hydrateVendorCanonicalInvoice(order,control);
- const type=String(canonical.delivery_payment_type||control?.delivery_payment_type||order.delivery_payment_type||'');
- if(type==='paid_prepaid')return {type,amounts:[]};
- const amount=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))&&Number(v)>=0?Number(v):null;
- const goods=amount(order.total_price),currency=String(order.currency||'').trim();
- const delivery=amount(canonical.delivery_fee??control?.delivery_fee??order.delivery_fee);
- const deliveryCurrency=String(canonical.delivery_currency||control?.delivery_currency||order.delivery_currency||currency).trim();
- const external=amount(canonical.external_shipping_fee);
- // Do not assign a parent-level external fee to a store unless its collector is known.
- const collector=control?.external_shipping_collector_segment_id||canonical.external_shipping_collector_segment_id;
- const externalForStore=external===0?0:collector?(String(collector)===String(order._v95SegmentId)?external:0):null;
- if(type==='cod_full'){
-  if(goods===null||!currency||delivery===null||!deliveryCurrency||externalForStore===null)return {type,amounts:null};
-  const amounts=[{amount:goods+externalForStore,currency},{amount:delivery,currency:deliveryCurrency}];
-  return {type,amounts};
- }
- if(type==='product_paid_delivery_cod'){
-  if(delivery===null||!deliveryCurrency||externalForStore===null||!currency)return {type,amounts:null};
-  return {type,amounts:[{amount:externalForStore,currency},{amount:delivery,currency:deliveryCurrency}]};
- }
- return {type,amounts:null};
-}
-window.KintoVendorLabelCollection=labelStoreCollection;
 window.KintoVendorLabelCustomer=labelCustomerSnapshot;
 window.vendorLogin=secureLogin;window.vendorLogout=secureLogout;window.loadOrders=loadSegmentOrders;window.renderVendorOrders=renderOrders;window.openV94VendorOrderDetails=openDetails;window.setV94VendorStoreStatus=setStatus;window.printV95VendorStoreInvoice=printStoreInvoice;window.vendorShippingCompanyChanged=vendorShippingCompanyChanged;window.vendorFreeShippingChanged=vendorFreeShippingChanged;window.saveVendorOrderShipping=saveVendorOrderShipping;window.vendorTableShippingChanged=vendorTableShippingChanged;window.vendorTableFreeShippingChanged=vendorTableFreeShippingChanged;window.saveVendorTableShipping=saveVendorTableShipping;window.MeshwarVendorV94={projectOrder:projectLegacyOrder,projectSegment,loadOrders:loadSegmentOrders,session,statuses:VENDOR_OPERATIONAL_STATUSES.slice()};
 window.dispatchEvent(new CustomEvent('meshwar:vendor-segment-adapter-ready'));
