@@ -78,7 +78,7 @@ function render(data){
  field('المنطقة',d.area);field('الحي',d.neighborhood);field('الشارع',d.street);
  field('العنوان التفصيلي',d.address);field('أقرب نقطة دالة',d.landmark);
  field('ملاحظات التوصيل',d.deliveryNotes);field('الفرع',d.branch);
- field('رقم مرجعي',d.referenceOrderNo);field('القطع / الطرود',[present(d.pieces)?d.pieces:'—',present(d.parcels)?d.parcels:'—'].join(' / '));
+ field('رقم مرجعي',d.referenceOrderNo);field('القطع / الطرود','قطع: '+(present(d.pieces)?d.pieces:'—')+' | طرود: '+(present(d.parcels)?d.parcels:'—'));
  field('تاريخ الطلب',d.date);
  const collection=d.invoiceCollection||d.collectionCharges||null;
  if(collection&&collection.type==='paid_prepaid')field('','واصل');
@@ -90,7 +90,7 @@ function render(data){
   }
   if(!valid)field('','راجع الفاتورة — مبلغ غير مؤكد');
   else if(!groups.size||![...groups.values()].some(v=>v>0))field('','واصل');
-  else field('',[...groups].filter(([,v])=>v>0).map(([c,v])=>v.toLocaleString('en-US',{maximumFractionDigits:2})+' '+c).join(' + '));
+  else field('المبلغ',[...groups].filter(([,v])=>v>0).map(([c,v])=>v.toLocaleString('en-US',{maximumFractionDigits:2})+' '+c).join(' + '));
  }else field('','راجع الفاتورة — مبلغ غير مؤكد');
  const logo=escape(d.logoUrl||'images/kinto-header-logo-v158.jpeg');
  return '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>KINTO — '+escape(code)+'</title>'+
