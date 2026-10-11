@@ -439,7 +439,7 @@ function financeCurrency(){const x=[...new Set(orders.map(r=>r.currency).filter(
 function renderFinance(){renderVendorFinanceTable();window.dispatchEvent(new Event('kinto:vendor-finance-changed'))}
 function renderStats(){renderFinance()}
 
-function printShippingLabel(orderId){if(typeof window.printShippingLabel!=='function')throw Error('KINTO label printer is unavailable');return window.printShippingLabel(orderId)}
+function printShippingLabel(orderId){if(typeof window.KintoVendorUnifiedLabelPrint!=='function')throw Error('KINTO label printer is unavailable');return window.KintoVendorUnifiedLabelPrint(orderId)}
 
 let vendorOrdersRealtime=null,vendorRealtimeRefreshTimer=null;
 function scheduleVendorRealtimeRefresh(){clearTimeout(vendorRealtimeRefreshTimer);vendorRealtimeRefreshTimer=setTimeout(()=>{Promise.resolve(window.loadOrders()).catch(e=>console.warn('Vendor realtime refresh failed:',e))},180)}
@@ -509,7 +509,7 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 <script src="js/kinto-unified-shipping-label-v1.js?v=20261011-address-v2"></script>
 <script id="kinto-unified-label-printShippingLabel">
 (function(){
- window.printShippingLabel=async function(id){
+ window.KintoVendorUnifiedLabelPrint=async function(id){
    try{
      const key=decodeURIComponent(String(id));
      const runtime=window.MeshwarVendorRuntime;
