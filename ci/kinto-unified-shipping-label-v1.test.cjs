@@ -17,7 +17,7 @@ assert.match(label({delivery_payment_type:'product_paid_delivery_cod',external_s
 assert.doesNotMatch(label({delivery_payment_type:'product_paid_delivery_cod',external_shipping_fee:15000,delivery_fee:5000,currency:'IQD',_v95SegmentId:'seg1',external_shipping_collector_segment_id:'seg2'}),/20,000/);
 for(const file of ['employee-dashboard.html','admin-dashboard.html','branch-dashboard.html','vendor-dashboard-v2.html']){
  const html=fs.readFileSync(file,'utf8');
- assert.match(html,file==='vendor-dashboard-v2.html'?/KintoUnifiedShippingLabel\.buildOrderLabel\(o,/:/KintoUnifiedShippingLabel\.invoiceCollection\(o\)/,file);
+ assert.match(html,file==='vendor-dashboard-v2.html'?/(?:KintoUnifiedShippingLabel|label)\.buildOrderLabel\(o,/:/KintoUnifiedShippingLabel\.invoiceCollection\(o\)/,file);
 }
 const vendorBridge=fs.readFileSync('js/vendor-v94-multistore-orders.js','utf8');
 assert.match(vendorBridge,/row\.delivery_payment_type=control\.delivery_payment_type/);
@@ -30,7 +30,7 @@ assert.match(api.render({...base,...destination}),/الدولة \/ المحاف�
 assert.match(api.render({...base,...destination}),/العنوان التفصيلي/);
 for(const file of ['employee-dashboard.html','admin-dashboard.html','branch-dashboard.html','vendor-dashboard-v2.html']){
  const html=fs.readFileSync(file,'utf8');
- assert.match(html,file==='vendor-dashboard-v2.html'?/KintoUnifiedShippingLabel\.buildOrderLabel\(o,/:/KintoUnifiedShippingLabel\.destination\(o\)/,file);
+ assert.match(html,file==='vendor-dashboard-v2.html'?/(?:KintoUnifiedShippingLabel|label)\.buildOrderLabel\(o,/:/KintoUnifiedShippingLabel\.destination\(o\)/,file);
 }
 const vendorHtml=fs.readFileSync('vendor-dashboard-v2.html','utf8');
 assert.doesNotMatch(vendorHtml,/MeshWar Cargo|@page\\{size:50mm 40mm/, 'legacy vendor label must be removed');
@@ -43,7 +43,7 @@ assert.match(api.render(base),/قطع: 6 \| طرود: 1/);
 const sample=api.buildOrderLabel({order_code:'KN-000101',details:{customer:{name:'عمر',code:'CUS-2675',phone:'905378240430',address:'كيجوران'}}},{pieces:6,parcels:1});
 assert.match(api.render(sample),/CUS-2675/);
 assert.match(api.render(sample),/كيجوران/);
-assert.match(vendorHtml,/KintoUnifiedShippingLabel\.buildOrderLabel\(o,/);
+assert.match(vendorHtml,/label\.buildOrderLabel\(o,/);
 assert.match(fs.readFileSync('js/vendor-v94-multistore-orders.js','utf8'),/KintoVendorLabelCustomer=labelCustomerSnapshot/);
 assert.match(api.render(base),/kintoSetSize/);
 assert.doesNotMatch(api.render(base),/setTimeout\(function\(\)\{window\.print\(\)/);
