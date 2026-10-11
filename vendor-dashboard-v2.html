@@ -132,6 +132,21 @@
           <article class="rounded-2xl border border-white/10 p-4"><div class="text-xs text-slate-300">عدد الطلبات المسلّمة</div><strong id="vendorGrowthOrders" class="mt-2 block text-lg text-emerald-300">—</strong></article>
         </div>
         <p id="vendorGrowthStatus" class="mt-3 text-xs text-slate-300" role="status">اختر الفترة واضغط عرض الأداء. البيانات من Supabase وليست تقديرية.</p>
+        <div class="mt-5 grid gap-4 lg:grid-cols-2">
+          <section class="rounded-2xl border border-white/10 p-4" aria-label="منحنى المبيعات اليومية">
+            <h3 class="text-base font-bold text-emerald-300">📈 اتجاه المبيعات اليومي</h3>
+            <div id="vendorGrowthTrendV168" class="mt-3 w-full" style="height:280px;min-height:240px" role="img" aria-label="منحنى تفاعلي للمبيعات اليومية"></div>
+          </section>
+          <section class="rounded-2xl border border-white/10 p-4" aria-label="التوزيع المالي للمبيعات">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="text-base font-bold text-emerald-300">◉ توزيع المبيعات</h3>
+              <select id="vendorGrowthChartCurrencyV168" class="field max-w-24 text-sm" aria-label="عملة الرسوم"></select>
+            </div>
+            <div id="vendorGrowthCompositionV168" class="mt-3 w-full" style="height:280px;min-height:240px" role="img" aria-label="رسم دائري تفاعلي لتوزيع المبيعات"></div>
+            <p id="vendorGrowthCompositionLegendV168" class="text-xs text-slate-300"></p>
+          </section>
+        </div>
+        <p id="vendorGrowthChartStatusV168" class="mt-3 text-xs text-slate-300" role="status">اختر الفترة واضغط عرض الأداء لعرض الرسوم الحقيقية.</p>
         <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="مؤشرات زيارات المتجر">
           <article class="rounded-2xl border border-white/10 p-4"><div class="text-xs text-slate-300">زيارات المتجر</div><strong class="mt-2 block text-lg text-emerald-300">—</strong></article>
           <article class="rounded-2xl border border-white/10 p-4"><div class="text-xs text-slate-300">الزوار الفريدون (تقديري)</div><strong class="mt-2 block text-lg text-emerald-300">—</strong></article>
@@ -581,6 +596,8 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 <script defer src="js/vendor-settlement-archive-v163.js?v=20261010-live-archive"></script>
 <script defer src="js/vendor-dashboard-summary-v166.js?v=20261010-lifetime"></script>
 <script defer src="js/vendor-growth-v167.js?v=20261011-v167-growth"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js" crossorigin="anonymous"></script>
+<script defer src="js/vendor-growth-charts-v168.js?v=20261011-v168-echarts"></script>
 
 <script src="js/kinto-unified-shipping-label-v1.js?v=20261011-4x5-inch-single-page-v1"></script>
 <script id="kinto-unified-label-printShippingLabel">
