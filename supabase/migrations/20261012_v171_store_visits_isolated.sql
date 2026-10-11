@@ -24,7 +24,7 @@ create or replace function public.kinto_record_store_visit_v171(
 ) returns void language plpgsql volatile security definer
 set search_path=public,private,pg_temp as $$
 declare d date:=(now() at time zone 'Europe/Istanbul')::date;
- v_session boolean:=false;v_browser boolean:=false;
+ v_session_count integer:=0;v_browser_count integer:=0;
 begin
  if p_store_id is null or p_session_id is null or p_browser_id is null then return;end if;
  if not exists(select 1 from public.local_stores where id=p_store_id and status='active') then return;end if;
@@ -32,16 +32,16 @@ begin
  insert into private.kinto_store_visit_dedupe_v171(store_id,visit_day,token_kind,token_hash)
  values(p_store_id,d,'session',md5(p_session_id::text))
  on conflict do nothing;
- get diagnostics v_session=row_count;
+ get diagnostics v_session_count=row_count;
  insert into private.kinto_store_visit_dedupe_v171(store_id,visit_day,token_kind,token_hash)
  values(p_store_id,d,'browser',md5(p_browser_id::text))
  on conflict do nothing;
- get diagnostics v_browser=row_count;
- if v_session or v_browser then
+ get diagnostics v_browser_count=row_count;
+ if v_session_count>0 or v_browser_count>0 then
   insert into public.kinto_store_visits_daily_v171(store_id,visit_day,visits,unique_browsers,ad_visits)
-  values(p_store_id,d,case when v_session then 1 else 0 end,
-    case when v_browser then 1 else 0 end,
-    case when v_session and lower(coalesce(p_ad_source,'')) in ('facebook','instagram','google','tiktok','snapchat') then 1 else 0 end)
+  values(p_store_id,d,case when v_session_count>0 then 1 else 0 end,
+    case when v_browser_count>0 then 1 else 0 end,
+    case when v_session_count>0 and lower(coalesce(p_ad_source,'')) in ('facebook','instagram','google','tiktok','snapchat') then 1 else 0 end)
   on conflict(store_id,visit_day) do update set
    visits=public.kinto_store_visits_daily_v171.visits+excluded.visits,
    unique_browsers=public.kinto_store_visits_daily_v171.unique_browsers+excluded.unique_browsers,
