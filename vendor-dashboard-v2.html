@@ -127,7 +127,23 @@
       <div class="glass rounded-3xl p-5 md:p-7" dir="rtl">
         <h2 class="text-xl font-black text-emerald-300">📣 نتائج إعلاناتي</h2>
         <p class="mt-3 text-sm text-slate-300">هنا ستحدد فترة الإعلان ومنصته وتكلفته، ثم تقارن مبيعات المتجر قبل الحملة وأثناءها وبعدها. قياس المبيعات المنسوبة للإعلان سيتطلب رابطاً أو رمز تتبع موثوقاً.</p>
-        <p class="mt-3 text-xs text-amber-300">المرحلة الأولى: واجهة تعريفية فقط؛ لا تسجيل للحملات أو تغيير للطلبات أو الفواتير.</p>
+        <form id="vendorAdPeriodPlanner" class="mt-5 grid gap-3 sm:grid-cols-2" autocomplete="off">
+          <label class="block text-sm text-slate-200">منصة الإعلان
+            <select id="vendorAdPlatform" class="field mt-1 w-full rounded-xl p-3" aria-label="منصة الإعلان"><option value="facebook">فيسبوك</option><option value="instagram">إنستغرام</option><option value="tiktok">تيك توك</option><option value="other">منصة أخرى</option></select>
+          </label>
+          <label class="block text-sm text-slate-200">المبلغ المصروف (دينار عراقي)
+            <input id="vendorAdSpend" class="field mt-1 w-full rounded-xl p-3" type="number" min="0" step="1" inputmode="numeric" placeholder="اختياري">
+          </label>
+          <label class="block text-sm text-slate-200">بداية الإعلان
+            <input id="vendorAdStart" class="field mt-1 w-full rounded-xl p-3" type="date" required>
+          </label>
+          <label class="block text-sm text-slate-200">نهاية الإعلان
+            <input id="vendorAdEnd" class="field mt-1 w-full rounded-xl p-3" type="date" required>
+          </label>
+          <div class="sm:col-span-2 flex flex-wrap gap-2"><button type="submit" class="vendor-order-filter">عرض فترات المقارنة</button><button type="reset" class="vendor-order-filter">مسح</button></div>
+        </form>
+        <div id="vendorAdPeriodResult" class="mt-4 rounded-xl border border-white/10 p-4 text-sm text-slate-200" role="status" aria-live="polite">اختر فترة الإعلان لعرض فترة مماثلة قبلها وبعدها. لا تُرسل المدخلات إلى الخادم ولا تُحفظ في المتصفح.</div>
+        <p class="mt-3 text-xs text-amber-300">هذه أداة تخطيط فقط؛ لا تعرض مبيعات حقيقية أو نتائج من منصات الإعلان. ربط الأرقام سيتم لاحقاً من خلال قراءة محمية من Supabase.</p>
       </div>
     </section>
     <section id="vendorTab-orders" class="vendor-tab-panel active">
@@ -437,6 +453,29 @@ async function exportVendorPaidStatement(){
   statementWindow.focus();
   setTimeout(()=>{try{statementWindow.print()}catch(e){console.warn('Statement print failed:',e)}},350);
 }
+/* Advertising period planner: client-only date math, no network/storage or order mutations. */
+(function(){
+  const day=86400000;
+  function dateValue(value){if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return null;const ms=Date.parse(value+'T00:00:00Z');return Number.isFinite(ms)&&new Date(ms).toISOString().slice(0,10)===value?ms:null}
+  function iso(ms){return new Date(ms).toISOString().slice(0,10)}
+  function init(){
+    const form=document.getElementById('vendorAdPeriodPlanner'),result=document.getElementById('vendorAdPeriodResult');
+    if(!form||!result)return;
+    form.addEventListener('submit',function(event){
+      event.preventDefault();
+      const start=dateValue(document.getElementById('vendorAdStart').value),end=dateValue(document.getElementById('vendorAdEnd').value);
+      if(start===null||end===null||end<start){result.textContent='تحقق من تاريخ البداية والنهاية؛ يجب ألا تسبق النهاية البداية.';return}
+      const days=Math.round((end-start)/day)+1;
+      if(days>366){result.textContent='اختر فترة لا تتجاوز 366 يوماً للمقارنة.';return}
+      const spend=document.getElementById('vendorAdSpend').value;
+      if(spend!==''&&(!Number.isSafeInteger(Number(spend))||Number(spend)<0)){result.textContent='أدخل مبلغاً صحيحاً غير سالب.';return}
+      const platform=document.getElementById('vendorAdPlatform').selectedOptions[0].textContent;
+      result.textContent='المنصة: '+platform+' | مدة الإعلان: '+days+' يوم | قبل الإعلان: '+iso(start-days*day)+' إلى '+iso(start-day)+' | أثناء الإعلان: '+iso(start)+' إلى '+iso(end)+' | بعد الإعلان: '+iso(end+day)+' إلى '+iso(end+days*day)+(spend!==''?' | الإنفاق المدخل: '+Number(spend).toLocaleString('en-US')+' د.ع':'')+'. هذه فترات مقارنة فقط وليست نتائج مبيعات.';
+    });
+    form.addEventListener('reset',function(){result.textContent='اختر فترة الإعلان لعرض فترة مماثلة قبلها وبعدها. لا تُرسل المدخلات إلى الخادم ولا تُحفظ في المتصفح.'});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
 let activeVendorTab='orders',activeVendorOrderFilter='all';
 function setVendorTab(tab){const allowed=['orders','finance','growth','adResults','products','notifications','deals','dealsHistory'];if(!allowed.includes(tab))tab='orders';activeVendorTab=tab;allowed.forEach(name=>{document.getElementById('vendorTab-'+name)?.classList.toggle('active',name===tab);document.getElementById('vendorTabBtn-'+name)?.classList.toggle('active',name===tab)});if(tab==='orders')window.renderVendorOrders();if(tab==='finance')renderFinance();if(tab==='notifications')loadVendorNotifV399()}
 let vendorNotifRowsV399=[];window.vendorNotifPageV399=1;const vendorNotifPageSizeV399=8;
