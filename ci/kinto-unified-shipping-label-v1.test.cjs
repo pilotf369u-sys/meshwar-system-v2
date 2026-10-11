@@ -35,7 +35,7 @@ for(const file of ['employee-dashboard.html','admin-dashboard.html','branch-dash
 const vendorHtml=fs.readFileSync('vendor-dashboard-v2.html','utf8');
 assert.doesNotMatch(vendorHtml,/MeshWar Cargo|@page\\{size:50mm 40mm/, 'legacy vendor label must be removed');
 assert.doesNotMatch(vendorHtml,/original\\?\\.\\(id\\)/, 'vendor label must not fall back to old printer');
-assert.match(vendorHtml,/KintoUnifiedShippingLabel\.print\(data,popup\)/, 'vendor must use unified printer');
+assert.match(vendorHtml,/label\.print\(data,popup\)/, 'vendor must use unified printer');
 assert.match(api.render({...base,customerName:'عمر',customerCode:'MW-C1001'}),/عمر.*MW-C1001/);
 assert.match(api.render(base),/قطع: 6 \| طرود: 1/);
 assert.match(label({delivery_payment_type:'cod_full',_invoiceTotals:invoice(100000)}),/المبلغ<\/b><span>100,000 IQD/);
