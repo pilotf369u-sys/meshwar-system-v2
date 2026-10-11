@@ -39,6 +39,12 @@ assert.match(vendorHtml,/KintoUnifiedShippingLabel\.print\(data,popup\)/, 'vendo
 assert.match(api.render({...base,customerName:'عمر',customerCode:'MW-C1001'}),/عمر.*MW-C1001/);
 assert.match(api.render(base),/قطع: 6 \| طرود: 1/);
 assert.match(label({delivery_payment_type:'cod_full',_invoiceTotals:invoice(100000)}),/المبلغ<\/b><span>100,000 IQD/);
+assert.match(api.render(base),/قطع: 6 \| طرود: 1/);
+const sample=api.buildOrderLabel({order_code:'KN-000101',details:{customer:{name:'عمر',code:'CUS-2675',phone:'905378240430',address:'كيجوران'}}},{pieces:6,parcels:1});
+assert.match(api.render(sample),/CUS-2675/);
+assert.match(api.render(sample),/كيجوران/);
+assert.match(vendorHtml,/KintoUnifiedShippingLabel\.buildOrderLabel\(o,/);
+assert.match(fs.readFileSync('js/vendor-v94-multistore-orders.js','utf8'),/KintoVendorLabelCustomer=labelCustomerSnapshot/);
 assert.match(api.render(base),/kintoSetSize/);
 assert.doesNotMatch(api.render(base),/setTimeout\(function\(\)\{window\.print\(\)/);
 assert.match(api.render(base),/@page\{size:100mm 100mm/);
