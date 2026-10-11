@@ -78,7 +78,7 @@ function render(data){
  field('المنطقة',d.area);field('الحي',d.neighborhood);field('الشارع',d.street);
  field('العنوان التفصيلي',d.address);field('أقرب نقطة دالة',d.landmark);
  field('ملاحظات التوصيل',d.deliveryNotes);field('الفرع',d.branch);
- field('رقم مرجعي',d.referenceOrderNo);field('القطع / الطرود','قطع: '+(present(d.pieces)?d.pieces:'—')+' | طرود: '+(present(d.parcels)?d.parcels:'—'));
+ field('رقم مرجعي',d.referenceOrderNo);field('','قطع: '+(present(d.pieces)?d.pieces:'—')+' | طرود: '+(present(d.parcels)?d.parcels:'—'));
  field('تاريخ الطلب',d.date);
  const collection=d.invoiceCollection||d.collectionCharges||null;
  if(collection&&collection.type==='paid_prepaid')field('','واصل');
