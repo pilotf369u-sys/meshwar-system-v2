@@ -47,6 +47,7 @@ assert.match(vendorHtml,/label\.buildOrderLabel\(o,/);
 assert.match(fs.readFileSync('js/vendor-v94-multistore-orders.js','utf8'),/KintoVendorLabelCustomer=labelCustomerSnapshot/);
 assert.match(api.render(base),/kintoSetSize/);
 assert.doesNotMatch(api.render(base),/setTimeout\(function\(\)\{window\.print\(\)/);
-assert.match(api.render(base),/@page\{size:100mm 100mm/);
+assert.match(api.render(base),/@page\{size:4in 5in/);
+assert.doesNotMatch(api.render(base),/break-after:page/);
 assert.match(api.render(base),/JsBarcode/);
 console.log('KINTO invoice-grounded unified shipping label tests passed');
