@@ -506,7 +506,7 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 <script defer src="js/vendor-settlement-archive-v163.js?v=20261010-live-archive"></script>
 <script defer src="js/vendor-dashboard-summary-v166.js?v=20261010-lifetime"></script>
 
-<script src="js/kinto-unified-shipping-label-v1.js?v=20261011-vendor-builder-cachefix-v1"></script>
+<script src="js/kinto-unified-shipping-label-v1.js?v=20261011-secondary-phone-v1"></script>
 <script id="kinto-unified-label-printShippingLabel">
 (function(){
  // One shared KINTO label; the vendor button has no independent label renderer.
@@ -524,7 +524,8 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
     if(typeof window.KintoVendorLabelCustomer!=='function')throw Error('تعذر قراءة بيانات المستلم');
     o._kintoCustomer=await window.KintoVendorLabelCustomer(o);
    }else if(window.KintoBundleV93?.hydrateCustomer)await window.KintoBundleV93.hydrateCustomer(o);
-   const data=label.buildOrderLabel(o,{
+   const collection=o._v95SegmentId?await window.KintoVendorLabelInvoiceCollection(o):label.invoiceCollection(o);
+   const data=label.buildOrderLabel(o,{invoiceCollection:collection,
     storeName:runtime.getStore()?.store_name,
     pieces:runtime.labelHelpers.orderQuantity(o),
     parcels:runtime.labelHelpers.orderParcelsCount(o)
