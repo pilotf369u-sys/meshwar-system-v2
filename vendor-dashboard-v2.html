@@ -439,6 +439,8 @@ function financeCurrency(){const x=[...new Set(orders.map(r=>r.currency).filter(
 function renderFinance(){renderVendorFinanceTable();window.dispatchEvent(new Event('kinto:vendor-finance-changed'))}
 function renderStats(){renderFinance()}
 
+function printShippingLabel(orderId){if(typeof window.printShippingLabel!=='function')throw Error('KINTO label printer is unavailable');return window.printShippingLabel(orderId)}
+
 let vendorOrdersRealtime=null,vendorRealtimeRefreshTimer=null;
 function scheduleVendorRealtimeRefresh(){clearTimeout(vendorRealtimeRefreshTimer);vendorRealtimeRefreshTimer=setTimeout(()=>{Promise.resolve(window.loadOrders()).catch(e=>console.warn('Vendor realtime refresh failed:',e))},180)}
 async function setupVendorOrdersRealtime(){
@@ -528,7 +530,7 @@ try{if(window.KintoBundleV93&&typeof window.KintoBundleV93.hydrateCustomer==='fu
      window.KintoUnifiedShippingLabel.print(data,popup);
    }catch(e){console.error('KINTO label:',e);alert('تعذر طباعة ملصق KINTO: '+e.message)}
  };
- printShippingLabel=window.printShippingLabel;
+
 })();
 </script>
 </body></html>
