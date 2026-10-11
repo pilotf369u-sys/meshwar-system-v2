@@ -1,67 +1,73 @@
-/* KINTO V168 — authenticated daily trend and financial composition. No tracking or writes. */
+/* KINTO V168: ECharts interactive read-only merchant growth charts. */
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const session=()=>{try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null')?.token||''}catch{return ''}};
-const format=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:0});
-const palette=['#34d399','#fbbf24','#818cf8'];
-let serial=0,lastData=null;
-function clearCanvas(canvas){if(!canvas)return;const ctx=canvas.getContext('2d');if(ctx)ctx.clearRect(0,0,canvas.width,canvas.height)}
-function setup(canvas){const w=Math.max(280,Math.round(canvas.getBoundingClientRect().width||560)),h=220,d=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);const ctx=canvas.getContext('2d');ctx.setTransform(d,0,0,d,0,0);return {ctx,w,h}}
-function lineChart(days,currency){
- const canvas=$('vendorGrowthTrendV168');if(!canvas)return;
- const {ctx,w,h}=setup(canvas);ctx.clearRect(0,0,w,h);
- const left=56,right=w-18,top=22,bottom=h-34;
- const byDate=new Map(days.filter(x=>x.currency===currency).map(x=>[x.day,Number(x.sales)]));
- const from=$('vendorGrowthFrom').value,to=$('vendorGrowthTo').value;
- const dates=[];let t=Date.parse(from+'T00:00:00Z'),end=Date.parse(to+'T00:00:00Z');
- for(let i=0;t<=end&&i<366;i++,t+=86400000)dates.push(new Date(t).toISOString().slice(0,10));
- const vals=dates.map(x=>byDate.get(x)||0),max=Math.max(1,...vals);
- ctx.font='11px Arial';ctx.textAlign='right';ctx.fillStyle='#cbd5e1';ctx.strokeStyle='rgba(255,255,255,.15)';
- for(let k=0;k<=4;k++){const y=top+(bottom-top)*k/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(right,y);ctx.stroke();ctx.fillText(format(max*(4-k)/4),left-7,y+4)}
- if(!dates.length)return;
- ctx.strokeStyle='#34d399';ctx.lineWidth=2.5;ctx.beginPath();
- vals.forEach((v,i)=>{const x=left+(right-left)*(dates.length===1?.5:i/(dates.length-1)),y=bottom-(bottom-top)*v/max;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
- ctx.fillStyle='#cbd5e1';ctx.textAlign='center';ctx.fillText(dates[0].slice(5),left,bottom+19);if(dates.length>1)ctx.fillText(dates.at(-1).slice(5),right-12,bottom+19);
-}
-function donut(days,currency){
- const canvas=$('vendorGrowthCompositionV168');if(!canvas)return;
- const {ctx,w,h}=setup(canvas);ctx.clearRect(0,0,w,h);
- const rows=days.filter(x=>x.currency===currency);
- const vals=[rows.reduce((a,x)=>a+Number(x.net),0),rows.reduce((a,x)=>a+Number(x.commission),0),rows.reduce((a,x)=>a+Number(x.deductions),0)];
- const total=vals.reduce((a,b)=>a+b,0);
- if(vals.some(x=>x<0)||total<=0){$('vendorGrowthCompositionLegendV168').textContent='لا يوجد توزيع موجب صالح للرسم لهذه الفترة.';return}
- const cx=Math.min(w*.33,145),cy=105,r=75;let start=-Math.PI/2;
- vals.forEach((v,i)=>{if(!v)return;const end=start+v/total*2*Math.PI;ctx.beginPath();ctx.arc(cx,cy,r,start,end);ctx.arc(cx,cy,r*.54,end,start,true);ctx.closePath();ctx.fillStyle=palette[i];ctx.fill();start=end});
- ctx.fillStyle='#f8fafc';ctx.font='bold 13px Arial';ctx.textAlign='center';ctx.fillText(currency,cx,110);
- const names=['صافي المستحق للتاجر','العمولة','الخصومات الأخرى'];
- $('vendorGrowthCompositionLegendV168').textContent=names.map((n,i)=>n+': '+format(vals[i])+' '+currency).join(' · ');
+const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
+const colors=['#34d399','#fbbf24','#818cf8'];
+let seq=0,rows=null,trend=null,composition=null,range=null;
+const status=s=>{const el=$('vendorGrowthChartStatusV168');if(el)el.textContent=s};
+function validRow(r){return r&&/^\d{4}-\d{2}-\d{2}$/.test(r.day)&&typeof r.currency==='string'&&r.currency.length<16&&['sales','commission','deductions','net'].every(k=>r[k]!==null&&r[k]!==''&&Number.isFinite(Number(r[k])))}
+function chart(el,old){if(!el||!window.echarts)return null;return old||window.echarts.init(el,null,{renderer:'canvas'})}
+function redraw(){
+ if(!rows||!range||!window.echarts)return;
+ const currency=$('vendorGrowthChartCurrencyV168')?.value;
+ const list=rows.filter(r=>r.currency===currency);
+ const dates=[],lookup=new Map(list.map(r=>[r.day,Number(r.sales)]));
+ for(let t=Date.parse(range.from+'T00:00:00Z'),end=Date.parse(range.to+'T00:00:00Z'),i=0;t<=end&&i<366;i++,t+=86400000)dates.push(new Date(t).toISOString().slice(0,10));
+ trend=chart($('vendorGrowthTrendV168'),trend);
+ composition=chart($('vendorGrowthCompositionV168'),composition);
+ if(!trend||!composition)return;
+ trend.setOption({backgroundColor:'transparent',color:[colors[0]],animationDuration:350,
+  tooltip:{trigger:'axis',confine:true,valueFormatter:v=>fmt(v)+' '+currency},
+  grid:{left:66,right:18,top:28,bottom:62,containLabel:false},
+  xAxis:{type:'category',data:dates,axisLabel:{color:'#cbd5e1',hideOverlap:true},axisLine:{lineStyle:{color:'#64748b'}}},
+  yAxis:{type:'value',min:0,axisLabel:{color:'#cbd5e1',formatter:v=>fmt(v)},splitLine:{lineStyle:{color:'rgba(255,255,255,.10)'}}},
+  dataZoom:[{type:'inside',zoomOnMouseWheel:false,moveOnMouseWheel:false},{type:'slider',bottom:9,height:18,textStyle:{color:'#cbd5e1'}}],
+  series:[{name:'المبيعات',type:'line',smooth:.2,showSymbol:dates.length<=35,symbolSize:7,areaStyle:{opacity:.12},data:dates.map(d=>lookup.get(d)||0)}]
+ },true);
+ const totals=[list.reduce((s,r)=>s+Number(r.net),0),list.reduce((s,r)=>s+Number(r.commission),0),list.reduce((s,r)=>s+Number(r.deductions),0)];
+ const labels=['مستحق التاجر','العمولة','الخصومات الأخرى'];
+ const valid=totals.every(v=>v>=0)&&totals.some(v=>v>0);
+ composition.setOption({backgroundColor:'transparent',color:colors,
+  tooltip:{trigger:'item',confine:true,formatter:p=>p.name+': '+fmt(p.value)+' '+currency+' ('+p.percent+'%)'},
+  legend:{bottom:0,textStyle:{color:'#e2e8f0'},type:'scroll'},
+  series:[{type:'pie',radius:['42%','70%'],center:['50%','42%'],avoidLabelOverlap:true,
+   label:{show:false},emphasis:{label:{show:true,color:'#fff',fontSize:13}},
+   data:valid?totals.map((v,i)=>({name:labels[i],value:v})):[]}]
+ },true);
+ $('vendorGrowthCompositionLegendV168').textContent=valid?labels.map((label,i)=>label+': '+fmt(totals[i])+' '+currency).join(' · '):'لا يوجد توزيع مالي موجب صالح للرسم لهذه الفترة.';
+ trend.resize();composition.resize();
 }
 async function refresh(){
- const token=session(),client=window.MeshwarVendorRuntime?.sb,from=$('vendorGrowthFrom')?.value,to=$('vendorGrowthTo')?.value,seq=++serial;
+ const token=session(),client=window.MeshwarVendorRuntime?.sb,from=$('vendorGrowthFrom')?.value,to=$('vendorGrowthTo')?.value,request=++seq;
  if(!token||!client||!from||!to||from>to)return;
- const span=(Date.parse(to+'T00:00:00Z')-Date.parse(from+'T00:00:00Z'))/86400000;
- if(!Number.isFinite(span)||span>365)return;
- $('vendorGrowthChartStatusV168').textContent='جارٍ تحميل الرسوم…';
+ const days=(Date.parse(to+'T00:00:00Z')-Date.parse(from+'T00:00:00Z'))/86400000;
+ if(!Number.isFinite(days)||days>365)return;
+ if(!window.echarts){status('تعذر تحميل مكتبة الرسوم. بيانات المبيعات الأساسية ما زالت متاحة أعلاه.');return}
+ status('جارٍ تحميل الرسوم التفاعلية…');
  try{
   const {data,error}=await client.rpc('vendor_growth_daily_v168',{p_session_token:token,p_from:from,p_to:to});
   if(error)throw error;
-  if(seq!==serial||session()!==token)return;
-  if(data?.basis!=='delivered_v161_orders_by_creation_date'||!Array.isArray(data.days))throw Error('Invalid response');
-  const rows=data.days;
-  if(rows.some(r=>!/^\d{4}-\d{2}-\d{2}$/.test(r.day)||!r.currency||!['sales','commission','deductions','net'].every(k=>Number.isFinite(Number(r[k])))))throw Error('Invalid values');
-  const currencies=[...new Set(rows.map(r=>r.currency))];
-  const selected=$('vendorGrowthChartCurrencyV168');selected.replaceChildren();
-  for(const currency of currencies){const option=document.createElement('option');option.value=currency;option.textContent=currency;selected.append(option)}
-  if(!currencies.length){clearCanvas($('vendorGrowthTrendV168'));clearCanvas($('vendorGrowthCompositionV168'));$('vendorGrowthCompositionLegendV168').textContent='لا توجد طلبات مسلّمة في الفترة.';$('vendorGrowthChartStatusV168').textContent='لا توجد بيانات لرسمها.';return}
-  lastData=rows;draw();$('vendorGrowthChartStatusV168').textContent='منحنى المبيعات حسب تاريخ إنشاء الطلب؛ الأيام بلا طلبات تظهر بصفر. الرسم الدائري يوزع المبيعات إلى مستحقات التاجر والعمولة والخصومات، وليس توزيع الأرباح.';
- }catch(e){if(seq===serial&&session()===token){$('vendorGrowthChartStatusV168').textContent='تعذر تحميل الرسوم؛ تأكد من تنفيذ SQL V168.';console.warn('KINTO V168 charts:',e.message)}}
+  if(request!==seq||session()!==token)return;
+  if(!data||data.basis!=='delivered_v161_orders_by_creation_date'||!Array.isArray(data.days)||data.days.some(r=>!validRow(r)))throw Error('Invalid response');
+  rows=data.days;range={from,to};
+  const currencies=[...new Set(rows.map(r=>r.currency))].sort();
+  const selector=$('vendorGrowthChartCurrencyV168'),previous=selector.value;
+  selector.replaceChildren();
+  for(const c of currencies){const option=document.createElement('option');option.value=c;option.textContent=c;selector.append(option)}
+  if(currencies.includes(previous))selector.value=previous;
+  if(!currencies.length){trend?.clear();composition?.clear();$('vendorGrowthCompositionLegendV168').textContent='لا توجد طلبات مسلّمة في الفترة.';status('لا توجد بيانات لرسمها.');return}
+  redraw();
+  status('رسوم تفاعلية من الطلبات المسلّمة وفق تاريخ إنشاء الطلب؛ الأيام بلا طلبات تظهر بصفر. توزيع المبيعات لا يعني توزيع الربح.');
+ }catch(e){if(request===seq&&session()===token){status('تعذر تحميل الرسوم؛ تحقق من تنفيذ SQL V168.');console.warn('KINTO V168 charts:',e.message)}}
 }
-function draw(){if(!lastData)return;const c=$('vendorGrowthChartCurrencyV168').value;lineChart(lastData,c);donut(lastData,c)}
 function init(){
- $('vendorGrowthForm')?.addEventListener('submit',()=>{setTimeout(refresh,0)});
- $('vendorGrowthChartCurrencyV168')?.addEventListener('change',draw);
- window.addEventListener('resize',()=>{if($('vendorTab-growth')?.classList.contains('active'))draw()});
- window.KintoVendorGrowthChartsV168={refresh};
+ $('vendorGrowthForm')?.addEventListener('submit',()=>setTimeout(refresh,0));
+ $('vendorGrowthChartCurrencyV168')?.addEventListener('change',redraw);
+ window.addEventListener('resize',()=>{if($('vendorTab-growth')?.classList.contains('active')){trend?.resize();composition?.resize()}});
+ if(window.ResizeObserver){const observer=new ResizeObserver(()=>{if($('vendorTab-growth')?.classList.contains('active')){trend?.resize();composition?.resize()}});for(const id of ['vendorGrowthTrendV168','vendorGrowthCompositionV168'])if($(id))observer.observe($(id))}
+ window.addEventListener('meshwar:vendor-session-ready',()=>{seq++;rows=null;trend?.clear();composition?.clear()});
+ window.KintoVendorGrowthChartsV168={refresh,resize:()=>{trend?.resize();composition?.resize()}};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
