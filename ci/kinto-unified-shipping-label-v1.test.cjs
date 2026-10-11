@@ -17,7 +17,7 @@ assert.match(label({delivery_payment_type:'product_paid_delivery_cod',external_s
 assert.doesNotMatch(label({delivery_payment_type:'product_paid_delivery_cod',external_shipping_fee:15000,delivery_fee:5000,currency:'IQD',_v95SegmentId:'seg1',external_shipping_collector_segment_id:'seg2'}),/20,000/);
 for(const file of ['employee-dashboard.html','admin-dashboard.html','branch-dashboard.html','vendor-dashboard-v2.html']){
  const html=fs.readFileSync(file,'utf8');
- assert.match(html,/KintoUnifiedShippingLabel\.invoiceCollection\(o\)/,file);
+ assert.match(html,file==='vendor-dashboard-v2.html'?/KintoUnifiedShippingLabel\.buildOrderLabel\(o,/:/KintoUnifiedShippingLabel\.invoiceCollection\(o\)/,file);
 }
 const vendorBridge=fs.readFileSync('js/vendor-v94-multistore-orders.js','utf8');
 assert.match(vendorBridge,/row\.delivery_payment_type=control\.delivery_payment_type/);
