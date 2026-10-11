@@ -523,7 +523,7 @@ if(o._v95SegmentId){
   if(typeof window.KintoVendorLabelCustomer!=='function')throw Error('مصدر بيانات العميل الآمن غير متاح');
   o._kintoCustomer=await window.KintoVendorLabelCustomer(o);
  }else if(window.KintoBundleV93?.hydrateCustomer)await window.KintoBundleV93.hydrateCustomer(o);
- const collection=o._v95SegmentId?await window.KintoVendorLabelCollection(o):window.KintoUnifiedShippingLabel.invoiceCollection(o);
+ const collection=window.KintoUnifiedShippingLabel.invoiceCollection(o);
  const data=window.KintoUnifiedShippingLabel.buildOrderLabel(o,{invoiceCollection:collection,
   storeName:runtime.getStore()?.store_name,
   pieces:orderQuantity(o),parcels:orderParcelsCount(o)
