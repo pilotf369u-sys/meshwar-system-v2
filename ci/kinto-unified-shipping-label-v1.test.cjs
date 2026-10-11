@@ -32,7 +32,10 @@ for(const file of ['employee-dashboard.html','admin-dashboard.html','branch-dash
  const html=fs.readFileSync(file,'utf8');
  assert.match(html,/KintoUnifiedShippingLabel\.destination\(o\)/,file);
 }
-assert.match(fs.readFileSync('vendor-dashboard-v2.html','utf8'),/window\.__kintoVendorUnifiedPrint/, 'vendor legacy print must delegate');
+const vendorHtml=fs.readFileSync('vendor-dashboard-v2.html','utf8');
+assert.doesNotMatch(vendorHtml,/MeshWar Cargo|@page\\{size:50mm 40mm/, 'legacy vendor label must be removed');
+assert.doesNotMatch(vendorHtml,/original\\?\\.\\(id\\)/, 'vendor label must not fall back to old printer');
+assert.match(vendorHtml,/KintoUnifiedShippingLabel\\.print\\(data\\)/, 'vendor must use unified printer');
 assert.match(api.render(base),/kintoSetSize/);
 assert.doesNotMatch(api.render(base),/setTimeout\(function\(\)\{window\.print\(\)/);
 assert.match(api.render(base),/@page\{size:100mm 100mm/);
