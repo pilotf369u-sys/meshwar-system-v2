@@ -53,9 +53,9 @@ async function refresh(){
  status('جارٍ تحميل الرسوم التفاعلية…');
  try{
   const start=Date.parse(from+'T00:00:00Z'),prevTo=iso(start-dayMs),prevFrom=iso(start-(days+1)*dayMs);
-  const [current,previous]=await Promise.all([client.rpc('vendor_growth_daily_v168',{p_session_token:token,p_from:from,p_to:to}),client.rpc('vendor_growth_daily_v168',{p_session_token:token,p_from:prevFrom,p_to:prevTo})]);
-  if(current.error)throw current.error;if(previous.error)throw previous.error;
-  const data=current.data,prior=previous.data;
+  const [current,previousResult]=await Promise.all([client.rpc('vendor_growth_daily_v168',{p_session_token:token,p_from:from,p_to:to}),client.rpc('vendor_growth_daily_v168',{p_session_token:token,p_from:prevFrom,p_to:prevTo})]);
+  if(current.error)throw current.error;if(previousResult.error)throw previousResult.error;
+  const data=current.data,prior=previousResult.data;
   if(request!==seq||session()!==token)return;
   if(!data||data.basis!=='delivered_v161_orders_by_creation_date'||!Array.isArray(data.days)||data.days.some(r=>!validRow(r)))throw Error('Invalid response');
   if(!prior||prior.basis!==data.basis||!Array.isArray(prior.days)||prior.days.some(r=>!validRow(r)))throw Error('Invalid comparison response');
