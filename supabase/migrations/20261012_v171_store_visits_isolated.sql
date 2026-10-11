@@ -28,6 +28,8 @@ declare d date:=(now() at time zone 'Europe/Istanbul')::date;
 begin
  if p_store_id is null or p_session_id is null or p_browser_id is null then return;end if;
  if not exists(select 1 from public.local_stores where id=p_store_id and status='active') then return;end if;
+ -- Hard upper bound per store/day to limit accidental or abusive growth.
+ if exists(select 1 from public.kinto_store_visits_daily_v171 where store_id=p_store_id and visit_day=d and visits>=10000) then return;end if;
  -- Hash high-entropy random UUIDs; never persist browser or session identifiers themselves.
  insert into private.kinto_store_visit_dedupe_v171(store_id,visit_day,token_kind,token_hash)
  values(p_store_id,d,'session',md5(p_session_id::text))
@@ -68,7 +70,9 @@ begin
 end $$;
 revoke all on function public.vendor_store_visits_v171(text,date,date) from public,anon,authenticated;
 grant execute on function public.vendor_store_visits_v171(text,date,date) to anon,authenticated;
--- Optional periodic housekeeping: run manually/monthly until a safe cron schedule is agreed:
--- delete from private.kinto_store_visit_dedupe_v171 where visit_day < current_date - 35;
+-- Run this separately via a reviewed daily scheduler to cap dedup storage:
+-- delete from private.kinto_store_visit_dedupe_v171
+-- where visit_day < (now() at time zone 'Europe/Istanbul')::date - 35;
+-- V171 must not be enabled at scale until scheduled retention is installed.
 notify pgrst,'reload schema';
 commit;
