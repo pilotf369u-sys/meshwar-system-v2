@@ -141,6 +141,23 @@ async function secureLogin(){
 
 async function secureLogout(){const active=session();clearSession();if(active){try{await runtime.sb.rpc('vendor_logout_session',{p_session_token:active.token})}catch(e){console.warn('Vendor session revoke failed',e)}}return runtime.nativeVendorLogout()}
 
+// Label data uses the same session-scoped customer snapshot as the vendor invoice.
+async function secureLabelCustomer(order){
+ if(!order?._v95SegmentId)return null;
+ const active=session();
+ if(!active?.token)throw new Error('يلزم تسجيل دخول التاجر لعرض بيانات مستلم الشحنة');
+ const key=String(order.id);
+ let details=detailCache.get(key);
+ if(!details){
+  const {data,error}=await runtime.sb.rpc('vendor_get_order_segment_details',{p_session_token:active.token,p_segment_id:order._v95SegmentId});
+  if(error)throw error;
+  details=data;
+  detailCache.set(key,data);
+ }
+ const customer=parse(details?.customer_snapshot||details?.customer);
+ return Object.keys(customer).length?customer:null;
+}
+window.KintoVendorSecureLabelCustomer=secureLabelCustomer;
 window.vendorLogin=secureLogin;window.vendorLogout=secureLogout;window.loadOrders=loadSegmentOrders;window.renderVendorOrders=renderOrders;window.openV94VendorOrderDetails=openDetails;window.setV94VendorStoreStatus=setStatus;window.printV95VendorStoreInvoice=printStoreInvoice;window.vendorShippingCompanyChanged=vendorShippingCompanyChanged;window.vendorFreeShippingChanged=vendorFreeShippingChanged;window.saveVendorOrderShipping=saveVendorOrderShipping;window.vendorTableShippingChanged=vendorTableShippingChanged;window.vendorTableFreeShippingChanged=vendorTableFreeShippingChanged;window.saveVendorTableShipping=saveVendorTableShipping;window.MeshwarVendorV94={projectOrder:projectLegacyOrder,projectSegment,loadOrders:loadSegmentOrders,session,statuses:VENDOR_OPERATIONAL_STATUSES.slice()};
 window.dispatchEvent(new CustomEvent('meshwar:vendor-segment-adapter-ready'));
 })();
