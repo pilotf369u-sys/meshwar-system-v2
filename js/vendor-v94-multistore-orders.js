@@ -158,6 +158,63 @@ async function labelCustomerSnapshot(order){
  if(!Object.keys(customer).length)throw new Error('بيانات المستلم غير متاحة في تفاصيل الطلب الآمنة');
  return customer;
 }
+// Read payment mode from the same authorized segment invoice and shipping controls.
+async function labelInvoiceCollection(order){
+ if(!order?._v95SegmentId)return window.KintoUnifiedShippingLabel.invoiceCollection(order);
+ const active=session();
+ if(!active?.token)throw new Error('جلسة التاجر غير صالحة');
+ const id=String(order._v95SegmentId),key=String(order.id);
+ let details=detailCache.get(key);
+ if(!details){
+  const response=await runtime.sb.rpc('vendor_get_order_segment_details',{p_session_token:active.token,p_segment_id:id});
+  if(response.error)throw response.error;
+  details=response.data;detailCache.set(key,details);
+ }
+ let shipping=shippingControlCache.get(id);
+ if(!shipping){
+  let response=await runtime.sb.rpc('vendor_get_order_shipping_control',{p_session_token:active.token,p_segment_id:id});
+  if(response.error&&String(response.error.message||'').includes('vendor_get_order_shipping_control'))response=await runtime.sb.rpc('vendor_get_order_segment_shipping',{p_session_token:active.token,p_segment_id:id});
+  if(response.error)throw response.error;
+  shipping=response.data;shippingControlCache.set(id,shipping);
+ }
+ const canonical=await hydrateVendorCanonicalInvoice(order,shipping);
+ const type=String(canonical.delivery_payment_type||details?.delivery_payment_type||shipping?.delivery_payment_type||order.delivery_payment_type||'');
+ if(type==='paid_prepaid')return {type,amounts:[]};
+ // The vendor invoice has no explicit verified per-store COD due amount in this projection.
+ // Do not mislabel an invoice subtotal as an outstanding collection balance.
+ return {type,amounts:null};
+}
+window.KintoVendorLabelInvoiceCollection=labelInvoiceCollection;
+async function labelStoreInvoiceTotal(order){
+ if(!order?._v95SegmentId)return '';
+ const active=session();if(!active?.token)throw new Error('جلسة التاجر غير صالحة');
+ const id=String(order._v95SegmentId),key=String(order.id);
+ let details=detailCache.get(key);
+ if(!details){
+  const response=await runtime.sb.rpc('vendor_get_order_segment_details',{p_session_token:active.token,p_segment_id:id});
+  if(response.error)throw response.error;
+  details=response.data;detailCache.set(key,details);
+ }
+ let shipping=shippingControlCache.get(id);
+ if(!shipping){
+  let response=await runtime.sb.rpc('vendor_get_order_shipping_control',{p_session_token:active.token,p_segment_id:id});
+  if(response.error&&String(response.error.message||'').includes('vendor_get_order_shipping_control'))response=await runtime.sb.rpc('vendor_get_order_segment_shipping',{p_session_token:active.token,p_segment_id:id});
+  if(response.error)throw response.error;
+  shipping=response.data;shippingControlCache.set(id,shipping);
+ }
+ const canonical=await hydrateVendorCanonicalInvoice(order,shipping);
+ const subtotal=Number(canonical.total_price??details?.subtotal_local??order.total_price);
+ if(!Number.isFinite(subtotal)||subtotal<0)return '';
+ const externalShippingFee=Number(canonical.external_shipping_fee)||0;
+ const deliveryFee=Number(canonical.delivery_fee??shipping?.delivery_fee)||0;
+ const currency=canonical.currency||details?.currency||order.currency||runtime.financeCurrency();
+ const deliveryCurrency=canonical.delivery_currency||shipping?.delivery_currency||shipping?.shipping_snapshot?.currency||currency;
+ const mixedCurrency=String(deliveryCurrency).toUpperCase()!==String(currency).toUpperCase();
+ const reward=vendorRewardInfo(canonical);
+ return vendorRewardGrand({subtotal,externalShippingFee,deliveryFee,currency,deliveryCurrency,mixedCurrency,reward,grandTotal:mixedCurrency?subtotal+externalShippingFee:subtotal+externalShippingFee+deliveryFee});
+}
+window.KintoVendorLabelStoreInvoiceTotal=labelStoreInvoiceTotal;
+
 window.KintoVendorLabelCustomer=labelCustomerSnapshot;
 window.vendorLogin=secureLogin;window.vendorLogout=secureLogout;window.loadOrders=loadSegmentOrders;window.renderVendorOrders=renderOrders;window.openV94VendorOrderDetails=openDetails;window.setV94VendorStoreStatus=setStatus;window.printV95VendorStoreInvoice=printStoreInvoice;window.vendorShippingCompanyChanged=vendorShippingCompanyChanged;window.vendorFreeShippingChanged=vendorFreeShippingChanged;window.saveVendorOrderShipping=saveVendorOrderShipping;window.vendorTableShippingChanged=vendorTableShippingChanged;window.vendorTableFreeShippingChanged=vendorTableFreeShippingChanged;window.saveVendorTableShipping=saveVendorTableShipping;window.MeshwarVendorV94={projectOrder:projectLegacyOrder,projectSegment,loadOrders:loadSegmentOrders,session,statuses:VENDOR_OPERATIONAL_STATUSES.slice()};
 window.dispatchEvent(new CustomEvent('meshwar:vendor-segment-adapter-ready'));
