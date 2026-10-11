@@ -70,9 +70,21 @@ begin
 end $$;
 revoke all on function public.vendor_store_visits_v171(text,date,date) from public,anon,authenticated;
 grant execute on function public.vendor_store_visits_v171(text,date,date) to anon,authenticated;
--- Run this separately via a reviewed daily scheduler to cap dedup storage:
--- delete from private.kinto_store_visit_dedupe_v171
--- where visit_day < (now() at time zone 'Europe/Istanbul')::date - 35;
--- V171 must not be enabled at scale until scheduled retention is installed.
+-- Daily retention for dedup hashes; the aggregated daily counters remain.
+create or replace function private.kinto_visit_cleanup_v171()
+returns void language plpgsql security definer set search_path=private,public,pg_temp as $
+begin
+ delete from private.kinto_store_visit_dedupe_v171
+ where visit_day < (now() at time zone 'Europe/Istanbul')::date - 35;
+end $;
+revoke all on function private.kinto_visit_cleanup_v171() from public,anon,authenticated;
+do $install$
+begin
+ if to_regprocedure('cron.schedule(text,text,text)') is not null then
+  perform cron.schedule('kinto-v171-dedupe-retention','15 3 * * *','select private.kinto_visit_cleanup_v171()');
+ else
+  raise exception 'V171_REQUIRES_PG_CRON_FOR_RETENTION';
+ end if;
+end $install$;
 notify pgrst,'reload schema';
 commit;
