@@ -474,6 +474,7 @@ window.MeshwarVendorRuntime={
   saveStoreSession,
   openDashboard,
   getOrders:()=>orders,
+  labelHelpers:{normalizeOrderDetails,orderCity,orderQuantity,orderParcelsCount},
   setOrders:value=>{orders=Array.isArray(value)?value:[]},
   money,
   financeCurrency,
@@ -509,7 +510,10 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
  window.printShippingLabel=async function(id){
    try{
      const key=decodeURIComponent(String(id));
-     const o=orders.find(x=>String(x.id)===key);
+     const runtime=window.MeshwarVendorRuntime;
+     if(!runtime||!runtime.getOrders||!runtime.labelHelpers)throw Error('بيانات التاجر غير جاهزة');
+     const {normalizeOrderDetails,orderCity,orderQuantity,orderParcelsCount}=runtime.labelHelpers;
+     const o=runtime.getOrders().find(x=>String(x.id)===key);
      if(!o)throw Error('الطلب غير موجود');if(!window.KintoUnifiedShippingLabel)throw Error('ملف الملصق الموحد غير متاح');
 const popup=window.open('','_blank','width=700,height=750');
 if(!popup)throw Error('يرجى السماح بفتح نافذة الملصق');
