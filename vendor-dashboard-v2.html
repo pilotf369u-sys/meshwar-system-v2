@@ -503,6 +503,25 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 <script defer src="js/vendor-order-indicators-v66.js?v=20261008-v67-runtime-ready"></script>
 <script defer src="js/vendor-settlement-archive-v163.js?v=20261010-live-archive"></script>
 <script defer src="js/vendor-dashboard-summary-v166.js?v=20261010-lifetime"></script>
-</body>
-</html>
 
+<script src="js/kinto-unified-shipping-label-v1.js?v=20261010"></script>
+<script id="kinto-unified-label-printShippingLabel">
+(function(){
+ const original=window.printShippingLabel;
+ window.printShippingLabel=function(id){
+   try{
+     const key=decodeURIComponent(String(id));
+     const o=orders.find(x=>String(x.id)===key);
+     if(!o||!window.KintoUnifiedShippingLabel)return original?.(id);
+     const d=normalizeOrderDetails(o.details),c=(d.customer&&typeof d.customer==='object')?d.customer:{};
+     const pick=(...xs)=>xs.find(x=>x!==null&&x!==undefined&&String(x).trim()!==''&&String(x).trim()!=='---')||'';
+     const data={orderCode:pick(o.order_code,o.id),referenceOrderNo:o.reference_order_no,storeName:pick(o.store_name,d.store_name),customerName:pick(o.customer_name,c.name,d.customer_name),phone:pick(o.customer_phone,o.phone,c.phone,d.phone),secondaryPhone:pick(o.secondary_phone,c.secondary_phone,d.secondary_phone),governorate:pick(orderCity(o)),district:pick(o.district,d.district,c.district),subdistrict:pick(o.subdistrict,d.subdistrict,c.subdistrict),area:pick(o.area,d.area,c.area),neighborhood:pick(o.neighborhood,d.neighborhood,c.neighborhood),street:pick(o.street,d.street,c.street),address:pick(o.customer_address,o.address,d.address,c.address),landmark:pick(o.landmark,d.landmark,c.landmark),deliveryNotes:pick(d.delivery_notes,o.delivery_notes),branch:pick(o.branch_name,d.branch_name),pieces:orderQuantity(o),parcels:orderParcelsCount(o),date:o.created_at?new Date(o.created_at).toLocaleDateString('en-GB'):''};
+     // Never infer outstanding balances from order totals or COD labels.
+     data.invoiceCollection=window.KintoUnifiedShippingLabel.invoiceCollection(o);
+     window.KintoUnifiedShippingLabel.print(data);
+   }catch(e){console.error('KINTO label:',e);alert('تعذر طباعة ملصق KINTO: '+e.message)}
+ };
+ printShippingLabel=window.printShippingLabel;
+})();
+</script>
+</body></html>
