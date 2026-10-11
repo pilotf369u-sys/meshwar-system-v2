@@ -5,7 +5,7 @@ const api=window.KintoUnifiedShippingLabel;
 const base={orderCode:'KN-000065',governorate:'بغداد',pieces:6,parcels:1};
 const invoice=(grand,currency='IQD')=>({grand,currency,goods:90000,external:5000,delivery:5000,deliveryCurrency:currency,mixed:false,reward:{amount:0},campaign:{amount:0}});
 function label(o){return api.render({...base,invoiceCollection:api.invoiceCollection(o)})}
-assert.match(label({delivery_payment_type:'paid_prepaid'}),/مدفوع شامل/);
+assert.match(label({delivery_payment_type:'paid_prepaid'}),/واصل/);
 assert.doesNotMatch(label({delivery_payment_type:'paid_prepaid',total_price:100000}),/100,000/);
 assert.match(label({delivery_payment_type:'cod_full',_invoiceTotals:invoice(100000)}),/100,000 IQD/);
 assert.match(label({delivery_payment_type:'cod_full',_v95SegmentId:'seg1',_invoiceTotals:invoice(100000)}),/غير مؤكد/);
@@ -36,6 +36,8 @@ const vendorHtml=fs.readFileSync('vendor-dashboard-v2.html','utf8');
 assert.doesNotMatch(vendorHtml,/MeshWar Cargo|@page\\{size:50mm 40mm/, 'legacy vendor label must be removed');
 assert.doesNotMatch(vendorHtml,/original\\?\\.\\(id\\)/, 'vendor label must not fall back to old printer');
 assert.match(vendorHtml,/KintoUnifiedShippingLabel\.print\(data,popup\)/, 'vendor must use unified printer');
+assert.match(api.render({...base,customerName:'عمر',customerCode:'MW-C1001'}),/عمر.*MW-C1001/);
+assert.match(api.render(base),/القطع \/ الطرود/);
 assert.match(api.render(base),/kintoSetSize/);
 assert.doesNotMatch(api.render(base),/setTimeout\(function\(\)\{window\.print\(\)/);
 assert.match(api.render(base),/@page\{size:100mm 100mm/);
