@@ -33,6 +33,8 @@ for(const file of ['employee-dashboard.html','admin-dashboard.html','branch-dash
  assert.match(html,/KintoUnifiedShippingLabel\.destination\(o\)/,file);
 }
 assert.match(fs.readFileSync('vendor-dashboard-v2.html','utf8'),/window\.__kintoVendorUnifiedPrint/, 'vendor legacy print must delegate');
+assert.match(api.render(base),/kintoSetSize/);
+assert.doesNotMatch(api.render(base),/setTimeout\(function\(\)\{window\.print\(\)/);
 assert.match(api.render(base),/@page\{size:100mm 100mm/);
 assert.match(api.render(base),/JsBarcode/);
 console.log('KINTO invoice-grounded unified shipping label tests passed');
