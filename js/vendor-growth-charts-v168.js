@@ -19,7 +19,7 @@ function redraw(){
  const list=rows.filter(r=>r.currency===currency);
  const dates=[],lookup=new Map();for(const r of list)lookup.set(r.day,(lookup.get(r.day)||0)+Number(r.sales));
  for(let t=Date.parse(range.from+'T00:00:00Z'),end=Date.parse(range.to+'T00:00:00Z'),i=0;t<=end&&i<366;i++,t+=86400000)dates.push(new Date(t).toISOString().slice(0,10));
- const mode=$('vendorGrowthGranularityV169')?.value||'daily';const buckets=new Map();for(const d of dates){const k=groupKey(d,mode);buckets.set(k,(buckets.get(k)||0)+(lookup.get(d)||0))}const labelsX=[...buckets.keys()];
+ const mode=$('vendorGrowthGranularityV169')?.value||'daily';const periodName=({daily:'اليومي',weekly:'الأسبوعي',monthly:'الشهري'})[mode]||'اليومي';const title=$('vendorGrowthTrendTitleV170');if(title)title.textContent='📈 اتجاه المبيعات '+periodName;const trendElement=$('vendorGrowthTrendV168');if(trendElement)trendElement.setAttribute('aria-label','منحنى تفاعلي للمبيعات '+periodName);const buckets=new Map();for(const d of dates){const k=groupKey(d,mode);buckets.set(k,(buckets.get(k)||0)+(lookup.get(d)||0))}const labelsX=[...buckets.keys()];
  trend=chart($('vendorGrowthTrendV168'),trend);
  composition=chart($('vendorGrowthCompositionV168'),composition);
  if(!trend||!composition)return;
