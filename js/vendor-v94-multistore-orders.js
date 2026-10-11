@@ -141,6 +141,24 @@ async function secureLogin(){
 
 async function secureLogout(){const active=session();clearSession();if(active){try{await runtime.sb.rpc('vendor_logout_session',{p_session_token:active.token})}catch(e){console.warn('Vendor session revoke failed',e)}}return runtime.nativeVendorLogout()}
 
+// The shipping label reads the same authorized customer snapshot as the store invoice.
+async function labelCustomerSnapshot(order){
+ if(!order?._v95SegmentId)return null;
+ const active=session();
+ if(!active?.token)throw new Error('جلسة التاجر غير صالحة');
+ const key=String(order.id);
+ let details=detailCache.get(key);
+ if(!details){
+  const result=await runtime.sb.rpc('vendor_get_order_segment_details',{p_session_token:active.token,p_segment_id:order._v95SegmentId});
+  if(result.error)throw result.error;
+  details=result.data;
+  detailCache.set(key,details);
+ }
+ const customer=parse(details?.customer_snapshot||details?.customer);
+ if(!Object.keys(customer).length)throw new Error('بيانات المستلم غير متاحة في تفاصيل الطلب الآمنة');
+ return customer;
+}
+window.KintoVendorLabelCustomer=labelCustomerSnapshot;
 window.vendorLogin=secureLogin;window.vendorLogout=secureLogout;window.loadOrders=loadSegmentOrders;window.renderVendorOrders=renderOrders;window.openV94VendorOrderDetails=openDetails;window.setV94VendorStoreStatus=setStatus;window.printV95VendorStoreInvoice=printStoreInvoice;window.vendorShippingCompanyChanged=vendorShippingCompanyChanged;window.vendorFreeShippingChanged=vendorFreeShippingChanged;window.saveVendorOrderShipping=saveVendorOrderShipping;window.vendorTableShippingChanged=vendorTableShippingChanged;window.vendorTableFreeShippingChanged=vendorTableFreeShippingChanged;window.saveVendorTableShipping=saveVendorTableShipping;window.MeshwarVendorV94={projectOrder:projectLegacyOrder,projectSegment,loadOrders:loadSegmentOrders,session,statuses:VENDOR_OPERATIONAL_STATUSES.slice()};
 window.dispatchEvent(new CustomEvent('meshwar:vendor-segment-adapter-ready'));
 })();
