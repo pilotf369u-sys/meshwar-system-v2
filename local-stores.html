@@ -96,5 +96,19 @@ Promise.all([fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,lo
 </script>
 <script defer src="js/kinto-deals-customer-g7.js?v=20261006-g20iqd1"></script>
 <script defer src="js/kinto-local-directory-pages-v172.js?v=174"></script>
+
+<style id="kintoLocalDirectoryCompactV172">
+/* Directory listing only: leave official-store spotlight and store operations untouched. */
+#storesGrid.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+#storesGrid .card{min-width:0;min-height:0;padding:12px 10px;border-radius:18px;background:linear-gradient(160deg,#1b4b3b,#103629);border-color:rgba(223,185,83,.28);box-shadow:inset 0 1px rgba(255,255,255,.07)}
+#storesGrid .card .logo{width:74px;height:74px;min-width:74px;min-height:74px;padding:0;background:rgba(255,255,255,.92);border:2px solid rgba(238,203,113,.65);box-shadow:0 4px 16px rgba(0,0,0,.15);margin-bottom:7px}
+#storesGrid .card .logo img{width:100%;height:100%;object-fit:cover}
+#storesGrid .card .name{font-size:13px;line-height:1.4;margin:2px 0 3px;overflow-wrap:anywhere}
+#storesGrid .card .meta{font-size:10px;line-height:1.5}
+#storesGrid .card .chip{font-size:10px;margin:6px 0}
+#storesGrid .card .open{margin-top:auto;min-height:34px;padding:7px 8px;border-radius:11px;background:linear-gradient(100deg,#f1d268,#d7a92e);color:#183328;font-size:11px}
+@media(min-width:768px){#storesGrid.grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+@media(min-width:1200px){#storesGrid.grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}#storesGrid .card .logo{width:90px;height:90px;min-width:90px;min-height:90px}#storesGrid .card .name{font-size:15px}#storesGrid .card .meta{font-size:11px}}
+</style>
 </body>
 </html>
