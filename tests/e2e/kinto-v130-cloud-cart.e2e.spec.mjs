@@ -45,3 +45,12 @@ test('V189 checkout cleans cloud cart only after confirmed independent orders', 
   expect(source).not.toContain('localStorage.setItem(scope.key');
   expect(source).not.toContain('state=read(scope.key)');
 });
+
+
+test('V189 verifies cart owner session', async () => {
+ const sql=await read('supabase/migrations/20261012_kinto_cart_revision_v189.sql');
+ const source=await read('js/local-cart-v93.js');
+ expect(sql).toContain('private.require_customer_review_session(p_session_token)');
+ expect(sql).toContain('CART_SESSION_FORBIDDEN');
+ expect(source).toContain('p_session_token:cloudSessionToken()');
+});
