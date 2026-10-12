@@ -28,7 +28,7 @@ function syncScope(){
   clearTimeout(cloudSaveTimer);
   scope=next;state=[];cloudReady=false;cloudDirty=false;cloudRevision++;
   cloudServerRevision=null;cloudConflict=false;cloudSavingSnapshot=null;cloudConfirmedItems=[];
-  initializeCloudCart();return true;
+  cloudSyncing=false;initializeCloudCart();return true;
 }
 function persistLocal(){} // intentionally no persistent cart cache
 function notifyCart(){render();window.dispatchEvent(new CustomEvent('kinto:local-cart-change',{detail:{scope:{...scope},items:snapshot(),version:'v189-cloud-only'}}))}
@@ -141,7 +141,7 @@ async function pushCloudCart(){
     if(revision===cloudRevision){state=previous;cloudDirty=false;cloudSavingSnapshot=null;notifyCart();}
     if(String(e.message||e).includes('CART_REVISION_CONFLICT')){
       cloudConflict=true;
-      console.warn('KINTO V189 cart conflict: local edits preserved; cloud not overwritten.',e);
+      console.warn('KINTO V189 cart conflict: unconfirmed local edits reverted; cloud not overwritten.',e);
       alert('تم تعديل السلة من جهاز آخر. لم نكتب فوق التعديل الأحدث. أعد تحميل الصفحة لمشاهدة السلة السحابية قبل إجراء تغييرات جديدة.');
     }else console.warn('KINTO cloud cart save deferred:',e);
     return false;
@@ -173,7 +173,7 @@ async function pullCloudCart(){
     }
     cloudReady=true;
   }catch(e){
-    console.warn('KINTO cloud cart load unavailable; local cart remains active:',e);
+    console.warn('KINTO cloud cart unavailable; edits disabled until load succeeds:',e);
   }finally{cloudSyncing=false}
 }
 async function initializeCloudCart(){
