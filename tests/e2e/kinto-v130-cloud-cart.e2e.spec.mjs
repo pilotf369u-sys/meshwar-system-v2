@@ -5,13 +5,13 @@ import path from 'node:path';
 const root = process.cwd();
 const read = file => readFile(path.join(root, file), 'utf8');
 
-test('customer cart keeps local fallback and synchronizes through account RPCs', async () => {
+test('customer cart uses cloud-only account RPCs', async () => {
   const source = await read('js/local-cart-v93.js');
   expect(source).toContain("rpc/customer_cart_get_v189");
   expect(source).toContain("rpc/customer_cart_put_v189");
   expect(source).not.toContain('mergeCartItems(remote,state)');
   expect(source).toContain('CART_REVISION_CONFLICT');
-  expect(source).toContain("version:'v130-cloud-cart'");
+  expect(source).toContain("version:'v189-cloud-only'");
 });
 
 test('cloud cart migration is account-scoped and blocks direct table access', async () => {
