@@ -33,7 +33,7 @@ function syncScope(){
 function persistLocal(){} // intentionally no persistent cart cache
 function notifyCart(){render();window.dispatchEvent(new CustomEvent('kinto:local-cart-change',{detail:{scope:{...scope},items:snapshot(),version:'v189-cloud-only'}}))}
 function canEditCart(){
-  if(checkoutBusy||!cloudReady||cloudConflict||cloudSyncing||cloudDirty||!cloudCustomerId()){
+  if(checkoutBusy||!cloudReady||cloudConflict||cloudSyncing||cloudDirty||!cloudCustomerId()||!cloudSessionToken()){
     alert('السلة غير جاهزة للحفظ في Supabase أو هناك تعديل قيد المزامنة. انتظر قليلاً ثم حاول مجدداً.');
     return false;
   }
@@ -120,6 +120,7 @@ function selectedItems(){return state.filter(x=>x.selected!==false)}
 function open(){syncScope();render();const drawer=document.getElementById('kintoLocalCartDrawer');if(drawer?.hasAttribute('data-kinto-cart-embedded')){drawer.scrollIntoView({behavior:'smooth',block:'start'});return}document.documentElement.classList.add('kinto-local-cart-open')}
 function close(){document.documentElement.classList.remove('kinto-local-cart-open')}
 async function rest(path,{method='GET',body=null,timeout=7000,returnRepresentation=false}={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);try{const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{method,signal:controller.signal,cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json','Content-Type':'application/json',...(['POST','PATCH'].includes(method)?{Prefer:returnRepresentation?'return=representation':'return=minimal'}:{})},body:body===null?null:JSON.stringify(body)});if(!r.ok)throw new Error((await r.text().catch(()=>''))||`HTTP ${r.status}`);if(r.status===204)return null;const text=await r.text();return text?JSON.parse(text):null}catch(e){if(e?.name==='AbortError')throw new Error('انتهت مهلة الاتصال أثناء إرسال الطلب.');throw e}finally{clearTimeout(timer)}}
+function cloudSessionToken(){return String(customerShoppingSession()?.token||'').trim()}
 function cloudCustomerId(){const id=String(scope.userId||'').trim();return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)?id:''}
 function mergeCartItems(remoteItems,localItems){const merged=new Map();for(const raw of [...(Array.isArray(remoteItems)?remoteItems:[]),...(Array.isArray(localItems)?localItems:[])]){const item=normalize(raw);if(!valid(item))continue;const key=itemKey(item),previous=merged.get(key);merged.set(key,previous?normalize({...previous,...item,quantity:Math.max(Number(previous.quantity)||1,Number(item.quantity)||1),selected:previous.selected!==false||item.selected!==false}):item)}return[...merged.values()]}
 // V189: Supabase is authoritative on device startup. Optimistic concurrency
@@ -131,7 +132,7 @@ async function pushCloudCart(){
   const revision=cloudRevision,items=snapshot(),expected=cloudServerRevision;
   const previous=cloudSavingSnapshot||[];
   try{
-    const result=await rest('rpc/customer_cart_put_v189',{method:'POST',returnRepresentation:true,body:{p_customer_id:id,p_items:items,p_expected_revision:expected}});
+    const result=await rest('rpc/customer_cart_put_v189',{method:'POST',returnRepresentation:true,body:{p_customer_id:id,p_items:items,p_expected_revision:expected,p_session_token:cloudSessionToken()}});
     if(id!==cloudCustomerId())return false;
     cloudServerRevision=Number(result.revision);
     lastCloudUpdatedAt=String(result?.updated_at||lastCloudUpdatedAt);
@@ -161,7 +162,7 @@ async function pullCloudCart(){
   cloudSyncing=true;
   const revision=cloudRevision;
   try{
-    const result=await rest('rpc/customer_cart_get_v189',{method:'POST',body:{p_customer_id:id}});
+    const result=await rest('rpc/customer_cart_get_v189',{method:'POST',body:{p_customer_id:id,p_session_token:cloudSessionToken()}});
     if(id!==cloudCustomerId())return;
     if(!cloudDirty&&revision===cloudRevision){
       state=(Array.isArray(result?.items)?result.items:[]).filter(valid).map(normalize);
@@ -198,12 +199,12 @@ async function removeSubmitted(keys){
   cloudSyncing=true;
   for(let attempt=0;attempt<3;attempt++){
     try{
-      const remote=await rest('rpc/customer_cart_get_v189',{method:'POST',body:{p_customer_id:id}});
+      const remote=await rest('rpc/customer_cart_get_v189',{method:'POST',body:{p_customer_id:id,p_session_token:cloudSessionToken()}});
       if(id!==cloudCustomerId())return false;
       const rows=(Array.isArray(remote?.items)?remote.items:[]).filter(valid).map(normalize);
       const remaining=rows.filter(x=>!sent.has(itemKey(x)));
       if(remaining.length===rows.length){state=remaining;cloudConfirmedItems=remaining;cloudServerRevision=Number(remote.revision);cloudDirty=false;cloudSavingSnapshot=null;cloudSyncing=false;notifyCart();return true;}
-      const result=await rest('rpc/customer_cart_put_v189',{method:'POST',returnRepresentation:true,body:{p_customer_id:id,p_items:remaining,p_expected_revision:Number(remote.revision)}});
+      const result=await rest('rpc/customer_cart_put_v189',{method:'POST',returnRepresentation:true,body:{p_customer_id:id,p_items:remaining,p_expected_revision:Number(remote.revision),p_session_token:cloudSessionToken()}});
       if(id!==cloudCustomerId())return false;
       state=remaining;cloudConfirmedItems=remaining;cloudServerRevision=Number(result.revision);
       cloudDirty=false;cloudSavingSnapshot=null;cloudSyncing=false;notifyCart();return true;
