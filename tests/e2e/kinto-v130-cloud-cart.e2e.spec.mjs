@@ -31,6 +31,8 @@ test('V189 revision migration is additive and rejects stale writers', async () =
   expect(sql).toContain('CART_REVISION_CONFLICT');
   expect(sql).toContain('kinto_cart_revision_legacy_guard_v189');
   expect(sql).toContain('pg_advisory_xact_lock');
+  expect(sql).toContain('revoke execute on function public.customer_cart_get_v130(uuid)');
+  expect(sql).toContain('revoke execute on function public.customer_cart_put_v130(uuid, jsonb)');
   expect(sql).not.toMatch(/delete\\s+from\\s+public\\.customer_local_carts/i);
 });
 
