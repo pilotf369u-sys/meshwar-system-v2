@@ -12,12 +12,12 @@ function attach(gridId,cardSelector,scopeId){
  const cards=()=>Array.from(grid.querySelectorAll(':scope > '+cardSelector));
  function draw(){
   if(busy)return;busy=true;
-  const all=cards(),key=all.map(el=>el.getAttribute('data-kinto-store-id')||el.querySelector('a[href*="storeId="]')?.getAttribute('href')||el.textContent?.trim()||'').join('|');
+  const all=cards(),homeSearch=gridId==='localStoresPublicGrid'?document.getElementById('kintoV172LocalSearch'):null,term=String(homeSearch?.value||'').trim().toLocaleLowerCase(),matching=term?all.filter(el=>String(el.textContent||'').toLocaleLowerCase().includes(term)):all,key=all.map(el=>el.getAttribute('data-kinto-store-id')||el.querySelector('a[href*="storeId="]')?.getAttribute('href')||el.textContent?.trim()||'').join('|');
   if(key!==signature){signature=key;page=1}
-  const total=Math.max(1,Math.ceil(all.length/SIZE));page=Math.min(page,total);const productView=gridId==='localStoresPublicGrid'&&document.getElementById('localStoreProductsPanel')?.style.display==='block';
-  all.forEach((el,i)=>{el.hidden=i<(page-1)*SIZE||i>=page*SIZE;el.style.display=el.hidden?'none':''});
+  const total=Math.max(1,Math.ceil(matching.length/SIZE));page=Math.min(page,total);const productView=gridId==='localStoresPublicGrid'&&document.getElementById('localStoreProductsPanel')?.style.display==='block';
+  all.forEach(el=>{const i=matching.indexOf(el);el.hidden=i<0||i<(page-1)*SIZE||i>=page*SIZE;el.style.display=el.hidden?'none':''});
   for(const nav of [top,bottom]){
-   nav.replaceChildren();nav.hidden=all.length<=SIZE||productView;
+   nav.replaceChildren();nav.hidden=matching.length<=SIZE||productView;
    if(nav.hidden)continue;
    const add=(label,to,disabled,current)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.disabled=disabled;b.className=current?'active':'';if(current)b.setAttribute('aria-current','page');b.addEventListener('click',()=>{page=to;draw();if(nav===bottom)top.scrollIntoView({block:'nearest',behavior:'auto'})});nav.append(b)};
    add('السابق',page-1,page===1,false);
@@ -30,7 +30,7 @@ function attach(gridId,cardSelector,scopeId){
  const observer=new MutationObserver(()=>{if(!busy)draw()});
  observer.observe(grid,{childList:true});if(gridId==='localStoresPublicGrid'){const panel=document.getElementById('localStoreProductsPanel');if(panel)new MutationObserver(draw).observe(panel,{attributes:true,attributeFilter:['style']});}
  const search=scope.querySelector('#storeSearch');
- search?.addEventListener('input',()=>{signature='';queueMicrotask(draw)});
+ search?.addEventListener('input',()=>{signature='';queueMicrotask(draw)});const homeSearch=gridId==='localStoresPublicGrid'?document.getElementById('kintoV172LocalSearch'):null;homeSearch?.addEventListener('input',()=>{page=1;draw()});
  scope.addEventListener('click',e=>{if(e.target.closest('.filter-btn, [data-filter]')){signature='';queueMicrotask(draw)}});
  draw();
 }
