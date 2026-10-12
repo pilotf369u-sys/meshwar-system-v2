@@ -33,7 +33,7 @@ function syncScope(){
 function persistLocal(){} // intentionally no persistent cart cache
 function notifyCart(){render();window.dispatchEvent(new CustomEvent('kinto:local-cart-change',{detail:{scope:{...scope},items:snapshot(),version:'v189-cloud-only'}}))}
 function canEditCart(){
-  if(!cloudReady||cloudConflict||cloudSyncing||cloudDirty||!cloudCustomerId()){
+  if(checkoutBusy||!cloudReady||cloudConflict||cloudSyncing||cloudDirty||!cloudCustomerId()){
     alert('السلة غير جاهزة للحفظ في Supabase أو هناك تعديل قيد المزامنة. انتظر قليلاً ثم حاول مجدداً.');
     return false;
   }
@@ -195,23 +195,24 @@ async function removeSubmitted(keys){
   // Orders are already confirmed. Never turn a successful checkout into a failed order
   // because cloud-cart cleanup raced another device.
   const sent=new Set(keys),id=cloudCustomerId();
+  cloudSyncing=true;
   for(let attempt=0;attempt<3;attempt++){
     try{
       const remote=await rest('rpc/customer_cart_get_v189',{method:'POST',body:{p_customer_id:id}});
       if(id!==cloudCustomerId())return false;
       const rows=(Array.isArray(remote?.items)?remote.items:[]).filter(valid).map(normalize);
       const remaining=rows.filter(x=>!sent.has(itemKey(x)));
-      if(remaining.length===rows.length){state=remaining;cloudConfirmedItems=remaining;cloudServerRevision=Number(remote.revision);notifyCart();return true;}
+      if(remaining.length===rows.length){state=remaining;cloudConfirmedItems=remaining;cloudServerRevision=Number(remote.revision);cloudSyncing=false;notifyCart();return true;}
       const result=await rest('rpc/customer_cart_put_v189',{method:'POST',body:{p_customer_id:id,p_items:remaining,p_expected_revision:Number(remote.revision)}});
       if(id!==cloudCustomerId())return false;
       state=remaining;cloudConfirmedItems=remaining;cloudServerRevision=Number(result.revision);
-      cloudDirty=false;cloudSavingSnapshot=null;notifyCart();return true;
+      cloudDirty=false;cloudSavingSnapshot=null;cloudSyncing=false;notifyCart();return true;
     }catch(error){
       if(!String(error.message||error).includes('CART_REVISION_CONFLICT'))break;
     }
   }
   // Never report order failure or re-upload stale cart data after successful checkout.
-  cloudConflict=true;cloudDirty=false;
+  cloudConflict=true;cloudDirty=false;cloudSyncing=false;
   alert('تم إنشاء الطلب بنجاح، لكن تعذر تحديث السلة السحابية. يرجى تحديث الصفحة ومراجعة السلة قبل طلب جديد.');
   return false;
 }
