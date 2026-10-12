@@ -57,5 +57,6 @@ test('V189 verifies cart owner session', async () => {
  expect(sql).toContain('private.require_customer_review_session(p_session_token)');
  expect(sql).toContain('CART_SESSION_FORBIDDEN');
  expect(source).toContain('p_session_token:sessionToken');
+ expect(source).toContain('if(id!==cloudCustomerId()||sessionToken!==cloudSessionToken())return false;');
   expect(source).toContain('sessionToken!==cloudSessionToken()');
 });
