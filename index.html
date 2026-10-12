@@ -722,6 +722,21 @@ body{background-image:linear-gradient(180deg,#063b32 0%,#082f26 50%,#06291f 100%
 #localStoresPublic .local-public-open{margin-top:9px!important;padding:7px 10px!important;min-height:34px!important;border-radius:11px!important}
 @media(max-width:600px){#localStoresPublic .local-public-card{padding:11px 8px!important}#localStoresPublic .local-public-logo{width:74px!important;height:74px!important;min-width:74px;min-height:74px}#localStoresPublic .local-public-name{font-size:13px!important}#localStoresPublic .local-public-meta{font-size:10px!important}#localStoresPublic .local-public-open{font-size:11px!important}}
 
+
+/* KINTO V172: homepage-only six-column compact store directory preview. */
+#localStoresPublic #localStoresPublicGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+#localStoresPublic #localStoresPublicGrid .local-public-card{min-width:0!important;min-height:0!important;padding:12px 10px!important;box-sizing:border-box}
+#localStoresPublic #localStoresPublicGrid .local-public-logo{width:74px!important;height:74px!important;min-width:74px!important;min-height:74px!important;max-width:100%;margin-bottom:7px!important}
+#localStoresPublic #localStoresPublicGrid .local-public-name{overflow-wrap:anywhere}
+#localStoresPublic #localStoresPublicGrid .local-public-open{width:100%;box-sizing:border-box}
+@media(min-width:768px){
+  #localStoresPublic #localStoresPublicGrid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+}
+@media(min-width:1200px){
+  #localStoresPublic #localStoresPublicGrid{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+  #localStoresPublic #localStoresPublicGrid .local-public-logo{width:90px!important;height:90px!important;min-width:90px!important;min-height:90px!important}
+}
+
 </style>
 </body>
 </html>
