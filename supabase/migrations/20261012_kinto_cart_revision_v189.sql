@@ -26,7 +26,7 @@ before update on public.customer_local_carts
 for each row execute function public.kinto_cart_revision_legacy_guard_v189();
 
 create or replace function public.customer_cart_get_v189(p_customer_id uuid, p_session_token text)
-returns jsonb language plpgsql security definer set search_path=public,private,pg_temp as $
+returns jsonb language plpgsql security definer set search_path=public,private,pg_temp as $cart$
 declare v_cart record;
 begin
   if p_session_token is null or private.require_customer_review_session(p_session_token) is distinct from p_customer_id then
@@ -41,11 +41,11 @@ begin
     return jsonb_build_object('items','[]'::jsonb,'updated_at',null,'revision',0);
   end if;
   return jsonb_build_object('items',v_cart.items,'updated_at',v_cart.updated_at,'revision',v_cart.revision_v189);
-end; $$;
+end; $cart$;
 
 create or replace function public.customer_cart_put_v189(
   p_customer_id uuid, p_items jsonb, p_expected_revision bigint, p_session_token text
-) returns jsonb language plpgsql security definer set search_path=public,private,pg_temp as $
+) returns jsonb language plpgsql security definer set search_path=public,private,pg_temp as $cart$
 declare v_cart record;
 begin
   if p_session_token is null or private.require_customer_review_session(p_session_token) is distinct from p_customer_id then
@@ -82,7 +82,7 @@ begin
       returning items,updated_at,revision_v189 into v_cart;
   end if;
   return jsonb_build_object('items',v_cart.items,'updated_at',v_cart.updated_at,'revision',v_cart.revision_v189);
-end; $$;
+end; $cart$;
 
 revoke all on function public.customer_cart_get_v189(uuid,text) from public;
 revoke all on function public.customer_cart_put_v189(uuid,jsonb,bigint,text) from public;
