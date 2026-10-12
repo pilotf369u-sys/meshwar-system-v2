@@ -17,10 +17,13 @@ create trigger kinto_cart_revision_legacy_guard_v189
 before update on public.customer_local_carts
 for each row execute function public.kinto_cart_revision_legacy_guard_v189();
 
-create or replace function public.customer_cart_get_v189(p_customer_id uuid)
-returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
+create or replace function public.customer_cart_get_v189(p_customer_id uuid, p_session_token text)
+returns jsonb language plpgsql security definer set search_path=public,private,pg_temp as $
 declare v_cart record;
 begin
+  if p_session_token is null or private.require_customer_review_session(p_session_token) is distinct from p_customer_id then
+    raise exception 'CART_SESSION_FORBIDDEN';
+  end if;
   if not exists(select 1 from public.customers where id=p_customer_id) then
     raise exception 'CUSTOMER_NOT_FOUND';
   end if;
@@ -33,10 +36,13 @@ begin
 end; $$;
 
 create or replace function public.customer_cart_put_v189(
-  p_customer_id uuid, p_items jsonb, p_expected_revision bigint
-) returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
+  p_customer_id uuid, p_items jsonb, p_expected_revision bigint, p_session_token text
+) returns jsonb language plpgsql security definer set search_path=public,private,pg_temp as $
 declare v_cart record;
 begin
+  if p_session_token is null or private.require_customer_review_session(p_session_token) is distinct from p_customer_id then
+    raise exception 'CART_SESSION_FORBIDDEN';
+  end if;
   if not exists(select 1 from public.customers where id=p_customer_id) then
     raise exception 'CUSTOMER_NOT_FOUND';
   end if;
@@ -70,8 +76,8 @@ begin
   return jsonb_build_object('items',v_cart.items,'updated_at',v_cart.updated_at,'revision',v_cart.revision_v189);
 end; $$;
 
-revoke all on function public.customer_cart_get_v189(uuid) from public;
-revoke all on function public.customer_cart_put_v189(uuid,jsonb,bigint) from public;
-grant execute on function public.customer_cart_get_v189(uuid) to anon,authenticated;
-grant execute on function public.customer_cart_put_v189(uuid,jsonb,bigint) to anon,authenticated;
+revoke all on function public.customer_cart_get_v189(uuid,text) from public;
+revoke all on function public.customer_cart_put_v189(uuid,jsonb,bigint,text) from public;
+grant execute on function public.customer_cart_get_v189(uuid,text) to anon,authenticated;
+grant execute on function public.customer_cart_put_v189(uuid,jsonb,bigint,text) to anon,authenticated;
 commit;
