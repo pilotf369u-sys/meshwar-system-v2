@@ -16,7 +16,7 @@ function requireCustomerShopping(){
 }
 function currentStoreId(preferred){return String(preferred||window.__KINTO_STORE_ID__||window.MeshwarLocalStoreV4Context?.store?.id||new URLSearchParams(location.search).get('storeId')||'').trim()}
 function makeScope(){const user=customerId();return{userId:user,key:`${PREFIX}_${token(user)}`}}
-let scope=makeScope(),state=read(scope.key),checkoutBusy=false,cloudReady=false,cloudSyncing=false,cloudSaveTimer=null,cloudPollTimer=null,lastCloudUpdatedAt='',cloudDirty=false,cloudRevision=0,cloudRetryTimer=null;
+let scope=makeScope(),state=read(scope.key),checkoutBusy=false,cloudReady=false,cloudSyncing=false,cloudSaveTimer=null,cloudPollTimer=null,lastCloudUpdatedAt='',cloudDirty=false,cloudRevision=0,cloudRetryTimer=null,cloudServerRevision=null,cloudConflict=false;
 function valid(x){return x&&String(x.store_id||'').trim()&&String(x.product_id||'').trim()&&Number(x.quantity)>0}
 function normalize(input){const q=Math.max(1,Math.floor(Number(input.quantity)||1)),unit=Math.max(0,Number(input.unit_price_local)||0),old=Math.max(0,Number(input.old_unit_price_local)||0);return{store_id:String(input.store_id||'').trim(),store_name:String(input.store_name||'').trim(),product_id:String(input.product_id||'').trim(),product_name:String(input.product_name||'').trim(),image_url:String(input.image_url||input.product_image||''),selected_options:{color:String(input.selected_options?.color||''),size:String(input.selected_options?.size||''),volume:String(input.selected_options?.volume||'')},quantity:q,selected:input.selected!==false,unit_price_local:unit,old_unit_price_local:old||null,currency:String(input.currency||'IQD').trim().toUpperCase()||'IQD',pricing_snapshot:{vendor_price_usd:Number(input.pricing_snapshot?.vendor_price_usd)||0,customer_price_usd:Number(input.pricing_snapshot?.customer_price_usd)||0,exchange_rate:Number(input.pricing_snapshot?.exchange_rate)||0,commission_rate:Number(input.pricing_snapshot?.commission_rate)||0,captured_at:input.pricing_snapshot?.captured_at||new Date().toISOString()}}}
 function read(key=scope.key){try{const x=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(x)?x.filter(valid).map(normalize):[]}catch{return[]}}
@@ -103,61 +103,65 @@ function close(){document.documentElement.classList.remove('kinto-local-cart-ope
 async function rest(path,{method='GET',body=null,timeout=7000,returnRepresentation=false}={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);try{const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{method,signal:controller.signal,cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json','Content-Type':'application/json',...(['POST','PATCH'].includes(method)?{Prefer:returnRepresentation?'return=representation':'return=minimal'}:{})},body:body===null?null:JSON.stringify(body)});if(!r.ok)throw new Error((await r.text().catch(()=>''))||`HTTP ${r.status}`);if(r.status===204)return null;const text=await r.text();return text?JSON.parse(text):null}catch(e){if(e?.name==='AbortError')throw new Error('انتهت مهلة الاتصال أثناء إرسال الطلب.');throw e}finally{clearTimeout(timer)}}
 function cloudCustomerId(){const id=String(scope.userId||'').trim();return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)?id:''}
 function mergeCartItems(remoteItems,localItems){const merged=new Map();for(const raw of [...(Array.isArray(remoteItems)?remoteItems:[]),...(Array.isArray(localItems)?localItems:[])]){const item=normalize(raw);if(!valid(item))continue;const key=itemKey(item),previous=merged.get(key);merged.set(key,previous?normalize({...previous,...item,quantity:Math.max(Number(previous.quantity)||1,Number(item.quantity)||1),selected:previous.selected!==false||item.selected!==false}):item)}return[...merged.values()]}
-// V189: A returning device must never upload a stale local cart over the cloud cart.
-// Keep unsaved local edits until acknowledged, and do not pull over pending edits.
+// V189: Supabase is authoritative on device startup. Optimistic concurrency
+// prevents a stale tab/device from overwriting newer cart changes.
 async function pushCloudCart(){
   const id=cloudCustomerId();
-  if(!id||!cloudReady||!cloudDirty||cloudSyncing)return false;
+  if(!id||!cloudReady||!cloudDirty||cloudSyncing||cloudConflict||cloudServerRevision===null)return false;
   cloudSyncing=true;
-  const revision=cloudRevision,items=snapshot();
+  const revision=cloudRevision,items=snapshot(),expected=cloudServerRevision;
   try{
-    const result=await rest('rpc/customer_cart_put_v130',{method:'POST',body:{p_customer_id:id,p_items:items}});
+    const result=await rest('rpc/customer_cart_put_v189',{method:'POST',body:{p_customer_id:id,p_items:items,p_expected_revision:expected}});
     if(id!==cloudCustomerId())return false;
+    cloudServerRevision=Number(result.revision);
     lastCloudUpdatedAt=String(result?.updated_at||lastCloudUpdatedAt);
     if(revision===cloudRevision)cloudDirty=false;
     return true;
   }catch(e){
-    console.warn('KINTO cloud cart save deferred:',e);
+    if(String(e.message||e).includes('CART_REVISION_CONFLICT')){
+      cloudConflict=true;
+      console.warn('KINTO V189 cart conflict: local edits preserved; cloud not overwritten.',e);
+      alert('تم تعديل السلة من جهاز آخر. لم نكتب فوق التعديل الأحدث. أعد تحميل الصفحة لمشاهدة السلة السحابية قبل إجراء تغييرات جديدة.');
+    }else console.warn('KINTO cloud cart save deferred:',e);
     return false;
   }finally{
     cloudSyncing=false;
-    if(cloudDirty&&id===cloudCustomerId())scheduleCloudSave(3000);
+    if(cloudDirty&&!cloudConflict&&id===cloudCustomerId())scheduleCloudSave(3000);
   }
 }
 function scheduleCloudSave(delay=350){
-  if(!cloudReady||!cloudCustomerId()||!cloudDirty)return;
+  if(!cloudReady||!cloudCustomerId()||!cloudDirty||cloudConflict)return;
   clearTimeout(cloudSaveTimer);
   cloudSaveTimer=setTimeout(()=>{pushCloudCart()},delay);
 }
 async function pullCloudCart(){
   const id=cloudCustomerId();
-  if(!id||cloudSyncing||cloudDirty)return;
+  if(!id||cloudSyncing||cloudDirty||cloudConflict)return;
   cloudSyncing=true;
   const revision=cloudRevision;
   try{
-    const result=await rest('rpc/customer_cart_get_v130',{method:'POST',body:{p_customer_id:id}});
+    const result=await rest('rpc/customer_cart_get_v189',{method:'POST',body:{p_customer_id:id}});
     if(id!==cloudCustomerId())return;
-    const remote=Array.isArray(result?.items)?result.items:[],stamp=String(result?.updated_at||'');
     if(!cloudDirty&&revision===cloudRevision){
-      // Cloud is authoritative even if its cart is empty.
-      state=remote.filter(valid).map(normalize);
+      state=(Array.isArray(result?.items)?result.items:[]).filter(valid).map(normalize);
+      cloudServerRevision=Number(result?.revision??0);
       persistLocal();
       render();
-      lastCloudUpdatedAt=stamp;
+      lastCloudUpdatedAt=String(result?.updated_at||'');
     }
     cloudReady=true;
   }catch(e){
     console.warn('KINTO cloud cart load unavailable; local cart remains active:',e);
-    // Never write a stale cached cart to the server after a failed initial read.
   }finally{cloudSyncing=false}
 }
 async function initializeCloudCart(){
   clearInterval(cloudPollTimer);
   clearTimeout(cloudSaveTimer);
   cloudReady=false;
+  cloudServerRevision=null;
+  cloudConflict=false;
   lastCloudUpdatedAt='';
   if(!cloudCustomerId())return;
-  // Do not merge old guest or device-local snapshots into an existing account cart.
   await pullCloudCart();
   if(cloudDirty&&cloudReady)scheduleCloudSave();
   cloudPollTimer=setInterval(()=>{if(cloudDirty)scheduleCloudSave(0);else pullCloudCart()},8000);
@@ -169,5 +173,5 @@ function buildStores(items){return Object.values(group(items)).map(storeItems=>{
 async function checkout(){if(!requireCustomerShopping())return{ok:false,error:new Error('CUSTOMER_LOGIN_REQUIRED')};if(window.KINTO_STAFF_CUSTOMER_READ_ONLY===true){alert('وضع مشاهدة فقط: لا يمكن إنشاء طلب باسم العميل.');return{ok:false,error:new Error('STAFF_CUSTOMER_READ_ONLY')}}syncScope();if(checkoutBusy)return;const items=selectedItems().map(item=>JSON.parse(JSON.stringify(item)));if(!items.length)return alert('حدد منتجاً واحداً على الأقل لإتمام الطلب.');const expectedStores=buildStores(items).length;if(!expectedStores)return alert('تعذر تحديد المتاجر المختارة.');checkoutBusy=true;render();try{await validateCheckoutStock(items);const customer=await loadCustomer(scope.userId),submittedKeys=items.map(itemKey),rpcItems=items.map(x=>({store_id:String(x.store_id),product_id:String(x.product_id),selected_options:{...x.selected_options},quantity:Math.max(1,Math.floor(Number(x.quantity)||1))})),result=await rest('rpc/checkout_independent_vendor_orders_v161',{method:'POST',timeout:15000,body:{p_customer_id:scope.userId==='guest'?null:customer.id,p_customer_name:customer?.name||'ضيف',p_customer_phone:customer?.phone||'',p_customer_shipping:shippingDestination(customer),p_items:rpcItems}}),orders=Array.isArray(result?.orders)?result.orders:[];if(orders.length!==expectedStores)throw new Error('لم يؤكد النظام إنشاء طلب مستقل لكل متجر.');const codes=orders.map(x=>String(x?.order_code||'').trim());if(codes.some(code=>!/^KN-\d{6,}$/.test(code))||new Set(codes).size!==codes.length)throw new Error('لم تُرجع قاعدة البيانات أرقام KN مستقلة وصالحة.');removeSubmitted(submittedKeys);const success=document.getElementById('kintoLocalCartSuccess');if(success){success.textContent=`تم إنشاء ${orders.length} طلب مستقل بنجاح — ${codes.join(' · ')}`;success.hidden=false}render();open();return{ok:true,orders,orderCodes:codes,checkoutGroupId:result.checkout_group_id}}catch(e){console.error('KINTO V101 independent checkout failed',e);alert('تعذر إرسال الطلبات المستقلة: '+(e.message||e));return{ok:false,error:e}}finally{checkoutBusy=false;render()}}
 function ensureUi(){if(document.getElementById('kintoLocalCartDrawer'))return;const trigger=document.createElement('button');trigger.type='button';trigger.className='kinto-local-cart-trigger';trigger.id='kintoLocalCartTrigger';trigger.innerHTML='🛒 السلة <span class="kinto-local-cart-count" id="kintoLocalCartCount">0</span>';trigger.addEventListener('click',open);document.body.appendChild(trigger);const back=document.createElement('div');back.className='kinto-local-cart-backdrop';back.addEventListener('click',close);document.body.appendChild(back);const drawer=document.createElement('aside');drawer.id='kintoLocalCartDrawer';drawer.className='kinto-local-cart-drawer';drawer.innerHTML='<div class="kinto-local-cart-head"><h2 class="kinto-local-cart-title">السلة متعددة المتاجر</h2><button type="button" class="kinto-local-cart-close">×</button></div><div class="kinto-local-cart-body" id="kintoLocalCartBody"></div><div class="kinto-local-cart-foot"><div id="kintoLocalCartSuccess" class="kinto-local-cart-success" hidden></div><div class="kinto-local-cart-grand"><span>إجمالي السلة التقديري</span><strong id="kintoLocalCartGrand">IQD 0</strong></div><button type="button" class="kinto-local-cart-checkout" id="kintoLocalCartCheckout">إنشاء الطلبات المستقلة</button><div class="kinto-local-cart-note">يُنشأ طلب ورقم KN مستقل لكل متجر. السعر النهائي يُحتسب بأمان من قاعدة البيانات، وتُضاف تعرفة توصيل التاجر تلقائياً حسب محافظة العميل عند إنشاء كل طلب.</div></div>';drawer.querySelector('.kinto-local-cart-close').addEventListener('click',close);drawer.querySelector('#kintoLocalCartCheckout').addEventListener('click',checkout);drawer.addEventListener('change',e=>{const box=e.target.closest?.('[data-cart-select]');if(box)setSelected(box.dataset.key,box.checked)});drawer.addEventListener('click',e=>{const b=e.target.closest('[data-cart-action]');if(!b)return;const key=b.dataset.key,item=state.find(x=>itemKey(x)===key);if(b.dataset.cartAction==='remove')remove(key);else if(item&&b.dataset.cartAction==='plus')setQuantity(key,item.quantity+1);else if(item&&b.dataset.cartAction==='minus')setQuantity(key,Math.max(1,item.quantity-1))});document.body.appendChild(drawer)}
 function render(){syncScope();ensureUi();const countEl=document.getElementById('kintoLocalCartCount'),body=document.getElementById('kintoLocalCartBody'),grand=document.getElementById('kintoLocalCartGrand'),checkoutBtn=document.getElementById('kintoLocalCartCheckout');if(countEl)countEl.textContent=String(count());if(!body||!grand)return;const selected=selectedItems();if(checkoutBtn){checkoutBtn.disabled=checkoutBusy||!selected.length;checkoutBtn.textContent=checkoutBusy?'جاري إنشاء الطلبات...':'إنشاء الطلبات المستقلة'}if(!state.length){body.innerHTML='<div class="kinto-local-cart-empty">السلة متعددة المتاجر فارغة حالياً.</div>';grand.textContent='IQD 0';return}body.innerHTML=Object.entries(group()).map(([store,storeItems])=>{const currency=storeItems[0]?.currency||'IQD';return `<section class="kinto-local-cart-store" data-store-id="${esc(store)}"><div class="kinto-local-cart-store-title">${esc(storeItems[0]?.store_name||'متجر محلي')}</div>${storeItems.map(x=>{const key=itemKey(x),opts=[x.selected_options?.color&&'اللون: '+x.selected_options.color,x.selected_options?.size&&'المقاس: '+x.selected_options.size,x.selected_options?.volume&&'الحجم: '+x.selected_options.volume].filter(Boolean).join(' · '),isSelected=x.selected!==false,line=(Number(x.unit_price_local)||0)*(Number(x.quantity)||1);return `<div class="kinto-local-cart-item ${isSelected?'':'is-unselected'}"><label class="kinto-local-cart-select" title="احتساب المنتج ضمن الطلب"><input type="checkbox" data-cart-select data-key="${esc(key)}" ${isSelected?'checked':''}><span aria-hidden="true"></span></label><img class="kinto-local-cart-img" src="${esc(x.image_url)}" alt=""><div><div class="kinto-local-cart-name">${esc(x.product_name)}</div>${opts?`<div class="kinto-local-cart-options">${esc(opts)}</div>`:''}<div class="kinto-local-cart-price"><span class="kinto-money" dir="ltr">${money(x.unit_price_local)} ${esc(currency)}</span><span class="kinto-price-op">×</span><span dir="ltr">${x.quantity}</span><span class="kinto-price-op">=</span><strong class="kinto-money" dir="ltr">${money(line)} ${esc(currency)}</strong></div><div class="kinto-local-cart-actions"><div class="kinto-local-cart-qty"><button data-cart-action="minus" data-key="${esc(key)}">−</button><span>${x.quantity}</span><button data-cart-action="plus" data-key="${esc(key)}">+</button></div><button class="kinto-local-cart-remove" data-cart-action="remove" data-key="${esc(key)}">حذف</button></div></div></div>`}).join('')}<div class="kinto-local-cart-store-total">مجموع المتجر: <span dir="ltr">${money(subtotal(storeItems))} ${esc(currency)}</span></div></section>`}).join('');grand.innerHTML=`<span dir="ltr">${money(subtotal(state))} ${esc(state[0]?.currency||'IQD')}</span>`}
-const api={stockLimit,loadStockProduct,add,addItem:add,setQuantity,setSelected,remove,clear,checkout,render,syncCloud:initializeCloudCart,getItems:()=>{syncScope();return snapshot()},getCount:()=>{syncScope();return count()},getScope:()=>({...scope}),getStores:()=>buildStores(state),open,close,version:'v130-cloud-cart'};Object.defineProperty(api,'storageKey',{enumerable:true,get:()=>scope.key});window.KintoLocalCartV93=api;window.KintoGlobalCartV94=api;function startCart(){render();initializeCloudCart()}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startCart,{once:true});else startCart();window.addEventListener('storage',e=>{if(e.key===scope.key){state=read();render();return}if(['meshwar_customer_id','loggedInUser'].includes(e.key)){clearTimeout(cloudSaveTimer);cloudDirty=false;cloudRevision++;syncScope();render();initializeCloudCart()}});window.addEventListener('beforeunload',()=>{clearTimeout(cloudSaveTimer);clearInterval(cloudPollTimer)});
+const api={stockLimit,loadStockProduct,add,addItem:add,setQuantity,setSelected,remove,clear,checkout,render,syncCloud:initializeCloudCart,getItems:()=>{syncScope();return snapshot()},getCount:()=>{syncScope();return count()},getScope:()=>({...scope}),getStores:()=>buildStores(state),open,close,version:'v130-cloud-cart'};Object.defineProperty(api,'storageKey',{enumerable:true,get:()=>scope.key});window.KintoLocalCartV93=api;window.KintoGlobalCartV94=api;function startCart(){render();initializeCloudCart()}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startCart,{once:true});else startCart();window.addEventListener('storage',e=>{if(e.key===scope.key){state=read();render();return}if(['meshwar_customer_id','loggedInUser'].includes(e.key)){clearTimeout(cloudSaveTimer);cloudDirty=false;cloudRevision++;cloudServerRevision=null;cloudConflict=false;syncScope();render();initializeCloudCart()}});window.addEventListener('beforeunload',()=>{clearTimeout(cloudSaveTimer);clearInterval(cloudPollTimer)});
 })();
