@@ -5,13 +5,13 @@ alter table public.customer_local_carts
 
 -- Legacy V130 writers also advance the revision, so V189 detects their updates.
 create or replace function public.kinto_cart_revision_legacy_guard_v189()
-returns trigger language plpgsql set search_path=public,pg_temp as $
+returns trigger language plpgsql set search_path=public,pg_temp as $tag$
 begin
   if new.revision_v189=old.revision_v189 then
     new.revision_v189=old.revision_v189+1;
   end if;
   return new;
-end; $;
+end; $tag$;
 drop trigger if exists kinto_cart_revision_legacy_guard_v189 on public.customer_local_carts;
 create trigger kinto_cart_revision_legacy_guard_v189
 before update on public.customer_local_carts
