@@ -244,5 +244,28 @@ schedule();
 .kinto-store-product-pages button[aria-current="page"]{background:#e5b93f;color:#12332a}
 .kinto-store-product-pages button:disabled{opacity:.4;cursor:default}
 </style>
+
+<style id="kintoStoreImageStageV178">
+/* Display-only: remove internal image stage padding without cropping merchandise. */
+#localStoreProductsGrid .local-v3-img-wrap{
+ padding:0!important;
+ background:transparent!important;
+ border-radius:0!important;
+}
+#localStoreProductsGrid .local-v3-img{
+ display:block!important;
+ width:100%!important;
+ height:100%!important;
+ max-width:100%!important;
+ max-height:100%!important;
+ object-fit:contain!important;
+ object-position:center center!important;
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+ border-radius:0!important;
+ background:transparent!important;
+}
+</style>
 </body>
 </html>
