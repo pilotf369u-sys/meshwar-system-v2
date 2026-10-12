@@ -3,6 +3,10 @@ begin;
 alter table public.customer_local_carts
   add column if not exists revision_v189 bigint not null default 0;
 
+-- Retire obsolete V189 function signatures from an earlier draft, if present.
+drop function if exists public.customer_cart_get_v189(uuid);
+drop function if exists public.customer_cart_put_v189(uuid,jsonb,bigint);
+
 -- Legacy V130 writers also advance the revision, so V189 detects their updates.
 create or replace function public.kinto_cart_revision_legacy_guard_v189()
 returns trigger language plpgsql set search_path=public,pg_temp as $tag$
