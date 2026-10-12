@@ -35,6 +35,6 @@ function attach(gridId,cardSelector,scopeId){
  draw();
 }
 const css=document.createElement('style');css.textContent='.kinto-v172-pages{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:15px 0;min-height:38px}.kinto-v172-pages[hidden]{display:none}.kinto-v172-pages button{border:1px solid rgba(229,185,63,.38);border-radius:11px;padding:8px 12px;background:#103d34;color:#f8ead0;font-weight:800;cursor:pointer}.kinto-v172-pages button.active{background:#e5b93f;color:#12332a}.kinto-v172-pages button:disabled{opacity:.4;cursor:default}';document.head.append(css);
-function init(){attach('storesGrid','.card','main');attach('localStoresPublicGrid','.local-store-card','localStoresPublic')}
+function init(){attach('storesGrid','.card','main');attach('localStoresPublicGrid','.local-public-card','localStoresPublic')}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
