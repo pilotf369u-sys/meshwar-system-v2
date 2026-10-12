@@ -293,5 +293,14 @@ schedule();
  filter:none!important;
 }
 </style>
+
+<style id="kintoStoreMediaBackdropV180">
+/* Presentation only: softly fill side gutters using existing blurred product photo. */
+#localStoreProductsGrid .local-v3-img-wrap{background:#d8ddd9!important}
+#localStoreProductsGrid .kinto-media-backdrop{display:block!important;inset:-12px!important;opacity:.72!important}
+#localStoreProductsGrid .kinto-media-backdrop img{filter:blur(22px) saturate(.7)!important;opacity:.48!important}
+#localStoreProductsGrid .local-v3-img{background:transparent!important;filter:none!important}
+#localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
+</style>
 </body>
 </html>
