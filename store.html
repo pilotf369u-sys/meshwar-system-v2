@@ -245,118 +245,32 @@ schedule();
 .kinto-store-product-pages button:disabled{opacity:.4;cursor:default}
 </style>
 
-<style id="kintoStoreImageStageV178">
-/* Display-only: remove internal image stage padding without cropping merchandise. */
-#localStoreProductsGrid .local-v3-img-wrap{
- padding:0!important;
- background:transparent!important;
- border-radius:0!important;
-}
-#localStoreProductsGrid .local-v3-img{
- display:block!important;
- width:100%!important;
- height:100%!important;
- max-width:100%!important;
- max-height:100%!important;
- object-fit:contain!important;
- object-position:center center!important;
- margin:0!important;
- padding:0!important;
- border:0!important;
- border-radius:0!important;
- background:transparent!important;
-}
-</style>
 
-<style id="kintoStoreMediaCleanV179">
-/* Presentation-only: eliminate decorative side panels and backdrop, keep product uncropped. */
+<style id="kintoStoreUnifiedMediaV183">
+/* Single presentation rule: preserve image proportions and uploaded backgrounds.
+   No blur overlays, no image mutation, no crop, no merchant data changes. */
 #localStoreProductsGrid .local-v3-img-wrap{
- background:#fff!important;
+ position:relative!important;
  padding:0!important;
  overflow:hidden!important;
+ background:#183f34!important;
 }
 #localStoreProductsGrid .kinto-media-backdrop,
 #localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
 #localStoreProductsGrid .local-v3-img{
+ display:block!important;
  position:relative!important;
  z-index:2!important;
- display:block!important;
  width:100%!important;
  height:100%!important;
  max-width:100%!important;
  max-height:100%!important;
- object-fit:contain!important;
- object-position:center!important;
- padding:0!important;
  margin:0!important;
- background:#fff!important;
- filter:none!important;
-}
-</style>
-
-<style id="kintoStoreMediaBackdropV180">
-/* Presentation only: softly fill side gutters using existing blurred product photo. */
-#localStoreProductsGrid .local-v3-img-wrap{background:#d8ddd9!important}
-#localStoreProductsGrid .kinto-media-backdrop{display:block!important;inset:-12px!important;opacity:.72!important}
-#localStoreProductsGrid .kinto-media-backdrop img{filter:blur(22px) saturate(.7)!important;opacity:.48!important}
-#localStoreProductsGrid .local-v3-img{background:transparent!important;filter:none!important}
-#localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
-</style>
-
-<style id="kintoStoreAdaptiveImageV181">
-/* Presentation only: keep white-backed merchandise clean and portrait graphics softly framed. */
-#localStoreProductsGrid .local-v3-img-wrap{background:#fff!important}
-#localStoreProductsGrid .kinto-media-backdrop{display:none!important}
-#localStoreProductsGrid .local-v3-img{background:transparent!important;object-fit:contain!important}
-#localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
-#localStoreProductsGrid .local-v3-img-wrap.kinto-v181-portrait{background:#d8ddd9!important}
-#localStoreProductsGrid .local-v3-img-wrap.kinto-v181-portrait .kinto-media-backdrop{display:block!important;opacity:.65!important}
-</style>
-<script id="kintoStoreAdaptiveImageScriptV181">
-/* No product source, order, stock or data mutations: only a class on existing media wrappers. */
-(()=>{'use strict';const grid=document.getElementById('localStoreProductsGrid');if(!grid)return;
-function classify(img){
- if(!img||!img.naturalWidth||!img.naturalHeight)return;
- const wrap=img.closest('.local-v3-img-wrap');if(!wrap)return;
- // Tall poster / packaging photos benefit from the subdued blurred side gutters.
- const ratio=img.naturalWidth/img.naturalHeight;
- wrap.classList.toggle('kinto-v181-portrait',ratio<.78);
-}
-function scan(){grid.querySelectorAll('.local-v3-img-wrap > img.local-v3-img').forEach(img=>{
- if(!img.dataset.kintoV181Observed){img.dataset.kintoV181Observed='1';img.addEventListener('load',()=>classify(img));}
- if(img.complete)classify(img);
-})}
-new MutationObserver(records=>{if(records.some(r=>r.type==='childList'))scan()}).observe(grid,{childList:true,subtree:true});
-scan();
-})();
-</script>
-
-<style id="kintoStoreFinalImagePolicyV182">
-/* Uniform merchandise media. Keep original photos, including their white backgrounds, untouched. */
-#localStoreProductsGrid .local-v3-img-wrap{
- background:transparent!important;
  padding:0!important;
- overflow:hidden!important;
-}
-#localStoreProductsGrid .kinto-media-backdrop,
-#localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
-#localStoreProductsGrid .local-v3-img{
- width:100%!important;
- height:100%!important;
- max-width:100%!important;
- max-height:100%!important;
- padding:0!important;
- margin:0!important;
  object-fit:contain!important;
  object-position:center!important;
  background:transparent!important;
  filter:none!important;
-}
-#localStoreProductsGrid .local-v3-img-wrap.kinto-v181-portrait{
- background:transparent!important;
-}
-#localStoreProductsGrid .local-v3-img-wrap.kinto-v181-portrait .kinto-media-backdrop{
- display:none!important;
 }
 </style>
 </body>
