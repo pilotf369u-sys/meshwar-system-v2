@@ -7,6 +7,10 @@ alter table public.customer_local_carts
 drop function if exists public.customer_cart_get_v189(uuid);
 drop function if exists public.customer_cart_put_v189(uuid,jsonb,bigint);
 
+-- Retire public execution privileges on the legacy cart RPCs.
+revoke execute on function public.customer_cart_get_v130(uuid) from anon, authenticated;
+revoke execute on function public.customer_cart_put_v130(uuid, jsonb) from anon, authenticated;
+
 -- Legacy V130 writers also advance the revision, so V189 detects their updates.
 create or replace function public.kinto_cart_revision_legacy_guard_v189()
 returns trigger language plpgsql set search_path=public,pg_temp as $tag$
