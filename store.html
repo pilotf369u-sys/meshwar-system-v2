@@ -113,6 +113,7 @@
       const logo=document.getElementById('localStoreLogo'),fallback=document.querySelector('.store-brand img')?.src||'';
       if(logo){logo.src=s.logo_url||fallback;logo.alt=`شعار ${s.store_name||'المتجر'}`;logo.hidden=!logo.src;logo.onerror=()=>{if(fallback&&logo.src!==fallback){logo.src=fallback;logo.hidden=false}else logo.hidden=true}}
       document.title=`${s.store_name||'KINTO Store'} - KINTO`;
+      const visitScript=document.createElement('script');visitScript.src='js/store-visits-v171.js?v=20261012-v171';visitScript.async=true;document.head.appendChild(visitScript);
     }).catch(err=>{
       console.error('Store header load error:',err);
       title.textContent='منتجات المتجر';

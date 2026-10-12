@@ -1,0 +1,1 @@
+KINTO V171 is staged. Apply the isolated SQL migration before merging. Store visits are approximate and UTM attribution is unverified. No financial data is changed.
