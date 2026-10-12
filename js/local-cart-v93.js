@@ -131,7 +131,7 @@ async function pushCloudCart(){
   const revision=cloudRevision,items=snapshot(),expected=cloudServerRevision;
   const previous=cloudSavingSnapshot||[];
   try{
-    const result=await rest('rpc/customer_cart_put_v189',{method:'POST',body:{p_customer_id:id,p_items:items,p_expected_revision:expected}});
+    const result=await rest('rpc/customer_cart_put_v189',{method:'POST',returnRepresentation:true,body:{p_customer_id:id,p_items:items,p_expected_revision:expected}});
     if(id!==cloudCustomerId())return false;
     cloudServerRevision=Number(result.revision);
     lastCloudUpdatedAt=String(result?.updated_at||lastCloudUpdatedAt);
@@ -202,8 +202,8 @@ async function removeSubmitted(keys){
       if(id!==cloudCustomerId())return false;
       const rows=(Array.isArray(remote?.items)?remote.items:[]).filter(valid).map(normalize);
       const remaining=rows.filter(x=>!sent.has(itemKey(x)));
-      if(remaining.length===rows.length){state=remaining;cloudConfirmedItems=remaining;cloudServerRevision=Number(remote.revision);cloudSyncing=false;notifyCart();return true;}
-      const result=await rest('rpc/customer_cart_put_v189',{method:'POST',body:{p_customer_id:id,p_items:remaining,p_expected_revision:Number(remote.revision)}});
+      if(remaining.length===rows.length){state=remaining;cloudConfirmedItems=remaining;cloudServerRevision=Number(remote.revision);cloudDirty=false;cloudSavingSnapshot=null;cloudSyncing=false;notifyCart();return true;}
+      const result=await rest('rpc/customer_cart_put_v189',{method:'POST',returnRepresentation:true,body:{p_customer_id:id,p_items:remaining,p_expected_revision:Number(remote.revision)}});
       if(id!==cloudCustomerId())return false;
       state=remaining;cloudConfirmedItems=remaining;cloudServerRevision=Number(result.revision);
       cloudDirty=false;cloudSavingSnapshot=null;cloudSyncing=false;notifyCart();return true;
