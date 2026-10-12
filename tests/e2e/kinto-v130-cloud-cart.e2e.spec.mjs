@@ -33,3 +33,15 @@ test('V189 revision migration is additive and rejects stale writers', async () =
   expect(sql).toContain('pg_advisory_xact_lock');
   expect(sql).not.toMatch(/delete\\s+from\\s+public\\.customer_local_carts/i);
 });
+
+
+test('V189 checkout cleans cloud cart only after confirmed independent orders', async () => {
+  const source = await read('js/local-cart-v93.js');
+  expect(source).toContain('async function removeSubmitted(keys)');
+  expect(source).toContain('await removeSubmitted(submittedKeys)');
+  expect(source).toContain("rpc/checkout_independent_vendor_orders_v161");
+  expect(source).toContain('p_expected_revision:Number(remote.revision)');
+  expect(source).toContain('cloudConflict=true;cloudDirty=false');
+  expect(source).not.toContain('localStorage.setItem(scope.key');
+  expect(source).not.toContain('state=read(scope.key)');
+});
