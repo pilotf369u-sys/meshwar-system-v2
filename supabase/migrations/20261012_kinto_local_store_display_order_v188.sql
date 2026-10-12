@@ -50,7 +50,7 @@ begin
  when w.store_id=p_store_id then v_target
  when v_target<v_source and w.position>=v_target and w.position<v_source then w.position+1
  when v_target>v_source and w.position>v_source and w.position<=v_target then w.position-1
- else w.position end;
+ else w.position end where w.position between least(v_source,v_target) and greatest(v_source,v_target);
  insert into public.kinto_local_store_display_order_v188(store_id,sort_order)
  select store_id,position from pg_temp.kinto_order_work_v188
  on conflict(store_id) do update set sort_order=excluded.sort_order;
