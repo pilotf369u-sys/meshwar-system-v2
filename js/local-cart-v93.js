@@ -41,7 +41,9 @@ function canEditCart(){
 }
 function save(){
   cloudSavingSnapshot=cloudSavingSnapshot||cloudConfirmedItems.map(x=>JSON.parse(JSON.stringify(x)));
-  cloudDirty=true;cloudRevision++;notifyCart();scheduleCloudSave();
+  cloudDirty=true;cloudRevision++;
+  // Never present unconfirmed edits as saved. Restore confirmed view until RPC ACK.
+  scheduleCloudSave();
 }
 function optionsKey(o={}){return['color','size','volume'].map(k=>String(o[k]||'').trim()).join('|')}
 function itemKey(x){return String(x.store_id)+'::'+String(x.product_id)+'::'+optionsKey(x.selected_options)}
@@ -136,7 +138,7 @@ async function pushCloudCart(){
     if(id!==cloudCustomerId())return false;
     cloudServerRevision=Number(result.revision);
     lastCloudUpdatedAt=String(result?.updated_at||lastCloudUpdatedAt);
-    if(revision===cloudRevision){cloudDirty=false;cloudSavingSnapshot=null;cloudConfirmedItems=items;}
+    if(revision===cloudRevision){cloudDirty=false;cloudSavingSnapshot=null;cloudConfirmedItems=items;notifyCart();}
     return true;
   }catch(e){
     if(revision===cloudRevision){state=previous;cloudDirty=false;cloudSavingSnapshot=null;notifyCart();}
