@@ -11,6 +11,8 @@ test('customer cart uses cloud-only account RPCs', async () => {
   expect(source).toContain("rpc/customer_cart_put_v189");
   expect(source).not.toContain('mergeCartItems(remote,state)');
   expect(source).toContain('CART_REVISION_CONFLICT');
+  expect(source).toContain('if(!cloudDirty)return renderConfirmedView()');
+  expect(source).toContain('finally{state=pending}');
   expect(source).toContain("version:'v189-cloud-only'");
 });
 
