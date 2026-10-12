@@ -149,8 +149,10 @@ async function pushCloudCart(){
     }else console.warn('KINTO cloud cart save deferred:',e);
     return false;
   }finally{
-    cloudSyncing=false;
-    if(cloudDirty&&!cloudConflict&&id===cloudCustomerId())scheduleCloudSave(3000);
+    if(id===cloudCustomerId()&&sessionToken===cloudSessionToken()){
+      cloudSyncing=false;
+      if(cloudDirty&&!cloudConflict)scheduleCloudSave(3000);
+    }
   }
 }
 function scheduleCloudSave(delay=350){
@@ -177,7 +179,7 @@ async function pullCloudCart(){
     cloudReady=true;
   }catch(e){
     console.warn('KINTO cloud cart unavailable; edits disabled until load succeeds:',e);
-  }finally{cloudSyncing=false}
+  }finally{if(id===cloudCustomerId()&&sessionToken===cloudSessionToken())cloudSyncing=false}
 }
 async function initializeCloudCart(){
   clearInterval(cloudPollTimer);
