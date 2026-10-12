@@ -246,33 +246,12 @@ schedule();
 </style>
 
 
-<style id="kintoStoreMediaPreviewV185">
-/* V186 preview: explicit build marker verifies the correct deployment. No commerce logic changed. */
-#localStoreProductsGrid .local-v3-img-wrap{
- position:relative!important;overflow:hidden!important;padding:0!important;
- background:#fff!important;
-}
+<style id="kintoStoreUnifiedMediaV187">
+/* Product images always stay intact; no crop, stretch or image mutation. */
+#localStoreProductsGrid .local-v3-img-wrap{position:relative!important;overflow:hidden!important;padding:0!important;background:#fff!important}
 #localStoreProductsGrid .kinto-media-backdrop,
 #localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
-#localStoreProductsGrid .local-v3-img{
- display:block!important;position:relative!important;z-index:2!important;
- width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
- margin:0!important;padding:0!important;object-position:center!important;
- object-fit:cover!important;background:transparent!important;filter:none!important;
- transform:none!important;
-}
-/* Exception for very tall portraits: avoid clipping labels, heads or packaging. */
-#localStoreProductsGrid .local-v3-img-wrap.kinto-v185-tall .local-v3-img{
- object-fit:contain!important;
-}
+#localStoreProductsGrid .local-v3-img{display:block!important;position:relative!important;z-index:2!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;margin:0!important;padding:0!important;object-fit:contain!important;object-position:center!important;background:transparent!important;filter:none!important;transform:none!important}
 </style>
-<script id="kintoStoreMediaPreviewV185Script">
-(()=>{'use strict';const grid=document.getElementById('localStoreProductsGrid');if(!grid)return;
-const seen=new WeakSet();
-function apply(img){if(!img.naturalWidth||!img.naturalHeight)return;const wrap=img.closest('.local-v3-img-wrap');if(!wrap)return;wrap.classList.toggle('kinto-v185-tall',img.naturalWidth/img.naturalHeight<.68)}
-function scan(){grid.querySelectorAll('.local-v3-img-wrap img.local-v3-img').forEach(img=>{if(!seen.has(img)){seen.add(img);img.addEventListener('load',()=>apply(img))}if(img.complete)apply(img)})}
-new MutationObserver(rs=>{if(rs.some(r=>r.type==='childList'))scan()}).observe(grid,{childList:true,subtree:true});scan();
-})();
-</script>
 </body>
 </html>
