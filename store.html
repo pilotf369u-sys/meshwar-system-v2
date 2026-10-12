@@ -246,61 +246,32 @@ schedule();
 </style>
 
 
-<style id="kintoStoreUnifiedMediaV183">
-/* Single presentation rule: preserve image proportions and uploaded backgrounds.
-   No blur overlays, no image mutation, no crop, no merchant data changes. */
+<style id="kintoStoreMediaPreviewV185">
+/* V185 preview only. No image uploads, product data, or purchasing logic modified. */
 #localStoreProductsGrid .local-v3-img-wrap{
- position:relative!important;
- padding:0!important;
- overflow:hidden!important;
- background:#183f34!important;
+ position:relative!important;overflow:hidden!important;padding:0!important;
+ background:#fff!important;
 }
 #localStoreProductsGrid .kinto-media-backdrop,
 #localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
 #localStoreProductsGrid .local-v3-img{
- display:block!important;
- position:relative!important;
- z-index:2!important;
- width:100%!important;
- height:100%!important;
- max-width:100%!important;
- max-height:100%!important;
- margin:0!important;
- padding:0!important;
- object-fit:contain!important;
- object-position:center!important;
- background:transparent!important;
- filter:none!important;
+ display:block!important;position:relative!important;z-index:2!important;
+ width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ margin:0!important;padding:0!important;object-position:center!important;
+ object-fit:cover!important;background:transparent!important;filter:none!important;
+ transform:none!important;
 }
-
-/* Restrained optical enlargement for very narrow photos only.
-   White-backed and ordinary aspect ratios remain untouched. */
-#localStoreProductsGrid .local-v3-img-wrap.kinto-v184-narrow .local-v3-img{
- transform:scale(1.10)!important;
- transform-origin:center center!important;
+/* Exception for very tall portraits: avoid clipping labels, heads or packaging. */
+#localStoreProductsGrid .local-v3-img-wrap.kinto-v185-tall .local-v3-img{
+ object-fit:contain!important;
 }
 </style>
-
-<script id="kintoStoreMediaSizingV184">
-/* View-only: uses image intrinsic dimensions; no changes to URLs, uploads or orders. */
-(()=>{'use strict';
-const grid=document.getElementById('localStoreProductsGrid');if(!grid)return;
-const observed=new WeakSet();
-function apply(img){
- if(!img.naturalWidth||!img.naturalHeight)return;
- const wrap=img.closest('.local-v3-img-wrap');if(!wrap)return;
- const ratio=img.naturalWidth/img.naturalHeight;
- // Apply subtle enlargement only to narrow portrait photographs; keep all other images unchanged.
- wrap.classList.toggle('kinto-v184-narrow',ratio>=0.48&&ratio<0.73);
-}
-function scan(){
- grid.querySelectorAll('.local-v3-img-wrap > img.local-v3-img').forEach(img=>{
-  if(!observed.has(img)){observed.add(img);img.addEventListener('load',()=>apply(img));}
-  if(img.complete)apply(img);
- });
-}
-new MutationObserver(records=>{if(records.some(r=>r.type==='childList'))scan()}).observe(grid,{childList:true,subtree:true});
-scan();
+<script id="kintoStoreMediaPreviewV185Script">
+(()=>{'use strict';const grid=document.getElementById('localStoreProductsGrid');if(!grid)return;
+const seen=new WeakSet();
+function apply(img){if(!img.naturalWidth||!img.naturalHeight)return;const wrap=img.closest('.local-v3-img-wrap');if(!wrap)return;wrap.classList.toggle('kinto-v185-tall',img.naturalWidth/img.naturalHeight<.68)}
+function scan(){grid.querySelectorAll('.local-v3-img-wrap img.local-v3-img').forEach(img=>{if(!seen.has(img)){seen.add(img);img.addEventListener('load',()=>apply(img))}if(img.complete)apply(img)})}
+new MutationObserver(rs=>{if(rs.some(r=>r.type==='childList'))scan()}).observe(grid,{childList:true,subtree:true});scan();
 })();
 </script>
 </body>
