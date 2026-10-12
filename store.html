@@ -267,5 +267,31 @@ schedule();
  background:transparent!important;
 }
 </style>
+
+<style id="kintoStoreMediaCleanV179">
+/* Presentation-only: eliminate decorative side panels and backdrop, keep product uncropped. */
+#localStoreProductsGrid .local-v3-img-wrap{
+ background:#fff!important;
+ padding:0!important;
+ overflow:hidden!important;
+}
+#localStoreProductsGrid .kinto-media-backdrop,
+#localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
+#localStoreProductsGrid .local-v3-img{
+ position:relative!important;
+ z-index:2!important;
+ display:block!important;
+ width:100%!important;
+ height:100%!important;
+ max-width:100%!important;
+ max-height:100%!important;
+ object-fit:contain!important;
+ object-position:center!important;
+ padding:0!important;
+ margin:0!important;
+ background:#fff!important;
+ filter:none!important;
+}
+</style>
 </body>
 </html>
