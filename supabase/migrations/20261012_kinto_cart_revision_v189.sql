@@ -3,6 +3,20 @@ begin;
 alter table public.customer_local_carts
   add column if not exists revision_v189 bigint not null default 0;
 
+-- Legacy V130 writers also advance the revision, so V189 detects their updates.
+create or replace function public.kinto_cart_revision_legacy_guard_v189()
+returns trigger language plpgsql set search_path=public,pg_temp as $
+begin
+  if new.revision_v189=old.revision_v189 then
+    new.revision_v189=old.revision_v189+1;
+  end if;
+  return new;
+end; $;
+drop trigger if exists kinto_cart_revision_legacy_guard_v189 on public.customer_local_carts;
+create trigger kinto_cart_revision_legacy_guard_v189
+before update on public.customer_local_carts
+for each row execute function public.kinto_cart_revision_legacy_guard_v189();
+
 create or replace function public.customer_cart_get_v189(p_customer_id uuid)
 returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
 declare v_cart record;
