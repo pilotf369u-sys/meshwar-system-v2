@@ -9,7 +9,7 @@ test('V97 checkout delegates independent order creation to the atomic RPC', asyn
 
   expect(source).toContain("rpc/checkout_independent_vendor_orders");
   expect(source).toContain("p_items:rpcItems");
-  expect(source).toContain("version:'v97-independent-orders'");
+  expect(source).toContain("version:'v189-cloud-only'");
 
   const rpcProjection = source.match(/rpcItems=items\.map\(x=>\(\{(.+?)\}\)\),result=/s)?.[1] || '';
   expect(rpcProjection).toContain('store_id');
