@@ -141,6 +141,7 @@ async function pushCloudCart(){
     if(revision===cloudRevision){cloudDirty=false;cloudSavingSnapshot=null;cloudConfirmedItems=items;notifyCart();}
     return true;
   }catch(e){
+    if(id!==cloudCustomerId()||sessionToken!==cloudSessionToken())return false;
     if(revision===cloudRevision){state=previous;cloudDirty=false;cloudSavingSnapshot=null;notifyCart();}
     if(String(e.message||e).includes('CART_REVISION_CONFLICT')){
       cloudConflict=true;
@@ -213,9 +214,11 @@ async function removeSubmitted(keys){
       state=remaining;cloudConfirmedItems=remaining;cloudServerRevision=Number(result.revision);
       cloudDirty=false;cloudSavingSnapshot=null;cloudSyncing=false;notifyCart();return true;
     }catch(error){
+      if(id!==cloudCustomerId()||sessionToken!==cloudSessionToken())return false;
       if(!String(error.message||error).includes('CART_REVISION_CONFLICT'))break;
     }
   }
+  if(id!==cloudCustomerId()||sessionToken!==cloudSessionToken())return false;
   // Never report order failure or re-upload stale cart data after successful checkout.
   cloudConflict=true;cloudDirty=false;cloudSyncing=false;
   alert('تم إنشاء الطلب بنجاح، لكن تعذر تحديث السلة السحابية. يرجى تحديث الصفحة ومراجعة السلة قبل طلب جديد.');
