@@ -330,5 +330,34 @@ new MutationObserver(records=>{if(records.some(r=>r.type==='childList'))scan()})
 scan();
 })();
 </script>
+
+<style id="kintoStoreFinalImagePolicyV182">
+/* Uniform merchandise media. Keep original photos, including their white backgrounds, untouched. */
+#localStoreProductsGrid .local-v3-img-wrap{
+ background:transparent!important;
+ padding:0!important;
+ overflow:hidden!important;
+}
+#localStoreProductsGrid .kinto-media-backdrop,
+#localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
+#localStoreProductsGrid .local-v3-img{
+ width:100%!important;
+ height:100%!important;
+ max-width:100%!important;
+ max-height:100%!important;
+ padding:0!important;
+ margin:0!important;
+ object-fit:contain!important;
+ object-position:center!important;
+ background:transparent!important;
+ filter:none!important;
+}
+#localStoreProductsGrid .local-v3-img-wrap.kinto-v181-portrait{
+ background:transparent!important;
+}
+#localStoreProductsGrid .local-v3-img-wrap.kinto-v181-portrait .kinto-media-backdrop{
+ display:none!important;
+}
+</style>
 </body>
 </html>
