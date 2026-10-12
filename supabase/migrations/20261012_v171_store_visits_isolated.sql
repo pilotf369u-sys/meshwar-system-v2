@@ -72,11 +72,11 @@ revoke all on function public.vendor_store_visits_v171(text,date,date) from publ
 grant execute on function public.vendor_store_visits_v171(text,date,date) to anon,authenticated;
 -- Daily retention for dedup hashes; the aggregated daily counters remain.
 create or replace function private.kinto_visit_cleanup_v171()
-returns void language plpgsql security definer set search_path=private,public,pg_temp as $
+returns void language plpgsql security definer set search_path=private,public,pg_temp as $v171_cleanup$
 begin
  delete from private.kinto_store_visit_dedupe_v171
  where visit_day < (now() at time zone 'Europe/Istanbul')::date - 35;
-end $;
+end $v171_cleanup$;
 revoke all on function private.kinto_visit_cleanup_v171() from public,anon,authenticated;
 do $install$
 begin
