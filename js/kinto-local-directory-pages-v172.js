@@ -17,8 +17,10 @@ function attach(gridId,cardSelector,scopeId){
   const total=Math.max(1,Math.ceil(matching.length/SIZE));page=Math.min(page,total);const productView=gridId==='localStoresPublicGrid'&&document.getElementById('localStoreProductsPanel')?.style.display==='block';
   all.forEach(el=>{const i=matching.indexOf(el);el.hidden=i<0||i<(page-1)*SIZE||i>=page*SIZE;el.style.display=el.hidden?'none':''});
   for(const nav of [top,bottom]){
-   nav.replaceChildren();nav.hidden=matching.length<=SIZE||productView;
+   nav.replaceChildren();nav.hidden=productView;
    if(nav.hidden)continue;
+   const info=document.createElement('span');info.className='kinto-v174-page-info';info.textContent='صفحة '+page+' من '+total+' — '+matching.length+' متاجر';nav.append(info);
+   if(total===1)continue;
    const add=(label,to,disabled,current)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.disabled=disabled;b.className=current?'active':'';if(current)b.setAttribute('aria-current','page');b.addEventListener('click',()=>{page=to;draw();if(nav===bottom)top.scrollIntoView({block:'nearest',behavior:'auto'})});nav.append(b)};
    add('السابق',page-1,page===1,false);
    const start=Math.max(1,Math.min(page-2,total-4)),end=Math.min(total,start+4);
@@ -34,7 +36,7 @@ function attach(gridId,cardSelector,scopeId){
  scope.addEventListener('click',e=>{if(e.target.closest('.filter-btn, [data-filter]')){signature='';queueMicrotask(draw)}});
  draw();
 }
-const css=document.createElement('style');css.textContent='.kinto-v172-pages{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:15px 0;min-height:38px}.kinto-v172-pages[hidden]{display:none}.kinto-v172-pages button{border:1px solid rgba(229,185,63,.38);border-radius:11px;padding:8px 12px;background:#103d34;color:#f8ead0;font-weight:800;cursor:pointer}.kinto-v172-pages button.active{background:#e5b93f;color:#12332a}.kinto-v172-pages button:disabled{opacity:.4;cursor:default}';document.head.append(css);
+const css=document.createElement('style');css.textContent='.kinto-v172-pages{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:15px 0;min-height:38px}.kinto-v172-pages[hidden]{display:none}.kinto-v172-pages button{border:1px solid rgba(229,185,63,.38);border-radius:11px;padding:8px 12px;background:#103d34;color:#f8ead0;font-weight:800;cursor:pointer}.kinto-v172-pages button.active{background:#e5b93f;color:#12332a}.kinto-v172-pages button:disabled{opacity:.4;cursor:default} .kinto-v174-page-info{display:inline-flex;align-items:center;color:#e7d7a6;font-size:12px;font-weight:800;padding:7px 10px;border:1px solid rgba(229,185,63,.2);border-radius:10px;background:rgba(255,255,255,.04)}';document.head.append(css);
 function init(){attach('storesGrid','.card','main');attach('localStoresPublicGrid','.local-public-card','localStoresPublic')}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 
