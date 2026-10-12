@@ -177,5 +177,81 @@
 (()=>{const stores=document.getElementById('kintoMobileStores'),menu=document.getElementById('kintoMobileStoresMenu');stores?.addEventListener('click',()=>menu?.classList.toggle('open'));document.addEventListener('click',e=>{if(menu&&!menu.contains(e.target)&&!stores?.contains(e.target))menu.classList.remove('open')});const customerId=()=>String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();const sync=()=>{const id=customerId(),chat=document.getElementById('kintoMobileChat'),favorites=document.getElementById('kintoMobileFavorites'),account=document.getElementById('kintoMobileAccount'),cart=document.getElementById('kintoMobileCart'),orders=document.getElementById('kintoMobileOrders');if(!chat||!favorites||!account||!cart||!orders)return;const dash=tab=>'dashboard.html?customerId='+encodeURIComponent(id)+'&tab='+encodeURIComponent(tab);chat.href=id?dash('chatHelp'):'login.html';favorites.href=id?dash('favorites'):'login.html';account.href=id?'dashboard.html?customerId='+encodeURIComponent(id)+'&openAccount=1':'login.html';cart.href=id?dash('drafts'):'login.html';orders.href=id?dash('activeOrders'):'login.html';const badge=document.getElementById('kintoMobileCartBadge'),count=Number(window.KintoLocalCartV93?.getCount?.()||0);if(badge){badge.textContent=count>99?'99+':String(count);badge.classList.toggle('show',count>0)}};async function unread(){const id=customerId(),badge=document.getElementById('kintoMobileChatBadge');if(!id||!badge)return;try{const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'),sb=window.KintoSupabase||(window.KintoSupabase=mod.createClient('https://hsmmbloouskqdnptiiad.supabase.co','sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH'));let r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('read_by_customer',false).in('sender_type',['employee','admin']);if(r.error&&/read_by_customer/i.test(String(r.error.message||'')))r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('is_read',false).in('sender_type',['employee','admin']);if(r.error)throw r.error;const n=Number(r.count||0);badge.textContent=n>99?'99+':String(n);badge.classList.toggle('show',n>0)}catch(e){console.warn('Store chat unread count error:',e)}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();window.addEventListener('storage',sync);window.addEventListener('kinto:local-cart-change',sync);setTimeout(sync,800);unread();setTimeout(unread,800)})();
 </script>
 <script defer src="js/kinto-deals-customer-g7.js?v=20261006-g20iqd1"></script>
+
+<style id="kintoStoreCompactCardsPreviewV177">
+/* Visual-only storefront cards. Preserve option, stock, campaign and ordering markup. */
+@media(min-width:1200px){
+ #localStoreProductsGrid{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:12px!important}
+ #localStoreProductsGrid .local-v3-img-wrap{height:148px!important;padding:5px!important}
+ #localStoreProductsGrid .local-v3-body{padding:10px!important;min-height:180px!important}
+ #localStoreProductsGrid .local-v3-name{font-size:.82rem!important;line-height:1.35!important}
+ #localStoreProductsGrid .local-v3-desc{font-size:.68rem!important}
+ #localStoreProductsGrid .local-v3-price{font-size:.96rem!important}
+ #localStoreProductsGrid .local-v3-order{min-height:34px!important;font-size:.72rem!important}
+}
+@media(min-width:768px) and (max-width:1199px){
+ #localStoreProductsGrid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+ #localStoreProductsGrid .local-v3-img-wrap{height:145px!important;padding:5px!important}
+ #localStoreProductsGrid .local-v3-body{padding:10px!important;min-height:180px!important}
+}
+@media(max-width:767px){
+ #localStoreProductsGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #localStoreProductsGrid .local-v3-img-wrap{padding:4px!important}
+}
+#localStoreProductsGrid .local-v3-card{min-width:0!important;overflow:hidden}
+#localStoreProductsGrid .local-v3-img-wrap{background:rgba(255,255,255,.035)!important}
+#localStoreProductsGrid .local-v3-img{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center!important}
+</style>
+
+<script id="kintoStoreVisualPaginationV177">
+/* Presentation-only paging: cards remain mounted to preserve product listeners and direct links. */
+(()=>{'use strict';
+const grid=document.getElementById('localStoreProductsGrid');
+if(!grid)return;
+const SIZE=12;
+let page=1,lastSignature='',lastFilter='';
+const navs=['top','bottom'].map(position=>{const nav=document.createElement('nav');nav.className='kinto-store-product-pages';nav.setAttribute('aria-label','صفحات منتجات المتجر');nav.dataset.position=position;return nav});
+grid.before(navs[0]);grid.after(navs[1]);
+const search=document.getElementById('mwGlobalStoreSearchInput');
+const params=new URLSearchParams(location.search),directId=String(params.get('productId')||params.get('product')||'');
+function cards(){return Array.from(grid.querySelectorAll(':scope > .local-v3-card[data-product-card]'))}
+function update(){
+ const all=cards();if(!all.length){navs.forEach(n=>n.replaceChildren());return}
+ const signature=all.map(x=>x.dataset.productCard).join('|');
+ const activeFilters=Array.from(document.querySelectorAll('#mwCategoryShell button.active')).map(x=>x.dataset.catFilter||x.textContent).join('|');
+ const filterKey=activeFilters+'|'+String(search?.value||'');
+ if(signature!==lastSignature||filterKey!==lastFilter){page=1;lastSignature=signature;lastFilter=filterKey}
+ // Respect category/search controls' existing visibility decisions, never override them.
+ const eligible=all.filter(el=>{const inline=el.style.display;return inline!=='none'&&!el.hidden});
+ const direct=directId&&eligible.findIndex(el=>el.dataset.productCard===directId);
+ if(direct>=0&&!grid.dataset.kintoV177DirectHandled){page=Math.floor(direct/SIZE)+1;grid.dataset.kintoV177DirectHandled='1'}
+ const total=Math.max(1,Math.ceil(eligible.length/SIZE));page=Math.min(page,total);
+ all.forEach(el=>{if(!eligible.includes(el))return;const i=eligible.indexOf(el);el.style.setProperty('display',i>=(page-1)*SIZE&&i<page*SIZE?'':'none','important');el.dataset.kintoV177Paged=i>=(page-1)*SIZE&&i<page*SIZE?'0':'1'});
+ for(const nav of navs){nav.replaceChildren();const info=document.createElement('span');info.className='kinto-store-product-page-info';info.textContent='صفحة '+page+' من '+total+' — '+eligible.length+' منتج';nav.append(info);if(total===1)continue;const button=(label,target,disabled,current)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.disabled=disabled;if(current)b.setAttribute('aria-current','page');b.addEventListener('click',()=>{all.forEach(el=>{if(el.dataset.kintoV177Paged==='1'){el.style.removeProperty('display');el.dataset.kintoV177Paged='0'}});page=target;lastSignature=signature;lastFilter=filterKey;update();if(nav===navs[1])navs[0].scrollIntoView({block:'nearest'})});nav.append(b)};button('السابق',page-1,page===1,false);const start=Math.max(1,Math.min(page-2,total-4));for(let i=start;i<=Math.min(total,start+4);i++)button(String(i),i,false,i===page);button('التالي',page+1,page===total,false)}
+}
+let pending=false;function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;update()})}
+const observer=new MutationObserver(records=>{if(records.some(r=>r.type==='childList'))schedule()});
+observer.observe(grid,{childList:true});
+search?.addEventListener('input',()=>{page=1;grid.querySelectorAll('[data-kinto-v177-paged="1"]').forEach(el=>{el.style.removeProperty('display');el.dataset.kintoV177Paged='0'});schedule()});
+document.getElementById('mwCategoryShell')?.addEventListener('click',()=>{page=1;grid.querySelectorAll('[data-kinto-v177-paged="1"]').forEach(el=>{el.style.removeProperty('display');el.dataset.kintoV177Paged='0'});setTimeout(schedule,0)});
+schedule();
+})();
+</script>
+<style id="kintoStoreVisualPaginationStyleV177">
+.kinto-store-product-pages{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;margin:14px 0;min-height:36px}
+.kinto-store-product-page-info{color:#f0db9e;font-size:12px;font-weight:800;background:#164334;padding:8px 12px;border-radius:10px;border:1px solid rgba(229,185,63,.3)}
+.kinto-store-product-pages button{border:1px solid rgba(229,185,63,.4);border-radius:10px;background:#123d31;color:#fff1cc;font-weight:800;padding:8px 12px;cursor:pointer}
+.kinto-store-product-pages button[aria-current="page"]{background:#e5b93f;color:#12332a}
+.kinto-store-product-pages button:disabled{opacity:.4;cursor:default}
+</style>
+
+
+<style id="kintoStoreUnifiedMediaV187">
+/* Product images always stay intact; no crop, stretch or image mutation. */
+#localStoreProductsGrid .local-v3-img-wrap{position:relative!important;overflow:hidden!important;padding:0!important;background:#fff!important}
+#localStoreProductsGrid .kinto-media-backdrop,
+#localStoreProductsGrid .local-v3-img-wrap::after{display:none!important}
+#localStoreProductsGrid .local-v3-img{display:block!important;position:relative!important;z-index:2!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;margin:0!important;padding:0!important;object-fit:contain!important;object-position:center!important;background:transparent!important;filter:none!important;transform:none!important}
+</style>
 </body>
 </html>
