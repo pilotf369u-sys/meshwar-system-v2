@@ -885,5 +885,34 @@ html body section#localStoresPublic #localStoresPublicGrid.local-stores-grid{
  }
 }
 </style>
+
+<!-- KINTO V205 — emerald flow: visual only, no data or interaction changes. -->
+<style id="kinto-v205-local-emerald-flow">
+html body section#localStoresPublic.local-stores-shell{
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:linear-gradient(180deg,#104e3b 0%,#104e3b 12%,#0d4837 30%,#0a4133 55%,#08392e 76%,rgba(7,51,40,0) 100%)!important;
+ padding-bottom:clamp(65px,10vw,120px)!important;
+}
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+ position:relative!important;border:0!important;border-bottom:0!important;
+ box-shadow:none!important;background:#104e3b!important;overflow:hidden!important;
+ margin-bottom:0!important;border-radius:15px 15px 0 0!important;
+}
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{
+ border:0!important;border-bottom:0!important;box-shadow:none!important;
+ border-radius:15px 15px 0 0!important;
+ -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 77%,rgba(0,0,0,.94) 84%,rgba(0,0,0,.5) 92%,transparent 100%)!important;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 77%,rgba(0,0,0,.94) 84%,rgba(0,0,0,.5) 92%,transparent 100%)!important;
+}
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner::after{
+ content:"";position:absolute;pointer-events:none;z-index:2;inset:auto 0 -1px;height:13%;
+ background:linear-gradient(180deg,rgba(16,78,59,0),#104e3b);
+}
+@media(max-width:700px){
+ html body section#localStoresPublic.local-stores-shell{padding-bottom:65px!important}
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner,
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{border-radius:13px 13px 0 0!important}
+}
+</style>
 </body>
 </html>
