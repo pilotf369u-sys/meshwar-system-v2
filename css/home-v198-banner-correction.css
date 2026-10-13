@@ -1,0 +1,81 @@
+/* V198: match featured card to the short premium global banner, without changing data or click handlers. */
+html body #kintoFeaturedStoreSlot.header-container.kinto-featured-store{
+  box-sizing:border-box!important;
+  width:min(1180px,calc(100% - 20px))!important;
+  min-height:0!important;
+  height:clamp(124px,16vw,188px)!important;
+  max-height:188px!important;
+  margin:10px auto!important;
+  padding:10px 16px!important;
+  display:grid!important;
+  grid-template-columns:clamp(70px,11vw,112px) minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:12px!important;
+  overflow:hidden!important;
+  border-radius:18px!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap{
+  grid-column:1!important;grid-row:1!important;
+  width:100%!important;height:auto!important;max-height:100%!important;
+  min-height:0!important;max-width:112px!important;
+  align-self:center!important;justify-self:center!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap img{
+  width:100%!important;height:auto!important;max-height:96px!important;
+  object-fit:contain!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-copy{
+  grid-column:2!important;grid-row:1!important;
+  width:100%!important;height:100%!important;
+  min-width:0!important;min-height:0!important;
+  display:flex!important;flex-direction:column!important;
+  align-items:stretch!important;justify-content:center!important;
+  gap:3px!important;margin:0!important;padding:0!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-copy > *{
+  max-width:100%!important;margin-block:0!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-copy h1,
+html body #kintoFeaturedStoreSlot .kinto-featured-copy h2,
+html body #kintoFeaturedStoreSlot .kinto-featured-copy h3{
+  font-size:clamp(16px,2vw,22px)!important;line-height:1.2!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-copy p{
+  font-size:clamp(11px,1.4vw,13px)!important;line-height:1.25!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-copy a,
+html body #kintoFeaturedStoreSlot .kinto-featured-copy button{
+  width:auto!important;min-width:0!important;max-width:100%!important;
+  min-height:28px!important;padding:5px 10px!important;
+  font-size:12px!important;line-height:1.25!important;
+}
+/* The source international stores section must stay hidden in local homepage mode.
+   The approved global banner remains the visible route to global-stores.html. */
+html body:not(.mw-v55-browse-mode) #internationalStoresSection{
+  display:none!important;visibility:hidden!important;
+}
+html body #internationalStoresSection.mw-v55-section-hidden:not(.mw-v55-active){
+  display:none!important;visibility:hidden!important;
+}
+@media(max-width:700px){
+  html body #kintoFeaturedStoreSlot.header-container.kinto-featured-store{
+    height:124px!important;max-height:124px!important;
+    min-height:0!important;
+    grid-template-columns:74px minmax(0,1fr)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    gap:9px!important;padding:8px 12px!important;
+  }
+  html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap{
+    max-width:74px!important;max-height:74px!important;
+  }
+  html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap img{max-height:74px!important}
+  html body #kintoFeaturedStoreSlot .kinto-featured-copy{gap:2px!important}
+  html body #kintoFeaturedStoreSlot .kinto-featured-copy h1,
+  html body #kintoFeaturedStoreSlot .kinto-featured-copy h2,
+  html body #kintoFeaturedStoreSlot .kinto-featured-copy h3{font-size:16px!important}
+  html body #kintoFeaturedStoreSlot .kinto-featured-copy a,
+  html body #kintoFeaturedStoreSlot .kinto-featured-copy button{
+    min-height:26px!important;padding:4px 8px!important;font-size:11px!important;
+  }
+}
