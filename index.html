@@ -886,43 +886,54 @@ html body section#localStoresPublic #localStoresPublicGrid.local-stores-grid{
 }
 </style>
 
-<!-- KINTO V205.2 — match actual dark emerald artwork edge; unified surface behind the entire directory. -->
+<!-- KINTO V205.3 — restore the single gold frame and carry the banner's emerald/gold atmosphere through the directory. -->
 <style id="kinto-v205-local-emerald-flow">
-/* The lower edge of the artwork is dark #07372b, not the lighter #104e3b.
-   Keep a single base surface through the search and cards, and fade only at the end. */
 html body section#localStoresPublic.local-stores-shell{
- --kinto-v205-emerald:#07372b;
- border:0!important;border-radius:0!important;box-shadow:none!important;
- background:linear-gradient(to bottom,
-   var(--kinto-v205-emerald) 0%,
-   var(--kinto-v205-emerald) 89%,
-   rgba(7,55,43,.9) 94%,
-   rgba(7,55,43,0) 100%)!important;
- padding-bottom:clamp(80px,11vw,130px)!important;
+ --kinto-v205-base:#073c2e;
+ position:relative!important;isolation:isolate!important;
+ box-sizing:border-box!important;
+ border:1px solid rgba(226,184,87,.48)!important;
+ border-radius:19px!important;
+ box-shadow:inset 0 0 0 1px rgba(255,224,135,.07),0 10px 26px rgba(0,25,19,.16)!important;
+ background:
+  radial-gradient(ellipse 90% 24% at 76% 10%,rgba(173,144,64,.12),transparent 80%),
+  radial-gradient(ellipse 85% 40% at 15% 32%,rgba(29,106,76,.24),transparent 80%),
+  radial-gradient(ellipse 88% 38% at 85% 65%,rgba(20,88,65,.22),transparent 82%),
+  linear-gradient(180deg,#073c2e 0%,#073c2e 80%,rgba(7,60,46,.92) 91%,rgba(7,60,46,0) 100%)!important;
+ padding-bottom:clamp(65px,9vw,110px)!important;
 }
+/* Only the bottom edge of the artwork dissolves. The enclosing section retains its gold outline. */
 html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
  position:relative!important;isolation:isolate!important;
  border:0!important;border-bottom:0!important;
- box-shadow:none!important;background:var(--kinto-v205-emerald)!important;
+ box-shadow:none!important;
+ background:var(--kinto-v205-base)!important;
  overflow:hidden!important;margin-bottom:0!important;
- border-radius:15px 15px 0 0!important;
+ border-radius:16px 16px 0 0!important;
 }
 html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{
  border:0!important;border-bottom:0!important;box-shadow:none!important;
- border-radius:15px 15px 0 0!important;
- -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 82%,rgba(0,0,0,.95) 88%,rgba(0,0,0,.58) 95%,transparent 100%)!important;
- mask-image:linear-gradient(to bottom,#000 0%,#000 82%,rgba(0,0,0,.95) 88%,rgba(0,0,0,.58) 95%,transparent 100%)!important;
+ border-radius:16px 16px 0 0!important;
+ -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 77%,rgba(0,0,0,.9) 85%,rgba(0,0,0,.52) 93%,transparent 100%)!important;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 77%,rgba(0,0,0,.9) 85%,rgba(0,0,0,.52) 93%,transparent 100%)!important;
 }
 html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner::after{
  content:"";position:absolute;pointer-events:none;z-index:2;
- inset:auto 0 -1px;height:12%;
- background:linear-gradient(to bottom,rgba(7,55,43,0),var(--kinto-v205-emerald));
+ inset:auto 0 -1px;height:15%;
+ background:linear-gradient(180deg,rgba(7,60,46,0),var(--kinto-v205-base));
+}
+/* Give store cards depth without changing their individual golden borders. */
+html body section#localStoresPublic #localStoresPublicGrid.local-stores-grid{
+ background:transparent!important;
 }
 @media(max-width:700px){
- html body section#localStoresPublic.local-stores-shell{padding-bottom:80px!important}
+ html body section#localStoresPublic.local-stores-shell{
+  border-radius:16px!important;
+  padding-bottom:70px!important;
+ }
  html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner,
  html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{
-  border-radius:13px 13px 0 0!important;
+  border-radius:14px 14px 0 0!important;
  }
 }
 </style>
