@@ -1,0 +1,78 @@
+/* KINTO V197: isolated visual repair. Preserve the live featured-store DOM and its click actions. */
+#kintoFeaturedStoreSlot.kinto-featured-store{
+  box-sizing:border-box!important;
+  width:min(1180px,calc(100% - 20px))!important;
+  max-width:1180px!important;
+  min-height:0!important;
+  height:auto!important;
+  margin:12px auto!important;
+  padding:12px 16px!important;
+  display:grid!important;
+  grid-template-columns:94px minmax(0,1fr)!important;
+  grid-template-rows:auto!important;
+  align-items:center!important;
+  justify-content:stretch!important;
+  gap:12px!important;
+  text-align:start!important;
+  border-radius:18px!important;
+}
+#kintoFeaturedStoreSlot .kinto-featured-logo-wrap{
+  grid-column:1!important;grid-row:1!important;
+  width:94px!important;height:94px!important;min-width:0!important;min-height:0!important;
+  max-width:94px!important;max-height:94px!important;
+  margin:0!important;padding:0!important;align-self:center!important;
+}
+#kintoFeaturedStoreSlot .kinto-featured-logo-wrap img{
+  width:100%!important;height:100%!important;max-width:94px!important;max-height:94px!important;
+  object-fit:contain!important;
+}
+#kintoFeaturedStoreSlot .kinto-featured-copy{
+  grid-column:2!important;grid-row:1!important;min-width:0!important;min-height:0!important;
+  width:100%!important;height:auto!important;margin:0!important;padding:0!important;
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  justify-content:center!important;gap:5px!important;text-align:start!important;
+}
+#kintoFeaturedStoreSlot .kinto-featured-copy h1,
+#kintoFeaturedStoreSlot .kinto-featured-copy h2,
+#kintoFeaturedStoreSlot .kinto-featured-copy h3{font-size:clamp(17px,2vw,23px)!important;line-height:1.25!important;margin:0!important}
+#kintoFeaturedStoreSlot .kinto-featured-copy p{font-size:13px!important;line-height:1.45!important;margin:0!important}
+#kintoFeaturedStoreSlot .kinto-featured-copy a,
+#kintoFeaturedStoreSlot .kinto-featured-copy button{
+  box-sizing:border-box!important;max-width:100%!important;
+  min-height:36px!important;height:auto!important;padding:8px 14px!important;
+  margin:4px 0 0!important;font-size:13px!important;border-radius:12px!important;
+}
+/* The approved artwork is the only content of the global banner. */
+#kintoStorePortalsV55 > :not(.kinto-v196-global-image-link){display:none!important}
+#kintoStorePortalsV55 .kinto-v196-global-image-link{
+  display:block!important;width:100%!important;height:auto!important;
+  min-height:0!important;padding:0!important;line-height:0!important;
+}
+#kintoStorePortalsV55 .kinto-v196-global-image-link img{
+  display:block!important;width:100%!important;height:auto!important;object-fit:contain!important;
+}
+@media(max-width:700px){
+ #kintoFeaturedStoreSlot.kinto-featured-store{
+   grid-template-columns:76px minmax(0,1fr)!important;
+   grid-template-rows:auto!important;min-height:0!important;
+   height:auto!important;gap:10px!important;
+   padding:10px 12px!important;margin:10px auto!important;
+   text-align:start!important;
+ }
+ #kintoFeaturedStoreSlot .kinto-featured-logo-wrap{
+   width:76px!important;height:76px!important;max-width:76px!important;max-height:76px!important;
+   margin:0!important;
+ }
+ #kintoFeaturedStoreSlot .kinto-featured-logo-wrap img{max-width:76px!important;max-height:76px!important}
+ #kintoFeaturedStoreSlot .kinto-featured-copy{
+   min-height:0!important;align-items:stretch!important;gap:4px!important;
+ }
+ #kintoFeaturedStoreSlot .kinto-featured-copy h1,
+ #kintoFeaturedStoreSlot .kinto-featured-copy h2,
+ #kintoFeaturedStoreSlot .kinto-featured-copy h3{font-size:17px!important}
+ #kintoFeaturedStoreSlot .kinto-featured-copy p{font-size:12px!important}
+ #kintoFeaturedStoreSlot .kinto-featured-copy a,
+ #kintoFeaturedStoreSlot .kinto-featured-copy button{
+   min-height:32px!important;padding:7px 10px!important;font-size:12px!important;
+ }
+}
