@@ -1,0 +1,7 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'com.kinto.trendyollab'
+ compileSdk 35
+ defaultConfig { applicationId 'com.kinto.trendyollab'; minSdk 26; targetSdk 35; versionCode 6; versionName '0.6-lab' }
+ compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
