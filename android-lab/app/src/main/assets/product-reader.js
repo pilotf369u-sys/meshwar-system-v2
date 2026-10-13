@@ -15,9 +15,10 @@
   else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,'');
   const n = Number(s); return Number.isFinite(n) && n > 0 && n < 10000000 ? n : null;
  };
+ const regularPlusPrices = Array.from(document.querySelectorAll('.ty-plus-price-original-price')).filter(visible);
  const selectors = ['[data-testid="price-current-price"]','[data-testid="product-price"]','.prc-dsc','.prc-box-dscntd','.price-current-price','.product-price-container .price'];
  const prices = [];
- for (const selector of selectors) for (const el of document.querySelectorAll(selector)) {
+ for (const selector of (regularPlusPrices.length ? ['.ty-plus-price-original-price'] : selectors)) for (const el of document.querySelectorAll(selector)) {
   if (!visible(el) || el.closest('[data-testid*="recommend"],[class*="recommend"],[class*="similar"],[class*="cross-selling"]')) continue;
   const raw = text(el.textContent); if (!/(TL|TRY|₺)/i.test(raw)) continue;
   const value = parsePrice(raw); if (value !== null && !prices.some(p => p.value === value)) prices.push({value,raw});
@@ -47,20 +48,39 @@
   if (values.length === 1) { price = parsePrice(values[0].price); if (price !== null) {priceRaw=String(values[0].price)+' TRY'; priceSource='structured';} }
  }
  const name = text(document.querySelector('h1')?.textContent || product?.name || meta('og:title') || document.title);
- let image = meta('og:image') || (Array.isArray(product?.image) ? product.image[0] : product?.image) || '';
+ const liveImages = Array.from(document.querySelectorAll('.product-image-gallery-viewport img')).filter(visible);
+ let image = liveImages[0]?.currentSrc || liveImages[0]?.src || meta('og:image') || (Array.isArray(product?.image) ? product.image[0] : product?.image) || '';
  if (image && typeof image === 'object') image = image.url || '';
  try { const u = new URL(image,location.href); image = u.protocol === 'https:' ? u.href : ''; } catch (_) { image=''; }
  const readOption = selectors => {
   const containers = selectors.flatMap(selector => Array.from(document.querySelectorAll(selector))).filter(visible);
   const values = [];
-  for (const container of containers) for (const el of container.querySelectorAll('[aria-pressed="true"],[aria-selected="true"],.selected,.active,input:checked,option:checked')) {
+  for (const container of containers) for (const el of container.querySelectorAll('[aria-checked="true"],[aria-pressed="true"],[aria-selected="true"],.selected,.active,input:checked,option:checked')) {
    const candidate = text(el.getAttribute('data-value') || el.getAttribute('aria-label') || el.getAttribute('title') || el.querySelector('img')?.getAttribute('alt') || el.textContent);
    if (candidate && candidate.length <= 60 && !values.includes(candidate)) values.push(candidate);
   }
   return {required:containers.length>0,value:values.length===1?values[0]:'',ambiguous:values.length>1};
  };
- const size = readOption(['.size-variant-wrapper','.size-variant-container','[data-testid="size-variants"]','[data-testid="size-variant"]']);
+ const size = readOption(['.size-picker','.size-variant-wrapper','.size-variant-container','[data-testid="size-variants"]','[data-testid="size-variant"]']);
  const color = readOption(['.color-variant-wrapper','.color-variant-container','[data-testid="color-variants"]','[data-testid="color-variant"]']);
+ // Current responsive picker titles describe the actual selected variant.
+ for (const el of document.querySelectorAll('.variant-title')) {
+  if (!visible(el)) continue;
+  const label = text(el.textContent);
+  const target = /^Beden\s*:/i.test(label) ? size : /^Renk\s*:/i.test(label) ? color : null;
+  if (!target) continue;
+  target.required = true;
+  const selected = text(el.querySelector('.selected-variant')?.textContent || label.split(':').slice(1).join(':'));
+  if (selected && selected.length <= 60) target.value = selected;
+ }
+ const sizeBoxes = Array.from(document.querySelectorAll('[data-testid="size-box"]')).filter(visible);
+ if (sizeBoxes.length) {
+  size.required = true;
+  const chosen = sizeBoxes.filter(el => el.getAttribute('aria-checked') === 'true').map(el => text(el.textContent));
+  size.value = chosen.length === 1 ? chosen[0] : '';
+ }
+ // Avoid stale metadata images when a variant exists but its live gallery is unavailable.
+ if ((size.required || color.required) && !liveImages.length) image = '';
  const merchantId = new URL(location.href).searchParams.get('merchantId') || '';
  return JSON.stringify({source,sourceName:'Trendyol',productId,pageUrl:location.href,title:name,image:String(image).slice(0,2000),price,currency:'TRY',priceRaw,priceSource,merchantId,observedOptions:{size:size.value,color:color.value},optionRequirements:{size:size.required,color:color.required},warning:prices.length>1?'AMBIGUOUS_PRICE':price===null?'PRICE_NOT_FOUND':''});
 })();

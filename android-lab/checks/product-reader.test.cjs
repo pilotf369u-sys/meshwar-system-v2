@@ -1,10 +1,10 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('fs');const vm=require('vm');
 const script=fs.readFileSync('android-lab/app/src/main/assets/product-reader.js','utf8');
-function read({path='/brand/product-p-123',prices=[],structured=null,merchant='',options={},host='www.trendyol.com'}={}) {
+function read({path='/brand/product-p-123',prices=[],structured=null,merchant='',options={},plus=[],titles=[],boxes=[],images=[],host='www.trendyol.com'}={}) {
  const node=text=>({textContent:text,getClientRects:()=>[{}],closest:()=>null});
  const href='https://'+host+path+merchant;
  const optionContainer=values=>({getClientRects:()=>[{}],closest:()=>null,querySelectorAll:()=>values.map(value=>({textContent:value,getAttribute:()=>null,querySelector:()=>null}))});
- const doc={title:'Product title',querySelector:s=>s==='h1'?node('New Well Product'):s.includes('og:image')?{content:'https://cdn.dsmcdn.com/product.jpg'}:null,querySelectorAll:s=>options[s]?options[s].map(optionContainer):s==='.prc-dsc'?prices.map(node):s==='script[type="application/ld+json"]'&&structured?[node(JSON.stringify(structured))]:[]};
+ const doc={title:'Product title',querySelector:s=>s==='h1'?node('New Well Product'):s.includes('og:image')?{content:'https://cdn.dsmcdn.com/product.jpg'}:null,querySelectorAll:s=>s==='.ty-plus-price-original-price'?plus.map(node):s==='.variant-title'?titles.map(value=>({...node(value),querySelector:()=>null})):s==='[data-testid="size-box"]'?boxes.map(([value,checked])=>({...node(value),getAttribute:()=>checked?'true':'false'})):s==='.product-image-gallery-viewport img'?images.map(src=>({...node(''),src})):options[s]?options[s].map(optionContainer):s==='.prc-dsc'?prices.map(node):s==='script[type="application/ld+json"]'&&structured?[node(JSON.stringify(structured))]:[]};
  return JSON.parse(vm.runInNewContext(script,{location:{href,pathname:path,protocol:'https:',hostname:host},document:doc,getComputedStyle:()=>({visibility:'visible'}),URL}));
 }
 test('captures displayed TRY price, source, exact product and image',()=>{const r=read({prices:['1.246,84 TL']});assert.equal(r.price,1246.84);assert.equal(r.currency,'TRY');assert.equal(r.source,'trendyol');assert.equal(r.productId,'123');assert.equal(r.priceSource,'visible');assert.match(r.image,/product.jpg/);});
@@ -19,3 +19,7 @@ test('button is product-only and handles SPA navigation',()=>{let current=null,t
 
 test('reads selected size/color only from option containers',()=>{const r=read({options:{'.size-variant-wrapper':[['M']],'.color-variant-wrapper':[['Mavi']]}});assert.equal(r.observedOptions.size,'M');assert.equal(r.observedOptions.color,'Mavi');assert.equal(r.optionRequirements.size,true);});
 test('ambiguous or unselected option is never guessed',()=>{const r=read({options:{'.size-variant-wrapper':[['M','L']],'.color-variant-wrapper':[[]]}});assert.equal(r.observedOptions.size,'');assert.equal(r.observedOptions.color,'');assert.equal(r.optionRequirements.color,true);});
+
+test('responsive regular price excludes conditional Plus offer',()=>{const r=read({prices:['1.281,70 TL'],plus:['1.424,11 TL','1.424,11 TL']});assert.equal(r.price,1424.11);});
+test('responsive selected size and color match current gallery',()=>{const r=read({titles:['Beden: L','Renk: Siyah-Beyaz-Gri Bisiklet'],boxes:[['M',false],['L',true]],images:['https://cdn.dsmcdn.com/current.jpg']});assert.equal(r.observedOptions.size,'L');assert.equal(r.observedOptions.color,'Siyah-Beyaz-Gri Bisiklet');assert.equal(r.optionRequirements.color,true);assert.match(r.image,/current.jpg/);});
+test('missing selected clothes size remains required and stale image suppressed',()=>{const r=read({boxes:[['M',false],['L',false]]});assert.equal(r.optionRequirements.size,true);assert.equal(r.observedOptions.size,'');assert.equal(r.image,'');});
