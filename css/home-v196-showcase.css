@@ -45,3 +45,10 @@
 #kintoFeaturedStoreSlot .kinto-featured-copy h2,#kintoFeaturedStoreSlot .kinto-featured-copy h3{font-size:18px!important}
 }
 @media(prefers-reduced-motion:reduce){#kintoStorePortalsV55 .kinto-v196-global-link{transition:none!important}}
+
+/* V196 final approved artwork: one full-card link, no visual substitutes */
+#kintoStorePortalsV55 .kinto-v196-global-image-link{display:block!important;position:relative!important;width:100%!important;min-height:0!important;height:auto!important;padding:0!important;line-height:0!important;overflow:hidden!important;border:0!important;border-radius:clamp(12px,2vw,22px)!important;background:#052f26!important;box-shadow:0 12px 28px #001c1866!important}
+#kintoStorePortalsV55 .kinto-v196-global-image-link img{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;object-fit:contain!important;aspect-ratio:987/187!important}
+#kintoStorePortalsV55 .kinto-v196-global-image-link:focus-visible{outline:3px solid #ffe58c!important;outline-offset:3px!important}
+#kintoStorePortalsV55 .kinto-v196-accessible-label{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@media(max-width:700px){#kintoStorePortalsV55 .kinto-v196-global-image-link{min-height:0!important;border-radius:12px!important}#kintoStorePortalsV55.kinto-v172-global-strip{margin:12px 10px 8px!important}}
