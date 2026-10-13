@@ -861,5 +861,29 @@ html body section#localStoresPublic #localStoresPublicGrid.local-stores-grid{
  }
 }
 </style>
+
+<!-- V203.7: last-in-cascade banner alignment; fixes V203.5 mobile width reset. -->
+<style id="kinto-v203-v7-banner-full-width">
+@media(max-width:700px){
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+  display:block!important;box-sizing:border-box!important;
+  width:calc(100% + 18px)!important;max-width:none!important;
+  margin:-9px -9px 8px!important;padding:0!important;
+  aspect-ratio:2172 / 412!important;height:auto!important;
+  border-radius:15px!important;overflow:hidden!important;
+ }
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{
+  display:block!important;width:100%!important;height:100%!important;
+  aspect-ratio:2172 / 412!important;object-fit:fill!important;
+  border-radius:inherit!important;
+ }
+}
+@media(min-width:701px){
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+  width:calc(100% + 26px)!important;max-width:none!important;
+  margin:-12px -13px 9px!important;padding:0!important;
+ }
+}
+</style>
 </body>
 </html>
