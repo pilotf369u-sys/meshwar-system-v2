@@ -231,8 +231,8 @@
 
     <section id="localStoresPublic" class="local-stores-shell">
       <div class="local-stores-head kinto-v201-local-banner"><img src="images/kinto-local-banner-v201(1).webp" alt="المتاجر المحلية — منتجات متنوعة من متاجر محلية موثوقة عبر منصة KINTO" width="2172" height="412" loading="lazy" decoding="async"></div>
-      <div class="kinto-v172-search-wrap"><label for="kintoV172LocalSearch">ابحث عن متجر محلي</label><input id="kintoV172LocalSearch" type="search" autocomplete="off" placeholder="اسم المتجر أو المحافظة أو التخصص"></div>
-      <div id="localSpecialtyFilters" class="local-specialty-filters" hidden></div>
+      <div class="kinto-v172-search-wrap"><label for="kintoV172LocalSearch">تصفّح المتاجر المحلية <small class="kinto-v203-section-hint">ابحث أو اختر تصنيفاً من المتاجر المعروضة أدناه</small></label><input id="kintoV172LocalSearch" type="search" autocomplete="off" placeholder="اسم المتجر أو المحافظة أو التخصص"></div>
+      <details class="kinto-v203-filter-dropdown" id="kintoV203FilterDropdown"><summary aria-label="عرض تصنيفات المتاجر"><span><i class="fa-solid fa-layer-group" aria-hidden="true"></i> تصنيف المتاجر</span><span class="kinto-v203-filter-hint">اختر التخصص <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span></summary><div id="localSpecialtyFilters" class="local-specialty-filters" hidden></div></details>
       <div id="localStoresPublicGrid" class="local-stores-grid"><div class="local-empty">جاري تحميل المتاجر المحلية...</div></div>
     <div id="localStoreProductsPanel"
      style="display:none;margin-top:22px">
@@ -749,5 +749,141 @@ body{background-image:linear-gradient(180deg,#063b32 0%,#082f26 50%,#06291f 100%
 <link rel="stylesheet" href="css/home-v199-final-correction.css?v=20261013-v199">
 <link rel="stylesheet" href="css/home-v201-local-banner.css?v=20261013-v201">
 <link rel="stylesheet" href="css/home-v202-featured-vip.css?v=20261013-v202">
+<link rel="stylesheet" href="css/home-v203-local-directory.css?v=2031">
+
+<!-- V203.2: scoped final visual overrides, after all legacy styles. No business logic changes. -->
+<style id="kinto-v203-final-directory-visual">
+body section#localStoresPublic.local-stores-shell{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0 0 18px!important;margin-top:12px!important;overflow:visible!important}
+body section#localStoresPublic .kinto-v172-search-wrap{margin:0 0 10px!important;gap:5px!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+body section#localStoresPublic .kinto-v172-search-wrap label{margin:0 0 5px!important;font-size:14px!important;color:#f5d38a!important}
+body section#localStoresPublic input#kintoV172LocalSearch{height:43px!important;min-height:43px!important;border-radius:12px!important;background:#124b39!important;border:1px solid #a88b4e!important;padding:7px 13px!important;font-size:14px!important;box-shadow:none!important}
+body section#localStoresPublic div#localSpecialtyFilters.local-specialty-filters{margin:0 0 10px!important;padding:0!important;gap:6px!important;justify-content:flex-start!important}
+body section#localStoresPublic #localSpecialtyFilters button.local-filter-btn{min-height:32px!important;border-radius:9px!important;padding:5px 9px!important;font-size:11px!important;box-shadow:none!important;transform:none!important}
+body section#localStoresPublic div#localStoresPublicGrid.local-stores-grid{gap:10px!important;margin-top:0!important;padding:0!important}
+body section#localStoresPublic #localStoresPublicGrid article.local-public-card{background:linear-gradient(160deg,#155441,#0b382e)!important;border:1px solid rgba(239,197,101,.45)!important;border-radius:15px!important;padding:13px 9px!important;box-shadow:0 7px 18px rgba(0,18,12,.18)!important;min-height:0!important}
+body section#localStoresPublic #localStoresPublicGrid img.local-public-logo{width:88px!important;height:88px!important;min-width:0!important;min-height:0!important;max-width:100%!important;object-fit:contain!important;background:#f8f4e8!important;border:2px solid #e5c377!important;border-radius:50%!important;margin-bottom:9px!important}
+body section#localStoresPublic #localStoresPublicGrid .local-public-name{font-size:14px!important;line-height:1.3!important;color:#fff6dd!important}
+body section#localStoresPublic #localStoresPublicGrid .local-public-meta{font-size:11px!important;color:#c5dfd1!important}
+body section#localStoresPublic #localStoresPublicGrid .local-public-open{border-radius:10px!important}
+@media(max-width:700px){body section#localStoresPublic.local-stores-shell{padding:0 0 12px!important;margin-top:10px!important}body section#localStoresPublic div#localStoresPublicGrid.local-stores-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}body section#localStoresPublic #localStoresPublicGrid article.local-public-card{padding:12px 7px!important}body section#localStoresPublic #localStoresPublicGrid img.local-public-logo{width:76px!important;height:76px!important}body section#localStoresPublic .kinto-v172-search-wrap{margin-bottom:8px!important}}
+</style>
+
+<style id="kinto-v203-directory-compact">
+body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{margin-bottom:4px!important}
+body section#localStoresPublic .kinto-v172-search-wrap{margin-top:0!important;margin-bottom:8px!important}
+body section#localStoresPublic .kinto-v172-search-wrap label{display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important;margin:0!important;font-size:14px!important;line-height:1.3!important}
+body section#localStoresPublic .kinto-v203-section-hint{font-size:10px!important;font-weight:500!important;color:#b6d5c5!important}
+body section#localStoresPublic .kinto-v203-filter-dropdown{margin:0 0 8px!important;padding:0!important;border:1px solid rgba(235,197,112,.42)!important;border-radius:12px!important;background:linear-gradient(115deg,#124b3a,#0a3c30)!important;overflow:hidden!important}
+body section#localStoresPublic .kinto-v203-filter-dropdown>summary{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:10px!important;padding:10px 13px!important;cursor:pointer!important;list-style:none!important;color:#f9e4ab!important;font-size:13px!important;font-weight:800!important;min-height:40px!important;box-sizing:border-box!important}
+body section#localStoresPublic .kinto-v203-filter-dropdown>summary::-webkit-details-marker{display:none}
+body section#localStoresPublic .kinto-v203-filter-hint{display:flex;gap:8px;align-items:center;font-size:11px;font-weight:600;color:#bcd9ca}
+body section#localStoresPublic .kinto-v203-filter-dropdown[open] .kinto-v203-filter-hint i{transform:rotate(180deg)}
+body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters{padding:9px!important;margin:0!important;border-top:1px solid rgba(235,197,112,.18)!important;justify-content:flex-start!important;gap:6px!important}
+body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters[hidden]{display:none!important}
+@media(max-width:700px){body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{margin-bottom:3px!important}body section#localStoresPublic .kinto-v172-search-wrap{margin-bottom:7px!important}body section#localStoresPublic .kinto-v203-section-hint{font-size:9px!important}}
+</style>
+
+<style id="kinto-v203-unified-directory">
+/* One continuous visual section, fading into the page after the store cards. */
+html body section#localStoresPublic.local-stores-shell{
+ position:relative!important;isolation:isolate!important;
+ box-sizing:border-box!important;
+ border:1px solid rgba(225,186,91,.38)!important;
+ border-radius:20px!important;
+ padding:12px 13px 30px!important;
+ background:linear-gradient(180deg,
+   rgba(18,82,61,.94) 0%,
+   rgba(10,66,49,.90) 24%,
+   rgba(7,54,42,.70) 57%,
+   rgba(5,47,37,.26) 85%,
+   rgba(5,47,37,0) 100%)!important;
+ box-shadow:inset 0 1px 0 rgba(255,229,155,.09)!important;
+ overflow:visible!important;
+}
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+ width:100%!important;max-width:100%!important;
+ margin:0 0 8px!important;padding:0!important;
+ border-radius:13px!important;
+}
+html body section#localStoresPublic .kinto-v172-search-wrap{
+ margin:0 0 8px!important;padding:0!important;
+ border:0!important;border-bottom:0!important;
+ background:transparent!important;box-shadow:none!important;
+}
+html body section#localStoresPublic .kinto-v172-search-wrap label,
+html body section#localStoresPublic .kinto-v172-search-wrap label:after,
+html body section#localStoresPublic .kinto-v203-section-hint{
+ border:0!important;border-bottom:0!important;
+ text-decoration:none!important;box-shadow:none!important;
+}
+html body section#localStoresPublic .kinto-v172-search-wrap label{
+ padding:0 2px!important;line-height:1.35!important;
+}
+html body section#localStoresPublic .kinto-v203-filter-dropdown{
+ margin-bottom:10px!important;
+ border-radius:11px!important;
+}
+html body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters.local-specialty-filters:not([hidden]){
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:center!important;justify-content:flex-start!important;
+ gap:7px!important;
+ width:100%!important;max-width:100%!important;
+ box-sizing:border-box!important;
+ overflow-x:auto!important;overflow-y:hidden!important;
+ overscroll-behavior-x:contain!important;
+ -webkit-overflow-scrolling:touch!important;
+ scrollbar-width:thin!important;
+ padding:9px 10px 11px!important;
+ margin:0!important;
+}
+html body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters .local-filter-btn{
+ display:inline-flex!important;flex:0 0 auto!important;
+ width:auto!important;min-width:max-content!important;
+ white-space:nowrap!important;
+ margin:0!important;
+}
+html body section#localStoresPublic #localStoresPublicGrid.local-stores-grid{
+ margin-top:0!important;
+}
+@media(max-width:700px){
+ html body section#localStoresPublic.local-stores-shell{
+  width:calc(100% - 20px)!important;
+  margin:12px auto 22px!important;
+  padding:9px 9px 22px!important;
+  border-radius:16px!important;
+ }
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+  width:100%!important;max-width:100%!important;
+  margin:0 0 7px!important;
+ }
+ html body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters.local-specialty-filters:not([hidden]){
+  gap:6px!important;padding:8px 8px 10px!important;
+ }
+}
+</style>
+
+<!-- V203.7: last-in-cascade banner alignment; fixes V203.5 mobile width reset. -->
+<style id="kinto-v203-v7-banner-full-width">
+@media(max-width:700px){
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+  display:block!important;box-sizing:border-box!important;
+  width:calc(100% + 18px)!important;max-width:none!important;
+  margin:-9px -9px 8px!important;padding:0!important;
+  aspect-ratio:2172 / 412!important;height:auto!important;
+  border-radius:15px!important;overflow:hidden!important;
+ }
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{
+  display:block!important;width:100%!important;height:100%!important;
+  aspect-ratio:2172 / 412!important;object-fit:fill!important;
+  border-radius:inherit!important;
+ }
+}
+@media(min-width:701px){
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+  width:calc(100% + 26px)!important;max-width:none!important;
+  margin:-12px -13px 9px!important;padding:0!important;
+ }
+}
+</style>
 </body>
 </html>
