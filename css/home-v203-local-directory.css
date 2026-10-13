@@ -134,3 +134,35 @@ html body #localStoresPublic .local-public-open{
 @media(prefers-reduced-motion:reduce){
   html body #localStoresPublic .local-public-card{transition:none!important}
 }
+
+/* V203.3: Restore exact horizontal alignment with global banner.
+   V202 and V203 each inset the local artwork, creating the visible double inset.
+   The shell is already aligned; the banner must fill that shell. */
+html body section#localStoresPublic.local-stores-shell > .local-stores-head.kinto-v201-local-banner{
+  box-sizing:border-box!important;
+  width:100%!important;max-width:100%!important;
+  margin:0 0 12px!important;padding:0!important;
+  aspect-ratio:2172 / 412!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  border-radius:15px!important;overflow:hidden!important;
+}
+html body section#localStoresPublic.local-stores-shell > .local-stores-head.kinto-v201-local-banner > img{
+  display:block!important;box-sizing:border-box!important;
+  width:100%!important;height:100%!important;
+  aspect-ratio:2172 / 412!important;
+  object-fit:fill!important;border-radius:15px!important;
+}
+@media(max-width:700px){
+  html body section#localStoresPublic.local-stores-shell > .local-stores-head.kinto-v201-local-banner{
+    width:100%!important;max-width:100%!important;
+    margin:0 0 12px!important;
+    border-radius:13px!important;
+  }
+  html body section#localStoresPublic.local-stores-shell > .local-stores-head.kinto-v201-local-banner > img{
+    border-radius:13px!important;
+  }
+  /* Bring the first stores into view sooner while keeping filters functional. */
+  html body section#localStoresPublic #localSpecialtyFilters.local-specialty-filters{
+    margin-bottom:5px!important;
+  }
+}
