@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a2f23">
+<title>KINTO — لا يوجد اتصال</title>
+<style>
+html,body{margin:0;min-height:100%;background:#0a2f23}
+body{min-height:100dvh;display:grid;place-items:center;padding:28px;box-sizing:border-box;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;color:#fff}
+.wrap{width:min(360px,100%);text-align:center}
+.logo{width:116px;height:116px;object-fit:contain;border-radius:50%;display:block;margin:0 auto 24px;animation:breathe 3s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.88}50%{transform:scale(1.07);opacity:1}}
+h1{font-size:22px;margin:0 0 10px;font-weight:900}
+p{font-size:15px;line-height:1.8;opacity:.86;margin:0 0 24px}
+button{border:1px solid rgba(255,215,96,.8);background:#e6b83f;color:#0a2f23;border-radius:14px;padding:12px 25px;font:900 15px system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+</style>
+</head>
+<body>
+<main class="wrap">
+<img class="logo" src="/images/meshwar-logo.png" alt="KINTO">
+<h1>لا يوجد اتصال بالإنترنت</h1>
+<p>تحقق من الشبكة ثم حاول مرة أخرى.</p>
+<button type="button" onclick="location.reload()">إعادة المحاولة</button>
+</main>
+<script>
+window.addEventListener('online',function(){location.replace('/index.html')});
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.kinto.app",
+    "sha256_cert_fingerprints": ["43:83:9F:A3:0A:84:72:D1:D0:DE:9B:39:4F:D7:18:4A:0F:1A:2A:3A:73:97:A9:94:73:34:BD:01:0D:CB:7E:33"]
+  }
+}]
