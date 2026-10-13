@@ -23,13 +23,18 @@ jobs:
    - uses: gradle/actions/setup-gradle@v4
      with:
       gradle-version: '8.11.1'
+   - uses: actions/cache@v4
+     with:
+      path: ~/.android/debug.keystore
+      key: kinto-trendyol-lab-debug-signing-v1
    - name: Product reader and SPA button tests
      run: node --test android-lab/checks/product-reader.test.cjs
    - name: URL boundary tests
      run: |
       mkdir -p /tmp/kinto-lab-checks
-      javac -d /tmp/kinto-lab-checks android-lab/app/src/main/java/com/kinto/trendyollab/UrlPolicy.java android-lab/checks/UrlPolicyCheck.java
+      javac -d /tmp/kinto-lab-checks android-lab/app/src/main/java/com/kinto/trendyollab/UrlPolicy.java android-lab/checks/UrlPolicyCheck.java android-lab/app/src/main/java/com/kinto/trendyollab/CartRules.java android-lab/checks/CartRulesCheck.java
       java -cp /tmp/kinto-lab-checks UrlPolicyCheck
+      java -cp /tmp/kinto-lab-checks CartRulesCheck
    - name: Build test APK
      working-directory: android-lab
      run: gradle --no-daemon :app:assembleDebug :app:lintDebug

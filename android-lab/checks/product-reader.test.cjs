@@ -1,9 +1,10 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('fs');const vm=require('vm');
 const script=fs.readFileSync('android-lab/app/src/main/assets/product-reader.js','utf8');
-function read({path='/brand/product-p-123',prices=[],structured=null,merchant='',host='www.trendyol.com'}={}) {
+function read({path='/brand/product-p-123',prices=[],structured=null,merchant='',options={},host='www.trendyol.com'}={}) {
  const node=text=>({textContent:text,getClientRects:()=>[{}],closest:()=>null});
  const href='https://'+host+path+merchant;
- const doc={title:'Product title',querySelector:s=>s==='h1'?node('New Well Product'):s.includes('og:image')?{content:'https://cdn.dsmcdn.com/product.jpg'}:null,querySelectorAll:s=>s==='.prc-dsc'?prices.map(node):s==='script[type="application/ld+json"]'&&structured?[node(JSON.stringify(structured))]:[]};
+ const optionContainer=values=>({getClientRects:()=>[{}],closest:()=>null,querySelectorAll:()=>values.map(value=>({textContent:value,getAttribute:()=>null,querySelector:()=>null}))});
+ const doc={title:'Product title',querySelector:s=>s==='h1'?node('New Well Product'):s.includes('og:image')?{content:'https://cdn.dsmcdn.com/product.jpg'}:null,querySelectorAll:s=>options[s]?options[s].map(optionContainer):s==='.prc-dsc'?prices.map(node):s==='script[type="application/ld+json"]'&&structured?[node(JSON.stringify(structured))]:[]};
  return JSON.parse(vm.runInNewContext(script,{location:{href,pathname:path,protocol:'https:',hostname:host},document:doc,getComputedStyle:()=>({visibility:'visible'}),URL}));
 }
 test('captures displayed TRY price, source, exact product and image',()=>{const r=read({prices:['1.246,84 TL']});assert.equal(r.price,1246.84);assert.equal(r.currency,'TRY');assert.equal(r.source,'trendyol');assert.equal(r.productId,'123');assert.equal(r.priceSource,'visible');assert.match(r.image,/product.jpg/);});
@@ -15,3 +16,6 @@ test('does not capture home or untrusted host',()=>{assert.equal(read({path:'/'}
 test('discount percentage is not a price',()=>{assert.equal(read({prices:['10% TL']}).price,null);});
 const buttonScript=fs.readFileSync('android-lab/app/src/main/assets/order-button.js','utf8');
 test('button is product-only and handles SPA navigation',()=>{let current=null,tick;const doc={getElementById:()=>current,createElement:()=>({style:{},addEventListener:()=>{},remove:()=>{current=null}}),body:{appendChild:x=>current=x}};const context={location:{protocol:'https:',hostname:'www.trendyol.com',pathname:'/'},document:doc,window:{addEventListener:()=>{}},setInterval:f=>{tick=f;return 1}};vm.runInNewContext(buttonScript,context);assert.equal(current,null);context.location.pathname='/a-p-123';tick();assert.ok(current);const first=current;tick();assert.equal(current,first);context.location.pathname='/login';tick();assert.equal(current,null);});
+
+test('reads selected size/color only from option containers',()=>{const r=read({options:{'.size-variant-wrapper':[['M']],'.color-variant-wrapper':[['Mavi']]}});assert.equal(r.observedOptions.size,'M');assert.equal(r.observedOptions.color,'Mavi');assert.equal(r.optionRequirements.size,true);});
+test('ambiguous or unselected option is never guessed',()=>{const r=read({options:{'.size-variant-wrapper':[['M','L']],'.color-variant-wrapper':[[]]}});assert.equal(r.observedOptions.size,'');assert.equal(r.observedOptions.color,'');assert.equal(r.optionRequirements.color,true);});

@@ -50,5 +50,17 @@
  let image = meta('og:image') || (Array.isArray(product?.image) ? product.image[0] : product?.image) || '';
  if (image && typeof image === 'object') image = image.url || '';
  try { const u = new URL(image,location.href); image = u.protocol === 'https:' ? u.href : ''; } catch (_) { image=''; }
- return JSON.stringify({source,sourceName:'Trendyol',productId,pageUrl:location.href,title:name,image:String(image).slice(0,2000),price,currency:'TRY',priceRaw,priceSource,warning:prices.length>1?'AMBIGUOUS_PRICE':price===null?'PRICE_NOT_FOUND':''});
+ const readOption = selectors => {
+  const containers = selectors.flatMap(selector => Array.from(document.querySelectorAll(selector))).filter(visible);
+  const values = [];
+  for (const container of containers) for (const el of container.querySelectorAll('[aria-pressed="true"],[aria-selected="true"],.selected,.active,input:checked,option:checked')) {
+   const candidate = text(el.getAttribute('data-value') || el.getAttribute('aria-label') || el.getAttribute('title') || el.querySelector('img')?.getAttribute('alt') || el.textContent);
+   if (candidate && candidate.length <= 60 && !values.includes(candidate)) values.push(candidate);
+  }
+  return {required:containers.length>0,value:values.length===1?values[0]:'',ambiguous:values.length>1};
+ };
+ const size = readOption(['.size-variant-wrapper','.size-variant-container','[data-testid="size-variants"]','[data-testid="size-variant"]']);
+ const color = readOption(['.color-variant-wrapper','.color-variant-container','[data-testid="color-variants"]','[data-testid="color-variant"]']);
+ const merchantId = new URL(location.href).searchParams.get('merchantId') || '';
+ return JSON.stringify({source,sourceName:'Trendyol',productId,pageUrl:location.href,title:name,image:String(image).slice(0,2000),price,currency:'TRY',priceRaw,priceSource,merchantId,observedOptions:{size:size.value,color:color.value},optionRequirements:{size:size.required,color:color.required},warning:prices.length>1?'AMBIGUOUS_PRICE':price===null?'PRICE_NOT_FOUND':''});
 })();

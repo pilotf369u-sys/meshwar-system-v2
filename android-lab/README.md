@@ -21,3 +21,6 @@ GitHub Actions builds this on the isolated `app/android-trendyol-lab-v1` branch.
 
 ## Version 0.2
 Product-only side button, SPA visibility updates, confirmed product title/image/TRY price capture, and stored source ID. Ambiguous/missing prices stay unknown; no conversion, variants, quantity, employee routing or production order API. Public product image preview uses only approved HTTPS CDN hosts and bounded image downloads. Test fixtures validate parsing; actual Trendyol page compatibility must be checked on device.
+
+## Version 0.3
+Removes native fallback button. Captures candidate selected options from recognized Trendyol variant containers, requires user confirmation and offers explicit manual correction for unread options. Requested quantity is 1–99 for experiment only, not an availability check. Cart identity includes source/product/seller/size/color; two different variants remain separate. Reconfirming the same variant replaces its captured quantity. Decimal totals omit shipping and are observations, not a final quote. Stable debug keystore caching begins with this version; the first upgrade from v0.2 may still require uninstall. This is not production signing.
