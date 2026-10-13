@@ -782,5 +782,84 @@ body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilter
 body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters[hidden]{display:none!important}
 @media(max-width:700px){body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{margin-bottom:3px!important}body section#localStoresPublic .kinto-v172-search-wrap{margin-bottom:7px!important}body section#localStoresPublic .kinto-v203-section-hint{font-size:9px!important}}
 </style>
+
+<style id="kinto-v203-unified-directory">
+/* One continuous visual section, fading into the page after the store cards. */
+html body section#localStoresPublic.local-stores-shell{
+ position:relative!important;isolation:isolate!important;
+ box-sizing:border-box!important;
+ border:1px solid rgba(225,186,91,.38)!important;
+ border-radius:20px!important;
+ padding:12px 13px 30px!important;
+ background:linear-gradient(180deg,
+   rgba(18,82,61,.94) 0%,
+   rgba(10,66,49,.90) 24%,
+   rgba(7,54,42,.70) 57%,
+   rgba(5,47,37,.26) 85%,
+   rgba(5,47,37,0) 100%)!important;
+ box-shadow:inset 0 1px 0 rgba(255,229,155,.09)!important;
+ overflow:visible!important;
+}
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+ width:100%!important;max-width:100%!important;
+ margin:0 0 8px!important;padding:0!important;
+ border-radius:13px!important;
+}
+html body section#localStoresPublic .kinto-v172-search-wrap{
+ margin:0 0 8px!important;padding:0!important;
+ border:0!important;border-bottom:0!important;
+ background:transparent!important;box-shadow:none!important;
+}
+html body section#localStoresPublic .kinto-v172-search-wrap label,
+html body section#localStoresPublic .kinto-v172-search-wrap label:after,
+html body section#localStoresPublic .kinto-v203-section-hint{
+ border:0!important;border-bottom:0!important;
+ text-decoration:none!important;box-shadow:none!important;
+}
+html body section#localStoresPublic .kinto-v172-search-wrap label{
+ padding:0 2px!important;line-height:1.35!important;
+}
+html body section#localStoresPublic .kinto-v203-filter-dropdown{
+ margin-bottom:10px!important;
+ border-radius:11px!important;
+}
+html body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters.local-specialty-filters:not([hidden]){
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:center!important;justify-content:flex-start!important;
+ gap:7px!important;
+ width:100%!important;max-width:100%!important;
+ box-sizing:border-box!important;
+ overflow-x:auto!important;overflow-y:hidden!important;
+ overscroll-behavior-x:contain!important;
+ -webkit-overflow-scrolling:touch!important;
+ scrollbar-width:thin!important;
+ padding:9px 10px 11px!important;
+ margin:0!important;
+}
+html body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters .local-filter-btn{
+ display:inline-flex!important;flex:0 0 auto!important;
+ width:auto!important;min-width:max-content!important;
+ white-space:nowrap!important;
+ margin:0!important;
+}
+html body section#localStoresPublic #localStoresPublicGrid.local-stores-grid{
+ margin-top:0!important;
+}
+@media(max-width:700px){
+ html body section#localStoresPublic.local-stores-shell{
+  width:calc(100% - 20px)!important;
+  margin:12px auto 22px!important;
+  padding:9px 9px 22px!important;
+  border-radius:16px!important;
+ }
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+  width:100%!important;max-width:100%!important;
+  margin:0 0 7px!important;
+ }
+ html body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters.local-specialty-filters:not([hidden]){
+  gap:6px!important;padding:8px 8px 10px!important;
+ }
+}
+</style>
 </body>
 </html>
