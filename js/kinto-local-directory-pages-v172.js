@@ -42,6 +42,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 function decorate(){
  const global=document.querySelector('.kinto-v172-global-link');
+ if(global&&global.classList.contains('kinto-v196-global-image-link')){global.querySelectorAll('.kinto-v173-brands').forEach(el=>el.remove());global.dataset.v173='1';}
  if(global&&!global.dataset.v173){
   global.dataset.v173='1';
   const globe=global.querySelector('.kinto-v172-global-icon');
