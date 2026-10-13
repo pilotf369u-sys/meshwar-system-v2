@@ -1,0 +1,58 @@
+/* KINTO V201: neutral local marketplace image, same wide aspect as global banner. */
+#localStoresPublic .local-stores-head.kinto-v201-local-banner{
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  padding:0!important;
+  margin:0 0 14px!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+  border-radius:18px!important;
+}
+#localStoresPublic .kinto-v201-local-banner img{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  aspect-ratio:2172 / 412!important;
+  object-fit:contain!important;
+  border:1px solid rgba(229,186,93,.65)!important;
+  border-radius:18px!important;
+  box-sizing:border-box!important;
+}
+#localStoresPublic #localSpecialtyFilters{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-start;
+  gap:6px!important;
+  margin:10px 0 12px!important;
+}
+#localStoresPublic #localSpecialtyFilters[hidden]{display:none!important}
+#localStoresPublic #localSpecialtyFilters button{
+  width:auto!important;
+  min-height:31px!important;
+  height:auto!important;
+  padding:6px 10px!important;
+  border-radius:11px!important;
+  font-size:12px!important;
+  line-height:1.25!important;
+  white-space:nowrap;
+}
+#localStoresPublic #localSpecialtyFilters button svg,
+#localStoresPublic #localSpecialtyFilters button img{
+  width:14px!important;height:14px!important;
+}
+@media(max-width:700px){
+  #localStoresPublic .local-stores-head.kinto-v201-local-banner{
+    margin-bottom:10px!important;border-radius:13px!important;
+  }
+  #localStoresPublic .kinto-v201-local-banner img{border-radius:13px!important}
+  #localStoresPublic #localSpecialtyFilters{gap:5px!important;margin:8px 0 10px!important}
+  #localStoresPublic #localSpecialtyFilters button{
+    padding:5px 8px!important;
+    min-height:28px!important;
+    font-size:11px!important;
+  }
+}
