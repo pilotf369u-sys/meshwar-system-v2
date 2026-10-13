@@ -264,3 +264,75 @@ html body #meshwarTicker .meshwar-ticker-track{
   position:relative!important;z-index:1!important;
   color:#ffe3a0!important;text-shadow:0 1px 5px rgba(0,0,0,.35)!important;
 }
+
+/* KINTO V204 — VIP store identity. CSS only: existing live logo, name and link. */
+html body #kintoFeaturedStoreSlot.header-container.kinto-featured-store{
+  grid-template-columns:clamp(76px,14%,148px) minmax(0,1fr)!important;
+  gap:clamp(8px,1.5vw,20px)!important;
+  padding:clamp(5px,1vw,12px)!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap{
+  position:relative!important;
+  box-sizing:border-box!important;
+  width:100%!important;max-width:100%!important;
+  height:auto!important;aspect-ratio:1/1!important;
+  padding:clamp(4px,.8vw,9px)!important;
+  border:2px solid #f4d477!important;
+  border-radius:clamp(10px,1.7vw,20px)!important;
+  background:linear-gradient(145deg,rgba(4,51,39,.94),rgba(7,69,49,.82))!important;
+  box-shadow:0 0 0 3px rgba(238,189,77,.11),0 0 21px rgba(243,196,90,.25),inset 0 1px 10px rgba(255,229,144,.12)!important;
+  overflow:hidden!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap img{
+  display:block!important;width:100%!important;height:100%!important;
+  max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;object-position:center!important;
+  border-radius:inherit!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-copy{
+  min-width:0!important;max-width:100%!important;
+  border-color:rgba(255,216,126,.17)!important;
+  background:linear-gradient(90deg,rgba(1,33,26,.10),rgba(1,33,26,.55))!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-title{
+  display:block!important;max-width:100%!important;
+  color:#fff7da!important;
+  font-weight:900!important;
+  font-size:clamp(15px,2.6vw,28px)!important;
+  line-height:1.18!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;
+  overflow:hidden!important;
+  display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;
+  text-overflow:ellipsis!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-badge{
+  background:linear-gradient(110deg,rgba(8,65,46,.95),rgba(9,50,39,.91))!important;
+  border-color:rgba(255,221,131,.82)!important;
+  color:#ffdf86!important;font-weight:900!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-open{
+  box-shadow:0 2px 9px rgba(255,203,96,.19)!important;
+}
+@media(max-width:700px){
+  html body #kintoFeaturedStoreSlot.header-container.kinto-featured-store{
+    grid-template-columns:clamp(57px,17%,78px) minmax(0,1fr)!important;
+    gap:7px!important;padding:3px 7px!important;
+  }
+  html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap{
+    padding:3px!important;border-width:1.5px!important;border-radius:11px!important;
+    box-shadow:0 0 0 2px rgba(238,189,77,.11),0 0 12px rgba(243,196,90,.24)!important;
+  }
+  html body #kintoFeaturedStoreSlot .kinto-featured-copy{
+    padding:2px 5px!important;gap:1px!important;
+  }
+  html body #kintoFeaturedStoreSlot .kinto-featured-title{
+    font-size:clamp(11px,3vw,15px)!important;line-height:1.12!important;
+    -webkit-line-clamp:2!important;
+  }
+  html body #kintoFeaturedStoreSlot .kinto-featured-subtitle{
+    font-size:clamp(8px,1.95vw,10px)!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+ html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap{animation:none!important}
+}
