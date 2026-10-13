@@ -1,0 +1,17 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('fs');const vm=require('vm');
+const script=fs.readFileSync('android-lab/app/src/main/assets/product-reader.js','utf8');
+function read({path='/brand/product-p-123',prices=[],structured=null,merchant='',host='www.trendyol.com'}={}) {
+ const node=text=>({textContent:text,getClientRects:()=>[{}],closest:()=>null});
+ const href='https://'+host+path+merchant;
+ const doc={title:'Product title',querySelector:s=>s==='h1'?node('New Well Product'):s.includes('og:image')?{content:'https://cdn.dsmcdn.com/product.jpg'}:null,querySelectorAll:s=>s==='.prc-dsc'?prices.map(node):s==='script[type="application/ld+json"]'&&structured?[node(JSON.stringify(structured))]:[]};
+ return JSON.parse(vm.runInNewContext(script,{location:{href,pathname:path,protocol:'https:',hostname:host},document:doc,getComputedStyle:()=>({visibility:'visible'}),URL}));
+}
+test('captures displayed TRY price, source, exact product and image',()=>{const r=read({prices:['1.246,84 TL']});assert.equal(r.price,1246.84);assert.equal(r.currency,'TRY');assert.equal(r.source,'trendyol');assert.equal(r.productId,'123');assert.equal(r.priceSource,'visible');assert.match(r.image,/product.jpg/);});
+test('different visible prices fail closed',()=>{const r=read({prices:['246,84 TL','271 TL']});assert.equal(r.price,null);assert.equal(r.warning,'AMBIGUOUS_PRICE');});
+test('missing prices do not become zero',()=>{assert.equal(read().price,null);});
+test('exact structured TRY offer only',()=>{assert.equal(read({structured:{'@type':'Product',url:'https://www.trendyol.com/a-p-123',offers:{price:'271.25',priceCurrency:'TRY'}}}).price,271.25);assert.equal(read({structured:{'@type':'Product',url:'https://www.trendyol.com/a-p-1234',offers:{price:271,priceCurrency:'TRY'}}}).price,null);});
+test('rejects merchant mismatch, foreign currency and multiple offers',()=>{const p={'@type':'Product',sku:'123',offers:{price:20,priceCurrency:'USD'}};assert.equal(read({structured:p}).price,null);p.offers=[{price:20,priceCurrency:'TRY'},{price:30,priceCurrency:'TRY'}];assert.equal(read({structured:p}).price,null);p.offers={price:20,priceCurrency:'TRY',seller:{identifier:'1'}};assert.equal(read({structured:p,merchant:'?merchantId=2'}).price,null);});
+test('does not capture home or untrusted host',()=>{assert.equal(read({path:'/'}).error,'NOT_PRODUCT');assert.equal(read({host:'trendyol.com.evil.test'}).error,'NOT_PRODUCT');});
+test('discount percentage is not a price',()=>{assert.equal(read({prices:['10% TL']}).price,null);});
+const buttonScript=fs.readFileSync('android-lab/app/src/main/assets/order-button.js','utf8');
+test('button is product-only and handles SPA navigation',()=>{let current=null,tick;const doc={getElementById:()=>current,createElement:()=>({style:{},addEventListener:()=>{},remove:()=>{current=null}}),body:{appendChild:x=>current=x}};const context={location:{protocol:'https:',hostname:'www.trendyol.com',pathname:'/'},document:doc,window:{addEventListener:()=>{}},setInterval:f=>{tick=f;return 1}};vm.runInNewContext(buttonScript,context);assert.equal(current,null);context.location.pathname='/a-p-123';tick();assert.ok(current);const first=current;tick();assert.equal(current,first);context.location.pathname='/login';tick();assert.equal(current,null);});

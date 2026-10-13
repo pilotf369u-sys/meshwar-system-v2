@@ -18,3 +18,6 @@ GitHub Actions builds this on the isolated `app/android-trendyol-lab-v1` branch.
 4. Saved links survive app restart; duplicate identical URL is rejected.
 5. Cart remains local and does not appear in KINTO orders.
 6. If site blocks this WebView, record the limitation; no bypass.
+
+## Version 0.2
+Product-only side button, SPA visibility updates, confirmed product title/image/TRY price capture, and stored source ID. Ambiguous/missing prices stay unknown; no conversion, variants, quantity, employee routing or production order API. Public product image preview uses only approved HTTPS CDN hosts and bounded image downloads. Test fixtures validate parsing; actual Trendyol page compatibility must be checked on device.
