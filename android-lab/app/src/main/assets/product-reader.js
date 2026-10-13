@@ -77,8 +77,10 @@
  if (sizeBoxes.length) {
   size.required = true;
   const chosen = sizeBoxes.filter(el => el.getAttribute('aria-checked') === 'true').map(el => text(el.textContent));
-  size.value = chosen.length === 1 ? chosen[0] : '';
+  size.value = chosen.length === 1 && (!size.value || size.value === chosen[0]) ? chosen[0] : '';
  }
+ const selectedColors = Array.from(document.querySelectorAll('[data-testid="selected-color"]')).filter(visible).map(el => text(el.textContent));
+ if (selectedColors.length) { color.required = true; const unique = [...new Set(selectedColors)]; color.value = unique.length === 1 ? unique[0] : ''; }
  // Avoid stale metadata images when a variant exists but its live gallery is unavailable.
  if ((size.required || color.required) && !liveImages.length) image = '';
  const merchantId = new URL(location.href).searchParams.get('merchantId') || '';
