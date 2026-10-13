@@ -55,7 +55,7 @@ public class MainActivity extends Activity {
   });
  }
  private TextView line(String value){TextView t=new TextView(this);t.setText(value);t.setTextSize(15);t.setPadding(18,8,18,8);return t;}
- private String priceLabel(JSONObject item){double price=item.optDouble("price",Double.NaN);if(!Double.isFinite(price)||price<=0)return "السعر: لم نتمكن من قراءته بثقة";return "السعر المرصود: "+String.format(java.util.Locale.US,"%.2f",price)+" ليرة تركية";}
+ private String priceLabel(JSONObject item){double price=item.optDouble("price",Double.NaN);if(!Double.isFinite(price)||price<=0)return "السعر: لم نتمكن من قراءته بثقة";return ("visible-basket-offer".equals(item.optString("priceSource"))?"سعر عرض السلة المرصود: ":"السعر المرصود: ")+String.format(java.util.Locale.US,"%.2f",price)+" ليرة تركية";}
  private void confirmProduct(JSONObject item){
   LinearLayout details=new LinearLayout(this);details.setOrientation(LinearLayout.VERTICAL);
   details.addView(line(item.optString("sourceName","Trendyol")+" — "+item.optString("title")));
@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
    ImageView preview=new ImageView(this);preview.setAdjustViewBounds(true);preview.setScaleType(ImageView.ScaleType.FIT_CENTER);details.addView(preview,new LinearLayout.LayoutParams(-1,Math.round(150*getResources().getDisplayMetrics().density)));loadPreview(image,preview);
   }
   details.addView(line(priceLabel(item)));
+  if("visible-basket-offer".equals(item.optString("priceSource"))){details.addView(line("عرض يُطبق داخل سلة ترنديول؛ يلزم تأكيد استحقاقه والسعر النهائي عند الشراء."));double before=item.optDouble("priceBeforeBasketDiscount",Double.NaN);if(Double.isFinite(before))details.addView(line("قبل خصم السلة: "+String.format(java.util.Locale.US,"%.2f",before)+" ليرة تركية"));}
   if("structured".equals(item.optString("priceSource")))details.addView(line("السعر من بيانات الصفحة؛ طابقه مع السعر الظاهر قبل الحفظ."));
   if("AMBIGUOUS_PRICE".equals(item.optString("warning")))details.addView(line("وجدنا أسعاراً مختلفة؛ لم نعتمد سعراً تلقائياً."));
   JSONObject observed=item.optJSONObject("observedOptions"),required=item.optJSONObject("optionRequirements");

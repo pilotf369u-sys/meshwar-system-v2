@@ -16,9 +16,11 @@
   const n = Number(s); return Number.isFinite(n) && n > 0 && n < 10000000 ? n : null;
  };
  const regularPlusPrices = Array.from(document.querySelectorAll('.ty-plus-price-original-price')).filter(visible);
+ const basketSelector = '.product-details-product-details-container .campaign-price .new-price';
+ const basketPrices = Array.from(document.querySelectorAll(basketSelector)).filter(visible);
  const selectors = ['[data-testid="price-current-price"]','[data-testid="product-price"]','.prc-dsc','.prc-box-dscntd','.price-current-price','.product-price-container .price'];
  const prices = [];
- for (const selector of (regularPlusPrices.length ? ['.ty-plus-price-original-price'] : selectors)) for (const el of document.querySelectorAll(selector)) {
+ for (const selector of (regularPlusPrices.length ? ['.ty-plus-price-original-price'] : basketPrices.length ? [basketSelector] : selectors)) for (const el of document.querySelectorAll(selector)) {
   if (!visible(el) || el.closest('[data-testid*="recommend"],[class*="recommend"],[class*="similar"],[class*="cross-selling"]')) continue;
   const raw = text(el.textContent); if (!/(TL|TRY|₺)/i.test(raw)) continue;
   const value = parsePrice(raw); if (value !== null && !prices.some(p => p.value === value)) prices.push({value,raw});
@@ -40,7 +42,9 @@
  for (const el of document.querySelectorAll('script[type="application/ld+json"]')) { try { walk(JSON.parse(el.textContent)); } catch (_) {} }
  let price = prices.length === 1 ? prices[0].value : null;
  let priceRaw = prices.length === 1 ? prices[0].raw : '';
- let priceSource = price !== null ? 'visible' : '';
+ let priceSource = price !== null ? (!regularPlusPrices.length && basketPrices.length ? 'visible-basket-offer' : 'visible') : '';
+ const basketBaseValues = [...new Set(Array.from(document.querySelectorAll('.product-details-product-details-container .campaign-price .old-price')).filter(visible).map(el => parsePrice(el.textContent)).filter(value => value !== null))];
+ const priceBeforeBasketDiscount = priceSource === 'visible-basket-offer' && basketBaseValues.length === 1 ? basketBaseValues[0] : null;
  if (!prices.length && product) {
   const offers = Array.isArray(product.offers) ? product.offers : [product.offers];
   const merchantId = new URL(location.href).searchParams.get('merchantId');
@@ -92,5 +96,5 @@
  // Avoid stale metadata images when a variant exists but its live gallery is unavailable.
  if ((size.required || color.required) && !liveImages.length) image = '';
  const merchantId = new URL(location.href).searchParams.get('merchantId') || '';
- return JSON.stringify({source,sourceName:'Trendyol',productId,pageUrl:location.href,title:name,image:String(image).slice(0,2000),price,currency:'TRY',priceRaw,priceSource,merchantId,observedOptions:{size:size.value,color:color.value},optionRequirements:{size:size.required,color:color.required},warning:prices.length>1?'AMBIGUOUS_PRICE':price===null?'PRICE_NOT_FOUND':''});
+ return JSON.stringify({source,sourceName:'Trendyol',productId,pageUrl:location.href,title:name,image:String(image).slice(0,2000),price,currency:'TRY',priceRaw,priceSource,priceBeforeBasketDiscount,merchantId,observedOptions:{size:size.value,color:color.value},optionRequirements:{size:size.required,color:color.required},warning:prices.length>1?'AMBIGUOUS_PRICE':price===null?'PRICE_NOT_FOUND':''});
 })();
