@@ -227,3 +227,40 @@ html body #kintoFeaturedStoreSlot .kinto-featured-badge{
     margin-bottom:10px!important;
   }
 }
+
+/* V202.3 — screenshot alignment: local banner was wider than global/featured.
+   Inset only the local artwork; do not resize the whole searchable directory. */
+@media(max-width:700px){
+  html body #localStoresPublic .local-stores-head.kinto-v201-local-banner{
+    width:calc(100% - 30px)!important;
+    max-width:calc(100% - 30px)!important;
+    margin-inline:15px!important;
+    margin-bottom:10px!important;
+    aspect-ratio:2172 / 412!important;
+    height:auto!important;
+    border-radius:13px!important;
+  }
+  html body #localStoresPublic .kinto-v201-local-banner img{
+    width:100%!important;height:100%!important;
+    aspect-ratio:2172 / 412!important;
+    object-fit:fill!important;
+  }
+}
+/* Premium, neutral backdrop for the existing live scrolling announcement.
+   CSS-only; preserves original announcement text and ticker animation. */
+html body #meshwarTicker{
+  position:relative!important;isolation:isolate!important;
+  box-sizing:border-box!important;
+  border:1px solid rgba(241,198,98,.65)!important;
+  border-radius:clamp(12px,2vw,18px)!important;
+  background:
+    radial-gradient(ellipse at 13% 12%,rgba(233,183,73,.15),transparent 38%),
+    radial-gradient(ellipse at 92% 85%,rgba(233,183,73,.12),transparent 36%),
+    repeating-linear-gradient(128deg,transparent 0,transparent 32px,rgba(230,183,72,.035) 33px,transparent 34px),
+    linear-gradient(110deg,#06372b 0%,#0b4b37 52%,#062f27 100%)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,218,135,.09),0 7px 20px rgba(0,21,15,.18)!important;
+}
+html body #meshwarTicker .meshwar-ticker-track{
+  position:relative!important;z-index:1!important;
+  color:#ffe3a0!important;text-shadow:0 1px 5px rgba(0,0,0,.35)!important;
+}
