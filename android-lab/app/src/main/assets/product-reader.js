@@ -79,6 +79,14 @@
   const chosen = sizeBoxes.filter(el => el.getAttribute('aria-checked') === 'true').map(el => text(el.textContent));
   size.value = chosen.length === 1 && (!size.value || size.value === chosen[0]) ? chosen[0] : '';
  }
+ // Mobile dropdown renders the selection in its button, not the Beden title.
+ const sizeDropdowns = Array.from(document.querySelectorAll('.size-picker-container .size-picker-dropdown .dropdown-button')).filter(visible);
+ if (sizeDropdowns.length) {
+  size.required = true;
+  const values = [...new Set(sizeDropdowns.map(el => text(el.textContent)).filter(value => value && value.length <= 60 && !/seç|select|beden/i.test(value)))];
+  const candidate = values.length === 1 ? values[0] : '';
+  size.value = candidate && (!size.value || size.value === candidate) ? candidate : '';
+ }
  const selectedColors = Array.from(document.querySelectorAll('[data-testid="selected-color"]')).filter(visible).map(el => text(el.textContent));
  if (selectedColors.length) { color.required = true; const unique = [...new Set(selectedColors)]; color.value = unique.length === 1 ? unique[0] : ''; }
  // Avoid stale metadata images when a variant exists but its live gallery is unavailable.
