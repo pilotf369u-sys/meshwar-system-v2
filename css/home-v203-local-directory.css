@@ -166,3 +166,28 @@ html body section#localStoresPublic.local-stores-shell > .local-stores-head.kint
     margin-bottom:5px!important;
   }
 }
+
+/* V203.6 — full-bleed local banner and compact right-aligned page indicators */
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+box-sizing:border-box!important;width:calc(100% + 26px)!important;max-width:none!important;
+margin:-12px -13px 9px!important;padding:0!important;aspect-ratio:2172/412!important;
+border-radius:17px!important;overflow:hidden!important}
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{
+display:block!important;width:100%!important;height:100%!important;object-fit:fill!important;border-radius:inherit!important}
+html body section#localStoresPublic nav.kinto-v172-pages{
+box-sizing:border-box!important;min-height:0!important;gap:5px!important;
+margin:5px 0 9px!important;padding:0!important;align-items:center!important}
+html body section#localStoresPublic nav.kinto-v172-pages[data-position="top"]{
+justify-content:flex-start!important;flex-wrap:nowrap!important;direction:rtl!important}
+html body section#localStoresPublic nav.kinto-v172-pages .kinto-v174-page-info{
+font-size:10px!important;font-weight:700!important;line-height:1.2!important;
+padding:4px 7px!important;border-radius:7px!important;
+background:rgba(10,59,45,.38)!important;border:1px solid rgba(223,186,98,.24)!important;white-space:nowrap!important}
+html body section#localStoresPublic nav.kinto-v172-pages button{
+min-height:27px!important;padding:4px 8px!important;font-size:10px!important;border-radius:7px!important}
+html body section#localStoresPublic nav.kinto-v172-pages[data-position="bottom"]{
+justify-content:center!important;margin:11px 0 7px!important}
+@media(max-width:700px){
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+width:calc(100% + 18px)!important;max-width:none!important;margin:-9px -9px 8px!important;border-radius:15px!important}
+html body section#localStoresPublic nav.kinto-v172-pages[data-position="top"]{margin:4px 0 8px!important}}
