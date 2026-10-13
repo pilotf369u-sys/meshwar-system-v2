@@ -87,3 +87,52 @@ html body #kintoFeaturedStoreSlot .kinto-featured-copy button{
     min-height:25px!important;padding:4px 8px!important;font-size:11px!important;
   }
 }
+
+/* V200: the actual global artwork is 987x187; use its height ratio for the featured banner. */
+html body #kintoFeaturedStoreSlot.header-container.kinto-featured-store{
+  height:clamp(74px,18.95vw,224px)!important;
+  max-height:224px!important;
+  padding:5px 12px!important;
+  gap:8px!important;
+  grid-template-columns:clamp(48px,10vw,108px) minmax(0,1fr)!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-copy{
+  gap:1px!important;
+}
+html body #kintoFeaturedStoreSlot .kinto-featured-copy a,
+html body #kintoFeaturedStoreSlot .kinto-featured-copy button{
+  min-height:22px!important;padding:3px 9px!important;margin:0!important;
+}
+@media(max-width:700px){
+ html body #kintoFeaturedStoreSlot.header-container.kinto-featured-store{
+  height:clamp(74px,18.95vw,96px)!important;
+  max-height:96px!important;
+  min-height:0!important;
+  grid-template-columns:50px minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  padding:5px 9px!important;
+  gap:8px!important;
+ }
+ html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap{
+  width:50px!important;height:50px!important;max-width:50px!important;max-height:50px!important;
+ }
+ html body #kintoFeaturedStoreSlot .kinto-featured-logo-wrap img{
+  width:50px!important;height:50px!important;max-width:50px!important;max-height:50px!important;
+ }
+ html body #kintoFeaturedStoreSlot .kinto-featured-copy{
+  gap:1px!important;
+ }
+ html body #kintoFeaturedStoreSlot .kinto-featured-copy h1,
+ html body #kintoFeaturedStoreSlot .kinto-featured-copy h2,
+ html body #kintoFeaturedStoreSlot .kinto-featured-copy h3{
+  font-size:13px!important;line-height:1.1!important;
+ }
+ html body #kintoFeaturedStoreSlot .kinto-featured-copy p{
+  font-size:10px!important;line-height:1.1!important;
+ }
+ html body #kintoFeaturedStoreSlot .kinto-featured-copy a,
+ html body #kintoFeaturedStoreSlot .kinto-featured-copy button{
+  min-height:20px!important;padding:2px 7px!important;
+  font-size:10px!important;line-height:1.1!important;
+ }
+}
