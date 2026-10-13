@@ -1,13 +1,16 @@
 /* MESHWAR_VENDOR_PRODUCT_EDIT_FIELDS_V26 */
 (function(){
   'use strict';
-  const VERSION='20260825-native-modal-raceguard1';
+  const VERSION='20261008-v68-save';
   const deps=[
-    ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=20260825-native-modal-raceguard1'],
-    ['MeshwarStoreCategoriesV9','js/local-store-categories-v9.js?v=20260825-native-modal-raceguard1'],
-    ['MeshwarTaxonomyPersistenceV10','js/local-store-taxonomy-persistence-v10.js?v=vendor-edit-v27-payloadfix1']
+    ['MeshwarVariantStock','js/local-store-variant-stock-v5.js?v=20261008-v68-save'],
+    ['MeshwarMatrixStock','js/local-store-matrix-stock-v6.js?v=20261008-v68-save'],
+    ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=20261008-v68-save'],
+    ['MeshwarStoreCategoriesV9','js/local-store-categories-v9.js?v=20261008-v68-save'],
+    ['MeshwarTaxonomyPersistenceV10','js/local-store-taxonomy-persistence-v10.js?v=20261008-v68-save']
   ];
   function dependencyReady(win,name){
+    if(name==='MeshwarVariantStock'||name==='MeshwarMatrixStock')return typeof win[name]?.editorSnapshot==='function';
     if(name==='MeshwarDetailedDescriptionV8')return typeof win.MeshwarDetailedDescriptionV8?.persistDetailedDescriptionSnapshot==='function';
     if(name==='MeshwarTaxonomyPersistenceV10')return win.MeshwarTaxonomyPersistenceV10?.VERSION==='20260824-v27-payloadfix1'&&typeof win.MeshwarTaxonomyPersistenceV10?.taxonomySnapshot==='function';
     return Boolean(win[name]);
@@ -41,3 +44,4 @@
   function install(win){if(!win||win.__mwVendorProductEditFieldsV26Installing||win.__mwVendorProductEditFieldsV26)return;win.__mwVendorProductEditFieldsV26Installing=true;boot(win).catch(e=>console.error('Vendor product edit V26 install failed',e)).finally(()=>{win.__mwVendorProductEditFieldsV26Installing=false})}
   window.MeshwarVendorProductEditFieldsV26={install,VERSION};
 })();
+

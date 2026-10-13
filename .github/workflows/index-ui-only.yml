@@ -14,6 +14,8 @@ on:
       - 'js/vendor-order-status-contrast-v18.js'
       - 'js/vendor-finance-settlement-v24.js'
       - 'js/vendor-finance-delivered-orders-v35.js'
+      - 'js/vendor-profit-report-v164.js'
+      - 'js/vendor-profit-report-v165.js'
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
@@ -38,6 +40,8 @@ on:
       - 'js/vendor-order-status-contrast-v18.js'
       - 'js/vendor-finance-settlement-v24.js'
       - 'js/vendor-finance-delivered-orders-v35.js'
+      - 'js/vendor-profit-report-v164.js'
+      - 'js/vendor-profit-report-v165.js'
       - 'js/local-store-card-v3.js'
       - 'js/local-store-pricing.js'
       - 'js/local-store-product-details-v4.js'
@@ -109,7 +113,7 @@ jobs:
           grep -Fq '#mwCategoryShell [data-cat-filter]' js/local-store-global-search-v12.js
       - name: Validate vendor order smart search and employee camera parity
         run: |
-          grep -Fq '<script src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1910"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-order-smart-search-scanner-v13.js?v=20260822-1910"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorOrderSmartSearchV13?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'vendorOrderSmartSearch' js/vendor-order-smart-search-scanner-v13.js
           grep -Fq 'Html5Qrcode' js/vendor-order-smart-search-scanner-v13.js
@@ -129,7 +133,7 @@ jobs:
           grep -Fq 'ordersBody' js/vendor-order-smart-search-scanner-v13.js
       - name: Validate vendor lux theme tab isolation and pagination
         run: |
-          grep -Fq '<script src="js/vendor-theme-pagination-v16.js?v=20260822-1910"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-theme-pagination-v16.js?v=20260822-1910"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorThemePaginationV16?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq "orders:{container:'#ordersBody'" js/vendor-theme-pagination-v16.js
           grep -Fq "products:{container:'#productsBody'" js/vendor-theme-pagination-v16.js
@@ -148,32 +152,23 @@ jobs:
           ! grep -Fq "sb.from('local_products')" js/vendor-theme-pagination-v16.js
       - name: Validate vendor V18 order contrast isolation
         run: |
-          grep -Fq '<script src="js/vendor-order-status-contrast-v18.js?v=20260822-1910"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-order-status-contrast-v18.js?v=20260822-1910"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorOrderStatusContrastV18?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq 'data-mw-order-status-tone' js/vendor-order-status-contrast-v18.js
           grep -Fiq '#f3f4f6' js/vendor-order-status-contrast-v18.js
           grep -Fiq '#e5e7eb' js/vendor-order-status-contrast-v18.js
           ! grep -Fq "sb.from(" js/vendor-order-status-contrast-v18.js
           ! grep -Fq '/rest/v1/' js/vendor-order-status-contrast-v18.js
-      - name: Validate V24/V35 P&L injection lifecycle
+      - name: Validate single V164 P&L writer and iframe lifecycle
         run: |
+          node --check js/vendor-profit-report-v165.js
           grep -Fq '<meta name="meshwar-build"' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-finance-settlement-v24.js?v=20260824-1253"></script>' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-finance-delivered-orders-v35.js?v=20260825-v35-pl-backend-fx3"></script>' vendor-dashboard.html
-          grep -Fq 'MeshwarVendorFinanceSettlementV24?.install(frame.contentWindow)' vendor-dashboard.html
-          grep -Fq 'MeshwarVendorFinanceDeliveredV35?.install(frame.contentWindow)' vendor-dashboard.html
-          grep -Fq 'MeshwarVendorFinanceSettlementV24?.ensureUi(win,{refresh:true})' vendor-dashboard.html
-          grep -Fq "closest?.('#vendorTabBtn-pl')" vendor-dashboard.html
-          grep -Fq "panel.querySelector('.mw-pl-kpis')" js/vendor-finance-settlement-v24.js
-          grep -Fq 'kpis.parentNode.insertBefore(toolbar,kpis)' js/vendor-finance-settlement-v24.js
-          grep -Fq 'function ensureUi(win,{refresh=false}={})' js/vendor-finance-settlement-v24.js
-          grep -Fq "closest?.('#vendorTabBtn-pl')" js/vendor-finance-settlement-v24.js
-          grep -Fq 'new win.MutationObserver' js/vendor-finance-settlement-v24.js
-          grep -Fq "querySelector('#vendorTab-pl .mw-pl-kpis')" js/vendor-finance-settlement-v24.js
-          grep -Fq "rest(win,\`local_stores?select=*&id=eq.\${q(sid)}&limit=1\`)" js/vendor-finance-delivered-orders-v35.js
-          grep -Fq "rate=currentFxRate(win,st),convertCostToLocal=cur==='IQD'" js/vendor-finance-delivered-orders-v35.js
-          grep -Fq "rowCogsIQD=convertCostToLocal?rowCogsUSD*rate:rowCogsUSD" js/vendor-finance-delivered-orders-v35.js
-          grep -Fq 'net=sales-totalCogs-fees' js/vendor-finance-delivered-orders-v35.js
+          grep -Fq 'KintoVendorProfitV164?.install(frame.contentWindow)' vendor-dashboard.html
+          grep -Fq 'vendor-profit-report-v165.js?v=20261010-session-ready-profit' vendor-dashboard.html
+          ! grep -Fq 'vendor-finance-settlement-v24.js' vendor-dashboard.html
+          ! grep -Fq 'vendor-finance-delivered-orders-v35.js' vendor-dashboard.html
+          ! grep -Fq 'vendor-expenses-panel-v23.js' vendor-dashboard.html
+          ! grep -Fq 'vendor-settlement-pdf-details-v25.js' vendor-dashboard.html
           grep -Fq "frame.addEventListener('load',install)" vendor-dashboard.html
           ! grep -Fq 'setTimeout(install,250)' vendor-dashboard.html
           ! grep -Fq 'setTimeout(install,900)' vendor-dashboard.html
@@ -181,7 +176,7 @@ jobs:
       - name: Validate direct vendor barcode entry, native required cost field and unrestricted product description
         run: |
           ! grep -Fq 'location.replace(' vendor-dashboard.html
-          grep -Fq '<script src="js/vendor-barcode-smart-search-v11.js?v=20260825-v11-stale-edit-guard2"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-barcode-smart-search-v11.js?v=20261010-v11-stable-decoration"></script>' vendor-dashboard.html
           grep -Fq 'id="vendorFrame"' vendor-dashboard.html
           grep -Fq 'src="vendor-dashboard-v2.html?v=' vendor-dashboard.html
           grep -Fq 'MeshwarVendorBarcodeV11?.install(frame.contentWindow)' vendor-dashboard.html

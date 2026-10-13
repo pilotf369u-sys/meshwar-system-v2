@@ -204,7 +204,7 @@
     const id=String(productId||'').trim();if(!id)return;
     const rows=await rest(`local_products?select=id,category_id,is_featured&id=eq.${q(id)}&store_id=eq.${q(state.storeId)}&limit=1`),p=Array.isArray(rows)?rows[0]:null;if(!p)return;
     const currentId=String(document.getElementById('productId')?.value||'').trim();
-    if(window.__mwProductModalMode==='add'||currentId!==id)return;
+    if(window.__mwProductModalMode==='add'||currentId!==id||window.__mwTaxonomyTouchedV10)return;
     if(featured)featured.checked=!!p.is_featured;
     const cat=categoryById(p.category_id);if(!cat)return;
     if(cat.parent_id){if(main)main.value=cat.parent_id;fillSubcategorySelect(cat.id)}else{if(main)main.value=cat.id;fillSubcategorySelect()}
@@ -227,7 +227,7 @@
       if(edit){const m=String(edit.getAttribute('onclick')||'').match(/editProduct\('([^']+)'\)/);if(m)setTimeout(()=>loadProductTaxonomy(m[1]).catch(console.warn),0)}
       const add=e.target.closest?.('#addNewProductBtn,button[onclick="openProductModal()"]');
       if(add)setTimeout(()=>loadProductTaxonomy('').catch(console.warn),0);
-      const save=e.target.closest?.('button[onclick="saveProduct()"]');
+      const save=e.target.closest?.('button[onclick="saveProduct()"]');if(save&&window.__mwVendorProductSaveCompleteV34)return;
       if(save){
         injectProductFields();
         const id=String(document.getElementById('productId')?.value||'').trim(),name=String(document.getElementById('productName')?.value||'').trim();

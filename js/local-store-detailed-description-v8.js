@@ -61,10 +61,11 @@
     ensureField();bindModalHydration();new MutationObserver(()=>{ensureField();bindModalHydration()}).observe(document.documentElement,{childList:true,subtree:true});
     document.addEventListener('click',e=>{
       const add=e.target.closest?.('#addNewProductBtn,button[onclick="openProductModal()"]');if(add)setTimeout(()=>{ensureField();const a=document.getElementById(FIELD_ID);if(a)a.value=''},0);
-      const save=e.target.closest?.('button[onclick*="saveProduct"]');if(save){const snapshot=snapshotDetailedDescription();persistDetailedDescriptionSnapshot(snapshot).catch(err=>{console.error('Detailed description save failed',err);alert('تم حفظ المنتج، لكن تعذر حفظ الوصف التفصيلي: '+(err?.message||err))})}
+      const save=e.target.closest?.('button[onclick*="saveProduct"]');if(save&&!window.__mwVendorProductSaveCompleteV34){const snapshot=snapshotDetailedDescription();persistDetailedDescriptionSnapshot(snapshot).catch(err=>{console.error('Detailed description save failed',err);alert('تم حفظ المنتج، لكن تعذر حفظ الوصف التفصيلي: '+(err?.message||err))})}
     },true)
   }
   document.addEventListener('click',e=>{const btn=e.target.closest?.('.local-v3-order[data-pid]');if(btn&&!btn.disabled)setTimeout(()=>applyModalDetailedDescription(btn.dataset.pid),0)},true);
   window.MeshwarDetailedDescriptionV8={ensureField,fillDetailedDescription,persistDetailedDescription,persistDetailedDescriptionSnapshot,applyModalDetailedDescription};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('productModal'))startVendor()},{once:true});else if(document.getElementById('productModal'))startVendor();
 })();
+

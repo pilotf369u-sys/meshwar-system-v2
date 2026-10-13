@@ -63,7 +63,7 @@
 })();
     </script>
     <link rel="manifest" href="manifest.json">
-    <script src="js/kinto-pwa-v275.js?v=20261008-app-sync" defer></script>
+    <script src="js/kinto-pwa-v275.js?v=20261013-app-sync" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/site-identity-v16.css?v=20260828-v27">
     <link rel="stylesheet" href="css/site-identity-v17.css?v=20260828-v27">
@@ -188,8 +188,12 @@
 <header id="kintoHomeHeader" class="top"><div class="top-inner"><a class="brand" href="index.html" aria-label="KINTO الرئيسية"><img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="52" height="52" class="kinto-boot-logo kinto-boot-logo--nav" alt="KINTO Logo" decoding="async" fetchpriority="high"><span class="brand-copy"><strong>KINTO</strong><small>SHOP • SHIP • ENJOY</small></span></a><div id="meshwarHeaderControls" class="header-actions"><div class="user-auth-zone"></div></div></div></header>
 <section class="mx-auto max-w-7xl px-4 pt-8">
 
-  <div class="mw-home-hero-grid grid gap-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-2xl backdrop-blur-md md:grid-cols-[1.15fr_.85fr] md:p-10 dark:border-white/10 dark:bg-slate-900/60">
+  <div class="mw-home-hero-grid kinto-v193-hero grid gap-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-2xl backdrop-blur-md md:grid-cols-[1.15fr_.85fr] md:p-10 dark:border-white/10 dark:bg-slate-900/60">
 
+    <div class="kinto-v195-banner">
+      <img src="images/kinto-hero-approved-v195.webp" alt="KINTO — اطلب من مكان واحد، متاجر محلية وعالمية مع وصول سريع للطلب والتتبع" width="1671" height="941" fetchpriority="high" decoding="async">
+      <a class="kinto-v195-banner-cta" href="local-stores.html" aria-label="ابدأ التسوق الآن — افتح المتاجر المحلية"></a>
+    </div>
     <div class="kinto-hero-copy-shell mw-home-copy" aria-live="polite"></div>
 
     <div id="meshwarVideoFrame"
@@ -227,8 +231,9 @@
     <section id="meshwarTicker" class="mx-auto mt-6 max-w-7xl overflow-hidden rounded-2xl border border-amber-400/25 bg-slate-900/75 px-3 py-3 shadow-lg backdrop-blur-md"><div class="meshwar-ticker-track whitespace-nowrap text-sm font-black text-amber-200 md:text-base">✨ عروض KINTO الجديدة قريباً • تابع أحدث المتاجر والخصومات والخدمات من مكان واحد • أهلاً بكم في KINTO ✨</div></section>
 
     <section id="localStoresPublic" class="local-stores-shell">
-      <div class="local-stores-head"><div><h2>🏪 المتاجر المحلية</h2><p>متاجر محلية موثقة ومضافة مباشرة عبر منصة KINTO.</p></div></div>
-      <div id="localSpecialtyFilters" class="local-specialty-filters" hidden></div>
+      <div class="local-stores-head kinto-v201-local-banner"><img src="images/kinto-local-banner-v201(1).webp" alt="المتاجر المحلية — منتجات متنوعة من متاجر محلية موثوقة عبر منصة KINTO" width="2172" height="412" loading="lazy" decoding="async"></div>
+      <div class="kinto-v172-search-wrap"><label for="kintoV172LocalSearch">تصفّح المتاجر المحلية <small class="kinto-v203-section-hint">ابحث أو اختر تصنيفاً من المتاجر المعروضة أدناه</small></label><input id="kintoV172LocalSearch" type="search" autocomplete="off" placeholder="اسم المتجر أو المحافظة أو التخصص"></div>
+      <details class="kinto-v203-filter-dropdown" id="kintoV203FilterDropdown"><summary aria-label="عرض تصنيفات المتاجر"><span><i class="fa-solid fa-layer-group" aria-hidden="true"></i> تصنيف المتاجر</span><span class="kinto-v203-filter-hint">اختر التخصص <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span></summary><div id="localSpecialtyFilters" class="local-specialty-filters" hidden></div></details>
       <div id="localStoresPublicGrid" class="local-stores-grid"><div class="local-empty">جاري تحميل المتاجر المحلية...</div></div>
     <div id="localStoreProductsPanel"
      style="display:none;margin-top:22px">
@@ -590,9 +595,9 @@ window.loadStoreDetails=loadStoreDetails;
 function showLocalStoreList(){const grid=document.getElementById('localStoresPublicGrid'),filters=document.getElementById('localSpecialtyFilters'),panel=document.getElementById('localStoreProductsPanel'),products=document.getElementById('localStoreProductsGrid');if(panel)panel.style.display='none';if(products)products.innerHTML='<div class=\"local-empty\">جاري تحميل المنتجات...</div>';if(filters)filters.style.display='flex';if(grid)grid.style.display='grid';renderLocalPublicStores();document.getElementById('localStoresPublic')?.scrollIntoView({behavior:'smooth',block:'start'})}
 document.getElementById('backToLocalStoresBtn')?.addEventListener('click',showLocalStoreList);
 window.showLocalStoreList=showLocalStoreList;
-function renderLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');if(!grid)return;const rows=localPublicStores.filter(s=>localActiveSpecialty==='الكل'||String(s.specialty||'شامل')===localActiveSpecialty);grid.style.display='grid';grid.innerHTML=rows.map(s=>`<article class="local-public-card"><img class="local-public-logo" src="${localEsc(s.logo_url||localPlaceholder)}" onerror="this.onerror=null;this.src='${localEsc(localPlaceholder)}'" alt="${localEsc(s.store_name||'متجر')}"><div class="local-public-name">${localEsc(s.store_name||'متجر محلي')}</div><div class="local-public-meta">${localEsc(s.specialty||s.store_type||'شامل')}</div><div class="local-public-location"><span>${localCountryFlag(s.country)}</span><span>${localEsc(s.governorate||s.country||'غير محدد')}</span></div><div class="local-public-chip">${localEsc(s.default_currency||'')} · متجر نشط</div><button type="button" class="local-public-open" style="pointer-events:auto;cursor:pointer" onclick="openStore('${String(s.store_url||'').replace(/'/g,"\'")}', '${String(s.id||'').replace(/'/g,"\'")}')">✨ فتح المتجر</button></article>`).join('')||'<div class="local-empty">لا توجد متاجر ضمن هذا التخصص حالياً.</div>'}
-function renderLocalSpecialtyFilters(){const box=document.getElementById('localSpecialtyFilters');if(!box)return;const specs=['الكل',...new Set(localPublicStores.map(s=>String(s.specialty||'شامل').trim()).filter(Boolean))];box.replaceChildren(...specs.map(x=>{const label=String(x||'').trim()||'شامل',b=document.createElement('button'),t=document.createElement('span');b.type='button';b.className='local-filter-btn '+(label===localActiveSpecialty?'active':'');b.dataset.specialty=label;b.setAttribute('aria-label',label);b.style.setProperty('color','#ffffff','important');b.style.setProperty('-webkit-text-fill-color','#ffffff','important');b.style.setProperty('opacity','1','important');b.style.setProperty('visibility','visible','important');t.textContent=label;t.style.setProperty('display','inline','important');t.style.setProperty('color','#ffffff','important');t.style.setProperty('-webkit-text-fill-color','#ffffff','important');t.style.setProperty('opacity','1','important');t.style.setProperty('visibility','visible','important');b.replaceChildren(t);b.addEventListener('click',()=>{localActiveSpecialty=label;renderLocalSpecialtyFilters();renderLocalPublicStores()});return b}));box.hidden=false}
-async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false}).range(0,999);if(error)throw error;localPublicStores=data||[];window.KintoLocalPublicStores=localPublicStores;renderLocalSpecialtyFilters();renderLocalPublicStores();window.dispatchEvent(new CustomEvent('kinto:local-stores-data',{detail:{stores:localPublicStores}}));const storeId=new URLSearchParams(window.location.search).get('storeId');if(storeId){await openStore('',storeId)}}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class="local-empty">تعذر تحميل المتاجر المحلية حالياً.</div>'}}
+function renderLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');if(!grid)return;const rows=localPublicStores.filter(s=>localActiveSpecialty==='الكل'||String(s.store_type||'شامل')===localActiveSpecialty);grid.style.display='grid';grid.innerHTML=rows.map(s=>`<article class="local-public-card"><img class="local-public-logo" src="${localEsc(s.logo_url||localPlaceholder)}" onerror="this.onerror=null;this.src='${localEsc(localPlaceholder)}'" alt="${localEsc(s.store_name||'متجر')}"><div class="local-public-name">${localEsc(s.store_name||'متجر محلي')}</div><div class="local-public-meta">${localEsc(s.specialty||s.store_type||'شامل')}</div><div class="local-public-location"><span>${localCountryFlag(s.country)}</span><span>${localEsc(s.governorate||s.country||'غير محدد')}</span></div><div class="local-public-chip">${localEsc(s.default_currency||'')} · متجر نشط</div><button type="button" class="local-public-open" style="pointer-events:auto;cursor:pointer" onclick="openStore('${String(s.store_url||'').replace(/'/g,"\'")}', '${String(s.id||'').replace(/'/g,"\'")}')">✨ فتح المتجر</button></article>`).join('')||'<div class="local-empty">لا توجد متاجر ضمن هذا التخصص حالياً.</div>'}
+function renderLocalSpecialtyFilters(){const box=document.getElementById('localSpecialtyFilters');if(!box)return;const specs=['الكل',...new Set(localPublicStores.map(s=>String(s.store_type||'شامل').trim()).filter(Boolean))];box.replaceChildren(...specs.map(x=>{const label=String(x||'').trim()||'شامل',b=document.createElement('button'),t=document.createElement('span');b.type='button';b.className='local-filter-btn '+(label===localActiveSpecialty?'active':'');b.dataset.specialty=label;b.setAttribute('aria-label',label);b.style.setProperty('color','#ffffff','important');b.style.setProperty('-webkit-text-fill-color','#ffffff','important');b.style.setProperty('opacity','1','important');b.style.setProperty('visibility','visible','important');t.textContent=label;t.style.setProperty('display','inline','important');t.style.setProperty('color','#ffffff','important');t.style.setProperty('-webkit-text-fill-color','#ffffff','important');t.style.setProperty('opacity','1','important');t.style.setProperty('visibility','visible','important');b.replaceChildren(t);b.addEventListener('click',()=>{localActiveSpecialty=label;renderLocalSpecialtyFilters();renderLocalPublicStores()});return b}));box.hidden=false}
+async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false}).range(0,999);if(error)throw error;localPublicStores=data||[];try{const {data:positions,error:orderError}=await localStoresSb.rpc('kinto_list_local_store_order_v188');if(orderError)throw orderError;const rank=new Map((positions||[]).map(x=>[String(x.store_id),Number(x.display_position)]));localPublicStores.sort((a,b)=>(rank.get(String(a.id))??Number.MAX_SAFE_INTEGER)-(rank.get(String(b.id))??Number.MAX_SAFE_INTEGER));}catch(e){console.warn('V188 order unavailable',e)}window.KintoLocalPublicStores=localPublicStores;renderLocalSpecialtyFilters();renderLocalPublicStores();window.dispatchEvent(new CustomEvent('kinto:local-stores-data',{detail:{stores:localPublicStores}}));const storeId=new URLSearchParams(window.location.search).get('storeId');if(storeId){await openStore('',storeId)}}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class="local-empty">تعذر تحميل المتاجر المحلية حالياً.</div>'}}
 loadLocalPublicStores();
 </script>
 
@@ -632,6 +637,10 @@ loadLocalPublicStores();
 <script src="js/local-store-pricing.js?v=20260927-video-pause-v277"></script>
 <script type="module" src="js/local-store-card-v3.js?v=20260829-final-v33"></script>
 <script src="js/local-store-product-details-v4.js?v=20260829-direct-v31bb" data-mw-product-details-v4></script>
+<link rel="stylesheet" href="css/hero-v193-modern.css?v=20261012-v193">
+<link rel="stylesheet" href="css/home-v196-showcase.css?v=20261013-v196">
+<link rel="stylesheet" href="css/home-v197-featured-global-fix.css?v=20261013-v197">
+<link rel="stylesheet" href="css/home-v198-banner-correction.css?v=20261013-v198">
 <link rel="stylesheet" href="css/hero-v14-emerald-glass.css?v=20260828-v15-brand-hero"><script src="js/index-featured-campaigns-v1.js?v=20260828-v28-kinto"></script>
     <script src="js/home-store-portals-v55.js?v=20260925-v213"></script>
     <script src="js/local-products-pagination-v60.js?v=20260831"></script>
@@ -686,6 +695,249 @@ body>#kintoLocalCartDrawer{display:none!important}
 (()=>{const stores=document.getElementById('kintoMobileStores'),storesMenu=document.getElementById('kintoMobileStoresMenu');stores?.addEventListener('click',()=>storesMenu?.classList.toggle('open'));document.addEventListener('click',e=>{if(storesMenu&&!storesMenu.contains(e.target)&&!stores?.contains(e.target))storesMenu.classList.remove('open')});const sync=()=>{const id=typeof window.getStoredCustomerId==='function'?String(window.getStoredCustomerId()||'').trim():String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim(),hasSession=Boolean(window.KintoCustomerSessionV150?.read?.()),loggedIn=Boolean(id||hasSession);const chat=document.getElementById('kintoMobileChat'),favorites=document.getElementById('kintoMobileFavorites'),account=document.getElementById('kintoMobileAccount'),cart=document.getElementById('kintoMobileCart'),orders=document.getElementById('kintoMobileOrders');if(!chat||!favorites||!account||!cart||!orders)return;const dash=tab=>'dashboard.html?'+new URLSearchParams({...((id)?{customerId:id}:{}),tab}).toString();chat.href=loggedIn?dash('chatHelp'):'login.html';favorites.href=loggedIn?dash('favorites'):'login.html';account.href=loggedIn?'dashboard.html?'+new URLSearchParams({...((id)?{customerId:id}:{}),openAccount:'1'}).toString():'login.html';cart.href=loggedIn?dash('drafts'):'login.html';orders.href=loggedIn?dash('activeOrders'):'login.html';const badge=document.getElementById('kintoMobileCartBadge'),count=Number(window.KintoLocalCartV93?.getCount?.()||0);if(badge){badge.textContent=count>99?'99+':String(count);badge.classList.toggle('show',count>0)}};window.KintoMobileAppNavV319=Object.freeze({sync});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();window.addEventListener('storage',sync);window.addEventListener('kinto:local-cart-change',sync);setTimeout(sync,0);setTimeout(sync,800);
 async function syncChatUnread(){const id=typeof window.getStoredCustomerId==='function'?String(window.getStoredCustomerId()||'').trim():String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim(),badge=document.getElementById('kintoMobileChatBadge');if(!badge||!id)return;try{const sb=await window.ensureMainSupabase();let r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('read_by_customer',false).in('sender_type',['employee','admin']);if(r.error&&/read_by_customer/i.test(String(r.error.message||'')))r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('is_read',false).in('sender_type',['employee','admin']);if(r.error)throw r.error;const n=Number(r.count||0);badge.textContent=n>99?'99+':String(n);badge.classList.toggle('show',n>0)}catch(e){console.warn('Home chat unread count error:',e);badge.classList.remove('show')}}syncChatUnread();setTimeout(syncChatUnread,800)})();
 </script>
-<script src="js/kinto-connectivity-v275.js?v=20261008-app-sync" defer></script>
+<script defer src="js/kinto-local-directory-pages-v172.js?v=200-source-fix"></script>
+<style id="kintoV172HomeStableStyles">#localStoresPublic{min-height:350px;scroll-margin-top:90px}#localStoresPublicGrid{min-height:180px}.kinto-v172-search-wrap{display:grid;gap:7px;margin:15px 0}.kinto-v172-search-wrap label{font-size:13px;font-weight:800;color:#e5c86a}.kinto-v172-search-wrap input{width:100%;min-height:45px;border-radius:13px;padding:10px 14px;background:#103d34;color:#fff;border:1px solid rgba(229,185,63,.35);outline:none}#localStoresPublic .local-public-card[hidden]{display:none!important}</style>
+<style id="kintoV174LocalEmerald">
+/* V174: homepage-only KINTO emerald/gold palette, one consolidated rule group. */
+:root{--kinto-home-back:#062d24;--kinto-home-panel:#103d30;--kinto-home-gold:#e5b93f}
+html,html.kinto-ready,html.kinto-ready body{background-color:var(--kinto-home-back)!important;background-image:linear-gradient(180deg,#073c30 0%,#062d24 100%)!important}
+#kintoFeaturedStoreSlot.header-container{background:linear-gradient(125deg,#123f33,#0b3329)!important;border:1px solid rgba(229,185,63,.32)!important;color:#f8f2df!important}
+#kintoFeaturedStoreSlot .kinto-featured-copy,#kintoFeaturedStoreSlot .kinto-featured-logo-wrap{background-color:transparent!important}
+#kintoFeaturedStoreSlot h1,#kintoFeaturedStoreSlot h2,#kintoFeaturedStoreSlot h3{color:#f4d66b!important}
+#kintoFeaturedStoreSlot p{color:#d7e5da!important}
+#kintoFeaturedStoreSlot a,#kintoFeaturedStoreSlot button{border-color:rgba(229,185,63,.65)}
+#internationalStoresSection{background-color:transparent!important}
+
+html,body{background-color:#063b32!important}
+body{background-image:linear-gradient(180deg,#063b32 0%,#082f26 50%,#06291f 100%)!important;color:#f7f5e9}
+#meshwarTicker{background:linear-gradient(110deg,rgba(13,59,45,.94),rgba(9,48,37,.95))!important;border-color:rgba(229,185,63,.3)!important;color:#f5e8bf!important}
+#kintoStorePortalsV55 .kinto-v172-global-link{background:linear-gradient(115deg,#164b39,#0c392d)!important;border-color:rgba(229,185,63,.65)!important}
+#localStoresPublic.local-stores-shell{background:linear-gradient(150deg,#0a2f23 0%,#103e30 60%,#082b23 100%)!important;border:1px solid rgba(224,183,71,.32)!important;color:#f6f7ed!important;box-shadow:0 18px 48px rgba(2,24,18,.22)!important}
+#localStoresPublic .local-public-card{background:linear-gradient(160deg,#1b4b3b,#103629)!important;border:1px solid rgba(223,185,83,.28)!important;box-shadow:inset 0 1px rgba(255,255,255,.07)!important}
+#localStoresPublic .local-public-card:hover{border-color:rgba(229,185,63,.7)!important}
+#localStoresPublic .local-public-name{color:#fff9e9!important}
+#localStoresPublic .local-public-meta{color:#c5d9ce!important}
+#localStoresPublic .local-stores-head p{color:#c1d6ca!important}
+#localStoresPublic .local-public-chip{color:#efd486!important}
+#localStoresPublic .local-public-card .local-public-open{background:linear-gradient(100deg,#f1d268,#d7a92e)!important;color:#183328!important}
+#localStoresPublic .kinto-v172-search-wrap input{background:#164737!important;border-color:rgba(229,185,63,.4)!important}
+
+/* Compact directory cards with a larger, clearer store identity. Homepage only. */
+#localStoresPublic .local-public-card{min-height:0!important;padding:13px 13px 12px!important;border-radius:18px!important;transform:none}
+#localStoresPublic .local-public-logo{width:82px!important;height:82px!important;min-width:82px;min-height:82px;object-fit:cover!important;margin-bottom:7px!important;border:2px solid rgba(238,203,113,.65)!important;box-shadow:0 4px 16px rgba(0,0,0,.15)!important}
+#localStoresPublic .local-public-name{font-size:15px!important;line-height:1.4!important;margin:2px 0 3px!important}
+#localStoresPublic .local-public-meta{font-size:11px!important;line-height:1.5!important}
+#localStoresPublic .local-public-chip{padding-top:6px!important;font-size:11px!important}
+#localStoresPublic .local-public-open{margin-top:9px!important;padding:7px 10px!important;min-height:34px!important;border-radius:11px!important}
+@media(max-width:600px){#localStoresPublic .local-public-card{padding:11px 8px!important}#localStoresPublic .local-public-logo{width:74px!important;height:74px!important;min-width:74px;min-height:74px}#localStoresPublic .local-public-name{font-size:13px!important}#localStoresPublic .local-public-meta{font-size:10px!important}#localStoresPublic .local-public-open{font-size:11px!important}}
+
+
+/* KINTO V172: homepage-only six-column compact store directory preview. */
+#localStoresPublic #localStoresPublicGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+#localStoresPublic #localStoresPublicGrid .local-public-card{min-width:0!important;min-height:0!important;padding:12px 10px!important;box-sizing:border-box}
+#localStoresPublic #localStoresPublicGrid .local-public-logo{width:74px!important;height:74px!important;min-width:74px!important;min-height:74px!important;max-width:100%;margin-bottom:7px!important}
+#localStoresPublic #localStoresPublicGrid .local-public-name{overflow-wrap:anywhere}
+#localStoresPublic #localStoresPublicGrid .local-public-open{width:100%;box-sizing:border-box}
+@media(min-width:768px){
+  #localStoresPublic #localStoresPublicGrid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+}
+@media(min-width:1200px){
+  #localStoresPublic #localStoresPublicGrid{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+  #localStoresPublic #localStoresPublicGrid .local-public-logo{width:90px!important;height:90px!important;min-width:90px!important;min-height:90px!important}
+}
+
+</style>
+<link rel="stylesheet" href="css/home-v199-final-correction.css?v=20261013-v199">
+<link rel="stylesheet" href="css/home-v201-local-banner.css?v=20261013-v201">
+<link rel="stylesheet" href="css/home-v202-featured-vip.css?v=20261013-v202">
+<link rel="stylesheet" href="css/home-v203-local-directory.css?v=2031">
+
+<!-- V203.2: scoped final visual overrides, after all legacy styles. No business logic changes. -->
+<style id="kinto-v203-final-directory-visual">
+body section#localStoresPublic.local-stores-shell{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0 0 18px!important;margin-top:12px!important;overflow:visible!important}
+body section#localStoresPublic .kinto-v172-search-wrap{margin:0 0 10px!important;gap:5px!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+body section#localStoresPublic .kinto-v172-search-wrap label{margin:0 0 5px!important;font-size:14px!important;color:#f5d38a!important}
+body section#localStoresPublic input#kintoV172LocalSearch{height:43px!important;min-height:43px!important;border-radius:12px!important;background:#124b39!important;border:1px solid #a88b4e!important;padding:7px 13px!important;font-size:14px!important;box-shadow:none!important}
+body section#localStoresPublic div#localSpecialtyFilters.local-specialty-filters{margin:0 0 10px!important;padding:0!important;gap:6px!important;justify-content:flex-start!important}
+body section#localStoresPublic #localSpecialtyFilters button.local-filter-btn{min-height:32px!important;border-radius:9px!important;padding:5px 9px!important;font-size:11px!important;box-shadow:none!important;transform:none!important}
+body section#localStoresPublic div#localStoresPublicGrid.local-stores-grid{gap:10px!important;margin-top:0!important;padding:0!important}
+body section#localStoresPublic #localStoresPublicGrid article.local-public-card{background:linear-gradient(160deg,#155441,#0b382e)!important;border:1px solid rgba(239,197,101,.45)!important;border-radius:15px!important;padding:13px 9px!important;box-shadow:0 7px 18px rgba(0,18,12,.18)!important;min-height:0!important}
+body section#localStoresPublic #localStoresPublicGrid img.local-public-logo{width:88px!important;height:88px!important;min-width:0!important;min-height:0!important;max-width:100%!important;object-fit:contain!important;background:#f8f4e8!important;border:2px solid #e5c377!important;border-radius:50%!important;margin-bottom:9px!important}
+body section#localStoresPublic #localStoresPublicGrid .local-public-name{font-size:14px!important;line-height:1.3!important;color:#fff6dd!important}
+body section#localStoresPublic #localStoresPublicGrid .local-public-meta{font-size:11px!important;color:#c5dfd1!important}
+body section#localStoresPublic #localStoresPublicGrid .local-public-open{border-radius:10px!important}
+@media(max-width:700px){body section#localStoresPublic.local-stores-shell{padding:0 0 12px!important;margin-top:10px!important}body section#localStoresPublic div#localStoresPublicGrid.local-stores-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}body section#localStoresPublic #localStoresPublicGrid article.local-public-card{padding:12px 7px!important}body section#localStoresPublic #localStoresPublicGrid img.local-public-logo{width:76px!important;height:76px!important}body section#localStoresPublic .kinto-v172-search-wrap{margin-bottom:8px!important}}
+</style>
+
+<style id="kinto-v203-directory-compact">
+body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{margin-bottom:4px!important}
+body section#localStoresPublic .kinto-v172-search-wrap{margin-top:0!important;margin-bottom:8px!important}
+body section#localStoresPublic .kinto-v172-search-wrap label{display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important;margin:0!important;font-size:14px!important;line-height:1.3!important}
+body section#localStoresPublic .kinto-v203-section-hint{font-size:10px!important;font-weight:500!important;color:#b6d5c5!important}
+body section#localStoresPublic .kinto-v203-filter-dropdown{margin:0 0 8px!important;padding:0!important;border:1px solid rgba(235,197,112,.42)!important;border-radius:12px!important;background:linear-gradient(115deg,#124b3a,#0a3c30)!important;overflow:hidden!important}
+body section#localStoresPublic .kinto-v203-filter-dropdown>summary{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:10px!important;padding:10px 13px!important;cursor:pointer!important;list-style:none!important;color:#f9e4ab!important;font-size:13px!important;font-weight:800!important;min-height:40px!important;box-sizing:border-box!important}
+body section#localStoresPublic .kinto-v203-filter-dropdown>summary::-webkit-details-marker{display:none}
+body section#localStoresPublic .kinto-v203-filter-hint{display:flex;gap:8px;align-items:center;font-size:11px;font-weight:600;color:#bcd9ca}
+body section#localStoresPublic .kinto-v203-filter-dropdown[open] .kinto-v203-filter-hint i{transform:rotate(180deg)}
+body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters{padding:9px!important;margin:0!important;border-top:1px solid rgba(235,197,112,.18)!important;justify-content:flex-start!important;gap:6px!important}
+body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters[hidden]{display:none!important}
+@media(max-width:700px){body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{margin-bottom:3px!important}body section#localStoresPublic .kinto-v172-search-wrap{margin-bottom:7px!important}body section#localStoresPublic .kinto-v203-section-hint{font-size:9px!important}}
+</style>
+
+<style id="kinto-v203-unified-directory">
+/* One continuous visual section, fading into the page after the store cards. */
+html body section#localStoresPublic.local-stores-shell{
+ position:relative!important;isolation:isolate!important;
+ box-sizing:border-box!important;
+ border:1px solid rgba(225,186,91,.38)!important;
+ border-radius:20px!important;
+ padding:12px 13px 30px!important;
+ background:linear-gradient(180deg,
+   rgba(18,82,61,.94) 0%,
+   rgba(10,66,49,.90) 24%,
+   rgba(7,54,42,.70) 57%,
+   rgba(5,47,37,.26) 85%,
+   rgba(5,47,37,0) 100%)!important;
+ box-shadow:inset 0 1px 0 rgba(255,229,155,.09)!important;
+ overflow:visible!important;
+}
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+ width:100%!important;max-width:100%!important;
+ margin:0 0 8px!important;padding:0!important;
+ border-radius:13px!important;
+}
+html body section#localStoresPublic .kinto-v172-search-wrap{
+ margin:0 0 8px!important;padding:0!important;
+ border:0!important;border-bottom:0!important;
+ background:transparent!important;box-shadow:none!important;
+}
+html body section#localStoresPublic .kinto-v172-search-wrap label,
+html body section#localStoresPublic .kinto-v172-search-wrap label:after,
+html body section#localStoresPublic .kinto-v203-section-hint{
+ border:0!important;border-bottom:0!important;
+ text-decoration:none!important;box-shadow:none!important;
+}
+html body section#localStoresPublic .kinto-v172-search-wrap label{
+ padding:0 2px!important;line-height:1.35!important;
+}
+html body section#localStoresPublic .kinto-v203-filter-dropdown{
+ margin-bottom:10px!important;
+ border-radius:11px!important;
+}
+html body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters.local-specialty-filters:not([hidden]){
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:center!important;justify-content:flex-start!important;
+ gap:7px!important;
+ width:100%!important;max-width:100%!important;
+ box-sizing:border-box!important;
+ overflow-x:auto!important;overflow-y:hidden!important;
+ overscroll-behavior-x:contain!important;
+ -webkit-overflow-scrolling:touch!important;
+ scrollbar-width:thin!important;
+ padding:9px 10px 11px!important;
+ margin:0!important;
+}
+html body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters .local-filter-btn{
+ display:inline-flex!important;flex:0 0 auto!important;
+ width:auto!important;min-width:max-content!important;
+ white-space:nowrap!important;
+ margin:0!important;
+}
+html body section#localStoresPublic #localStoresPublicGrid.local-stores-grid{
+ margin-top:0!important;
+}
+@media(max-width:700px){
+ html body section#localStoresPublic.local-stores-shell{
+  width:calc(100% - 20px)!important;
+  margin:12px auto 22px!important;
+  padding:9px 9px 22px!important;
+  border-radius:16px!important;
+ }
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+  width:100%!important;max-width:100%!important;
+  margin:0 0 7px!important;
+ }
+ html body section#localStoresPublic .kinto-v203-filter-dropdown #localSpecialtyFilters.local-specialty-filters:not([hidden]){
+  gap:6px!important;padding:8px 8px 10px!important;
+ }
+}
+</style>
+
+<!-- V203.7: last-in-cascade banner alignment; fixes V203.5 mobile width reset. -->
+<style id="kinto-v203-v7-banner-full-width">
+@media(max-width:700px){
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+  display:block!important;box-sizing:border-box!important;
+  width:calc(100% + 18px)!important;max-width:none!important;
+  margin:-9px -9px 8px!important;padding:0!important;
+  aspect-ratio:2172 / 412!important;height:auto!important;
+  border-radius:15px!important;overflow:hidden!important;
+ }
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{
+  display:block!important;width:100%!important;height:100%!important;
+  aspect-ratio:2172 / 412!important;object-fit:fill!important;
+  border-radius:inherit!important;
+ }
+}
+@media(min-width:701px){
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+  width:calc(100% + 26px)!important;max-width:none!important;
+  margin:-12px -13px 9px!important;padding:0!important;
+ }
+}
+</style>
+
+<!-- KINTO V205.3 — restore the single gold frame and carry the banner's emerald/gold atmosphere through the directory. -->
+<style id="kinto-v205-local-emerald-flow">
+html body section#localStoresPublic.local-stores-shell{
+ --kinto-v205-base:#073c2e;
+ position:relative!important;isolation:isolate!important;
+ box-sizing:border-box!important;
+ border:1px solid rgba(226,184,87,.48)!important;
+ border-radius:19px!important;
+ box-shadow:inset 0 0 0 1px rgba(255,224,135,.07),0 10px 26px rgba(0,25,19,.16)!important;
+ background:
+  radial-gradient(ellipse 90% 24% at 76% 10%,rgba(173,144,64,.12),transparent 80%),
+  radial-gradient(ellipse 85% 40% at 15% 32%,rgba(29,106,76,.24),transparent 80%),
+  radial-gradient(ellipse 88% 38% at 85% 65%,rgba(20,88,65,.22),transparent 82%),
+  linear-gradient(180deg,#073c2e 0%,#073c2e 80%,rgba(7,60,46,.92) 91%,rgba(7,60,46,0) 100%)!important;
+ padding-bottom:clamp(65px,9vw,110px)!important;
+}
+/* Only the bottom edge of the artwork dissolves. The enclosing section retains its gold outline. */
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner{
+ position:relative!important;isolation:isolate!important;
+ border:0!important;border-bottom:0!important;
+ box-shadow:none!important;
+ background:var(--kinto-v205-base)!important;
+ overflow:hidden!important;margin-bottom:0!important;
+ border-radius:16px 16px 0 0!important;
+}
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{
+ border:0!important;border-bottom:0!important;box-shadow:none!important;
+ border-radius:16px 16px 0 0!important;
+ -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 77%,rgba(0,0,0,.9) 85%,rgba(0,0,0,.52) 93%,transparent 100%)!important;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 77%,rgba(0,0,0,.9) 85%,rgba(0,0,0,.52) 93%,transparent 100%)!important;
+}
+html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner::after{
+ content:"";position:absolute;pointer-events:none;z-index:2;
+ inset:auto 0 -1px;height:15%;
+ background:linear-gradient(180deg,rgba(7,60,46,0),var(--kinto-v205-base));
+}
+/* Give store cards depth without changing their individual golden borders. */
+html body section#localStoresPublic #localStoresPublicGrid.local-stores-grid{
+ background:transparent!important;
+}
+@media(max-width:700px){
+ html body section#localStoresPublic.local-stores-shell{
+  border-radius:16px!important;
+  padding-bottom:70px!important;
+ }
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner,
+ html body section#localStoresPublic.local-stores-shell>.local-stores-head.kinto-v201-local-banner>img{
+  border-radius:14px 14px 0 0!important;
+ }
+}
+</style>
+<script src="js/kinto-connectivity-v275.js?v=20261013-app-sync" defer></script>
 </body>
 </html>

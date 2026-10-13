@@ -1,12 +1,11 @@
 /* MESHWAR_VENDOR_FINANCIAL_KPI_ICONS_V19 */
 (function(){
   const MAP=[
-    {id:'statSales',icon:'🛒',tone:'emerald',label:'إجمالي المبيعات الكلية'},
-    {id:'statCommission',icon:'🎖️',tone:'sky',label:'عمولة MeshWar'},
-    {id:'statOther',icon:'🏷️',tone:'rose',label:'إجمالي الخصومات / أخرى'},
-    {id:'statPending',icon:'🪙',tone:'amber',label:'المبلغ المعلق'},
-    {id:'statPaid',icon:'💳',tone:'indigo',label:'المبلغ المدفوع'},
-    {id:'statNet',icon:'👛',tone:'violet',label:'صافي حساب التاجر'}
+    {id:'statSales',icon:'🛒',tone:'emerald',label:'إجمالي المبيعات المتراكمة'},
+    {id:'statCommission',icon:'🎖️',tone:'sky',label:'عمولة KINTO المتراكمة'},
+    {id:'statPending',icon:'🪙',tone:'amber',label:'مستحقات لم تُدفع للتاجر'},
+    {id:'statPaid',icon:'💳',tone:'indigo',label:'إجمالي المدفوع للتاجر'},
+    {id:'statProfit',icon:'👛',tone:'violet',label:'صافي الربح المتراكم'}
   ];
   const COLORS={
     emerald:['#ecfdf5','#059669','#a7f3d0'],sky:['#eff6ff','#0284c7','#bae6fd'],rose:['#fff1f2','#e11d48','#fecdd3'],
@@ -32,7 +31,7 @@
     });
   }
   function install(win){
-    if(!win)return;const boot=()=>{decorate(win);let n=0;const t=win.setInterval(()=>{decorate(win);if(++n>20||win.document.querySelectorAll('[data-mw-kpi-icon]').length===6)win.clearInterval(t)},250)};
+    if(!win)return;const boot=()=>{decorate(win);let n=0;const t=win.setInterval(()=>{decorate(win);if(++n>20||win.document.querySelectorAll('[data-mw-kpi-icon]').length===5)win.clearInterval(t)},250)};
     if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   }
   window.MeshwarVendorFinancialKpiIconsV19={install,decorate};

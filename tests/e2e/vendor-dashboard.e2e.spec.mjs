@@ -8,6 +8,55 @@ async function shellDecorateProducts(page){return page.evaluate(()=>window.Meshw
 test.describe('MeshWar vendor E2E integration gate',()=>{
   test.beforeEach(async({page})=>{await installMocks(page)});
 
+  test('opening product stock fields never mutates browser history or leaves the vendor dashboard',async({page})=>{
+    const vendor=await openVendor(page);
+    await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorMobileBackV1))).toBe(true);
+    await vendor.locator('#vendorTabBtn-products').click();
+    await vendor.getByRole('button',{name:'+ منتج جديد'}).click();
+    await expect(vendor.locator('#productModal')).toHaveClass(/flex/);
+    const before=await page.url();
+    await vendor.locator('#productStock').focus();
+    await expect(vendor.locator('#productModal')).toHaveClass(/flex/);
+    expect(await page.url()).toBe(before);
+    await frameWindow(page,()=>window.closeProductModal());
+    await vendor.locator('#vendorTabBtn-orders').click();
+    await vendor.locator('#ordersBody tr').filter({hasText:'MW-5664'}).getByRole('button',{name:'تفاصيل'}).click();
+    await expect(vendor.locator('#vendorOrderDetailsModal')).toHaveClass(/flex/);
+    expect(await page.url()).toBe(before);
+  });
+
+  test('stock-only edit retains product metadata and variant quantities after iframe reload',async({page})=>{
+    const vendor=await openVendor(page);
+    await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
+    await frameWindow(page,async()=>{
+      const p=window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1');
+      p.cost_price=8;p.stock_quantity=29;p.description='preserved description';
+      p.options={...p.options,colors:['وردي','أزرق فاتح','سلفر'],variant_stock:{color:{وردي:3,'أزرق فاتح':5,سلفر:5},size:{},volume:{}},matrix_stock:{},campaign_extra:{keep:true}};
+      await window.MeshwarVendorRuntime.loadProducts();
+    });
+    await vendor.locator('#vendorTabBtn-products').click();
+    for(let n=0;n<3 && !(await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').isVisible());n++) await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();
+    await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
+    const pink=vendor.locator('#mwVariantStockEditor [data-vs-group="color"][data-vs-value="وردي"]');
+    await expect(pink).toHaveValue('3');
+    await vendor.locator('#productStock').fill('30');await pink.fill('4');
+    await vendor.getByRole('button',{name:'حفظ المنتج'}).click();
+    await expect(vendor.locator('#productModal')).toHaveClass(/hidden/);
+    const saved=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1'));
+    expect(saved.stock_quantity).toBe(30);expect(saved.options.variant_stock.color['وردي']).toBe(4);
+    expect(saved.options.variant_stock.color['أزرق فاتح']).toBe(5);
+    expect(saved.options.campaign_extra).toEqual({keep:true});
+    expect(saved.description).toBe('preserved description');expect(saved.category_id).toBe('sub-a');expect(saved.subcategory_id).toBe('sub-a');
+    await page.evaluate(()=>document.getElementById('vendorFrame').contentWindow.location.reload());
+    await expect(vendor.locator('#dashboardView')).toBeVisible();
+    await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
+    await vendor.locator('#vendorTabBtn-products').click();
+    for(let n=0;n<3 && !(await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').isVisible());n++) await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();
+    await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
+    await expect(vendor.locator('#productName')).toHaveValue(saved.product_name);
+    await expect(vendor.locator('#productStock')).toHaveValue('30');await expect(pink).toHaveValue('4');
+  });
+
   test('orders: lifecycle rendering, filters, barcode search, camera, details and label print',async({page})=>{
     const vendor=await openVendor(page);
     await expect(vendor.locator('#ordersBody tr')).toHaveCount(15);
@@ -22,8 +71,8 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     const camera=await frameWindow(page,()=>window.__E2E_CAMERA_START);expect(camera.camera).toEqual({facingMode:'environment'});expect(camera.config).toEqual({fps:10,qrbox:{width:250,height:150}});await shellStopCamera(page);
     await vendor.locator('#vendorOrderSearchClear').click();const row=vendor.locator('#ordersBody tr').filter({hasText:'MW-5664'});
     await row.getByRole('button',{name:'تفاصيل'}).click();await expect(vendor.locator('#vendorOrderDetailsModal')).toHaveClass(/flex/);await expect(vendor.locator('#vendorOrderDetailsBody')).toContainText('MW-5664');await frameWindow(page,()=>window.closeVendorOrderDetails());
-    await frameWindow(page,()=>{window.__E2E_PRINT_HTML='';window.__E2E_PRINT_CLOSED=false;window.open=()=>({document:{write:s=>{window.__E2E_PRINT_HTML+=String(s)},close:()=>{window.__E2E_PRINT_CLOSED=true}}})});
-    await row.getByRole('button',{name:/طباعة الملصق/}).click();const printed=await frameWindow(page,()=>({html:window.__E2E_PRINT_HTML,closed:window.__E2E_PRINT_CLOSED}));expect(printed.closed).toBe(true);expect(printed.html).toContain('MW-5664');expect(printed.html).toContain('MeshWar Cargo');expect(printed.html).toContain('JsBarcode');
+    await frameWindow(page,()=>{window.__E2E_PRINT_HTML='';window.__E2E_PRINT_CLOSED=false;window.__E2E_LABEL_ERROR='';window.alert=m=>{window.__E2E_LABEL_ERROR=String(m)};if(window.KintoBundleV93)window.KintoBundleV93.hydrateCustomer=async()=>null;window.open=()=>({document:{write:s=>{window.__E2E_PRINT_HTML+=String(s)},close:()=>{window.__E2E_PRINT_CLOSED=true}}})});
+    await row.getByRole('button',{name:/طباعة الملصق/}).click();await expect.poll(async()=>frameWindow(page,()=>({closed:window.__E2E_PRINT_CLOSED,error:window.__E2E_LABEL_ERROR})),{timeout:10000,message:'Unified vendor label print should close popup without error'}).toMatchObject({closed:true,error:''});const printed=await frameWindow(page,()=>({html:window.__E2E_PRINT_HTML,closed:window.__E2E_PRINT_CLOSED}));expect(printed.closed).toBe(true);expect(printed.html).toContain('MW-5664');expect(printed.html).toContain('KINTO');expect(printed.html).toContain('JsBarcode');
     const tones=[['بانتظار الموافقة','pending'],['قيد التوصيل','transit'],['تم التسليم','success'],['مرتجع','danger'],['ملغي من قبل العميل','danger']];
     for(const[status,tone]of tones){await frameWindow(page,async s=>{const o=window.__MESH_E2E_DB.orders.find(x=>x.id==='o-pending');o.status=s;await window.loadOrders()},status);await search.fill('MW-5664');await shellOrderFilter(page,{highlightExact:true});await expect.poll(()=>frameWindow(page,()=>document.querySelector('#ordersBody tr[data-mw-order-highlight] td[data-label="الحالة"] span')?.dataset.mwOrderStatusTone||'')).toBe(tone);await vendor.locator('#vendorOrderSearchClear').click()}
   });
@@ -75,27 +124,46 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await vendor.locator('#mwProductMainCategory').selectOption('cat-a');await expect(vendor.locator('#mwProductSubCategory option[value="sub-a"]')).toHaveCount(1);await vendor.locator('#mwProductSubCategory').selectOption('sub-a');await vendor.getByRole('button',{name:'حفظ المنتج'}).click();
     await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.product_name==='E2E Added Product')||null)).not.toBeNull();await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.product_name==='E2E Added Product')?.subcategory_id||'')).toBe('sub-a');await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.product_name==='E2E Added Product')?.cost_price)).toBe(18.5);
     const added=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.product_name==='E2E Added Product'));expect(added.stock_quantity).toBe(17);expect(added.base_price).toBe(44);expect(added.category_id).toBe('sub-a');expect(added.subcategory_id).toBe('sub-a');
-    await frameWindow(page,()=>window.editProduct('p-1'));await expect(vendor.locator('#productModal')).toHaveClass(/flex/);await expect(vendor.locator('#productBarcode')).toHaveValue('LEGACY-SKU-01');await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwTaxonomyV10))).toBe(true);await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwFinanceV21))).toBe(true);
+    await productSearch.fill('');
+    for(let n=0;n<3 && !(await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').isVisible());n++) await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();
+    await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();await expect(vendor.locator('#productModal')).toHaveClass(/flex/);await expect(vendor.locator('#productBarcode')).toHaveValue('LEGACY-SKU-01');await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwTaxonomyV10))).toBe(true);await expect.poll(()=>frameWindow(page,()=>Boolean(window.saveProduct?.__mwFinanceV21))).toBe(true);
+    await expect(vendor.locator('#mwProductMainCategory')).toHaveValue('cat-a');
+    await expect(vendor.locator('#mwProductSubCategory')).toHaveValue('sub-a');
     await vendor.locator('#productStock').fill('73');await vendor.locator('#mwProductCostPrice').fill('22');await expect(vendor.locator('#productBasePrice')).toHaveValue('28');await vendor.locator('#productBasePrice').fill('31');await vendor.locator('#mwProductMainCategory').selectOption('cat-b');await expect(vendor.locator('#mwProductSubCategory option[value="sub-b"]')).toHaveCount(1);await vendor.locator('#mwProductSubCategory').selectOption('sub-b');await vendor.getByRole('button',{name:'حفظ المنتج'}).click();
     await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1')?.stock_quantity)).toBe(73);await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1')?.subcategory_id||'')).toBe('sub-b');await expect.poll(()=>frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1')?.cost_price)).toBe(22);
     const moved=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(p=>p.id==='p-1'));expect(moved.base_price).toBe(31);expect(moved.barcode).toBe('LEGACY-SKU-01');expect(moved.category_id).toBe('sub-b');expect(moved.subcategory_id).toBe('sub-b');await expect(vendor.locator('#mwVendorPager-products [data-pager-info]')).toContainText('من 24');
   });
 
-  test('finance: legacy KPIs reconcile and V21 P&L, expenses and editable invoice work',async({page})=>{
+  test('finance: V161 balance excludes legacy rows and V165 is the only profit writer',async({page})=>{
+    await page.addInitScript(()=>sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token',expiresAt:new Date(Date.now()+3600000).toISOString()})));
     const vendor=await openVendor(page);await vendor.locator('#vendorTabBtn-finance').click();
-    await expect(vendor.locator('#statSales')).toHaveText('300 USD');await expect(vendor.locator('#statCommission')).toHaveText('40 USD');await expect(vendor.locator('#statOther')).toHaveText('15 USD');await expect(vendor.locator('#statPending')).toHaveText('160 USD');await expect(vendor.locator('#statPaid')).toHaveText('85 USD');await expect(vendor.locator('#statNet')).toHaveText('245 USD');
-    await expect(vendor.locator('#vendorFinanceBody tr')).toHaveCount(2);
-    const rows=await vendor.locator('#vendorFinanceBody tr').evaluateAll(list=>list.map(row=>{const num=label=>Number((row.querySelector(`td[data-label="${label}"]`)?.textContent||'0').replace(/[^0-9.-]/g,''))||0;const commission=Number((row.querySelector('td[data-label="العمولة (%)"] .vendor-muted')?.textContent||'0').replace(/[^0-9.-]/g,''))||0;return{total:num('المبلغ الكلي'),commission,other:num('أخرى'),net:num('المبلغ الصافي'),paid:/مدفوع/.test(row.querySelector('td[data-label="حالة الدفع"]')?.textContent||'')}}));
-    const reconciled=rows.reduce((a,r)=>{a.sales+=r.total;a.commission+=r.commission;a.other+=r.other;a.net+=r.net;if(r.paid)a.paid+=r.net;else a.pending+=r.net;return a},{sales:0,commission:0,other:0,pending:0,paid:0,net:0});expect(reconciled).toEqual({sales:300,commission:40,other:15,pending:160,paid:85,net:245});await expect(vendor.locator('[data-mw-kpi-icon]')).toHaveCount(6);
+    await expect(vendor.locator('#statSales')).toHaveText('0 USD');await expect(vendor.locator('#statCommission')).toHaveText('0 USD');await expect(vendor.locator('#statPending')).toHaveText('0 USD');await expect(vendor.locator('#statPaid')).toHaveText('0 USD');await expect(vendor.locator('#statProfit')).toHaveText('0 USD');
+    await expect(vendor.locator('#vendorFinanceBody tr')).toHaveCount(1);
+    await expect(vendor.locator('#vendorFinanceBody')).toContainText('لا توجد حركات مالية');await expect(vendor.locator('[data-mw-kpi-icon]')).toHaveCount(5);
 
-    await frameWindow(page,()=>{const paid=window.__MESH_E2E_DB.orders.find(x=>x.id==='o-paid'),unpaid=window.__MESH_E2E_DB.orders.find(x=>x.id==='o-unpaid');paid.snapshot_cost_price=20;unpaid.snapshot_cost_price=25;window.__MESH_E2E_DB.vendor_operating_expenses=[{id:1,store_id:'store-e2e-1',amount:25,currency:'USD',category:'إيجار',note:'E2E',expense_date:'2026-08-22'}]});
-    await expect(vendor.locator('#vendorTabBtn-pl')).toBeAttached();await vendor.locator('#vendorTabBtn-pl').click();await expect(vendor.locator('#vendorTab-pl')).toHaveClass(/active/);await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);
-    await expect.poll(()=>frameWindow(page,()=>window.__mwFinanceV21Last||null)).not.toBeNull();
-    expect(await frameWindow(page,()=>window.__mwFinanceV21Last)).toEqual({sales:300,cogs:90,fees:55,expenses:25,net:130,deliveredCount:2,missing:0,estimated:0});
-    await expect(vendor.locator('#mwPlSales')).toHaveText('300 USD');await expect(vendor.locator('#mwPlCogs')).toHaveText('90 USD');await expect(vendor.locator('#mwPlNet')).toHaveText('130 USD');
-    await vendor.locator('#mwExpenseAmount').fill('10');await vendor.locator('#mwExpenseCategory').fill('تسويق');await vendor.locator('#mwExpenseNote').fill('E2E marketing');await vendor.locator('#mwExpenseAdd').click();await expect(vendor.locator('#mwPlExpenses')).toHaveText('35 USD');await expect(vendor.locator('#mwPlNet')).toHaveText('120 USD');
-    await frameWindow(page,()=>{window.__E2E_INVOICE_HTML='';window.__E2E_INVOICE_CLOSED=false;window.open=()=>({document:{write:s=>{window.__E2E_INVOICE_HTML+=String(s)},close:()=>{window.__E2E_INVOICE_CLOSED=true}}})});
-    await vendor.locator('[data-mw-invoice]').first().click();const invoice=await frameWindow(page,()=>({html:window.__E2E_INVOICE_HTML,closed:window.__E2E_INVOICE_CLOSED}));expect(invoice.closed).toBe(true);expect(invoice.html).toContain('contenteditable="true"');expect(invoice.html).toContain('طباعة / حفظ PDF');expect(invoice.html).toContain('MW-566');
+
+    await frameWindow(page,()=>{
+      sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token'}));
+      window.__E2E_PROFIT_REPORT={order:{order_code:'KN-000100',currency:'IQD',statement_no:'KINTO-STL-TEST',financial:{gross_amount:123000,commission_amount:12300,other_deductions:0,net_amount:110700},cost_frozen:true,total_cost_local:87500,cost_captured_at:new Date().toISOString(),cost_lines:[{product_name:'Test product',quantity:1,unit_cost_usd:50,exchange_rate:1750,cost_local:87500}]},expenses:[],expense_total:0};
+      const original=window.MeshwarVendorRuntime.sb.rpc;
+      window.MeshwarVendorRuntime.sb.rpc=async(name,args)=>name==='vendor_profit_list_v165'?{data:{rows:[{...structuredClone(window.__E2E_PROFIT_REPORT.order),segment_id:'test',expense_total:0,product_count:1,created_at:new Date().toISOString()}],summary:[{currency:'IQD',orders:1,incomplete_orders:window.__E2E_PROFIT_REPORT.order.cost_frozen?0:1,sales:123000,commission:12300,net:110700,cost:window.__E2E_PROFIT_REPORT.order.total_cost_local,expenses:0,profit:window.__E2E_PROFIT_REPORT.order.cost_frozen?23200:null}],page:1,pages:1,total:1},error:null}:original(name,args);
+    });
+    await vendor.locator('#vendorTabBtn-pl').click();
+    await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);
+    const content=vendor.locator('#vendorTab-pl');
+    await expect(content).toContainText('23,200 IQD');
+    await expect(content).toContainText('87,500 IQD');
+    await expect(content).toContainText('110,700 IQD');
+    await expect(vendor.locator('#mwSettlementToolbar,#mwPlSales,#mwPlCogs,#mwPlNet,[data-mw-invoice]')).toHaveCount(0);
+    expect(await page.evaluate(()=>Boolean(window.MeshwarVendorFinanceExpensesV23||window.MeshwarVendorFinanceSettlementV24||window.MeshwarVendorFinanceDeliveredV35||window.MeshwarVendorSettlementPdfDetailsV25))).toBe(false);
+    await frameWindow(page,()=>{window.__MESH_E2E_STORE.exchange_rate=9999;window.__MESH_E2E_DB.local_products[0].cost_price=999});
+    await vendor.locator('#profitApplyV165').click();
+    await expect(content).toContainText('23,200 IQD');
+    await expect(content).not.toContainText('633,284');
+    await frameWindow(page,()=>{window.__E2E_PROFIT_REPORT.order.cost_frozen=false;window.__E2E_PROFIT_REPORT.order.total_cost_local=null});
+    await vendor.locator('#profitApplyV165').click();
+    await expect(content).toContainText('غير مكتمل');
+    await expect(content).not.toContainText('23,200 IQD');
   });
 
   test('vendor tab regression: every dynamic tab can enter shipping with one active panel',async({page})=>{
@@ -122,4 +190,32 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await vendor.locator('#vendorTabBtn-orders').click();await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);await expect(vendor.locator('#vendorTab-orders')).toHaveClass(/active/);await expect(vendor.locator('#vendorTab-categories')).not.toHaveClass(/active/);
     await vendor.locator('button[onclick="toggleTheme()"]').click();await expect(vendor.locator('html')).toHaveClass(/light/);await vendor.locator('#vendorTabBtn-products').click();await expect(vendor.locator('html')).toHaveClass(/light/);await expect(vendor.locator('.vendor-tab-panel.active')).toHaveCount(1);const lightBg=await frameWindow(page,()=>getComputedStyle(document.body).backgroundColor);expect(lightBg).not.toBe('rgba(0, 0, 0, 0)');await vendor.locator('button[onclick="toggleTheme()"]').click();await expect(vendor.locator('html')).toHaveClass(/dark/);
   });
+  test('repeat save preserves variants when untouched form fields are stale',async({page})=>{
+    const vendor=await openVendor(page);
+    await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
+    await frameWindow(page,async()=>{
+      const p=window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1');
+      p.stock_quantity=34;
+      p.options={...p.options,colors:['وردي','أزرق فاتح','سلفر'],variant_stock:{color:{وردي:4,'أزرق فاتح':20,سلفر:10},size:{},volume:{}},matrix_stock:{},campaign_extra:{keep:true}};
+      await window.MeshwarVendorRuntime.loadProducts();
+    });
+    await vendor.locator('#vendorTabBtn-products').click();
+    for(let n=0;n<3 && !(await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').isVisible());n++)await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();
+    await vendor.locator('#productsBody button[onclick="editProduct(\'p-1\')"]').click();
+    await expect(vendor.locator('#productModal')).toHaveClass(/flex/);
+    await frameWindow(page,()=>{
+      document.getElementById('productColors').value='أسود, أبيض, أزرق';
+      document.getElementById('mwVariantStockEditor').innerHTML='';
+      window.__mwVendorOptionsTouchedV69=false;
+      window.__mwVendorVariantStockTouchedV69=false;
+    });
+    await vendor.getByRole('button',{name:'حفظ المنتج'}).click();
+    const saved=await frameWindow(page,()=>window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1'));
+    expect(saved.stock_quantity).toBe(34);
+    expect(saved.options.colors).toEqual(['وردي','أزرق فاتح','سلفر']);
+    expect(saved.options.variant_stock.color).toEqual({وردي:4,'أزرق فاتح':20,سلفر:10});
+    expect(saved.options.campaign_extra).toEqual({keep:true});
+  });
+
 });
+

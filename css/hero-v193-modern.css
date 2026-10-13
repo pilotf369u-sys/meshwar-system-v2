@@ -1,0 +1,10 @@
+/* V195 approved artwork: preserve the original image, its colors and complete framing. */
+.mw-home-hero-grid.kinto-v193-hero{display:flex!important;flex-direction:column!important;gap:14px!important;padding:0!important;overflow:visible!important;background:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+.mw-home-hero-grid.kinto-v193-hero::before{display:none!important}
+.kinto-v195-banner{position:relative!important;width:100%;overflow:hidden;border-radius:clamp(12px,2vw,24px);background:#032b23;line-height:0;box-shadow:0 16px 35px rgba(0,0,0,.2)}
+.kinto-v195-banner img{display:block;width:100%;height:auto;object-fit:contain}
+.kinto-v195-banner-cta{position:absolute;z-index:5;left:54%;top:75%;width:43%;height:16%;border-radius:40px;cursor:pointer;touch-action:manipulation}
+.kinto-v195-banner-cta:focus-visible{outline:3px solid #fff;outline-offset:-3px;background:rgba(255,255,255,.13)}
+.mw-home-hero-grid.kinto-v193-hero .kinto-hero-copy-shell{display:none!important}
+.mw-home-hero-grid.kinto-v193-hero #meshwarVideoFrame{grid-column:auto!important;grid-row:auto!important;position:relative!important;width:min(100%,780px)!important;max-width:780px!important;margin:0 auto!important;aspect-ratio:16/9!important;border-radius:20px!important}
+@media(max-width:767px){.mw-home-hero-grid.kinto-v193-hero{gap:10px!important;padding:0!important;grid-template-rows:none!important}.kinto-v195-banner{border-radius:14px}.kinto-v195-banner-cta{left:53%;top:73%;width:45%;height:19%}.mw-home-hero-grid.kinto-v193-hero #meshwarVideoFrame{border-radius:14px!important}}

@@ -1,0 +1,54 @@
+/* KINTO V196 — visual-only global portal and featured store polish */
+#kintoStorePortalsV55.kinto-v172-global-strip{max-width:1180px;margin:16px auto 10px}
+#kintoStorePortalsV55 .kinto-v196-global-link{position:relative;isolation:isolate;display:flex;align-items:stretch;min-height:168px;overflow:hidden;padding:0!important;border:1px solid rgba(233,190,85,.72)!important;border-radius:23px!important;background:radial-gradient(ellipse at 87% 28%,#417b83 0%,transparent 43%),linear-gradient(110deg,#03291f 0%,#064135 62%,#0c5360 100%)!important;box-shadow:0 12px 32px #001a1766!important;color:#fff9e9!important;text-decoration:none}
+#kintoStorePortalsV55 .kinto-v196-global-content{position:relative;z-index:2;display:flex;flex:1;flex-direction:column;align-items:flex-start;justify-content:center;gap:9px;padding:18px 24px;min-width:0}
+#kintoStorePortalsV55 .kinto-v196-heading{display:flex;align-items:center;gap:10px}
+#kintoStorePortalsV55 .kinto-v196-heading strong{font-size:clamp(19px,2.5vw,29px);font-weight:900;line-height:1.3}
+#kintoStorePortalsV55 .kinto-v196-heading .kinto-v172-global-icon{font-size:29px;filter:sepia(1) saturate(3)}
+#kintoStorePortalsV55 .kinto-v196-global-content>small{font-size:clamp(11px,1.6vw,15px);color:#e6e4d6}
+#kintoStorePortalsV55 .kinto-v196-brand-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#kintoStorePortalsV55 .kinto-v196-brand{display:inline-flex;align-items:center;justify-content:center;min-height:31px;padding:4px 8px;border:1px solid #e1d9b17d;border-radius:8px;background:#061c1de8;color:#fff;font-size:11px;font-weight:900;line-height:1;letter-spacing:-.2px;direction:ltr}
+#kintoStorePortalsV55 .kinto-v196-brand.trendyol{background:#f76c19;color:white}
+#kintoStorePortalsV55 .kinto-v196-brand.zara{font-family:Georgia,serif;font-size:14px;letter-spacing:1px}
+#kintoStorePortalsV55 .kinto-v196-brand.adidas{font-style:italic}
+#kintoStorePortalsV55 .kinto-v196-brand.nike{font-style:italic}
+#kintoStorePortalsV55 .kinto-v196-global-arrow{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ffdd78,#c68e25);color:#052c23;font-size:24px;font-weight:900}
+#kintoStorePortalsV55 .kinto-v196-art{position:relative;display:flex;align-items:center;justify-content:center;width:35%;min-width:170px;overflow:hidden;background:radial-gradient(circle at 60% 45%,#7eb9b75e,transparent 60%)}
+#kintoStorePortalsV55 .kinto-v196-art-globe{font-size:clamp(75px,11vw,145px);filter:drop-shadow(0 7px 14px #001e1c);transform:rotate(-12deg)}
+#kintoStorePortalsV55 .kinto-v196-art-parcel{position:absolute;bottom:18px;right:7%;padding:12px 9px;transform:rotate(-7deg);border-radius:4px;background:linear-gradient(135deg,#e1b778,#9b6434);color:#153c32;font-weight:900;font-size:13px;box-shadow:0 8px 15px #001a1870}
+#kintoStorePortalsV55 .kinto-v196-art-bags{position:absolute;bottom:5px;left:7%;font-size:55px}
+#kintoStorePortalsV55 .kinto-v196-global-link:hover{border-color:#ffe08c!important;filter:brightness(1.08)}
+/* The featured store content and selection remain entirely controlled by the existing scripts. */
+#kintoFeaturedStoreSlot.kinto-featured-store{max-width:1180px!important;min-height:0!important;padding:12px 18px!important;gap:12px!important;margin-top:12px!important;margin-bottom:10px!important;border-radius:20px!important}
+#kintoFeaturedStoreSlot .kinto-featured-logo-wrap{flex:0 0 auto!important}
+#kintoFeaturedStoreSlot .kinto-featured-logo-wrap img{width:78px!important;height:78px!important;max-width:78px!important;max-height:78px!important;object-fit:contain!important}
+#kintoFeaturedStoreSlot .kinto-featured-copy{min-width:0!important}
+#kintoFeaturedStoreSlot .kinto-featured-copy h2,#kintoFeaturedStoreSlot .kinto-featured-copy h3{font-size:clamp(17px,2vw,22px)!important;margin:3px 0!important}
+@media(max-width:700px){
+#kintoStorePortalsV55.kinto-v172-global-strip{margin:12px 10px 8px}
+#kintoStorePortalsV55 .kinto-v196-global-link{min-height:145px;border-radius:19px!important}
+#kintoStorePortalsV55 .kinto-v196-global-content{gap:7px;padding:13px 12px}
+#kintoStorePortalsV55 .kinto-v196-heading{gap:6px}
+#kintoStorePortalsV55 .kinto-v196-heading strong{font-size:18px}
+#kintoStorePortalsV55 .kinto-v196-heading .kinto-v172-global-icon{font-size:24px}
+#kintoStorePortalsV55 .kinto-v196-global-content>small{font-size:11px;line-height:1.5}
+#kintoStorePortalsV55 .kinto-v196-brand-row{gap:4px}
+#kintoStorePortalsV55 .kinto-v196-brand{font-size:9px;min-height:25px;padding:3px 5px;border-radius:6px}
+#kintoStorePortalsV55 .kinto-v196-brand.zara{font-size:11px}
+#kintoStorePortalsV55 .kinto-v196-global-arrow{width:30px;height:30px;font-size:19px}
+#kintoStorePortalsV55 .kinto-v196-art{width:27%;min-width:85px}
+#kintoStorePortalsV55 .kinto-v196-art-globe{font-size:68px}
+#kintoStorePortalsV55 .kinto-v196-art-parcel{bottom:13px;right:0;padding:6px 4px;font-size:8px}
+#kintoStorePortalsV55 .kinto-v196-art-bags{font-size:30px;left:0}
+#kintoFeaturedStoreSlot.kinto-featured-store{padding:10px 12px!important;min-height:0!important;gap:8px!important;border-radius:18px!important}
+#kintoFeaturedStoreSlot .kinto-featured-logo-wrap img{width:66px!important;height:66px!important;max-width:66px!important;max-height:66px!important}
+#kintoFeaturedStoreSlot .kinto-featured-copy h2,#kintoFeaturedStoreSlot .kinto-featured-copy h3{font-size:18px!important}
+}
+@media(prefers-reduced-motion:reduce){#kintoStorePortalsV55 .kinto-v196-global-link{transition:none!important}}
+
+/* V196 final approved artwork: one full-card link, no visual substitutes */
+#kintoStorePortalsV55 .kinto-v196-global-image-link{display:block!important;position:relative!important;width:100%!important;min-height:0!important;height:auto!important;padding:0!important;line-height:0!important;overflow:hidden!important;border:0!important;border-radius:clamp(12px,2vw,22px)!important;background:#052f26!important;box-shadow:0 12px 28px #001c1866!important}
+#kintoStorePortalsV55 .kinto-v196-global-image-link img{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;object-fit:contain!important;aspect-ratio:987/187!important}
+#kintoStorePortalsV55 .kinto-v196-global-image-link:focus-visible{outline:3px solid #ffe58c!important;outline-offset:3px!important}
+#kintoStorePortalsV55 .kinto-v196-accessible-label{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@media(max-width:700px){#kintoStorePortalsV55 .kinto-v196-global-image-link{min-height:0!important;border-radius:12px!important}#kintoStorePortalsV55.kinto-v172-global-strip{margin:12px 10px 8px!important}}

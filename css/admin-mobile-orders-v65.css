@@ -1,0 +1,17 @@
+/* Admin order panel only: preserve readable columns on mobile and tablet. */
+.admin-stock-slot-v65{text-align:center;margin-bottom:4px}
+.admin-stock-slot-v65:empty{display:none}
+@media(max-width:1100px){
+ body #ordersListPanel{min-width:0!important;max-width:100%!important}
+ body #ordersListPanel .order-toolbar{display:flex!important;flex-wrap:wrap!important;gap:8px!important}
+ body #ordersListPanel .order-toolbar input{min-width:150px!important;flex:1 1 200px!important;max-width:100%!important}
+ body #ordersListPanel .order-toolbar button,body #ordersListPanel .order-toolbar select{white-space:nowrap!important}
+ body #ordersListPanel .table-wrap{width:100%!important;max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+ body #ordersListPanel table{width:1400px!important;min-width:1400px!important;max-width:none!important;table-layout:fixed!important}
+ body #ordersListPanel th,body #ordersListPanel td{font-size:12px!important;padding:8px 6px!important;word-break:normal!important;overflow-wrap:normal!important;white-space:normal!important}
+ body #ordersListPanel td input,body #ordersListPanel td select{font-size:12px!important;height:36px!important}
+ body #ordersListPanel .mw-native-actions button,body #ordersListPanel .mw-native-actions a{font-size:11px!important;padding:7px 5px!important;word-break:normal!important}
+ body #ordersListPanel .customer-code,body #ordersListPanel .qty-badge,body #ordersListPanel .collect-due,body #ordersListPanel .qty-warning{white-space:nowrap!important;word-break:normal!important}
+ body #ordersListPanel .collect-due{font-size:12px!important}
+ body #ordersListPanel .order-thumb{max-width:100%!important}
+}

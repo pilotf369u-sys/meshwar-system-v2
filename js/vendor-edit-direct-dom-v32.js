@@ -115,8 +115,10 @@
       const currentId=String(d.getElementById('productId')?.value||'').trim();
       const visible=Boolean(modal&&!modal.classList.contains('hidden'));
       if(visible&&currentId===id){
+        if(win.__mwVendorEditorDirtyV68)return complete;
         matchedOnce=true;
         complete=applyVisibleFields(win,product,categories)||complete;
+        if(complete)return true;
       }else if(matchedOnce){
         // The user closed this edit or opened a fresh Add modal. Never hydrate stale product data into it.
         return complete;
@@ -128,9 +130,11 @@
   }
   function install(win){
     if(!win||win.__mwVendorDirectDomV33Bound)return;
+    for(const eventName of ['input','change'])win.document.addEventListener(eventName,event=>{if(event.target?.closest?.('#productModal'))win.__mwVendorEditorDirtyV68=true},true);
     win.document.addEventListener('click',event=>{
       const btn=event.target?.closest?.('button[onclick^="editProduct("]');if(!btn)return;
       const code=String(btn.getAttribute('onclick')||'');const match=code.match(/editProduct\(['\"]([^'\"]+)['\"]\)/);const id=match?.[1];if(!id)return;
+      win.__mwVendorEditorDirtyV68=false;
       setTimeout(()=>hydrate(win,id).catch(err=>console.error('Vendor V33 complete edit hydration failed',err)),0);
     },true);
     win.__mwVendorDirectDomV33Bound=true;

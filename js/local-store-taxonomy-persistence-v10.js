@@ -55,6 +55,7 @@
       const subId=String(p.subcategory_id||'').trim(),effective=String(p.category_id||'').trim();let mainId=effective;
       if(subId){const cats=await rest(`store_categories?select=id,parent_id&id=eq.${q(subId)}&store_id=eq.${q(store.id)}&limit=1`),sub=Array.isArray(cats)?cats[0]:null;mainId=String(sub?.parent_id||effective||'').trim()}
       else if(effective){const cats=await rest(`store_categories?select=id,parent_id&id=eq.${q(effective)}&store_id=eq.${q(store.id)}&limit=1`),cat=Array.isArray(cats)?cats[0]:null;if(cat?.parent_id)mainId=String(cat.parent_id)}
+      if(window.__mwTaxonomyTouchedV10||String(document.getElementById('productId')?.value||'')!==String(productId))return;
       window.__mwTaxonomySelectionV10={main:mainId||'',sub:subId||(effective&&effective!==mainId?effective:'')};
     }catch(err){console.warn('V10 taxonomy edit hydration failed',err)}
   }
@@ -98,7 +99,7 @@
     document.addEventListener('click',e=>{
       if(e.target?.closest?.('#addNewProductBtn,button[onclick="openProductModal()"]')){window.__mwTaxonomyTouchedV10=true;window.__mwTaxonomySelectionV10={main:'',sub:''}}
       if(e.target?.closest?.('button[onclick^="editProduct("]')){window.__mwTaxonomyTouchedV10=false;window.__mwTaxonomySelectionV10=null}
-      const save=e.target?.closest?.('button[onclick*="saveProduct"]');if(!save)return;
+      const save=e.target?.closest?.('button[onclick*="saveProduct"]');if(!save||window.__mwVendorProductSaveCompleteV34)return;
       const store=sessionStore(),id=String(document.getElementById('productId')?.value||'').trim(),name=String(document.getElementById('productName')?.value||'').trim(),taxonomy=saveTaxonomySnapshot();
       const skip=Boolean(id&&!window.__mwTaxonomyTouchedV10&&!taxonomy.effective);
       window.__mwTaxonomyV10SaveSnapshot={id,name,storeId:String(store?.id||''),taxonomy,skip,at:Date.now()};
@@ -112,3 +113,4 @@
   if(vendorPage)startVendor();
   window.MeshwarTaxonomyPersistenceV10={VERSION,persistTaxonomy,hydrateTaxonomyForEdit,taxonomySnapshot:saveTaxonomySnapshot};
 })();
+
