@@ -109,6 +109,13 @@ BEGIN
   IF v_old.status = 'تم التسديد' THEN
     RAISE EXCEPTION 'KINTO_ORDER_ALREADY_PAID';
   END IF;
+  -- Payment approval must not alter financial amounts.
+  IF (p_patch ? 'total_price' AND (p_patch->>'total_price')::numeric IS DISTINCT FROM v_old.total_price)
+     OR (p_patch ? 'delivery_fee' AND (p_patch->>'delivery_fee')::numeric IS DISTINCT FROM v_old.delivery_fee)
+     OR (p_patch ? 'currency' AND p_patch->>'currency' IS DISTINCT FROM v_old.currency)
+  THEN
+    RAISE EXCEPTION 'KINTO_PAYMENT_FINANCIAL_FIELDS_CHANGE_DENIED' USING ERRCODE='42501';
+  END IF;
   -- The employee UI may change only the parcel count while approving payment.
   -- Prevent a forged RPC patch from changing cart items, prices or stock evidence.
   IF p_patch ? 'details' THEN
