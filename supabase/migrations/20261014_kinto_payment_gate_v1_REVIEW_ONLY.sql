@@ -115,10 +115,14 @@ BEGIN
   IF v_old.status IS DISTINCT FROM p_expected_status THEN
     RAISE EXCEPTION 'KINTO_ORDER_STATUS_CHANGED';
   END IF;
+  IF v_old.status IS NULL OR btrim(v_old.status) = '' THEN
+    RAISE EXCEPTION 'KINTO_PAYMENT_PREVIOUS_STATUS_REQUIRED';
+  END IF;
   IF v_old.status = 'تم التسديد' THEN
     RAISE EXCEPTION 'KINTO_ORDER_ALREADY_PAID';
   END IF;
-  -- Payment approval must not alter financial amounts.
+  -- Compare financial values using the database column types, including SQL NULL.
+  -- Dashboard saves send unchanged financial values; a mismatched value is rejected.
   IF (p_patch ? 'total_price' AND (p_patch->>'total_price')::numeric IS DISTINCT FROM v_old.total_price)
      OR (p_patch ? 'delivery_fee' AND (p_patch->>'delivery_fee')::numeric IS DISTINCT FROM v_old.delivery_fee)
      OR (p_patch ? 'currency' AND p_patch->>'currency' IS DISTINCT FROM v_old.currency)
