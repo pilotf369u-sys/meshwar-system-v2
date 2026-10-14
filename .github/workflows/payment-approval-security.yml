@@ -1,0 +1,22 @@
+name: Payment approval security contracts
+on:
+  pull_request:
+    paths:
+      - 'employee-dashboard.html'
+      - 'admin-dashboard.html'
+      - 'supabase/migrations/20261014_kinto_payment_gate_v1_REVIEW_ONLY.sql'
+      - 'tests/payment-approval-gate-static.test.cjs'
+      - '.github/workflows/payment-approval-security.yml'
+  push:
+    branches:
+      - 'security/payment-approval-gate-20261014'
+jobs:
+  payment-gate-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate payment approval wiring
+        run: node tests/payment-approval-gate-static.test.cjs
