@@ -42,6 +42,7 @@ AS $$
 DECLARE
   v_id text;
   v_old public.orders%ROWTYPE;
+  v_typed public.orders%ROWTYPE;
   v_patch jsonb;
 BEGIN
   IF p_actor = 'employee' THEN
@@ -78,6 +79,8 @@ BEGIN
   IF v_old.status = 'تم التسديد' THEN
     RAISE EXCEPTION 'KINTO_ORDER_ALREADY_PAID';
   END IF;
+  -- PostgreSQL performs column-type conversion using the real orders row type.
+  v_typed := jsonb_populate_record(NULL::public.orders, p_patch);
   INSERT INTO private.kinto_paid_transition_permits_v1(transaction_id,order_id)
     VALUES(txid_current(),p_order_id);
   UPDATE public.orders o SET
@@ -86,13 +89,13 @@ BEGIN
     delivery_payment_type = CASE WHEN p_patch ? 'delivery_payment_type' THEN p_patch->>'delivery_payment_type' ELSE o.delivery_payment_type END,
     branch_id = CASE WHEN p_patch ? 'branch_id' THEN p_patch->>'branch_id' ELSE o.branch_id END,
     branch_name = CASE WHEN p_patch ? 'branch_name' THEN p_patch->>'branch_name' ELSE o.branch_name END,
-    delivery_agent_id = CASE WHEN p_patch ? 'delivery_agent_id' THEN p_patch->>'delivery_agent_id' ELSE o.delivery_agent_id END,
-    courier_id = CASE WHEN p_patch ? 'courier_id' THEN p_patch->>'courier_id' ELSE o.courier_id END,
-    total_price = CASE WHEN p_patch ? 'total_price' THEN (p_patch->>'total_price')::numeric ELSE o.total_price END,
+    delivery_agent_id = CASE WHEN p_patch ? 'delivery_agent_id' THEN v_typed.delivery_agent_id ELSE o.delivery_agent_id END,
+    courier_id = CASE WHEN p_patch ? 'courier_id' THEN v_typed.courier_id ELSE o.courier_id END,
+    total_price = CASE WHEN p_patch ? 'total_price' THEN v_typed.total_price ELSE o.total_price END,
     currency = CASE WHEN p_patch ? 'currency' THEN p_patch->>'currency' ELSE o.currency END,
     rejection_reason = CASE WHEN p_patch ? 'rejection_reason' THEN p_patch->>'rejection_reason' ELSE o.rejection_reason END,
     details = CASE WHEN p_patch ? 'details' THEN p_patch->>'details' ELSE o.details END,
-    delivery_fee = CASE WHEN p_patch ? 'delivery_fee' THEN (p_patch->>'delivery_fee')::numeric ELSE o.delivery_fee END
+    delivery_fee = CASE WHEN p_patch ? 'delivery_fee' THEN v_typed.delivery_fee ELSE o.delivery_fee END
   WHERE o.id=p_order_id;
   DELETE FROM private.kinto_paid_transition_permits_v1
    WHERE transaction_id=txid_current() AND order_id=p_order_id;
