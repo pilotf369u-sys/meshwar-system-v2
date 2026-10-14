@@ -25,6 +25,11 @@ DECLARE
   v_new_details jsonb;
   v_key text;
 BEGIN
+  -- Keep unrelated updates untouched, including legacy rows with non-JSON details.
+  IF OLD.details IS NOT DISTINCT FROM NEW.details
+     AND NOT (OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'تم التسديد') THEN
+    RETURN NEW;
+  END IF;
   -- Reject client-side forgery of paid stock markers, even without status change.
   BEGIN
     v_old_details := coalesce(nullif(OLD.details, '')::jsonb, '{}'::jsonb);
