@@ -19,8 +19,28 @@ REVOKE ALL ON private.kinto_paid_approval_audit_v1 FROM PUBLIC, anon, authentica
 CREATE OR REPLACE FUNCTION private.kinto_paid_transition_guard_v1()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = pg_catalog, public, private
-AS $$
+AS $
+DECLARE
+  v_old_details jsonb;
+  v_new_details jsonb;
+  v_key text;
 BEGIN
+  -- Reject client-side forgery of paid stock markers, even without status change.
+  BEGIN
+    v_old_details := coalesce(nullif(OLD.details, '')::jsonb, '{}'::jsonb);
+    v_new_details := coalesce(nullif(NEW.details, '')::jsonb, '{}'::jsonb);
+  EXCEPTION WHEN others THEN
+    RAISE EXCEPTION 'KINTO_PAYMENT_DETAILS_INVALID';
+  END;
+  FOREACH v_key IN ARRAY ARRAY[
+    'bundle_stock_lifecycle_state','bundle_stock_deducted_at',
+    'bundle_variant_stock_deducted','stock_engine_version',
+    'stock_deduction_evidence_v47'
+  ]::text[] LOOP
+    IF v_old_details->v_key IS DISTINCT FROM v_new_details->v_key THEN
+      RAISE EXCEPTION 'KINTO_PAYMENT_STOCK_MARKER_CHANGE_DENIED' USING ERRCODE='42501';
+    END IF;
+  END LOOP;
   IF OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'تم التسديد' THEN
     IF NOT EXISTS (
       SELECT 1 FROM private.kinto_paid_transition_permits_v1 p
@@ -34,7 +54,7 @@ END;
 $$;
 DROP TRIGGER IF EXISTS trg_kinto_paid_transition_guard_v1 ON public.orders;
 CREATE TRIGGER trg_kinto_paid_transition_guard_v1
-BEFORE UPDATE OF status ON public.orders
+BEFORE UPDATE ON public.orders
 FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1();
 -- This RPC accepts the exact patch used by the two dashboard save actions.
 -- It validates a custom employee/admin session on the server before granting a one-transaction permit.
