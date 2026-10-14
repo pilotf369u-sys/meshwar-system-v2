@@ -155,7 +155,7 @@ BEGIN
          OR (v_requested_details->>'parcels_count')::numeric < 1
          OR (v_requested_details->>'parcels_count')::numeric > 100000
          OR (v_requested_details->>'parcels_count')::numeric <> trunc((v_requested_details->>'parcels_count')::numeric)
-       )
+       ))
     THEN
       RAISE EXCEPTION 'KINTO_PAYMENT_DETAILS_CHANGE_DENIED';
     END IF;
