@@ -52,6 +52,8 @@ DECLARE
   v_id text;
   v_old public.orders%ROWTYPE;
   v_typed public.orders%ROWTYPE;
+  v_previous_details jsonb;
+  v_requested_details jsonb;
 BEGIN
   IF p_actor = 'employee' THEN
     v_id := private.require_employee_session_v143(p_session_token);
@@ -86,6 +88,27 @@ BEGIN
   END IF;
   IF v_old.status = 'تم التسديد' THEN
     RAISE EXCEPTION 'KINTO_ORDER_ALREADY_PAID';
+  END IF;
+  -- The employee UI may change only the parcel count while approving payment.
+  -- Prevent a forged RPC patch from changing cart items, prices or stock evidence.
+  IF p_patch ? 'details' THEN
+    BEGIN
+      v_previous_details := coalesce(nullif(v_old.details, '')::jsonb, '{}'::jsonb);
+      v_requested_details := coalesce(nullif(p_patch->>'details', '')::jsonb, '{}'::jsonb);
+    EXCEPTION WHEN others THEN
+      RAISE EXCEPTION 'KINTO_PAYMENT_DETAILS_INVALID';
+    END;
+    IF jsonb_typeof(v_previous_details) <> 'object'
+       OR jsonb_typeof(v_requested_details) <> 'object'
+       OR (v_requested_details - 'parcels_count') IS DISTINCT FROM
+          (v_previous_details - 'parcels_count')
+       OR jsonb_typeof(v_requested_details->'parcels_count') <> 'number'
+       OR (v_requested_details->>'parcels_count')::numeric < 1
+       OR (v_requested_details->>'parcels_count')::numeric > 100000
+       OR (v_requested_details->>'parcels_count')::numeric <> trunc((v_requested_details->>'parcels_count')::numeric)
+    THEN
+      RAISE EXCEPTION 'KINTO_PAYMENT_DETAILS_CHANGE_DENIED';
+    END IF;
   END IF;
   -- PostgreSQL performs column-type conversion using the real orders row type.
   v_typed := jsonb_populate_record(NULL::public.orders, p_patch);
