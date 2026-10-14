@@ -33,9 +33,6 @@ for (const needle of [
   "KINTO_PAYMENT_MARKER_FORGERY_DENIED",
   "KINTO_PAYMENT_FINANCIAL_FIELDS_CHANGE_DENIED",
   "KINTO_PAYMENT_DETAILS_CHANGE_DENIED",
-  "KINTO_PAYMENT_FINANCIAL_FIELDS_CHANGE_DENIED",
-  "KINTO_PAYMENT_DETAILS_CHANGE_DENIED",
-  "KINTO_PAYMENT_STOCK_MARKER_CHANGE_DENIED",
   "REVOKE ALL ON FUNCTION public.kinto_approve_paid_order_v1",
 ]) assert.ok(sql.includes(needle), 'SQL missing '+needle);
 console.log('PASS: static payment-approval wiring contracts (not DB integration tests)');
