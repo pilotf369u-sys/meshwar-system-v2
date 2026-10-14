@@ -1,4 +1,5 @@
--- KINTO payment gate (review candidate; do not execute on production before staging verification)
+-- KINTO payment gate: deploy SQL before merging dashboard PR.
+-- Run preflight and transactional smoke checks; never merge UI first.
 -- Intentionally no changes to existing stock, campaign, invoice or vendor triggers.
 BEGIN;
 CREATE TABLE IF NOT EXISTS private.kinto_paid_transition_permits_v1 (
@@ -18,7 +19,7 @@ CREATE TABLE IF NOT EXISTS private.kinto_paid_approval_audit_v1 (
 REVOKE ALL ON private.kinto_paid_approval_audit_v1 FROM PUBLIC, anon, authenticated;
 CREATE OR REPLACE FUNCTION private.kinto_paid_transition_guard_v1()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = pg_catalog, public, private
+SET search_path = pg_catalog, private, pg_temp
 AS $kinto_guard$
 BEGIN
   IF (TG_OP = 'INSERT' AND NEW.status = 'تم التسديد') THEN
@@ -38,14 +39,14 @@ $kinto_guard$;
 DROP TRIGGER IF EXISTS trg_kinto_paid_transition_guard_v1 ON public.orders;
 DROP TRIGGER IF EXISTS trg_kinto_paid_insert_guard_v1 ON public.orders;
 CREATE TRIGGER trg_kinto_paid_insert_guard_v1
-BEFORE INSERT ON public.orders
+AFTER INSERT ON public.orders
 FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1();
 CREATE TRIGGER trg_kinto_paid_transition_guard_v1
-BEFORE UPDATE ON public.orders
+AFTER UPDATE ON public.orders
 FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1();
 CREATE OR REPLACE FUNCTION private.kinto_paid_marker_guard_v1()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = pg_catalog, public, private
+SET search_path = pg_catalog, private, pg_temp
 AS $marker$
 DECLARE
   old_json jsonb;
@@ -70,7 +71,7 @@ END;
 $marker$;
 DROP TRIGGER IF EXISTS trg_kinto_paid_marker_guard_v1 ON public.orders;
 CREATE TRIGGER trg_kinto_paid_marker_guard_v1
-BEFORE UPDATE ON public.orders
+AFTER UPDATE ON public.orders
 FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_marker_guard_v1();
 -- This RPC accepts the exact patch used by the two dashboard save actions.
 -- It validates a custom employee/admin session on the server before granting a one-transaction permit.
@@ -82,7 +83,7 @@ CREATE OR REPLACE FUNCTION public.kinto_approve_paid_order_v1(
   p_patch jsonb
 ) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = pg_catalog, public, private
+SET search_path = pg_catalog, private, pg_temp
 AS $$
 DECLARE
   v_id text;
@@ -149,10 +150,12 @@ BEGIN
        OR jsonb_typeof(v_requested_details) <> 'object'
        OR (v_requested_details - 'parcels_count') IS DISTINCT FROM
           (v_previous_details - 'parcels_count')
-       OR jsonb_typeof(v_requested_details->'parcels_count') <> 'number'
-       OR (v_requested_details->>'parcels_count')::numeric < 1
-       OR (v_requested_details->>'parcels_count')::numeric > 100000
-       OR (v_requested_details->>'parcels_count')::numeric <> trunc((v_requested_details->>'parcels_count')::numeric)
+       OR (v_requested_details IS DISTINCT FROM v_previous_details AND (
+         jsonb_typeof(v_requested_details->'parcels_count') IS DISTINCT FROM 'number'
+         OR (v_requested_details->>'parcels_count')::numeric < 1
+         OR (v_requested_details->>'parcels_count')::numeric > 100000
+         OR (v_requested_details->>'parcels_count')::numeric <> trunc((v_requested_details->>'parcels_count')::numeric)
+       )
     THEN
       RAISE EXCEPTION 'KINTO_PAYMENT_DETAILS_CHANGE_DENIED';
     END IF;
