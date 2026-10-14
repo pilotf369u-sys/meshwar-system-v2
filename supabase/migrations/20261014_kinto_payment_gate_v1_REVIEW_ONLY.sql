@@ -41,7 +41,7 @@ CREATE TRIGGER trg_kinto_paid_insert_guard_v1
 BEFORE INSERT ON public.orders
 FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1();
 CREATE TRIGGER trg_kinto_paid_transition_guard_v1
-BEFORE UPDATE OF status ON public.orders
+BEFORE UPDATE ON public.orders
 FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1();
 CREATE OR REPLACE FUNCTION private.kinto_paid_marker_guard_v1()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
@@ -63,7 +63,7 @@ END;
 $marker$;
 DROP TRIGGER IF EXISTS trg_kinto_paid_marker_guard_v1 ON public.orders;
 CREATE TRIGGER trg_kinto_paid_marker_guard_v1
-BEFORE UPDATE OF details ON public.orders
+BEFORE UPDATE ON public.orders
 FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_marker_guard_v1();
 -- This RPC accepts the exact patch used by the two dashboard save actions.
 -- It validates a custom employee/admin session on the server before granting a one-transaction permit.
