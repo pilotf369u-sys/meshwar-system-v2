@@ -1,0 +1,17 @@
+name: Payment gate static contracts
+on:
+  pull_request:
+    paths:
+      - 'employee-dashboard.html'
+      - 'admin-dashboard.html'
+      - 'supabase/migrations/20261014_kinto_payment_gate_v1_REVIEW_ONLY.sql'
+      - 'tests/payment-approval-gate-static.test.cjs'
+      - '.github/workflows/payment-gate-static.yml'
+  workflow_dispatch:
+jobs:
+  payment-gate-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate payment approval wiring
+        run: node tests/payment-approval-gate-static.test.cjs
