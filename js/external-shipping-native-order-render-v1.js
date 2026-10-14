@@ -4,7 +4,7 @@
 const script=document.currentScript;
 const screen=String(script?.dataset?.meshwarScreen||'').trim().toLowerCase();
 if(screen!=='employee'&&screen!=='admin')return;
-const VERSION='20261015-native-payment-gate-v41';
+const VERSION='20261015-payment-type-guard-v42';
 const num=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
 const fee=o=>Math.max(0,num(o?.external_shipping_fee));
 const localFee=o=>Math.max(0,num(o?.delivery_fee));
@@ -94,7 +94,17 @@ function installEmployee(){
         // External-shipping fields are not part of the protected payment RPC.
         // Preserve the existing shipping editor through a separate status-free update.
         ({error}=await sb.from('orders').update({external_shipping_fee,external_shipping_currency}).eq('id',id));
-      }else{
+       }else{
+        if(payload.delivery_payment_type!==o.delivery_payment_type){
+          const token=window.KintoEmployeeSessionV143?.read?.()?.token;
+          if(!token)throw new Error('EMPLOYEE_SESSION_REQUIRED');
+          ({error}=await sb.rpc('kinto_approve_payment_type_v1',{
+            p_session_token:String(token),p_actor:'employee',p_order_id:id,
+            p_expected_status:o.status,p_expected_type:o.delivery_payment_type,
+            p_new_type:payload.delivery_payment_type
+          }));
+          if(error)throw error;
+        }
         ({error}=await sb.from('orders').update(payload).eq('id',id));
       }
       if(error)throw error;
@@ -141,7 +151,17 @@ function installAdmin(){
         }));
         if(error)throw error;
         ({error}=await sb.from('orders').update({external_shipping_fee,external_shipping_currency}).eq('id',id));
-      }else{
+       }else{
+        if(payload.delivery_payment_type!==o.delivery_payment_type){
+          const token=window.KintoAdminSessionV147?.read?.()?.token;
+          if(!token)throw new Error('ADMIN_SESSION_REQUIRED');
+          ({error}=await sb.rpc('kinto_approve_payment_type_v1',{
+            p_session_token:String(token),p_actor:'admin',p_order_id:id,
+            p_expected_status:o.status,p_expected_type:o.delivery_payment_type,
+            p_new_type:payload.delivery_payment_type
+          }));
+          if(error)throw error;
+        }
         ({error}=await sb.from('orders').update(payload).eq('id',id));
       }
       if(error)throw error;
