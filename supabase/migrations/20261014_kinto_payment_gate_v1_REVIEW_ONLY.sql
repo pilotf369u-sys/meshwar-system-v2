@@ -146,18 +146,25 @@ BEGIN
     EXCEPTION WHEN others THEN
       RAISE EXCEPTION 'KINTO_PAYMENT_DETAILS_INVALID';
     END;
-    IF jsonb_typeof(v_previous_details) <> 'object'
-       OR jsonb_typeof(v_requested_details) <> 'object'
+    -- Keep each validation separate to avoid nested boolean-parenthesis errors.
+    IF jsonb_typeof(v_previous_details) IS DISTINCT FROM 'object'
+       OR jsonb_typeof(v_requested_details) IS DISTINCT FROM 'object'
        OR (v_requested_details - 'parcels_count') IS DISTINCT FROM
           (v_previous_details - 'parcels_count')
-       OR (v_requested_details IS DISTINCT FROM v_previous_details AND (
-         jsonb_typeof(v_requested_details->'parcels_count') IS DISTINCT FROM 'number'
-         OR (v_requested_details->>'parcels_count')::numeric < 1
-         OR (v_requested_details->>'parcels_count')::numeric > 100000
-         OR (v_requested_details->>'parcels_count')::numeric <> trunc((v_requested_details->>'parcels_count')::numeric)
-       ))
     THEN
       RAISE EXCEPTION 'KINTO_PAYMENT_DETAILS_CHANGE_DENIED';
+    END IF;
+    IF v_requested_details IS DISTINCT FROM v_previous_details THEN
+      IF jsonb_typeof(v_requested_details->'parcels_count') IS DISTINCT FROM 'number' THEN
+        RAISE EXCEPTION 'KINTO_PAYMENT_DETAILS_CHANGE_DENIED';
+      END IF;
+      IF (v_requested_details->>'parcels_count')::numeric < 1
+         OR (v_requested_details->>'parcels_count')::numeric > 100000
+         OR (v_requested_details->>'parcels_count')::numeric <>
+            trunc((v_requested_details->>'parcels_count')::numeric)
+      THEN
+        RAISE EXCEPTION 'KINTO_PAYMENT_DETAILS_CHANGE_DENIED';
+      END IF;
     END IF;
   END IF;
   -- PostgreSQL performs column-type conversion using the real orders row type.
