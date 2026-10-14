@@ -381,43 +381,7 @@ function renderAdminVendorFinance(){const all=adminVendorFinanceScopedRows(),vis
 async function loadAdminVendorFinance(){const body=document.getElementById('adminVendorFinanceBody');if(body)body.innerHTML='<tr><td colspan="6">جاري التحقق من صلاحية الأدمن وتحميل الحسابات...</td></tr>';try{await checkAdminRole();const sb=await ensureCustomerSupabase(),[or,sr]=await Promise.all([sb.from('orders').select('id,order_code,total_price,currency,status,created_at,details').eq('status','تم التسليم').order('created_at',{ascending:false}).limit(10000),sb.from('local_stores').select('*').limit(2000)]);if(or.error)throw or.error;if(sr.error)console.warn('Local stores finance lookup:',sr.error.message);adminVendorStoresMap=new Map((sr.data||[]).map(x=>[String(x.id),x]));adminVendorFinanceOrders=(or.data||[]).filter(o=>{const d=parseAdminOrderDetails(o.details);return String(d.source||'')==='local_store'&&String(d.store_id||'').trim()});populateAdminVendorStoreFilter();renderAdminVendorFinance()}catch(e){console.error('Admin vendor finance error:',e);if(body)body.innerHTML=`<tr><td colspan="6" style="color:red">${esc(e.message||e)}</td></tr>`}}
 async function saveAdminVendorSettlement(encodedId){try{await checkAdminRole()}catch(e){return alert(e.message||'غير مصرح.')}const id=decodeURIComponent(encodedId),o=adminVendorFinanceOrders.find(x=>String(x.id)===String(id));if(!o)return alert('الطلب غير موجود.');const other=Number(document.getElementById('adminVendorOther-'+encodedId)?.value||0),status=String(document.getElementById('adminVendorPay-'+encodedId)?.value||'pending');if(!Number.isFinite(other)||other<0)return alert('قيمة أخرى يجب أن تكون رقماً موجباً أو صفراً.');const d=parseAdminOrderDetails(o.details),previous=adminVendorFinanceStatus(o),now=new Date().toISOString();d.vendor_other_deductions=other;d.vendor_payment_status=status;if(status==='paid'){if(previous!=='paid'||!d.vendor_paid_at)d.vendor_paid_at=now;d.vendor_paid_by=String(currentAdminCloud?.id||'')}else{d.vendor_paid_at=null;d.vendor_paid_by=null}const history=Array.isArray(d.vendor_payment_history)?d.vendor_payment_history:[];if(previous!==status)history.push({from:previous,to:status,at:now,admin_id:String(currentAdminCloud?.id||'')});d.vendor_payment_history=history.slice(-50);try{const sb=await ensureCustomerSupabase(),{error}=await sb.from('orders').update({details:JSON.stringify(d)}).eq('id',id);if(error)throw error;await loadAdminVendorFinance()}catch(e){console.error(e);alert('تعذر حفظ التسوية: '+(e.message||e))}}
 function exportAdminVendorPaidStatement(){const rows=adminVendorFinanceScopedRows().filter(r=>r.paymentStatus==='paid');if(!rows.length)return alert('لا توجد تسويات مدفوعة للطباعة.');const w=window.open('','_blank','width=980,height=720');if(!w)return;const table=rows.map(r=>`<tr><td>${esc(r.order.order_code||r.order.id)}</td><td>${esc(r.store?.store_name||r.store?.name||parseAdminOrderDetails(r.order.details).store_id||'')}</td><td>${adminVendorFinanceMoney(r.total,r.order.currency||'IQD')}</td><td>${Number(r.rate).toFixed(2)}%</td><td>${adminVendorFinanceMoney(r.other,r.order.currency||'IQD')}</td><td>${adminVendorFinanceMoney(r.net,r.order.currency||'IQD')}</td></tr>`).join('');w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير تسويات المتاجر</title><style>body{font-family:Tahoma,Arial;padding:28px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:7px;text-align:center}th{background:#f1f5f9}@media print{button{display:none}}</style></head><body><h2>MeshWar — تقرير التسويات المدفوعة ${activeAdminVendorStoreFilter==='all'?'لجميع المتاجر':'للمتجر المحدد'}</h2><p>${new Date().toLocaleString('en-US')}</p><table><tr><th>الطلب</th><th>المتجر</th><th>الإجمالي</th><th>العمولة</th><th>أخرى</th><th>الصافي</th></tr>${table}</table><button onclick="print()">طباعة / PDF</button>
-<script id="kinto-admin-orders-silent-realtime-v1">
-/* Admin orders: keep existing workflow, update only changed rows. */
-(function(){
- let busy=false,queued=false,channel=null,timer=null,seq=0;
- function editing(){const el=document.activeElement,body=document.getElementById('adminOrdersTableBody');return !!(el&&body?.contains(el)&&/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName))}
- function active(){return !document.hidden&&!editing()&&document.getElementById('orders')?.classList.contains('active-section')&&!ADMIN_PIPELINES[activeAdminPipeline]?.rewards}
- async function sync(){
-  if(!active()||busy){if(busy)queued=true;return}
-  const term=searchTerm(document.getElementById('orderSearchInput')?.value||'');if(term)return; // Never bypass the existing customer-code search query.
-  busy=true;const ticket=++seq,view=activeAdminPipeline,page=orderPage,branch=document.getElementById('adminBranchFilter')?.value||'';
-  try{
-   const sb=await ensureCustomerSupabase(),p=ADMIN_PIPELINES[view];let q=sb.from('orders').select('*',{count:'exact'});
-   if(p.branchAny){q=q.or('branch_id.not.is.null,branch_name.not.is.null');if(branch)q=q.eq('branch_id',branch)}else if(!p.all&&Array.isArray(p.statuses)&&p.statuses.length)q=q.in('status',p.statuses);
-   const from=(page-1)*orderPageSize,{data,error,count}=await q.order('created_at',{ascending:false}).range(from,from+orderPageSize-1);if(error)throw error;
-   if(ticket!==seq||!active()||view!==activeAdminPipeline||page!==orderPage||branch!==(document.getElementById('adminBranchFilter')?.value||'')||searchTerm(document.getElementById('orderSearchInput')?.value||''))return;
-   const incoming=(data||[]).map(normalizeAdminOrderMetrics),old=adminOrdersCloud||[];
-   const same=(count||0)===orderTotal&&incoming.length===old.length&&incoming.every((o,i)=>JSON.stringify(o)===JSON.stringify(Object.fromEntries(Object.keys(o).map(k=>[k,old[i]?.[k]]))));
-   if(same)return;
-   await enrichCustomerCodes(incoming);if(!active()||view!==activeAdminPipeline||page!==orderPage)return;
-   const body=document.getElementById('adminOrdersTableBody');if(!body)return;
-   const oldMap=new Map(old.map((o,i)=>[String(o.id),{data:o,row:body.querySelector('[id="adminStatus-'+encodeURIComponent(String(o.id))+'"]')?.closest('tr')} ]));
-   const rows=[];
-   for(const o of incoming){const prev=oldMap.get(String(o.id));if(prev?.row&&JSON.stringify(prev.data)===JSON.stringify(o)){rows.push(prev.row);continue}
-    const holder=document.createElement('tbody');holder.innerHTML=adminOrderRow(o);const row=holder.firstElementChild;if(row)rows.push(row);
-   }
-   if(editing())return;
-   const keep=new Set(rows);for(const row of [...body.children])if(!keep.has(row))row.remove();
-   rows.forEach((row,i)=>{if(body.children[i]!==row)body.insertBefore(row,body.children[i]||null)});
-   if(!rows.length)body.innerHTML='<tr><td colspan="9">لا توجد طلبات في هذا القسم.</td></tr>';
-   adminOrdersCloud=incoming;orderTotal=count||0;renderOrderPagination();await renderAdminBarcodes();
-  }catch(e){console.warn('Admin silent order sync:',e)}finally{busy=false;if(queued){queued=false;setTimeout(sync,500)}}
- }
- function schedule(){if(!active())return;clearTimeout(timer);timer=setTimeout(sync,250)}
- setupAdminOrdersRealtime=async function(){const sb=await ensureCustomerSupabase();if(channel)await sb.removeChannel(channel);channel=sb.channel('admin-orders-pipeline-silent-v1').on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{schedule();refreshAdminPipelineCounts()}).subscribe(status=>{if(status==='SUBSCRIBED')schedule()});ordersRealtimeChannel=channel};
- setInterval(sync,15000);window.addEventListener('focus',schedule);document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
-})();
-</script>
+
 </body></html>`);w.document.close()}
 async function loadAdminCouriersForOrders(){const sb=await ensureCustomerSupabase(),{data,error}=await sb.from('couriers').select('id,branch_id,name,phone,delivery_fee,is_active,created_at').order('name',{ascending:true}).limit(2000);adminCouriersForOrders=error?[]:(data||[])}function adminCourierOptions(o){const cur=String(o.delivery_agent_id||'');return '<option value="">اختر موظف التوصيل</option>'+adminCouriersForOrders.filter(c=>!o.branch_id||String(c.branch_id)===String(o.branch_id)).map(c=>{const u=adminCourierUuid(c);return `<option value="${esc(u)}" ${u&&u===cur?'selected':''} ${u?'':'disabled'}>${esc(c.name||c.phone||c.id)}${u?'':' — معرف غير UUID'}</option>`}).join('')}
 async function loadAdminBranches(){const sb=await ensureCustomerSupabase(),{data,error}=await sb.from('branches').select('id,name,phone,status,payload,created_at,updated_at,address').order('id',{ascending:true}).limit(1000);if(error){adminBranches=[];return}adminBranches=data||[];document.getElementById('adminBranchFilter').innerHTML='<option value="">كل الفروع</option>'+adminBranches.map(b=>`<option value="${esc(String(b.id))}">${esc(b.name||b.branch_name||b.id)}</option>`).join('')}function adminBranchOptions(cur){return '<option value="">بدون فرع</option>'+adminBranches.map(b=>`<option value="${esc(String(b.id))}" ${String(b.id)===String(cur||'')?'selected':''}>${esc(b.name||b.branch_name||b.id)}</option>`).join('')}async function enrichCustomerCodes(rows){const ids=[...new Set((rows||[]).map(o=>String(o.customer_id||'')).filter(Boolean))];if(!ids.length)return;const sb=await ensureCustomerSupabase(),{data,error}=await sb.from('customers').select('id,code,phone,secondary_phone').in('id',ids);if(error)return;const m=new Map((data||[]).map(c=>[String(c.id),c]));rows.forEach(o=>{const c=m.get(String(o.customer_id));o._customer_code=c?.code||o.customer_id;o._secondary_phone=c?.secondary_phone||'';o._customer_phone=c?.phone||o.customer_phone||''})}
@@ -1010,7 +974,44 @@ Object.assign(window,{switchAdminPipeline,adminBranchFilterChanged,syncAdminBran
 })();
 </script>
 
-<!-- G16 isolated module, placed after all existing script blocks; never replace </body> inside template strings. -->
+<!-- G16 isolated module, placed after all existing script blocks; never replace <script id="kinto-admin-orders-silent-realtime-v1">
+/* Admin orders: keep existing workflow, update only changed rows. */
+(function(){
+ let busy=false,queued=false,channel=null,timer=null,seq=0;
+ function editing(){const el=document.activeElement,body=document.getElementById('adminOrdersTableBody');return !!(el&&body?.contains(el)&&/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName))}
+ function active(){return !document.hidden&&!editing()&&document.getElementById('orders')?.classList.contains('active-section')&&!ADMIN_PIPELINES[activeAdminPipeline]?.rewards}
+ async function sync(){
+  if(!active()||busy){if(busy)queued=true;return}
+  const term=searchTerm(document.getElementById('orderSearchInput')?.value||'');if(term)return; // Never bypass the existing customer-code search query.
+  busy=true;const ticket=++seq,view=activeAdminPipeline,page=orderPage,branch=document.getElementById('adminBranchFilter')?.value||'';
+  try{
+   const sb=await ensureCustomerSupabase(),p=ADMIN_PIPELINES[view];let q=sb.from('orders').select('*',{count:'exact'});
+   if(p.branchAny){q=q.or('branch_id.not.is.null,branch_name.not.is.null');if(branch)q=q.eq('branch_id',branch)}else if(!p.all&&Array.isArray(p.statuses)&&p.statuses.length)q=q.in('status',p.statuses);
+   const from=(page-1)*orderPageSize,{data,error,count}=await q.order('created_at',{ascending:false}).range(from,from+orderPageSize-1);if(error)throw error;
+   if(ticket!==seq||!active()||view!==activeAdminPipeline||page!==orderPage||branch!==(document.getElementById('adminBranchFilter')?.value||'')||searchTerm(document.getElementById('orderSearchInput')?.value||''))return;
+   const incoming=(data||[]).map(normalizeAdminOrderMetrics),old=adminOrdersCloud||[];
+   const same=(count||0)===orderTotal&&incoming.length===old.length&&incoming.every((o,i)=>JSON.stringify(o)===JSON.stringify(Object.fromEntries(Object.keys(o).map(k=>[k,old[i]?.[k]]))));
+   if(same)return;
+   await enrichCustomerCodes(incoming);if(!active()||view!==activeAdminPipeline||page!==orderPage)return;
+   const body=document.getElementById('adminOrdersTableBody');if(!body)return;
+   const oldMap=new Map(old.map((o,i)=>[String(o.id),{data:o,row:body.querySelector('[id="adminStatus-'+encodeURIComponent(String(o.id))+'"]')?.closest('tr')} ]));
+   const rows=[];
+   for(const o of incoming){const prev=oldMap.get(String(o.id));if(prev?.row&&JSON.stringify(prev.data)===JSON.stringify(o)){rows.push(prev.row);continue}
+    const holder=document.createElement('tbody');holder.innerHTML=adminOrderRow(o);const row=holder.firstElementChild;if(row)rows.push(row);
+   }
+   if(editing())return;
+   const keep=new Set(rows);for(const row of [...body.children])if(!keep.has(row))row.remove();
+   rows.forEach((row,i)=>{if(body.children[i]!==row)body.insertBefore(row,body.children[i]||null)});
+   if(!rows.length)body.innerHTML='<tr><td colspan="9">لا توجد طلبات في هذا القسم.</td></tr>';
+   adminOrdersCloud=incoming;orderTotal=count||0;renderOrderPagination();await renderAdminBarcodes();
+  }catch(e){console.warn('Admin silent order sync:',e)}finally{busy=false;if(queued){queued=false;setTimeout(sync,500)}}
+ }
+ function schedule(){if(!active())return;clearTimeout(timer);timer=setTimeout(sync,250)}
+ setupAdminOrdersRealtime=async function(){const sb=await ensureCustomerSupabase();if(channel)await sb.removeChannel(channel);channel=sb.channel('admin-orders-pipeline-silent-v1').on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{schedule();refreshAdminPipelineCounts()}).subscribe(status=>{if(status==='SUBSCRIBED')schedule()});ordersRealtimeChannel=channel};
+ setInterval(sync,15000);window.addEventListener('focus',schedule);document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
+})();
+</script>
+</body> inside template strings. -->
 <script defer src="js/admin-payment-methods-g16.js?v=20261005-g16-inline-otp"></script>
 <script defer src="js/admin-security-recovery-g19.js?v=20261005-g19-ui"></script>
 <script defer src="js/admin-vendor-finance-v161.js?v=20261010-v163"></script>
