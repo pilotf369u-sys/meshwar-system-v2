@@ -43,6 +43,28 @@ FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1();
 CREATE TRIGGER trg_kinto_paid_transition_guard_v1
 BEFORE UPDATE OF status ON public.orders
 FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1();
+CREATE OR REPLACE FUNCTION private.kinto_paid_marker_guard_v1()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, public, private
+AS $marker$
+DECLARE
+  old_json jsonb;
+  new_json jsonb;
+BEGIN
+  IF NEW.details IS DISTINCT FROM OLD.details THEN
+    old_json := coalesce(nullif(OLD.details, '')::jsonb, '{}'::jsonb);
+    new_json := coalesce(nullif(NEW.details, '')::jsonb, '{}'::jsonb);
+    IF old_json->'bundle_stock_lifecycle_state' IS DISTINCT FROM new_json->'bundle_stock_lifecycle_state' THEN
+      RAISE EXCEPTION 'KINTO_PAYMENT_MARKER_FORGERY_DENIED' USING ERRCODE='42501';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$marker$;
+DROP TRIGGER IF EXISTS trg_kinto_paid_marker_guard_v1 ON public.orders;
+CREATE TRIGGER trg_kinto_paid_marker_guard_v1
+BEFORE UPDATE OF details ON public.orders
+FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_marker_guard_v1();
 -- This RPC accepts the exact patch used by the two dashboard save actions.
 -- It validates a custom employee/admin session on the server before granting a one-transaction permit.
 CREATE OR REPLACE FUNCTION public.kinto_approve_paid_order_v1(
