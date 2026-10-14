@@ -7,6 +7,15 @@ CREATE TABLE IF NOT EXISTS private.kinto_paid_transition_permits_v1 (
   PRIMARY KEY (transaction_id, order_id)
 );
 REVOKE ALL ON private.kinto_paid_transition_permits_v1 FROM PUBLIC, anon, authenticated;
+CREATE TABLE IF NOT EXISTS private.kinto_paid_approval_audit_v1 (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  order_id uuid NOT NULL,
+  actor_type text NOT NULL CHECK (actor_type IN ('employee','admin')),
+  actor_id text NOT NULL,
+  previous_status text,
+  approved_at timestamptz NOT NULL DEFAULT now()
+);
+REVOKE ALL ON private.kinto_paid_approval_audit_v1 FROM PUBLIC, anon, authenticated;
 CREATE OR REPLACE FUNCTION private.kinto_paid_transition_guard_v1()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = pg_catalog, public, private
@@ -43,7 +52,6 @@ DECLARE
   v_id text;
   v_old public.orders%ROWTYPE;
   v_typed public.orders%ROWTYPE;
-  v_patch jsonb;
 BEGIN
   IF p_actor = 'employee' THEN
     v_id := private.require_employee_session_v143(p_session_token);
@@ -97,6 +105,8 @@ BEGIN
     details = CASE WHEN p_patch ? 'details' THEN p_patch->>'details' ELSE o.details END,
     delivery_fee = CASE WHEN p_patch ? 'delivery_fee' THEN v_typed.delivery_fee ELSE o.delivery_fee END
   WHERE o.id=p_order_id;
+  INSERT INTO private.kinto_paid_approval_audit_v1(order_id,actor_type,actor_id,previous_status)
+    VALUES(p_order_id,p_actor,v_id,v_old.status);
   DELETE FROM private.kinto_paid_transition_permits_v1
    WHERE transaction_id=txid_current() AND order_id=p_order_id;
 END;
