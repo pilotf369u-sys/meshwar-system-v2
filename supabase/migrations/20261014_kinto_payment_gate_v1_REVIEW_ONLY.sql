@@ -54,7 +54,14 @@ BEGIN
   IF NEW.details IS DISTINCT FROM OLD.details THEN
     old_json := coalesce(nullif(OLD.details, '')::jsonb, '{}'::jsonb);
     new_json := coalesce(nullif(NEW.details, '')::jsonb, '{}'::jsonb);
-    IF old_json->'bundle_stock_lifecycle_state' IS DISTINCT FROM new_json->'bundle_stock_lifecycle_state' THEN
+    -- Stock lifecycle evidence may be written by existing server-side triggers.
+    -- Require the one-transaction approval permit when the marker enters deducted.
+    IF old_json->>'bundle_stock_lifecycle_state' IS DISTINCT FROM 'deducted'
+       AND new_json->>'bundle_stock_lifecycle_state' = 'deducted'
+       AND NOT EXISTS (
+         SELECT 1 FROM private.kinto_paid_transition_permits_v1 p
+         WHERE p.transaction_id = txid_current() AND p.order_id = NEW.id
+       ) THEN
       RAISE EXCEPTION 'KINTO_PAYMENT_MARKER_FORGERY_DENIED' USING ERRCODE='42501';
     END IF;
   END IF;
