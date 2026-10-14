@@ -19,8 +19,7 @@ REVOKE ALL ON private.kinto_paid_approval_audit_v1 FROM PUBLIC, anon, authentica
 CREATE OR REPLACE FUNCTION private.kinto_paid_transition_guard_v1()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = pg_catalog, public, private
-AS $
-DECLARE
+AS $kinto_guard$
 BEGIN
   IF OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'تم التسديد' THEN
     IF NOT EXISTS (
@@ -32,7 +31,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$;
+$kinto_guard$;
 DROP TRIGGER IF EXISTS trg_kinto_paid_transition_guard_v1 ON public.orders;
 CREATE TRIGGER trg_kinto_paid_transition_guard_v1
 BEFORE UPDATE OF status ON public.orders
