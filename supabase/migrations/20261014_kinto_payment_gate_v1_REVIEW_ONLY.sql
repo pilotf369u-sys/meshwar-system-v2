@@ -21,7 +21,10 @@ RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = pg_catalog, public, private
 AS $kinto_guard$
 BEGIN
-  IF OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'تم التسديد' THEN
+  IF (TG_OP = 'INSERT' AND NEW.status = 'تم التسديد') THEN
+    RAISE EXCEPTION 'KINTO_PAYMENT_INSERT_DENIED' USING ERRCODE='42501';
+  END IF;
+  IF TG_OP = 'UPDATE' AND OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'تم التسديد' THEN
     IF NOT EXISTS (
       SELECT 1 FROM private.kinto_paid_transition_permits_v1 p
       WHERE p.transaction_id = txid_current() AND p.order_id = NEW.id
@@ -33,6 +36,10 @@ BEGIN
 END;
 $kinto_guard$;
 DROP TRIGGER IF EXISTS trg_kinto_paid_transition_guard_v1 ON public.orders;
+DROP TRIGGER IF EXISTS trg_kinto_paid_insert_guard_v1 ON public.orders;
+CREATE TRIGGER trg_kinto_paid_insert_guard_v1
+BEFORE INSERT ON public.orders
+FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1();
 CREATE TRIGGER trg_kinto_paid_transition_guard_v1
 BEFORE UPDATE OF status ON public.orders
 FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1();
