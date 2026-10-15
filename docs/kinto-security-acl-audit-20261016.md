@@ -31,3 +31,33 @@
 ## Evidence of limitation
 - Static and catalog audits are not penetration tests. We did not impersonate a real anonymous user or execute destructive probes against production.
 - Current custom-role sessions and direct PostgREST CRUD create a compatibility dependency. Replacing RLS immediately would risk breaking sales/login/tracking.
+
+
+## Follow-up: verified authorization defects (read-only audit, 2026-10-16)
+The latest Supabase Security Advisors returned:
+- 1 SECURITY DEFINER view error: `public.active_merchant_slots_view` ([reference](https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view)).
+- 18 mutable function search paths ([reference](https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable)).
+- 197 anonymous-executable SECURITY DEFINER functions (same set also executable by authenticated). This is a **review queue**, not proof all 197 are exploitable ([reference](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable)).
+- 78 tables with RLS and no policy: most intentionally private, **not necessarily defects**.
+- Leaked-password protection not enabled for Supabase Auth (the project also has custom login flows).
+
+**Two confirmed authorization design problems, based on live function definitions (no mutation/probe):**
+1. `public.adjust_customer_reward_balance(p_customer_id,p_amount,p_currency,p_actor_id,p_note)` is `SECURITY DEFINER` and `anon` can execute it. It checks `private.v112_require_reward_actor(p_actor_id)`, which verifies that the **caller-supplied ID** belongs to an employee/admin role; it does **not** validate a signed or stored session token. Thus an ID is being treated as authority to alter reward balances. This is a high-priority integrity risk; actual exploitation was **not** attempted.
+2. `public.admin_approve_featured_request(p_admin_id,...)` is `SECURITY DEFINER` and `anon` can execute it. It checks `public.meshwar_is_admin(p_admin_id)`, which tests whether the **caller-supplied ID** belongs to an active admin employee; it does **not** prove the caller owns that identity. The existing `js/admin-featured-requests-v2.js` directly invokes this legacy RPC. Do **not** revoke it without migrating all approval/rejection/list callers to session-verified equivalents.
+
+Existing verified session checks are available:
+- `private.require_admin_session_v147(p_session_token text)` returns a verified admin ID.
+- `private.require_employee_session_v143(p_session_token text)` returns a verified employee ID.
+These should be used in new dedicated RPCs that derive actor identity from a session token **server-side** and ignore untrusted client actor IDs. Migrate all call sites and regression-test before revoking legacy RPC EXECUTE.
+
+**Do not run a live anonymous exploit test** against customer rewards, campaigns, or production orders. A restored isolated database is needed for negative tests.
+
+### Correct rollout order (must be separate PRs from ACL Stage 1)
+1. Inventory every direct browser call to the two identified legacy RPCs and their related list/reject operations.
+2. Build session-verified RPC replacements, with server-side identity derivation, minimal result fields, idempotence and audit logs where relevant.
+3. Switch the admin and employee UI to the new RPCs, including expiration/relogin behavior.
+4. In an isolated restored DB, verify no-token, invalid-token, other-role, and other-store calls fail; valid role succeeds. Verify no finance/stock/checkout regression.
+5. Revoke legacy anonymous EXECUTE **only after** all clients have migrated and a rollback path exists.
+6. Then address direct anonymous table CRUD and password exposure in small table-specific slices.
+
+The additional file `sql/kinto-authz-followup-readonly-20261016.sql` is read-only metadata inspection, not a production migration.
