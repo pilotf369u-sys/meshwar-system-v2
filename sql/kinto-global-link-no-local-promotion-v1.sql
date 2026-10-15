@@ -41,9 +41,11 @@ BEGIN
   END IF;
 
   -- The global product-link flow has no store/product/campaign contract.
-  IF coalesce(v_details->>'checkout_contract','') <> ''
+  IF NEW.order_code IS DISTINCT FROM OLD.order_code
+     OR coalesce(NEW.order_url,'') !~* '^https?://'
+     OR coalesce(v_details->>'checkout_contract','') <> ''
      OR coalesce(v_details->>'source','') IN ('local_cart_bundle','local_store')
-     OR v_details ?| ARRAY['stores','store_id','store_segments','product_id',
+     OR v_details ?| ARRAY['items','stores','store_id','store_segments','product_id',
                             'products','customer_total_local','store_subtotal',
                             'checkout_group_id','vendor_order_id']
      OR NEW.kinto_campaign_id IS DISTINCT FROM OLD.kinto_campaign_id
