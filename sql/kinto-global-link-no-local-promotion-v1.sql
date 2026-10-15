@@ -30,6 +30,16 @@ BEGIN
     v_details := '{}'::jsonb;
   END IF;
 
+  -- Keep the marker used to identify this global-link row intact. Without
+  -- this check a browser could change the code/URL first and bypass the
+  -- promotion guard in a second UPDATE.
+  IF coalesce(NEW.order_code,'') NOT LIKE 'MW-%'
+     OR coalesce(NEW.order_url,'') !~* '^https?://'
+  THEN
+    RAISE EXCEPTION 'KINTO_GLOBAL_LINK_IDENTITY_LOCKED'
+      USING ERRCODE='42501';
+  END IF;
+
   -- The global product-link flow has no store/product/campaign contract.
   IF coalesce(v_details->>'checkout_contract','') <> ''
      OR coalesce(v_details->>'source','') IN ('local_cart_bundle','local_store')
@@ -68,7 +78,7 @@ REVOKE ALL ON FUNCTION private.kinto_global_link_no_local_promotion_v1()
 
 DROP TRIGGER IF EXISTS trg_kinto_global_link_no_local_promotion_v1 ON public.orders;
 CREATE TRIGGER trg_kinto_global_link_no_local_promotion_v1
-BEFORE UPDATE OF details, items, kinto_campaign_id ON public.orders
+BEFORE UPDATE OF order_code, order_url, details, items, kinto_campaign_id ON public.orders
 FOR EACH ROW
 EXECUTE FUNCTION private.kinto_global_link_no_local_promotion_v1();
 
