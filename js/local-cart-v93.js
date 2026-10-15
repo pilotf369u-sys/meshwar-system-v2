@@ -184,7 +184,7 @@ async function pullCloudCart(){
     cloudReady=true;
   }catch(e){
     console.warn('KINTO cloud cart unavailable; edits disabled until load succeeds:',e);
-  }finally{if(id===cloudCustomerId()&&sessionToken===cloudSessionToken())cloudSyncing=false}
+  }finally{if(id===cloudCustomerId()&&sessionToken===cloudSessionToken()){cloudSyncing=false;render()}}
 }
 async function initializeCloudCart(){
   clearInterval(cloudPollTimer);
