@@ -39,6 +39,9 @@ BEGIN
     IF v_source <> ''
        OR v_contract <> ''
        OR NEW.total_price IS DISTINCT FROM 0
+       OR NEW.items IS NOT NULL
+       OR NEW.kinto_campaign_id IS NOT NULL
+       OR coalesce(NEW.kinto_campaign_discount_amount,0) <> 0
        OR coalesce(NEW.order_url,'') !~* '^https?://[^[:space:]]+'
        OR NEW.status IS DISTINCT FROM 'انتظار رد الموظف'
        OR coalesce(NEW.order_code,'') NOT LIKE 'MW-%'
