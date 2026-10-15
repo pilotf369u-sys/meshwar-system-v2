@@ -4,7 +4,7 @@
 const script=document.currentScript;
 const screen=String(script?.dataset?.meshwarScreen||'').trim().toLowerCase();
 if(screen!=='employee'&&screen!=='admin')return;
-const VERSION='20261015-payment-type-guard-v42';
+const VERSION='20261015-external-shipping-guard-v43';
 const num=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
 const fee=o=>Math.max(0,num(o?.external_shipping_fee));
 const localFee=o=>Math.max(0,num(o?.delivery_fee));
@@ -93,7 +93,16 @@ function installEmployee(){
         if(error)throw error;
         // External-shipping fields are not part of the protected payment RPC.
         // Preserve the existing shipping editor through a separate status-free update.
-        ({error}=await sb.from('orders').update({external_shipping_fee,external_shipping_currency}).eq('id',id));
+        if(external_shipping_fee!==o.external_shipping_fee ||
+           external_shipping_currency!==o.external_shipping_currency){
+          ({error}=await sb.rpc('kinto_approve_external_shipping_v1',{
+            p_session_token:String(token),p_actor:'employee',p_order_id:id,
+            p_expected_status:payload.status,
+            p_expected_fee:o.external_shipping_fee,
+            p_expected_currency:o.external_shipping_currency,
+            p_new_fee:external_shipping_fee,p_new_currency:external_shipping_currency
+          }));
+        }
        }else{
         if(payload.delivery_payment_type!==o.delivery_payment_type){
           const token=window.KintoEmployeeSessionV143?.read?.()?.token;
@@ -105,7 +114,21 @@ function installEmployee(){
           }));
           if(error)throw error;
         }
-        ({error}=await sb.from('orders').update(payload).eq('id',id));
+        const {external_shipping_fee,external_shipping_currency,...orderPatch}=payload;
+        ({error}=await sb.from('orders').update(orderPatch).eq('id',id));
+        if(error)throw error;
+        if(external_shipping_fee!==o.external_shipping_fee ||
+           external_shipping_currency!==o.external_shipping_currency){
+          const token=window.KintoEmployeeSessionV143?.read?.()?.token;
+          if(!token)throw new Error('EMPLOYEE_SESSION_REQUIRED');
+          ({error}=await sb.rpc('kinto_approve_external_shipping_v1',{
+            p_session_token:String(token),p_actor:'employee',p_order_id:id,
+            p_expected_status:payload.status,
+            p_expected_fee:o.external_shipping_fee,
+            p_expected_currency:o.external_shipping_currency,
+            p_new_fee:external_shipping_fee,p_new_currency:external_shipping_currency
+          }));
+        }
       }
       if(error)throw error;
       await Promise.all([loadPipelineOrders(),refreshPipelineCounts()]);
@@ -150,7 +173,16 @@ function installAdmin(){
           p_expected_status:o.status,p_patch:approvalPatch
         }));
         if(error)throw error;
-        ({error}=await sb.from('orders').update({external_shipping_fee,external_shipping_currency}).eq('id',id));
+        if(external_shipping_fee!==o.external_shipping_fee ||
+           external_shipping_currency!==o.external_shipping_currency){
+          ({error}=await sb.rpc('kinto_approve_external_shipping_v1',{
+            p_session_token:String(token),p_actor:'admin',p_order_id:id,
+            p_expected_status:payload.status,
+            p_expected_fee:o.external_shipping_fee,
+            p_expected_currency:o.external_shipping_currency,
+            p_new_fee:external_shipping_fee,p_new_currency:external_shipping_currency
+          }));
+        }
        }else{
         if(payload.delivery_payment_type!==o.delivery_payment_type){
           const token=window.KintoAdminSessionV147?.read?.()?.token;
@@ -162,7 +194,21 @@ function installAdmin(){
           }));
           if(error)throw error;
         }
-        ({error}=await sb.from('orders').update(payload).eq('id',id));
+        const {external_shipping_fee,external_shipping_currency,...orderPatch}=payload;
+        ({error}=await sb.from('orders').update(orderPatch).eq('id',id));
+        if(error)throw error;
+        if(external_shipping_fee!==o.external_shipping_fee ||
+           external_shipping_currency!==o.external_shipping_currency){
+          const token=window.KintoAdminSessionV147?.read?.()?.token;
+          if(!token)throw new Error('ADMIN_SESSION_REQUIRED');
+          ({error}=await sb.rpc('kinto_approve_external_shipping_v1',{
+            p_session_token:String(token),p_actor:'admin',p_order_id:id,
+            p_expected_status:payload.status,
+            p_expected_fee:o.external_shipping_fee,
+            p_expected_currency:o.external_shipping_currency,
+            p_new_fee:external_shipping_fee,p_new_currency:external_shipping_currency
+          }));
+        }
       }
       if(error)throw error;
       await Promise.all([loadAdminOrders(),refreshAdminPipelineCounts()]);
