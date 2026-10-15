@@ -153,6 +153,10 @@ async function pushCloudCart(){
     if(id===cloudCustomerId()&&sessionToken===cloudSessionToken()){
       cloudSyncing=false;
       if(cloudDirty&&!cloudConflict)scheduleCloudSave(3000);
+      // The save completion notification above can render while cloudSyncing
+      // is still true, leaving checkout disabled until the drawer is reopened.
+      // Re-render only after the pending flag is cleared.
+      render();
     }
   }
 }
