@@ -1,0 +1,18 @@
+name: KINTO ACL Stage 1 static gate
+on:
+  pull_request:
+    paths:
+      - 'sql/kinto-public-acl-stage1-*.sql'
+      - 'scripts/verify_kinto_acl_stage1.py'
+      - '.github/workflows/kinto-acl-stage1.yml'
+  workflow_dispatch:
+jobs:
+  static-acl-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify ACL SQL scope and rollback contract
+        run: python scripts/verify_kinto_acl_stage1.py
