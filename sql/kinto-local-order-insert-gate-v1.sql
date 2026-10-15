@@ -4,7 +4,8 @@
 -- Canonical checkout functions execute as SECURITY DEFINER (postgres), while
 -- browser REST inserts execute as anon/authenticated. Campaign checkout calls
 -- the canonical engine via a SECURITY DEFINER chain.
--- Global legacy direct INSERT (order.html) is allowed only for a strict\n-- zero-price product-link request; other browser inserts are rejected.
+-- Global legacy direct INSERT (order.html) is allowed only for a strict
+-- zero-price product-link request; other browser inserts are rejected.
 BEGIN;
 
 CREATE OR REPLACE FUNCTION private.kinto_local_order_insert_gate_v1()
@@ -74,6 +75,7 @@ EXECUTE FUNCTION private.kinto_local_order_insert_gate_v1();
 COMMIT;
 
 -- Notes:
--- This gates local-tagged orders only. It does not replace the need for
--- an eventual general order creation authorization review.
+-- Browser INSERT is restricted to the legacy global zero-price URL form.
+-- Other browser-created orders must use trusted RPCs; this is not a
+-- replacement for the separate UPDATE/RLS permissions audit.
 -- The existing checkout engine computes prices from local_products/local_stores.
