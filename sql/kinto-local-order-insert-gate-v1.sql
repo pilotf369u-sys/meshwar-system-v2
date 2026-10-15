@@ -18,7 +18,16 @@ DECLARE
   v_source text;
   v_contract text;
 BEGIN
-  -- Parse without calling private helper functions: anon must be able to\n  -- execute this SECURITY INVOKER trigger on the global order path.\n  BEGIN\n    v_details := coalesce(NEW.details,'{}')::jsonb;\n    IF jsonb_typeof(v_details) <> 'object' THEN\n      v_details := '{}'::jsonb;\n    END IF;\n  EXCEPTION WHEN invalid_text_representation THEN\n    v_details := '{}'::jsonb;\n  END;
+  -- Parse without calling private helper functions: anon must be able to
+  -- execute this SECURITY INVOKER trigger on the global order path.
+  BEGIN
+    v_details := coalesce(NEW.details,'{}')::jsonb;
+    IF jsonb_typeof(v_details) <> 'object' THEN
+      v_details := '{}'::jsonb;
+    END IF;
+  EXCEPTION WHEN invalid_text_representation THEN
+    v_details := '{}'::jsonb;
+  END;
   v_source := coalesce(v_details->>'source','');
   v_contract := coalesce(v_details->>'checkout_contract','');
 
