@@ -147,7 +147,7 @@ async function createOrder(product,store,selection={},requestedQuantity=1){
   let reservation=null;
   try{
     requestedQuantity=Math.max(1,Math.floor(Number(requestedQuantity)||1));reservation=await reserveStock(product.id,requestedQuantity);
-    const customerRows=await restRequest(`customers?select=*&id=eq.${encodeURIComponent(customerId)}&limit=1`,{timeout:3000});const customer=Array.isArray(customerRows)?customerRows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل.');
+    const {data:customerRows,error:customerError}=await KintoCustomerDirectoryV1.from(null).eq('id',customerId).limit(1);if(customerError)throw customerError;const customer=Array.isArray(customerRows)?customerRows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل.');
     const rows=await restRequest('orders?select=order_code&order=created_at.desc&limit=1000',{timeout:3000});const vendor=vendorPrice(product),usd=customerPriceUsd(product,store),iqd=customerPriceIqd(product,store);if(vendor===null||usd===null||iqd===null)throw new Error('سعر المنتج غير صالح.');
     let max=1000;(rows||[]).forEach(r=>{const m=String(r.order_code||'').match(/^MW-(\d+)$/i);if(m)max=Math.max(max,Number(m[1]))});const orderCode='MW-'+(max+1);
     const selectedColor=String(selection.color||'').trim(),selectedSize=String(selection.size||'').trim(),selectedVolume=String(selection.volume||'').trim();const unitIqd=ceilPrice(iqd),totalIqd=ceilPrice(unitIqd*requestedQuantity);
