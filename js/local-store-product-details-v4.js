@@ -104,7 +104,7 @@
           detailed.dataset.mwDetailedDescriptionV8='1';
           detailed.onload=()=>{
             const categories=document.createElement('script');
-            categories.src='js/local-store-categories-v9.js?v=store-categories-v9-taxonomy-fix';
+            categories.src='js/local-store-categories-v9.js?v=20261016-session-refresh-v1';
             categories.dataset.mwStoreCategoriesV9='1';
             categories.onload=()=>{
               const taxonomy=document.createElement('script');
