@@ -6,7 +6,7 @@ Bootstrap recreates 110 public/private tables, 338 functions, 47 triggers and 79
 
 Virtual users issue concurrent bursts through a **32-connection pool**: browse products, create canonical orders, employee review, customer acceptance, payment/stock processing. Stages: 10, 25, 50, 100, 200, 400, 800, 1000, 2000 and 4000 virtual users. Timings include pool waiting and database transaction overhead. This is not a sustained soak or a measurement of 1000 database connections.
 
-Separate 200-way integrity races verify:
+The normal processing phases use one employee session, matching a single operator. Separate 200-way integrity races use distinct valid employee/customer sessions so auth-row serialization cannot mask write contention. Campaign NOWAIT busy responses receive at most 12 jittered retries and are counted in the report. These races verify:
 
 - Only 7 of 200 purchases can pay for 7 remaining pieces; stock ends at zero.
 - Only 3 of 200 pending campaign orders consume the final 3 allocations; both paid-product and gift stock change exactly 3 times.
