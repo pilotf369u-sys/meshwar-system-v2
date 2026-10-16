@@ -29,3 +29,11 @@ for forbidden in [r"\bREVOKE\s+(?:SELECT|INSERT|UPDATE|DELETE)", r"\bDROP\s+POLI
 assert "COMMIT;" in M and "BEGIN;" in M and "RAISE EXCEPTION" in M
 assert "GRANT TRUNCATE" not in M
 print("PASS: 23 matching tables, no CRUD/RLS changes, rollback/verification scope consistent")
+
+# Also run session-RPC migration and JS syntax tests in the existing required CI job.
+import runpy
+import subprocess
+runpy.run_path(str(ROOT / 'scripts/verify_kinto_session_rpc_v1.py'), run_name='__main__')
+for js_file in ('js/admin-featured-requests-v2.js', 'js/admin-featured-campaigns-v1-core-v15.js'):
+    subprocess.run(['node','--check',str(ROOT/js_file)],check=True)
+print('PASS: session RPC migration static checks and JS syntax')
