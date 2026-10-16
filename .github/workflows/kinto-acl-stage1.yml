@@ -10,6 +10,9 @@ on:
       - 'ci/vendor-media*'
       - 'ci/vendor-category-session*'
       - 'ci/private-media*'
+      - 'ci/customer-profile*'
+      - 'ci/fixtures/customer-profile*'
+      - 'dashboard.html'
       - 'ci/fixtures/private-media*'
       - 'js/local-store-categories-v9.js'
       - 'js/vendor-product-edit-fields-v26.js'
@@ -61,12 +64,17 @@ jobs:
       - name: Execute isolated authorization and UI migration tests
         run: |
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/sensitive-session-rpc.integration.mjs
-          node --test ci/sensitive-session-ui.test.mjs ci/staff-directory-client.test.mjs ci/featured-admin-session-ui.test.mjs ci/site-admin-session-ui.test.mjs ci/vendor-media-client.test.mjs ci/vendor-category-session.test.mjs
+          node --test ci/sensitive-session-ui.test.mjs ci/staff-directory-client.test.mjs ci/featured-admin-session-ui.test.mjs ci/site-admin-session-ui.test.mjs ci/vendor-media-client.test.mjs ci/vendor-category-session.test.mjs ci/customer-profile-ui.test.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/staff-directory.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/featured-admin-session.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/site-admin-session.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/vendor-media-session.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/private-media-storage.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/customer-profile-session.integration.mjs
+      - name: Customer profile writes on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/customer-profile-session.integration.mjs
       - name: Verify on PostgreSQL 17 with real pgcrypto and API roles
         env:
           KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
