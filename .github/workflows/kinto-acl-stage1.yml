@@ -17,6 +17,8 @@ on:
       - 'ci/order-save*'
       - 'ci/order-delete*'
       - 'ci/product-assignment*'
+      - 'ci/order-privacy*'
+      - 'js/kinto-order-data-session-v1.js'
       - 'js/kinto-vendor-products-v1.js'
       - 'js/kinto-order-assignment-v1.js'
       - 'ci/fixtures/order-delete*'

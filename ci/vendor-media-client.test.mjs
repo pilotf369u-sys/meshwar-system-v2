@@ -19,6 +19,6 @@ test('three actual upload paths obtain vendor tickets before upload, preserving 
 });
 test('vendor host and loader versions load the helper and updated upload modules',()=>{
  const host=fs.readFileSync('vendor-dashboard-v2.html','utf8');assert(host.includes('js/kinto-vendor-media-v1.js?v=20261016-v1'));
- const wrapper=fs.readFileSync('vendor-dashboard.html','utf8');assert(wrapper.includes('vendor-dashboard-v2.html?v=20261016-product-assignment-session-v1'));assert(wrapper.includes('vendor-featured-requests-v2.js?v=20261016-media-session-v1'));
+ const wrapper=fs.readFileSync('vendor-dashboard.html','utf8');assert(wrapper.includes('vendor-dashboard-v2.html?v=20261016-order-privacy-v1'));assert(wrapper.includes('vendor-featured-requests-v2.js?v=20261016-media-session-v1'));
  assert(fs.readFileSync('js/local-store-product-details-v4.js','utf8').includes('local-store-product-details-v4-core.js?v=20261016-product-session-v1'));
 });

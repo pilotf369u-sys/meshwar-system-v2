@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<script src="js/kinto-order-data-session-v1.js?v=20261016-order-privacy-v1" data-role="report"></script>
 <script src="js/kinto-settlements-v1.js?v=20261016-v1"></script>
 <script src="js/kinto-staff-directory-v1.js?v=20261016-v1" data-role="report"></script>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>تقارير ومحاسبة المندوبين - MeshWar</title>
@@ -22,7 +23,7 @@ html.admin-embedded{background:transparent;color-scheme:dark}html.admin-embedded
 </div>
 <script>
 const REPORT_SB_URL='https://hsmmbloouskqdnptiiad.supabase.co',REPORT_SB_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';let reportSb=null,currentActor=null,actorType='',branches=[],couriers=[],reportOrders=[],settlements=[],activeCourierId='';
-async function getReportSb(){if(reportSb)return reportSb;const{createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');reportSb=createClient(REPORT_SB_URL,REPORT_SB_KEY);return reportSb}
+async function getReportSb(){if(reportSb)return reportSb;const{createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');reportSb=createClient(REPORT_SB_URL,REPORT_SB_KEY,{global:{fetch:window.KintoOrderDataSessionV1.fetch}});return reportSb}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function idText(v){return v==null?'':String(v).trim()}
 function query(){return new URLSearchParams(location.search)}

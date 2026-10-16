@@ -3,11 +3,18 @@
 const root=window,origin='https://hsmmbloouskqdnptiiad.supabase.co';
 function forWindow(win){const native=win.fetch.bind(win);return async function productFetch(input,init){
  const request=new Request(input,init),url=new URL(request.url),method=request.method.toUpperCase();
- if(url.origin!==origin||url.pathname!=='/rest/v1/local_products'||['GET','HEAD','OPTIONS'].includes(method))return native(input,init);
+ if(url.origin!==origin||url.pathname!=='/rest/v1/local_products'||method==='OPTIONS')return native(input,init);
  try{
-  if(!['POST','PATCH','DELETE'].includes(method))throw Error('PRODUCT_METHOD_DENIED');
+
   const session=JSON.parse(win.sessionStorage.getItem('meshwar_vendor_session_v95')||'null');
   if(!session?.token||(session.expiresAt&&Date.parse(session.expiresAt)<=Date.now()))throw Error('VENDOR_SESSION_REQUIRED');
+  if(['GET','HEAD'].includes(method)){
+   const headers=new Headers(request.headers);headers.set('Content-Type','application/json');
+   url.pathname='/rest/v1/rpc/kinto_vendor_products_read_session_v1';
+   const response=await native(url.href,{method:'POST',headers,body:JSON.stringify({p_session_token:session.token}),signal:request.signal});
+   return method==='HEAD'?new Response(null,{status:response.status,headers:response.headers}):response;
+  }
+  if(!['POST','PATCH','DELETE'].includes(method))throw Error('PRODUCT_METHOD_DENIED');
   if(url.searchParams.has('on_conflict'))throw Error('PRODUCT_UPSERT_DENIED');
   const filters=[];let id=null;
   for(const [field,expression]of url.searchParams){

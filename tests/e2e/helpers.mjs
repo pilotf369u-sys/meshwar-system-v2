@@ -92,6 +92,12 @@ function initBrowserFixture({db,store}){
       const row={id:'rpc-'+Date.now(),store_id:String(body.p_store_id||''),amount:Number(body.p_amount),currency:body.p_currency||null,category:body.p_category||'تشغيلي',note:body.p_note||null,expense_date:body.p_expense_date||now.slice(0,10),created_at:now,updated_at:now};rows.push(row);
       return new Response(JSON.stringify(row),{status:200,headers:{'content-type':'application/json'}});
     }
+    if(['kinto_vendor_products_read_session_v1','kinto_vendor_orders_read_session_v1'].includes(table)&&method==='POST'){
+      const args=JSON.parse(init.body||'{}');if(args.p_session_token!=='e2e-secure-token')return new Response(JSON.stringify({message:'VENDOR_SESSION_INVALID'}),{status:401});
+      const sid=window.__MESH_E2E_STORE.id,source=table.includes('products')?window.__MESH_E2E_DB.local_products:window.__MESH_E2E_DB.orders;
+      let selected=source.filter(r=>{if(table.includes('products'))return r.store_id===sid;let d=r.details;if(typeof d==='string'){try{d=JSON.parse(d)}catch{d={}}}return d?.store_id===sid||(d?.items||[]).some(i=>i.store_id===sid)});
+      selected=applyFilters(selected,u.searchParams);return new Response(JSON.stringify(selected),{status:200,headers:{'content-type':'application/json'}});
+    }
     if(table==='kinto_vendor_product_write_session_v1'&&method==='POST'){
       const args=JSON.parse(init.body||'{}'),sid=window.__MESH_E2E_STORE.id,rows=window.__MESH_E2E_DB.local_products;
       (window.__MESH_E2E_PRODUCT_WRITES||(window.__MESH_E2E_PRODUCT_WRITES=[])).push(args);
