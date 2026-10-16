@@ -29,7 +29,7 @@ async function refresh(){
   const incomplete=rows.reduce((sum,r)=>sum+Number(r.delivered_orders)-Number(r.profit_ready_orders),0);
   const invalid=rows.reduce((sum,r)=>sum+Number(r.invalid_financial_orders),0);
   show('vendorGrowthStatus','البيانات من الطلبات المسلّمة وفق تاريخ إنشاء الطلب (توقيت إسطنبول)، وليست تاريخ التسليم. الربح للطلبات ذات التكلفة المثبتة فقط؛ الشحن خارج الحساب.'+(incomplete?' · '+incomplete+' طلب خارج حساب الربح':'')+(invalid?' · '+invalid+' طلب يحتاج مراجعة مالية':''));
- }catch(e){if(request===seq&&readSession()===token){show('vendorGrowthStatus','تعذر تحميل البيانات؛ تحقق من تطبيق SQL V167 ثم أعد المحاولة.');console.warn('KINTO V167 growth:',e.message)}}
+ }catch(e){if(request===seq&&readSession()===token){const code=String(e?.code||'').replace(/[^A-Za-z0-9_]/g,'').slice(0,32);const detail=String(e?.message||'').slice(0,220);const safeDetail=/^(Could not find the function|permission denied|function .* does not exist|column .* does not exist|structure of query does not match function result type|invalid input syntax|VENDOR_GROWTH_DATE_RANGE_INVALID|PGRST\d+|JWT expired|Invalid JWT)/i.test(detail)?detail:'راجع وحدة التحكم لمعرفة سبب الخطأ';show('vendorGrowthStatus','تعذر تحميل بيانات الأداء'+(code?' ('+code+')':'')+' — '+safeDetail);console.warn('KINTO V167 growth:',{code,message:e?.message,details:e?.details,hint:e?.hint})}}
 }
 function init(){
  const today=new Date(),to=today.toISOString().slice(0,10),from=new Date(today.getTime()-29*86400000).toISOString().slice(0,10);
