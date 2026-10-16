@@ -3,11 +3,11 @@
   'use strict';
   const VERSION='20261008-v68-save';
   const deps=[
-    ['MeshwarVariantStock','js/local-store-variant-stock-v5.js?v=20261008-v68-save'],
+    ['MeshwarVariantStock','js/local-store-variant-stock-v5.js?v=20261016-product-session-v1'],
     ['MeshwarMatrixStock','js/local-store-matrix-stock-v6.js?v=20261008-v68-save'],
-    ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=20261008-v68-save'],
+    ['MeshwarDetailedDescriptionV8','js/local-store-detailed-description-v8.js?v=20261016-product-session-v1'],
     ['MeshwarStoreCategoriesV9','js/local-store-categories-v9.js?v=20261016-session-refresh-v1'],
-    ['MeshwarTaxonomyPersistenceV10','js/local-store-taxonomy-persistence-v10.js?v=20261008-v68-save']
+    ['MeshwarTaxonomyPersistenceV10','js/local-store-taxonomy-persistence-v10.js?v=20261016-product-session-v1']
   ];
   function dependencyReady(win,name){
     if(name==='MeshwarVariantStock'||name==='MeshwarMatrixStock')return typeof win[name]?.editorSnapshot==='function';

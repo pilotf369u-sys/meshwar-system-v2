@@ -17,7 +17,7 @@
   function isDelivered(o){const s=String(o?.status||'').trim().toLowerCase();return s==='تم التسليم'||s==='delivered'||s==='delivered_to_customer'}
 
   async function rest(win,path,{method='GET',body=null,prefer='return=representation'}={}){
-    const r=await win.fetch(`${SB_URL}/rest/v1/${path}`,{
+    if(/^local_products(?:\?|$)/.test(path)&&String(method).toUpperCase()!=='GET'&&!(win.KintoVendorProductsV1||window.KintoVendorProductsV1))throw Error('PRODUCT_SESSION_TRANSPORT_REQUIRED');const productTransport=(win.KintoVendorProductsV1||window.KintoVendorProductsV1)?.forWindow(win)||win.fetch.bind(win);const r=await productTransport(`${SB_URL}/rest/v1/${path}`,{
       method,cache:'no-store',
       headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',...(method!=='GET'?{Prefer:prefer}:{})},
       body:body==null?null:JSON.stringify(body)

@@ -10,7 +10,7 @@
 
   function sessionStore(){try{return JSON.parse(sessionStorage.getItem(STORE_KEY)||'null')}catch{return null}}
   async function rest(path,{method='GET',body=null,prefer='return=representation'}={}){
-    const r=await fetch(`${SB_URL}/rest/v1/${path}`,{method,cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',...(method!=='GET'?{Prefer:prefer}:{})},body:body==null?null:JSON.stringify(body)});
+    if(/^local_products(?:\?|$)/.test(path)&&String(method).toUpperCase()!=='GET'&&!(window.KintoVendorProductsV1||window.KintoVendorProductsV1))throw Error('PRODUCT_SESSION_TRANSPORT_REQUIRED');const productTransport=(window.KintoVendorProductsV1||window.KintoVendorProductsV1)?.forWindow(window)||window.fetch.bind(window);const r=await productTransport(`${SB_URL}/rest/v1/${path}`,{method,cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',...(method!=='GET'?{Prefer:prefer}:{})},body:body==null?null:JSON.stringify(body)});
     const text=await r.text();if(!r.ok)throw new Error(text||`HTTP ${r.status}`);return text?JSON.parse(text):null;
   }
   function domTaxonomy(){
