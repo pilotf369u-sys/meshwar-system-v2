@@ -13,6 +13,11 @@ test('private attachment display uses signed links without changing persisted me
  await page.addScriptTag({content:source});await expect(page.locator('#proof')).toHaveAttribute('src',/\/object\/sign\//);await expect(page.locator('#file')).toHaveAttribute('href',/token=test-signed/);
  expect(await page.evaluate(()=>window.order.details.delivery_proof_url)).toContain('/object/public/');expect(await page.evaluate(()=>window.signRequests[0])).toMatchObject({role:'customer',session_token:'customer-session',paths:['customer/own/file.png']});
  await page.evaluate(()=>KintoAttachmentAccessV1.refresh());expect(await page.evaluate(()=>window.signRequests.length)).toBe(1);
+ // Reusing an existing viewer for a different order must replace the previous signed image.
+ await page.evaluate(()=>document.getElementById('proof').src=window.original.replace('file.png','second.png'));
+ await expect(page.locator('#proof')).toHaveAttribute('src',/sign\/chat-attachments\/customer\/own\/second.png/);
+ await page.evaluate(()=>{document.getElementById('proof').src='';document.getElementById('file').remove()});
+ await page.waitForTimeout(100);expect(await page.locator('#proof').getAttribute('src')).toBe('');
 });
 test('ticketed upload binds session and target, returning a stable canonical path for storage in the order',async({page})=>{
  await page.route('**/__attachment_fixture__',r=>r.fulfill({status:200,contentType:'text/html',body:'<html><body></body></html>'}));await page.goto('/__attachment_fixture__');
