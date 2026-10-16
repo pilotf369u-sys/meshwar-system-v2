@@ -6,6 +6,9 @@ on:
       - 'ci/sensitive-session-*'
       - 'ci/staff-directory*'
       - 'ci/featured-admin*'
+      - 'ci/site-admin*'
+      - 'ci/fixtures/site-admin*'
+      - 'js/admin-brand-logo-v15.js'
       - 'ci/fixtures/featured-admin*'
       - 'ci/fixtures/staff-account*'
       - 'js/kinto-staff-directory-v1.js'
@@ -47,9 +50,10 @@ jobs:
       - name: Execute isolated authorization and UI migration tests
         run: |
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/sensitive-session-rpc.integration.mjs
-          node --test ci/sensitive-session-ui.test.mjs ci/staff-directory-client.test.mjs ci/featured-admin-session-ui.test.mjs
+          node --test ci/sensitive-session-ui.test.mjs ci/staff-directory-client.test.mjs ci/featured-admin-session-ui.test.mjs ci/site-admin-session-ui.test.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/staff-directory.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/featured-admin-session.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/site-admin-session.integration.mjs
       - name: Verify on PostgreSQL 17 with real pgcrypto and API roles
         env:
           KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
@@ -62,3 +66,7 @@ jobs:
         env:
           KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
         run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/featured-admin-session.integration.mjs
+      - name: Site administration and scoped Storage guards on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/site-admin-session.integration.mjs
