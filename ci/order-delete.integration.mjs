@@ -12,7 +12,7 @@ if(process.env.KINTO_TEST_DATABASE_URL){
 await db.exec(`DO $$BEGIN
  IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon; END IF;
  IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated; END IF;
- IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role; END IF;
+ IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role BYPASSRLS; END IF;
 END$$;CREATE SCHEMA private;
 CREATE TABLE orders(id integer PRIMARY KEY,status text,settlement_id bigint,settlement_status text DEFAULT 'unsettled',is_settled boolean DEFAULT false,
  total_price numeric,currency text,delivery_fee numeric,delivery_payment_type text,branch_id text,courier_id text,delivery_agent_id uuid);
