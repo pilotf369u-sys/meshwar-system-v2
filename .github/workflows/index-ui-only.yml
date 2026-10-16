@@ -87,7 +87,7 @@ jobs:
           grep -Eq '<script src="js/local-store-product-details-v4\.js\?v=[^"]+" data-mw-product-details-v4></script>' index.html
           grep -Eq "s\.src='js/local-store-product-details-v4\.js\?v=[^']+';" js/local-store-pricing.js
           grep -Fq "btn.textContent='عرض التفاصيل والطلب'" js/local-store-product-details-v4.js
-          grep -Fq "local-store-variant-stock-v5.js?v=desc-unlimit-v8-1" js/local-store-product-details-v4.js
+          grep -Fq "local-store-variant-stock-v5.js?v=20261016-product-session-v1" js/local-store-product-details-v4.js
           grep -Fq "local-store-matrix-stock-v6.js?v=desc-unlimit-v8-1" js/local-store-product-details-v4.js
           grep -Fq "local-store-ui-stock-v7.js?v=desc-unlimit-v8-1" js/local-store-product-details-v4.js
           grep -Fq 'variant_stock' js/local-store-variant-stock-v5.js
