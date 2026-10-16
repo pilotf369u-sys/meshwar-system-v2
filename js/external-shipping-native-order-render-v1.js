@@ -115,7 +115,8 @@ function installEmployee(){
           if(error)throw error;
         }
         const {external_shipping_fee,external_shipping_currency,...orderPatch}=payload;
-        ({error}=await sb.from('orders').update(orderPatch).eq('id',id));
+        const saveToken=window.KintoEmployeeSessionV143?.read?.()?.token;if(!saveToken)throw new Error('STAFF_SESSION_REQUIRED');
+        ({error}=await sb.rpc('kinto_save_staff_order_session_v1',{p_role:'employee',p_session_token:String(saveToken),p_order_id:id,p_expected_status:o.status,p_expected_price:o.total_price,p_expected_currency:o.currency,p_patch:orderPatch}));
         if(error)throw error;
         if(external_shipping_fee!==o.external_shipping_fee ||
            external_shipping_currency!==o.external_shipping_currency){
@@ -195,7 +196,8 @@ function installAdmin(){
           if(error)throw error;
         }
         const {external_shipping_fee,external_shipping_currency,...orderPatch}=payload;
-        ({error}=await sb.from('orders').update(orderPatch).eq('id',id));
+        const saveToken=window.KintoAdminSessionV147?.read?.()?.token;if(!saveToken)throw new Error('STAFF_SESSION_REQUIRED');
+        ({error}=await sb.rpc('kinto_save_staff_order_session_v1',{p_role:'admin',p_session_token:String(saveToken),p_order_id:id,p_expected_status:o.status,p_expected_price:o.total_price,p_expected_currency:o.currency,p_patch:orderPatch}));
         if(error)throw error;
         if(external_shipping_fee!==o.external_shipping_fee ||
            external_shipping_currency!==o.external_shipping_currency){

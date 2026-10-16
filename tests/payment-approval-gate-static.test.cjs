@@ -16,7 +16,10 @@ for (const [name, source, actor, session] of [
   assert.ok(source.includes("p_actor:'"+actor+"'"), name+' actor');
   assert.ok(source.includes(session+'?.read?.()?.token'), name+' session token');
   assert.ok(source.includes("sb.rpc('kinto_approve_paid_order_v1'"), name+' RPC');
-  assert.ok(source.includes("sb.from('orders').update(payload)"), name+' other statuses retained');
+  assert.ok(source.includes("sb.rpc('kinto_save_staff_order_session_v1'"), name+' ordinary save uses a staff session');
+  assert.ok(source.includes("p_role:'"+actor+"'"), name+' ordinary save actor');
+  assert.ok(source.includes('p_expected_price:o.total_price'), name+' ordinary save price concurrency');
+  assert.ok(!source.includes("sb.from('orders').update(payload)"), name+' no direct ordinary order-save fallback');
 }
 for (const needle of [
   "CREATE TRIGGER trg_kinto_paid_transition_guard_v1",

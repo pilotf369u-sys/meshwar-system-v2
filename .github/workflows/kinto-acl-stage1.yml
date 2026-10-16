@@ -14,6 +14,12 @@ on:
       - 'ci/customer-directory*'
       - 'ci/legacy-reward*'
       - 'ci/settlement-*'
+      - 'ci/order-save*'
+      - 'ci/fixtures/order-save*'
+      - 'admin-dashboard.html'
+      - 'employee-dashboard.html'
+      - 'external-shipping-shell.html'
+      - 'js/external-shipping-native-order-render-v1.js'
       - 'js/kinto-settlements-v1.js'
       - 'branch-dashboard.html'
       - 'admin-branches.html'
@@ -75,7 +81,7 @@ jobs:
       - name: Execute isolated authorization and UI migration tests
         run: |
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/sensitive-session-rpc.integration.mjs
-          node --test ci/sensitive-session-ui.test.mjs ci/staff-directory-client.test.mjs ci/featured-admin-session-ui.test.mjs ci/site-admin-session-ui.test.mjs ci/vendor-media-client.test.mjs ci/vendor-category-session.test.mjs ci/customer-profile-ui.test.mjs ci/customer-directory-client.test.mjs ci/legacy-reward-retirement.test.mjs ci/settlement-client.test.mjs
+          node --test ci/sensitive-session-ui.test.mjs ci/staff-directory-client.test.mjs ci/featured-admin-session-ui.test.mjs ci/site-admin-session-ui.test.mjs ci/vendor-media-client.test.mjs ci/vendor-category-session.test.mjs ci/customer-profile-ui.test.mjs ci/customer-directory-client.test.mjs ci/legacy-reward-retirement.test.mjs ci/settlement-client.test.mjs ci/order-save-client.test.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/staff-directory.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/featured-admin-session.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/site-admin-session.integration.mjs
@@ -85,6 +91,7 @@ jobs:
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/customer-directory.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/legacy-reward-retirement.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/settlement-session.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/order-save-session.integration.mjs
       - name: Verify on PostgreSQL 17 with real pgcrypto and API roles
         env:
           KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
@@ -105,6 +112,10 @@ jobs:
         env:
           KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
         run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/settlement-session.integration.mjs
+      - name: Staff order pricing on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/order-save-session.integration.mjs
       - name: Staff accounts on PostgreSQL 17 after table lockdown
         env:
           KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
