@@ -64,6 +64,6 @@ async function submitLoginForm(){if(loginForm?.dataset.submitting==='1')return;l
 loginForm?.addEventListener('submit',e=>{e.preventDefault();submitLoginForm()});
 loginPhone?.addEventListener('input',clearRoleChoice);loginPhone?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();loginPassword?.focus()}});
 loginPassword?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitLoginForm()}});
-loginPassword?.addEventListener('input',()=>{const identity=String(loginPhone?.value||'').trim(),password=String(loginPassword?.value||'');if(!identity||!password)return;clearTimeout(window.__kintoLoginAutoTimer);window.__kintoLoginAutoTimer=setTimeout(()=>{if(!document.getElementById('loginRoleChooser')?.classList.contains('show')&&document.activeElement===loginPassword&&password===String(loginPassword?.value||'')&&identity===String(loginPhone?.value||'').trim())submitLoginForm()},700)});
+// Login is submitted only by the form button or Enter; never while typing.
 hydrateLoginBrandAndSupport();
 </script></body></html>
