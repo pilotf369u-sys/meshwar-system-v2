@@ -1,8 +1,14 @@
-const {PGlite}=await import(process.env.KINTO_PGLITE_MODULE || '@electric-sql/pglite');
 import fs from 'node:fs';
-const db=new PGlite();
+let db;
+if(process.env.KINTO_TEST_DATABASE_URL){
+ const {Client}=await import(process.env.KINTO_PG_MODULE || 'pg');
+ const client=new Client({connectionString:process.env.KINTO_TEST_DATABASE_URL});await client.connect();
+ db={exec:sql=>client.query(sql),query:(sql,args)=>client.query(sql,args),close:()=>client.end()};
+ await db.exec('CREATE EXTENSION pgcrypto');
+}else{const {PGlite}=await import(process.env.KINTO_PGLITE_MODULE || '@electric-sql/pglite');db=new PGlite();
+ await db.exec("create function public.digest(text,text) returns bytea language sql as $$select sha256(convert_to($1,'UTF8'))$$;");}
+
 await db.exec(`create role anon;create role authenticated;create schema private; create schema extensions;
-create function public.digest(text,text) returns bytea language sql as $$select sha256(convert_to($1,'UTF8'))$$;
 create table employees(id uuid primary key,role text,is_active boolean);
 create table customers(id uuid primary key,reward_balances jsonb,rewards_log jsonb);
 create table local_stores(id uuid primary key,store_name text,is_active boolean);
@@ -18,8 +24,8 @@ for(const [n,role,active] of [[1,'admin',true],[2,'employee',true],[3,'vendor',t
  for(const table of ['admin','employee'])await db.query(`insert into ${table}_sessions_v${table==='admin'?'147':'143'} values($1,digest($2,'sha256'),now()+interval '1 day',null,null)`,[id(n),`${table}-${n}`]);
 }
 await db.exec(`insert into customers values('${id(10)}','{"USD":100}','[]');insert into local_stores values('${id(20)}','Test',true);insert into merchant_featured_requests(id,status,store_id,slot_type) values('${id(30)}','pending','${id(20)}','hero_banner'),('${id(31)}','pending','${id(20)}','hero_banner');`);
-let count=0;async function call(fn,args){return db.query(`select * from public.${fn}(${args.map((_,i)=>'$'+(i+1)).join(',')})`,args)}
-async function deny(fn,args,pattern){await db.exec('set role anon');try{await call(fn,args);throw Error('UNEXPECTED SUCCESS '+fn)}catch(e){if(!pattern.test(e.message))throw e;count++;}finally{await db.exec('reset role')}}
+let apiRole='anon';let count=0;async function call(fn,args){return db.query(`select * from public.${fn}(${args.map((_,i)=>'$'+(i+1)).join(',')})`,args)}
+async function deny(fn,args,pattern){await db.exec('set role '+apiRole);try{await call(fn,args);throw Error('UNEXPECTED SUCCESS '+fn)}catch(e){if(!pattern.test(e.message))throw e;count++;}finally{await db.exec('reset role')}}
 const cases=[['admin_list_featured_requests_session_v1',[]],['list_featured_merchants_session_v1',[]],['admin_approve_featured_request_session_v1',[id(30),id(20),'2026-10-16','2026-10-20',null]],['admin_reject_featured_request_session_v1',[id(31),null]],['adjust_customer_reward_balance_admin_session_v1',[id(10),1,'USD',null]],['adjust_customer_reward_balance_employee_session_v1',[id(10),1,'USD',null]]];
 for(const [fn,args] of cases){for(const token of [null,'','invalid'])await deny(fn,[token,...args],/SESSION_(REQUIRED|INVALID)/);const employee=fn.includes('_employee_');await deny(fn,[employee?'admin-1':'employee-2',...args],/SESSION_INVALID/);}
 await deny('adjust_customer_reward_balance_employee_session_v1',['employee-4',id(10),1,'USD',null],/EMPLOYEE_INACTIVE/);
@@ -33,4 +39,16 @@ const balance=(await db.query('select reward_balances from customers')).rows[0].
 const reviewed=(await db.query('select reviewed_by from merchant_featured_requests')).rows;if(reviewed.some(x=>x.reviewed_by!==id(1)))throw Error('actor mismatch');
 await deny('adjust_customer_reward_balance',[id(10),1,'USD',id(2),null],/permission denied/);
 await deny('admin_approve_featured_request',[id(1),id(30),id(20),'2026-10-16','2026-10-20',null],/permission denied/);
+for(const role of ['anon','authenticated']){
+ apiRole=role;
+ for(const [fn,args] of cases)await deny(fn,['invalid',...args],/SESSION_INVALID/);
+ for(const [fn,args] of [
+ ['adjust_customer_reward_balance',[id(10),1,'USD',id(2),null]],
+ ['admin_list_featured_requests',[id(1)]],['list_featured_merchants',[id(1)]],
+ ['admin_reject_featured_request',[id(1),id(31),null]],
+ ['admin_approve_featured_request',[id(1),id(30),id(20),'2026-10-16','2026-10-20',null]]
+ ])await deny(fn,args,/permission denied/);
+ await db.exec('set role '+role);await call('admin_list_featured_requests_session_v1',['admin-1']);await db.exec('reset role');count++;
+}
+const {verifyDatabaseUi}=await import('./sensitive-session-db-ui.mjs');await verifyDatabaseUi(db,id);
 console.log(`PASS ${count} isolated PostgreSQL authorization cases; correct balances and server-derived audit actors; wrappers succeed after legacy revocation`);await db.close();
