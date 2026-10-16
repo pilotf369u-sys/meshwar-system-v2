@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
+<script src="js/kinto-customer-directory-v1.js?v=20261016-v1" data-role="vendor"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="css/kinto-ui-stability-v123.css?v=20260908-v123">
@@ -65,7 +66,7 @@
       function injectFeaturedPhase2(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorFeaturedPhase2'))return;const s=d.createElement('script');s.id='mwVendorFeaturedPhase2';s.src='js/vendor-featured-requests-v2.js?v=20261016-media-session-v1';d.head.appendChild(s)}
       function injectV94Orders(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorV94Orders'))return;const s=d.createElement('script');s.id='mwVendorV94Orders';s.src='js/vendor-v94-multistore-orders.js?v=20261010-v66-order-indicators-session-ready';s.onerror=()=>console.error('Vendor V95 segment adapter failed to load');d.body.appendChild(s)}
       function injectShippingV98(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorShippingV98'))return;const s=d.createElement('script');s.id='mwVendorShippingV98';s.src='js/vendor-shipping-settings-v98.js?v=20260905-v98';s.onerror=()=>console.error('Vendor V98 shipping settings failed to load');d.body.appendChild(s)}
-      function injectRewardsV344(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorRewardsV344'))return;const s=d.createElement('script');s.id='mwVendorRewardsV344';s.src='js/vendor-loyalty-v344.js?v=20260929-v344';s.onerror=()=>console.error('Vendor rewards V344 failed to load');d.body.appendChild(s)}
+      function injectRewardsV344(){const d=frame.contentDocument;if(!d||d.getElementById('mwVendorRewardsV344'))return;const s=d.createElement('script');s.id='mwVendorRewardsV344';s.src='js/vendor-loyalty-v344.js?v=20261016-customer-directory-v1';s.onerror=()=>console.error('Vendor rewards V344 failed to load');d.body.appendChild(s)}
       function install(){
         // A cached iframe can finish before the deferred parent modules.
         if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',install,{once:true});return}

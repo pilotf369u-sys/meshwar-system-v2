@@ -154,7 +154,7 @@ async function placeOrder(product){
   try{
     if(!currentStore||String(currentStore.id)!==String(currentStoreId))await loadStoreContext(currentStoreId);
     const [{data:customer,error:ce},{data:rows,error:oe}]=await Promise.all([
-      sb.from('customers').select('id,name,phone').eq('id',customerId).single(),
+      KintoCustomerDirectoryV1.from(sb).select('id,name,phone').eq('id',customerId).single(),
       sb.from('orders').select('order_code').not('order_code','is',null).order('created_at',{ascending:false}).limit(1000)
     ]);
     if(ce)throw ce;

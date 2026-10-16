@@ -40,7 +40,7 @@ async function loadRewardRows(){
  try{
   const {data,error}=await sb.rpc('vendor_loyalty_customers_v375',{p_session_token:token});if(error)throw error;
   const raw=Array.isArray(data)?data:(data?.rows||[]);const ids=[...new Set(raw.map(x=>String(x.customer_id||'')).filter(Boolean))];let customers=[];
-  if(ids.length){const res=await sb.from('customers').select('id,name,phone,code').in('id',ids);customers=res.data||[]}
+  if(ids.length){const res=await KintoCustomerDirectoryV1.from(sb).select('id,name,phone,code').in('id',ids);customers=res.data||[]}
   const cm=new Map(customers.map(x=>[String(x.id),x]));
   rewardRows=raw.map(r=>{const cu=cm.get(String(r.customer_id))||{};return{...r,customer_name:cu.name||cu.code||cu.phone||r.customer_id,phone:cu.phone||'',code:cu.code||''}});
   renderRows();

@@ -199,7 +199,7 @@ async function initializeCloudCart(){
   if(cloudDirty&&cloudReady)scheduleCloudSave();
   cloudPollTimer=setInterval(()=>{if(cloudDirty)scheduleCloudSave(0);else pullCloudCart()},8000);
 }
-async function loadCustomer(id){if(id==='guest')return null;const rows=await rest(`customers?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);const customer=Array.isArray(rows)?rows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل الحالي.');return customer}
+async function loadCustomer(id){if(id==='guest')return null;const {data:rows,error}=await KintoCustomerDirectoryV1.from(null).eq('id',id).limit(1);if(error)throw error;const customer=Array.isArray(rows)?rows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل الحالي.');return customer}
 function shippingDestination(customer){const c=customer||{};return{country:c.country||c.country_name||c.country_code||'',governorate:c.governorate||c.state||c.province||c.city||'',city:c.city||c.province||'',area:c.area||c.district||c.neighborhood||'',address:c.address||c.address_details||c.full_address||c.delivery_address||''}}
 async function removeSubmitted(keys){
   // Orders are already confirmed. Never turn a successful checkout into a failed order

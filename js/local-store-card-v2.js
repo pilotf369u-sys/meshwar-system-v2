@@ -34,7 +34,7 @@ async function createOrder(product,store){
   if(!customerId){alert('الرجاء تسجيل الدخول أولاً لإرسال الطلب.');location.href='login.html';return}
   try{
     const [{data:customer,error:ce},{data:rows,error:oe}]=await Promise.all([
-      sb.from('customers').select('id,name,phone').eq('id',customerId).single(),
+      KintoCustomerDirectoryV1.from(sb).select('id,name,phone').eq('id',customerId).single(),
       sb.from('orders').select('order_code').not('order_code','is',null).order('created_at',{ascending:false}).limit(1000)
     ]);
     if(ce)throw ce;if(oe)throw oe;

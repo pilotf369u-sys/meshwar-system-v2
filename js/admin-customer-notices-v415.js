@@ -10,7 +10,7 @@ async function peopleLoad(p=1){
  const serial=++searchSerial;page=p;const box=$('acnPeople');box.textContent='جاري التحميل...';
  try{
  const sb=await client(),q=String($('acnSearch').value||'').trim().replace(/[,%()]/g,' ').slice(0,70);
- let req=sb.from('customers').select('id,name,code,phone',{count:'exact'});
+ let req=KintoCustomerDirectoryV1.from(sb).select('id,name,code,phone',{count:'exact'});
  if(q){const term='%'+q+'%';req=req.or('name.ilike.'+term+',code.ilike.'+term+',phone.ilike.'+term)}
  const {data,error,count}=await req.order('id',{ascending:true}).range((p-1)*8,p*8-1);
  if(serial!==searchSerial)return;if(error)throw error;people=data||[];total=count||0;renderPeople();
