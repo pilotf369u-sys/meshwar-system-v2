@@ -97,7 +97,8 @@ test('V101 checkout carries destination and resolves an active same-currency fal
     read('js/local-cart-v93.js')
   ]);
 
-  expect(cart).toContain('customers?select=*');
+  expect(cart).toContain("KintoCustomerDirectoryV1.from(null).eq('id',id).limit(1)");
+  expect(cart).not.toContain('customers?select=*');
   expect(cart).toContain('shippingDestination(customer)');
   expect(cart).toContain("rpc/checkout_independent_vendor_orders_v101");
   expect(sql).toContain("'app.checkout_customer_shipping'");
