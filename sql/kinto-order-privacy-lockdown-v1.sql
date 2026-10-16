@@ -18,7 +18,8 @@ DROP POLICY IF EXISTS kinto_order_session_insert_v1 ON public.orders;
 CREATE POLICY kinto_order_session_insert_v1 ON public.orders AS RESTRICTIVE FOR INSERT TO anon,authenticated
  WITH CHECK(customer_id=(SELECT private.kinto_request_actor_v1()->>'id') AND (SELECT private.kinto_request_actor_v1()->>'role')='customer');
 DROP TRIGGER IF EXISTS trg_kinto_order_session_write_guard_v1 ON public.orders;
-CREATE TRIGGER trg_kinto_order_session_write_guard_v1 BEFORE INSERT OR UPDATE ON public.orders
+DROP TRIGGER IF EXISTS trg_00_kinto_order_session_write_guard_v1 ON public.orders;
+CREATE TRIGGER trg_00_kinto_order_session_write_guard_v1 BEFORE INSERT OR UPDATE ON public.orders
  FOR EACH ROW EXECUTE FUNCTION private.kinto_order_session_write_guard_v1();
 -- Remove the direct legacy checkout entry points; the new session wrapper calls the unchanged V161 as owner.
 DO $$ DECLARE f regprocedure;

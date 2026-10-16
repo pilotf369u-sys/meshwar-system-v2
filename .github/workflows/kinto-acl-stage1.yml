@@ -18,6 +18,8 @@ on:
       - 'ci/order-delete*'
       - 'ci/product-assignment*'
       - 'ci/order-privacy*'
+      - 'ci/order-workflow*'
+      - 'ci/fixtures/workflow-loyalty*'
       - 'ci/store-control*'
       - 'ci/control-surface*'
       - 'ci/attachment-edge*'

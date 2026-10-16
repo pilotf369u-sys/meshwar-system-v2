@@ -4,6 +4,7 @@ DROP POLICY IF EXISTS kinto_order_session_select_v1 ON public.orders;
 DROP POLICY IF EXISTS kinto_order_session_update_v1 ON public.orders;
 DROP POLICY IF EXISTS kinto_order_session_insert_v1 ON public.orders;
 DROP TRIGGER IF EXISTS trg_kinto_order_session_write_guard_v1 ON public.orders;
+DROP TRIGGER IF EXISTS trg_00_kinto_order_session_write_guard_v1 ON public.orders;
 GRANT SELECT ON public.local_products TO anon,authenticated;
 DO $$ DECLARE f regprocedure; BEGIN
  FOR f IN SELECT p.oid::regprocedure FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname IN
