@@ -37,7 +37,7 @@ function hex(v,fallback){const s=String(v||'').trim();return/^#[0-9a-f]{6}$/i.te
 function migrationMissing(e){const m=String(e?.message||e||'');return /public\.settings|schema cache|permission denied|PGRST205|get_site_settings|PGRST202|admin_create_hero_upload/i.test(m)}
 function migrationNotice(){status('يلزم تطبيق migrations الخاصة بـ settings و V13 Hero Storage في Supabase ثم إعادة المحاولة.','warn')}
 function syncEmbeddedViewport(){try{const frame=window.frameElement;if(!frame)return;frame.style.setProperty('height','90vh','important');frame.style.setProperty('min-height','90vh','important')}catch{}}
-async function verifyAdmin(){const id=adminId();if(!id)throw new Error('adminId غير موجود في الرابط.');const sb=await getSb(),{data,error}=await sb.from('employees').select('id,name,phone,role,is_active').eq('id',id).maybeSingle();if(error)throw error;if(!data||normalizeRole(data.role)!=='admin'||data.is_active===false)throw new Error('غير مصرح بإدارة محتوى الموقع.');currentAdmin=data;return data}
+async function verifyAdmin(){const sb=await getSb();if(!window.KintoAdminSessionV147)throw new Error('ADMIN_SESSION_LIBRARY_MISSING');const data=await window.KintoAdminSessionV147.identity(sb);if(!data||normalizeRole(data.role)!=='admin')throw new Error('غير مصرح بإدارة محتوى الموقع.');const routeId=adminId();if(routeId&&String(routeId)!==String(data.id))throw new Error('ADMIN_SESSION_ROUTE_MISMATCH');currentAdmin=data;return data}
 const textIds=['video_url','video_poster','hero_media_type','hero_image_url','announcement_text','hero_title','hero_subtitle','cta_primary_text','cta_primary_url','cta_secondary_text','cta_secondary_url','whatsapp_url','facebook_url','instagram_url','telegram_url','tiktok_url','support_phone','support_email','contact_address','warehouse_address','site_title','meta_description','favicon_url'];
 const boolIds=['is_active','whatsapp_active','facebook_active','instagram_active','telegram_active','tiktok_active'];
 function syncColorPair(id,value){const c=document.getElementById(id),t=document.getElementById(id+'_text'),v=hex(value,id==='hero_title_color'?'#ffffff':'#e2e8f0');if(c)c.value=v;if(t)t.value=v}
@@ -54,9 +54,10 @@ function bindVisualControls(){['hero_title_color','hero_subtitle_color'].forEach
 function bindVideoPasteGuard(){const e=document.getElementById('video_url');if(!e)return;e.addEventListener('change',()=>{e.value=cleanVideoUrl(e.value)})}
 window.loadSiteSettings=loadSiteSettings;window.saveSiteSettings=saveSiteSettings;window.addEventListener('DOMContentLoaded',()=>{syncEmbeddedViewport();bindVideoPasteGuard();bindUploads();bindVisualControls();loadSiteSettings()});
 </script>
+<script src="js/admin-session-v147.js?v=20261016-cms-security"></script>
 <script src="js/admin-brand-logo-v15.js?v=20260920-v112"></script>
 <script src="js/admin-featured-store-v18.js?v=20260828-v22"></script>
-<script src="js/admin-featured-campaigns-v1.js?v=20260827-v1.1-approval-refresh"></script>
-<script src="js/admin-featured-requests-v2.js?v=20260827-v2.3-pending-products"></script>
+<script src="js/admin-featured-campaigns-v1.js?v=20261016-session-v1"></script>
+<script src="js/admin-featured-requests-v2.js?v=20261016-session-v1"></script>
 </body>
 </html>
