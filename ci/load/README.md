@@ -4,7 +4,7 @@ This harness never connects to production. Native mode accepts only a loopback U
 
 Bootstrap recreates 110 public/private tables, 338 functions, 47 triggers and 79 RLS policies, plus constraints/indexes/views/grants. Before measuring, the existing six-role rollback workflow must pass. The Auth schema stub exists only to satisfy unused foreign keys/policies; custom KINTO sessions used by the measured operations are backed by the actual hashed-session routines. External pg_net/cron/vault services, Storage file delivery, JWT Auth and payments are not simulated.
 
-Virtual users issue concurrent bursts through a **32-connection pool**: browse products, create canonical orders, employee review, customer acceptance, payment/stock processing. Stages: 10, 25, 50, 100, 200, 400, 800 and 1000 virtual users. Timings include pool waiting and database transaction overhead. This is not a sustained soak or a measurement of 1000 database connections.
+Virtual users issue concurrent bursts through a **32-connection pool**: browse products, create canonical orders, employee review, customer acceptance, payment/stock processing. Stages: 10, 25, 50, 100, 200, 400, 800, 1000, 2000 and 4000 virtual users. Timings include pool waiting and database transaction overhead. This is not a sustained soak or a measurement of 1000 database connections.
 
 Separate 200-way integrity races verify:
 
@@ -13,7 +13,7 @@ Separate 200-way integrity races verify:
 - 200 attempts to use the same coupon create one redemption/ledger event.
 - 200 retries of the same campaign request produce one canonical order/reservation.
 
-Business denials in these scarcity/replay tests are expected and separately classified. Normal workload errors or p95 above 10 seconds stop the escalation. All transaction statements have a 10-second timeout, lock waits 5 seconds, pool acquisition 10 seconds, and the CI job 20 minutes. Unexpected failures and integrity assertions fail the run and retain its report.
+Business denials in these scarcity/replay tests are expected and separately classified. Normal workload timeouts or p95 above 10 seconds stop the escalation and are reported as a capacity observation; other unexpected errors fail the run. All transaction statements have a 10-second timeout, lock waits 5 seconds, pool acquisition 10 seconds, and the CI job 20 minutes. Unexpected failures and integrity assertions fail the run and retain its report.
 
 Run on a disposable native PostgreSQL 17 database:
 

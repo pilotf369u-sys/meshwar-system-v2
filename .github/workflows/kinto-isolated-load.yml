@@ -30,7 +30,7 @@ jobs:
           node-version: '22'
       - name: Install pinned isolated database driver
         run: npm install --prefix "$RUNNER_TEMP/kinto-load" --ignore-scripts --no-audit --no-fund pg@8.16.3
-      - name: Exercise deployed schema with up to 1000 virtual users
+      - name: Exercise deployed schema with up to 4000 virtual users
         env:
           KINTO_LOAD_DATABASE_URL: postgresql://postgres:isolated-load-test-only@127.0.0.1:5432/kinto_load
         run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-load/node_modules/pg/lib/index.js" node ci/load/run.mjs
