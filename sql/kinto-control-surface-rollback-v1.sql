@@ -9,6 +9,5 @@ DO $$ DECLARE t text; BEGIN
 END $$;
 DROP POLICY IF EXISTS kinto_legacy_finance_insert_v1 ON public.financial_settlements;
 ALTER VIEW public.local_store_financial_summary SET(security_invoker=true);
-ALTER VIEW IF EXISTS public.active_merchant_slots_view SET(security_invoker=false);
 GRANT SELECT,INSERT,UPDATE,DELETE ON public.agents,public.store_categories,public.store_category_media,public.currencies,public.local_orders,public.local_returns TO anon,authenticated;
 COMMIT;

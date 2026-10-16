@@ -10,11 +10,11 @@ Status: prepared and tested in isolation; production activation is pending. This
 | Vendor exchange, margin, expense and featured-request APIs trusted store IDs | Fixed allowlist dispatcher derives vendor store from existing hashed session and rejects foreign store IDs; original pricing delegates retained | Same |
 | Global-store, content and review management trusted admin IDs | Same dispatcher derives verified admin identity; legacy API execution revoked from PUBLIC/anon/authenticated | Same |
 | Category/currency direct mutations | Session RPCs enforce vendor ownership or admin role; legacy table/column mutations revoked | Same |
-| Legacy agents and financial/customer rows | Unused agents API revoked; restrictive session/row policies for local orders, returns and financial settlement reads; scoped finance insert; views run with caller RLS | Same |
+| Legacy agents and financial/customer rows | Unused agents API revoked; restrictive session/row policies for local orders, returns and financial settlement reads; scoped finance insert; financial summary retains caller RLS | Same |
 | Broad remaining Storage writes | Restrictive policies intersect old permissive policies; existing review tickets required; unused CMS/category upload paths closed; chat uploads require session-bound ticket | Same |
 | Public chat, parcel and delivery-proof files | Private chat bucket; database checks actor and actual message/order ownership before Edge signs exact paths for 15 minutes | Additive SQL, Edge deployment, frontend verification, lockdown SQL |
 
-The inventory covered 95 public tables, their RLS/grants, 200 non-trigger public SECURITY DEFINER APIs callable by anon, Storage policies, and 158 frontend source files. Counts such as no-policy tables or SECURITY DEFINER advisor notices are not themselves proof of a vulnerability. Maintenance-only search_path warnings and the standard Supabase Auth password setting are outside this targeted patch.
+The inventory covered 95 public tables, their RLS/grants, 200 non-trigger public SECURITY DEFINER APIs callable by anon, Storage policies, and 158 frontend source files. Counts such as no-policy tables or SECURITY DEFINER advisor notices are not themselves proof of a vulnerability. The active merchant-slot view intentionally exposes a filtered public advertising projection while the underlying table has no public policies; this view is retained to preserve public ads. Maintenance-only search_path warnings and the standard Supabase Auth password setting are outside this targeted patch.
 
 ## Exact rollout order
 

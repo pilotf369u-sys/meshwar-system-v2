@@ -14,7 +14,6 @@ DO $$ DECLARE t text;cols text; BEGIN
  END LOOP;
 END $$;
 ALTER VIEW public.local_store_financial_summary SET(security_invoker=true);
-ALTER VIEW IF EXISTS public.active_merchant_slots_view SET(security_invoker=true);
 DROP POLICY IF EXISTS kinto_legacy_finance_insert_v1 ON public.financial_settlements;
 CREATE POLICY kinto_legacy_finance_insert_v1 ON public.financial_settlements AS RESTRICTIVE FOR INSERT TO anon,authenticated WITH CHECK(private.kinto_legacy_store_scope_v1(store_id::text));
 DROP POLICY IF EXISTS kinto_remaining_asset_insert_v1 ON storage.objects;
