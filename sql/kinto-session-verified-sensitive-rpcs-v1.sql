@@ -72,6 +72,9 @@ AS $$
 DECLARE v_employee text;
 BEGIN
   v_employee := private.require_employee_session_v143(p_session_token);
+  IF NOT EXISTS (SELECT 1 FROM public.employees e WHERE e.id::text=v_employee AND e.is_active IS TRUE) THEN
+    RAISE EXCEPTION 'EMPLOYEE_INACTIVE' USING ERRCODE='42501';
+  END IF;
   RETURN public.adjust_customer_reward_balance(p_customer_id,p_amount,p_currency,v_employee,p_note);
 END $$;
 
