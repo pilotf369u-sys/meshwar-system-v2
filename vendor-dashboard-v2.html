@@ -75,7 +75,7 @@
     </div>
     <div class="space-y-3">
       <input id="loginIdentity" class="field" autocomplete="username" placeholder="اسم المستخدم أو رقم الهاتف">
-      <input id="loginPassword" class="field" type="password" autocomplete="current-password" placeholder="كلمة المرور">
+      <input id="loginPassword" class="field" type="password" autocomplete="current-password" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter'){event.preventDefault();vendorLogin()}">
       <button id="loginBtn" type="button" onclick="vendorLogin()" class="w-full rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 px-5 py-3 font-black shadow-lg shadow-sky-500/15 transition hover:scale-[1.01] hover:shadow-sky-500/25">دخول إلى المتجر</button>
       <p id="loginNotice" class="min-h-5 text-center text-xs text-rose-300"></p>
     </div>
