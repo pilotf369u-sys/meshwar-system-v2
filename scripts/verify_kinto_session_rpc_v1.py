@@ -20,7 +20,6 @@ for fn in wrappers:
 assert sql.count('private.require_admin_session_v147(p_session_token)')==5
 assert sql.count('private.require_employee_session_v143(p_session_token)')==1
 for fn in wrappers[:4]:
-    assert f"'{fn}'" not in js or True
     assert f"sb.rpc('{fn}'" in js,fn
 for old in ['admin_list_featured_requests','list_featured_merchants',
             'admin_approve_featured_request','admin_reject_featured_request']:
@@ -42,3 +41,13 @@ for old in ['adjust_customer_reward_balance','admin_approve_featured_request',
 assert 'FROM PUBLIC,anon,authenticated' in lock
 assert 'BEGIN;' in sql and 'COMMIT;' in sql
 print('PASS: six session RPCs, four migrated admin UI calls, staged legacy lockdown')
+
+# Inventory every shipped browser source, not only the currently edited module.
+legacy = ['adjust_customer_reward_balance', 'admin_list_featured_requests',
+          'list_featured_merchants', 'admin_approve_featured_request',
+          'admin_reject_featured_request']
+for path in list(root.rglob('*.html')) + list((root/'js').rglob('*.js')):
+    source = path.read_text()
+    for name in legacy:
+        assert not re.search(r"\.rpc\s*\(\s*['\"]" + name + r"['\"]", source), (path, name)
+print('PASS: repository browser callsite inventory contains no legacy sensitive RPC calls')
