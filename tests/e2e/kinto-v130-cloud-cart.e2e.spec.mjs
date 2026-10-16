@@ -43,7 +43,8 @@ test('V189 checkout cleans cloud cart only after confirmed independent orders', 
   const source = await read('js/local-cart-v93.js');
   expect(source).toContain('async function removeSubmitted(keys)');
   expect(source).toContain('await removeSubmitted(submittedKeys)');
-  expect(source).toContain("rpc/checkout_independent_vendor_orders_v161");
+  expect(source).toContain("rpc/kinto_checkout_session_v1");
+  expect(source).toContain("p_session_token:cloudSessionToken()");
   expect(source).toContain('p_expected_revision:Number(remote.revision)');
   expect(source).toContain('cloudConflict=true;cloudDirty=false');
   expect(source).not.toContain('localStorage.setItem(scope.key');

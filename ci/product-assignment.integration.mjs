@@ -69,7 +69,7 @@ for(let repeat=0;repeat<2;repeat++){
  await db.exec(fs.readFileSync('sql/kinto-product-assignment-lockdown-v1.sql','utf8'));
 }
 let count=0,apiRole='anon';
-async function api(fn,args){await db.exec('SET ROLE '+apiRole);try{return (await db.query(`SELECT public.${fn}(${args.map((_,i)=>'$'+(i+1)).join(',')}) result`,args)).rows.map(r=>r.result)}finally{await db.exec('RESET ROLE')}}
+async function api(fn,args){await db.exec('SET ROLE '+apiRole);try{return (await db.query(`SELECT to_jsonb(public.${fn}(${args.map((_,i)=>'$'+(i+1)).join(',')})) result`,args)).rows.map(r=>r.result)}finally{await db.exec('RESET ROLE')}}
 async function deny(fn,pattern=/SESSION|DENIED|INVALID|REQUIRED|NOT_FOUND|CHANGED|SETTLED|DISABLED|permission denied|LOCKED/){await assert.rejects(fn,pattern);count++}
 async function direct(sql){await db.exec('SET ROLE '+apiRole);try{return await db.query(sql)}finally{await db.exec('RESET ROLE')}}
 const admin=(await api('admin_login_v147',['admin-phone','admin-pass']))[0].session_token;
@@ -192,4 +192,5 @@ if(native){
  }finally{await first.query('ROLLBACK');await first.end();await second.end()}
 }
 console.log(`PASS ${count} product/assignment isolation checks: real vendor/admin/branch logins, foreign-store denial, CAS stock protection, direct API lockdown, scoped/atomic assignments, paid-entry permissions, settled compatibility and rollback`);
+await (await import('./order-privacy.integration.mjs')).verifyOrderPrivacy({db,id,admin,employee,branch,vendor,otherVendor,api});
 await db.close();

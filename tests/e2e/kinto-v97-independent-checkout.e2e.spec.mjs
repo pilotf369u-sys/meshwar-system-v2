@@ -7,7 +7,7 @@ const root = path.resolve(import.meta.dirname, '../..');
 test('V97 checkout delegates independent order creation to the atomic RPC', async () => {
   const source = await readFile(path.join(root, 'js/local-cart-v93.js'), 'utf8');
 
-  expect(source).toContain("rpc/checkout_independent_vendor_orders");
+  expect(source).toContain("rpc/kinto_checkout_session_v1");
   expect(source).toContain("p_items:rpcItems");
   expect(source).toContain("version:'v189-cloud-only'");
 
