@@ -36,7 +36,7 @@
       storeId=String(product?.store_id||storeId).trim();
     }
     if(!storeId)throw new Error('تعذر تحديد المتجر المرتبط بالمنتج.');
-    const stores=await rest(`local_stores?select=id,store_name,logo_url,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(storeId)}&limit=1`);
+    const stores=await rest(`kinto_local_stores_public_v1?select=id,store_name,logo_url,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(storeId)}&limit=1`);
     const store=Array.isArray(stores)?stores[0]:null;
     if(!store)throw new Error('تعذر تحميل بيانات المتجر المرتبط بالمنتج.');
     window.MeshwarLocalStoreV4Context={...context,store};
@@ -75,7 +75,7 @@
     const originalText=confirmBtn.textContent;confirmBtn.disabled=true;confirmBtn.textContent='جاري الإضافة للسلة...';
     try{
       const rows=await rest(`local_products?select=id,store_id,product_name,image_url,base_price,discount_price,options&id=eq.${encodeURIComponent(activeProductId)}&limit=1`),product=Array.isArray(rows)?rows[0]:null;if(!product)throw new Error('تعذر تحميل المنتج المحدد.');
-      let store=window.MeshwarLocalStoreV4Context?.store||null;if(!store||String(store.id)!==String(product.store_id)){const stores=await rest(`local_stores?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(product.store_id)}&limit=1`);store=Array.isArray(stores)?stores[0]:null}if(!store)throw new Error('تعذر تحميل بيانات المتجر.');
+      let store=window.MeshwarLocalStoreV4Context?.store||null;if(!store||String(store.id)!==String(product.store_id)){const stores=await rest(`kinto_local_stores_public_v1?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(product.store_id)}&limit=1`);store=Array.isArray(stores)?stores[0]:null}if(!store)throw new Error('تعذر تحميل بيانات المتجر.');
       const unit=currentUnitPrice(product,store),oldUnit=oldUnitPrice(product,store);if(unit===null)throw new Error('سعر المنتج غير صالح.');
       const cart=await ensureCart(),vendor=Number(product.discount_price??product.base_price),pricing=window.MeshwarLocalPricing;
       cart.addItem({store_id:String(store.id),store_name:store.store_name||'',product_id:String(product.id),product_name:product.product_name||'',image_url:product.image_url||'',selected_options:selection,quantity,unit_price_local:unit,old_unit_price_local:oldUnit,currency:'IQD',pricing_snapshot:{vendor_price_usd:Number.isFinite(vendor)?vendor:0,customer_price_usd:Number(pricing?.customerPriceUSD?.(vendor,store.commission_rate))||0,exchange_rate:Number(store.exchange_rate)||0,commission_rate:Number(store.commission_rate)||0}});
@@ -84,7 +84,7 @@
   },true);
 
   const script=document.createElement('script');
-  script.src='js/local-store-product-details-v4-core.js?v=20261016-product-session-v1';
+  script.src='js/local-store-product-details-v4-core.js?v=20261017-store-control-v1';
   script.dataset.mwProductDetailsV4Core='1';
   script.onload=()=>{
     const variant=document.createElement('script');
@@ -104,7 +104,7 @@
           detailed.dataset.mwDetailedDescriptionV8='1';
           detailed.onload=()=>{
             const categories=document.createElement('script');
-            categories.src='js/local-store-categories-v9.js?v=20261016-session-refresh-v1';
+            categories.src='js/local-store-categories-v9.js?v=20261017-store-control-v1';
             categories.dataset.mwStoreCategoriesV9='1';
             categories.onload=()=>{
               const taxonomy=document.createElement('script');
@@ -169,7 +169,7 @@
       await coreReady;
       if(typeof window.MeshwarStoreCategoriesV9?.initStorefront==='function')await window.MeshwarStoreCategoriesV9.initStorefront(sid);
       if(typeof window.MeshwarLocalStoreGlobalSearchV12?.init==='function')await window.MeshwarLocalStoreGlobalSearchV12.init(sid);
-      const rows=await rest(`local_stores?select=id,store_name,logo_url,specialty,store_type,country,governorate,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(sid)}&limit=1`);
+      const rows=await rest(`kinto_local_stores_public_v1?select=id,store_name,logo_url,specialty,store_type,country,governorate,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(sid)}&limit=1`);
       const store=Array.isArray(rows)?rows[0]:null;
       if(!store)return;
       window.MeshwarLocalStoreV4Context={...(window.MeshwarLocalStoreV4Context||{}),store:{...(window.MeshwarLocalStoreV4Context?.store||{}),...store}};

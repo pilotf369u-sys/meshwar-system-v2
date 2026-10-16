@@ -17,7 +17,7 @@
   function rowTime(row,expense=false){const raw=expense?(row?.expense_date||row?.created_at):(row?.created_at);const t=new Date(raw||0).getTime();return Number.isFinite(t)?t:0}
 
   async function request(win,path,{method='GET',body=null,prefer='return=representation'}={}){
-    const r=await win.fetch(`${SB_URL}/rest/v1/${path}`,{method,cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',...(method!=='GET'?{Prefer:prefer}:{})},body:body==null?null:JSON.stringify(body)});
+    const r=await (win.KintoStoreControlV1||window.KintoStoreControlV1).forWindow(win)(`${SB_URL}/rest/v1/${path}`,{method,cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',...(method!=='GET'?{Prefer:prefer}:{})},body:body==null?null:JSON.stringify(body)});
     const t=await r.text();if(!r.ok)throw new Error(t||`HTTP ${r.status}`);return t?JSON.parse(t):null;
   }
 

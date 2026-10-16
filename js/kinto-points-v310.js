@@ -16,7 +16,7 @@ function couponList(data,sid){const rows=activeCoupons(data,sid);if(!rows.length
 async function customer(){
  const box=document.getElementById('rewardStatusBadge'),session=sessionCustomer();if(!box||!session?.token||typeof ensureCustomerPortalSupabase!=='function')return;
  try{const sb=await ensureCustomerPortalSupabase(),{data,error}=await sb.rpc('customer_loyalty_summary_v310',{p_session_token:session.token});if(error)throw error;
- let logos={};try{const ids=[...new Set([...(data?.wallets||[]),...(data?.coupons||[])].map(x=>String(x.store_id||'')).filter(Boolean))];if(ids.length){const {data:storeRows}=await sb.from('local_stores').select('id,logo_url').in('id',ids);for(const s of storeRows||[])logos[String(s.id)]=s.logo_url||''}}catch(e){console.debug('Reward store logos unavailable',e)}
+ let logos={};try{const ids=[...new Set([...(data?.wallets||[]),...(data?.coupons||[])].map(x=>String(x.store_id||'')).filter(Boolean))];if(ids.length){const {data:storeRows}=await sb.from('kinto_local_stores_public_v1').select('id,logo_url').in('id',ids);for(const s of storeRows||[])logos[String(s.id)]=s.logo_url||''}}catch(e){console.debug('Reward store logos unavailable',e)}
  const wallets=data?.wallets||[],coupons=data?.coupons||[],orders=data?.eligible_orders||[];data.wallets=wallets;data.coupons=coupons;
  const stores=[...new Set([...wallets.map(x=>String(x.store_id)),...coupons.map(x=>String(x.store_id))])].filter(Boolean);
  box.innerHTML='<div class="kinto-points-v310"><b>⭐ مكافآتي</b><small>مكافآت كل متجر مستقلة. الكوبون صالح 30 يوماً، والشحن لا يدخل في الخصم.</small>'+

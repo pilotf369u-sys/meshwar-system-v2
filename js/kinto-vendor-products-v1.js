@@ -1,7 +1,7 @@
 /* Explicit transport for vendor product writes; public reads use the original fetch. */
 (()=>{'use strict';
 const root=window,origin='https://hsmmbloouskqdnptiiad.supabase.co';
-function forWindow(win){const native=win.fetch.bind(win);return async function productFetch(input,init){
+function forWindow(win){const native=(win.KintoStoreControlV1||root.KintoStoreControlV1).forWindow(win);return async function productFetch(input,init){
  const request=new Request(input,init),url=new URL(request.url),method=request.method.toUpperCase();
  if(url.origin!==origin||url.pathname!=='/rest/v1/local_products'||method==='OPTIONS')return native(input,init);
  try{

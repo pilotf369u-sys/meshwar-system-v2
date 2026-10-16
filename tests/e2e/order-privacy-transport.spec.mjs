@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import fs from 'node:fs';
-const orderSource=fs.readFileSync('js/kinto-order-data-session-v1.js','utf8'),productSource=fs.readFileSync('js/kinto-vendor-products-v1.js','utf8');
+const orderSource=fs.readFileSync('js/kinto-order-data-session-v1.js','utf8'),productSource=fs.readFileSync('js/kinto-vendor-products-v1.js','utf8'),controlSource=fs.readFileSync('js/kinto-store-control-v1.js','utf8');
 async function boot(page,role){
  await page.goto('/');
  await page.evaluate(()=>{
@@ -20,7 +20,7 @@ test('customer transport binds the current session, preserves filters, and never
  expect(result.calls[0]).toMatchObject({role:'customer',token:'customer-token',method:'GET'});expect(result.calls[0].url).toContain('customer_id=eq.other');expect(result.calls[1].token).toBeNull();expect(result.calls).toHaveLength(2);expect(result.status).toBe(401);
 });
 test('vendor product and order reads use scoped RPC bodies and retain PostgREST filtering and exact counts',async({page})=>{
- await boot(page,'vendor');await page.addScriptTag({content:productSource});
+ await boot(page,'vendor');await page.addScriptTag({content:controlSource});await page.addScriptTag({content:productSource});
  const result=await page.evaluate(async()=>{
   const r=await KintoOrderDataSessionV1.fetch('https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/orders?select=id&limit=1',{headers:{Prefer:'count=exact'}});
   await KintoVendorProductsV1.fetch('https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/local_products?select=id,cost_price&store_id=eq.foreign&limit=1');return {calls:window.calls,count:r.headers.get('Content-Range')};
