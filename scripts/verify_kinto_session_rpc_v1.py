@@ -25,6 +25,13 @@ for fn in wrappers[:4]:
 for old in ['admin_list_featured_requests','list_featured_merchants',
             'admin_approve_featured_request','admin_reject_featured_request']:
     assert f"sb.rpc('{old}'" not in js,old
+campaign_js=(root/'js/admin-featured-campaigns-v1-core-v15.js').read_text()
+cms=(root/'admin-content-cms.html').read_text()
+assert "sb.rpc('list_featured_merchants_session_v1'" in campaign_js
+assert "sb.rpc('list_featured_merchants',{" not in campaign_js
+assert 'js/admin-session-v147.js' in cms
+assert 'KintoAdminSessionV147.identity(sb)' in cms
+assert 'ADMIN_SESSION_ROUTE_MISMATCH' in cms
 assert 'p_admin_id:' not in js
 assert "KintoAdminSessionV147?.read" in js
 assert lock.count('REVOKE EXECUTE')==1
