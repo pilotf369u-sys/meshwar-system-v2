@@ -9,6 +9,8 @@ on:
       - 'ci/site-admin*'
       - 'ci/vendor-media*'
       - 'ci/vendor-category-session*'
+      - 'ci/private-media*'
+      - 'ci/fixtures/private-media*'
       - 'js/local-store-categories-v9.js'
       - 'js/vendor-product-edit-fields-v26.js'
       - 'ci/fixtures/vendor-media*'
@@ -64,6 +66,7 @@ jobs:
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/featured-admin-session.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/site-admin-session.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/vendor-media-session.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/private-media-storage.integration.mjs
       - name: Verify on PostgreSQL 17 with real pgcrypto and API roles
         env:
           KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
@@ -84,3 +87,7 @@ jobs:
         env:
           KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
         run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/vendor-media-session.integration.mjs
+      - name: Private media API isolation and existing Edge handlers on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/private-media-storage.integration.mjs
