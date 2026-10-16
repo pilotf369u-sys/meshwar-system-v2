@@ -41,3 +41,23 @@ jobs:
           name: kinto-isolated-load-report
           path: test-results/load-report.json
           if-no-files-found: warn
+  bounded-owner-public-reads:
+    needs: concurrent-postgresql
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'test/concurrent-load-20261017' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Owner-authorized bounded public GETs only
+        env:
+          KINTO_LIVE_READONLY_APPROVAL: OWNER_AUTHORIZED_20261017
+        run: node ci/load/public-readonly.mjs
+      - name: Upload bounded public-read report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kinto-bounded-public-read-report
+          path: test-results/live-readonly-report.json

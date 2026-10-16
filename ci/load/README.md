@@ -24,3 +24,7 @@ KINTO_LOAD_DATABASE_URL=postgresql://postgres:isolated@127.0.0.1:5432/kinto_load
 `--smoke` uses PGlite and a single serialized connection solely to validate the harness. Its timings must never be used as capacity evidence.
 
 The report is `test-results/load-report.json` and is uploaded by `kinto-isolated-load.yml`. Results do **not** establish the maximum capacity of the current Supabase Free project, its API pool, network, Edge functions or GitHub Pages. Those require a separately bounded hosted-environment test. A test that reaches its configured cap reports “highest tested”, not “maximum possible”. No application or production schema changes are included in this PR.
+
+## Separately bounded live public reads
+
+For the owner-authorized test branch in this repository only, a dependent job runs after isolated integrity tests pass. It makes at most 541 **GET-only** public product/store requests, ramps to at most 200 concurrent requests, and stops after a failed response or p95 above five seconds. No login, RPC, private-data, purchase or write endpoint is present. This job is not enabled for arbitrary branches/forks or default workflow dispatch. Its separate report describes the hosted public-read path only, not production purchasing capacity. The endpoint and publishable key are the same public client configuration already shipped in KINTO.
