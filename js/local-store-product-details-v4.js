@@ -84,11 +84,11 @@
   },true);
 
   const script=document.createElement('script');
-  script.src='js/local-store-product-details-v4-core.js?v=20261016-media-session-v1';
+  script.src='js/local-store-product-details-v4-core.js?v=20261016-product-session-v1';
   script.dataset.mwProductDetailsV4Core='1';
   script.onload=()=>{
     const variant=document.createElement('script');
-    variant.src='js/local-store-variant-stock-v5.js?v=desc-unlimit-v8-1';
+    variant.src='js/local-store-variant-stock-v5.js?v=20261016-product-session-v1';
     variant.dataset.mwVariantStockV5='1';
     variant.onload=()=>{
       const matrix=document.createElement('script');
@@ -100,7 +100,7 @@
         v7.dataset.mwUiStockV7='1';
         v7.onload=()=>{
           const detailed=document.createElement('script');
-          detailed.src='js/local-store-detailed-description-v8.js?v=detailed-desc-v8';
+          detailed.src='js/local-store-detailed-description-v8.js?v=20261016-product-session-v1';
           detailed.dataset.mwDetailedDescriptionV8='1';
           detailed.onload=()=>{
             const categories=document.createElement('script');
@@ -108,7 +108,7 @@
             categories.dataset.mwStoreCategoriesV9='1';
             categories.onload=()=>{
               const taxonomy=document.createElement('script');
-              taxonomy.src='js/local-store-taxonomy-persistence-v10.js?v=taxonomy-persistence-v10';
+              taxonomy.src='js/local-store-taxonomy-persistence-v10.js?v=20261016-product-session-v1';
               taxonomy.dataset.mwTaxonomyPersistenceV10='1';
               taxonomy.onload=()=>{
                 const globalSearch=document.createElement('script');

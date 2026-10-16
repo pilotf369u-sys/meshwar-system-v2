@@ -121,6 +121,7 @@
         win.__mwVendorProductSaveV34LastPayload=payload;
         let query=id?sb.from('local_products').update(payload).eq('id',id).eq('store_id',vendorStore.id):sb.from('local_products').insert([payload]);
         if(id&&existing.updated_at)query=query.eq('updated_at',existing.updated_at);
+        if(id){query=query.eq('stock_quantity',existing.stock_quantity);query=existing.options==null?query.is('options',null):query.eq('options',JSON.stringify(existing.options));}
         const{data,error}=await query.select('*');if(error)throw error;
         if(!data?.length)throw new Error('تغير المنتج أثناء الحفظ. أعد فتحه وراجع الكميات ثم احفظ.');
         if(costInput)delete costInput.dataset.mwCostDirty;

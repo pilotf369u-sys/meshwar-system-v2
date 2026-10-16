@@ -22,7 +22,7 @@
   document.head.appendChild(style);
 
   async function rest(path,opts={}){
-    const r=await fetch(`${SB_URL}/rest/v1/${path}`,{method:opts.method||'GET',cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json'},body:opts.body==null?null:JSON.stringify(opts.body)});
+    if(/^local_products(?:\?|$)/.test(path)&&String(opts.method||'GET').toUpperCase()!=='GET'&&!(window.KintoVendorProductsV1||window.KintoVendorProductsV1))throw Error('PRODUCT_SESSION_TRANSPORT_REQUIRED');const productTransport=(window.KintoVendorProductsV1||window.KintoVendorProductsV1)?.forWindow(window)||window.fetch.bind(window);const r=await productTransport(`${SB_URL}/rest/v1/${path}`,{method:opts.method||'GET',cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json'},body:opts.body==null?null:JSON.stringify(opts.body)});
     if(!r.ok)throw new Error(await r.text()||`HTTP ${r.status}`);if(r.status===204)return null;const t=await r.text();return t?JSON.parse(t):null;
   }
 

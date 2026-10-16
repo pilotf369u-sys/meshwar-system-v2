@@ -8,7 +8,7 @@
   const q=v=>encodeURIComponent(String(v??''));
   function store(win){try{return JSON.parse(win.sessionStorage.getItem(STORE_KEY)||'null')}catch{return null}}
   async function rest(win,path,{method='GET',body=null}={}){
-    const r=await win.fetch(`${SB_URL}/rest/v1/${path}`,{method,cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',...(method!=='GET'?{Prefer:'return=representation'}:{})},body:body==null?null:JSON.stringify(body)});
+    if(/^local_products(?:\?|$)/.test(path)&&String(method).toUpperCase()!=='GET'&&!(win.KintoVendorProductsV1||window.KintoVendorProductsV1))throw Error('PRODUCT_SESSION_TRANSPORT_REQUIRED');const productTransport=(win.KintoVendorProductsV1||window.KintoVendorProductsV1)?.forWindow(win)||win.fetch.bind(win);const r=await productTransport(`${SB_URL}/rest/v1/${path}`,{method,cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',...(method!=='GET'?{Prefer:'return=representation'}:{})},body:body==null?null:JSON.stringify(body)});
     const t=await r.text();if(!r.ok)throw new Error(t||`HTTP ${r.status}`);return t?JSON.parse(t):null;
   }
   function snapshot(win){
@@ -39,7 +39,7 @@
   function install(win){
     if(!win||win.__mwFinanceCostSaveGuardV21)return;
     win.document.addEventListener('click',e=>{
-      const btn=e.target?.closest?.('button[onclick*="saveProduct"]');if(!btn)return;
+      const btn=e.target?.closest?.('button[onclick*="saveProduct"]');if(!btn||win.__mwVendorProductSaveCompleteV34)return;
       const s=snapshot(win);persistAfterSuccessfulSave(win,s).catch(err=>console.warn('V21 cost save guard skipped',err));
     },true);
     win.__mwFinanceCostSaveGuardV21=true;

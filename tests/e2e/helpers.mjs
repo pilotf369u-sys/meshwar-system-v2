@@ -26,7 +26,7 @@ export function fixtureDb(){
 }
 
 const mockSupabaseModule=String.raw`
-export function createClient(){
+export function createClient(_url,_key,options={}){
   const db=globalThis.__MESH_E2E_DB;
   const matches=(row,filters)=>filters.every(([k,v])=>String(row?.[k]??'')===String(v));
   class Query{
@@ -36,6 +36,12 @@ export function createClient(){
     async single(){const result=await this.maybeSingle();return result.data?result:{data:null,error:{message:'ROW_NOT_FOUND'}}}
     insert(rows){this.mode='insert';this.payload=Array.isArray(rows)?rows:[rows];return this} update(payload){this.mode='update';this.payload=payload;return this} delete(){this.mode='delete';return this}
     async exec(){
+      if(this.table==='local_products'&&this.mode!=='select'&&options.global?.fetch){
+        const u=new URL('https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/local_products');u.searchParams.set('select','*');
+        for(const[k,v]of this.filters)u.searchParams.append(k,v===null?'is.null':'eq.'+v);
+        const response=await options.global.fetch(u.href,{method:{insert:'POST',update:'PATCH',delete:'DELETE'}[this.mode],headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:this.mode==='delete'?undefined:JSON.stringify(this.payload)});
+        const data=await response.json();return response.ok?{data,error:null}:{data:null,error:data};
+      }
       const rows=db[this.table]||(db[this.table]=[]);
       if(this.mode==='insert'){const now=new Date().toISOString();const added=this.payload.map((r,i)=>({...r,id:r.id||'e2e-'+Date.now()+'-'+i,created_at:r.created_at||now,updated_at:r.updated_at||now}));rows.push(...added);return{data:added,error:null};}
       const selected=rows.filter(r=>matches(r,this.filters));
@@ -86,6 +92,19 @@ function initBrowserFixture({db,store}){
       const row={id:'rpc-'+Date.now(),store_id:String(body.p_store_id||''),amount:Number(body.p_amount),currency:body.p_currency||null,category:body.p_category||'تشغيلي',note:body.p_note||null,expense_date:body.p_expense_date||now.slice(0,10),created_at:now,updated_at:now};rows.push(row);
       return new Response(JSON.stringify(row),{status:200,headers:{'content-type':'application/json'}});
     }
+    if(table==='kinto_vendor_product_write_session_v1'&&method==='POST'){
+      const args=JSON.parse(init.body||'{}'),sid=window.__MESH_E2E_STORE.id,rows=window.__MESH_E2E_DB.local_products;
+      (window.__MESH_E2E_PRODUCT_WRITES||(window.__MESH_E2E_PRODUCT_WRITES=[])).push(args);
+      if(args.p_session_token!=='e2e-secure-token'||(args.p_patch?.store_id&&args.p_patch.store_id!==sid))return new Response(JSON.stringify({message:'VENDOR_SESSION_INVALID'}),{status:400});
+      if(window.__MESH_E2E_BEFORE_PRODUCT_WRITE)await window.__MESH_E2E_BEFORE_PRODUCT_WRITE(args);
+      let selected=rows.filter(r=>r.id===args.p_id&&r.store_id===sid);
+      for(const f of args.p_filters||[])selected=selected.filter(r=>f.op==='is'?r[f.field]==null:f.field==='options'?JSON.stringify(r.options)===JSON.stringify(f.value):String(r[f.field]??'')===String(f.value));
+      if(args.p_action==='update'&&!selected.length)console.warn('E2E product CAS conflict',JSON.stringify({filters:args.p_filters,actual:rows.find(r=>r.id===args.p_id)}));
+      if(args.p_action==='insert'){const row={...args.p_patch,store_id:sid,id:'rpc-product-'+Date.now(),created_at:new Date().toISOString(),updated_at:new Date().toISOString()};rows.push(row);selected=[row]}
+      if(args.p_action==='update')selected.forEach(r=>Object.assign(r,args.p_patch,{updated_at:new Date().toISOString()}));
+      if(args.p_action==='delete')for(let i=rows.length-1;i>=0;i--)if(selected.includes(rows[i]))rows.splice(i,1);
+      return new Response(JSON.stringify(selected),{status:200,headers:{'content-type':'application/json'}});
+    }
     const rows=window.__MESH_E2E_DB[table]||(window.__MESH_E2E_DB[table]=[]);let selected=applyFilters(rows,u.searchParams);
     if(method==='PATCH'){const body=JSON.parse(init.body||'{}');selected.forEach(r=>Object.assign(r,body));return new Response(JSON.stringify(selected),{status:200,headers:{'content-type':'application/json'}})}
     if(method==='POST'){let body=JSON.parse(init.body||'[]');body=Array.isArray(body)?body:[body];const now=new Date().toISOString();body=body.map((r,i)=>({...r,id:r.id||'rest-'+Date.now()+'-'+i,created_at:r.created_at||now,updated_at:r.updated_at||now}));rows.push(...body);return new Response(JSON.stringify(body),{status:201,headers:{'content-type':'application/json'}})}
@@ -103,7 +122,7 @@ export async function installMocks(page){
   await page.context().route('https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',r=>r.fulfill({status:200,contentType:'text/javascript',body:"window.JsBarcode=function(){return true};window.print=function(){};"}));return db;
 }
 
-export async function openVendor(page){await page.goto('/vendor-dashboard.html');const frame=page.frameLocator('#vendorFrame');await frame.locator('#dashboardView').waitFor({state:'visible'});await frame.locator('#vendorOrderSmartSearch').waitFor();await frame.locator('#vendorTabBtn-categories').waitFor();return frame;}
+export async function openVendor(page,{authenticated=false}={}){if(authenticated)await page.addInitScript(()=>sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token',expiresAt:'2099-01-01'})));await page.goto('/vendor-dashboard.html');const frame=page.frameLocator('#vendorFrame');await frame.locator('#dashboardView').waitFor({state:'visible'});await frame.locator('#vendorOrderSmartSearch').waitFor();await frame.locator('#vendorTabBtn-categories').waitFor();return frame;}
 
 export async function frameWindow(page,fn,arg){
   let last;

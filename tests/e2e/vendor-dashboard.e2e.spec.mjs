@@ -26,7 +26,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
   });
 
   test('stock-only edit retains product metadata and variant quantities after iframe reload',async({page})=>{
-    const vendor=await openVendor(page);
+    const vendor=await openVendor(page,{authenticated:true});
     await expect.poll(()=>frameWindow(page,()=>Boolean(window.__mwVendorProductSaveCompleteV34))).toBe(true);
     await frameWindow(page,async()=>{
       const p=window.__MESH_E2E_DB.local_products.find(x=>x.id==='p-1');
@@ -107,7 +107,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
   });
 
   test('catalog: add/edit stock, taxonomy persistence, barcode fallback, global margin auto-pricing and pagination',async({page})=>{
-    const vendor=await openVendor(page);await vendor.locator('#vendorTabBtn-products').click();
+    const vendor=await openVendor(page,{authenticated:true});await vendor.locator('#vendorTabBtn-products').click();
     await expect(vendor.locator('#mwVendorPager-products [data-pager-info]')).toContainText('1–10 من 23');await expect(vendor.locator('#productsBody tr:not(.mw-page-hidden)')).toHaveCount(10);
     await vendor.locator('#mwVendorPager-products [data-page-action="next"]').click();await expect(vendor.locator('#mwVendorPager-products [data-pager-info]')).toContainText('11–20 من 23');
     await expect(vendor.locator('#mwProductMainCategory')).toBeAttached();await expect(vendor.locator('#mwProductSubCategory')).toBeAttached();await expect(vendor.locator('#mwProductCostPrice')).toBeAttached();await expect(vendor.locator('#mwGlobalProfitMargin')).toBeAttached();
