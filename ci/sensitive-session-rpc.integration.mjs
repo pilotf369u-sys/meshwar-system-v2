@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 let db;
 if(process.env.KINTO_TEST_DATABASE_URL){
- const {Client}=await import(process.env.KINTO_PG_MODULE || 'pg');
+ const pg=await import(process.env.KINTO_PG_MODULE || 'pg');
+ const Client=pg.Client || pg.default.Client;
  const client=new Client({connectionString:process.env.KINTO_TEST_DATABASE_URL});await client.connect();
  db={exec:sql=>client.query(sql),query:(sql,args)=>client.query(sql,args),close:()=>client.end()};
  await db.exec('CREATE EXTENSION pgcrypto');
