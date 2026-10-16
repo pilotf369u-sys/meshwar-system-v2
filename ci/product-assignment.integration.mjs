@@ -196,4 +196,5 @@ console.log(`PASS ${count} product/assignment isolation checks: real vendor/admi
 await (await import('./order-privacy.integration.mjs')).verifyOrderPrivacy({db,id,admin,employee,branch,vendor,otherVendor,api});
 await (await import('./store-control.integration.mjs')).verifyStoreControl({db,id,admin,employee,branch,vendor,otherVendor,api});
 await (await import('./control-surface.integration.mjs')).verifyControlSurface({db,id,admin,employee,branch,vendor,otherVendor,api});
+await (await import('./order-workflow.integration.mjs')).verifyOrderWorkflow({db,id,api});
 await db.close();
