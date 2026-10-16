@@ -25,3 +25,6 @@ From repository root, install `@electric-sql/pglite@0.5.8` in a temporary prefix
 - This adapter tests the UI-to-SQL behavior; it does not emulate PostgREST HTTP or replace a full restored-database/browser staging test.
 - GitHub checks for commit 0a3a74c: 7/7 passed, including E2E. The older employee-session-ui-v143 source-pattern test fails identically on parent 451967a (expects an obsolete legacyLogin text); login and session helper files are unchanged.
 - Connected Supabase inventory contains production only and no development branches. No paid branch or project was created.
+
+## Real login session test
+The native PostgreSQL 17 run additionally loads metadata snapshots of the six live login/identity/logout function definitions. Synthetic admin/employee accounts use random test-only passwords hashed with real pgcrypto bcrypt. Actual frontend session helpers perform incorrect-password rejection, successful login, storage, identity, reward adjustment and logout. Generated tokens, rather than preseeded strings, drive campaign approvals/rejections; a second generated admin token is revoked and must fail. Token hashes, audit identities and unchanged post-logout balances are asserted. Passwords and tokens are not printed. This is an isolated SQL environment with a direct RPC adapter, not a hosted Supabase branch or browser/PostgREST HTTP staging test.

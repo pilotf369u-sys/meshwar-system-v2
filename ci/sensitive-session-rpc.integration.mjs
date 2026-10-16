@@ -52,4 +52,5 @@ for(const role of ['anon','authenticated']){
  await db.exec('set role '+role);await call('admin_list_featured_requests_session_v1',['admin-1']);await db.exec('reset role');count++;
 }
 const {verifyDatabaseUi}=await import('./sensitive-session-db-ui.mjs');await verifyDatabaseUi(db,id);
-console.log(`PASS ${count} isolated PostgreSQL authorization cases; correct balances and server-derived audit actors; wrappers succeed after legacy revocation`);await db.close();
+console.log(`PASS ${count} isolated PostgreSQL authorization cases; correct balances and server-derived audit actors; wrappers succeed after legacy revocation`);if(process.env.KINTO_TEST_DATABASE_URL){const {verifyRealLogin}=await import('./sensitive-session-login.mjs');await verifyRealLogin(db,id,verifyDatabaseUi);}
+await db.close();
