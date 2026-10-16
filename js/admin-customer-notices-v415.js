@@ -30,7 +30,7 @@ async function storeLoad(p=1){
  box.textContent='جاري التحميل...';
  try{
   const sb=await client(),q=String($('acnStoreSearchV420').value||'').trim().replace(/[,%()]/g,' ').slice(0,70);
-  let req=sb.from('local_stores').select('id,store_name',{count:'exact'});
+  let req=sb.from('kinto_local_stores_public_v1').select('id,store_name',{count:'exact'});
   if(q)req=req.ilike('store_name','%'+q+'%');
   const {data,error,count}=await req.order('id').range((p-1)*8,p*8-1);
   if(serial!==storeSerial)return;if(error)throw error;

@@ -11,7 +11,7 @@
   const slugify=v=>String(v||'').trim().toLowerCase().replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,80)||'category';
 
   async function rest(path,{method='GET',body=null,prefer='return=representation'}={}){
-    const r=await fetch(`${SB_URL}/rest/v1/${path}`,{
+    const r=await (window.KintoVendorProductsV1?.forWindow(window)||((input,init)=>fetch(input,init)))(`${SB_URL}/rest/v1/${path}`,{
       method,cache:'no-store',
       headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json',...(method!=='GET'?{Prefer:prefer}:{})},
       body:body==null?null:JSON.stringify(body)

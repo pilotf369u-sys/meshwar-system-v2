@@ -51,7 +51,7 @@
       const originalText=confirmBtn.textContent;confirmBtn.dataset.submitting='1';confirmBtn.disabled=true;confirmBtn.classList.add('is-loading');confirmBtn.textContent='جاري إرسال الطلب...';
       try{
         const context=window.MeshwarLocalStoreV4Context||{};let store=context.store||null;
-        if(!store){const storeId=String(new URLSearchParams(location.search).get('storeId')||'').trim();if(storeId){const stores=await rest(`local_stores?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(storeId)}&limit=1`);store=Array.isArray(stores)?stores[0]:null}}
+        if(!store){const storeId=String(new URLSearchParams(location.search).get('storeId')||'').trim();if(storeId){const stores=await rest(`kinto_local_stores_public_v1?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encodeURIComponent(storeId)}&limit=1`);store=Array.isArray(stores)?stores[0]:null}}
         if(!store)throw new Error('تعذر تحميل بيانات المتجر.');
         const result=await window.createLocalStoreOrder(p,store,selection,qty);
         if(result?.ok){modal.classList.remove('open');return}

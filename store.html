@@ -104,7 +104,7 @@
       return;
     }
     window.__KINTO_STORE_ID__=id;function loadCampaignPromo(){fetch(`${SUPABASE_URL}/rest/v1/rpc/active_kinto_campaigns_v400`,{method:'POST',cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},body:'{}'}).then(r=>r.ok?r.json():[]).then(rows=>{const c=(Array.isArray(rows)?rows:[]).find(x=>Array.isArray(x.store_ids)&&x.store_ids.map(String).includes(id));const el=document.getElementById('kintoStoreCampaignPromo');if(!el||!c)return;el.textContent=String(c.display_text||'').trim()||('اشتري واربح '+Number(c.reward_amount||0).toLocaleString('en-US')+' '+String(c.currency||'IQD'));el.hidden=false}).catch(e=>console.warn('Campaign promo skipped',e))}loadCampaignPromo();
-    fetch(`${SUPABASE_URL}/rest/v1/local_stores?select=id,store_name,logo_url,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{
+    fetch(`${SUPABASE_URL}/rest/v1/kinto_local_stores_public_v1?select=id,store_name,logo_url,country,governorate,store_type,specialty,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`,{
       cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json'}
     }).then(r=>{if(!r.ok)throw new Error(`Store REST ${r.status}`);return r.json()}).then(rows=>{
       const s=Array.isArray(rows)?rows[0]:null;
@@ -124,7 +124,7 @@
   </script>
   <script src="js/customer-session-v150.js?v=20261012-v189-cart-session"></script>
   <script src="js/local-cart-v93.js?v=20261016-order-privacy-v1"></script>
-  <script type="module" src="js/local-store-card-v3.js?v=20261016-customer-directory-v1"></script>
+  <script type="module" src="js/local-store-card-v3.js?v=20261017-store-control-v1"></script>
   <script src="js/store-product-reviews-v140.js?v=20260912-v144-1" defer></script>
   <script src="js/store-card-modern-v144.js?v=20260912-v144" defer></script>
   <script src="js/storefront-product-modal-v145.js?v=20261007-v52-stock-limits" defer></script>
@@ -178,7 +178,7 @@
 <script id="kintoStoreMobileAppNavRuntimeV252">
 (()=>{const stores=document.getElementById('kintoMobileStores'),menu=document.getElementById('kintoMobileStoresMenu');stores?.addEventListener('click',()=>menu?.classList.toggle('open'));document.addEventListener('click',e=>{if(menu&&!menu.contains(e.target)&&!stores?.contains(e.target))menu.classList.remove('open')});const customerId=()=>String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim();const sync=()=>{const id=customerId(),chat=document.getElementById('kintoMobileChat'),favorites=document.getElementById('kintoMobileFavorites'),account=document.getElementById('kintoMobileAccount'),cart=document.getElementById('kintoMobileCart'),orders=document.getElementById('kintoMobileOrders');if(!chat||!favorites||!account||!cart||!orders)return;const dash=tab=>'dashboard.html?customerId='+encodeURIComponent(id)+'&tab='+encodeURIComponent(tab);chat.href=id?dash('chatHelp'):'login.html';favorites.href=id?dash('favorites'):'login.html';account.href=id?'dashboard.html?customerId='+encodeURIComponent(id)+'&openAccount=1':'login.html';cart.href=id?dash('drafts'):'login.html';orders.href=id?dash('activeOrders'):'login.html';const badge=document.getElementById('kintoMobileCartBadge'),count=Number(window.KintoLocalCartV93?.getCount?.()||0);if(badge){badge.textContent=count>99?'99+':String(count);badge.classList.toggle('show',count>0)}};async function unread(){const id=customerId(),badge=document.getElementById('kintoMobileChatBadge');if(!id||!badge)return;try{const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'),sb=window.KintoSupabase||(window.KintoSupabase=mod.createClient('https://hsmmbloouskqdnptiiad.supabase.co','sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH'));let r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('read_by_customer',false).in('sender_type',['employee','admin']);if(r.error&&/read_by_customer/i.test(String(r.error.message||'')))r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('is_read',false).in('sender_type',['employee','admin']);if(r.error)throw r.error;const n=Number(r.count||0);badge.textContent=n>99?'99+':String(n);badge.classList.toggle('show',n>0)}catch(e){console.warn('Store chat unread count error:',e)}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();window.addEventListener('storage',sync);window.addEventListener('kinto:local-cart-change',sync);setTimeout(sync,800);unread();setTimeout(unread,800)})();
 </script>
-<script defer src="js/kinto-deals-customer-g7.js?v=20261006-g20iqd1"></script>
+<script defer src="js/kinto-deals-customer-g7.js?v=20261017-store-control-v1"></script>
 
 <style id="kintoStoreCompactCardsPreviewV177">
 /* Visual-only storefront cards. Preserve option, stock, campaign and ordering markup. */

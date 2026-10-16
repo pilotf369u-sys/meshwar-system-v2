@@ -201,7 +201,7 @@ test('V310 replaces legacy V112 rewards with store-scoped secure KINTO coupons',
   ]);
   for (const source of [admin, employee, dashboard]) {
     expect(source).not.toContain('rewards-loyalty-v112.js?v=20260905-v112');
-    expect(source).toContain('kinto-points-v310.js?v=20260928-v310');
+    expect(source).toContain('kinto-points-v310.js?v=20261017-store-control-v1');
   }
   expect(kinto).toContain("customer_loyalty_summary_v310");
   expect(kinto).toContain("customer_apply_coupon_v310");

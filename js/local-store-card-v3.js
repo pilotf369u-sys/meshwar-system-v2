@@ -100,7 +100,7 @@ function readCache(storeId){try{const v=JSON.parse(localStorage.getItem(cacheKey
 
 async function fetchStoreBundle(storeId){
   const encoded=encodeURIComponent(storeId);
-  const [stores,products]=await Promise.all([restRequest(`local_stores?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encoded}&status=eq.active&limit=1`,{timeout:3000}),restRequest(`local_products?select=id,product_name,image_url,description,base_price,discount_price,stock_quantity,low_stock_threshold,is_out_of_stock,options&store_id=eq.${encoded}&order=created_at.desc`,{timeout:3000})]);
+  const [stores,products]=await Promise.all([restRequest(`kinto_local_stores_public_v1?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encoded}&status=eq.active&limit=1`,{timeout:3000}),restRequest(`local_products?select=id,product_name,image_url,description,base_price,discount_price,stock_quantity,low_stock_threshold,is_out_of_stock,options&store_id=eq.${encoded}&order=created_at.desc`,{timeout:3000})]);
   const store=Array.isArray(stores)?stores[0]:null;if(!store)throw new Error('المتجر غير موجود أو غير نشط، أو أن RLS يمنع قراءته.');return{store,products:Array.isArray(products)?products:[]};
 }
 

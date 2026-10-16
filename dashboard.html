@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" class="customer-auth-pending">
 <head>
+<script src="js/kinto-attachment-access-v1.js?v=20261017-v1" data-role="customer-view"></script>
 <script src="js/kinto-order-data-session-v1.js?v=20261016-order-privacy-v1" data-role="customer-view"></script>
 <script src="js/kinto-customer-directory-v1.js?v=20261016-v1" data-role="customer-view"></script>
     <meta charset="UTF-8">
@@ -93,7 +94,7 @@ let customerPortalSupabase=null,currentCustomerCloud=null,currentCustomerOrdersG
 let chatPollingTimer=null,ordersPollingTimer=null,selectedCustomerChatFile=null,customerReadField=null;
 async function ensureCustomerPortalSupabase(){if(customerPortalSupabase)return customerPortalSupabase;const{createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');customerPortalSupabase=createClient(CUSTOMER_SUPABASE_URL,CUSTOMER_SUPABASE_KEY,{global:{fetch:window.KintoOrderDataSessionV1.fetch}});return customerPortalSupabase;}
 function customerChatTokenV61(){const s=window.KintoCustomerSessionV150?.read?.();if(!s?.token)throw new Error('CUSTOMER_SESSION_REQUIRED');return String(s.token)}async function customerChatItemsV61(){const sb=await ensureCustomerPortalSupabase(),r=await sb.rpc('customer_chat_list_v61',{p_session_token:customerChatTokenV61()});if(r.error)throw r.error;return Array.isArray(r.data?.items)?r.data.items:[]}function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
-function safeChatFileName(name){return String(name||'file').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-120)||'file'}function isImageAttachment(url){return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(String(url||''))}function attachmentName(url){try{return decodeURIComponent(new URL(url).pathname.split('/').pop()||'ملف مرفق')}catch{return'ملف مرفق'}}function attachmentHtml(m){const url=String(m?.file_url||'').trim();if(!url)return'';const safe=escapeHtml(url),name=escapeHtml(attachmentName(url));return isImageAttachment(url)?`<div class="chat-attachment"><a href="${safe}" target="_blank" rel="noopener"><img src="${safe}" alt="مرفق"></a></div>`:`<div class="chat-attachment"><a class="chat-file-link" href="${safe}" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down"></i>${name}</a></div>`}function handleCustomerChatFile(file){selectedCustomerChatFile=file||null;document.getElementById('customerSelectedFile').innerText=file?`المرفق: ${file.name}`:''}async function uploadCustomerChatAttachment(file){if(denyStaffCustomerMutationV151())return;if(!file)return'';if(file.size>15*1024*1024)throw new Error('حجم المرفق يجب ألا يتجاوز 15MB');const sb=await ensureCustomerPortalSupabase(),path=`customer/${String(currentCustomerCloud?.id||'customer')}/${Date.now()}-${safeChatFileName(file.name)}`,{error}=await sb.storage.from('chat-attachments').upload(path,file,{upsert:false,contentType:file.type||undefined});if(error)throw error;const{data}=sb.storage.from('chat-attachments').getPublicUrl(path);if(!data?.publicUrl)throw new Error('تعذر إنشاء رابط المرفق');return data.publicUrl}
+function safeChatFileName(name){return String(name||'file').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-120)||'file'}function isImageAttachment(url){return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(String(url||''))}function attachmentName(url){try{return decodeURIComponent(new URL(url).pathname.split('/').pop()||'ملف مرفق')}catch{return'ملف مرفق'}}function attachmentHtml(m){const url=String(m?.file_url||'').trim();if(!url)return'';const safe=escapeHtml(url),name=escapeHtml(attachmentName(url));return isImageAttachment(url)?`<div class="chat-attachment"><a href="${safe}" target="_blank" rel="noopener"><img src="${safe}" alt="مرفق"></a></div>`:`<div class="chat-attachment"><a class="chat-file-link" href="${safe}" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down"></i>${name}</a></div>`}function handleCustomerChatFile(file){selectedCustomerChatFile=file||null;document.getElementById('customerSelectedFile').innerText=file?`المرفق: ${file.name}`:''}async function uploadCustomerChatAttachment(file){if(denyStaffCustomerMutationV151()||!file)return '';return KintoAttachmentAccessV1.upload(await ensureCustomerPortalSupabase(),file,'chat',currentCustomerCloud.id)}
 async function fetchCurrentCustomerFromCloud(){
   const sb=await ensureCustomerPortalSupabase(),params=new URLSearchParams(location.search),viewedBy=String(params.get('viewedBy')||'').trim(),customerId=String(params.get('customerId')||'').trim();
   if(customerId&&(viewedBy==='employee'||viewedBy==='admin')){
@@ -284,7 +285,7 @@ Object.assign(window,{applyCustomerDecisionReward,switchCustomerTab,openCustomer
 </script>
 <script defer src="js/customer-admin-notices-v416.js?v=20261001-v422-store-branding"></script>
 <script src="js/customer-product-reviews-v135.js?v=20261007-v53-stock-warning" defer></script>
-<script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>\n<script src="js/customer-favorites-dashboard-v148.js?v=20260924-v195" defer></script>
+<script src="js/local-store-pricing.js?v=local-modal-v4-2"></script>\n<script src="js/customer-favorites-dashboard-v148.js?v=20261017-store-control-v1" defer></script>
 <script src="js/customer-navigation-drawer-v156.js?v=20260920-v134-public-refresh-route-v431-notice-badge-v189-cart-badge-v190-compact-menu-v191-address-compact" defer></script>
 <script src="js/customer-mobile-app-shell-v178.js?v=20260924-v178" defer></script>
 <script src="js/customer-dashboard-deeplink-v158.js?v=20260920-v133-refresh-position-v431-notice-back" defer></script>
@@ -293,7 +294,7 @@ Object.assign(window,{applyCustomerDecisionReward,switchCustomerTab,openCustomer
 <script src="js/local-cart-v93.js?v=20261016-order-privacy-v1"></script>
 <script src="js/customer-local-cart-v125.js?v=20260909-v125"></script>
 <script src="js/kinto-bundle-ui-v93.js?v=20261016-order-privacy-v1"></script>
-<script defer src="js/kinto-points-v310.js?v=20260928-v310"></script>
+<script defer src="js/kinto-points-v310.js?v=20261017-store-control-v1"></script>
 <style id="customer-rewards-entry-v367-style">
 .customer-reward-summary-card{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .customer-reward-source{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;pointer-events:none!important}

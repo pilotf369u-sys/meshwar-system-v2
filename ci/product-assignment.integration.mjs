@@ -154,7 +154,8 @@ const browser={sessionStorage:{getItem:()=>JSON.stringify({token})},fetch:async(
  if(!request.url.includes('/rpc/kinto_vendor_product_write_session_v1'))return new Response('[]',{status:200});
  try{const args=await request.json();const result=await product(args.p_session_token,args.p_patch,args.p_id,args.p_filters,args.p_action);return new Response(JSON.stringify(result),{status:200,headers:{'Content-Type':'application/json'}})}catch(error){return new Response(JSON.stringify({message:error.message}),{status:400})}
 }};
-const context=vm.createContext({window:browser,Request,Response,Headers,URL,Date,JSON,Error,String,Boolean,Object,Array});
+const context=vm.createContext({window:browser,document:{currentScript:{dataset:{role:"vendor"}}},Request,Response,Headers,URL,Date,JSON,Error,String,Boolean,Object,Array});
+vm.runInContext(fs.readFileSync('js/kinto-store-control-v1.js','utf8'),context);
 vm.runInContext(fs.readFileSync('js/kinto-vendor-products-v1.js','utf8'),context);
 const transport=browser.KintoVendorProductsV1.fetch,baseURL='https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/local_products';
 const response=await transport(baseURL+'?id=eq.'+id(1001)+'&store_id=eq.'+id(1)+'&select=id,barcode',{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({barcode:'SESSION-TRANSPORT'})});
@@ -193,4 +194,6 @@ if(native){
 }
 console.log(`PASS ${count} product/assignment isolation checks: real vendor/admin/branch logins, foreign-store denial, CAS stock protection, direct API lockdown, scoped/atomic assignments, paid-entry permissions, settled compatibility and rollback`);
 await (await import('./order-privacy.integration.mjs')).verifyOrderPrivacy({db,id,admin,employee,branch,vendor,otherVendor,api});
+await (await import('./store-control.integration.mjs')).verifyStoreControl({db,id,admin,employee,branch,vendor,otherVendor,api});
+await (await import('./control-surface.integration.mjs')).verifyControlSurface({db,id,admin,employee,branch,vendor,otherVendor,api});
 await db.close();

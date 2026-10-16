@@ -98,7 +98,7 @@ async function loadStoreContext(id){
   const storeId=String(id||'').trim();
   if(!storeId)return;
   const [{data:store,error:se},{data:products,error:pe}]=await Promise.all([
-    sb.from('local_stores').select('id,store_name,commission_rate,default_currency,exchange_rate,exchange_base_currency,exchange_target_currency,status').eq('id',storeId).single(),
+    sb.from('kinto_local_stores_public_v1').select('id,store_name,commission_rate,default_currency,exchange_rate,exchange_base_currency,exchange_target_currency,status').eq('id',storeId).single(),
     sb.from('local_products').select('id,product_name,image_url,description,base_price,discount_price,is_out_of_stock').eq('store_id',storeId).order('created_at',{ascending:false})
   ]);
   if(se)throw se;

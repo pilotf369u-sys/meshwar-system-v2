@@ -18,6 +18,12 @@ on:
       - 'ci/order-delete*'
       - 'ci/product-assignment*'
       - 'ci/order-privacy*'
+      - 'ci/store-control*'
+      - 'ci/control-surface*'
+      - 'ci/attachment-edge*'
+      - 'js/kinto-store-control-v1.js'
+      - 'js/kinto-attachment-access-v1.js'
+      - 'supabase/functions/kinto-attachment-access-v1/**'
       - 'js/kinto-order-data-session-v1.js'
       - 'js/kinto-vendor-products-v1.js'
       - 'js/kinto-order-assignment-v1.js'
@@ -101,6 +107,8 @@ jobs:
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/order-save-session.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/order-delete.integration.mjs
           KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/product-assignment.integration.mjs
+      - name: Verify private attachment Edge authorization
+        run: node --test ci/attachment-edge.test.mjs
       - name: Verify on PostgreSQL 17 with real pgcrypto and API roles
         env:
           KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
