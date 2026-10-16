@@ -61,6 +61,10 @@ BEGIN
   d:=private.v94_jsonb_object(to_jsonb(o.details));
   IF d->>'source'='local_store' AND d->>'store_id'=sid THEN RETURN NEXT o; CONTINUE; END IF;
   IF d->>'source' IS DISTINCT FROM 'local_cart_bundle' THEN CONTINUE; END IF;
+  IF jsonb_typeof(d->'items') IS DISTINCT FROM 'array' THEN CONTINUE; END IF;
+  -- Independent checkout already creates one order per store. Keep its canonical shipping/discount/finance snapshots intact.
+  IF d->>'checkout_contract'='independent_vendor_orders' AND d->>'store_id'=sid AND jsonb_array_length(d->'items')>0 AND NOT EXISTS(
+   SELECT FROM jsonb_array_elements(d->'items') i WHERE i->>'store_id' IS DISTINCT FROM sid) THEN RETURN NEXT o;CONTINUE; END IF;
   SELECT coalesce(jsonb_agg(i),'[]'),coalesce(sum(coalesce(nullif(i->>'line_total_local','')::numeric,
    coalesce(nullif(i->>'unit_price_local','')::numeric,0)*coalesce(nullif(i->>'quantity','')::numeric,1))),0),coalesce(sum(coalesce(nullif(i->>'quantity','')::numeric,1)),0)
    INTO items,subtotal,qty FROM jsonb_array_elements(d->'items') i WHERE i->>'store_id'=sid;
