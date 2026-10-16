@@ -9,7 +9,7 @@ export async function verifyControlSurface({db,id,admin,employee,branch,vendor,o
  CREATE TABLE local_orders(id uuid PRIMARY KEY,store_id uuid,customer_name text);
  CREATE TABLE local_returns(id uuid PRIMARY KEY,store_id uuid,penalty_amount numeric,return_status text);
  CREATE TABLE financial_settlements(id bigserial PRIMARY KEY,store_id text,period_end timestamptz,closed_at timestamptz,status text);
- CREATE VIEW local_store_financial_summary AS SELECT store_id,count(*) FROM local_orders GROUP BY store_id;
+ CREATE VIEW local_store_financial_summary WITH(security_invoker=true) AS SELECT store_id,count(*) FROM local_orders GROUP BY store_id;
  CREATE TABLE messages(id uuid PRIMARY KEY,customer_id text,file_url text);
  CREATE SCHEMA storage;
  CREATE TABLE storage.buckets(id text PRIMARY KEY,public boolean);
