@@ -53,7 +53,7 @@ INSERT INTO orders(id,customer_id,branch_id,courier_id,delivery_agent_id,details
 INSERT INTO order_store_segments VALUES('${id(100)}','${id(60)}'),('${id(101)}','${id(61)}');
 INSERT INTO kinto_loyalty_wallets VALUES('${id(3)}','${id(60)}');`);
 let apiRole='anon',checks=0;
-async function api(fn,args){await db.exec('SET ROLE '+apiRole);try{return (await db.query(`SELECT public.${fn}(${args.map((_,i)=>'$'+(i+1)).join(',')}) AS result`,args)).rows[0].result}finally{await db.exec('RESET ROLE')}}
+async function api(fn,args){if(fn==='kinto_customer_directory_session_v1')args=args.map((value,index)=>index===2?JSON.stringify(value):value);await db.exec('SET ROLE '+apiRole);try{return (await db.query(`SELECT public.${fn}(${args.map((_,i)=>'$'+(i+1)).join(',')}) AS result`,args)).rows[0].result}finally{await db.exec('RESET ROLE')}}
 async function deny(action,pattern=/SESSION|ROLE|permission denied|DISABLED|INVALID|PERMISSION/){await assert.rejects(action,pattern);checks++}
 const sessions={};
 sessions.customer=(await api('customer_review_login_v132',['phone-1','legacy-test-password'])).session_token;
