@@ -58,10 +58,16 @@
     `;document.head.appendChild(s);
   }
 
+  let vendorCategoryLoad=0;
   async function loadVendorCategories(){
-    const store=parseSession();state.storeId=String(store?.id||'').trim();if(!state.storeId)return [];
-    const rows=await rest(`store_categories?select=id,store_id,parent_id,name,slug,sort_order,is_visible&store_id=eq.${q(state.storeId)}&order=sort_order.asc,name.asc`);
+    const request=++vendorCategoryLoad,store=parseSession(),storeId=String(store?.id||'').trim();
+    state.storeId=storeId;if(!storeId){state.categories=[];return []}
+    const rows=await rest(`store_categories?select=id,store_id,parent_id,name,slug,sort_order,is_visible&store_id=eq.${q(storeId)}&order=sort_order.asc,name.asc`);
+    if(request!==vendorCategoryLoad||String(parseSession()?.id||'').trim()!==storeId)return state.categories;
     state.categories=Array.isArray(rows)?rows:[];return state.categories;
+  }
+  async function refreshVendorSessionCategories(){
+    await loadVendorCategories();renderVendorCategories();refreshProductCategoryFields();
   }
 
   function categoryPanelHtml(){
@@ -240,7 +246,8 @@
 
   async function startVendor(){
     injectCss();injectVendorTab();injectProductFields();bindProductTaxonomy();
-    await loadVendorCategories();renderVendorCategories();refreshProductCategoryFields();
+    window.addEventListener('meshwar:vendor-session-ready',()=>{refreshVendorSessionCategories().catch(e=>console.error('Store categories session refresh failed',e))});
+    await refreshVendorSessionCategories();
     new MutationObserver(()=>{injectVendorTab();injectProductFields()}).observe(document.documentElement,{childList:true,subtree:true});
   }
 
