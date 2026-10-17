@@ -317,7 +317,7 @@ function freshEmployeeBrandUrl(url){try{const u=new URL(String(url||'').trim(),l
 async function hydrateEmployeeBrandLogo(){try{const sb=await ensureEmployeeSupabase(),{data,error}=await sb.rpc('get_site_settings');if(error)throw error;const url=String(parseEmployeeSiteSettings(data).brand_logo_url||'').trim(),img=document.getElementById('employeeBrandLogo');if(!url||!img)return;const fresh=freshEmployeeBrandUrl(url),probe=new Image();probe.onload=()=>{img.src=fresh;requestAnimationFrame(()=>img.classList.add('is-ready'))};probe.src=fresh}catch(e){console.warn('KINTO employee branding settings unavailable:',e)}}
 window.onload=async()=>{try{await loadEmployeeIdentity();await Promise.all([hydrateEmployeeBrandLogo(),loadBranches(),loadCouriersForOrders()]);renderPipelineTabs();document.getElementById('activePipelineLabel').innerText=PIPELINES[activePipeline].label;await Promise.all([loadPipelineOrders(),refreshPipelineCounts(),fetchUnreadChatNotifications(),setupRealtime()])}catch(e){console.error(e);document.getElementById('employeeIdentity').innerText='تعذر التحقق: '+(e.message||e);throw e}};
 window.addEventListener('beforeunload',()=>{if(unreadPollingTimer)clearInterval(unreadPollingTimer);if(chatPollingTimer)clearInterval(chatPollingTimer);if(employeeOrderSyncTimerV151)clearInterval(employeeOrderSyncTimerV151)});
-Object.assign(window,{switchPipeline,schedulePipelineSearch,handlePipelineSearchKeydown,changePipelinePage,goPipelinePage,changePipelinePageSize,onBranchFilterChange,saveOrderRow,printOrderBarcode,exportSelectedBranchCsv,printSelectedBranchReport,loadRewardsManagementTable,openOrderDetailsById,closeOrderDetailsModal,openCustomerPortal,toggleNotificationDropdown,openUnreadNotification,openChat,closeChatModal,sendChatMessage,handleEmployeeChatFile,employeeVerifiedLogout});
+Object.assign(window,{switchPipeline,schedulePipelineSearch,handlePipelineSearchKeydown,changePipelinePage,goPipelinePage,changePipelinePageSize,onBranchFilterChange,saveOrderRow,printOrderBarcode,exportSelectedBranchCsv,printSelectedBranchReport,openOrderDetailsById,closeOrderDetailsModal,openCustomerPortal,toggleNotificationDropdown,openUnreadNotification,openChat,closeChatModal,sendChatMessage,handleEmployeeChatFile,employeeVerifiedLogout});
 </script>
 <script defer src="js/invoice-details-hotfix-v115.js?v=20260905-v116"></script>
 <script defer src="js/kinto-points-v310.js?v=20261017-store-control-v1"></script>
@@ -891,28 +891,7 @@ html{background:var(--emp-navy);color-scheme:dark}body{background:radial-gradien
   switchPipeline=window.switchPipeline;
 })();
 </script>
-<script id="employee-sidebar-counts-v364">
-(()=>{
-  window.refreshPipelineCounts=async function(){
-    try{
-      const sb=await ensureEmployeeSupabase();
-      const {data,error}=await sb.from('orders').select('status,branch_id,branch_name').limit(10000);
-      if(error)throw error;
-      const rows=data||[],next={};
-      Object.entries(PIPELINES).forEach(([k,p])=>{
-        if(p.all){next[k]=rows.length;return}
-        if(p.rewards){next[k]=employeeRewardRows.length;return}
-        if(p.branchAny){next[k]=rows.filter(o=>cloudId(o.branch_id)||String(o.branch_name||'').trim()).length;return}
-        next[k]=rows.filter(o=>(p.statuses||[]).includes(o.status)).length;
-      });
-      globalPipelineCounts=next;
-      Object.entries(next).forEach(([k,n])=>{const el=document.getElementById('count-'+k);if(el)el.innerText=n});
-    }catch(e){console.error('Employee sidebar counters:',e)}
-  };
-  refreshPipelineCounts=window.refreshPipelineCounts;
-  window.addEventListener('load',()=>setTimeout(()=>refreshPipelineCounts(),0));
-})();
-</script>
+<!-- Counts are defined once above; do not override session/error handling here. -->
 
 
 

@@ -23,6 +23,33 @@ export async function verifyOrderPrivacy({db,id,admin,employee,branch,vendor,oth
   try{return await db.query(sql,args)}finally{await db.exec('RESET ROLE')}
  }
  async function deny(fn){await assert.rejects(fn,/DENIED|INVALID|DISABLED|SESSION|REQUIRED|permission denied|row-level security|USE_ORDER_SESSION_RPC/);count++}
+ // Reproduce the production incident: login accepts a legacy padded Arabic role,
+ // while the original order actor rejected it. Test the actual SQL/RLS, not a mock.
+ const actorSql=fs.readFileSync('sql/kinto-order-role-trim-v1.sql','utf8');
+ const originalActor=actorSql.replaceAll("lower(trim(coalesce(row_data->>'role','')))","lower(coalesce(row_data->>'role',''))");
+ await db.exec(originalActor);
+ await db.query('UPDATE employees SET role=$1 WHERE id=$2',[' موظف',id(2)]);
+ await assert.rejects(()=>direct('employee',employee,'SELECT id FROM orders'),/ORDER_ACTOR_ROLE_INVALID/);count++;
+ const aclBefore=(await db.query("SELECT proacl::text FROM pg_proc WHERE oid='private.kinto_request_actor_v1()'::regprocedure")).rows;
+ await db.exec(actorSql);await db.exec(actorSql);
+ assert.deepEqual((await db.query("SELECT proacl::text FROM pg_proc WHERE oid='private.kinto_request_actor_v1()'::regprocedure")).rows,aclBefore);count++;
+ for(const [actorRole,token,actorId,labels] of [
+  ['employee',employee,id(2),[' موظف','موظف ',' EMPLOYEE ']],
+  ['admin',admin,id(1),[' أدمن ',' ADMIN ']]
+ ]){
+  for(const label of labels){
+   await db.query('UPDATE employees SET role=$1 WHERE id=$2',[label,actorId]);
+   for(const apiRole of ['anon','authenticated']){assert((await direct(actorRole,token,'SELECT id FROM orders',[],apiRole)).rows.length>=3);count++}
+  }
+  await db.query('UPDATE employees SET role=$1 WHERE id=$2',['customer',actorId]);
+  await deny(()=>direct(actorRole,token,'SELECT id FROM orders'));
+  await db.query('UPDATE employees SET role=$1 WHERE id=$2',[actorRole,actorId]);
+ }
+ await db.query('UPDATE employees SET role=$1,permissions=$2 WHERE id=$3',[' موظف',JSON.stringify({orders:false}),id(2)]);
+ await deny(()=>direct('employee',employee,'SELECT id FROM orders'));
+ await db.query('UPDATE employees SET permissions=$1,is_active=false WHERE id=$2',[JSON.stringify({orders:true}),id(2)]);
+ await deny(()=>direct('employee',employee,'SELECT id FROM orders'));
+ await db.query('UPDATE employees SET role=$1,permissions=$2,is_active=true WHERE id=$3',['employee',JSON.stringify({}),id(2)]);
  for(const apiRole of ['anon','authenticated']){
   assert.equal((await direct('',null,'SELECT id FROM orders',[],apiRole)).rows.length,0);count++;
   for(const [role,token]of [['admin','bad'],['customer','bad'],['courier','bad'],['vendor',vendor],['admin','customer-one']])await deny(()=>direct(role,token,'SELECT id FROM orders',[],apiRole));

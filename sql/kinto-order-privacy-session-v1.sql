@@ -21,8 +21,8 @@ BEGIN
  IF row_data IS NULL OR lower(coalesce(row_data->>'is_active','true')) IN ('false','0')
  OR lower(coalesce(row_data->>'active','true')) IN ('false','0') OR lower(coalesce(row_data->>'disabled','false')) IN ('true','1')
  OR lower(coalesce(row_data->>'status','')) IN ('disabled','inactive','blocked','suspended','معطل','موقوف') THEN RAISE EXCEPTION 'ORDER_ACTOR_DISABLED' USING ERRCODE='42501'; END IF;
- IF (role_name='admin' AND lower(coalesce(row_data->>'role','')) NOT IN ('admin','أدمن','ادمن'))
- OR (role_name='employee' AND lower(coalesce(row_data->>'role','')) NOT IN ('employee','موظف')) THEN RAISE EXCEPTION 'ORDER_ACTOR_ROLE_INVALID' USING ERRCODE='42501'; END IF;
+ IF (role_name='admin' AND lower(trim(coalesce(row_data->>'role',''))) NOT IN ('admin','أدمن','ادمن'))
+ OR (role_name='employee' AND lower(trim(coalesce(row_data->>'role',''))) NOT IN ('employee','موظف')) THEN RAISE EXCEPTION 'ORDER_ACTOR_ROLE_INVALID' USING ERRCODE='42501'; END IF;
  permissions:=row_data->'permissions';IF jsonb_typeof(permissions)='string' THEN permissions:=(permissions#>>'{}')::jsonb; END IF;
  IF role_name='employee' AND (permissions->'orders'='false'::jsonb OR permissions->'manage_orders'='false'::jsonb) THEN
   RAISE EXCEPTION 'ORDER_SESSION_PERMISSION_DENIED' USING ERRCODE='42501'; END IF;
