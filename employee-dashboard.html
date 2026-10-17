@@ -422,7 +422,7 @@ Object.assign(PIPELINES,{all:{label:'🌐 كل الطلبات',all:true},waiting
 const EMPLOYEE_STATUS_GROUPS=[{title:'🌐 عرض شامل',keys:['all']},{title:'📦 الطلبات النشطة وقيد المعالجة',keys:['waiting_employee','waiting_customer','in_order','company_store','branch','shipped','courier','internal_distribution']},{title:'✅ الطلبات المكتملة والمالية',keys:['waiting_payment','paid','delivered']},{title:'❌ الطلبات الملغاة والمرفوضة',keys:['cancelled','rejected']},{title:'🎁 المكافآت',keys:['rewards']}];
 renderPipelineTabs=function(){const box=document.getElementById('pipelineTabs');if(!box)return;let html='<div class="status-sidebar-title">حالات الطلبات</div>';EMPLOYEE_STATUS_GROUPS.forEach(g=>{html+=`<div class="status-group-title">${g.title}</div>`;g.keys.forEach(k=>{const p=PIPELINES[k];if(p)html+=`<button class="pipeline-tab ${k===activePipeline?'active':''}" data-pipeline="${k}" onclick="switchPipeline('${k}')"><span>${p.label}</span><span id="count-${k}" class="pipeline-count">${globalPipelineCounts[k]??0}</span></button>`})});box.innerHTML=html};
 buildPipelineQuery=function(sb,count=false){const p=PIPELINES[activePipeline],term=normalizeSearch(document.getElementById('employeeOrderSearch')?.value||'');let q=sb.from('orders').select('*',count?{count:'exact'}:{});if(!p.all){if(p.branch){q=q.in('status',p.statuses).or('branch_id.not.is.null,branch_name.not.is.null');const branch=cloudId(document.getElementById('branchFilter')?.value);if(branch)q=q.eq('branch_id',branch)}else if(Array.isArray(p.statuses)&&p.statuses.length)q=q.in('status',p.statuses)}if(term){const pat=`%${term}%`;q=q.or(`order_code.ilike.${pat},reference_order_no.ilike.${pat},customer_name.ilike.${pat},customer_phone.ilike.${pat}`)}return q};
-refreshPipelineCounts=async function(){try{const{customers,orders,by}=await employeeRewardDataset(),next={};Object.entries(PIPELINES).forEach(([k,p])=>{if(p.all){next[k]=orders.length;return}if(p.rewards){next[k]=customers.filter(c=>employeeRewardCycle(c,by.get(cloudId(c.id))||[]).length>=EMPLOYEE_REWARD_TARGET).length;return}if(p.branch){next[k]=orders.filter(o=>(p.statuses||[]).includes(o.status)&&(cloudId(o.branch_id)||String(o.branch_name||'').trim())).length;return}next[k]=orders.filter(o=>(p.statuses||[]).includes(o.status)).length});globalPipelineCounts=next;Object.entries(next).forEach(([k,n])=>{const el=document.getElementById('count-'+k);if(el)el.innerText=n})}catch(e){console.error('Vertical sidebar counters error:',e)}};
+
 const employeeStatusInitBase=window.onload;window.onload=async function(...args){if(typeof employeeStatusInitBase==='function')await employeeStatusInitBase.apply(this,args);renderPipelineTabs();setActivePipelineButton(activePipeline);await refreshPipelineCounts()};Object.assign(window,{renderPipelineTabs,refreshPipelineCounts});
 </script>
 
@@ -474,7 +474,32 @@ const EMPLOYEE_STATUS_ORDER=[
 ];
 renderPipelineTabs=function(){const box=document.getElementById('pipelineTabs');if(!box)return;let html='<div class="status-sidebar-title">حالات الطلبات</div>';EMPLOYEE_STATUS_ORDER.forEach((group,gi)=>{if(gi)html+='<div class="status-group-separator" aria-hidden="true"></div>';group.forEach(k=>{const p=PIPELINES[k];if(!p)return;html+=`<button class="pipeline-tab ${k===activePipeline?'active':''}" data-pipeline="${k}" onclick="switchPipeline('${k}')"><span>${p.label}</span><span id="count-${k}" class="pipeline-count">${globalPipelineCounts[k]??0}</span></button>`})});box.innerHTML=html};
 buildPipelineQuery=function(sb,count=false){const p=PIPELINES[activePipeline],term=normalizeSearch(document.getElementById('employeeOrderSearch')?.value||'');let q=sb.from('orders').select('*',count?{count:'exact'}:{});if(p.branchAny){q=q.or('branch_id.not.is.null,branch_name.not.is.null')}else if(!p.all&&Array.isArray(p.statuses)&&p.statuses.length){q=q.in('status',p.statuses)}if(term){const pat=`%${term}%`;q=q.or(`order_code.ilike.${pat},reference_order_no.ilike.${pat},customer_name.ilike.${pat},customer_phone.ilike.${pat}`)}return q};
-refreshPipelineCounts=async function(){try{const{customers,orders,by}=await employeeRewardDataset(),next={};Object.entries(PIPELINES).forEach(([k,p])=>{if(p.all){next[k]=orders.length;return}if(p.rewards){next[k]=customers.filter(c=>employeeRewardCycle(c,by.get(cloudId(c.id))||[]).length>=EMPLOYEE_REWARD_TARGET).length;return}if(p.branchAny){next[k]=orders.filter(o=>cloudId(o.branch_id)||String(o.branch_name||'').trim()).length;return}next[k]=orders.filter(o=>(p.statuses||[]).includes(o.status)).length});globalPipelineCounts=next;Object.entries(next).forEach(([k,n])=>{const el=document.getElementById('count-'+k);if(el)el.innerText=n})}catch(e){console.error('Status sidebar V2 counters error:',e)}};
+// Counts use the same session-bound orders client as the order list.
+// Loyalty/customer-directory failures must never suppress every order counter.
+refreshPipelineCounts=async function(){
+ const setCount=(key,value,error='')=>{const el=document.getElementById('count-'+key);if(el){el.innerText=String(value);el.title=error}};
+ try{
+  const sb=await ensureEmployeeSupabase();
+  const {data,error}=await sb.from('orders').select('status,branch_id,branch_name').limit(10000);
+  if(error)throw error;
+  const orders=data||[],next={...globalPipelineCounts};
+  Object.entries(PIPELINES).forEach(([key,p])=>{
+   if(p.rewards)return;
+   next[key]=p.all?orders.length:p.branchAny?orders.filter(o=>cloudId(o.branch_id)||String(o.branch_name||'').trim()).length:orders.filter(o=>(p.statuses||[]).includes(o.status)).length;
+   setCount(key,next[key]);
+  });
+  globalPipelineCounts=next;
+  // This tab lists customers, including those without a loyalty balance.
+  try{
+   const {data:customers,error:directoryError}=await KintoCustomerDirectoryV1.from(sb).select('id').limit(2000);
+   if(directoryError)throw directoryError;
+   globalPipelineCounts.rewards=(customers||[]).length;setCount('rewards',globalPipelineCounts.rewards);
+  }catch(error){setCount('rewards','—','تعذر تحميل عدد العملاء');console.warn('Employee rewards count unavailable:',error)}
+ }catch(error){
+  Object.entries(PIPELINES).filter(([,p])=>!p.rewards).forEach(([key])=>setCount(key,'—','تعذر تحميل عدد الطلبات'));
+  console.error('Employee order counters unavailable:',error);
+ }
+};
 renderPipelineTabs();setActivePipelineButton(activePipeline);refreshPipelineCounts();
 Object.assign(window,{renderPipelineTabs,refreshPipelineCounts});
 </script>
