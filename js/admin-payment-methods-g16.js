@@ -83,6 +83,83 @@ async function runtimeRpc(action='get',extra={}){
  if(!data?.payment_mode)throw Error(data?.error||'تعذر قراءة إعدادات مسار الدفع.');
  return data;
 }
+async function paymentModeTransitionP4(targetMode,verifiedOrderIds=[],confirmedNoPayment=false){
+ const t=token();if(!t)throw Error('جلسة الأدمن غير متاحة. يرجى تسجيل الدخول مجدداً.');
+ const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.rpc('kinto_payment_mode_transition_p4',{p_session_token:t,p_target_mode:targetMode,
+  p_verified_unpaid_order_ids:verifiedOrderIds,p_admin_confirmed_no_payment:confirmedNoPayment});
+ if(error){
+  const detail=String(error.message||'');
+  if(/kinto_payment_mode_transition_p4|PGRST202|does not exist|Could not find the function/i.test(detail))return null;
+  throw error;
+ }
+ if(!data?.ok&&data?.error==='MANUAL_ORDERS_REQUIRE_REVIEW'&&Array.isArray(data.orders)&&data.orders.length){
+  const rows=data.orders.map(o=>`${o.order_code||o.id} — ${o.status} — ${o.amount} ${o.currency}`).join('\n');
+  const accepted=confirm('أوقف الخادم استقبال الطلبات اليدوية أثناء الانتقال. راجع هذه الطلبات خارجياً وتأكد من عدم تحصيل أي مبلغ عنها قبل إلغائها:\n\n'+rows+'\n\nهل تحققت من عدم التحصيل وتؤكد إلغاءها؟');
+  if(!accepted)throw Error('بقي الانتقال متوقفاً للمراجعة. أعد اختيار «يدوي» لإلغاء الانتقال وإعادة فتح المسار اليدوي.');
+  const second=await sb.rpc('kinto_payment_mode_transition_p4',{p_session_token:t,p_target_mode:targetMode,
+   p_verified_unpaid_order_ids:data.orders.map(o=>o.id),p_admin_confirmed_no_payment:true});
+  if(second.error)throw second.error;
+  if(!second.data?.ok)throw Error(second.data?.error==='MANUAL_ORDERS_REQUIRE_REVIEW'
+   ?'توجد طلبات أخرى أو حالات غير مصنفة. الاستقبال ما زال متوقفاً؛ أعد الانتقال بعد مراجعتها أو اختر «يدوي» لإلغاء الانتقال.'
+   :(second.data?.error||'تعذر إكمال الانتقال الآمن.'));
+  return second.data;
+ }
+ if(!data?.ok){
+  const errors={
+   ELECTRONIC_ADMISSION_NOT_READY:'الدفع الإلكتروني غير جاهز حالياً؛ بقي النظام اليدوي فعالاً ولم يبدأ التبديل.',
+   PAYMENT_ATTEMPTS_REQUIRE_RECONCILIATION:'توجد محاولات معلقة أو مجهولة النتيجة. لن يُفتح النظام اليدوي حتى تتم مطابقتها بأمان.',
+   MANUAL_ORDERS_REQUIRE_REVIEW:'توجد طلبات يدوية تحتاج مراجعة. الاستقبال متوقف مؤقتاً؛ اختر «يدوي» لإلغاء الانتقال بأمان.',
+  };
+  throw Error(errors[data?.error]||data?.error||'تعذر إكمال التبديل الآمن.');
+ }
+ return data;
+}
+async function paymentModeP4Read(){
+ const t=token();if(!t)return null;const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.rpc('kinto_payment_p4_admin_read',{p_session_token:t});
+ if(error){const detail=String(error.message||'');if(/kinto_payment_p4_admin_read|PGRST202|does not exist|Could not find the function/i.test(detail))return null;throw error}
+ return data||null;
+}
+function ensureP4ReconciliationPanel(){
+ const parent=document.getElementById('g16RuntimeControls');if(!parent)return null;
+ let panel=document.getElementById('g16P4Reconciliation');if(panel)return panel;
+ panel=document.createElement('section');panel.id='g16P4Reconciliation';panel.dir='rtl';
+ panel.style.cssText='margin-top:12px;padding:12px;border:1px solid #b99b52;border-radius:9px;background:#fff';
+ panel.innerHTML='<h5 style="margin:0 0 8px">مطابقة محاولات الدفع المعلّقة</h5><p class="mini">لا يُحرر الحجز عند انقطاع الاتصال أو وصول إشعار متأخر. طابق حالة العملية مع مزودها أولاً، ثم سجّل مرجع التحقق أو الاسترداد.</p><div id="g16P4ReconciliationRows"></div>';
+ parent.append(panel);return panel;
+}
+async function reconcileP4Attempt(attemptId,resolution){
+ if(busy)return;
+ const title=resolution==='refunded'?'تأكيد استرداد مستقر من مزود الدفع':'تأكيد أن المزود لم يحصّل أي مبلغ';
+ if(!confirm(title+' للمحاولة '+attemptId+'؟ سيحرر الخادم حجز المخزون بعد حفظ سجل المطابقة.'))return;
+ const evidence=prompt('أدخل مرجع استعلام المزود أو مرجع الاسترداد (8 أحرف على الأقل):','');
+ if(evidence===null)return;
+ if(evidence.trim().length<8){runtimeStatus('مرجع التحقق يجب أن يتكون من 8 أحرف على الأقل.',true);return;}
+ busy=true;runtimeStatus('جارٍ تسجيل المطابقة والتحقق من مرجعها...');
+ try{
+  const sb=await window.ensureCustomerSupabase();
+  const {data,error}=await sb.rpc('kinto_payment_attempt_reconcile_p4',{p_session_token:token(),p_attempt_id:attemptId,
+   p_resolution:resolution,p_evidence_reference:evidence.trim()});
+  if(error)throw error;if(!data?.ok)throw Error(data?.error||'تعذرت مطابقة محاولة الدفع.');
+  const p4=await paymentModeP4Read();if(p4)paintRuntime({...settings,effective_payment_mode:p4.effective_mode,
+   p4_transition_state:p4.transition_state,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,
+   unresolved_attempt_list:p4.unresolved_attempt_list});
+  runtimeStatus(data.resolution==='refunded'?'سُجل الاسترداد وتحرر الحجز. يمكنك إكمال العودة لليدوي.':'تأكد عدم التحصيل وتحرر الحجز. يمكنك إكمال العودة لليدوي.');
+ }catch(e){runtimeStatus(e?.message||'تعذرت مطابقة محاولة الدفع.',true)}finally{busy=false}
+}
+function paintP4Reconciliation(attempts){
+ const panel=ensureP4ReconciliationPanel(),rows=document.getElementById('g16P4ReconciliationRows');if(!panel||!rows)return;
+ rows.replaceChildren();const list=Array.isArray(attempts)?attempts:[];panel.hidden=list.length===0;
+ for(const a of list){
+  const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid #e5e7eb';
+  const info=document.createElement('span');info.textContent=`${a.attempt_id} — ${a.provider_key} — ${a.amount} ${a.currency} — ${a.status}`;info.style.cssText='overflow-wrap:anywhere;flex:1';
+  const select=document.createElement('select');select.setAttribute('aria-label','نتيجة المطابقة');
+  for(const [value,label] of [['confirmed_no_charge','لم يحدث تحصيل'],['refunded','تم الاسترداد']]){const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option)}
+  const button=document.createElement('button');button.type='button';button.className='btn-dark';button.textContent='مطابقة وتحرير الحجز';button.onclick=()=>reconcileP4Attempt(a.attempt_id,select.value);
+  row.append(info,select,button);rows.append(row);
+ }
+}
 const message=(v,bad=false)=>{const el=document.getElementById('g16Message');if(el){el.textContent=v;el.dataset.state=bad?'error':'ok'}};
 function runtimeStatus(v,bad=false){const el=document.getElementById('g16RuntimeStatus');if(el){el.textContent=v;el.dataset.state=bad?'error':'ok'}}
 function setRuntimeControlsAvailable(available){
@@ -98,26 +175,37 @@ function paintRuntime(data){
  if(mode)mode.value=settings.payment_mode==='electronic'?'electronic':'manual';
  if(env)env.value=settings.gateway_environment==='live'?'live':'sandbox';
  const effective=settings.effective_payment_mode==='electronic'?'إلكتروني':'يدوي';
- const selected=settings.payment_mode==='electronic'?'إلكتروني (محدد، غير مفعّل)':'يدوي';
+ const selected=settings.payment_mode==='electronic'?(settings.effective_payment_mode==='electronic'?'إلكتروني (الوضع الفعلي)':'إلكتروني (اختيار محفوظ فقط)'):'يدوي';
  const ready=settings.gateway_integration_ready===true;
  const state=document.getElementById('g16GatewayState');
  if(state)state.textContent='المسار المحدد: '+selected+' — المسار الفعلي حالياً: '+effective+' — التحصيل الإلكتروني '+(ready?'جاهز بعد الاعتماد':'مغلق حتى اكتمال الربط والاختبار');
  const sw=document.getElementById('g16GatewaySwitch');
  if(sw){sw.disabled=!ready;sw.textContent=!ready?'استقبال الدفع الإلكتروني مغلق':settings.gateways_enabled?'إيقاف استقبال المدفوعات الإلكترونية':'تفعيل استقبال المدفوعات الإلكترونية';}
- runtimeStatus(settings.payment_mode==='electronic'&&!ready?'تم حفظ اختيار الإلكتروني كإعداد فقط. لا تُنشأ محاولات تحصيل، ويبقى المسار الفعلي يدوياً حتى اكتمال الربط والاختبار.':'النظام اليدوي هو الافتراضي والفعلي حالياً.');
+ const transition=settings.p4_transition_state==='draining'?'التبديل قيد التصفية؛ استقبال الطلبات الجديدة متوقف حتى إكمال التسوية أو إلغاء الانتقال.':'';
+ const holds=Number(settings.p4_active_holds)||0,unresolved=Number(settings.p4_unresolved_attempts)||0;
+ const ledger=holds||unresolved?`حجوزات نشطة: ${holds} — محاولات تحتاج مطابقة: ${unresolved}.`:'';
+ const activeMode=settings.effective_payment_mode==='electronic'
+  ?'وضع الطلبات الإلكتروني فعّال؛ إنشاء التحصيل ما زال مغلقاً حتى ربط واعتماد البوابة.'
+  :'الوضع الفعلي يدوي؛ الاختيار الإلكتروني لا يغيّر ذلك قبل إكمال الانتقال الآمن.';
+ runtimeStatus([transition,ledger,activeMode].filter(Boolean).join(' '));
+ paintP4Reconciliation(data?.unresolved_attempt_list);
 }
 async function saveRuntime(){
  if(busy)return;
  const mode=document.getElementById('g16PaymentMode')?.value||'manual';
  const environment=document.getElementById('g16GatewayEnvironment')?.value||'sandbox';
- if(mode==='electronic'&&settings.payment_mode!=='electronic'&&!confirm('سيُحفظ اختيار الدفع الإلكتروني إعداداً للطلبات الجديدة، لكن التحصيل سيبقى مغلقاً حتى اكتمال الربط والاختبارات. الطلبات الجارية لن تتغير. متابعة؟'))return;
+ if(mode==='electronic'&&settings.payment_mode!=='electronic'&&!confirm('سيطلب النظام انتقالاً آمناً بعد إيقاف الطلبات اليدوية ومراجعة غير المسدد منها. لا يوجد تحصيل إلكتروني فعلي في هذه المرحلة. متابعة؟'))return;
  if(environment==='live'&&!settings.gateway_integration_ready){runtimeStatus('بيئة الإنتاج غير متاحة قبل اكتمال ربط البوابة والمراجعة.',true);return}
  busy=true;runtimeStatus('جارٍ حفظ الإعدادات...');
  try{
-  const updated=await runtimeRpc('set_mode',{p_payment_mode:mode});
+  const transition=await paymentModeTransitionP4(mode);
+  // P4 changes the effective mode and the persisted G16 preference atomically;
+  // only retain the legacy preference write when the P4 migration is absent.
+  const updated=transition?await runtimeRpc('get'):await runtimeRpc('set_mode',{p_payment_mode:mode});
   const withEnv=environment!==(updated.gateway_environment||'sandbox')?await runtimeRpc('set_environment',{p_gateway_environment:environment}):updated;
-  paintRuntime(withEnv);
-  runtimeStatus(mode==='electronic'&&!withEnv.gateway_integration_ready?'حُفظ الاختيار. الدفع الإلكتروني لا يستقبل عمليات حالياً؛ المسار الفعلي بقي يدوياً.':'تم حفظ إعداد المسار.');
+  const p4=await paymentModeP4Read();
+  paintRuntime({...withEnv,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_target_mode:p4.target_mode,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{} )});
+  runtimeStatus(transition?.effective_mode==='electronic'?'تم التبديل بأمان. يبقى التحصيل الإلكتروني مغلقاً حتى اكتمال ربط البوابة.':mode==='electronic'&&!withEnv.gateway_integration_ready?'حُفظ اختيار الإلكتروني إعداداً فقط. بقي المسار الفعلي يدوياً والتحصيل مغلقاً.':'تم حفظ إعداد المسار.');
  }catch(e){runtimeStatus(e?.message||'تعذر حفظ الإعدادات.',true);try{paintRuntime(await runtimeRpc('get'))}catch{}}
  finally{busy=false}
 }
@@ -201,7 +289,7 @@ async function load(){
  try{
   const catalog=await rpc();paint(catalog);
   try{
-   const mode=await runtimeRpc('get');setRuntimeControlsAvailable(true);paintRuntime(mode);
+   const mode=await runtimeRpc('get');setRuntimeControlsAvailable(true);const p4=await paymentModeP4Read();paintRuntime({...mode,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_target_mode:p4.target_mode,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{})});
    message('تم تحميل الإعدادات ووسائل الدفع؛ يبقى OTP مطلوباً عند تغيير بيانات التحويل.');
   }catch(e){
    paintRuntime({payment_mode:'manual',gateway_environment:'sandbox',gateways_enabled:false,gateway_integration_ready:false,effective_payment_mode:'manual'});
