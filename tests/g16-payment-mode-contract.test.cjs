@@ -10,7 +10,7 @@ assert.match(html,/id="g16PaymentMode"/,'mode selector exists in the current G16
 assert.match(html,/id="g16GatewayEnvironment"/,'gateway environment control exists');
 assert.match(html,/option value="manual">النظام اليدوي \(الافتراضي\)/,'manual mode is the visible default');
 assert.match(html,/إيقاف استقبال المدفوعات الإلكترونية/,'new-payment kill-switch control remains explicit');
-assert.match(html,/يوقف استقبال الطلبات الجديدة مؤقتاً، ويراجع غير المسدد والحجوزات المعلقة/,'mode transitions explain that intake pauses for reconciliation');
+assert.match(ui,/استقبال الطلبات الجديدة متوقف حتى إكمال التسوية أو إلغاء الانتقال/,'mode transitions explain that intake pauses for reconciliation');
 
 assert.match(sql,/payment_mode text not null default 'manual'/,'database mode defaults to manual');
 assert.match(sql,/private\.require_admin_session_v147\(p_session_token\)/,'mode mutations require an admin session on the server');
