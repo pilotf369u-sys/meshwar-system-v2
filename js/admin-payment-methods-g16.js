@@ -52,6 +52,16 @@ async function runtimeRpc(action='get',extra={}){
  if(!data?.payment_mode)throw Error(data?.error||'تعذر قراءة إعدادات مسار الدفع.');
  return data;
 }
+async function emergencyRuntimeRpc(action='get',extra={}){
+ const t=token();if(!t)throw Error('جلسة الأدمن غير متاحة. يرجى تسجيل الدخول مجدداً.');
+ const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.rpc('kinto_payment_runtime_admin_g18',{p_session_token:t,p_action:action,...extra});
+ if(error){let detail='';try{const j=await error.context?.json?.();detail=String(j?.message||j?.error||'')}catch{}
+  const map={NEW_PAYMENTS_PAUSED:'إنشاء محاولات الدفع الجديدة متوقف حالياً.',GATEWAY_NOT_READY:'لا يمكن إعادة التفعيل قبل اختيار مزود اختبار مفعّل ومراجعته.',PROVIDER_NOT_READY:'المزود غير جاهز أو غير مفعل.',PAUSE_REASON_REQUIRED:'اكتب سبب الإيقاف (8 أحرف على الأقل).'};
+  throw Error(map[detail]||detail||error.message||'تعذر تحديث مفتاح الإيقاف.');
+ }
+ return data;
+}
 const message=(v,bad=false)=>{const el=document.getElementById('g16Message');if(el){el.textContent=v;el.style.color=bad?'#b91c1c':'#166534'}};
 function runtimeStatus(v,bad=false){const el=document.getElementById('g16RuntimeStatus');if(el){el.textContent=v;el.style.color=bad?'#b91c1c':'#166534'}}
 function paintRuntime(data){
@@ -64,9 +74,16 @@ function paintRuntime(data){
  const ready=settings.gateway_integration_ready===true;
  const state=document.getElementById('g16GatewayState');
  if(state)state.textContent='المسار المحدد: '+selected+' — المسار الفعلي حالياً: '+effective+' — التحصيل الإلكتروني '+(ready?'جاهز بعد الاعتماد':'مغلق حتى اكتمال الربط والاختبار');
- const sw=document.getElementById('g16GatewaySwitch');
- if(sw){sw.disabled=!ready;sw.textContent=!ready?'استقبال الدفع الإلكتروني مغلق':settings.gateways_enabled?'إيقاف استقبال المدفوعات الإلكترونية':'تفعيل استقبال المدفوعات الإلكترونية';}
- runtimeStatus(settings.payment_mode==='electronic'&&!ready?'تم حفظ اختيار الإلكتروني كإعداد فقط. لا تُنشأ محاولات تحصيل، ويبقى المسار الفعلي يدوياً حتى اكتمال الربط والاختبار.':'النظام اليدوي هو الافتراضي والفعلي حالياً.');
+ const sw=document.getElementById('g16GatewaySwitch'),scope=document.getElementById('g16PauseScope')?.value||'all';
+ const globalPaused=settings.new_payments_paused!==false,providerPaused=settings.active_provider_paused!==false;
+ const paused=scope==='provider'?providerPaused:globalPaused;
+ if(sw){sw.disabled=busy||!settings.active_gateway_provider&&scope==='provider';sw.textContent=paused?(scope==='provider'?'إيقاف المزود الحالي مفعّل':'الإيقاف الشامل مفعّل'):(scope==='provider'?'إيقاف المزود الحالي فوراً':'إيقاف التحصيل الجديد فوراً');sw.classList.toggle('btn-danger',!paused);sw.setAttribute('aria-pressed',String(paused));}
+ const scopeSelect=document.getElementById('g16PauseScope');if(scopeSelect){const providerOption=scopeSelect.querySelector('option[value="provider"]');if(providerOption)providerOption.disabled=!settings.active_gateway_provider;}
+ const pauseReason=document.getElementById('g16PauseReason'),reason=scope==='provider'?settings.active_provider_pause_reason:settings.pause_reason;if(pauseReason&&reason&&!pauseReason.value)pauseReason.value=reason;
+ const resume=document.getElementById('g16ResumePayments');if(resume){resume.disabled=!globalPaused||!ready;resume.title=resume.disabled?'إعادة التفعيل غير متاحة قبل جاهزية مزود الاختبار ومراجعته':'';}
+ const resumeProvider=document.getElementById('g16ResumeProvider');if(resumeProvider){resumeProvider.disabled=!settings.active_gateway_provider||!providerPaused||!ready;resumeProvider.title=resumeProvider.disabled?'إعادة تفعيل المزود غير متاحة قبل جاهزيته ومراجعته':'';}
+ const canStart=!globalPaused&&!providerPaused&&settings.gateways_enabled===true;
+ runtimeStatus(!canStart?'مفتاح الخادم متوقف: لا تُنشأ جلسات جديدة. تبقى مطابقة وتسوية واسترداد العمليات السابقة متاحة.':(!ready?'تحصيل جديد مفتوح مؤقتاً؛ أوقفه فوراً إذا ظهر أي خلل. لا يوجد مزود حي معتمد.':'التحصيل الجديد مفعّل لمزود الاختبار المحدد.'));
 }
 async function saveRuntime(){
  if(busy)return;
@@ -76,21 +93,38 @@ async function saveRuntime(){
  if(environment==='live'&&!settings.gateway_integration_ready){runtimeStatus('بيئة الإنتاج غير متاحة قبل اكتمال ربط البوابة والمراجعة.',true);return}
  busy=true;runtimeStatus('جارٍ حفظ الإعدادات...');
  try{
-  const updated=await runtimeRpc('set_mode',{p_payment_mode:mode});
+  const updated=await emergencyRuntimeRpc('set_mode',{p_payment_mode:mode});
   const withEnv=environment!==(updated.gateway_environment||'sandbox')?await runtimeRpc('set_environment',{p_gateway_environment:environment}):updated;
-  paintRuntime(withEnv);
+  const emergency=await emergencyRuntimeRpc('get');
+  paintRuntime({...withEnv,...emergency});
   runtimeStatus(mode==='electronic'&&!withEnv.gateway_integration_ready?'حُفظ الاختيار. الدفع الإلكتروني لا يستقبل عمليات حالياً؛ المسار الفعلي بقي يدوياً.':'تم حفظ إعداد المسار.');
  }catch(e){runtimeStatus(e?.message||'تعذر حفظ الإعدادات.',true);try{paintRuntime(await runtimeRpc('get'))}catch{}}
  finally{busy=false}
 }
 async function toggleGateway(){
- if(busy||!settings.gateway_integration_ready)return;
- const next=!settings.gateways_enabled;
- if(next&&!confirm('تأكيد تفعيل إنشاء محاولات دفع جديدة؟'))return;
- if(!next&&!confirm('إيقاف إنشاء محاولات دفع إلكترونية جديدة؟ ستستمر مطابقة العمليات السابقة.'))return;
- busy=true;runtimeStatus('جارٍ تحديث مفتاح إيقاف التحصيل...');
- try{paintRuntime(await runtimeRpc('gateway_switch',{p_enabled:next}));runtimeStatus(next?'تم تفعيل استقبال محاولات جديدة.':'تم إيقاف محاولات الدفع الجديدة؛ تبقى مطابقة العمليات السابقة مستمرة.')}
+ const scope=document.getElementById('g16PauseScope')?.value||'all',providerPaused=settings.active_provider_paused!==false;
+ if(busy||(scope==='provider'?providerPaused:settings.new_payments_paused!==false))return;
+ if(!confirm('سيوقف هذا الإجراء إنشاء جلسات جديدة من الخادم فوراً ضمن النطاق المحدد. ستستمر مطابقة وتسوية واسترداد العمليات السابقة. متابعة؟'))return;
+ const reason=String(document.getElementById('g16PauseReason')?.value||'').trim();
+ if(reason.length<8){runtimeStatus('اكتب سبب الإيقاف (8 أحرف على الأقل) قبل المتابعة.',true);document.getElementById('g16PauseReason')?.focus();return}
+ busy=true;runtimeStatus('جارٍ إيقاف إنشاء المدفوعات الجديدة في الخادم...');
+ try{const action=scope==='provider'?'pause_provider':'emergency_pause';const stopped=await emergencyRuntimeRpc(action,{p_paused:true,p_reason:reason,p_provider_key:settings.active_gateway_provider});paintRuntime({...settings,...stopped});runtimeStatus('أُوقف إنشاء جلسات جديدة على الخادم. تستمر مطابقة وتسوية واسترداد العمليات السابقة.')}
  catch(e){runtimeStatus(e?.message||'تعذر تحديث مفتاح الإيقاف.',true)}finally{busy=false}
+}
+async function resumeNewPayments(){
+ if(busy||settings.new_payments_paused===false)return;
+ if(!settings.gateway_integration_ready){runtimeStatus('لا يمكن إعادة التفعيل قبل تجهيز مزود اختبار ومراجعته.',true);return}
+ if(!confirm('إعادة التفعيل تسمح بإنشاء محاولات جديدة. هل اكتملت مراجعة مزود الاختبار؟'))return;
+ busy=true;runtimeStatus('جارٍ إعادة التفعيل...');
+ try{const resumed=await emergencyRuntimeRpc('resume_new_payments');paintRuntime({...settings,...resumed});runtimeStatus('تمت إعادة تفعيل المحاولات الجديدة بعد المراجعة.')}
+ catch(e){runtimeStatus(e?.message||'تعذرت إعادة التفعيل.',true)}finally{busy=false}
+}
+async function resumeProvider(){
+ if(busy||!settings.active_gateway_provider||settings.active_provider_paused===false)return;
+ if(!confirm('إعادة تفعيل المزود تسمح بإسناد محاولات جديدة إليه بعد المراجعة. متابعة؟'))return;
+ busy=true;runtimeStatus('جارٍ إعادة تفعيل المزود...');
+ try{const resumed=await emergencyRuntimeRpc('resume_provider',{p_provider_key:settings.active_gateway_provider});paintRuntime({...settings,...resumed});runtimeStatus('أُعيد تفعيل المزود فقط؛ يبقى الإيقاف الشامل قائماً حتى إعادة تفعيله منفصلاً.')}
+ catch(e){runtimeStatus(e?.message||'تعذرت إعادة تفعيل المزود.',true)}finally{busy=false}
 }
 function paint(data){
  methods=data.methods||[];
@@ -160,7 +194,7 @@ async function change(action,args){
 }
 async function load(){
  if(!root()||busy)return;busy=true;message('جارٍ تحميل طرق الدفع...');
- try{const [catalog,mode]=await Promise.all([rpc(),runtimeRpc('get')]);paint(catalog);paintRuntime(mode);message('تم تحميل الإعدادات ووسائل الدفع؛ يبقى OTP مطلوباً عند تغيير بيانات التحويل.')}
+ try{const [catalog,mode,emergency]=await Promise.all([rpc(),runtimeRpc('get'),emergencyRuntimeRpc('get')]);paint(catalog);paintRuntime({...mode,...emergency});message('تم تحميل الإعدادات ووسائل الدفع؛ يبقى OTP مطلوباً عند تغيير بيانات التحويل.')}
  catch(e){message(e?.message||'تعذر التحميل. تأكد من تنفيذ SQL الخاص بالمرحلة.',true)}
  finally{busy=false}
 }
@@ -172,6 +206,9 @@ window.addEventListener('DOMContentLoaded',()=>{
  document.getElementById('g16Reload').onclick=load;
  document.getElementById('g16SaveRuntime').onclick=saveRuntime;
  document.getElementById('g16GatewaySwitch').onclick=toggleGateway;
+ document.getElementById('g16PauseScope')?.addEventListener('change',()=>paintRuntime(settings));
+ document.getElementById('g16ResumePayments')?.addEventListener('click',resumeNewPayments);
+ document.getElementById('g16ResumeProvider')?.addEventListener('click',resumeProvider);
  f.addEventListener('submit',e=>{
   e.preventDefault();const x=f.elements;
   const args={p_label:x.methodLabel.value.trim(),p_provider:x.methodProvider.value.trim(),p_recipient_name:x.recipientName.value.trim(),p_account_reference:x.accountReference.value.trim(),p_instructions:x.instructions.value.trim()};
