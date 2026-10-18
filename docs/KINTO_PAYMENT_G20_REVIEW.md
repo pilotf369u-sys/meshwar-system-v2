@@ -1,52 +1,50 @@
-# KINTO payment G20-A review handoff
+# KINTO G20 review, pricing, and reservation handoff
 
-## Scope delivered
+## What the customer review does
 
-G20-A adds a customer-facing **مراجعة الطلب والدفع** step to the existing cart checkout button on `dashboard.html` and `store.html`. It reads selected rows from the cloud cart, sends only store/product IDs, quantities and selected options, then requests prices and coupon eligibility from `kinto_payment_quote_g20`. The server quote includes product images, variants, per-store subtotal/discount/payable values and an explicit `shipping_included=false` marker. Prices shown in the browser cart are not submitted as authoritative values.
+The existing cart button opens **مراجعة الطلب والدفع** and reads selected real cart rows. It sends only store/product IDs, quantity, and selected color/size/volume to the server quote. The review shows product images, store grouping, quantity, variants, server prices, product markdown savings, store coupon discount, and product payable total. Shipping is excluded. Direct KINTO Deals remain outside the cart and the quote path cannot attach a coupon to a direct deal.
 
-The review RPC creates a short-lived quote snapshot only. It does not reserve stock, consume coupons, create a payment intent, insert an order, advance an order to `تم التسديد`, or call the payment simulator. Electronic checkout remains disabled. The existing manual checkout remains available and is explicitly identified as the current manual route; coupons selected in the review are not applied by that legacy route.
+The manual checkout remains available if the quote RPC is missing or unavailable. The G20 button calls the existing cart checkout once at a time; it does not remove cart rows. The existing legacy checkout removes submitted rows only after its canonical RPC returns validated KN orders. If the legacy RPC itself times out after committing on the server, that legacy RPC has no client idempotency key in this repository; do not automatically retry an ambiguous timeout before checking the existing orders view. This is an existing integration boundary, separate from a failed G20 quote call.
 
-The new listener intercepts only `#kintoLocalCartCheckout`. Direct KINTO Deals orders use their separate `kinto_deals_v1_direct_order_g20` path and remain outside the cart. The quote RPC accepts no deal/coupon override path.
+## Price contract and currencies
 
-## SQL boundary and dependency review
+G20-B uses the V97 calculation stages without modifying V97 or the legacy pricing engine:
 
-`supabase/migrations/20261018194000_kinto_payment_review_quote_g20.sql` is the first additive stage. It creates one RLS-protected quote table, one private option-validation helper and one customer-session-validated quote RPC. Its dependencies are existing V132 customer review sessions, V94 UUID parsing, V97 server pricing inputs, V310 loyalty settings/coupons, V401 campaign coupon scope and the existing matrix stock key helper.
+1. `customer_price_usd = ceil(vendor_price / (1 - commission_rate / 100))`.
+2. `unit_price_local = ceil((customer_price_usd * exchange_rate) / 1000) * 1000`.
 
-The SQL does not replace or call the hosted `kinto_checkout_session_v1` RPC, whose definition is not present in this repository. It also does not modify V97/V161 order creation, the `customer_apply_coupon_v310` consumption/ledger path, the G18 payment tables/emergency controls, the V47 `تم التسديد` stock trigger, invoices, tracking, OTP or direct-deal functions. The quote response rejects mixed currencies for now because a single provider intent currently has one currency; this is an explicit current limitation to resolve before reservation/payment for mixed-currency carts.
+The quote includes both the regular/base-price result and discounted-price result, so product savings remain distinct from a store coupon. Coupon caps remain tied to the existing `max_order_ratio` and `coupon_unit` settings, and eligible coupons remain scoped to their own store/campaign. Direct deals remain coupon-free.
 
-Stock checks in a preview are a point-in-time check, not a hold. A later reservation stage must revalidate under ordered product-row locks, persist holds separately from physical stock, and handle expiry/capture reconciliation. A later finalizer must enter the existing guarded paid transition so the current trigger performs the one physical inventory deduction; it must not insert paid orders or update stock directly. Coupon IDs stored in this quote are a preview snapshot and must be locked/revalidated and consumed through an idempotent per-store path during reservation/finalization.
+A mixed-currency cart displays each store subtotal and payable amount in that store's original currency. It is not silently converted, summed as a single payable, or eligible for a single electronic intent. Such carts are manual-only until a conversion/settlement policy is explicitly approved. Single-currency electronic checkout is also disabled in this stage. No provider has been selected.
 
-## Server handoff design for the next G20 stage
+## Staged SQL and engine boundaries
 
-1. A customer-session-validated reservation function accepts only an unexpired quote ID. In one transaction it rechecks the fingerprint and current prices, locks products in UUID order, locks the exact eligible coupon rows, and creates time-limited reservation rows. Holds reduce sellable availability but do not decrement `local_products.stock_quantity`, `variant_stock`, or `matrix_stock`.
-2. A server-only adapter call creates an intent through `kinto_payment_admit_intent_g18`. That function already pins the provider key/environment/adapter version/reference and checks the global and provider pause controls; browser code and the simulator must not invoke the production finalizer.
-3. A signed provider callback is verified server-side against the pinned intent, exact amount and currency, then recorded with provider event idempotency. Duplicate callbacks do not repeat capture or order work. Emergency stop blocks new intents while reconciliation/refund processing remains available for existing intents.
-4. Once capture is verified, a narrowly scoped service-role finalizer creates one canonical order per store through `checkout_independent_vendor_orders_v161` (the V161 wrapper around V101/V97), then moves those initial unpaid orders to `تم التسديد` through the existing `private.kinto_paid_transition_permits_v1` guard. The finalizer must not insert an order with paid status. Existing paid transition triggers then create the normal paid projections/invoice effects and V47 performs the one stock deduction. If current stock no longer covers a held item, the transaction must fail closed into reconciliation/refund instead of publishing an order.
-5. Coupon redemption is a remaining integration boundary: V310/V401 currently consume coupons against eligible existing order statuses, while V97 creates `انتظار رد الموظف`. The next stage must either add a transactionally safe payment-only coupon entry point that records the same V310/V401 ledger/funding snapshots or prove the canonical order wrapper already normalizes the status before coupon application. It must preserve store scope, campaign scope, 10% product-only limit and one-time restoration behavior.
+| Stage | File | Purpose | Touches existing paid-order engine? |
+|---|---|---|---|
+| G20-A | `supabase/migrations/20261018194000_kinto_payment_review_quote_g20.sql` | Initial server quote endpoint and quote snapshots | No |
+| G20-B | `supabase/migrations/20261018210000_kinto_payment_review_quote_g20b.sql` | Strict option/matrix validation, V97 price snapshot fields, per-currency totals | No |
+| G20-C | `supabase/migrations/20261018213000_kinto_stock_reservations_g20c.sql` | 15-minute stock and coupon holds, idempotency, safe release | No |
 
-This sequence preserves OTP by requiring the existing customer session at quote and reservation time, keeps provider signature checks on the server, leaves direct KINTO Deals on their dedicated path, and leaves the post-`تم التسديد` workflow in the current order engine. Items 1–5 above are design gates, not code claimed as delivered in G20-A.
+The reservation stage locks product rows in stable UUID order and counts unexpired holds against total, configured variant, and exact matrix stock. It reserves selected coupon IDs once per active reservation and rechecks coupon/store scope and the current coupon cap. A narrow trigger blocks the existing V310 coupon consumer from marking a coupon used while another live payment reservation owns it; the future trusted finalizer must set the reservation-scoped transaction context after locking the same reservation. The hold rows are separate from `local_products`; the migration never changes physical stock and never inserts or updates `orders`. V47 remains the existing physical stock decrement when the canonical paid transition occurs.
 
-## Review and rollback
+G20-C currently implements reserve and customer release only. It is not connected to a gateway, cannot create production payment attempts, and has no finalize/consume endpoint. Before gateway work, an approved finalizer must consume the same reservation idempotently, revalidate the held line against current physical stock, call the canonical order engine, and allow the existing paid transition/V47 to deduct once. A conflict after verified capture must enter reconciliation/refund; it must not publish a partial paid order.
 
-This migration has **not** been executed against production or Supabase. Local Supabase CLI, PostgreSQL and Docker are unavailable in the current workspace, so SQL runtime validation is still pending on an isolated Supabase project. No production SQL should be run from this handoff.
+These staged files must be reviewed against a disposable Supabase project after the G20 prerequisites are restored there. The quote depends on V94/V97/V132/V310/V401 and the existing `meshwar_matrix_stock_key`; reservation additionally depends on the loyalty coupon schema. I could not run PostgreSQL/Supabase locally in this workspace, and no SQL was run against production.
 
-If G20-A is applied to an isolated project and needs rollback before later stages depend on it, the rollback order is:
+## Risks and rollback
 
-```sql
-begin;
-drop function if exists public.kinto_payment_quote_g20(text,jsonb,jsonb);
-drop function if exists private.kinto_payment_options_valid_g20(jsonb,jsonb);
-drop table if exists public.kinto_payment_quotes_g20;
-notify pgrst, 'reload schema';
-commit;
-```
+- A temporary hold reduces availability only for the new electronic reservation path. The legacy manual checkout does not subtract G20 holds. Therefore finalization must check current stock again; holds alone do not prevent a concurrent legacy manual order from consuming the same physical stock.
+- Existing V47 behavior is intentionally unchanged. A missing/invalid matrix combination is rejected by G20-B/G20-C before payment setup, because V47 may skip a missing matrix key.
+- Holds expire after 15 minutes and remain auditable in the ledger. Expired rows are ignored by availability; cleanup may mark them expired later. A late provider success must be reconciled and cannot reuse an expired hold blindly.
+- G20-B changes quote amount/currency to nullable only for multi-currency review snapshots. Reserve rejects those quotes. Before production, test constraints against the actual G20-A migration state in an isolated database.
+- G20-C introduces foreign keys to existing product and loyalty coupon tables and a guarded coupon-consumption trigger. Validate exact IDs/types, V310 rollback behavior, and grants on the disposable project before any approval to apply SQL elsewhere.
 
-This removes review snapshots and the quote endpoint. Once a later reservation or payment migration references these objects, roll those later stages back first. Production use requires a separate reviewed SQL presentation and explicit approval.
+To roll back **before any later stage depends on these tables**, stop using the quote/reserve RPCs, inspect and reconcile active reservations, then roll back C before B before A. Do not delete active or consumed financial evidence. The C rollback must first export/reconcile reservation data and release or account for all active holds; only then may its RPCs/tables be removed. The G20-A quote table must remain until all G20-B/C references are removed. For production, present each SQL block and its staged rollback separately and wait for explicit approval.
 
-## Verification performed
+## Executable checks
 
-- `node --check js/kinto-payment-review-g20.js`
-- `npm run test:payments` — G18/G19 plus G20 review tests
-- `git diff --check`
+- `npm run test:payments` exercises G18/G19/G20 JavaScript, exact legacy pricing numbers and rounding boundaries, coupon cap boundaries, and a concurrent manual-fallback attempt that verifies one legacy invocation and retained cart rows on failure.
+- `supabase/tests/kinto_payment_review_g20b.sql` runs the installed PL/pgSQL options helper against valid, missing, invalid, and zero-stock color/size/volume matrix choices. `supabase/tests/kinto_stock_reservations_g20c.sql` runs the actual reservation availability helper at exact last-unit and held-quantity boundaries. Run both only after G20-A/B/C on a disposable Supabase test project.
+- `node --check` for changed JavaScript and `git diff --check`.
 
-These checks cover cart payload minimization, store/campaign coupon scope, the checkout-only interception boundary and the migration's review-only/no-order/no-stock-write boundary. They do not replace running the SQL on an isolated Supabase project or browser end-to-end verification against customer data.
+The SQL integration test has not been run because no local PostgreSQL, Supabase CLI, or Docker runtime is available here. Browser E2E against real customer/session data and concurrency testing (last item, two holds, coupon competition) remain required on the isolated project before any gateway is enabled.
