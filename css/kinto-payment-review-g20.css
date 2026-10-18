@@ -1,0 +1,42 @@
+/* G20: server-quoted cart review window. */
+.kinto-pay-review-g20-overlay[hidden]{display:none!important}
+.kinto-pay-review-g20-overlay{position:fixed;inset:0;z-index:1410;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,18,15,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.kinto-pay-review-g20{width:min(900px,100%);max-height:min(92dvh,900px);display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(229,185,63,.38);border-radius:22px;background:linear-gradient(155deg,#0a3329,#061f1a);color:#f8fafc;box-shadow:0 28px 100px rgba(0,0,0,.55);direction:rtl;outline:none}
+.kinto-pay-review-g20-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 24px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.kinto-pay-review-g20-kicker{font-size:10px;letter-spacing:.16em;color:#e5b93f;font-weight:900}
+.kinto-pay-review-g20-head h2{margin:5px 0;color:#ffe08a;font-size:23px}
+.kinto-pay-review-g20-head p{margin:0;color:#bfd0ca;font-size:13px;line-height:1.7}
+.kinto-pay-review-g20-close{flex:0 0 40px;width:40px;height:40px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.06);color:#fff;font-size:25px;cursor:pointer}
+.kinto-pay-review-g20-body{min-height:120px;overflow:auto;padding:16px 22px}
+.kinto-pay-review-g20-message{margin-bottom:12px;padding:10px 12px;border:1px solid rgba(229,185,63,.24);border-radius:12px;background:rgba(229,185,63,.07);color:#f3e3b5;font-size:12px;line-height:1.65;overflow-wrap:anywhere}
+.kinto-pay-review-g20-message[data-kind=ok]{border-color:rgba(74,222,128,.3);background:rgba(22,163,74,.1);color:#bbf7d0}
+.kinto-pay-review-g20-message[data-kind=error]{border-color:rgba(248,113,113,.35);background:rgba(153,27,27,.12);color:#fecaca}
+.kinto-pay-review-g20-store{margin:12px 0 16px;border:1px solid rgba(229,185,63,.2);border-radius:16px;background:rgba(255,255,255,.035);overflow:hidden}
+.kinto-pay-review-g20-store>header{display:flex;justify-content:space-between;gap:12px;padding:12px 15px;border-bottom:1px solid rgba(255,255,255,.08);color:#ffe08a;font-weight:900}
+.kinto-pay-review-g20-items{display:grid;gap:1px}
+.kinto-pay-review-g20-item{display:grid;grid-template-columns:68px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,.025)}
+.kinto-pay-review-g20-item img{width:68px;height:68px;border-radius:12px;object-fit:cover;background:#123a30}
+.kinto-pay-review-g20-item-copy{display:grid;gap:4px;min-width:0}
+.kinto-pay-review-g20-item-copy strong{overflow-wrap:anywhere;color:#fff}
+.kinto-pay-review-g20-item-copy span,.kinto-pay-review-g20-item-copy small{color:#b8c9c3;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.kinto-pay-review-g20-item>b{color:#ffe08a;white-space:nowrap;font-size:13px}
+.kinto-pay-review-g20-coupon{display:grid;grid-template-columns:minmax(120px,1fr) minmax(160px,240px);align-items:center;gap:7px 12px;padding:13px 15px;color:#f7e7bb;font-size:13px;font-weight:800}
+.kinto-pay-review-g20-coupon select{min-height:42px;padding:8px 10px;border:1px solid rgba(229,185,63,.35);border-radius:10px;background:#09281f;color:#fff;font:inherit}
+.kinto-pay-review-g20-coupon small{grid-column:1/-1;color:#aebfb8;font-size:11px;font-weight:500}
+.kinto-pay-review-g20-coupon-note{padding:8px 15px 13px;color:#aebfb8;font-size:11px}
+.kinto-pay-review-g20-store-total{display:grid;grid-template-columns:1fr auto;gap:7px 12px;padding:12px 15px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:#bdcec8}
+.kinto-pay-review-g20-store-total b{color:#f3c866}.kinto-pay-review-g20-store-total strong{color:#fff;font-size:14px}
+.kinto-pay-review-g20-total{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:14px;padding:17px;border:1px solid rgba(229,185,63,.42);border-radius:15px;background:linear-gradient(120deg,rgba(229,185,63,.13),rgba(255,255,255,.03));color:#fff;font-size:14px}
+.kinto-pay-review-g20-total strong{color:#ffe08a;font-size:20px;white-space:nowrap}.kinto-pay-review-g20-total small{grid-column:1/-1;color:#afc1bb;font-size:10px;overflow-wrap:anywhere}
+.kinto-pay-review-g20-foot{padding:14px 22px calc(16px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.12)}
+.kinto-pay-review-g20-shipping{margin-bottom:12px;padding:10px 12px;border-radius:11px;background:rgba(229,185,63,.08);color:#eadfbd;font-size:12px;line-height:1.7}
+.kinto-pay-review-g20-shipping strong{color:#ffe08a}
+.kinto-pay-review-g20-actions{display:flex;flex-wrap:wrap;gap:9px}
+.kinto-pay-review-g20-actions button{min-height:43px;padding:10px 14px;border-radius:11px;font:inherit;font-size:12px;font-weight:900;cursor:pointer}
+.kinto-pay-review-g20-secondary{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#f8fafc}
+.kinto-pay-review-g20-manual{border:1px solid #d5ad43;background:linear-gradient(135deg,#f3ca62,#d9a932);color:#132d25}
+.kinto-pay-review-g20-disabled{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#9aaba5;cursor:not-allowed!important}
+.kinto-pay-review-g20-actions button:disabled{opacity:.55;cursor:wait}
+.kinto-pay-review-g20-hint{margin:10px 0 0;color:#b5c7c0;font-size:11px;line-height:1.65}
+.kinto-payment-review-g20-open{overflow:hidden}
+@media(max-width:640px){.kinto-pay-review-g20-overlay{align-items:stretch;padding:0}.kinto-pay-review-g20{width:100%;max-height:100dvh;border-radius:0;border-left:0;border-right:0}.kinto-pay-review-g20-head{padding:16px}.kinto-pay-review-g20-head h2{font-size:19px}.kinto-pay-review-g20-body{padding:12px}.kinto-pay-review-g20-item{grid-template-columns:54px minmax(0,1fr);gap:9px;padding:10px}.kinto-pay-review-g20-item img{width:54px;height:54px}.kinto-pay-review-g20-item>b{grid-column:2;justify-self:start}.kinto-pay-review-g20-coupon{grid-template-columns:1fr}.kinto-pay-review-g20-coupon select{grid-column:1}.kinto-pay-review-g20-actions{display:grid;grid-template-columns:1fr}.kinto-pay-review-g20-actions button{width:100%}.kinto-pay-review-g20-foot{padding:12px 14px calc(14px + env(safe-area-inset-bottom))}}

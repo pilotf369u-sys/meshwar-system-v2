@@ -10,6 +10,7 @@
     <script>(function(){try{const allowed=new Set(['activeOrders','orderHistory','chatHelp','notifications','drafts','productReviews','customerFavorites']),params=new URLSearchParams(location.search),customerId=String(params.get('customerId')||params.get('id')||'session').trim(),key='kinto_customer_dashboard_tab:'+customerId,requested=String(params.get('tab')||sessionStorage.getItem(key)||'').trim(),tab=requested==='favorites'?'customerFavorites':requested;if(allowed.has(tab)&&tab!=='activeOrders'){window.__kintoCustomerInitialTab=tab;document.documentElement.classList.add('customer-tab-restoring')}}catch{}})();</script>
     <link rel="stylesheet" href="css/kinto-ui-stability-v123.css?v=20260908-v123">
     <link rel="stylesheet" href="css/local-cart-v93.css?v=20260909-v125">
+    <link rel="stylesheet" href="css/kinto-payment-review-g20.css?v=20261018-g20-review-1">
     <link rel="stylesheet" href="css/customer-local-cart-v125.css?v=20260909-v125">
     <link rel="stylesheet" href="css/customer-product-reviews-v135.css?v=20260912-ready-products-fix2">
     <link rel="stylesheet" href="css/customer-favorites-dashboard-v148.css?v=20260924-v194">
@@ -303,6 +304,7 @@ Object.assign(window,{applyCustomerDecisionReward,switchCustomerTab,openCustomer
 <script defer src="js/invoice-details-hotfix-v115.js?v=20260905-v116"></script>
 
 <script src="js/local-cart-v93.js?v=20261016-order-privacy-v1"></script>
+<script src="js/kinto-payment-review-g20.js?v=20261018-g20-review-1"></script>
 <script src="js/customer-local-cart-v125.js?v=20260909-v125"></script>
 <script src="js/kinto-bundle-ui-v93.js?v=20261016-order-privacy-v1"></script>
 <script defer src="js/kinto-points-v310.js?v=20261017-store-control-v1"></script>
