@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "test:e2e": "playwright test",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "test:payments": "node --test tests/payment-gateway-g18.test.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.55.0"
