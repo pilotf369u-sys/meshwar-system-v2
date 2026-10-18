@@ -3,7 +3,7 @@
 const root=()=>document.getElementById('g16PaymentMethods');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const token=()=>window.KintoAdminSessionV147?.read?.()?.token||'';
-let methods=[],busy=false,pendingChallenge='';
+let methods=[],settings={},busy=false,pendingChallenge='';
 async function secure(action,payload){
  const sb=await window.ensureCustomerSupabase();
  const {data,error}=await sb.functions.invoke('kinto-payment-security-g16',{body:{action,session_token:token(),...payload}});
@@ -40,11 +40,68 @@ async function rpc(action='list',extra={}){
  const {data,error}=await sb.rpc('kinto_payment_admin_g16',{p_session_token:t,p_action:action,...extra});
  if(error)throw error;return data;
 }
+async function runtimeRpc(action='get',extra={}){
+ const t=token();if(!t)throw Error('جلسة الأدمن غير متاحة. يرجى تسجيل الدخول مجدداً.');
+ const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.rpc('kinto_payment_mode_admin_g16',{p_session_token:t,p_action:action,...extra});
+ if(error){
+  let detail='';try{const j=await error.context?.json?.();detail=String(j?.message||j?.error||'')}catch{}
+  if(detail.includes('GATEWAY_INTEGRATION_NOT_DEPLOYED'))throw Error('لا يمكن تفعيل التحصيل الحي قبل اكتمال ربط البوابة ومراجعتها.');
+  throw Error(detail||error.message||'تعذر حفظ إعداد مسار الدفع.');
+ }
+ if(!data?.payment_mode)throw Error(data?.error||'تعذر قراءة إعدادات مسار الدفع.');
+ return data;
+}
 const message=(v,bad=false)=>{const el=document.getElementById('g16Message');if(el){el.textContent=v;el.style.color=bad?'#b91c1c':'#166534'}};
+function runtimeStatus(v,bad=false){const el=document.getElementById('g16RuntimeStatus');if(el){el.textContent=v;el.style.color=bad?'#b91c1c':'#166534'}}
+function setRuntimeControlsAvailable(available){
+ for(const id of ['g16PaymentMode','g16GatewayEnvironment','g16SaveRuntime']){
+  const el=document.getElementById(id);if(el)el.disabled=!available;
+ }
+ const gatewaySwitch=document.getElementById('g16GatewaySwitch');
+ if(gatewaySwitch&&!available)gatewaySwitch.disabled=true;
+}
+function paintRuntime(data){
+ settings=data||{};
+ const mode=document.getElementById('g16PaymentMode'),env=document.getElementById('g16GatewayEnvironment');
+ if(mode)mode.value=settings.payment_mode==='electronic'?'electronic':'manual';
+ if(env)env.value=settings.gateway_environment==='live'?'live':'sandbox';
+ const effective=settings.effective_payment_mode==='electronic'?'إلكتروني':'يدوي';
+ const selected=settings.payment_mode==='electronic'?'إلكتروني (محدد، غير مفعّل)':'يدوي';
+ const ready=settings.gateway_integration_ready===true;
+ const state=document.getElementById('g16GatewayState');
+ if(state)state.textContent='المسار المحدد: '+selected+' — المسار الفعلي حالياً: '+effective+' — التحصيل الإلكتروني '+(ready?'جاهز بعد الاعتماد':'مغلق حتى اكتمال الربط والاختبار');
+ const sw=document.getElementById('g16GatewaySwitch');
+ if(sw){sw.disabled=!ready;sw.textContent=!ready?'استقبال الدفع الإلكتروني مغلق':settings.gateways_enabled?'إيقاف استقبال المدفوعات الإلكترونية':'تفعيل استقبال المدفوعات الإلكترونية';}
+ runtimeStatus(settings.payment_mode==='electronic'&&!ready?'تم حفظ اختيار الإلكتروني كإعداد فقط. لا تُنشأ محاولات تحصيل، ويبقى المسار الفعلي يدوياً حتى اكتمال الربط والاختبار.':'النظام اليدوي هو الافتراضي والفعلي حالياً.');
+}
+async function saveRuntime(){
+ if(busy)return;
+ const mode=document.getElementById('g16PaymentMode')?.value||'manual';
+ const environment=document.getElementById('g16GatewayEnvironment')?.value||'sandbox';
+ if(mode==='electronic'&&settings.payment_mode!=='electronic'&&!confirm('سيُحفظ اختيار الدفع الإلكتروني إعداداً للطلبات الجديدة، لكن التحصيل سيبقى مغلقاً حتى اكتمال الربط والاختبارات. الطلبات الجارية لن تتغير. متابعة؟'))return;
+ if(environment==='live'&&!settings.gateway_integration_ready){runtimeStatus('بيئة الإنتاج غير متاحة قبل اكتمال ربط البوابة والمراجعة.',true);return}
+ busy=true;runtimeStatus('جارٍ حفظ الإعدادات...');
+ try{
+  const updated=await runtimeRpc('set_mode',{p_payment_mode:mode});
+  const withEnv=environment!==(updated.gateway_environment||'sandbox')?await runtimeRpc('set_environment',{p_gateway_environment:environment}):updated;
+  paintRuntime(withEnv);
+  runtimeStatus(mode==='electronic'&&!withEnv.gateway_integration_ready?'حُفظ الاختيار. الدفع الإلكتروني لا يستقبل عمليات حالياً؛ المسار الفعلي بقي يدوياً.':'تم حفظ إعداد المسار.');
+ }catch(e){runtimeStatus(e?.message||'تعذر حفظ الإعدادات.',true);try{paintRuntime(await runtimeRpc('get'))}catch{}}
+ finally{busy=false}
+}
+async function toggleGateway(){
+ if(busy||!settings.gateway_integration_ready)return;
+ const next=!settings.gateways_enabled;
+ if(next&&!confirm('تأكيد تفعيل إنشاء محاولات دفع جديدة؟'))return;
+ if(!next&&!confirm('إيقاف إنشاء محاولات دفع إلكترونية جديدة؟ ستستمر مطابقة العمليات السابقة.'))return;
+ busy=true;runtimeStatus('جارٍ تحديث مفتاح إيقاف التحصيل...');
+ try{paintRuntime(await runtimeRpc('gateway_switch',{p_enabled:next}));runtimeStatus(next?'تم تفعيل استقبال محاولات جديدة.':'تم إيقاف محاولات الدفع الجديدة؛ تبقى مطابقة العمليات السابقة مستمرة.')}
+ catch(e){runtimeStatus(e?.message||'تعذر تحديث مفتاح الإيقاف.',true)}finally{busy=false}
+}
 function paint(data){
  methods=data.methods||[];
  const list=document.getElementById('g16List');if(!list)return;
- document.getElementById('g16GatewayState').textContent='الدفع الإلكتروني: متوقف — الربط الفعلي سيضاف لاحقاً في مرحلة مستقلة';
  list.replaceChildren();const pv=document.getElementById('g16CustomerPreview');if(pv){pv.hidden=true;pv.textContent=''}
  for(const m of methods){
   const card=document.createElement('div');card.className='g16-method';
@@ -110,8 +167,19 @@ async function change(action,args){
 }
 async function load(){
  if(!root()||busy)return;busy=true;message('جارٍ تحميل طرق الدفع...');
- try{paint(await rpc());message('إدارة طرق الدفع مستقلة حالياً عن الطلبات؛ لا يتم إرسال بيانات الدفع تلقائياً.')}
- catch(e){message(e?.message||'تعذر التحميل. تأكد من تنفيذ SQL الخاص بالمرحلة.',true)}
+ try{
+  const catalog=await rpc();paint(catalog);
+  try{
+   const mode=await runtimeRpc('get');setRuntimeControlsAvailable(true);paintRuntime(mode);
+   message('تم تحميل الإعدادات ووسائل الدفع؛ يبقى OTP مطلوباً عند تغيير بيانات التحويل.');
+  }catch(e){
+   paintRuntime({payment_mode:'manual',gateway_environment:'sandbox',gateways_enabled:false,gateway_integration_ready:false,effective_payment_mode:'manual'});
+   setRuntimeControlsAvailable(false);
+   runtimeStatus('إعداد وضع الدفع ينتظر تطبيق ترحيل G16؛ بقيت وسائل الدفع اليدوية متاحة.',true);
+   message('تم تحميل وسائل الدفع اليدوية. إعداد وضع الدفع غير متاح حتى تطبيق SQL الخاص بـG16.');
+  }
+ }
+ catch(e){message(e?.message||'تعذر تحميل وسائل الدفع. تحقق من ترحيل كتالوج G16.',true)}
  finally{busy=false}
 }
 window.loadAdminPaymentMethodsG16=load;
@@ -120,6 +188,8 @@ window.addEventListener('DOMContentLoaded',()=>{
  f.elements.methodType.addEventListener('change',fields);
  document.getElementById('g16Reset').onclick=()=>fill(null);
  document.getElementById('g16Reload').onclick=load;
+ document.getElementById('g16SaveRuntime').onclick=saveRuntime;
+ document.getElementById('g16GatewaySwitch').onclick=toggleGateway;
  f.addEventListener('submit',e=>{
   e.preventDefault();const x=f.elements;
   const args={p_label:x.methodLabel.value.trim(),p_provider:x.methodProvider.value.trim(),p_recipient_name:x.recipientName.value.trim(),p_account_reference:x.accountReference.value.trim(),p_instructions:x.instructions.value.trim()};
