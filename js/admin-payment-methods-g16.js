@@ -54,6 +54,13 @@ async function runtimeRpc(action='get',extra={}){
 }
 const message=(v,bad=false)=>{const el=document.getElementById('g16Message');if(el){el.textContent=v;el.style.color=bad?'#b91c1c':'#166534'}};
 function runtimeStatus(v,bad=false){const el=document.getElementById('g16RuntimeStatus');if(el){el.textContent=v;el.style.color=bad?'#b91c1c':'#166534'}}
+function setRuntimeControlsAvailable(available){
+ for(const id of ['g16PaymentMode','g16GatewayEnvironment','g16SaveRuntime']){
+  const el=document.getElementById(id);if(el)el.disabled=!available;
+ }
+ const gatewaySwitch=document.getElementById('g16GatewaySwitch');
+ if(gatewaySwitch&&!available)gatewaySwitch.disabled=true;
+}
 function paintRuntime(data){
  settings=data||{};
  const mode=document.getElementById('g16PaymentMode'),env=document.getElementById('g16GatewayEnvironment');
@@ -160,8 +167,19 @@ async function change(action,args){
 }
 async function load(){
  if(!root()||busy)return;busy=true;message('جارٍ تحميل طرق الدفع...');
- try{const [catalog,mode]=await Promise.all([rpc(),runtimeRpc('get')]);paint(catalog);paintRuntime(mode);message('تم تحميل الإعدادات ووسائل الدفع؛ يبقى OTP مطلوباً عند تغيير بيانات التحويل.')}
- catch(e){message(e?.message||'تعذر التحميل. تأكد من تنفيذ SQL الخاص بالمرحلة.',true)}
+ try{
+  const catalog=await rpc();paint(catalog);
+  try{
+   const mode=await runtimeRpc('get');setRuntimeControlsAvailable(true);paintRuntime(mode);
+   message('تم تحميل الإعدادات ووسائل الدفع؛ يبقى OTP مطلوباً عند تغيير بيانات التحويل.');
+  }catch(e){
+   paintRuntime({payment_mode:'manual',gateway_environment:'sandbox',gateways_enabled:false,gateway_integration_ready:false,effective_payment_mode:'manual'});
+   setRuntimeControlsAvailable(false);
+   runtimeStatus('إعداد وضع الدفع ينتظر تطبيق ترحيل G16؛ بقيت وسائل الدفع اليدوية متاحة.',true);
+   message('تم تحميل وسائل الدفع اليدوية. إعداد وضع الدفع غير متاح حتى تطبيق SQL الخاص بـG16.');
+  }
+ }
+ catch(e){message(e?.message||'تعذر تحميل وسائل الدفع. تحقق من ترحيل كتالوج G16.',true)}
  finally{busy=false}
 }
 window.loadAdminPaymentMethodsG16=load;
