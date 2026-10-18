@@ -1,0 +1,60 @@
+name: KINTO payment G21 isolated SQL
+on:
+  push:
+    branches: [feature/kinto-electronic-payment]
+    paths:
+      - 'supabase/migrations/20261009_v161_new_orders_vendor_finance.sql'
+      - 'supabase/migrations/20260930_v401_campaign_cross_store_redemption.sql'
+      - 'supabase/migrations/20261018213000_kinto_stock_reservations_g20c.sql'
+      - 'supabase/migrations/20261018220000_kinto_payment_confirmation_g21.sql'
+      - 'supabase/rollback/20261018220000_kinto_payment_confirmation_g21_ROLLBACK.sql'
+      - 'tests/sql/kinto-payment-g21-fixture.sql'
+      - 'ci/kinto-payment-g21.integration.mjs'
+      - 'package.json'
+      - '.github/workflows/kinto-payment-g21.yml'
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261009_v161_new_orders_vendor_finance.sql'
+      - 'supabase/migrations/20260930_v401_campaign_cross_store_redemption.sql'
+      - 'supabase/migrations/20261018213000_kinto_stock_reservations_g20c.sql'
+      - 'supabase/migrations/20261018220000_kinto_payment_confirmation_g21.sql'
+      - 'supabase/rollback/20261018220000_kinto_payment_confirmation_g21_ROLLBACK.sql'
+      - 'tests/sql/kinto-payment-g21-fixture.sql'
+      - 'ci/kinto-payment-g21.integration.mjs'
+      - 'package.json'
+      - '.github/workflows/kinto-payment-g21.yml'
+  workflow_dispatch:
+jobs:
+  payment-sql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: kinto_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated PostgreSQL test clients
+        run: npm install --prefix "$RUNNER_TEMP/kinto-pg" --ignore-scripts --no-audit --no-fund @electric-sql/pglite@0.5.8 pg@8.16.3
+      - name: Run isolated SQL integration on PGlite
+        env:
+          KINTO_PGLITE_MODULE: ${{ runner.temp }}/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js
+        run: npm run test:payments:sql
+      - name: Run same scenarios and lock race on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+          KINTO_PG_MODULE: ${{ runner.temp }}/kinto-pg/node_modules/pg/lib/index.js
+        run: npm run test:payments:sql
+      - name: Run payment adapter unit tests
+        run: npm run test:payments

@@ -61,7 +61,9 @@ declare
     'and r.status=''active'' and r.expires_at>clock_timestamp())';
 begin
   v_definition:=pg_get_functiondef('public.customer_apply_coupon_v310(text,text,bigint)'::regprocedure);
-  if position(v_before in v_definition)=0 then
+  if position(v_after in v_definition)>0 then
+    return;
+  elsif position(v_before in v_definition)=0 then
     raise exception 'G21_EXPECTED_V401_COUPON_SELECTION_NOT_FOUND';
   end if;
   execute replace(v_definition,v_before,v_after);

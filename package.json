@@ -4,7 +4,8 @@
   "scripts": {
     "test:e2e": "playwright test",
     "test:e2e:report": "playwright show-report",
-    "test:payments": "node --test tests/payment-gateway-g18.test.mjs tests/payment-simulator-g19.test.mjs tests/payment-review-g20.test.mjs tests/payment-confirmation-g21.test.mjs"
+    "test:payments": "node --test tests/payment-gateway-g18.test.mjs tests/payment-simulator-g19.test.mjs tests/payment-review-g20.test.mjs tests/payment-confirmation-g21.test.mjs",
+    "test:payments:sql": "node ci/kinto-payment-g21.integration.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.55.0"
