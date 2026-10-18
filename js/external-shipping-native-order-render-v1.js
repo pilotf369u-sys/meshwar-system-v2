@@ -16,7 +16,7 @@ const extCurrencyValue=o=>{
   if(fee(o)===0&&ext==='USD'&&base&&base!=='USD')return base;
   return ext||base||'USD';
 };
-function collectionDue(o){const t=payTypeValue(o);if(t==='paid_prepaid')return 0;if(t==='product_paid_delivery_cod')return fee(o)+localFee(o);return product(o)+fee(o)+localFee(o)}
+function collectionDue(o){const t=payTypeValue(o);if(t==='paid_prepaid')return 0;if(t==='product_paid_delivery_cod')return fee(o)+localFee(o);return window.KintoCouponFinanceV1.goods(o)+fee(o)+localFee(o)}
 function symbol(v){const s=String(v||'').trim().toUpperCase();if(s==='USD'||s==='$')return'$';if(s==='IQD')return'IQD';if(s==='TRY'||s==='TL')return'TL';if(s==='EUR'||s==='€')return'€';if(s==='SYP')return'SYP';return String(v||'USD')}
 function shortCurrencyOptions(current){const cur=String(current||'USD'),values=[cur,'USD','IQD','TRY','EUR','SYP','$'];return [...new Set(values.filter(Boolean))].map(v=>`<option value="${escapeHtml(v)}" ${v===cur?'selected':''}>${escapeHtml(symbol(v))}</option>`).join('')}
 function adminShortCurrencyOptions(current){const cur=String(current||'USD'),values=[cur,'USD','IQD','TRY','EUR','SYP','$'];return [...new Set(values.filter(Boolean))].map(v=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(symbol(v))}</option>`).join('')}

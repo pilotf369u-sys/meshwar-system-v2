@@ -1,3 +1,4 @@
+import {verifyCouponFinance} from './coupon-finance.integration.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -92,6 +93,7 @@ for(const [table,token,role]of [['admin_sessions_v147',admin,'admin'],['branch_s
 }
 await db.exec("UPDATE branches SET status='disabled' WHERE id='"+id(30)+"'");await deny(()=>list('branch',branch));await db.exec("UPDATE branches SET status='active'");
 await db.exec("UPDATE employees SET role='employee' WHERE id='"+id(1)+"'");await deny(()=>list('admin',admin));await db.exec("UPDATE employees SET role='admin' WHERE id='"+id(1)+"'");
+await verifyCouponFinance({db,order,id,request,decide,cash,admin,branch});
 // Real simultaneous sessions on native PostgreSQL: observe lock wait before releasing winner.
 if(native){
  const branchTwo=(await api('branch_login_v148',['branch-phone','branch-pass'])).session_token,adminTwo=(await api('admin_login_v147',['admin-phone','admin-pass'])).session_token;assert(branchTwo&&adminTwo&&branchTwo!==branch&&adminTwo!==admin);
