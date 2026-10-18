@@ -354,7 +354,7 @@
       'PRODUCT_NOT_FOUND', 'PRODUCT_NOT_FOUND_IN_DELIVERED_ORDER', 'DELIVERED_ORDER_NOT_FOUND', 'REVIEW_STORE_NOT_FOUND',
       'INVALID_REVIEW_RATING', 'REVIEW_COMMENT_REQUIRED', 'REVIEW_COMMENT_TOO_LONG',
       'REVIEW_IMAGE_LIMIT_REACHED', 'IMAGE_SIZE_NOT_ALLOWED', 'IMAGE_TYPE_NOT_ALLOWED',
-      'REVIEW_UPLOAD_TICKET_INVALID', 'REVIEW_STORAGE_OBJECT_NOT_FOUND'
+      'REVIEW_UPLOAD_TICKET_INVALID', 'REVIEW_STORAGE_OBJECT_NOT_FOUND', 'REVIEW_IMAGES_LOCKED'
     ].find(value => raw.includes(value));
     return ({
       PRODUCT_NOT_FOUND: 'تعذر مطابقة المنتج مع الطلب المسلّم. حدّث الصفحة وحاول مجدداً.',
@@ -368,7 +368,8 @@
       IMAGE_SIZE_NOT_ALLOWED: 'تعذر تجهيز الصورة بالحجم الآمن.',
       IMAGE_TYPE_NOT_ALLOWED: 'صيغة الصورة غير مدعومة.',
       REVIEW_UPLOAD_TICKET_INVALID: 'انتهت مهلة رفع الصورة. أعد اختيارها وحاول مجدداً.',
-      REVIEW_STORAGE_OBJECT_NOT_FOUND: 'لم يكتمل حفظ الصورة. حاول مرة أخرى.'
+      REVIEW_STORAGE_OBJECT_NOT_FOUND: 'لم يكتمل حفظ الصورة. حاول مرة أخرى.',
+      REVIEW_IMAGES_LOCKED: 'تمت مراجعة التقييم بالفعل. حدّث الصفحة قبل المحاولة مجدداً.'
     })[code] || 'تعذر إرسال التقييم حالياً. حاول مرة أخرى.';
   }
 
@@ -489,7 +490,7 @@
         catch (error) { uploadFailure = error; break; }
       }
       if (uploadFailure) {
-        message('reviewFormMessage', `تم حفظ التقييم بحالة «قيد المراجعة»، لكن تعذر رفع الصورة: ${friendlyReviewError(uploadFailure)}`, 'error');
+        message('reviewFormMessage', `تم حفظ التقييم بحالة «قيد المراجعة»، لكن تعذر رفع الصورة: ${friendlyReviewError(uploadFailure)} اضغط إرسال مجدداً لإعادة محاولة رفع الصورة.`, 'error');
         state.busy = false;
         return;
       }

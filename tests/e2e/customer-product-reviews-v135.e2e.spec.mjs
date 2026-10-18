@@ -77,3 +77,50 @@ test('production reviews script blocks review submission in staff customer read-
   expect(after).toBe(before);
   await expect(page.locator('#reviewFormMessage')).toContainText('وضع مشاهدة فقط');
 });
+
+test('customer retains chosen image after upload refusal and can retry to finalize',async({page})=>{
+ await page.evaluate(()=>{
+  const sb=window.__meshwarSupabaseClient,original=sb.rpc.bind(sb);
+  window.__reviewUpload={attempts:0,tickets:0,finalized:0,types:[]};
+  sb.rpc=async(name,args)=>{
+   if(name==='customer_submit_product_review_v132')return {data:{id:'review-retry',status:'pending'}};
+   if(name==='customer_create_review_image_upload_v150'){__reviewUpload.tickets++;return {data:{ticket_id:'same-ticket',storage_path:'reviews/review-retry/image.webp',bucket:'product-review-images'}}}
+   if(name==='customer_finalize_review_image_upload_v150'){__reviewUpload.finalized++;return {data:{ok:true}}}
+   return original(name,args);
+  };
+  sb.storage={from:bucket=>({async upload(path,file,options){__reviewUpload.attempts++;__reviewUpload.types.push({bucket,path,type:file.type,size:file.size,upsert:options.upsert});return __reviewUpload.attempts===1?{error:{message:'new row violates row-level security policy'}}:{error:null}},async remove(){return {error:null}}})};
+ });
+ await page.locator('.review-tab-btn').click();await page.locator('[data-review-index="0"]').click();
+ await page.locator('[data-rating="5"]').click();await page.locator('#reviewComment').fill('صورة المنتج مع تقييم موثق');
+ const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=64;c.height=64;const x=c.getContext('2d');x.fillStyle='#063b2d';x.fillRect(0,0,64,64);return c.toDataURL('image/png').split(',')[1]});
+ await page.locator('#reviewFilesInput').setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await expect(page.locator('#reviewPreviews img')).toHaveCount(1);
+ await page.locator('#reviewSubmitBtn').click();await expect(page.locator('#reviewFormMessage')).toContainText('اضغط إرسال مجدداً');
+ expect(await page.evaluate(()=>__reviewUpload.finalized)).toBe(0);
+ await expect(page.locator('#reviewPreviews img')).toHaveCount(1);
+ await page.locator('#reviewSubmitBtn').click();await expect(page.locator('#reviewFormMessage')).toContainText('تم إرسال تقييمك وصورك للمراجعة بنجاح');
+ const state=await page.evaluate(()=>__reviewUpload);expect(state.attempts).toBe(2);expect(state.finalized).toBe(1);expect(state.types[1]).toMatchObject({bucket:'product-review-images',upsert:false});expect(state.types[1].size).toBeLessThanOrEqual(51200);
+ // Follow the saved image through the shipped admin and storefront renderers.
+ await page.waitForTimeout(900);
+ const imageUrl='https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/product-review-images/reviews/review-retry/image.webp';
+ await page.route('**/storage/v1/object/public/product-review-images/**',route=>route.fulfill({contentType:'image/png',body:Buffer.from(png,'base64')}));
+ await page.setContent('<aside class="admin-master-sidebar"></aside><main class="main-content"></main>');
+ await page.evaluate(imageUrl=>{
+  window.__reviewPublished=false;window.checkAdminRole=async()=>true;window.getAdminId=()=>'test-admin';window.showSection=()=>{};
+  window.ensureCustomerSupabase=async()=>({storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:imageUrl}})})},rpc:async(name)=>{
+   if(name==='admin_get_review_image_v139')return {data:{storage_path:'reviews/review-retry/image.webp',bucket:'product-review-images'}};
+   if(name==='admin_moderate_product_review_v138'){window.__reviewPublished=true;return {data:{}}}
+   return {data:{total:1,items:[{id:'review-retry',rating:5,comment:'صورة المنتج',product_name:'Product',created_at:'2026-10-18',images:[{id:'saved-image'}]}]}};
+  }});
+ },imageUrl);
+ await page.addScriptTag({url:'/js/admin-product-reviews-v138.js'});await page.evaluate(()=>KintoAdminProductReviewsV138.load());
+ await expect(page.locator('[data-admin-review-preview]')).toHaveAttribute('src',imageUrl);await expect.poll(()=>page.locator('[data-admin-review-preview]').evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);
+ await page.locator('[data-decision="published"]').click();await expect.poll(()=>page.evaluate(()=>__reviewPublished)).toBe(true);
+ await page.setContent('<div id="localStoreProductsGrid"><article class="local-v3-card" data-product-card="product"><button data-review-product="product">عرض التقييمات</button><div class="local-v3-name">Product</div></article></div>');
+ await page.evaluate(()=>{const original=window.fetch.bind(window);window.fetch=async(url,options)=>{
+  if(String(url).includes('/rpc/product_reviews_public_v141'))return new Response(JSON.stringify({count:1,average_rating:5,items:__reviewPublished?[{id:'review-retry',rating:5,customer_name:'عميل',comment:'صورة المنتج',images:[{storage_path:'reviews/review-retry/image.webp'}]}]:[]}),{status:200});
+  if(String(url).includes('/rpc/product_review_summaries_v140'))return new Response('[]',{status:200});return original(url,options);
+ }});
+ await page.addScriptTag({url:'/js/store-product-reviews-v140.js'});await page.locator('[data-review-product="product"]').click();
+ const image=page.locator('#kintoReviewsList .kinto-review-images img');await expect(image).toHaveAttribute('src',imageUrl);await expect.poll(()=>image.evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);
+});
