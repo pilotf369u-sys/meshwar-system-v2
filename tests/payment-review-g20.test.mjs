@@ -15,7 +15,7 @@ function loadReviewModule() {
   const document = {
     addEventListener(name, listener, capture) { listeners.set(`${name}:${Boolean(capture)}`, listener); },
   };
-  vm.runInNewContext(source, { window, document, alert: message => alerts.push(message), console });
+  vm.runInNewContext(source, { window, document, alert: message => alerts.push(message), console, URL });
   return { api: window.KintoPaymentReviewG20, listeners, alerts };
 }
 
@@ -120,7 +120,7 @@ function loadReviewModuleWithCart(cart) {
   const listeners = new Map();
   const window = { KintoLocalCartV93: cart };
   const document = { addEventListener(name, listener, capture) { listeners.set(`${name}:${Boolean(capture)}`, listener); } };
-  vm.runInNewContext(source, { window, document, alert() {}, console });
+  vm.runInNewContext(source, { window, document, alert() {}, console, URL });
   return { api: window.KintoPaymentReviewG20, listeners };
 }
 
@@ -141,4 +141,13 @@ test('currency policy preserves independent store totals without conversion', ()
     { currency: 'IQD', subtotal_minor: 73000, discount_minor: 4000, payable_minor: 69000 },
     { currency: 'USD', subtotal_minor: 18, discount_minor: 0, payable_minor: 18 },
   ]);
+});
+
+test('server quote refuses production and requires an explicitly isolated Supabase backend', () => {
+  const { api } = loadReviewModule();
+  assert.throws(() => api.testBackendConfig(undefined), /PAYMENT_REVIEW_ISOLATED_BACKEND_REQUIRED/);
+  assert.throws(() => api.testBackendConfig({ environment: 'isolated', projectRef: 'hsmmbloouskqdnptiiad', url: 'https://hsmmbloouskqdnptiiad.supabase.co', key: 'test' }), /PAYMENT_REVIEW_UNSAFE_BACKEND/);
+  assert.deepEqual(JSON.parse(JSON.stringify(api.testBackendConfig({ environment: 'isolated', projectRef: 'kinto-payment-sandbox', url: 'https://kinto-payment-sandbox.supabase.co', key: 'sandbox-key' }))), {
+    url: 'https://kinto-payment-sandbox.supabase.co', key: 'sandbox-key',
+  });
 });

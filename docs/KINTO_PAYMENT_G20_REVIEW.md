@@ -45,6 +45,6 @@ To roll back **before any later stage depends on these tables**, stop using the 
 
 - `npm run test:payments` exercises G18/G19/G20 JavaScript, exact legacy pricing numbers and rounding boundaries, coupon cap boundaries, and a concurrent manual-fallback attempt that verifies one legacy invocation and retained cart rows on failure.
 - `supabase/tests/kinto_payment_review_g20b.sql` runs the installed PL/pgSQL options helper against valid, missing, invalid, and zero-stock color/size/volume matrix choices. `supabase/tests/kinto_stock_reservations_g20c.sql` runs the actual reservation availability helper at exact last-unit and held-quantity boundaries. Run both only after G20-A/B/C on a disposable Supabase test project.
-- `node --check` for changed JavaScript and `git diff --check`.
+- `node --check` for changed JavaScript and `git diff --check`. The browser backend guard is also exercised for missing configuration, the production ref, and an isolated test endpoint.
 
 The SQL integration test has not been run because no local PostgreSQL, Supabase CLI, or Docker runtime is available here. Browser E2E against real customer/session data and concurrency testing (last item, two holds, coupon competition) remain required on the isolated project before any gateway is enabled.
