@@ -25,8 +25,11 @@ update public.local_products set stock_quantity=10,is_out_of_stock=false,
    'matrix_stock',jsonb_build_object('blue_small',3))
 where id=current_setting('p4.test.product_id')::uuid and store_id=current_setting('p4.test.store_id')::uuid;
 
--- Create one unpaid and one paid manual order. The paid row must be preserved;
--- the unpaid row can only be cancelled after explicit admin attestation.
+-- Mirror the real local-store caller contract: it performs a total-stock CAS
+-- decrement before INSERT, and the legacy AFTER INSERT trigger releases it.
+-- This keeps the fixture from accidentally manufacturing stock.
+update public.local_products set stock_quantity=stock_quantity-1
+ where id=current_setting('p4.test.product_id')::uuid and stock_quantity>0;
 insert into public.orders(customer_id,customer_name,customer_phone,total_price,currency,details,order_url,status)
 values(current_setting('p4.test.customer_id')::uuid,'P4 test','',100,'IQD',
  jsonb_build_object('source','local_store','store_id',current_setting('p4.test.store_id'),
@@ -34,6 +37,8 @@ values(current_setting('p4.test.customer_id')::uuid,'P4 test','',100,'IQD',
   'color','blue','size','small'), 'customer-dashboard.html','انتظار رد الموظف')
 returning id as unpaid_order_id \gset
 select set_config('p4.test.unpaid_order_id',:'unpaid_order_id',true);
+update public.local_products set stock_quantity=stock_quantity-1
+ where id=current_setting('p4.test.product_id')::uuid and stock_quantity>0;
 insert into public.orders(customer_id,customer_name,customer_phone,total_price,currency,details,order_url,status)
 values(current_setting('p4.test.customer_id')::uuid,'P4 test','',100,'IQD',
  jsonb_build_object('source','local_store','store_id',current_setting('p4.test.store_id'),
@@ -42,6 +47,28 @@ values(current_setting('p4.test.customer_id')::uuid,'P4 test','',100,'IQD',
 returning id as paid_order_id \gset
 select set_config('p4.test.paid_order_id',:'paid_order_id',true);
 update public.orders set status='تم التسديد' where id=:'paid_order_id'::uuid;
+update public.local_products set stock_quantity=stock_quantity-1
+ where id=current_setting('p4.test.product_id')::uuid and stock_quantity>0;
+insert into public.orders(customer_id,customer_name,customer_phone,total_price,currency,details,order_url,status)
+values(current_setting('p4.test.customer_id')::uuid,'P4 test','',100,'IQD',
+ jsonb_build_object('source','local_store','store_id',current_setting('p4.test.store_id'),
+  'product_id',current_setting('p4.test.product_id'),'quantity',1,'requested_quantity',1,
+  'color','blue','size','small'), 'customer-dashboard.html','انتظار رد الموظف')
+returning id as manually_cancelled_order_id \gset
+select set_config('p4.test.manually_cancelled_order_id',:'manually_cancelled_order_id',true);
+update public.orders set status='ملغي' where id=:'manually_cancelled_order_id'::uuid;
+do $manual_default$
+begin
+ if (select status from public.orders where id=current_setting('p4.test.unpaid_order_id')::uuid)<>'انتظار رد الموظف'
+   or (select status from public.orders where id=current_setting('p4.test.paid_order_id')::uuid)<>'تم التسديد'
+   or (select status from public.orders where id=current_setting('p4.test.manually_cancelled_order_id')::uuid)<>'ملغي' then
+   raise exception 'P4_TEST_FAILED: manual create/pay/cancel did not work in stable manual mode';
+ end if;
+ if (select stock_quantity from public.local_products where id=current_setting('p4.test.product_id')::uuid)<>9 then
+   raise exception 'P4_TEST_FAILED: manual create/cancel changed stock or payment did not deduct exactly once';
+ end if;
+end;
+$manual_default$;
 
 do $test$
 declare
@@ -53,6 +80,7 @@ declare
   lines jsonb;
   quote jsonb;
   expected_id uuid;
+  forged_attempt_id uuid;
   err text;
 begin
   -- The first transition closes intake and reports unpaid IDs without cancelling.
@@ -63,6 +91,14 @@ begin
     raise exception 'P4_TEST_FAILED: unpaid order changed before attestation'; end if;
   if (select status from public.orders where id=current_setting('p4.test.paid_order_id')::uuid)<>'تم التسديد' then
     raise exception 'P4_TEST_FAILED: paid order was changed'; end if;
+  begin
+    perform public.kinto_payment_mode_transition_p4(current_setting('p4.test.admin_token'),'electronic',
+      array[current_setting('p4.test.unpaid_order_id')::uuid],false);
+    raise exception 'P4_TEST_FAILED: manual order cancellation did not require no-charge attestation';
+  exception when others then
+    get stacked diagnostics err=message_text;
+    if err not like '%PAYMENT_P4_UNPAID_ATTESTATION_REQUIRED%' then raise; end if;
+  end;
 
   transition:=public.kinto_payment_mode_transition_p4(current_setting('p4.test.admin_token'),'electronic',array[current_setting('p4.test.unpaid_order_id')::uuid],true);
   if transition->>'ok'<>'true' or transition->>'effective_mode'<>'electronic' then
@@ -71,6 +107,28 @@ begin
     raise exception 'P4_TEST_FAILED: verified unpaid order was not cancelled'; end if;
   if (select status from public.orders where id=current_setting('p4.test.paid_order_id')::uuid)<>'تم التسديد' then
     raise exception 'P4_TEST_FAILED: paid order was not preserved'; end if;
+  -- A session can SET custom GUCs. Even a forged attempt ID that points to a
+  -- succeeded attempt and active hold must not authorize creating an order.
+  forged_attempt_id:=gen_random_uuid();
+  insert into private.kinto_payment_attempts_p4(
+    id,customer_id,idempotency_key,provider_key,currency,amount,status,quote_snapshot,expires_at
+  ) values(forged_attempt_id,current_setting('p4.test.customer_id'),'p4-forged-finalizer-0001',
+    'p4-test-api','IQD',100,'succeeded','{"currency":"IQD","amount":100}'::jsonb,
+    clock_timestamp()+interval '15 minutes');
+  insert into private.kinto_stock_holds_p4(attempt_id,expires_at)
+    values(forged_attempt_id,clock_timestamp()+interval '15 minutes');
+  perform set_config('app.kinto_payment_p4_finalizer_attempt_id',forged_attempt_id::text,true);
+  begin
+    insert into public.orders(customer_id,customer_name,customer_phone,total_price,currency,details,order_url,status)
+    values(current_setting('p4.test.customer_id')::uuid,'P4 forged','',100,'IQD',
+      jsonb_build_object('source','local_store','store_id',current_setting('p4.test.store_id'),
+        'product_id',current_setting('p4.test.product_id'),'quantity',1,'requested_quantity',1),
+      'customer-dashboard.html','انتظار رد الموظف');
+    raise exception 'P4_TEST_FAILED: forged finalizer GUC authorized electronic order insert';
+  exception when others then
+    get stacked diagnostics err=message_text;
+    if err not like '%PAYMENT_P4_MANUAL_ORDER_PATH_NOT_ACTIVE%' then raise; end if;
+  end;
   begin
     update public.orders set status='تم التسديد' where id=current_setting('p4.test.unpaid_order_id')::uuid;
     raise exception 'P4_TEST_FAILED: late manual payment passed in electronic mode';

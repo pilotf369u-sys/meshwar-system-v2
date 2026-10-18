@@ -169,7 +169,7 @@ revoke all on function private.kinto_payment_options_valid_p4(jsonb,jsonb) from 
 create or replace function private.kinto_payment_hold_gate_p4()
 returns trigger language plpgsql security definer
 set search_path=pg_catalog,public,private,auth,pg_temp as $gate$
-declare d jsonb; ctl private.kinto_payment_runtime_p4%rowtype; trusted_attempt text;
+declare d jsonb; ctl private.kinto_payment_runtime_p4%rowtype;
 begin
  d:=private.v94_jsonb_object(to_jsonb(new.details));
  if coalesce(d->>'source','') not in ('local_store','local_cart_bundle')
@@ -178,13 +178,9 @@ begin
  if not found then raise exception 'PAYMENT_P4_MODE_NOT_CONFIGURED' using errcode='55000'; end if;
  if ctl.transition_state<>'stable' then raise exception 'PAYMENT_P4_MODE_TRANSITION_IN_PROGRESS' using errcode='55000'; end if;
  if ctl.effective_mode='manual' then return new; end if;
- trusted_attempt:=current_setting('app.kinto_payment_p4_finalizer_attempt_id',true);
- if nullif(trusted_attempt,'') is not null and exists(
-   select 1 from private.kinto_payment_attempts_p4 a
-   join private.kinto_stock_holds_p4 h on h.attempt_id=a.id
-   where a.id=trusted_attempt::uuid and a.status='succeeded'
-     and h.status='active' and h.expires_at>clock_timestamp()
- ) then return new; end if;
+ -- P4 has no trusted order finalizer. Custom GUCs are caller-settable and must
+ -- never authorize an electronic order insert. A future finalizer needs a
+ -- separately reviewed privilege boundary, not a session variable bypass.
  raise exception 'PAYMENT_P4_MANUAL_ORDER_PATH_NOT_ACTIVE' using errcode='55000';
 end;
 $gate$;
