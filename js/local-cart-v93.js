@@ -6,7 +6,8 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:0});
 const token=v=>encodeURIComponent(String(v||'').trim()||'unknown');
 function customerShoppingSession(){try{return window.KintoCustomerSessionV150?.read?.()||null}catch{return null}}
-function customerId(){try{if(localStorage.getItem('kinto_customer_logged_out_v150')==='1')return'guest';const direct=String(localStorage.getItem('meshwar_customer_id')||'').trim();if(direct)return direct;const logged=JSON.parse(localStorage.getItem('loggedInUser')||'null');if(logged?.id)return String(logged.id).trim()}catch{}return'guest'}
+let verifiedCartIdentity=null,cloudInitializePromise=null,cloudInitializationError='';
+function customerId(){try{if(verifiedCartIdentity?.token===String(customerShoppingSession()?.token||'')&&verifiedCartIdentity?.id)return verifiedCartIdentity.id;if(localStorage.getItem('kinto_customer_logged_out_v150')==='1')return'guest';const direct=String(localStorage.getItem('meshwar_customer_id')||'').trim();if(direct)return direct;const logged=JSON.parse(localStorage.getItem('loggedInUser')||'null');if(logged?.id)return String(logged.id).trim()}catch{}return'guest'}
 function requireCustomerShopping(){
   const session=customerShoppingSession(),id=customerId();
   if(session?.token||id!=='guest')return true;
@@ -33,6 +34,8 @@ function syncScope(){
 function persistLocal(){} // intentionally no persistent cart cache
 function notifyCart(){render();window.dispatchEvent(new CustomEvent('kinto:local-cart-change',{detail:{scope:{...scope},items:snapshot(),version:'v189-cloud-only'}}))}
 function canEditCart(){
+  if(!cloudSessionToken()){alert('جلسة العميل غير متاحة أو انتهت. سجّل دخول حساب العميل مجدداً لإضافة المنتجات للسلة.');return false;}
+  if(cloudInitializationError){alert(cloudInitializationError);return false;}
   if(checkoutBusy||!cloudReady||cloudConflict||cloudSyncing||cloudDirty||!cloudCustomerId()||!cloudSessionToken()){
     alert('السلة غير جاهزة للحفظ في Supabase أو هناك تعديل قيد المزامنة. انتظر قليلاً ثم حاول مجدداً.');
     return false;
@@ -187,17 +190,36 @@ async function pullCloudCart(){
   }finally{if(id===cloudCustomerId()&&sessionToken===cloudSessionToken()){cloudSyncing=false;render()}}
 }
 async function initializeCloudCart(){
-  clearInterval(cloudPollTimer);
-  clearTimeout(cloudSaveTimer);
-  cloudReady=false;
-  cloudServerRevision=null;
-  cloudConflict=false;
-  lastCloudUpdatedAt='';
-  if(!cloudCustomerId())return;
-  await pullCloudCart();
-  if(cloudDirty&&!cloudReady){cloudConflict=true;console.warn('KINTO V189: cart changed before cloud loaded; refresh required to avoid overwriting newer cloud data.');alert('تعذر تأكيد مزامنة السلة قبل التعديل. أعد تحميل الصفحة بعد التأكد من الاتصال لتجنب تعارض السلة.');}
-  if(cloudDirty&&cloudReady)scheduleCloudSave();
-  cloudPollTimer=setInterval(()=>{if(cloudDirty)scheduleCloudSave(0);else pullCloudCart()},8000);
+  if(cloudInitializePromise)return cloudInitializePromise;
+  const pending=(async()=>{
+    clearInterval(cloudPollTimer);clearTimeout(cloudSaveTimer);
+    cloudReady=false;cloudServerRevision=null;cloudConflict=false;lastCloudUpdatedAt='';cloudInitializationError='';
+    const sessionToken=cloudSessionToken();
+    if(!sessionToken){verifiedCartIdentity=null;render();return;}
+    try{
+      // Legacy display/account keys may be absent or stale. The session owns the cart.
+      const identity=await rest('rpc/customer_session_identity_v150',{method:'POST',body:{p_session_token:sessionToken}});
+      if(sessionToken!==cloudSessionToken())return;
+      const id=String(identity?.customer?.id||'').trim();
+      if(!identity?.ok||!(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)))throw new Error('CUSTOMER_SESSION_INVALID');
+      verifiedCartIdentity={token:sessionToken,id};
+      const next=makeScope();
+      if(next.key!==scope.key){scope=next;state=[];cloudDirty=false;cloudRevision++;cloudSavingSnapshot=null;cloudConfirmedItems=[];cloudSyncing=false;}
+      await pullCloudCart();
+      if(sessionToken!==cloudSessionToken())return;
+      if(cloudDirty&&!cloudReady){cloudConflict=true;console.warn('KINTO V189: cart changed before cloud loaded; refresh required to avoid overwriting newer cloud data.');}
+      if(cloudDirty&&cloudReady)scheduleCloudSave();
+      cloudPollTimer=setInterval(()=>{if(cloudDirty)scheduleCloudSave(0);else pullCloudCart()},8000);
+    }catch(error){
+      if(sessionToken!==cloudSessionToken())return;
+      cloudInitializationError=/SESSION_(INVALID|REQUIRED)|CART_SESSION_FORBIDDEN/.test(String(error.message||error))?'جلسة العميل غير صالحة. سجّل الدخول مجدداً لتفعيل السلة.':'تعذر تحميل السلة من Supabase. تحقق من الاتصال ثم حدّث الصفحة.';
+      console.warn('KINTO cart identity initialization failed:',error);
+      // A transient identity/network error must not strand this page forever.
+      cloudPollTimer=setInterval(()=>initializeCloudCart(),8000);
+    }finally{render();}
+  })();
+  cloudInitializePromise=pending;
+  try{return await pending}finally{if(cloudInitializePromise===pending)cloudInitializePromise=null;}
 }
 async function loadCustomer(id){if(id==='guest')return null;const {data:rows,error}=await KintoCustomerDirectoryV1.from(null).eq('id',id).limit(1);if(error)throw error;const customer=Array.isArray(rows)?rows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل الحالي.');return customer}
 function shippingDestination(customer){const c=customer||{};return{country:c.country||c.country_name||c.country_code||'',governorate:c.governorate||c.state||c.province||c.city||'',city:c.city||c.province||'',area:c.area||c.district||c.neighborhood||'',address:c.address||c.address_details||c.full_address||c.delivery_address||''}}
