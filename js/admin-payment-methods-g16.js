@@ -77,7 +77,7 @@ function paintRuntime(data){
  const sw=document.getElementById('g16GatewaySwitch'),scope=document.getElementById('g16PauseScope')?.value||'all';
  const globalPaused=settings.new_payments_paused!==false,providerPaused=settings.active_provider_paused!==false;
  const paused=scope==='provider'?providerPaused:globalPaused;
- if(sw){sw.disabled=busy||!settings.active_gateway_provider&&scope==='provider';sw.textContent=paused?(scope==='provider'?'إيقاف المزود الحالي مفعّل':'الإيقاف الشامل مفعّل'):(scope==='provider'?'إيقاف المزود الحالي فوراً':'إيقاف التحصيل الجديد فوراً');sw.classList.toggle('btn-danger',!paused);sw.setAttribute('aria-pressed',String(paused));}
+ if(sw){sw.disabled=!settings.active_gateway_provider&&scope==='provider';sw.textContent=paused?(scope==='provider'?'إيقاف المزود الحالي مفعّل':'الإيقاف الشامل مفعّل'):(scope==='provider'?'إيقاف المزود الحالي فوراً':'إيقاف التحصيل الجديد فوراً');sw.classList.toggle('btn-danger',!paused);sw.setAttribute('aria-pressed',String(paused));}
  const scopeSelect=document.getElementById('g16PauseScope');if(scopeSelect){const providerOption=scopeSelect.querySelector('option[value="provider"]');if(providerOption)providerOption.disabled=!settings.active_gateway_provider;}
  const pauseReason=document.getElementById('g16PauseReason'),reason=scope==='provider'?settings.active_provider_pause_reason:settings.pause_reason;if(pauseReason&&reason&&!pauseReason.value)pauseReason.value=reason;
  const resume=document.getElementById('g16ResumePayments');if(resume){resume.disabled=!globalPaused||!ready;resume.title=resume.disabled?'إعادة التفعيل غير متاحة قبل جاهزية مزود الاختبار ومراجعته':'';}
