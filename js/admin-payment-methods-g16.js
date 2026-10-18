@@ -4,6 +4,30 @@ const root=()=>document.getElementById('g16PaymentMethods');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const token=()=>window.KintoAdminSessionV147?.read?.()?.token||'';
 let methods=[],settings={},busy=false,pendingChallenge='';
+let p2ScriptPromise=null;
+function mountPaymentProvidersP2(){
+ const container=root(),form=document.getElementById('g16Form');
+ if(!container||!form||document.getElementById('paymentProvidersP2'))return;
+ const section=document.createElement('section');section.id='paymentProvidersP2';section.dir='rtl';
+ section.style.cssText='max-width:900px;margin:14px 0;padding:14px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc';
+ section.innerHTML='<h4 style="margin:0 0 8px">مزودات الدفع — Payment-P2</h4><p id="paymentProvidersP2State" class="mini" role="status" aria-live="polite">المسار الفعلي يدوي والتحصيل الحقيقي مغلق.</p><div id="paymentProvidersP2List"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="paymentProvidersP2Reload" class="btn-dark">تحديث القائمة</button><input id="paymentProvidersP2Reason" maxlength="500" placeholder="سبب إيقاف الطوارئ (8 أحرف على الأقل)" aria-label="سبب إيقاف الطوارئ"><button type="button" id="paymentProvidersP2Stop" class="btn-dark">إيقاف المحاولات الجديدة فوراً</button><button type="button" id="paymentProvidersP2Resume" class="btn-dark">طلب رفع الإيقاف</button></div><p id="paymentProvidersP2Status" class="mini" role="status" aria-live="polite"></p><p class="mini">محاكي KINTO مدرج للاختبارات المعزولة فقط ولا ينشئ تحصيلاً. شركات الدفع غير مربوطة حالياً. لا تدخل مفاتيح أو أسرار هنا. سيرفض الخادم رفع الإيقاف ما دام التكامل والاعتماد غير مكتملين.</p>';
+ container.insertBefore(section,form);
+}
+async function loadPaymentProvidersP2(){
+ mountPaymentProvidersP2();
+ if(typeof window.loadPaymentProvidersP2==='function')return window.loadPaymentProvidersP2();
+ if(!p2ScriptPromise){
+  p2ScriptPromise=new Promise((resolve,reject)=>{
+   const script=document.createElement('script');
+   script.src=new URL('js/admin-payment-providers-p2.js',document.baseURI).href;
+   script.async=true;script.onload=resolve;script.onerror=()=>reject(Error('تعذر تحميل إعدادات Payment-P2.'));
+   document.head.append(script);
+  });
+ }
+ await p2ScriptPromise;
+ if(typeof window.loadPaymentProvidersP2!=='function')throw Error('خدمة إعدادات Payment-P2 غير متاحة.');
+ return window.loadPaymentProvidersP2();
+}
 async function secure(action,payload){
  const sb=await window.ensureCustomerSupabase();
  const {data,error}=await sb.functions.invoke('kinto-payment-security-g16',{body:{action,session_token:token(),...payload}});
@@ -180,7 +204,7 @@ async function load(){
   }
  }
  catch(e){message(e?.message||'تعذر تحميل وسائل الدفع. تحقق من ترحيل كتالوج G16.',true)}
- finally{busy=false}
+ finally{busy=false;loadPaymentProvidersP2().catch(error=>status(error?.message||'تعذر تحميل إعدادات Payment-P2.',true))}
 }
 window.loadAdminPaymentMethodsG16=load;
 window.addEventListener('DOMContentLoaded',()=>{
