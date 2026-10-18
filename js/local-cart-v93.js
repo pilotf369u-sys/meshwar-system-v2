@@ -34,7 +34,7 @@ function persistLocal(){} // intentionally no persistent cart cache
 function notifyCart(){render();window.dispatchEvent(new CustomEvent('kinto:local-cart-change',{detail:{scope:{...scope},items:snapshot(),version:'v189-cloud-only'}}))}
 function canEditCart(){
   if(checkoutBusy||!cloudReady||cloudConflict||cloudSyncing||cloudDirty||!cloudCustomerId()||!cloudSessionToken()){
-    alert('السلة غير جاهزة للحفظ في Supabase أو هناك تعديل قيد المزامنة. انتظر قليلاً ثم حاول مجدداً.');
+    alert('أعد تسجيل الدخول إلى حساب العميل، ثم حاول إضافة المنتج للسلة مجدداً.');
     return false;
   }
   return true;
