@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<script src="js/kinto-coupon-finance-v1.js?v=20261018-v1"></script>
 <script src="js/kinto-order-data-session-v1.js?v=20261016-order-privacy-v1" data-role="report"></script>
 <script src="js/kinto-settlements-v1.js?v=20261016-v1"></script>
 <script src="js/kinto-staff-directory-v1.js?v=20261016-v1" data-role="report"></script>
@@ -31,7 +32,7 @@ function adminId(){return idText(query().get('adminId'))}
 function fixedBranchId(){return idText(query().get('branchId'))}
 function normalizeRole(v){const r=String(v||'').trim().toLowerCase();return['admin','أدمن','ادمن'].includes(r)?'admin':r}
 function payType(v){return ['paid_prepaid','cod_full','product_paid_delivery_cod'].includes(v)?v:'cod_full'}
-function doorCollection(o){const t=payType(o.delivery_payment_type),p=Number(o.total_price||0),f=Number(o.delivery_fee||0);if(t==='paid_prepaid')return 0;if(t==='product_paid_delivery_cod')return f;return p+f}
+function doorCollection(o){const t=payType(o.delivery_payment_type),p=window.KintoCouponFinanceV1.goods(o),f=Number(o.delivery_fee||0);if(t==='paid_prepaid')return 0;if(t==='product_paid_delivery_cod')return f;return p+f}
 function netDue(o){return Math.max(0,doorCollection(o)-Number(o.delivery_fee||0))}
 function fmtDate(v){if(!v)return'—';const d=new Date(v);if(Number.isNaN(d.getTime()))return esc(v);return new Intl.DateTimeFormat('ar-IQ',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(d)}
 function moneyGroups(rows,fn){const out={};rows.forEach(o=>{const c=o.currency||'$',n=Number(fn(o)||0);out[c]=(out[c]||0)+n});return out}
