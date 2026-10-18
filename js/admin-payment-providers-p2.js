@@ -19,7 +19,7 @@ async function rpc(action='get',extra={}){
 
 function status(text,bad=false){
  const el=$('paymentProvidersP2Status');
- if(el){el.textContent=text;el.style.color=bad?'#b91c1c':'#166534'}
+ if(el){el.textContent=text;el.dataset.state=bad?'error':'ok'}
 }
 
 function button(label,run,disabled=false){
@@ -33,7 +33,7 @@ function paint(data){
  const providers=Array.isArray(data?.providers)?data.providers:[];
  for(const provider of providers){
   const card=document.createElement('article');
-  card.style.cssText='display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:12px;margin:8px 0;border:1px solid #cbd5e1;border-radius:10px;background:#fff';
+  card.className='payment-p2-provider';
   const details=document.createElement('div');
   const title=document.createElement('strong');title.textContent=provider.display_name||provider.provider_key;
   const line=document.createElement('p');line.className='mini';
@@ -42,7 +42,7 @@ function paint(data){
    ' — '+(provider.integration_ready?'جاهزية تكامل مُثبتة':'غير مربوط')+
    ' — التحصيل الحقيقي مغلق';
   details.append(title,line);
-  const controls=document.createElement('div');controls.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
+  const controls=document.createElement('div');controls.className='payment-p2-provider-actions';
   controls.append(button(provider.selected?'المزود المحدد':'اختيار هذا المزود',
    ()=>run('select_provider',{p_provider_key:provider.provider_key}),
    !provider.enabled||provider.selected));

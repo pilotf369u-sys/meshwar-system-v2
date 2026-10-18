@@ -5,12 +5,19 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const token=()=>window.KintoAdminSessionV147?.read?.()?.token||'';
 let methods=[],settings={},busy=false,pendingChallenge='';
 let p2ScriptPromise=null;
+function ensurePaymentP3Styles(){
+ if(document.getElementById('paymentMethodsP3Styles'))return;
+ const link=document.createElement('link');link.id='paymentMethodsP3Styles';link.rel='stylesheet';
+ link.href=new URL('css/admin-payment-methods-p3.css',document.baseURI).href;
+ document.head.append(link);
+}
 function mountPaymentProvidersP2(){
  const container=root(),form=document.getElementById('g16Form');
+ ensurePaymentP3Styles();
  if(!container||!form||document.getElementById('paymentProvidersP2'))return;
  const section=document.createElement('section');section.id='paymentProvidersP2';section.dir='rtl';
- section.style.cssText='max-width:900px;margin:14px 0;padding:14px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc';
- section.innerHTML='<h4 style="margin:0 0 8px">مزودات الدفع — Payment-P2</h4><p id="paymentProvidersP2State" class="mini" role="status" aria-live="polite">المسار الفعلي يدوي والتحصيل الحقيقي مغلق.</p><div id="paymentProvidersP2List"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="paymentProvidersP2Reload" class="btn-dark">تحديث القائمة</button><input id="paymentProvidersP2Reason" maxlength="500" placeholder="سبب إيقاف الطوارئ (8 أحرف على الأقل)" aria-label="سبب إيقاف الطوارئ"><button type="button" id="paymentProvidersP2Stop" class="btn-dark">إيقاف المحاولات الجديدة فوراً</button><button type="button" id="paymentProvidersP2Resume" class="btn-dark">طلب رفع الإيقاف</button></div><p id="paymentProvidersP2Status" class="mini" role="status" aria-live="polite"></p><p class="mini">محاكي KINTO مدرج للاختبارات المعزولة فقط ولا ينشئ تحصيلاً. شركات الدفع غير مربوطة حالياً. لا تدخل مفاتيح أو أسرار هنا. سيرفض الخادم رفع الإيقاف ما دام التكامل والاعتماد غير مكتملين.</p>';
+ section.className='payment-p2-panel';
+ section.innerHTML='<h4>مزودات الدفع — Payment-P2</h4><p id="paymentProvidersP2State" class="mini" role="status" aria-live="polite">المسار الفعلي يدوي والتحصيل الحقيقي مغلق.</p><div id="paymentProvidersP2List"></div><div class="payment-p2-actions"><button type="button" id="paymentProvidersP2Reload" class="btn-dark">تحديث القائمة</button><input id="paymentProvidersP2Reason" maxlength="500" placeholder="سبب إيقاف الطوارئ (8 أحرف على الأقل)" aria-label="سبب إيقاف الطوارئ"><button type="button" id="paymentProvidersP2Stop" class="btn-dark">إيقاف المحاولات الجديدة فوراً</button><button type="button" id="paymentProvidersP2Resume" class="btn-dark">طلب رفع الإيقاف</button></div><p id="paymentProvidersP2Status" class="mini" role="status" aria-live="polite"></p><p class="mini">محاكي KINTO مدرج للاختبارات المعزولة فقط ولا ينشئ تحصيلاً. شركات الدفع غير مربوطة حالياً. لا تدخل مفاتيح أو أسرار هنا. سيرفض الخادم رفع الإيقاف ما دام التكامل والاعتماد غير مكتملين.</p>';
  container.insertBefore(section,form);
 }
 async function loadPaymentProvidersP2(){
@@ -76,8 +83,8 @@ async function runtimeRpc(action='get',extra={}){
  if(!data?.payment_mode)throw Error(data?.error||'تعذر قراءة إعدادات مسار الدفع.');
  return data;
 }
-const message=(v,bad=false)=>{const el=document.getElementById('g16Message');if(el){el.textContent=v;el.style.color=bad?'#b91c1c':'#166534'}};
-function runtimeStatus(v,bad=false){const el=document.getElementById('g16RuntimeStatus');if(el){el.textContent=v;el.style.color=bad?'#b91c1c':'#166534'}}
+const message=(v,bad=false)=>{const el=document.getElementById('g16Message');if(el){el.textContent=v;el.dataset.state=bad?'error':'ok'}};
+function runtimeStatus(v,bad=false){const el=document.getElementById('g16RuntimeStatus');if(el){el.textContent=v;el.dataset.state=bad?'error':'ok'}}
 function setRuntimeControlsAvailable(available){
  for(const id of ['g16PaymentMode','g16GatewayEnvironment','g16SaveRuntime']){
   const el=document.getElementById(id);if(el)el.disabled=!available;
