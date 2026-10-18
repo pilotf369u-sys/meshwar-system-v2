@@ -1,0 +1,33 @@
+import {test,expect} from '@playwright/test';
+import {installMocks} from './helpers.mjs';
+for(const mobile of [false,true])test(`product details separates full description without changing cart (${mobile?'mobile':'desktop'})`,async({page})=>{
+ if(mobile)await page.setViewportSize({width:393,height:851});
+ await installMocks(page);await page.goto('/login.html');
+ await page.setContent('<div id="localStoreProductsGrid"><article class="local-v3-card" data-product-card="p1"><button class="local-v3-img-wrap"><img class="local-v3-img"></button><div class="local-v3-name">منتج</div><div class="local-v3-desc">الوصف المختصر</div><div class="local-v3-price">46000 IQD</div><button class="local-v3-order" data-pid="p1">عرض التفاصيل والطلب</button></article></div>');
+ await page.addStyleTag({url:'/css/storefront-premium-v145.css'});
+ await page.evaluate(()=>{
+  window.__cartCalls=[];window.__stockCalls=[];
+  window.__product={id:'p1',stock_quantity:10,options:{colors:['ذهبي'],detailed_description:'وصف تفصيلي كامل\nالسطر الثاني <b>نص آمن</b>'}};
+  window.KintoLocalCartV93={async loadStockProduct(id){__stockCalls.push(id);return __product},stockLimit:()=>10,getItems:()=>[]};
+  window.KintoLocalStoreCardV3={getProduct:()=>__product,productOptions:()=>({colors:['ذهبي'],sizes:[],volumes:[]}),async addToCart(...args){__cartCalls.push(args);return true}};
+  window.MeshwarDetailedDescriptionV8={applyModalDetailedDescription(){throw Error('LEGACY_DESCRIPTION_HYDRATION_MUST_NOT_REPLACE_SHORT_TEXT')}};
+ });
+ await page.addScriptTag({url:'/js/storefront-product-modal-v145.js'});
+ await page.locator('.local-v3-img-wrap').click();
+ const modal=page.locator('#kintoProductModalV145');
+ await expect(modal.locator('.kinto-product-description')).toHaveText('الوصف المختصر');
+ await expect(modal.locator('.kinto-product-long-description')).toBeVisible();
+ await expect(modal.locator('.kinto-product-long-description b')).toHaveText('الوصف التفصيلي');
+ await expect(modal.locator('.kinto-product-long-description-text')).toHaveText('وصف تفصيلي كامل\nالسطر الثاني <b>نص آمن</b>');
+ await expect(modal.locator('.kinto-product-long-description-text b')).toHaveCount(0);
+ expect(await modal.locator('.kinto-product-long-description-text').evaluate(el=>getComputedStyle(el).whiteSpace)).toBe('pre-wrap');
+ await expect(modal.locator('.kinto-product-price')).toHaveText('46000 IQD');
+ await modal.locator('select[data-option="color"]').selectOption('ذهبي');
+ await modal.locator('[data-qty="plus"]').click();await modal.locator('.kinto-detail-add').click();
+ expect(await page.evaluate(()=>__cartCalls)).toEqual([['p1',{color:'ذهبي',size:'',volume:''},2]]);
+ await page.evaluate(()=>{__product.options.detailed_description='';KintoProductModalV145.open(document.querySelector('.local-v3-card'))});
+ await expect(modal.locator('.kinto-product-long-description')).toBeHidden();
+ await expect(modal.locator('.kinto-product-description')).toHaveText('الوصف المختصر');
+ await page.keyboard.press('Escape');await expect(modal).not.toHaveClass(/open/);
+ expect(await page.evaluate(()=>__stockCalls.length)).toBe(2);
+});
