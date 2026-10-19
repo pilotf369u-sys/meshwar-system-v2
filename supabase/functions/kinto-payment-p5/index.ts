@@ -1,7 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
-import bcrypt from "npm:bcryptjs@2.4.3";
-import { verifyProtectedPreviewOidc } from "./vercel-oidc.mjs";
 
 const responseHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +12,7 @@ const json = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), { status, headers: responseHeaders });
 const uuid = (value: unknown) => typeof value === "string" &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: responseHeaders });
   if (request.method !== "POST") return json(405, { ok: false, error: "METHOD_NOT_ALLOWED" });
@@ -27,7 +26,7 @@ Deno.serve(async (request: Request) => {
   const origin = request.headers.get("origin") || "";
   const previewOrigin = "https://meshwar-system-v2-git-feature-kinto-payment-p5-kinto1.vercel.app";
   const isTestProject = new URL(url).hostname === "udtegahgxgqvflodjkjt.supabase.co";
-  if (action !== "preview_login" && action !== "preview_create_customer" && action !== "bootstrap_test_admin_and_customer" && (token.length < 24 || token.length > 512))
+  if (action !== "preview_login" && action !== "preview_create_customer" && (token.length < 24 || token.length > 512))
     return json(401, { ok: false, error: "CUSTOMER_SESSION_REQUIRED" });
   const db = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -52,98 +51,6 @@ Deno.serve(async (request: Request) => {
       return json(503, { ok: false, error: "TEST_SESSION_SETUP_FAILED" });
     }
     return json(200, { ok: true, data: { session_token: login.session_token, expires_at: expiresAt, customer: login.customer } });
-  }
-  if (action === "bootstrap_test_admin_and_customer") {
-    if (!isTestProject) return json(404, { ok: false, error: "TEST_PREVIEW_ONLY" });
-    const oidc = request.headers.get("x-vercel-oidc-token") || "";
-    if (!await verifyProtectedPreviewOidc(oidc)) return json(401, { ok: false, error: "PROTECTED_PREVIEW_IDENTITY_REQUIRED" });
-    const adminPassword = typeof body.admin_password === "string" ? body.admin_password : "";
-    const customerPassword = typeof body.customer_password === "string" ? body.customer_password : "";
-    if (adminPassword.length < 16 || adminPassword.length > 128 ||
-        customerPassword.length < 12 || customerPassword.length > 128)
-      return json(400, { ok: false, error: "TEST_SETUP_PASSWORD_POLICY" });
-
-    const adminIdentity = `P5ADM-${crypto.randomUUID()}`.toUpperCase();
-    const adminPasswordHash = await bcrypt.hash(adminPassword, 12);
-    const { data: bootstrapped, error: bootstrapError } = await db.rpc("kinto_payment_p5_test_admin_bootstrap_v1", {
-      p_admin_identity: adminIdentity,
-      p_password_hash: adminPasswordHash,
-    });
-    if (bootstrapError || bootstrapped?.ok !== true)
-      return json(409, { ok: false, error: bootstrapped?.error || "TEST_ADMIN_BOOTSTRAP_FAILED" });
-
-    let adminSessionToken = "";
-    let customerSessionToken = "";
-    let customerCode = "";
-    let customerId = "";
-    let expiresAt: unknown = null;
-    let customer: unknown = null;
-    let status = 503;
-    let result: Record<string, unknown> = { ok: false, error: "TEST_ADMIN_LOGIN_FAILED" };
-    let adminSessionRevoked = true;
-    try {
-      const { data: adminLogin, error: adminLoginError } = await db.rpc("admin_login_v147", {
-        p_identity: adminIdentity, p_password: adminPassword,
-      });
-      if (!adminLoginError && adminLogin?.ok === true && typeof adminLogin.session_token === "string") {
-        adminSessionToken = adminLogin.session_token;
-        customerCode = `P5T-${crypto.randomUUID()}`;
-        const { data: created, error: createError } = await db.rpc("admin_save_account_v300", {
-          p_admin_session_token: adminSessionToken, p_account_type: "customer", p_account_id: null,
-          p_name: "KINTO Payment-P5 Test Customer", p_phone: customerCode,
-          p_password: customerPassword, p_email: null, p_code: customerCode, p_country: "TEST",
-          p_state: "Isolated test project", p_address: "KINTO-Payment-Test only", p_secondary_phone: null,
-        });
-        if (!createError && created?.ok === true && typeof created.id === "string") {
-          customerId = created.id;
-          const { data: customerLogin, error: customerLoginError } = await db.rpc("customer_review_login_v132", {
-            p_identity: customerCode, p_password: customerPassword,
-          });
-          if (!customerLoginError && customerLogin?.ok === true && typeof customerLogin.session_token === "string") {
-            customerSessionToken = customerLogin.session_token;
-            const { data: boundExpiry, error: ttlError } = await db.rpc("kinto_payment_p5_test_session_bound_v1", {
-              p_session_token: customerSessionToken,
-            });
-            if (!ttlError && boundExpiry) {
-              expiresAt = boundExpiry;
-              customer = customerLogin.customer;
-              status = 201;
-              result = { ok: true };
-            } else {
-              result = { ok: false, error: "TEST_SESSION_SETUP_FAILED" };
-            }
-          } else {
-            result = { ok: false, error: "TEST_CUSTOMER_LOGIN_FAILED" };
-          }
-        } else {
-          result = { ok: false, error: createError ? "TEST_CUSTOMER_CREATE_FAILED" : created?.error || "TEST_CUSTOMER_CREATE_FAILED" };
-        }
-      } else {
-        result = { ok: false, error: "TEST_ADMIN_LOGIN_FAILED" };
-      }
-    } catch {
-      result = { ok: false, error: "TEST_ACCOUNT_SETUP_FAILED" };
-    } finally {
-      if (adminSessionToken) {
-        try {
-          const { data: revoked, error: revokeError } = await db.rpc("admin_logout_v147", { p_session_token: adminSessionToken });
-          adminSessionRevoked = !revokeError && revoked === true;
-        } catch { adminSessionRevoked = false; }
-      }
-    }
-    if (!adminSessionRevoked) {
-      if (customerSessionToken) await db.rpc("customer_review_logout_v132", { p_session_token: customerSessionToken });
-      return json(503, { ok: false, error: "TEST_ADMIN_SESSION_CLOSE_FAILED" });
-    }
-    if (status !== 201) {
-      if (customerSessionToken) await db.rpc("customer_review_logout_v132", { p_session_token: customerSessionToken });
-      return json(status, { ...result, admin_identity: adminIdentity });
-    }
-    return json(201, { ok: true, data: {
-      admin_id: String(bootstrapped.admin_id), admin_identity: adminIdentity,
-      customer_id: customerId, customer_code: customerCode,
-      session_token: customerSessionToken, expires_at: expiresAt, customer,
-    } });
   }
   if (action === "preview_create_customer") {
     if (!isTestProject || origin !== previewOrigin) return json(404, { ok: false, error: "TEST_PREVIEW_ONLY" });
