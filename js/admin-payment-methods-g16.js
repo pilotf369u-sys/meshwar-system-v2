@@ -151,10 +151,23 @@ async function p6PrepareSimulator(){
  try{const data=await paymentP6Admin('prepare');await refreshP6Simulator();const p4=await paymentModeP4Read();if(p4)paintRuntime({...settings,simulator_enabled:data.simulator_enabled,electronic_admission_ready:p4.electronic_admission_ready,effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list});runtimeStatus('تم تجهيز المحاكي فقط. لم يتغير المسار الفعلي؛ استخدم «فتح استقبال المحاكي» بعد مراجعة الحالات.')}
  catch(e){runtimeStatus(e?.message||'تعذر تجهيز محاكي الدفع.',true)}finally{busy=false}
 }
+async function activateP6SimulatorSequence(){
+ const current=await paymentP6Admin('get');
+ if(!(current.simulator_enabled&&current.electronic_admission_ready))await paymentP6Admin('prepare');
+ const transition=await paymentModeTransitionP4('electronic');
+ if(!transition?.ok||transition.effective_mode!=='electronic')throw Error('لم يكتمل انتقال P4؛ بقي فتح المحاكي مغلقاً.');
+ await paymentP6Admin('open');
+ const mode=await runtimeRpc('get');const p4=await paymentModeP4Read();const p6=await paymentP6Admin('get');
+ paintRuntime({...mode,simulator_enabled:p6.simulator_enabled,electronic_admission_ready:p6.electronic_admission_ready,
+  emergency_stop:p6.emergency_stop,effective_payment_mode:p4?.effective_mode||p6.effective_mode,
+  p4_transition_state:p4?.transition_state||p6.transition_state,p4_active_holds:p4?.active_holds,
+  p4_unresolved_attempts:p4?.unresolved_attempts,unresolved_attempt_list:p4?.unresolved_attempt_list});
+ try{await refreshP6Simulator()}catch{}
+}
 async function p6OpenSimulator(){
  if(busy)return;if(!confirm('سيبدأ استقبال طلبات جديدة عبر محاكي KINTO لجميع العملاء. لا توجد أموال أو بطاقات مصرفية حقيقية. هل تتابع؟'))return;
  busy=true;runtimeStatus('جارٍ التحقق من جاهزية المحاكي والانتقال الآمن...');
- try{const current=await paymentP6Admin('get');if(!(current.simulator_enabled&&current.electronic_admission_ready))await paymentP6Admin('prepare');const transition=await paymentModeTransitionP4('electronic');if(!transition?.ok||transition.effective_mode!=='electronic')throw Error('لم يكتمل انتقال P4؛ بقي فتح المحاكي مغلقاً.');await paymentP6Admin('open');const mode=await runtimeRpc('get');const p4=await paymentModeP4Read();const p6=await paymentP6Admin('get');paintRuntime({...mode,simulator_enabled:p6.simulator_enabled,electronic_admission_ready:p6.electronic_admission_ready,emergency_stop:p6.emergency_stop,effective_payment_mode:p4?.effective_mode||p6.effective_mode,p4_transition_state:p4?.transition_state||p6.transition_state,p4_active_holds:p4?.active_holds,p4_unresolved_attempts:p4?.unresolved_attempts,unresolved_attempt_list:p4?.unresolved_attempt_list});await refreshP6Simulator();runtimeStatus('استقبل المحاكي الطلبات الجديدة بأمان. لا يوجد تحصيل حقيقي؛ إيقاف الطوارئ يبقى متاحاً.')}
+ try{await activateP6SimulatorSequence();runtimeStatus('استقبل المحاكي الطلبات الجديدة بأمان. لا يوجد تحصيل حقيقي؛ إيقاف الطوارئ يبقى متاحاً.')}
  catch(e){runtimeStatus(e?.message||'تعذر فتح محاكي الدفع.',true);try{await refreshP6Simulator()}catch{}}
  finally{busy=false}
 }
@@ -246,9 +259,7 @@ async function saveRuntime(){
  if(busy)return;
  const mode=document.getElementById('g16PaymentMode')?.value||'manual';
  const environment=document.getElementById('g16GatewayEnvironment')?.value||'sandbox';
- if(mode==='manual'&&settings.effective_payment_mode==='electronic'){
-  runtimeStatus('لا تحفظ اليدوي مباشرة أثناء عمل المحاكي. استخدم «إيقاف المحاكي والعودة لليدوي» لإيقاف الجديد أولاً ومطابقة الحجوزات بأمان.',true);return;
- }
+ if(mode==='manual'&&(settings.effective_payment_mode==='electronic'||settings.payment_mode==='electronic'||settings.simulator_enabled===true||settings.electronic_admission_ready===true||settings.p4_transition_state==='draining'))return p6ReturnManual();
  if(environment==='live'&&!settings.gateway_integration_ready){runtimeStatus('بيئة الإنتاج غير متاحة قبل اكتمال ربط البوابة والمراجعة.',true);return}
  busy=true;runtimeStatus('جارٍ حفظ الإعدادات...');
  try{
@@ -260,6 +271,7 @@ async function saveRuntime(){
   const saveSandboxPreferenceOnly=mode==='electronic'&&environment==='sandbox'
    &&settings.effective_payment_mode==='manual'&&p4State==='stable'
    &&settings.gateway_integration_ready!==true;
+  if(saveSandboxPreferenceOnly&&!confirm('سيُجهّز محاكي KINTO ثم ينقل الطلبات الجديدة إليه لجميع العملاء. الدفع بلا تحصيل حقيقي. هل تتابع؟'))return;
   const transition=saveSandboxPreferenceOnly?null:await paymentModeTransitionP4(mode);
   // In the not-ready Sandbox case, persist only G16's selected preference.
   // P4 remains manual/stable, so the current manual checkout is unaffected.
@@ -269,6 +281,7 @@ async function saveRuntime(){
   const withEnv=environment!==(updated.gateway_environment||'sandbox')?await runtimeRpc('set_environment',{p_gateway_environment:environment}):updated;
   const p4=await paymentModeP4Read();
   paintRuntime({...withEnv,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_target_mode:p4.target_mode,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{} )});
+  if(saveSandboxPreferenceOnly){await activateP6SimulatorSequence();runtimeStatus('تم تجهيز المحاكي والانتقال إليه بأمان. لا يوجد تحصيل حقيقي؛ يمكن للأدمن العودة إلى اليدوي من إعداد الوضع.');return}
   runtimeStatus(saveSandboxPreferenceOnly
    ?'حُفظ اختيار الدفع الإلكتروني Sandbox. يبقى الوضع الفعلي يدوياً وتستمر الطلبات اليدوية حتى تكتمل جاهزية المحاكي ويُجرى انتقال آمن من الأدمن.'
    :transition?.effective_mode==='electronic'?'تم التبديل بأمان. يبقى التحصيل الإلكتروني الحقيقي مغلقاً.'
