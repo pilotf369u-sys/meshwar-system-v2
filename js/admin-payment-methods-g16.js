@@ -83,33 +83,26 @@ async function runtimeRpc(action='get',extra={}){
  if(!data?.payment_mode)throw Error(data?.error||'تعذر قراءة إعدادات مسار الدفع.');
  return data;
 }
-async function paymentModeTransitionP4(targetMode,verifiedOrderIds=[],confirmedNoPayment=false){
+async function paymentModeTransitionP4(targetMode){
  const t=token();if(!t)throw Error('جلسة الأدمن غير متاحة. يرجى تسجيل الدخول مجدداً.');
  const sb=await window.ensureCustomerSupabase();
  const {data,error}=await sb.rpc('kinto_payment_mode_transition_p4',{p_session_token:t,p_target_mode:targetMode,
-  p_verified_unpaid_order_ids:verifiedOrderIds,p_admin_confirmed_no_payment:confirmedNoPayment});
+  p_verified_unpaid_order_ids:[],p_admin_confirmed_no_payment:false});
  if(error){
   const detail=String(error.message||'');
   if(/kinto_payment_mode_transition_p4|PGRST202|does not exist|Could not find the function/i.test(detail))return null;
   throw error;
  }
- if(!data?.ok&&data?.error==='MANUAL_ORDERS_REQUIRE_REVIEW'&&Array.isArray(data.orders)&&data.orders.length){
-  const rows=data.orders.map(o=>`${o.order_code||o.id} — ${o.status} — ${o.amount} ${o.currency}`).join('\n');
-  const accepted=confirm('أوقف الخادم استقبال الطلبات اليدوية أثناء الانتقال. راجع هذه الطلبات خارجياً وتأكد من عدم تحصيل أي مبلغ عنها قبل إلغائها:\n\n'+rows+'\n\nهل تحققت من عدم التحصيل وتؤكد إلغاءها؟');
-  if(!accepted)throw Error('بقي الانتقال متوقفاً للمراجعة. أعد اختيار «يدوي» لإلغاء الانتقال وإعادة فتح المسار اليدوي.');
-  const second=await sb.rpc('kinto_payment_mode_transition_p4',{p_session_token:t,p_target_mode:targetMode,
-   p_verified_unpaid_order_ids:data.orders.map(o=>o.id),p_admin_confirmed_no_payment:true});
-  if(second.error)throw second.error;
-  if(!second.data?.ok)throw Error(second.data?.error==='MANUAL_ORDERS_REQUIRE_REVIEW'
-   ?'توجد طلبات أخرى أو حالات غير مصنفة. الاستقبال ما زال متوقفاً؛ أعد الانتقال بعد مراجعتها أو اختر «يدوي» لإلغاء الانتقال.'
-   :(second.data?.error||'تعذر إكمال الانتقال الآمن.'));
-  return second.data;
+ // Older production function versions ask administrators to attest and cancel
+ // legacy manual orders. Never repeat that destructive request from the UI.
+ if(!data?.ok&&data?.error==='MANUAL_ORDERS_REQUIRE_REVIEW'){
+  throw Error('خادم الدفع ما زال يستخدم شرط مراجعة الطلبات اليدوية القديم. لم يُرسل هذا المتصفح أي أمر إلغاء؛ يلزم تطبيق ترحيل حفظ الطلبات قبل متابعة التبديل.');
  }
  if(!data?.ok){
   const errors={
    ELECTRONIC_ADMISSION_NOT_READY:'الدفع الإلكتروني غير جاهز حالياً؛ بقي النظام اليدوي فعالاً ولم يبدأ التبديل.',
    PAYMENT_ATTEMPTS_REQUIRE_RECONCILIATION:'توجد محاولات معلقة أو مجهولة النتيجة. لن يُفتح النظام اليدوي حتى تتم مطابقتها بأمان.',
-   MANUAL_ORDERS_REQUIRE_REVIEW:'توجد طلبات يدوية تحتاج مراجعة. الاستقبال متوقف مؤقتاً؛ اختر «يدوي» لإلغاء الانتقال بأمان.',
+   EMERGENCY_STOP_REQUIRED:'فعّل إيقاف المحاولات الإلكترونية الجديدة قبل العودة إلى النظام اليدوي.',
   };
   throw Error(errors[data?.error]||data?.error||'تعذر إكمال التبديل الآمن.');
  }
@@ -281,13 +274,13 @@ async function saveRuntime(){
   const withEnv=environment!==(updated.gateway_environment||'sandbox')?await runtimeRpc('set_environment',{p_gateway_environment:environment}):updated;
   const p4=await paymentModeP4Read();
   paintRuntime({...withEnv,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_target_mode:p4.target_mode,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{} )});
-  if(saveSandboxPreferenceOnly){await activateP6SimulatorSequence();runtimeStatus('تم تجهيز المحاكي والانتقال إليه بأمان. لا يوجد تحصيل حقيقي؛ يمكن للأدمن العودة إلى اليدوي من إعداد الوضع.');return}
+  if(saveSandboxPreferenceOnly){const p6=await paymentP6Admin('prepare');const p4=await paymentModeP4Read();paintRuntime({...withEnv,simulator_enabled:p6.simulator_enabled,electronic_admission_ready:p6.electronic_admission_ready,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{})});runtimeStatus('حُفظ اختيار Sandbox وجُهّز المحاكي فقط. بقي استقبال الطلبات مغلقاً وإيقاف الطوارئ مفعّلاً؛ استخدم زر فتح الاستقبال بعد مراجعة الجاهزية.');return}
   runtimeStatus(saveSandboxPreferenceOnly
    ?'حُفظ اختيار الدفع الإلكتروني Sandbox. يبقى الوضع الفعلي يدوياً وتستمر الطلبات اليدوية حتى تكتمل جاهزية المحاكي ويُجرى انتقال آمن من الأدمن.'
    :transition?.effective_mode==='electronic'?'تم التبديل بأمان. يبقى التحصيل الإلكتروني الحقيقي مغلقاً.'
    :mode==='electronic'&&!withEnv.gateway_integration_ready?'حُفظ اختيار الإلكتروني إعداداً فقط. بقي المسار الفعلي يدوياً والتحصيل مغلقاً.'
    :'تم حفظ إعداد المسار.');
- }catch(e){runtimeStatus(e?.message||'تعذر حفظ الإعدادات.',true);try{paintRuntime(await runtimeRpc('get'))}catch{}}
+ }catch(e){try{paintRuntime(await runtimeRpc('get'))}catch{}runtimeStatus(e?.message||'تعذر حفظ الإعدادات.',true)}
  finally{busy=false}
 }
 async function toggleGateway(){

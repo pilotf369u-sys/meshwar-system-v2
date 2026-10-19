@@ -26,8 +26,9 @@ class Element {
   querySelector() { return new Element(); }
 }
 
-async function mount({ initialMode = 'manual', effectiveMode = 'manual', transitionState = 'stable', ready = false } = {}) {
+async function mount({ initialMode = 'manual', effectiveMode = 'manual', transitionState = 'stable', ready = false, legacyOrderReview = false } = {}) {
   const calls = [];
+  const confirmMessages = [];
   let selectedMode = initialMode, effective = effectiveMode, transition = transitionState;
   let simulatorEnabled = false, admissionReady = false, emergencyStop = true;
   const ids = [
@@ -51,7 +52,11 @@ async function mount({ initialMode = 'manual', effectiveMode = 'manual', transit
       return { data: { payment_mode: selectedMode, gateway_environment: 'sandbox', gateways_enabled: false, gateway_integration_ready: ready, effective_payment_mode: effective }, error: null };
     }
     if (name === 'kinto_payment_p4_admin_read') return { data: { effective_mode: effective, transition_state: transition, electronic_admission_ready: admissionReady, active_holds: 0, unresolved_attempts: 0, unresolved_attempt_list: [] }, error: null };
-    if (name === 'kinto_payment_mode_transition_p4') { effective = args.p_target_mode; selectedMode = args.p_target_mode; transition = 'stable'; return { data: { ok: true, effective_mode: effective, transition_state: 'stable' }, error: null }; }
+    if (name === 'kinto_payment_mode_transition_p4') {
+      if (legacyOrderReview) return { data: { ok: false, error: 'MANUAL_ORDERS_REQUIRE_REVIEW', orders: [{ id: 'legacy-order-id', status: 'بانتظار الدفع' }] }, error: null };
+      effective = args.p_target_mode; selectedMode = args.p_target_mode; transition = 'stable';
+      return { data: { ok: true, effective_mode: effective, transition_state: 'stable', preserved_existing_orders: true }, error: null };
+    }
     if (name === 'kinto_payment_p6_simulator_admin_v1') {
       const action = args.p_action;
       if (action === 'prepare') { simulatorEnabled = true; admissionReady = true; }
@@ -77,14 +82,14 @@ async function mount({ initialMode = 'manual', effectiveMode = 'manual', transit
     loadPaymentProvidersP2: async () => {},
     addEventListener: (name, fn) => { if (name === 'DOMContentLoaded') domReady = fn; },
   };
-  const context = { window, document, URL, confirm: () => true, prompt: () => 'return to manual safely', console };
+  const context = { window, document, URL, confirm: message => { confirmMessages.push(String(message || '')); return true; }, prompt: () => 'return to manual safely', console };
   vm.runInNewContext(script, context, { filename: 'admin-payment-methods-g16.js' });
   domReady();
   await window.loadAdminPaymentMethodsG16();
-  return { calls, elements };
+  return { calls, elements, getConfirmMessages: () => confirmMessages };
 }
 
-test('saving electronic Sandbox prepares and opens P6 after the guarded P4 transition', async () => {
+test('saving electronic Sandbox preference prepares P6 but does not open intake', async () => {
   const { calls, elements } = await mount({ initialMode: 'manual', effectiveMode: 'manual', transitionState: 'stable', ready: false });
   elements.g16PaymentMode.value = 'electronic';
 
@@ -93,11 +98,10 @@ test('saving electronic Sandbox prepares and opens P6 after the guarded P4 trans
   const names = calls.map(call => call.name + ':' + (call.args?.p_action || call.args?.p_target_mode || ''));
   assert.ok(names.includes('kinto_payment_mode_admin_g16:set_mode'));
   assert.ok(names.includes('kinto_payment_p6_simulator_admin_v1:prepare'));
-  assert.ok(names.includes('kinto_payment_mode_transition_p4:electronic'));
-  assert.ok(names.includes('kinto_payment_p6_simulator_admin_v1:open'));
-  assert.ok(names.indexOf('kinto_payment_p6_simulator_admin_v1:prepare') < names.indexOf('kinto_payment_mode_transition_p4:electronic'));
-  assert.ok(names.indexOf('kinto_payment_mode_transition_p4:electronic') < names.indexOf('kinto_payment_p6_simulator_admin_v1:open'));
-  assert.match(elements.g16RuntimeStatus.textContent, /تم تجهيز المحاكي والانتقال إليه بأمان/);
+  assert.ok(names.includes('kinto_payment_p6_simulator_admin_v1:prepare'));
+  assert.ok(!names.includes('kinto_payment_mode_transition_p4:electronic'), 'preference save does not change effective mode');
+  assert.ok(!names.includes('kinto_payment_p6_simulator_admin_v1:open'), 'preference save cannot open simulator intake');
+  assert.match(elements.g16RuntimeStatus.textContent, /بقي استقبال الطلبات مغلقاً/);
 });
 
 test('saving manual runs emergency stop, safe P4 transition, then closes P6', async () => {
@@ -123,4 +127,20 @@ test('an existing P4 drain cannot be bypassed by saving a Sandbox preference', a
 
   assert.ok(calls.some(call => call.name === 'kinto_payment_mode_transition_p4' && call.args.p_target_mode === 'electronic'));
   assert.ok(!calls.some(call => call.name === 'kinto_payment_mode_admin_g16' && call.args.p_action === 'set_mode'));
+});
+
+
+test('legacy order-review response fails closed without offering or submitting cancellations', async () => {
+  const { calls, elements, getConfirmMessages } = await mount({ initialMode: 'manual', effectiveMode: 'manual', transitionState: 'draining', ready: false, legacyOrderReview: true });
+  elements.g16PaymentMode.value = 'electronic';
+
+  await elements.g16SaveRuntime.onclick();
+
+  const transitionCalls = calls.filter(call => call.name === 'kinto_payment_mode_transition_p4');
+  assert.equal(transitionCalls.length, 1, 'never retries with administrator attestation');
+  assert.deepEqual(Array.from(transitionCalls[0].args.p_verified_unpaid_order_ids), []);
+  assert.equal(transitionCalls[0].args.p_admin_confirmed_no_payment, false);
+  assert.doesNotMatch(getConfirmMessages().join('\\n'), /تؤكد إلغاءها|تأكد من عدم تحصيل أي مبلغ عنها قبل إلغائها/, 'no confirmation asks to cancel existing orders');
+  assert.ok(!calls.some(call => call.name === 'kinto_payment_p6_simulator_admin_v1' && call.args.p_action === 'open'));
+  assert.match(elements.g16RuntimeStatus.textContent, /لم يُرسل هذا المتصفح أي أمر إلغاء/);
 });
