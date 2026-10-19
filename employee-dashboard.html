@@ -727,7 +727,8 @@ Object.assign(window,{switchPipeline,buildPipelineQuery,onBranchFilterChange,syn
   window.buildUnifiedOrderStatusOptions=function(current){
     const selected=window.normalizeMeshwarOrderStatus(current);
     const escapeValue=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-    return statuses.map(s=>`<option value="${escapeValue(s)}" ${s===selected?'selected':''}>${escapeValue(s)}</option>`).join('');
+    const options=statuses.includes(selected)||!selected?statuses:[selected,...statuses];
+    return options.map(s=>`<option value="${escapeValue(s)}" ${s===selected?'selected':''}>${escapeValue(s)}</option>`).join('');
   };
   try{statusOptions=function(current){return window.buildUnifiedOrderStatusOptions(current)}}catch(_){window.statusOptions=function(current){return window.buildUnifiedOrderStatusOptions(current)}}
 })();
