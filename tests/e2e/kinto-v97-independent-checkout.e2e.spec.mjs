@@ -11,7 +11,7 @@ test('V97 checkout delegates independent order creation to the atomic RPC', asyn
   expect(source).toContain("p_items:rpcItems");
   expect(source).toContain("version:'v189-cloud-only'");
 
-  const rpcProjection = source.match(/rpcItems=items\.map\(x=>\(\{(.+?)\}\)\),result=/s)?.[1] || '';
+  const rpcProjection = source.match(/rpcItems=items\.map\(x=>\(\{([\s\S]*?)\}\)\);/)?.[1] || '';
   expect(rpcProjection).toContain('store_id');
   expect(rpcProjection).toContain('product_id');
   expect(rpcProjection).toContain('selected_options');
