@@ -217,7 +217,7 @@ create or replace function public.kinto_payment_mode_transition_p4(
  p_admin_confirmed_no_payment boolean default false
 ) returns jsonb language plpgsql security definer
 set search_path=pg_catalog,public,private,auth,pg_temp as $transition$
-declare v_admin text; ctl private.kinto_payment_runtime_p4%rowtype; oid uuid; o public.orders%rowtype;
+declare v_admin text; ctl private.kinto_payment_runtime_p4%rowtype; oid uuid; v_order public.orders%rowtype;
         v_remaining jsonb; v_unclassified jsonb; v_holds jsonb; v_from text; v_cancelled uuid[]:='{}';
         v_pre_payment constant text[]:=array['انتظار رد الموظف','بانتظار رد الموظف','بانتظار موافقة العميل','بانتظار موافقة الزبون','بانتظار التسعير','تم التسعير / بانتظار موافقة العميل','تمت الموافقة - بانتظار الدفع','بانتظار تأكيد الدفع','بانتظار التسديد','بانتظار الدفع','تمت الموافقة'];
 begin
@@ -269,16 +269,16 @@ begin
    if cardinality(coalesce(p_verified_unpaid_order_ids,'{}'::uuid[]))>0 then
      if p_admin_confirmed_no_payment is not true then raise exception 'PAYMENT_P4_UNPAID_ATTESTATION_REQUIRED' using errcode='22023'; end if;
      foreach oid in array p_verified_unpaid_order_ids loop
-       select * into o from public.orders where id=oid for update;
+       select * into v_order from public.orders where id=oid for update;
        if not found then raise exception 'PAYMENT_P4_ORDER_NOT_FOUND:%',oid using errcode='P0002'; end if;
-       if coalesce(private.v94_jsonb_object(to_jsonb(o.details))->>'source','') not in ('local_store','local_cart_bundle')
-         and coalesce(private.v94_jsonb_object(to_jsonb(o.details))->>'checkout_contract','')<>'independent_vendor_orders' then
+       if coalesce(private.v94_jsonb_object(to_jsonb(v_order.details))->>'source','') not in ('local_store','local_cart_bundle')
+         and coalesce(private.v94_jsonb_object(to_jsonb(v_order.details))->>'checkout_contract','')<>'independent_vendor_orders' then
          raise exception 'PAYMENT_P4_ORDER_NOT_LOCAL:%',oid using errcode='22023'; end if;
-       if o.status='تم التسديد' or coalesce(private.v94_jsonb_object(to_jsonb(o.details))->>'stock_lifecycle_state','')='deducted'
-         or coalesce(private.v94_jsonb_object(to_jsonb(o.details))->>'bundle_stock_lifecycle_state','')='deducted'
-         or nullif(private.v94_jsonb_object(to_jsonb(o.details))->>'stock_deducted_at','') is not null then
+       if v_order.status='تم التسديد' or coalesce(private.v94_jsonb_object(to_jsonb(v_order.details))->>'stock_lifecycle_state','')='deducted'
+         or coalesce(private.v94_jsonb_object(to_jsonb(v_order.details))->>'bundle_stock_lifecycle_state','')='deducted'
+         or nullif(private.v94_jsonb_object(to_jsonb(v_order.details))->>'stock_deducted_at','') is not null then
          raise exception 'PAYMENT_P4_PAID_ORDER_PRESERVED:%',oid using errcode='55000'; end if;
-       if not o.status=any(v_pre_payment) then raise exception 'PAYMENT_P4_ORDER_REQUIRES_MANUAL_REVIEW:%',oid using errcode='55000'; end if;
+       if not v_order.status=any(v_pre_payment) then raise exception 'PAYMENT_P4_ORDER_REQUIRES_MANUAL_REVIEW:%',oid using errcode='55000'; end if;
        update public.orders set status='ملغي' where id=oid;
        v_cancelled:=array_append(v_cancelled,oid);
      end loop;
