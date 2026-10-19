@@ -10,6 +10,27 @@
   const r=await fetch(`${String(cfg.url).replace(/\/$/,'')}/functions/v1/kinto-payment-p5`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',apikey:cfg.anonKey,Authorization:`Bearer ${cfg.anonKey}`},body:JSON.stringify({action,session_token:session,...payload})});
   const j=await r.json().catch(()=>({}));if(!r.ok||j.ok!==true)throw new Error(j.error||'PAYMENT_REQUEST_FAILED');return j.data;
  }
+ // Reading the effective mode does not require the P5 Edge Function: the
+ // existing session-checked RPC is the authoritative source. This lets the
+ // established manual checkout continue while P5 is undeployed. A failed RPC
+ // still returns unknown; it never silently selects manual.
+ async function readModeFromDatabase(){
+  const cfg=config(),session=token();if(!session)throw new Error('CUSTOMER_SESSION_REQUIRED');
+  const response=await fetch(`${String(cfg.url).replace(/\/$/,'')}/rest/v1/rpc/kinto_payment_p5_mode_read_v1`,{
+   method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',apikey:cfg.anonKey,Authorization:`Bearer ${cfg.anonKey}`},
+   body:JSON.stringify({p_session_token:session})
+  });
+  const result=await response.json().catch(()=>null);
+  if(!response.ok||!result||typeof result!=='object')throw new Error('PAYMENT_MODE_UNAVAILABLE');
+  return result;
+ }
+ function normalizeMode(m){
+  if(m?.effective_mode==='manual'&&m.transition_state==='stable')return 'manual';
+  if(m?.effective_mode==='electronic'&&m.test_access_required===true)return 'unauthorized';
+  if(m?.effective_mode==='electronic'&&m.transition_state==='stable'&&m.checkout_available===true)return 'electronic';
+  if(m?.transition_state==='draining'||m?.effective_mode==='electronic')return 'blocked';
+  return 'unknown';
+ }
  function ensureModal(){let root=document.getElementById('kintoPaymentP5Modal');if(root)return root;root=document.createElement('div');root.id='kintoPaymentP5Modal';root.className='kp5-backdrop';root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label','مراجعة الطلب والدفع');root.innerHTML='<section class="kp5-dialog"><header><div><small>KINTO • الدفع التجريبي</small><h2>مراجعة الطلب والدفع</h2></div><button type="button" class="kp5-close" aria-label="إغلاق">×</button></header><div class="kp5-content"></div><footer class="kp5-actions"></footer></section>';root.querySelector('.kp5-close').addEventListener('click',()=>root.remove());root.addEventListener('click',e=>{if(e.target===root)root.remove()});document.body.append(root);return root}
  const money=(n,c)=>`${Number(n||0).toLocaleString('en-US',{maximumFractionDigits:3})} ${esc(c||'')}`;
  function setContent(root,html,actions=''){root.querySelector('.kp5-content').innerHTML=html;root.querySelector('.kp5-actions').innerHTML=actions}
@@ -26,7 +47,7 @@
   try{await quoteNow()}catch(e){message(root,'تعذرت مراجعة الطلب',e.message,'<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}
  }
  let modePromise=null,modeAt=0,modeValue='unknown';
- async function getMode(){if(modePromise&&Date.now()-modeAt<15000)return modePromise;modeAt=Date.now();modePromise=call('mode').then(m=>(modeValue=m.effective_mode==='manual'&&m.transition_state==='stable'?'manual':m.effective_mode==='electronic'&&m.checkout_available===true?'electronic':'blocked',modeValue)).catch(e=>{const detail=String(e.message||e);modeValue=/404|PGRST202|kinto_payment_p5_mode_read_v1.*(not found|does not exist)|FUNCTION_NOT_FOUND/i.test(detail)?'legacy-manual':'unknown';return modeValue});return modePromise}
+ async function getMode(){if(modePromise&&Date.now()-modeAt<15000)return modePromise;modeAt=Date.now();modePromise=call('mode').then(normalizeMode).catch(async()=>{try{return normalizeMode(await readModeFromDatabase())}catch{return 'unknown'}}).then(value=>(modeValue=value,modeValue));return modePromise}
  async function isElectronic(){return (await getMode())==='electronic'}
  async function loadPayments(page=1){return call('list',{page})}
  window.KintoPaymentP5V1={call,checkout,isElectronic,getMode,loadPayments,version:'p5-simulator-v1'};
