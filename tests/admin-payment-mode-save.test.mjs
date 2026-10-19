@@ -89,7 +89,7 @@ async function mount({ initialMode = 'manual', effectiveMode = 'manual', transit
   return { calls, elements, getConfirmMessages: () => confirmMessages };
 }
 
-test('saving electronic Sandbox prepares and opens P6 after the guarded P4 transition', async () => {
+test('saving electronic Sandbox preference prepares P6 but does not open intake', async () => {
   const { calls, elements } = await mount({ initialMode: 'manual', effectiveMode: 'manual', transitionState: 'stable', ready: false });
   elements.g16PaymentMode.value = 'electronic';
 
@@ -98,14 +98,10 @@ test('saving electronic Sandbox prepares and opens P6 after the guarded P4 trans
   const names = calls.map(call => call.name + ':' + (call.args?.p_action || call.args?.p_target_mode || ''));
   assert.ok(names.includes('kinto_payment_mode_admin_g16:set_mode'));
   assert.ok(names.includes('kinto_payment_p6_simulator_admin_v1:prepare'));
-  assert.ok(names.includes('kinto_payment_mode_transition_p4:electronic'));
-  const transitionCall = calls.find(call => call.name === 'kinto_payment_mode_transition_p4');
-  assert.deepEqual(Array.from(transitionCall.args.p_verified_unpaid_order_ids), [], 'mode switch never submits old order IDs for cancellation');
-  assert.equal(transitionCall.args.p_admin_confirmed_no_payment, false);
-  assert.ok(names.includes('kinto_payment_p6_simulator_admin_v1:open'));
-  assert.ok(names.indexOf('kinto_payment_p6_simulator_admin_v1:prepare') < names.indexOf('kinto_payment_mode_transition_p4:electronic'));
-  assert.ok(names.indexOf('kinto_payment_mode_transition_p4:electronic') < names.indexOf('kinto_payment_p6_simulator_admin_v1:open'));
-  assert.match(elements.g16RuntimeStatus.textContent, /تم تجهيز المحاكي والانتقال إليه بأمان/);
+  assert.ok(names.includes('kinto_payment_p6_simulator_admin_v1:prepare'));
+  assert.ok(!names.includes('kinto_payment_mode_transition_p4:electronic'), 'preference save does not change effective mode');
+  assert.ok(!names.includes('kinto_payment_p6_simulator_admin_v1:open'), 'preference save cannot open simulator intake');
+  assert.match(elements.g16RuntimeStatus.textContent, /بقي استقبال الطلبات مغلقاً/);
 });
 
 test('saving manual runs emergency stop, safe P4 transition, then closes P6', async () => {
@@ -135,7 +131,7 @@ test('an existing P4 drain cannot be bypassed by saving a Sandbox preference', a
 
 
 test('legacy order-review response fails closed without offering or submitting cancellations', async () => {
-  const { calls, elements, getConfirmMessages } = await mount({ initialMode: 'manual', effectiveMode: 'manual', transitionState: 'stable', ready: false, legacyOrderReview: true });
+  const { calls, elements, getConfirmMessages } = await mount({ initialMode: 'manual', effectiveMode: 'manual', transitionState: 'draining', ready: false, legacyOrderReview: true });
   elements.g16PaymentMode.value = 'electronic';
 
   await elements.g16SaveRuntime.onclick();
