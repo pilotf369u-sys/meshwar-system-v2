@@ -242,12 +242,12 @@ async function checkout(){
  try{
   await validateCheckoutStock(items);
   const customer=await loadCustomer(scope.userId),submittedKeys=items.map(itemKey),rpcItems=items.map(x=>({store_id:String(x.store_id),product_id:String(x.product_id),selected_options:{...x.selected_options},quantity:Math.max(1,Math.floor(Number(x.quantity)||1))}));
-  const paymentMode=await window.KintoPaymentP5V1?.getMode?.()||'legacy-manual';
+  const paymentMode=typeof window.KintoPaymentP5V1?.getMode==='function'?await window.KintoPaymentP5V1.getMode():'unknown';
   if(paymentMode==='electronic'){
    await window.KintoPaymentP5V1.checkout({items:rpcItems,shipping:shippingDestination(customer),onPaid:async()=>{await removeSubmitted(submittedKeys);const success=document.getElementById('kintoLocalCartSuccess');if(success){success.textContent='تم اعتماد الدفعة التجريبية والطلبات التابعة لها.';success.hidden=false}render();open()}});
    return{ok:true,p5:true};
   }
-  if(!['manual','legacy-manual'].includes(paymentMode))throw new Error(paymentMode==='blocked'?'الدفع الإلكتروني غير متاح حالياً. لم يُرسل الطلب ولم تُمسح السلة.':'تعذر التحقق من وضع الدفع. لم يُرسل الطلب اليدوي أو الإلكتروني؛ أعد المحاولة بعد استعادة الاتصال.');
+  if(paymentMode!=='manual')throw new Error(paymentMode==='unauthorized'?'الدفع الإلكتروني التجريبي متاح لحسابات اختبار مخوّلة فقط. لم يُرسل الطلب ولم تُمسح السلة.':paymentMode==='blocked'?'الدفع الإلكتروني أو الانتقال بين وضعي الدفع غير متاح حالياً. لم يُرسل الطلب ولم تُمسح السلة.':'تعذر التحقق من وضع الدفع. لم يُرسل الطلب اليدوي أو الإلكتروني؛ أعد المحاولة بعد استعادة الاتصال.');
   const result=await rest('rpc/kinto_checkout_session_v1',{method:'POST',timeout:15000,body:{p_session_token:cloudSessionToken(),p_customer_shipping:shippingDestination(customer),p_items:rpcItems}}),orders=Array.isArray(result?.orders)?result.orders:[];
   if(orders.length!==expectedStores)throw new Error('لم يؤكد النظام إنشاء طلب مستقل لكل متجر.');
   const codes=orders.map(x=>String(x?.order_code||'').trim());if(codes.some(code=>!/^KN-\d{6,}$/.test(code))||new Set(codes).size!==codes.length)throw new Error('لم تُرجع قاعدة البيانات أرقام KN مستقلة وصالحة.');

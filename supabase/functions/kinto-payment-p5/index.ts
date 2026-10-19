@@ -32,6 +32,15 @@ Deno.serve(async (request: Request) => {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: { headers: { "x-kinto-payment-channel": "p5-server" } },
   });
+  const requireTestAccess = async () => {
+    const { data, error } = await db.rpc("kinto_payment_p5_test_access_check_v1", { p_session_token: token });
+    if (error) {
+      if (error.code === "P0001" && /REVIEW_SESSION_(INVALID|REQUIRED)/.test(String(error.message || "")))
+        throw new Error("CUSTOMER_SESSION_REQUIRED");
+      throw new Error("PAYMENT_P5_TEST_ACCESS_CHECK_UNAVAILABLE");
+    }
+    if (data !== true) throw new Error("PAYMENT_P5_TEST_ACCESS_REQUIRED");
+  };
   if (action === "preview_login") {
     if (!isTestProject || origin !== previewOrigin) return json(404, { ok: false, error: "TEST_PREVIEW_ONLY" });
     const identity = typeof body.identity === "string" ? body.identity.trim() : "";
@@ -152,10 +161,42 @@ Deno.serve(async (request: Request) => {
     if (error) return json(503, { ok: false, error: "TEST_SESSION_CLOSE_FAILED" });
     return json(200, { ok: true, data: { revoked: data === true } });
   }
+  if (action === "mode") {
+    let allowed = false;
+    try {
+      const { data, error } = await db.rpc("kinto_payment_p5_test_access_check_v1", { p_session_token: token });
+      if (error) {
+        const invalidSession = error.code === "P0001" && /REVIEW_SESSION_(INVALID|REQUIRED)/.test(String(error.message || ""));
+        return json(invalidSession ? 401 : 503, { ok: false, error: invalidSession ? "CUSTOMER_SESSION_REQUIRED" : "PAYMENT_P5_MODE_UNAVAILABLE" });
+      }
+      allowed = data === true;
+    } catch {
+      return json(503, { ok: false, error: "PAYMENT_P5_MODE_UNAVAILABLE" });
+    }
+    const { data, error } = await db.rpc("kinto_payment_p5_mode_read_v1", { p_session_token: token });
+    if (error) {
+      const status = error.code === "28000" ? 401 : 503;
+      return json(status, { ok: false, error: String(error.message || "PAYMENT_MODE_UNAVAILABLE").slice(0, 240) });
+    }
+    const result = data && typeof data === "object" ? { ...(data as Record<string, unknown>) } : {};
+    if (result.effective_mode === "electronic" && !allowed) {
+      result.checkout_available = false;
+      result.test_access_required = true;
+    }
+    return json(200, { ok: true, data: result });
+  }
+  if (["quote", "reserve", "start", "simulate"].includes(action)) {
+    try { await requireTestAccess(); }
+    catch (error) {
+      const reason = error instanceof Error ? error.message : "PAYMENT_P5_TEST_ACCESS_CHECK_UNAVAILABLE";
+      const status = reason === "PAYMENT_P5_TEST_ACCESS_REQUIRED" ? 403 : reason === "CUSTOMER_SESSION_REQUIRED" ? 401 : 503;
+      return json(status, { ok: false, error: reason });
+    }
+  }
   let rpc: string;
   let args: Record<string, unknown>;
   switch (action) {
-    case "mode": rpc = "kinto_payment_p5_mode_read_v1"; args = { p_session_token: token }; break;
+    case "mode": return json(500, { ok: false, error: "PAYMENT_MODE_ROUTING_ERROR" });
     case "quote":
       if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 100 ||
           (body.coupon_points !== undefined && (!body.coupon_points || typeof body.coupon_points !== "object" || Array.isArray(body.coupon_points))))
@@ -198,7 +239,7 @@ Deno.serve(async (request: Request) => {
   }
   const { data, error } = await db.rpc(rpc, args);
   if (error) {
-    const status = error.code === "28000" ? 401 : error.code === "P0002" ? 404 : 409;
+    const status = error.code === "28000" ? 401 : error.code === "P0002" ? 404 : error.code === "42501" ? 403 : 409;
     return json(status, { ok: false, error: String(error.message || "PAYMENT_REQUEST_FAILED").slice(0, 240), code: error.code || null });
   }
   return json(200, { ok: true, data });
