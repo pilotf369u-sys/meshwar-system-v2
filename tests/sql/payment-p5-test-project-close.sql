@@ -90,6 +90,20 @@ begin
   values(v_actor,coalesce(v_from_mode,'electronic'),'manual','completed',
     jsonb_build_object('temporary_p5_test_closed',true,'real_collection_allowed',false,
       'active_stock_holds',0,'unresolved_attempts',0,'active_campaign_holds',0));
+
+  -- Revoke and remove only the one-time P5 test administrator created by the
+  -- protected preview. This does not touch any pre-existing KINTO account.
+  update public.admin_sessions_v147 s
+     set revoked_at=clock_timestamp()
+    from private.kinto_payment_p5_test_admin_bootstrap b
+   where b.singleton=true and b.admin_id is not null
+     and s.admin_id=b.admin_id and s.revoked_at is null;
+  delete from public.employees e
+   using private.kinto_payment_p5_test_admin_bootstrap b
+   where b.singleton=true and b.admin_id is not null and e.id::text=b.admin_id;
+  update private.kinto_payment_p5_test_admin_bootstrap
+     set enabled=false,closed_at=coalesce(closed_at,clock_timestamp())
+   where singleton=true;
 end;
 $close_p5$;
 
@@ -101,3 +115,5 @@ select effective_mode,transition_state,electronic_admission_ready from private.k
 select emergency_stop,selected_provider_key from public.kinto_payment_runtime_p2 where singleton=true;
 select enabled,test_only,integration_ready,real_collection_allowed from public.kinto_payment_providers_p2 where provider_key='kinto-simulator';
 select simulator_enabled,real_collection_allowed from private.kinto_payment_runtime_p5 where singleton=true;
+select enabled,admin_id is null as admin_removed,closed_at is not null as bootstrap_closed
+  from private.kinto_payment_p5_test_admin_bootstrap where singleton=true;
