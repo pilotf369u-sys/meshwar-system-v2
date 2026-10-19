@@ -14,3 +14,18 @@
 .kp5-test-card>div:last-of-type b{font-size:13px}
 .kp5-test-card>small{font-size:11px;color:#f4e9c7}
 @media(max-width:480px){.kp5-test-card{padding:16px;border-radius:14px;gap:16px}.kp5-test-card>strong{letter-spacing:.04em}}
+
+/* P5 mobile review: keep checkout above legacy floating cart/bottom navigation.
+   Header/actions remain visible while the order review itself scrolls. */
+.kp5-backdrop{z-index:2147483647!important;isolation:isolate}
+.kp5-dialog{display:flex;flex-direction:column;overflow:hidden;max-height:min(92dvh,900px)}
+.kp5-dialog>header{position:relative;flex:none}
+.kp5-dialog>.kp5-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;flex:1}
+.kp5-dialog>.kp5-actions{flex:none;padding-top:12px;border-top:1px solid #e3e9dd;background:#fffdf7}
+.kp5-coupon-unavailable{font-size:13px;color:#66756e}
+@media(max-width:600px){
+ .kp5-backdrop{padding:8px;align-items:center}
+ .kp5-dialog{max-height:calc(100dvh - 16px);max-height:calc(100svh - 16px)}
+ .kp5-dialog>.kp5-actions{padding:10px 14px max(14px,env(safe-area-inset-bottom))}
+ .kp5-dialog>.kp5-actions button{min-height:44px}
+}
