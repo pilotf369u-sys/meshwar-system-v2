@@ -16,10 +16,10 @@ document.querySelectorAll('[data-action]').forEach(b=>b.onclick=async()=>{b.disa
 
 Deno.serve((request: Request) => {
   if (request.method !== "GET") return new Response("Method not allowed", { status: 405 });
-  return publishAndRedirect();
+  return publishAndServePage();
 });
 
-async function publishAndRedirect() {
+async function publishAndServePage() {
   const url=Deno.env.get("SUPABASE_URL"),serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if(!url||!serviceKey)return new Response("Test preview is unavailable",{status:503});
   const db=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});

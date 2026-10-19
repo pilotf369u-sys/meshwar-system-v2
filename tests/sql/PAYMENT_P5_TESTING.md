@@ -28,6 +28,6 @@ The earlier HTTP security tests remain documented in `tests/sql/payment-p5-http.
 
 ## Browser preview limitation
 
-The deployed Supabase test preview endpoint redirects to its static test HTML, but the Supabase edge/storage delivery path forces `Content-Type: text/plain`; the browser displays the source instead of executing it. The existing Vercel PR preview redirects to Vercel Login in the available browser. The browser cannot open `data:` URLs under its URL policy. Therefore there is **no usable, verified interactive browser preview link** at this point. The static test page references only the test project and a public publishable key, with no session token or secret embedded.
+The Supabase Storage URL returned the static test HTML with `Content-Type: text/plain`; the browser displayed source. The preview Edge Function was then changed to return the same page directly with a `text/html` response header and redeployed to the test project, but the browser still exposed it as a text node containing literal markup rather than a rendered page. The existing Vercel PR preview redirects to Vercel Login in the available browser. Therefore there is **no usable, verified interactive browser preview link** at this point. The static test page references only the test project and a public publishable key, with no session token or secret embedded.
 
 P5 is **not ready for merge** until the interactive browser preview is available and the client journey/“مدفوعاتي” is exercised there. No real gateway or collection was enabled or tested.
