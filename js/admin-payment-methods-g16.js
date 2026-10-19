@@ -83,33 +83,26 @@ async function runtimeRpc(action='get',extra={}){
  if(!data?.payment_mode)throw Error(data?.error||'تعذر قراءة إعدادات مسار الدفع.');
  return data;
 }
-async function paymentModeTransitionP4(targetMode,verifiedOrderIds=[],confirmedNoPayment=false){
+async function paymentModeTransitionP4(targetMode){
  const t=token();if(!t)throw Error('جلسة الأدمن غير متاحة. يرجى تسجيل الدخول مجدداً.');
  const sb=await window.ensureCustomerSupabase();
  const {data,error}=await sb.rpc('kinto_payment_mode_transition_p4',{p_session_token:t,p_target_mode:targetMode,
-  p_verified_unpaid_order_ids:verifiedOrderIds,p_admin_confirmed_no_payment:confirmedNoPayment});
+  p_verified_unpaid_order_ids:[],p_admin_confirmed_no_payment:false});
  if(error){
   const detail=String(error.message||'');
   if(/kinto_payment_mode_transition_p4|PGRST202|does not exist|Could not find the function/i.test(detail))return null;
   throw error;
  }
- if(!data?.ok&&data?.error==='MANUAL_ORDERS_REQUIRE_REVIEW'&&Array.isArray(data.orders)&&data.orders.length){
-  const rows=data.orders.map(o=>`${o.order_code||o.id} — ${o.status} — ${o.amount} ${o.currency}`).join('\n');
-  const accepted=confirm('أوقف الخادم استقبال الطلبات اليدوية أثناء الانتقال. راجع هذه الطلبات خارجياً وتأكد من عدم تحصيل أي مبلغ عنها قبل إلغائها:\n\n'+rows+'\n\nهل تحققت من عدم التحصيل وتؤكد إلغاءها؟');
-  if(!accepted)throw Error('بقي الانتقال متوقفاً للمراجعة. أعد اختيار «يدوي» لإلغاء الانتقال وإعادة فتح المسار اليدوي.');
-  const second=await sb.rpc('kinto_payment_mode_transition_p4',{p_session_token:t,p_target_mode:targetMode,
-   p_verified_unpaid_order_ids:data.orders.map(o=>o.id),p_admin_confirmed_no_payment:true});
-  if(second.error)throw second.error;
-  if(!second.data?.ok)throw Error(second.data?.error==='MANUAL_ORDERS_REQUIRE_REVIEW'
-   ?'توجد طلبات أخرى أو حالات غير مصنفة. الاستقبال ما زال متوقفاً؛ أعد الانتقال بعد مراجعتها أو اختر «يدوي» لإلغاء الانتقال.'
-   :(second.data?.error||'تعذر إكمال الانتقال الآمن.'));
-  return second.data;
+ // Older production function versions ask administrators to attest and cancel
+ // legacy manual orders. Never repeat that destructive request from the UI.
+ if(!data?.ok&&data?.error==='MANUAL_ORDERS_REQUIRE_REVIEW'){
+  throw Error('خادم الدفع ما زال يستخدم شرط مراجعة الطلبات اليدوية القديم. لم يُرسل هذا المتصفح أي أمر إلغاء؛ يلزم تطبيق ترحيل حفظ الطلبات قبل متابعة التبديل.');
  }
  if(!data?.ok){
   const errors={
    ELECTRONIC_ADMISSION_NOT_READY:'الدفع الإلكتروني غير جاهز حالياً؛ بقي النظام اليدوي فعالاً ولم يبدأ التبديل.',
    PAYMENT_ATTEMPTS_REQUIRE_RECONCILIATION:'توجد محاولات معلقة أو مجهولة النتيجة. لن يُفتح النظام اليدوي حتى تتم مطابقتها بأمان.',
-   MANUAL_ORDERS_REQUIRE_REVIEW:'توجد طلبات يدوية تحتاج مراجعة. الاستقبال متوقف مؤقتاً؛ اختر «يدوي» لإلغاء الانتقال بأمان.',
+   EMERGENCY_STOP_REQUIRED:'فعّل إيقاف المحاولات الإلكترونية الجديدة قبل العودة إلى النظام اليدوي.',
   };
   throw Error(errors[data?.error]||data?.error||'تعذر إكمال التبديل الآمن.');
  }
