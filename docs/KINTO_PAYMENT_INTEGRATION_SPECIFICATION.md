@@ -2,6 +2,10 @@
 
 ## Purpose and status
 
+**Document date:** To be completed on the date this specification is sent to the payment provider (not its preparation date).
+
+**Merchant model:** KINTO is operated by one merchant who owns and runs multiple stores, trade names, or brands under that merchant's commercial activity. These are not third-party marketplace sellers or independent merchants requiring separate settlement accounts. All payment proceeds are intended to settle to the merchant's designated single bank account, subject to the provider's approved onboarding and settlement terms.
+
 This document defines the boundary for adding a future payment company to KINTO. KINTO Simulator is the first temporary provider and belongs to the same payment flow. It is a no-charge test provider; it is not a separate checkout or order system.
 
 No payment company has been selected. This specification does not publish or invent a callback, return, or webhook URL. Those values can be agreed and configured only after a provider is selected and its current technical documentation has been reviewed.
@@ -38,7 +42,7 @@ The adapter must not create operational orders or update KINTO stock, coupons, c
 
 ## Common payment and order invariants
 
-- One customer payment is represented by one KP. A multi-store basket creates the existing separate KN and invoice for each store through the canonical checkout engine.
+- One customer payment is represented by one KP. A basket spanning merchant-owned stores/brands creates the existing separate KN and invoice for each store through the canonical checkout engine. Multiple KN references do not imply multiple independent legal merchants or multiple payout accounts.
 - Store prices and currency policy remain authoritative. KINTO does not invent an exchange rate or combine unlike currencies.
 - Quotes are recalculated server-side. Client-submitted totals, discounts, coupon values, quantities, store ownership, variant selection, and campaign eligibility are untrusted.
 - A reservation is idempotent and locks product/variant/matrix availability without prematurely deducting physical stock. Finalization must preserve the existing one-time stock deduction guards.
@@ -56,11 +60,17 @@ The adapter must not create operational orders or update KINTO stock, coupons, c
 - Provider webhook authentication is independent of customer login. Validate the provider-specific signature and replay protections before any database finalization call.
 - Never bypass payment/order guards with client-controlled SQL session variables or request headers.
 
+## Commercial settlement clarification
+
+- KINTO may present several merchant-owned brands/storefront names to the customer. Contracting, merchant verification, and settlement concern the same merchant, with proceeds routed to that merchant's nominated account under the provider's terms.
+- Confirm whether the provider can include a storefront name and/or individual KN reference in the transaction description while keeping one KP payment reference and one merchant settlement relationship.
+- No statement in this specification implies that KINTO does not receive customer payments. The simulator's test-only operation describes the current development implementation, not the intended commercial collection and payout model.
+
 ## Information to request from a prospective provider
 
 Request the current official integration documentation and obtain:
 
-- Legal merchant onboarding requirements, supported merchant country, settlement account/currency, settlement timing, fees, reserve/chargeback policy, and supported test/live environments.
+- Legal merchant onboarding requirements for one merchant operating several owned brands/storefronts, one designated payout bank account, settlement currency/timing, fees, reserve/chargeback policy, and supported test/live environments.
 - All supported connection models: hosted redirect, embedded SDK/hosted fields, server API, webhooks, payment links, and QR, including which features are available to KINTO's merchant account.
 - API/SDK versions, supported platforms and browsers, checkout session creation, expiry, idempotency, cancellation, status query, refunds, partial refunds, and settlement/reconciliation APIs.
 - Exact webhook signing algorithm, signing key provisioning/rotation, canonical payload construction, timestamp tolerance, retry policy, event ID uniqueness, delivery order, and test-event procedure.
