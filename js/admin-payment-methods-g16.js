@@ -194,18 +194,31 @@ async function saveRuntime(){
  if(busy)return;
  const mode=document.getElementById('g16PaymentMode')?.value||'manual';
  const environment=document.getElementById('g16GatewayEnvironment')?.value||'sandbox';
- if(mode==='electronic'&&settings.payment_mode!=='electronic'&&!confirm('سيطلب النظام انتقالاً آمناً بعد إيقاف الطلبات اليدوية ومراجعة غير المسدد منها. لا يوجد تحصيل إلكتروني فعلي في هذه المرحلة. متابعة؟'))return;
  if(environment==='live'&&!settings.gateway_integration_ready){runtimeStatus('بيئة الإنتاج غير متاحة قبل اكتمال ربط البوابة والمراجعة.',true);return}
  busy=true;runtimeStatus('جارٍ حفظ الإعدادات...');
  try{
-  const transition=await paymentModeTransitionP4(mode);
-  // P4 changes the effective mode and the persisted G16 preference atomically;
-  // only retain the legacy preference write when the P4 migration is absent.
+  // Selecting Sandbox is a saved admin preference, not permission to stop
+  // manual intake. Keep P4's effective mode manual until the server reports
+  // that the electronic path is ready. Never defer while P4 is already
+  // draining or electronic; those states must pass through its safe transition.
+  const p4State=settings.p4_transition_state||'stable';
+  const saveSandboxPreferenceOnly=mode==='electronic'&&environment==='sandbox'
+   &&settings.effective_payment_mode==='manual'&&p4State==='stable'
+   &&settings.gateway_integration_ready!==true;
+  const transition=saveSandboxPreferenceOnly?null:await paymentModeTransitionP4(mode);
+  // In the not-ready Sandbox case, persist only G16's selected preference.
+  // P4 remains manual/stable, so the current manual checkout is unaffected.
+  // When the electronic path is ready, P4 still owns the mode transition and
+  // updates G16 atomically as before.
   const updated=transition?await runtimeRpc('get'):await runtimeRpc('set_mode',{p_payment_mode:mode});
   const withEnv=environment!==(updated.gateway_environment||'sandbox')?await runtimeRpc('set_environment',{p_gateway_environment:environment}):updated;
   const p4=await paymentModeP4Read();
   paintRuntime({...withEnv,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_target_mode:p4.target_mode,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{} )});
-  runtimeStatus(transition?.effective_mode==='electronic'?'تم التبديل بأمان. يبقى التحصيل الإلكتروني مغلقاً حتى اكتمال ربط البوابة.':mode==='electronic'&&!withEnv.gateway_integration_ready?'حُفظ اختيار الإلكتروني إعداداً فقط. بقي المسار الفعلي يدوياً والتحصيل مغلقاً.':'تم حفظ إعداد المسار.');
+  runtimeStatus(saveSandboxPreferenceOnly
+   ?'حُفظ اختيار الدفع الإلكتروني Sandbox. يبقى الوضع الفعلي يدوياً وتستمر الطلبات اليدوية حتى تكتمل جاهزية المحاكي ويُجرى انتقال آمن من الأدمن.'
+   :transition?.effective_mode==='electronic'?'تم التبديل بأمان. يبقى التحصيل الإلكتروني الحقيقي مغلقاً.'
+   :mode==='electronic'&&!withEnv.gateway_integration_ready?'حُفظ اختيار الإلكتروني إعداداً فقط. بقي المسار الفعلي يدوياً والتحصيل مغلقاً.'
+   :'تم حفظ إعداد المسار.');
  }catch(e){runtimeStatus(e?.message||'تعذر حفظ الإعدادات.',true);try{paintRuntime(await runtimeRpc('get'))}catch{}}
  finally{busy=false}
 }
