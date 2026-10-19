@@ -21,4 +21,9 @@ assert.doesNotMatch(fn,/cancelled_order_ids|v_cancelled/i,'transition has no leg
 assert.match(migration,/revoke all on function public\.kinto_payment_mode_transition_p4\(text,text,uuid\[\],boolean\) from public,anon,authenticated/i);
 assert.match(migration,/grant execute on function public\.kinto_payment_mode_transition_p4\(text,text,uuid\[\],boolean\) to anon,authenticated/i);
 
+
+// All three mode-switch checks must catch unsettled attempts, even without stock holds.
+const unresolvedGuards=[...fn.matchAll(/where a\.status in \('new','reserved','pending','reconciliation_required'\)/g)];
+assert.equal(unresolvedGuards.length,3,'all transitions count new/reserved attempts with or without holds');
+
 console.log('PASS: P6 transition preserves existing manual orders; only payment holds/reconciliation gate admission (SQL contract, no live DB write).');
