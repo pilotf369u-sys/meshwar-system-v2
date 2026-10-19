@@ -45,13 +45,21 @@ Deno.serve(async (request: Request) => {
       rpc = "kinto_payment_p5_reserve_v1";
       args = { p_session_token: token, p_idempotency_key: body.idempotency_key, p_items: body.items, p_coupon_points: body.coupon_points ?? {} };
       break;
+    case "campaign_reserve":
+      if (!uuid(body.idempotency_key) || !uuid(body.campaign_id) || !Array.isArray(body.items) || body.items.length < 1 || body.items.length > 100 ||
+          (body.coupon_points !== undefined && (!body.coupon_points || typeof body.coupon_points !== "object" || Array.isArray(body.coupon_points) || Object.keys(body.coupon_points).length > 0)))
+        return json(400, { ok: false, error: "DIRECT_CAMPAIGN_COUPONS_FORBIDDEN_OR_INVALID_RESERVATION" });
+      rpc = "kinto_payment_p5_campaign_reserve_v1";
+      args = { p_session_token: token, p_idempotency_key: body.idempotency_key, p_campaign_id: body.campaign_id,
+        p_items: body.items, p_coupon_points: {} };
+      break;
     case "start":
       if (!uuid(body.attempt_id)) return json(400, { ok: false, error: "INVALID_ATTEMPT" });
       rpc = "kinto_payment_p5_start_v1"; args = { p_session_token: token, p_attempt_id: body.attempt_id }; break;
     case "simulate":
       if (!uuid(body.attempt_id) || !["success", "failure", "cancel", "unknown", "disconnect"].includes(String(body.scenario)))
         return json(400, { ok: false, error: "INVALID_SIMULATION" });
-      rpc = "kinto_payment_p5_simulate_v1";
+      rpc = "kinto_payment_p5_simulate_dispatch_v1";
       args = { p_session_token: token, p_attempt_id: body.attempt_id, p_scenario: body.scenario,
         p_event_key: crypto.randomUUID(), p_shipping: body.shipping && typeof body.shipping === "object" ? body.shipping : {} };
       break;
