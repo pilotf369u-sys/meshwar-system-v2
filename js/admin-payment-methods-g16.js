@@ -274,7 +274,7 @@ async function saveRuntime(){
   const withEnv=environment!==(updated.gateway_environment||'sandbox')?await runtimeRpc('set_environment',{p_gateway_environment:environment}):updated;
   const p4=await paymentModeP4Read();
   paintRuntime({...withEnv,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_target_mode:p4.target_mode,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{} )});
-  if(saveSandboxPreferenceOnly){await activateP6SimulatorSequence();runtimeStatus('تم تجهيز المحاكي والانتقال إليه بأمان. لا يوجد تحصيل حقيقي؛ يمكن للأدمن العودة إلى اليدوي من إعداد الوضع.');return}
+  if(saveSandboxPreferenceOnly){const p6=await paymentP6Admin('prepare');const p4=await paymentModeP4Read();paintRuntime({...withEnv,simulator_enabled:p6.simulator_enabled,electronic_admission_ready:p6.electronic_admission_ready,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{})});runtimeStatus('حُفظ اختيار Sandbox وجُهّز المحاكي فقط. بقي استقبال الطلبات مغلقاً وإيقاف الطوارئ مفعّلاً؛ استخدم زر فتح الاستقبال بعد مراجعة الجاهزية.');return}
   runtimeStatus(saveSandboxPreferenceOnly
    ?'حُفظ اختيار الدفع الإلكتروني Sandbox. يبقى الوضع الفعلي يدوياً وتستمر الطلبات اليدوية حتى تكتمل جاهزية المحاكي ويُجرى انتقال آمن من الأدمن.'
    :transition?.effective_mode==='electronic'?'تم التبديل بأمان. يبقى التحصيل الإلكتروني الحقيقي مغلقاً.'
