@@ -6,7 +6,7 @@
   .kinto-customer-header .customer-header-actions{display:none!important}
   .kinto-customer-header .customer-header-main{padding:8px 10px!important;min-height:54px}
   .kinto-customer-header .customer-brand{margin-inline:auto!important}
-  .kinto-mobile-app-nav{position:fixed;z-index:1180;inset-inline:8px;bottom:max(8px,env(safe-area-inset-bottom));min-height:72px;padding:7px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:stretch;gap:2px;border:1px solid rgba(212,175,55,.28);border-radius:24px;background:rgba(4,22,43,.97);box-shadow:0 12px 32px rgba(0,0,0,.38);contain:layout paint}
+  .kinto-mobile-app-nav{position:fixed;z-index:1180;inset-inline:8px;bottom:max(8px,env(safe-area-inset-bottom));min-height:72px;padding:7px;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));align-items:stretch;gap:2px;border:1px solid rgba(212,175,55,.28);border-radius:24px;background:rgba(4,22,43,.97);box-shadow:0 12px 32px rgba(0,0,0,.38);contain:layout paint}
   .kinto-mobile-app-nav button,.kinto-mobile-app-nav a{position:relative;min-width:0;border:0;border-radius:14px;background:transparent;color:#c7d7d2;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:800 7px/1 "Segoe UI",Tahoma,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   .kinto-mobile-app-nav i{font-size:18px;color:#f3e7bd}
   .kinto-mobile-app-nav .is-active{background:linear-gradient(145deg,#f5dc84,#dca62c);color:#17372f;box-shadow:0 5px 14px rgba(217,155,39,.22)}

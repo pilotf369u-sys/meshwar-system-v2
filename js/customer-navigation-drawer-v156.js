@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const $=(s,r=document)=>r.querySelector(s),all=(s,r=document)=>[...r.querySelectorAll(s)];
-const tabMeta={activeOrders:['fa-box','طلباتي النشطة'],orderHistory:['fa-scroll','سجل الطلبات'],chatHelp:['fa-comments','الدردشة'],notifications:['fa-bell','الإشعارات'],drafts:['fa-cart-shopping','السلة'],productReviews:['fa-star','تقييماتي'],customerFavorites:['fa-heart','مفضلاتي']};
+const tabMeta={activeOrders:['fa-box','طلباتي النشطة'],orderHistory:['fa-scroll','سجل الطلبات'],myPayments:['fa-credit-card','مدفوعاتي'],chatHelp:['fa-comments','الدردشة'],notifications:['fa-bell','الإشعارات'],drafts:['fa-cart-shopping','السلة'],productReviews:['fa-star','تقييماتي'],customerFavorites:['fa-heart','مفضلاتي']};
 let drawer,trigger,quickNotification,observer,warehouseAddress='';
 function cleanupThemeDuplicates(){const preferred=$('.customer-header-actions #mwGlobalThemeToggle');all('[id="mwGlobalThemeToggle"]').forEach(button=>{if(preferred&&button!==preferred)button.remove()})}
 function node(tag,attrs={},html=''){const el=document.createElement(tag);Object.entries(attrs).forEach(([k,v])=>k==='class'?el.className=v:el.setAttribute(k,v));el.innerHTML=html;return el}

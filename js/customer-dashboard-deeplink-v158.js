@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const allowed=new Set(['activeOrders','orderHistory','chatHelp','notifications','drafts','productReviews','customerFavorites']);
+const allowed=new Set(['activeOrders','orderHistory','myPayments','chatHelp','notifications','drafts','productReviews','customerFavorites']);
 const reviewSessionKey='kinto_customer_review_session_v132';
 const readClass='kinto-notification-read',unreadClass='kinto-notification-unread';
 const UNREAD_WINDOW_MS=24*60*60*1000;
