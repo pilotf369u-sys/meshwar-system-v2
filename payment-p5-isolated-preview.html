@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>KINTO | معاينة دفع P5 المعزولة</title>
+  <style>
+    :root{font-family:system-ui,"Segoe UI",Tahoma,sans-serif;color:#18372d;background:#f2f5f1}*{box-sizing:border-box}body{margin:0}.shell{max-width:960px;margin:auto;padding:20px}header{background:#0a2f23;color:#f5df91;padding:20px;border-radius:18px}header h1{font-size:24px;margin:5px 0}header p{margin:0;color:#f8efca;line-height:1.6}.warning{background:#fff8df;border:1px solid #e3cc72;border-radius:12px;padding:12px;line-height:1.7;margin:16px 0}.card{background:#fff;border:1px solid #dce5dd;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 8px 24px #0a2f230d}.card h2{font-size:18px;margin:0 0 14px;color:#0a2f23}.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:grid;gap:6px;font-weight:750}input,textarea,select{font:inherit;border:1px solid #becdc1;border-radius:9px;padding:10px;background:#fff;color:#172f25;min-width:0}textarea{min-height:90px;direction:ltr;text-align:left;font:12px ui-monospace,monospace}.wide{grid-column:1/-1}.buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}button{font:inherit;font-weight:800;padding:10px 14px;border:0;border-radius:9px;background:#0a2f23;color:#f5df91;cursor:pointer}button.secondary{background:#edf2ed;border:1px solid #cedacf;color:#173b2d}button:disabled{opacity:.55;cursor:wait}.notice{min-height:24px;color:#52645a}.cart-line{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #edf0eb}.cart-line img{width:64px;height:64px;object-fit:cover;border-radius:9px;background:#f1f2ed}.cart-line small{display:block;color:#63756b;margin-top:4px}.total{display:flex;justify-content:space-between;padding-top:14px;font-size:18px;font-weight:900}.payments{display:grid;gap:10px}.payment{border:1px solid #dce5dd;border-radius:12px;padding:12px}.payment strong{color:#0a2f23}.orders{margin-top:8px;color:#5a6a61;font-size:13px}.response{white-space:pre-wrap;direction:ltr;text-align:left;overflow:auto;max-height:300px;background:#102019;color:#e4f3e9;border-radius:10px;padding:12px;font:12px ui-monospace,monospace}.hidden{display:none}@media(max-width:620px){.shell{padding:10px}.fields{grid-template-columns:1fr}.wide{grid-column:auto}.cart-line{grid-template-columns:50px 1fr}.cart-line img{width:50px;height:50px}.cart-line>b{grid-column:2}}
+  </style>
+</head>
+<body>
+<main class="shell">
+  <header><strong>KINTO · بيئة اختبار معزولة</strong><h1>معاينة السلة والدفع التجريبي</h1><p>هذه الصفحة تتصل بمشروع KINTO-Payment-Test فقط. لا توجد بوابة مالية أو تحصيل حقيقي. نتيجة النجاح هنا محاكاة خادمية للاختبار.</p></header>
+  <section class="warning"><b>بيانات اختبار فقط.</b> أدخل رمز جلسة اختبار مؤقتاً. يعرض الخادم الأسعار والصور والتفرعات الفعلية من قاعدة الاختبار. الشحن غير مشمول ويحدد لاحقاً. لا تستخدم بيانات حساب أو عميل حقيقي.</section>
+  <section class="card"><h2>السلة ومراجعة الطلب</h2><div class="fields">
+    <label class="wide">رمز جلسة عميل الاختبار<input id="session" autocomplete="off" spellcheck="false" placeholder="رمز مؤقت من قاعدة الاختبار"></label>
+    <label class="wide">عناصر اختبار السلة (JSON)<textarea id="items">[{"store_id":"22222222-2222-4222-8222-222222222222","product_id":"33333333-3333-4333-8333-333333333332","quantity":1,"selected_options":{"color":"red","size":"large"}}]</textarea></label>
+    <label class="wide">قسائم المتاجر كنقاط<textarea id="coupons">{}</textarea></label>
+  </div><div class="buttons"><button data-action="mode">حالة الدفع</button><button data-action="quote">مراجعة الأسعار</button><button data-action="reserve">تأكيد وحجز مؤقت</button></div>
+  <div id="review" class="hidden"><div id="lines"></div><div class="total"><span>الإجمالي <small id="currency"></small></span><span id="amount"></span></div><p>الشحن غير مشمول ويحدد لاحقاً.</p></div><p class="notice" id="notice" aria-live="polite"></p>
+  </section>
+  <section class="card"><h2>المحاكي الخادمي</h2><div class="fields"><label>معرف محاولة KP<input id="attempt" readonly></label><label>نتيجة المحاكاة<select id="scenario"><option value="success">نجاح تجريبي</option><option value="failure">رفض</option><option value="cancel">إلغاء</option><option value="disconnect">انقطاع / نتيجة مجهولة</option></select></label></div><div class="buttons"><button data-action="simulate">إرسال النتيجة للخادم</button><button class="secondary" data-action="status">التحقق من الحالة</button></div><p>إذا انقطع الاتصال تبقى الحالة «جارٍ التحقق» حتى يحسمها الخادم.</p></section>
+  <section class="card"><h2>مدفوعاتي</h2><div class="buttons"><button class="secondary" data-action="list">عرض الصفحة الأولى</button></div><div id="payments" class="payments"></div></section>
+  <section class="card"><h2>استجابة بيئة الاختبار</h2><pre id="response" class="response">جاهز للاختبار</pre></section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const endpoint='https://udtegahgxgqvflodjkjt.supabase.co/functions/v1/kinto-payment-p5';
+  const apikey='sb_publishable_KOdceuz9V-tRoIoxD3FjUA_4FoXbBNT';
+  const $=s=>document.querySelector(s), api=(action,payload={})=>{
+    const session=$('#session').value.trim(); if(!session) throw Error('أدخل رمز جلسة اختبار.');
+    return fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',apikey,Authorization:'Bearer '+apikey},body:JSON.stringify({action,session_token:session,...payload})}).then(async r=>{const data=await r.json();if(!r.ok||!data.ok)throw Error(data?.error||data?.message||'تعذر الاتصال بخادم الاختبار');return data.data});
+  };
+  const show=x=>$('#response').textContent=JSON.stringify(x,null,2), fail=e=>{$('#notice').textContent=String(e.message||e);show({error:String(e.message||e)})};
+  const cart=()=>JSON.parse($('#items').value), coupons=()=>JSON.parse($('#coupons').value);
+  function renderQuote(q){$('#review').classList.remove('hidden');$('#currency').textContent='('+q.currency+')';$('#amount').textContent=new Intl.NumberFormat('ar-IQ').format(q.amount);$('#lines').replaceChildren(...q.lines.map(line=>{const row=document.createElement('div');row.className='cart-line';const img=document.createElement('img');img.src=line.product_image||'';img.alt='';const info=document.createElement('div');const name=document.createElement('b');name.textContent=line.product_name;const meta=document.createElement('small');meta.textContent=[line.store_name,line.selected_options?.color,line.selected_options?.size,line.selected_options?.volume].filter(Boolean).join(' · ')+' · الكمية '+line.quantity;info.append(name,meta);const price=document.createElement('b');price.textContent=new Intl.NumberFormat('ar-IQ').format(line.line_total_local)+' '+line.currency;row.append(img,info,price);return row}));}
+  document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',async()=>{button.disabled=true;$('#notice').textContent='جارٍ التحقق...';try{let result;switch(button.dataset.action){case'mode':result=await api('mode');break;case'quote':result=await api('quote',{items:cart(),coupon_points:coupons()});renderQuote(result);break;case'reserve':result=await api('reserve',{items:cart(),coupon_points:coupons(),idempotency_key:crypto.randomUUID()});$('#attempt').value=result.attempt_id;result.started=await api('start',{attempt_id:result.attempt_id});break;case'simulate':result=await api('simulate',{attempt_id:$('#attempt').value.trim(),scenario:$('#scenario').value,shipping:{}});break;case'status':result=await api('status',{attempt_id:$('#attempt').value.trim()});break;case'list':result=await api('list',{page:1});$('#payments').replaceChildren(...(result.payments||[]).map(p=>{const card=document.createElement('article');card.className='payment';const head=document.createElement('strong');head.textContent=p.kp_number+' · '+p.status;const total=document.createElement('div');total.textContent=new Intl.NumberFormat('ar-IQ').format(p.amount)+' '+p.currency;const orders=document.createElement('div');orders.className='orders';orders.textContent=(p.orders||[]).map(o=>o.order_code).join('، ')||'لا توجد طلبات بعد';card.append(head,total,orders);return card}));break}show(result);$('#notice').textContent='اكتمل الطلب إلى بيئة الاختبار.'}catch(error){fail(error)}finally{button.disabled=false}}));
+})();
+</script>
+</body>
+</html>
