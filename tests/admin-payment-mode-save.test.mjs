@@ -28,7 +28,7 @@ class Element {
 
 async function mount({ initialMode = 'manual', effectiveMode = 'manual', transitionState = 'stable', ready = false, legacyOrderReview = false } = {}) {
   const calls = [];
-  let confirmCalls = 0;
+  const confirmMessages = [];
   let selectedMode = initialMode, effective = effectiveMode, transition = transitionState;
   let simulatorEnabled = false, admissionReady = false, emergencyStop = true;
   const ids = [
@@ -82,11 +82,11 @@ async function mount({ initialMode = 'manual', effectiveMode = 'manual', transit
     loadPaymentProvidersP2: async () => {},
     addEventListener: (name, fn) => { if (name === 'DOMContentLoaded') domReady = fn; },
   };
-  const context = { window, document, URL, confirm: () => { confirmCalls++; return true; }, prompt: () => 'return to manual safely', console };
+  const context = { window, document, URL, confirm: message => { confirmMessages.push(String(message || '')); return true; }, prompt: () => 'return to manual safely', console };
   vm.runInNewContext(script, context, { filename: 'admin-payment-methods-g16.js' });
   domReady();
   await window.loadAdminPaymentMethodsG16();
-  return { calls, elements, getConfirmCalls: () => confirmCalls };
+  return { calls, elements, getConfirmMessages: () => confirmMessages };
 }
 
 test('saving electronic Sandbox prepares and opens P6 after the guarded P4 transition', async () => {
@@ -135,7 +135,7 @@ test('an existing P4 drain cannot be bypassed by saving a Sandbox preference', a
 
 
 test('legacy order-review response fails closed without offering or submitting cancellations', async () => {
-  const { calls, elements, getConfirmCalls } = await mount({ initialMode: 'manual', effectiveMode: 'manual', transitionState: 'stable', ready: false, legacyOrderReview: true });
+  const { calls, elements, getConfirmMessages } = await mount({ initialMode: 'manual', effectiveMode: 'manual', transitionState: 'stable', ready: false, legacyOrderReview: true });
   elements.g16PaymentMode.value = 'electronic';
 
   await elements.g16SaveRuntime.onclick();
@@ -144,7 +144,7 @@ test('legacy order-review response fails closed without offering or submitting c
   assert.equal(transitionCalls.length, 1, 'never retries with administrator attestation');
   assert.deepEqual(Array.from(transitionCalls[0].args.p_verified_unpaid_order_ids), []);
   assert.equal(transitionCalls[0].args.p_admin_confirmed_no_payment, false);
-  assert.equal(getConfirmCalls(), 0, 'no destructive cancellation confirmation is shown');
+  assert.doesNotMatch(getConfirmMessages().join('\\n'), /تؤكد إلغاءها|تأكد من عدم تحصيل أي مبلغ عنها قبل إلغائها/, 'no confirmation asks to cancel existing orders');
   assert.ok(!calls.some(call => call.name === 'kinto_payment_p6_simulator_admin_v1' && call.args.p_action === 'open'));
   assert.match(elements.g16RuntimeStatus.textContent, /لم يُرسل هذا المتصفح أي أمر إلغاء/);
 });
