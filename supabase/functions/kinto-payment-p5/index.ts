@@ -23,11 +23,41 @@ Deno.serve(async (request: Request) => {
   try { body = await request.json(); } catch { return json(400, { ok: false, error: "INVALID_JSON" }); }
   const token = typeof body.session_token === "string" ? body.session_token.trim() : "";
   const action = typeof body.action === "string" ? body.action : "";
-  if (token.length < 24 || token.length > 512) return json(401, { ok: false, error: "CUSTOMER_SESSION_REQUIRED" });
+  const origin = request.headers.get("origin") || "";
+  const previewOrigin = "https://meshwar-system-v2-git-feature-kinto-payment-p5-kinto1.vercel.app";
+  const isTestProject = new URL(url).hostname === "udtegahgxgqvflodjkjt.supabase.co";
+  if (action !== "preview_login" && (token.length < 24 || token.length > 512))
+    return json(401, { ok: false, error: "CUSTOMER_SESSION_REQUIRED" });
   const db = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: { headers: { "x-kinto-payment-channel": "p5-server" } },
   });
+  if (action === "preview_login") {
+    if (!isTestProject || origin !== previewOrigin) return json(404, { ok: false, error: "TEST_PREVIEW_ONLY" });
+    const identity = typeof body.identity === "string" ? body.identity.trim() : "";
+    const password = typeof body.password === "string" ? body.password : "";
+    if (!identity || identity.length > 320 || !password || password.length > 512)
+      return json(400, { ok: false, error: "INVALID_TEST_LOGIN" });
+    const { data: login, error: loginError } = await db.rpc("customer_review_login_v132", {
+      p_identity: identity, p_password: password,
+    });
+    if (loginError || login?.ok !== true || typeof login.session_token !== "string")
+      return json(401, { ok: false, error: login?.error === "REVIEW_LOGIN_RATE_LIMITED" ? "TEST_LOGIN_RATE_LIMITED" : "TEST_LOGIN_INVALID" });
+    const { data: expiresAt, error: ttlError } = await db.rpc("kinto_payment_p5_test_session_bound_v1", {
+      p_session_token: login.session_token,
+    });
+    if (ttlError || !expiresAt) {
+      await db.rpc("customer_review_logout_v132", { p_session_token: login.session_token });
+      return json(503, { ok: false, error: "TEST_SESSION_SETUP_FAILED" });
+    }
+    return json(200, { ok: true, data: { session_token: login.session_token, expires_at: expiresAt, customer: login.customer } });
+  }
+  if (action === "preview_logout") {
+    if (!isTestProject || origin !== previewOrigin) return json(404, { ok: false, error: "TEST_PREVIEW_ONLY" });
+    const { data, error } = await db.rpc("customer_review_logout_v132", { p_session_token: token });
+    if (error) return json(503, { ok: false, error: "TEST_SESSION_CLOSE_FAILED" });
+    return json(200, { ok: true, data: { revoked: data === true } });
+  }
   let rpc: string;
   let args: Record<string, unknown>;
   switch (action) {
