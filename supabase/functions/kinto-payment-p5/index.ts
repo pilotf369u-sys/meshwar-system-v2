@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
+import { isKintoSimulatorCard, isSimulatorFailureScenario } from "../_shared/kinto-simulator-card.mjs";
 
 const responseHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -162,16 +163,18 @@ Deno.serve(async (request: Request) => {
     return json(200, { ok: true, data: { revoked: data === true } });
   }
   if (action === "mode") {
-    let allowed = false;
-    try {
-      const { data, error } = await db.rpc("kinto_payment_p5_test_access_check_v1", { p_session_token: token });
-      if (error) {
-        const invalidSession = error.code === "P0001" && /REVIEW_SESSION_(INVALID|REQUIRED)/.test(String(error.message || ""));
-        return json(invalidSession ? 401 : 503, { ok: false, error: invalidSession ? "CUSTOMER_SESSION_REQUIRED" : "PAYMENT_P5_MODE_UNAVAILABLE" });
+    let allowed = true;
+    if (isTestProject) {
+      try {
+        const { data, error } = await db.rpc("kinto_payment_p5_test_access_check_v1", { p_session_token: token });
+        if (error) {
+          const invalidSession = error.code === "P0001" && /REVIEW_SESSION_(INVALID|REQUIRED)/.test(String(error.message || ""));
+          return json(invalidSession ? 401 : 503, { ok: false, error: invalidSession ? "CUSTOMER_SESSION_REQUIRED" : "PAYMENT_P5_MODE_UNAVAILABLE" });
+        }
+        allowed = data === true;
+      } catch {
+        return json(503, { ok: false, error: "PAYMENT_P5_MODE_UNAVAILABLE" });
       }
-      allowed = data === true;
-    } catch {
-      return json(503, { ok: false, error: "PAYMENT_P5_MODE_UNAVAILABLE" });
     }
     const { data, error } = await db.rpc("kinto_payment_p5_mode_read_v1", { p_session_token: token });
     if (error) {
@@ -185,12 +188,27 @@ Deno.serve(async (request: Request) => {
     }
     return json(200, { ok: true, data: result });
   }
-  if (["quote", "reserve", "start", "simulate"].includes(action)) {
+  // The isolated P5 project keeps its explicit test-account allowlist. On the
+  // original project, the P6 database admission guards authorize all customer
+  // sessions only while the admin has opened the no-charge simulator safely.
+  if (isTestProject && ["quote", "reserve", "start", "simulate", "pay"].includes(action)) {
     try { await requireTestAccess(); }
     catch (error) {
       const reason = error instanceof Error ? error.message : "PAYMENT_P5_TEST_ACCESS_CHECK_UNAVAILABLE";
       const status = reason === "PAYMENT_P5_TEST_ACCESS_REQUIRED" ? 403 : reason === "CUSTOMER_SESSION_REQUIRED" ? 401 : 503;
       return json(status, { ok: false, error: reason });
+    }
+  }
+  if (!isTestProject && ["quote", "reserve", "start", "simulate", "pay"].includes(action)) {
+    try {
+      const { data, error } = await db.rpc("kinto_payment_p6_customer_admit_v1", { p_session_token: token });
+      if (error) {
+        const invalidSession = error.code === "P0001" && /REVIEW_SESSION_(INVALID|REQUIRED)/.test(String(error.message || ""));
+        return json(invalidSession ? 401 : 503, { ok: false, error: invalidSession ? "CUSTOMER_SESSION_REQUIRED" : "PAYMENT_P6_ADMISSION_UNAVAILABLE" });
+      }
+      if (data !== true) return json(409, { ok: false, error: "PAYMENT_P6_SIMULATOR_CLOSED" });
+    } catch {
+      return json(503, { ok: false, error: "PAYMENT_P6_ADMISSION_UNAVAILABLE" });
     }
   }
   let rpc: string;
@@ -222,12 +240,22 @@ Deno.serve(async (request: Request) => {
       if (!uuid(body.attempt_id)) return json(400, { ok: false, error: "INVALID_ATTEMPT" });
       rpc = "kinto_payment_p5_start_v1"; args = { p_session_token: token, p_attempt_id: body.attempt_id }; break;
     case "simulate":
-      if (!uuid(body.attempt_id) || !["success", "failure", "cancel", "unknown", "disconnect"].includes(String(body.scenario)))
+      if (!uuid(body.attempt_id) || !isSimulatorFailureScenario(body.scenario))
         return json(400, { ok: false, error: "INVALID_SIMULATION" });
       rpc = "kinto_payment_p5_simulate_dispatch_v1";
       args = { p_session_token: token, p_attempt_id: body.attempt_id, p_scenario: body.scenario,
         p_event_key: crypto.randomUUID(), p_shipping: body.shipping && typeof body.shipping === "object" ? body.shipping : {} };
       break;
+    case "pay": {
+      if (!uuid(body.attempt_id)) return json(400, { ok: false, error: "INVALID_ATTEMPT" });
+      // Only the published simulator card is accepted. Card inputs are checked
+      // in memory and never written, forwarded to a gateway, or returned.
+      const acceptedCard = isKintoSimulatorCard(body.card);
+      rpc = "kinto_payment_p5_simulate_dispatch_v1";
+      args = { p_session_token: token, p_attempt_id: body.attempt_id, p_scenario: acceptedCard ? "success" : "failure",
+        p_event_key: crypto.randomUUID(), p_shipping: body.shipping && typeof body.shipping === "object" ? body.shipping : {} };
+      break;
+    }
     case "status":
       if (!uuid(body.attempt_id)) return json(400, { ok: false, error: "INVALID_ATTEMPT" });
       rpc = "kinto_payment_p5_status_v1"; args = { p_session_token: token, p_attempt_id: body.attempt_id }; break;

@@ -83,14 +83,15 @@ test('saving electronic Sandbox stores the preference while P4 stays manual and 
   assert.match(elements.g16RuntimeStatus.textContent, /الوضع الفعلي يدوياً/);
 });
 
-test('choosing manual still uses the server-side P4 transition', async () => {
+test('saving manual cannot bypass the simulator stop-and-reconcile flow', async () => {
   const { calls, elements } = await mount({ initialMode: 'electronic', effectiveMode: 'electronic', transitionState: 'stable', ready: true });
   elements.g16PaymentMode.value = 'manual';
 
   await elements.g16SaveRuntime.onclick();
 
-  assert.ok(calls.some(call => call.name === 'kinto_payment_mode_transition_p4' && call.args.p_target_mode === 'manual'));
+  assert.ok(!calls.some(call => call.name === 'kinto_payment_mode_transition_p4'));
   assert.ok(!calls.some(call => call.name === 'kinto_payment_mode_admin_g16' && call.args.p_action === 'set_mode'));
+  assert.match(elements.g16RuntimeStatus.textContent, /إيقاف المحاكي والعودة لليدوي/);
 });
 
 test('an existing P4 drain cannot be bypassed by saving a Sandbox preference', async () => {

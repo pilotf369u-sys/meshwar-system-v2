@@ -54,7 +54,8 @@ function paint(data){
  const stop=$('paymentProvidersP2Stop');
  if(stop)stop.textContent=data?.emergency_stop?'مفتاح الطوارئ مفعّل':'إيقاف المحاولات الجديدة فوراً';
  const state=$('paymentProvidersP2State');
- if(state)state.textContent='المسار الفعلي: يدوي — التحصيل الحقيقي: مغلق — المحاكي: اختبار بلا تحصيل — الإيقاف العام: '+(data?.emergency_stop?'مفعّل':'غير مفعّل');
+ if(state)state.textContent='راجع المسار الفعلي في لوحة G16 — التحصيل الحقيقي مغلق — محاكي KINTO بلا تحصيل — إيقاف المحاولات الجديدة: '+(data?.emergency_stop?'مفعّل':'غير مفعّل');
+ const resume=$('paymentProvidersP2Resume');if(resume){resume.disabled=true;resume.textContent='التحصيل الحقيقي مغلق';resume.title='فتح المحاكي يتم من عناصر Payment-P6 بعد تحقق انتقال P4.'}
 }
 
 async function run(action,extra={}){
