@@ -280,7 +280,7 @@ async function saveRuntime(){
    :transition?.effective_mode==='electronic'?'تم التبديل بأمان. يبقى التحصيل الإلكتروني الحقيقي مغلقاً.'
    :mode==='electronic'&&!withEnv.gateway_integration_ready?'حُفظ اختيار الإلكتروني إعداداً فقط. بقي المسار الفعلي يدوياً والتحصيل مغلقاً.'
    :'تم حفظ إعداد المسار.');
- }catch(e){runtimeStatus(e?.message||'تعذر حفظ الإعدادات.',true);try{paintRuntime(await runtimeRpc('get'))}catch{}}
+ }catch(e){try{paintRuntime(await runtimeRpc('get'))}catch{}runtimeStatus(e?.message||'تعذر حفظ الإعدادات.',true)}
  finally{busy=false}
 }
 async function toggleGateway(){
