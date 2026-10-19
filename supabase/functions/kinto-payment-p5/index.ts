@@ -26,7 +26,7 @@ Deno.serve(async (request: Request) => {
   const origin = request.headers.get("origin") || "";
   const previewOrigin = "https://meshwar-system-v2-git-feature-kinto-payment-p5-kinto1.vercel.app";
   const isTestProject = new URL(url).hostname === "udtegahgxgqvflodjkjt.supabase.co";
-  if (action !== "preview_login" && (token.length < 24 || token.length > 512))
+  if (action !== "preview_login" && action !== "preview_create_customer" && (token.length < 24 || token.length > 512))
     return json(401, { ok: false, error: "CUSTOMER_SESSION_REQUIRED" });
   const db = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -51,6 +51,100 @@ Deno.serve(async (request: Request) => {
       return json(503, { ok: false, error: "TEST_SESSION_SETUP_FAILED" });
     }
     return json(200, { ok: true, data: { session_token: login.session_token, expires_at: expiresAt, customer: login.customer } });
+  }
+  if (action === "preview_create_customer") {
+    if (!isTestProject || origin !== previewOrigin) return json(404, { ok: false, error: "TEST_PREVIEW_ONLY" });
+    const adminIdentity = typeof body.admin_identity === "string" ? body.admin_identity.trim() : "";
+    const adminPassword = typeof body.admin_password === "string" ? body.admin_password : "";
+    const customerPassword = typeof body.customer_password === "string" ? body.customer_password : "";
+    if (!adminIdentity || adminIdentity.length > 320 || !adminPassword || adminPassword.length > 512 ||
+        customerPassword.length < 12 || customerPassword.length > 128)
+      return json(400, { ok: false, error: "INVALID_TEST_CUSTOMER_SETUP" });
+
+    let adminSessionToken = "";
+    let adminSessionRevoked = true;
+    let status = 401;
+    let result: Record<string, unknown> = { ok: false, error: "TEST_ADMIN_LOGIN_INVALID" };
+    let customerSessionToken = "";
+    try {
+      const { data: adminLogin, error: adminLoginError } = await db.rpc("admin_login_v147", {
+        p_identity: adminIdentity, p_password: adminPassword,
+      });
+      if (adminLoginError || adminLogin?.ok !== true || typeof adminLogin.session_token !== "string") {
+        result = { ok: false, error: adminLogin?.error === "ADMIN_LOGIN_RATE_LIMITED" ? "TEST_ADMIN_LOGIN_RATE_LIMITED" : "TEST_ADMIN_LOGIN_INVALID" };
+      } else {
+        adminSessionToken = adminLogin.session_token;
+        const customerCode = `P5T-${crypto.randomUUID()}`;
+        const { data: created, error: createError } = await db.rpc("admin_save_account_v300", {
+          p_admin_session_token: adminSessionToken,
+          p_account_type: "customer",
+          p_account_id: null,
+          p_name: "KINTO Payment-P5 Test Customer",
+          p_phone: customerCode,
+          p_password: customerPassword,
+          p_email: null,
+          p_code: customerCode,
+          p_country: "TEST",
+          p_state: "Isolated test project",
+          p_address: "KINTO-Payment-Test only",
+          p_secondary_phone: null,
+        });
+        if (createError || created?.ok !== true || typeof created.id !== "string") {
+          status = 409;
+          result = { ok: false, error: created?.error === "SAME_ROLE_PHONE_EXISTS" ? "TEST_CUSTOMER_ID_COLLISION" : "TEST_CUSTOMER_CREATE_FAILED" };
+        } else {
+          const { data: customerLogin, error: customerLoginError } = await db.rpc("customer_review_login_v132", {
+            p_identity: customerCode, p_password: customerPassword,
+          });
+          if (customerLoginError || customerLogin?.ok !== true || typeof customerLogin.session_token !== "string") {
+            status = 503;
+            result = { ok: false, error: "TEST_CUSTOMER_LOGIN_FAILED", customer_id: created.id, customer_code: customerCode };
+          } else {
+            customerSessionToken = customerLogin.session_token;
+            const { data: expiresAt, error: ttlError } = await db.rpc("kinto_payment_p5_test_session_bound_v1", {
+              p_session_token: customerSessionToken,
+            });
+            if (ttlError || !expiresAt) {
+              await db.rpc("customer_review_logout_v132", { p_session_token: customerSessionToken });
+              customerSessionToken = "";
+              status = 503;
+              result = { ok: false, error: "TEST_SESSION_SETUP_FAILED", customer_id: created.id, customer_code: customerCode };
+            } else {
+              status = 201;
+              result = { ok: true, data: { customer_id: created.id, customer_code: customerCode,
+                session_token: customerSessionToken, expires_at: expiresAt, customer: customerLogin.customer } };
+            }
+          }
+        }
+      }
+    } catch {
+      status = 503;
+      result = { ok: false, error: "TEST_CUSTOMER_SETUP_FAILED" };
+      if (customerSessionToken) {
+        await db.rpc("customer_review_logout_v132", { p_session_token: customerSessionToken });
+        customerSessionToken = "";
+      }
+    } finally {
+      if (adminSessionToken) {
+        try {
+          const { data: revoked, error: revokeError } = await db.rpc("admin_logout_v147", { p_session_token: adminSessionToken });
+          adminSessionRevoked = !revokeError && revoked === true;
+        } catch {
+          adminSessionRevoked = false;
+        }
+      }
+      adminSessionToken = "";
+    }
+    if (!adminSessionRevoked) {
+      if (customerSessionToken) {
+        try { await db.rpc("customer_review_logout_v132", { p_session_token: customerSessionToken }); } catch { /* expiry remains capped at 15 minutes */ }
+        customerSessionToken = "";
+      }
+      return json(503, { ok: false, error: "TEST_ADMIN_SESSION_CLOSE_FAILED",
+        customer_id: result.customer_id ?? (result.data as Record<string, unknown> | undefined)?.customer_id,
+        customer_code: result.customer_code ?? (result.data as Record<string, unknown> | undefined)?.customer_code });
+    }
+    return json(status, result);
   }
   if (action === "preview_logout") {
     if (!isTestProject || origin !== previewOrigin) return json(404, { ok: false, error: "TEST_PREVIEW_ONLY" });
