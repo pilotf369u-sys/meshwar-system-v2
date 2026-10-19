@@ -9,7 +9,7 @@ begin
     raise exception 'P6_ROLLBACK_REQUIRES_STABLE_MANUAL_MODE';
   end if;
   if exists(select 1 from private.kinto_stock_holds_p4 where status in ('active','reconciliation_required'))
-     or exists(select 1 from private.kinto_payment_attempts_p4 where status in ('pending','reconciliation_required')) then
+     or exists(select 1 from private.kinto_payment_attempts_p4 where status in ('new','reserved','pending','reconciliation_required')) then
     raise exception 'P6_ROLLBACK_REQUIRES_ALL_ATTEMPTS_RESOLVED';
   end if;
 end;

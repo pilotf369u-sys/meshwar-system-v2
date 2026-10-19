@@ -24,7 +24,10 @@ cross join private.kinto_payment_runtime_p5 rt
 left join public.kinto_payment_providers_p2 pr on pr.provider_key=s.selected_provider_key
 where g.singleton and p.singleton and s.singleton and rt.singleton;
 
-select count(*) filter(where h.status in ('active','reconciliation_required')) as active_holds,
-       count(*) filter(where a.status in ('pending','reconciliation_required')) as unresolved_attempts
-from private.kinto_stock_holds_p4 h
-join private.kinto_payment_attempts_p4 a on a.id=h.attempt_id;
+select (select count(*) from private.kinto_stock_holds_p4 h
+         where h.status in ('active','reconciliation_required')) as active_holds,
+       (select count(*) from private.kinto_payment_attempts_p4 a
+         where a.status in ('new','reserved','pending','reconciliation_required')) as unresolved_attempts,
+       (select count(*) from private.kinto_payment_attempts_p4 a
+         left join private.kinto_stock_holds_p4 h on h.attempt_id=a.id
+         where a.status in ('new','reserved','pending','reconciliation_required') and h.id is null) as unsettled_attempts_without_hold;

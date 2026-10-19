@@ -72,10 +72,15 @@ begin
      or rt.singleton is distinct from true or pr.provider_key is null then
     raise exception 'P6_PAYMENT_RUNTIME_NOT_CONFIGURED' using errcode='55000';
   end if;
-  select count(*) filter(where h.status in ('active','reconciliation_required')),
-         count(*) filter(where a.status in ('pending','reconciliation_required'))
-    into active_holds,unresolved
-    from private.kinto_stock_holds_p4 h join private.kinto_payment_attempts_p4 a on a.id=h.attempt_id;
+  -- Count ledgers independently. An inner join can hide an orphaned attempt
+  -- (for example, reserved without its hold) precisely when activation must
+  -- fail closed. Keep every unsettled lifecycle state in the attempt count.
+  select count(*) into active_holds
+    from private.kinto_stock_holds_p4 h
+   where h.status in ('active','reconciliation_required');
+  select count(*) into unresolved
+    from private.kinto_payment_attempts_p4 a
+   where a.status in ('new','reserved','pending','reconciliation_required');
 
   if p_action='get' then
     return jsonb_build_object('ok',true,'payment_mode',g.payment_mode,'gateway_environment',g.gateway_environment,
