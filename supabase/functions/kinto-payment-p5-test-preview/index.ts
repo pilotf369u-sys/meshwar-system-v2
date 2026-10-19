@@ -32,6 +32,7 @@ async function publishAndRedirect() {
     const uploaded=await storage.upload("preview.html",page,{contentType:"text/html",upsert:false,cacheControl:"60"});
     if(uploaded.error)return new Response("Test preview publish failed",{status:503});
   }
-  const target=`${url}/storage/v1/object/public/${bucket}/preview.html?v=${Date.now()}`;
-  return new Response(null,{status:302,headers:{Location:target,"Cache-Control":"no-store","X-Robots-Tag":"noindex, nofollow"}});
+  // Serve the page from the test Edge Function itself. The Storage CDN can
+  // override the object's MIME type to text/plain in some environments.
+  return new Response(page,{status:200,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Robots-Tag":"noindex, nofollow","Content-Security-Policy":"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://udtegahgxgqvflodjkjt.supabase.co; img-src data: https:; base-uri 'none'; form-action 'none'"}});
 }
