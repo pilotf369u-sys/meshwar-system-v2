@@ -11,6 +11,18 @@ Observed on the isolated database:
 - An invalid customer session was rejected by the database session validator.
 - A read-only post-test check found zero active/unknown holds and zero unresolved attempts before settings restoration.
 
-The tests did **not** establish two independent authenticated customers, a real browser/Edge HTTP checkout, native concurrent P5 reservations from two database sessions, or direct campaign checkout. The existing G20 direct-order RPC still creates an order before payment and is blocked by P4's electronic-mode order gate; P5 does not yet provide a safe campaign/gift/quota hold-and-finalize path. Those are blockers to calling P5 complete or ready for activation. No live gateway or financial collection was tested.
+Additional targeted checks were run on `KINTO-Payment-Test` through the deployed Edge Function HTTP endpoint using temporary customer sessions:
+
+- Guest, expired-session, and forged-session calls were rejected.
+- Two distinct test customers could not read each other's attempt.
+- Caller-supplied amount, currency, and customer identity fields were ignored by the quote path; the server returned the stored IQD pricing. An unrecognized `paid` simulation result was rejected.
+- Two simultaneous HTTP reservation requests raced for the only stock unit. Exactly one reservation won. Replaying its idempotency key returned the same KP attempt. Cancellation released the hold; the test created no order and no real collection.
+- Temporary sessions and the second test customer were removed. The project returned to manual mode with P2 emergency stop on, simulator/provider disabled, P4 electronic readiness off, and zero active or unresolved P4/P5 holds. An earlier paid P4 fixture order was observed and left unchanged.
+
+The Edge HTTP race used two concurrent requests but does not expose or prove two separately pinned PostgreSQL backend sessions. It is therefore not a substitute for a native two-connection database race. The integration run also did not prove browser HTTP attacks from the deployed customer application, or a live KINTO direct-campaign payment.
+
+Direct campaigns remain a hard blocker: G20 currently creates a KN order before returning, and its canonical quota reservation depends on that order. P5 has no isolated pre-order hold for campaign quota, selected campaign products, and gift inventory, nor a tested post-payment call into G20. No campaign fixtures exist in the isolated database. We did not add an unverified parallel campaign engine or change G20/V47.
+
+The Vercel deployment reports Ready, but its preview URL redirects to Vercel Login in the browser, so the customer-facing preview is not accessible for end-to-end review from this environment. The test-project Edge preview endpoint is served as `text/plain`, not executable HTML. The standalone `payment-p5-isolated-preview.html` is in this PR and uses only the test project, but the current Vercel access protection prevents browser verification. These gaps mean P5 is **not ready** to merge or activate. No live gateway or financial collection was tested.
 
 The temporary test settings were restored to manual mode, emergency stop on, simulator disabled, and provider intake closed after verification. See the read-only SQL under `supabase/verification` and the operational disable procedure under `supabase/rollback`.
