@@ -56,7 +56,7 @@ begin
      into v_holds
      from private.kinto_payment_attempts_p4 a
      left join private.kinto_stock_holds_p4 h on h.attempt_id=a.id
-    where a.status in ('pending','reconciliation_required')
+    where a.status in ('new','reserved','pending','reconciliation_required')
        or (a.status='succeeded' and h.status in ('active','reconciliation_required'))
        or h.status in ('active','reconciliation_required');
    if jsonb_array_length(v_holds)>0 then
@@ -109,7 +109,7 @@ begin
      into v_holds
      from private.kinto_payment_attempts_p4 a
      left join private.kinto_stock_holds_p4 h on h.attempt_id=a.id
-    where a.status in ('pending','reconciliation_required')
+    where a.status in ('new','reserved','pending','reconciliation_required')
        or (a.status='succeeded' and h.status in ('active','reconciliation_required'))
        or h.status in ('active','reconciliation_required');
    if jsonb_array_length(v_holds)>0 then
@@ -173,7 +173,7 @@ begin
    into v_holds
    from private.kinto_payment_attempts_p4 a
    left join private.kinto_stock_holds_p4 h on h.attempt_id=a.id
-  where a.status in ('pending','reconciliation_required')
+  where a.status in ('new','reserved','pending','reconciliation_required')
      or (a.status='succeeded' and h.status in ('active','reconciliation_required'))
      or h.status in ('active','reconciliation_required');
  if jsonb_array_length(v_holds)>0 then
