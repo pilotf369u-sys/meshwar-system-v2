@@ -56,25 +56,7 @@ begin
                and ca.status<>'cancelled'
           ))
         )
-        -- A campaign coupon eligible at multiple stores in this cart is shown
-        -- once, assigned deterministically to the lowest store UUID. This keeps
-        -- the per-store controls from offering the same one-use coupon twice.
-        and not exists(
-          select 1
-            from jsonb_array_elements(coalesce(v_quote->'lines','[]'::jsonb)) other_line
-           where (other_line->>'store_id')::uuid<v_store.store_id
-             and (
-               (q.campaign_id is null and q.store_id=other_line->>'store_id')
-               or (q.campaign_id is not null and exists(
-                 select 1
-                   from public.kinto_campaign_stores other_cs
-                   join public.kinto_campaigns other_ca on other_ca.id=other_cs.campaign_id
-                  where other_cs.campaign_id=q.campaign_id
-                    and other_cs.store_id=other_line->>'store_id'
-                    and other_ca.status<>'cancelled'
-               ))
-             )
-        );
+        ;
 
      foreach v_tier in array array[1000,3000,5000] loop
        if v_tier%v_coupon_unit=0
