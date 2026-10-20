@@ -70,7 +70,8 @@ assert.ok(discountedSummary.includes('الشحن غير مشمول'),'shipping r
 assert.match(discounted,/<details class="kp5-store-details"[^>]*open>/,'selected store can remain expanded after recalculation');
 const restoredOpen=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:10000,currency:'IQD',available_coupon_points:{'store-a':[]}}, {}, 'store-a');
 assert.match(restoredOpen,/<details class="kp5-store-details"[^>]*open>/,'the caller can restore the expanded store');
-assert.match(css,/\.kp5-actions \.kp5-checkout-summary\{margin:/,'final total sits in the fixed modal footer above the action buttons');
+assert.match(css,/\.kp5-checkout-summary\{margin:/,'checkout summary has compact fixed-footer styling');
+assert.match(css,/\.kp5-actions\{flex:none;display:block/,'checkout summary lives outside the scrolling product list');
 assert.match(css,/@media\(max-width:760px\)/,'compact layout adapts for tablets and phones');
 assert.match(css,/@media\(min-width:1000px\)/,'laptop spacing is tuned separately');
 assert.equal((discounted.match(/<del>/g)||[]).length,1,'only the discounted store original is crossed out inside store details');
