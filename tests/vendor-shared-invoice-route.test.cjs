@@ -103,6 +103,11 @@ function makeEnvironment({ proof = true, canonicalOrder = null, throwRpc = false
     assert.equal(invoice.reward_discount_amount, 1000);
     assert.equal(invoice.delivery_payment_type, 'product_paid_delivery_cod');
     assert.equal(invoice.details.items[0].product_image, 'https://example.test/product.jpg');
+    assert.deepEqual(JSON.parse(JSON.stringify(invoice.details.stores)), [{
+      store_id: 'store-1',
+      store_name: 'KINTO',
+      subtotal_local: 218000,
+    }], 'the shared invoice clone contains only the owning store metadata');
     assert.equal(env.order.delivery_payment_type, 'cod_full', 'legacy order row is never modified');
     assert.equal(env.state.rpcCalls[0].name, 'vendor_paid_electronic_invoice_orders_v1');
     assert.deepEqual(JSON.parse(JSON.stringify(env.state.rpcCalls[0].args)), {
