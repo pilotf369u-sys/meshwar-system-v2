@@ -97,6 +97,17 @@ function makeEnvironment({ proof = true, canonicalOrder = null, throwRpc = false
 (async () => {
   {
     const env = makeEnvironment();
+    env.order.id = 'segment-456';
+    env.order._v95OrderId = 'order-123';
+    const invoice = await env.context.kintoVendorPreparePaidElectronicInvoice(env.order, 'vendor-session-token');
+    assert.equal(invoice.id, 'order-123', 'segment click fetches canonical KN row');
+    assert.equal(env.state.rpcCalls[0].args.p_order_ids[0], 'order-123', 'KP proof must use order ID not segment ID');
+    await env.context.kintoVendorPrintPaidElectronicInvoice('order-123', {closed:false,close(){}});
+    assert.equal(env.state.invoiceCalls.length, 1, 'V95 segment opens the shared paid invoice');
+    assert.equal(env.state.invoiceCalls[0].invoiceOrder.delivery_payment_type, 'product_paid_delivery_cod');
+  }
+  {
+    const env = makeEnvironment();
     const invoice = await env.context.kintoVendorPreparePaidElectronicInvoice(env.order, 'vendor-session-token');
     assert.equal(invoice.order_code, 'KN-000123');
     assert.equal(invoice.total_price, 217000);
@@ -178,6 +189,7 @@ function makeEnvironment({ proof = true, canonicalOrder = null, throwRpc = false
 
   assert.match(vendorHtml, /<script src="js\/kinto-bundle-ui-v93\.js\?v=20261020-p5-paid-goods-invoice-v1"><\/script>/);
   assert.match(vendorHtml, /await kintoVendorAttachPaidElectronicInvoice\(o,modal,body\)/);
+  assert.match(vendorHtml, /window\.kintoVendorPrintPaidElectronicInvoice\s*=\s*kintoVendorPrintPaidElectronicInvoice/, 'V95 must be able to call the existing invoice handler');
   assert.match(vendorHtml, /function closeVendorOrderDetails\(\)/);
 
   const loaderStart = vendorHtml.indexOf('async function loadOrders(){');
