@@ -35,7 +35,35 @@
  const money=(n,c)=>`${Number(n||0).toLocaleString('en-US',{maximumFractionDigits:3})} ${esc(c||'')}`;
  function setContent(root,html,actions=''){root.querySelector('.kp5-content').innerHTML=html;root.querySelector('.kp5-actions').innerHTML=actions}
  function lineHtml(x){let opts=x.selected_options||{},variant=[['color','اللون'],['size','المقاس'],['volume','الحجم']].filter(([k])=>opts[k]).map(([k,l])=>`${l}: ${esc(opts[k])}`).join(' · ');return `<article class="kp5-line"><img src="${esc(x.product_image||'')}" alt=""><div><b>${esc(x.product_name)}</b><small>${esc(x.store_name)}${variant?' · '+variant:''}</small><span>${esc(x.quantity)} × ${money(x.unit_price_local,x.currency)}</span></div><strong>${money(x.line_total_local,x.currency)}</strong></article>`}
- function reviewHtml(q,couponPoints){let groups={};for(const x of q.lines||[])(groups[x.store_id]??=[]).push(x);return `<p class="kp5-lead">راجع المنتجات والتفرعات والأسعار المحسوبة من الخادم. أسعار المتاجر تبقى بعملتها الأصلية.</p>${Object.entries(groups).map(([sid,items])=>{const tiers=(Array.isArray(q.available_coupon_points?.[sid])?q.available_coupon_points[sid]:[]).map(Number).filter(v=>[1000,3000,5000].includes(v));const couponControl=tiers.length?`<label class="kp5-coupon">قسيمة هذا المتجر<select data-coupon-store="${esc(sid)}"><option value="0">بدون قسيمة</option>${tiers.map(v=>`<option value="${v}" ${Number(couponPoints[sid]||0)===v?'selected':''}>خصم ${money(v,items[0].currency)}</option>`).join('')}</select></label>`:'<p class="kp5-coupon-unavailable">لا توجد قسائم متاحة لهذا المتجر</p>';return `<section class="kp5-store"><h3>${esc(items[0].store_name)}</h3>${items.map(lineHtml).join('')}<div class="kp5-store-total"><span>مجموع المنتجات</span><b>${money(items.reduce((n,x)=>n+Number(x.line_total_local||0),0),items[0].currency)}</b></div>${couponControl}</section>`}).join('')}<div class="kp5-grand"><span>المبلغ التجريبي</span><strong>${money(q.amount,q.currency)}</strong></div><p class="kp5-note">الشحن غير مشمول في هذا المبلغ ويُحدد لاحقاً. لا يتم تحصيل أي أموال حقيقية.</p>`}
+ function reviewHtml(q,couponPoints){
+  const lines=Array.isArray(q?.lines)?q.lines:[];
+  const groups={};
+  for(const x of lines)(groups[x.store_id]??=[]).push(x);
+  const originalTotal=lines.reduce((n,x)=>n+Number(x.line_total_local||0),0);
+  const finalTotal=Number(q?.amount||0);
+  const totalDiscount=Math.max(0,originalTotal-finalTotal);
+  const storeMarkup=Object.entries(groups).map(([sid,items])=>{
+    const currency=items[0].currency;
+    const originalStoreTotal=items.reduce((n,x)=>n+Number(x.line_total_local||0),0);
+    // Use the server's normalized quote, not the local select value, for totals.
+    const storeDiscount=Math.max(0,Number(q?.coupon_points?.[sid]||0));
+    const finalStoreTotal=Math.max(0,originalStoreTotal-storeDiscount);
+    const tiers=(Array.isArray(q.available_coupon_points?.[sid])?q.available_coupon_points[sid]:[]).map(Number).filter(v=>[1000,3000,5000].includes(v));
+    const options=tiers.map(v=>'<option value="'+v+'" '+(Number(couponPoints?.[sid]||0)===v?'selected':'')+'>خصم '+money(v,currency)+'</option>').join('');
+    const couponControl=tiers.length?'<label class="kp5-coupon">قسيمة هذا المتجر<select data-coupon-store="'+esc(sid)+'"><option value="0">بدون قسيمة</option>'+options+'</select></label>':'<p class="kp5-coupon-unavailable">لا توجد قسائم متاحة لهذا المتجر</p>';
+    const totals=storeDiscount>0
+      ?'<div class="kp5-store-total kp5-store-original"><span>مجموع المنتجات قبل القسيمة</span><del>'+money(originalStoreTotal,currency)+'</del></div>'+
+       '<div class="kp5-store-total kp5-store-discount"><span>خصم القسيمة</span><b>−'+money(storeDiscount,currency)+'</b></div>'+
+       '<div class="kp5-store-total kp5-store-final"><span>مجموع المتجر بعد القسيمة</span><b>'+money(finalStoreTotal,currency)+'</b></div>'
+      :'<div class="kp5-store-total"><span>مجموع المنتجات</span><b>'+money(originalStoreTotal,currency)+'</b></div>';
+    return '<section class="kp5-store"><h3>'+esc(items[0].store_name)+'</h3>'+items.map(lineHtml).join('')+totals+couponControl+'</section>';
+  }).join('');
+  const grandTotal=totalDiscount>0
+    ?'<div class="kp5-grand kp5-grand-discounted"><span>الإجمالي قبل القسائم</span><div><del>'+money(originalTotal,q.currency)+'</del><strong>'+money(finalTotal,q.currency)+'</strong></div></div>'+
+     '<p class="kp5-discount-summary">إجمالي الخصم: −'+money(totalDiscount,q.currency)+'</p>'
+    :'<div class="kp5-grand"><span>المبلغ التجريبي</span><strong>'+money(finalTotal,q.currency)+'</strong></div>';
+  return '<p class="kp5-lead">راجع المنتجات والتفرعات والأسعار المحسوبة من الخادم. أسعار المتاجر تبقى بعملتها الأصلية.</p>'+storeMarkup+grandTotal+'<p class="kp5-note">الشحن غير مشمول في هذا المبلغ ويُحدد لاحقاً. لا يتم تحصيل أي أموال حقيقية.</p>';
+ }
  function message(root,title,body,actions=''){setContent(root,`<div class="kp5-state"><h3>${esc(title)}</h3><p>${esc(body)}</p></div>`,actions)}
  async function checkout({items,shipping,onPaid}){
   const root=ensureModal(),couponPoints={};let idempotency=crypto.randomUUID(),quote;
