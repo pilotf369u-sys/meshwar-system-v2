@@ -201,6 +201,6 @@ async function setupDeliveryRealtime(){KintoOrderDataSessionV1.watch(window,()=>
 async function initDelivery(){try{await verifyCourier();await Promise.all([hydrateDeliveryBrandLogo(),loadDeliveryOrders(),setupDeliveryRealtime()])}catch(e){console.error(e);redirectCourierToLogin()}}
 window.addEventListener('beforeunload',async()=>{try{await stopScanner();if(deliveryRealtime){const sb=await getDeliverySb();await sb.removeChannel(deliveryRealtime)}}catch{}});Object.assign(window,{cleanBarcodeScannerInput,deliverySearchInput,deliverySearchKeyup,deliverySearchKeydown,toggleScanner,startCameraScanner,stopScanner,openDeliveryImage,closeDeliveryImage,chooseDeliveryProof,handleDeliveryProofFile,courierVerifiedLogout});window.onload=initDelivery;
 </script>
-<script src="js/courier-paid-invoice-v1.js?v=20261020-collection-v2"></script>
+<script src="js/courier-collection-display-v1.js?v=20261020-v1"></script>
 </body>
 </html>
