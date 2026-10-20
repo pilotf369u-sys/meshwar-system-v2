@@ -149,7 +149,7 @@ function makeEnvironment({ proof = true, canonicalOrder = null, throwRpc = false
     assert.equal(env.state.invoiceCalls[0].invoiceOrder.delivery_payment_type, 'product_paid_delivery_cod');
     assert.deepEqual(JSON.parse(JSON.stringify(env.state.invoiceCalls[0].options)), {
       canonicalOnly: true,
-      invoiceWindow: popup,
+      invoiceWindow: { closed: false },
     });
     assert.equal(env.order.delivery_payment_type, 'cod_full');
   }
