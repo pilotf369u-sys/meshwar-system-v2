@@ -14,3 +14,81 @@
 .kp5-test-card>div:last-of-type b{font-size:13px}
 .kp5-test-card>small{font-size:11px;color:#f4e9c7}
 @media(max-width:480px){.kp5-test-card{padding:16px;border-radius:14px;gap:16px}.kp5-test-card>strong{letter-spacing:.04em}}
+
+
+/* KINTO P5 compact store accordion: readable at mobile, tablet, laptop and zoom. */
+.kp5-dialog{width:min(900px,100%);max-height:min(90dvh,900px);display:flex;flex-direction:column;overflow:hidden}
+.kp5-dialog>header{flex:none;padding:13px 18px}
+.kp5-dialog>header h2{font-size:19px}
+.kp5-content{min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 18px 8px;font-size:14px}
+.kp5-lead{margin:2px 0 10px;font-size:13px;line-height:1.55}
+.kp5-store{padding:0;margin:9px 0;border-radius:13px;overflow:hidden}
+.kp5-store-details>summary{display:grid;grid-template-columns:minmax(145px,.7fr) minmax(0,1.7fr);grid-template-areas:"head amounts";align-items:center;gap:12px;padding:12px 14px;cursor:pointer;list-style:none}
+.kp5-store-details>summary::-webkit-details-marker{display:none}
+.kp5-store-details>summary:after{content:"⌄";grid-area:head;justify-self:end;align-self:start;margin-inline-start:-28px;color:#92751b;font-size:18px;line-height:1;transform:translateX(-2px)}
+.kp5-store-details[open]>summary:after{content:"⌃"}
+.kp5-store-summary-heading{grid-area:head;display:grid;gap:3px;min-width:0;padding-inline-end:23px}
+.kp5-store-name{font-size:15px;font-weight:900;color:#0a2f23;overflow-wrap:anywhere}
+.kp5-store-meta{font-size:11px;color:#66766e;line-height:1.35}
+.kp5-store-summary-values{grid-area:amounts;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;min-width:0}
+.kp5-store-summary-values>span{display:grid;gap:3px;min-width:0}
+.kp5-store-summary-values small{font-size:10px;color:#65756e;line-height:1.2}
+.kp5-store-summary-values del,.kp5-store-summary-values b,.kp5-store-summary-values strong{font-size:13px;font-weight:900;white-space:nowrap}
+.kp5-store-before del{color:#64736c}
+.kp5-store-discount b{color:#9a4b28}
+.kp5-store-after strong,.kp5-no-coupon strong{color:#0a2f23}
+.kp5-no-coupon{grid-template-columns:1fr}
+.kp5-store-details-body{padding:0 13px 12px;border-top:1px solid #edf0eb}
+.kp5-coupon{margin:9px 0;font-size:13px}
+.kp5-coupon select{font-size:13px;min-height:40px}
+.kp5-coupon-unavailable{margin:9px 0;font-size:12px}
+.kp5-store-lines .kp5-line{grid-template-columns:46px minmax(0,1fr) auto;gap:9px;padding:7px 0}
+.kp5-store-lines .kp5-line img{width:46px;height:46px}
+.kp5-store-lines .kp5-line b,.kp5-store-lines .kp5-line span,.kp5-store-lines .kp5-line strong{font-size:13px}
+.kp5-store-lines .kp5-line small{font-size:11px}
+.kp5-checkout-summary{margin:0 0 5px;padding:6px 2px 5px;background:#fffdf7;border-top:1px solid #d9bd67}
+.kp5-grand{font-size:15px;gap:9px;padding:8px 0}
+.kp5-grand>span,.kp5-grand>strong{font-size:14px}
+.kp5-grand-discounted{align-items:center}
+.kp5-grand-discounted>span{display:grid;gap:2px}
+.kp5-grand-discounted del{font-size:12px;color:#66766e}
+.kp5-grand-discounted>strong{color:#0a2f23;text-align:end}
+.kp5-discount-summary{margin:0 0 5px;text-align:end;color:#8d4c26;font-size:12px;font-weight:800}
+.kp5-checkout-summary .kp5-note{margin:3px 0 0;padding:7px 10px;font-size:11px;line-height:1.45}
+.kp5-actions{flex:none;display:block;position:relative;max-height:40dvh;overflow:auto;padding:7px 18px 12px;background:#fffdf7;border-top:1px solid #e6e2d2}
+.kp5-actions button{font-size:14px;min-height:44px}
+@media(max-width:760px){
+ .kp5-backdrop{padding:8px}
+ .kp5-dialog{max-height:94dvh;border-radius:15px}
+ .kp5-dialog>header{padding:11px 14px}
+ .kp5-dialog>header h2{font-size:17px}
+ .kp5-content{padding:9px 12px 6px}
+ .kp5-store-details>summary{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "amounts";gap:7px;padding:10px 11px}
+ .kp5-store-details>summary:after{grid-area:head;justify-self:end;margin-top:1px}
+ .kp5-store-summary-heading{padding-inline-end:22px}
+ .kp5-store-summary-values{gap:5px}
+ .kp5-store-summary-values small{font-size:9px}
+ .kp5-store-summary-values del,.kp5-store-summary-values b,.kp5-store-summary-values strong{font-size:12px}
+ .kp5-store-details-body{padding:0 10px 9px}
+ .kp5-store-lines .kp5-line{grid-template-columns:40px minmax(0,1fr) auto;gap:7px}
+ .kp5-store-lines .kp5-line img{width:40px;height:40px}
+ .kp5-store-lines .kp5-line b,.kp5-store-lines .kp5-line span,.kp5-store-lines .kp5-line strong{font-size:12px}
+ .kp5-grand{align-items:flex-start}
+ .kp5-grand>span,.kp5-grand>strong{font-size:12px}
+ .kp5-actions{padding:8px 12px 11px;gap:7px}
+ .kp5-actions button{flex:1;min-width:132px;font-size:13px}
+}
+@media(max-width:420px){
+ .kp5-store-summary-values{gap:3px}
+ .kp5-store-summary-values small{font-size:8px}
+ .kp5-store-summary-values del,.kp5-store-summary-values b,.kp5-store-summary-values strong{font-size:11px}
+ .kp5-grand{display:grid;grid-template-columns:1fr;gap:3px}
+ .kp5-grand-discounted>strong{text-align:start}
+}
+@media(min-width:1000px){
+ .kp5-content{padding-inline:22px}
+ .kp5-store-details>summary{padding:13px 17px}
+}
+
+.kp5-action-buttons{display:flex;flex-wrap:wrap;gap:8px}.kp5-action-buttons button{flex:1;min-width:170px}
+@media(max-width:760px){.kp5-actions{padding:6px 12px 9px}.kp5-action-buttons{gap:6px}.kp5-action-buttons button{min-width:130px}}

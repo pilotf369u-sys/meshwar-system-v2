@@ -4,6 +4,7 @@ import vm from 'node:vm';
 
 const migration=readFileSync('supabase/migrations/20261020090000_kinto_payment_p5_available_coupons.sql','utf8');
 const ui=readFileSync('js/customer-payment-p5.js','utf8');
+const css=readFileSync('css/kinto-payment-p5.css','utf8');
 
 assert.match(migration,/private\.require_customer_review_session\(p_session_token\)/,'public quote derives customer identity from the session');
 assert.match(migration,/private\.kinto_payment_p5_quote_v1\(cid,p_items,p_coupon_points\)/,'coupon UI options are based on server-priced cart lines');
@@ -25,7 +26,7 @@ assert.match(ui,/tiers\.map\(v=>/,'only server-returned tiers are rendered as op
 
 const exposedUi=ui.replace(
   "window.KintoPaymentP5V1={call,checkout,isElectronic,getMode,loadPayments,version:'p5-simulator-v1'};",
-  "window.KintoPaymentP5V1={call,checkout,isElectronic,getMode,loadPayments,reviewHtml,version:'p5-simulator-v1'};"
+  "window.KintoPaymentP5V1={call,checkout,isElectronic,getMode,loadPayments,reviewHtml,checkoutSummaryHtml,version:'p5-simulator-v1'};"
 );
 assert.notEqual(exposedUi,ui,'renderer can be exercised in this isolated test');
 const window={};
@@ -33,30 +34,52 @@ vm.runInNewContext(exposedUi,{window,document:{},console,fetch:async()=>{throw n
 const line={store_id:'store-a',store_name:'Test store',product_name:'Product',product_image:'',quantity:1,unit_price_local:10000,line_total_local:10000,currency:'IQD',selected_options:{}};
 const hidden=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:10000,currency:'IQD',available_coupon_points:{'store-a':[]}}, {});
 assert.doesNotMatch(hidden,/<select data-coupon-store=/,'no coupon dropdown appears when none is available');
+assert.match(hidden,/<details class="kp5-store-details"[^>]*>/,'store is presented as a collapsible accordion');
+assert.doesNotMatch(hidden,/<details class="kp5-store-details"[^>]*\bopen\b/,'store details start collapsed');
+assert.match(hidden,/منتج واحد · بدون قسيمة/,'collapsed store summary includes an Arabic product count and coupon state');
 assert.match(hidden,/لا توجد قسائم متاحة لهذا المتجر/);
+const manyLines=Array.from({length:20},(_,i)=>({...line,product_name:'Product '+(i+1),line_total_local:1000}));
+const manyHtml=window.KintoPaymentP5V1.reviewHtml({lines:manyLines,amount:20000,currency:'IQD',available_coupon_points:{'store-a':[]}}, {});
+assert.equal((manyHtml.match(/class="kp5-line"/g)||[]).length,20,'all 20 products remain available inside the collapsed store details');
+assert.match(manyHtml,/20 منتجات · بدون قسيمة/,'long-cart store summary shows the item count');
 const available=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:7000,currency:'IQD',available_coupon_points:{'store-a':[3000]}}, {});
 assert.match(available,/<option value="3000"/,'available store tier appears');
 assert.doesNotMatch(available,/<option value="1000"|<option value="5000"/,'unavailable tiers stay hidden');
 
 
-const noDiscount = window.KintoPaymentP5V1.reviewHtml({
+const noDiscountQuote={
   lines:[line],amount:10000,currency:'IQD',coupon_points:{'store-a':0},
   available_coupon_points:{'store-a':[]}
-}, {});
-assert.doesNotMatch(noDiscount,/<del>/,'without a selected coupon, no crossed-out total appears');
+};
+const noDiscount=window.KintoPaymentP5V1.reviewHtml(noDiscountQuote,{});
+const noDiscountSummary=window.KintoPaymentP5V1.checkoutSummaryHtml(noDiscountQuote);
+assert.doesNotMatch(noDiscount,/<del>/,'without a selected coupon, store totals are not crossed out');
+assert.doesNotMatch(noDiscountSummary,/<del>/,'without a selected coupon, grand total is not crossed out');
 
 const secondLine={...line,store_id:'store-b',store_name:'Second test store',product_name:'Second product',unit_price_local:20000,line_total_local:20000};
 const discounted=window.KintoPaymentP5V1.reviewHtml({
   lines:[line,secondLine],amount:27000,currency:'IQD',
   coupon_points:{'store-a':3000,'store-b':0},
   available_coupon_points:{'store-a':[3000],'store-b':[]}
-}, {'store-a':3000});
-assert.ok(discounted.includes('<span>مجموع المنتجات قبل القسيمة</span><del>10,000 IQD</del>'),'discounted store shows its original total crossed out');
-assert.ok(discounted.includes('<span>خصم القسيمة</span><b>−3,000 IQD</b>'),'store discount is itemized');
-assert.ok(discounted.includes('<span>مجموع المتجر بعد القسيمة</span><b>7,000 IQD</b>'),'store net total is displayed');
-assert.ok(discounted.includes('<span>مجموع المنتجات</span><b>20,000 IQD</b>'),'unselected store total stays unchanged');
-assert.ok(discounted.includes('<span>الإجمالي قبل القسائم</span><div><del>30,000 IQD</del><strong>27,000 IQD</strong></div>'),'grand total shows original and server-quoted discounted total');
-assert.ok(discounted.includes('إجمالي الخصم: −3,000 IQD'),'grand discount is explicit');
-assert.equal((discounted.match(/<del>/g)||[]).length,2,'only discounted store plus grand total are crossed out');
+}, {'store-a':3000}, 'store-a');
+assert.ok(discounted.includes('<small>قبل القسيمة</small><del>10,000 IQD</del>'),'discounted store shows its original total crossed out');
+assert.ok(discounted.includes('<small>خصم القسيمة</small><b>−3,000 IQD</b>'),'store discount is itemized');
+assert.ok(discounted.includes('<small>بعد القسيمة</small><strong>7,000 IQD</strong>'),'store net total is displayed');
+assert.ok(discounted.includes('<span class="kp5-store-name">Second test store</span>'),'unselected store remains visible in the collapsed list');
+const discountedSummary=window.KintoPaymentP5V1.checkoutSummaryHtml({lines:[line,secondLine],amount:27000,currency:'IQD',coupon_points:{'store-a':3000,'store-b':0}});
+assert.ok(discountedSummary.includes('<del>30,000 IQD</del>'),'grand total shows the original amount crossed out');
+assert.ok(discountedSummary.includes('<strong>الإجمالي النهائي 27,000 IQD</strong>'),'grand total uses the server-quoted discounted amount');
+assert.ok(discountedSummary.includes('إجمالي الخصم: −3,000 IQD'),'grand discount is explicit');
+assert.ok(discountedSummary.includes('الشحن غير مشمول'),'shipping remains clearly excluded from the total');
+assert.match(discounted,/<details class="kp5-store-details"[^>]*open>/,'selected store can remain expanded after recalculation');
+const restoredOpen=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:10000,currency:'IQD',available_coupon_points:{'store-a':[]}}, {}, 'store-a');
+assert.match(restoredOpen,/<details class="kp5-store-details"[^>]*open>/,'the caller can restore the expanded store');
+assert.match(css,/\.kp5-checkout-summary\{margin:/,'checkout summary has compact fixed-footer styling');
+assert.match(css,/\.kp5-actions\{flex:none;display:block/,'checkout summary lives outside the scrolling product list');
+assert.match(css,/@media\(max-width:760px\)/,'compact layout adapts for tablets and phones');
+assert.match(css,/@media\(min-width:1000px\)/,'laptop spacing is tuned separately');
+assert.equal((discounted.match(/<del>/g)||[]).length,1,'only the discounted store original is crossed out inside store details');
+assert.equal((discountedSummary.match(/<del>/g)||[]).length,1,'only the original grand total is crossed out in the persistent summary');
+assert.match(css,/\.kp5-actions\{flex:none;display:block/,'checkout summary lives outside the scrolling product list');
 
 console.log('PASS: server-derived coupon eligibility contract and review-render behavior (no live database write).');
