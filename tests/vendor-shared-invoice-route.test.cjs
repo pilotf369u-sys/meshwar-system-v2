@@ -186,6 +186,11 @@ function makeEnvironment({ proof = true, canonicalOrder = null, throwRpc = false
   assert.match(loader, /select\('id,order_code,total_price,currency,status,created_at,details'\)/,
     'the restored board orders query remains the known-good narrow query');
 
+  const v95 = fs.readFileSync(path.join(root, 'js/vendor-v94-multistore-orders.js'), 'utf8');
+  const v95Details = v95.slice(v95.indexOf('async function openDetails(id)'), v95.indexOf('let secureDetails=null,shippingDetails=null;', v95.indexOf('async function openDetails(id)')));
+  assert.match(v95Details, /await window\.kintoVendorPrintPaidElectronicInvoice\(orderId,popup\)/, 'confirmed paid KP opens the real customer-style invoice from Details');
+  assert.doesNotMatch(v95Details, /if\(!error&&Array\.isArray\(data\).*return runtime\.nativeOpenVendorOrderDetails/, 'paid order must not use the compact six-field modal');
+
   console.log('PASS merchant invoice route: legacy paid KP proof, shared customer renderer, own-store item scope, and unchanged manual order data.');
 })().catch(error => {
   console.error(error);
