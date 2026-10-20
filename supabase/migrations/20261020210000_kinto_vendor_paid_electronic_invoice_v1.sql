@@ -23,6 +23,9 @@ begin
   return query
   select distinct o.id
     from public.orders o
+    cross join lateral (
+      select case when o.details is json then o.details::jsonb else '{}'::jsonb end as details_json
+    ) parsed
     join private.kinto_payments_p5 p
       on p.status='paid'
      and p.payment_kind='cart'
@@ -35,21 +38,21 @@ begin
    where o.id=any(coalesce(p_order_ids,array[]::uuid[]))
      and o.delivery_payment_type in ('cod_full','product_paid_delivery_cod')
      and (
-       o.details->>'source'='local_store'
-       or (o.details->>'source'='local_cart_bundle'
-         and o.details->>'checkout_contract'='independent_vendor_orders'
-         and o.details->>'multi_store'='false')
+       parsed.details_json->>'source'='local_store'
+       or (parsed.details_json->>'source'='local_cart_bundle'
+         and parsed.details_json->>'checkout_contract'='independent_vendor_orders'
+         and parsed.details_json->>'multi_store'='false')
      )
-     and o.details->>'store_id'=v_store_id::text
+     and parsed.details_json->>'store_id'=v_store_id::text
      and exists(
        select 1
-         from jsonb_array_elements(case when jsonb_typeof(o.details->'items')='array' then o.details->'items' else '[]'::jsonb end) i(item)
+         from jsonb_array_elements(case when jsonb_typeof(parsed.details_json->'items')='array' then parsed.details_json->'items' else '[]'::jsonb end) i(item)
          join public.local_products lp on lp.id=private.v94_uuid(i.item->>'product_id')
          where lp.store_id=v_store_id
       )
      and not exists(
        select 1
-         from jsonb_array_elements(case when jsonb_typeof(o.details->'items')='array' then o.details->'items' else '[]'::jsonb end) i(item)
+         from jsonb_array_elements(case when jsonb_typeof(parsed.details_json->'items')='array' then parsed.details_json->'items' else '[]'::jsonb end) i(item)
          left join public.local_products lp on lp.id=private.v94_uuid(i.item->>'product_id')
         where lp.id is null or lp.store_id<>v_store_id
      );

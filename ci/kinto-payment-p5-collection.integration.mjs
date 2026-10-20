@@ -24,6 +24,7 @@ const otherCustomerAttempt='00000000-0000-0000-0000-000000000208';
 const manualPaidAttempt='00000000-0000-0000-0000-000000000209';
 const currentPaidAttempt='00000000-0000-0000-0000-000000000210';
 const mixedStoreAttempt='00000000-0000-0000-0000-000000000211';
+const malformedDetailsAttempt='00000000-0000-0000-0000-000000000212';
 const vendorStore='00000000-0000-0000-0000-000000000301';
 const otherStore='00000000-0000-0000-0000-000000000302';
 const vendorProduct='00000000-0000-0000-0000-000000000401';
@@ -48,7 +49,7 @@ await db.exec(`
   create table public.orders(
     id uuid primary key default gen_random_uuid(),customer_id text not null,
     order_code text not null,status text not null default 'تم التسديد',currency text not null,delivery_payment_type text not null default 'cod_full',
-    details jsonb not null default '{}',created_at timestamptz not null default now()
+    details text not null default '{}',created_at timestamptz not null default now()
   );
   create table public.local_products(id uuid primary key,store_id uuid not null);
   insert into public.local_products values('${vendorProduct}','${vendorStore}'),('${otherProduct}','${otherStore}');
@@ -95,6 +96,7 @@ insert into public.orders(customer_id,order_code,currency,details) values
   ('${customer}','KN-CURRENT-ELECTRONIC','IQD','{"source":"local_store","store_id":"${vendorStore}","items":[{"product_id":"${vendorProduct}","store_id":"${vendorStore}"}]}'),
   ('${customer}','KN-FORGED-GOODS-PAID','IQD','{"source":"local_store","store_id":"${vendorStore}","items":[{"product_id":"${vendorProduct}","store_id":"${vendorStore}"}]}'),
   ('${customer}','KN-MIXED-STORE-DATA','IQD','{"source":"local_store","store_id":"${vendorStore}","items":[{"product_id":"${vendorProduct}","store_id":"${vendorStore}"},{"product_id":"${otherProduct}","store_id":"${otherStore}"}]}'),
+  ('${customer}','KN-MALFORMED-DETAILS','IQD','{'),
   ('${customer}','KN-MANUAL','IQD','{"source":"local_store","store_id":"${vendorStore}","items":[{"product_id":"${vendorProduct}","store_id":"${vendorStore}"}]}'),
   ('${customer}','KN-OTHER-STORE','IQD','{"source":"local_store","store_id":"${otherStore}","items":[{"product_id":"${otherProduct}","store_id":"${otherStore}"}]}'),
   ('${other}','KN-OTHER-CUSTOMER','IQD','{"source":"local_store","store_id":"${vendorStore}","items":[{"product_id":"${vendorProduct}","store_id":"${vendorStore}"}]}'),
@@ -109,6 +111,7 @@ insert into private.kinto_payment_attempts_p4(id,customer_id,status) values
   ('${manualPaidAttempt}','${customer}','succeeded'),
   ('${currentPaidAttempt}','${customer}','succeeded'),
   ('${mixedStoreAttempt}','${customer}','succeeded'),
+  ('${malformedDetailsAttempt}','${customer}','succeeded'),
   ('${failedAttempt}','${customer}','failed'),
   ('${pendingAttempt}','${customer}','pending');
 insert into private.kinto_payments_p5(attempt_id,kp_number,customer_id,payment_kind,status,amount,currency,order_ids)
@@ -116,6 +119,7 @@ insert into private.kinto_payments_p5(attempt_id,kp_number,customer_id,payment_k
   ('${oldAttempt}','KP-OLD','${customer}','cart','paid',217000,'IQD',array[(select id from public.orders where order_code='KN-LEGACY-ELECTRONIC')]),
   ('${currentPaidAttempt}','KP-CURRENT','${customer}','cart','paid',217000,'IQD',array[(select id from public.orders where order_code='KN-CURRENT-ELECTRONIC')]),
   ('${mixedStoreAttempt}','KP-MIXED-STORE','${customer}','cart','paid',217000,'IQD',array[(select id from public.orders where order_code='KN-MIXED-STORE-DATA')]),
+  ('${malformedDetailsAttempt}','KP-MALFORMED-DETAILS','${customer}','cart','paid',217000,'IQD',array[(select id from public.orders where order_code='KN-MALFORMED-DETAILS')]),
   ('${manualPaidAttempt}','KP-MANUAL-WRONG-KIND','${customer}','campaign','paid',217000,'IQD',array[(select id from public.orders where order_code='KN-MANUAL')]),
   ('${otherStoreAttempt}','KP-OTHER-STORE','${customer}','cart','paid',217000,'IQD',array[(select id from public.orders where order_code='KN-OTHER-STORE')]),
   ('${otherCustomerAttempt}','KP-OTHER-CUSTOMER','${other}','cart','paid',217000,'IQD',array[(select id from public.orders where order_code='KN-OTHER-CUSTOMER')]),
@@ -141,10 +145,11 @@ const legacyOrder=(await db.query("select id from public.orders where order_code
 const currentOrder=(await db.query("select id from public.orders where order_code='KN-CURRENT-ELECTRONIC'")).rows[0].id;
 const forgedGoodsPaidOrder=(await db.query("select id from public.orders where order_code='KN-FORGED-GOODS-PAID'")).rows[0].id;
 const mixedStoreOrder=(await db.query("select id from public.orders where order_code='KN-MIXED-STORE-DATA'")).rows[0].id;
+const malformedDetailsOrder=(await db.query("select id from public.orders where order_code='KN-MALFORMED-DETAILS'")).rows[0].id;
 const otherStoreOrder=(await db.query("select id from public.orders where order_code='KN-OTHER-STORE'")).rows[0].id;
 const manualOrder=(await db.query("select id from public.orders where order_code='KN-MANUAL'")).rows[0].id;
-const scoped=(await db.query("select order_id from public.vendor_paid_electronic_invoice_orders_v1('valid-vendor-session',$1::uuid[])",[ [legacyOrder,currentOrder,forgedGoodsPaidOrder,mixedStoreOrder,otherStoreOrder,manualOrder] ])).rows.map(x=>x.order_id).sort();
-assert.deepEqual(scoped,[currentOrder,legacyOrder].sort(),'vendor sees only old and current orders backed by an exact paid cart KP and succeeded attempt');
+const scoped=(await db.query("select order_id from public.vendor_paid_electronic_invoice_orders_v1('valid-vendor-session',$1::uuid[])",[ [legacyOrder,currentOrder,forgedGoodsPaidOrder,mixedStoreOrder,malformedDetailsOrder,otherStoreOrder,manualOrder] ])).rows.map(x=>x.order_id).sort();
+assert.deepEqual(scoped,[currentOrder,legacyOrder].sort(),'invalid TEXT JSON is safely ignored while only old and current paid orders are projected');
 assert.equal((await db.query("select count(*)::int n from public.vendor_paid_electronic_invoice_orders_v1('other-vendor-session',$1::uuid[])",[[legacyOrder]])).rows[0].n,0,'different vendor cannot infer another store payment');
 await assert.rejects(db.query("select * from public.vendor_paid_electronic_invoice_orders_v1('invalid-vendor-session',$1::uuid[])",[[legacyOrder]]),/VENDOR_SESSION_INVALID/);
 const acl=(await db.query("select has_function_privilege('authenticated','public.vendor_paid_electronic_invoice_orders_v1(text,uuid[])','EXECUTE') as auth_exec,has_table_privilege('anon','private.kinto_payments_p5','SELECT') as anon_payment_read")).rows[0];
