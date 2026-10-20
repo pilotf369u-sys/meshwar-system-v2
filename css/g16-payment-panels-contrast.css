@@ -1,0 +1,19 @@
+/* G16 payment audit and reconciliation: contrast-only, no logic changes. */
+#g16PaymentAuditP5,#g16P4Reconciliation{background:#0b3027!important;color:#eef6ee!important;border:1px solid #a58b43!important;box-shadow:0 8px 22px rgba(0,0,0,.13)}
+#g16PaymentAuditP5 h4,#g16P4Reconciliation h5{color:#e8ca71!important;font-weight:900}
+#g16PaymentAuditP5 .mini,#g16P4Reconciliation .mini,#g16AuditStateP5{color:#d8e7df!important;opacity:1!important}
+#g16PaymentAuditP5 select,#g16PaymentAuditP5 input,#g16P4Reconciliation select,#g16P4Reconciliation input{background:#142d29!important;color:#fff!important;border:1px solid #8aa99a!important;opacity:1!important;min-height:38px;border-radius:7px;padding:7px 10px}
+#g16PaymentAuditP5 input::placeholder,#g16P4Reconciliation input::placeholder{color:#becfc7!important;opacity:1!important}
+#g16PaymentAuditP5 option,#g16P4Reconciliation option{background:#142d29;color:#fff}
+#g16PaymentAuditP5 button,#g16P4Reconciliation button{background:#c6a34b!important;color:#142a23!important;border:1px solid #e4c66b!important;font-weight:800!important;opacity:1!important;border-radius:7px}
+#g16PaymentAuditP5 button:disabled,#g16P4Reconciliation button:disabled{opacity:.5!important}
+#g16PaymentAuditP5 table{width:100%;border-collapse:collapse;background:#103a30!important;color:#f6faf7!important}
+#g16PaymentAuditP5 th{background:#09271f!important;color:#f6d77f!important;font-weight:900!important;border-bottom:1px solid #729080!important;white-space:nowrap;padding:11px 10px}
+#g16PaymentAuditP5 td{background:#103a30!important;color:#f3f8f5!important;font-size:12px!important;opacity:1!important;border-bottom:1px solid #385b4c!important;padding:10px!important;white-space:nowrap}
+#g16PaymentAuditP5 tr:nth-child(even) td{background:#174338!important}
+#g16PaymentAuditP5 tbody tr:hover td{background:#225446!important}
+#g16AuditRowsP5{border:1px solid #446e5b;border-radius:8px;overflow-x:auto}
+#g16AuditPagerP5,#g16AuditPagerP5 span{color:#f0f7f1!important}
+#g16P4ReconciliationRows,#g16P4ReconciliationRows *{color:#eaf3ed}
+#g16P4ReconciliationRows select,#g16P4ReconciliationRows input{color:#fff!important}
+@media(max-width:650px){#g16PaymentAuditP5,#g16P4Reconciliation{padding:10px!important}#g16PaymentAuditP5 td,#g16PaymentAuditP5 th{font-size:11px!important;padding:8px!important}#g16PaymentAuditP5 input{max-width:100%}}
