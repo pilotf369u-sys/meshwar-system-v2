@@ -13,7 +13,7 @@ function setup(session){
  return{ctx,storage,nodes,calls,$};
 }
 (async()=>{
- for(const session of [undefined,'{bad',{token:'x',expiresAt:'bad-date'},{token:'x',expiresAt:new Date(Date.now()-1).toISOString()}]){
+ for(const session of [undefined,'{bad',{...active,storeId:'another-store'},{token:'x',expiresAt:'bad-date'},{token:'x',expiresAt:new Date(Date.now()-1).toISOString()}]){
   const {ctx,storage,calls,$}=setup(session);await ctx.openDashboard();assert.equal(ctx.vendorStore,null);assert.equal($.call(null,'loginView').classList.hidden,false);assert.equal($.call(null,'dashboardView').classList.hidden,true);assert.equal(calls.length,0);assert(!storage.has('meshwar_vendor_store'));assert(!storage.has('meshwar_vendor_session_v95'));
  }
  const good=setup(active);await good.ctx.openDashboard();assert.deepEqual(good.calls,['products','orders']);assert(good.ctx.vendorStore);

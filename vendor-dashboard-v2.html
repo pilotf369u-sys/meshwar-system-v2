@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="ar" dir="rtl" class="dark">
 <head>
+<script id="vendor-canonical-entry-v1">
+// This page is the inner frame; the host installs the active merchant modules.
+if(window.top===window.self){document.documentElement.style.visibility='hidden';location.replace('vendor-dashboard.html'+location.search+location.hash)}
+</script>
 <script src="js/kinto-coupon-finance-v1.js?v=20261018-v1"></script>
 <script src="js/kinto-store-control-v1.js?v=20261017-v1"></script>
 <script src="js/kinto-order-data-session-v1.js?v=20261016-order-privacy-v1" data-role="vendor"></script>
@@ -393,9 +397,9 @@ async function syncProductPricingSnapshots(){
 function storeSession(){try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_store')||'null')}catch{return null}}
 function saveStoreSession(s){sessionStorage.setItem('meshwar_vendor_store',JSON.stringify(s))}
 
-async function vendorLogin(){const identity=$('loginIdentity').value.trim(),password=$('loginPassword').value,notice=$('loginNotice');notice.textContent='';if(!identity||!password){notice.textContent='أدخل اسم المستخدم/الهاتف وكلمة المرور.';return}const btn=$('loginBtn');btn.disabled=true;btn.textContent='جاري التحقق...';try{const{data,error}=await sb.rpc('vendor_login_session',{p_identity:identity,p_password:password});if(error)throw error;const store=data?.store;if(!store||!data?.session_token)throw new Error('بيانات الدخول غير صحيحة أو المتجر غير نشط.');sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:data.session_token,expiresAt:data.expires_at}));vendorStore=store;saveStoreSession(store);await openDashboard()}catch(e){console.error('Vendor login error:',e);notice.textContent=e.message||String(e)}finally{btn.disabled=false;btn.textContent='دخول إلى المتجر'}}
-function vendorLogout(){try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime cleanup:',e)}sessionStorage.removeItem('meshwar_vendor_store');vendorStore=null;location.reload()}
-function vendorHasActiveSession(){try{const s=JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null');return Boolean(typeof s?.token==='string'&&s.token.trim()&&(!s.expiresAt||(Number.isFinite(Date.parse(s.expiresAt))&&Date.parse(s.expiresAt)>Date.now())))}catch{return false}}
+async function vendorLogin(){const identity=$('loginIdentity').value.trim(),password=$('loginPassword').value,notice=$('loginNotice');notice.textContent='';if(!identity||!password){notice.textContent='أدخل اسم المستخدم/الهاتف وكلمة المرور.';return}const btn=$('loginBtn');btn.disabled=true;btn.textContent='جاري التحقق...';try{const{data,error}=await sb.rpc('vendor_login_session',{p_identity:identity,p_password:password});if(error)throw error;const store=data?.store;if(!store||!data?.session_token)throw new Error('بيانات الدخول غير صحيحة أو المتجر غير نشط.');sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:data.session_token,expiresAt:data.expires_at,storeId:String(store.id)}));vendorStore=store;saveStoreSession(store);await openDashboard()}catch(e){console.error('Vendor login error:',e);notice.textContent=e.message||String(e)}finally{btn.disabled=false;btn.textContent='دخول إلى المتجر'}}
+function vendorLogout(){try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime cleanup:',e)}sessionStorage.removeItem('meshwar_vendor_store');sessionStorage.removeItem('meshwar_vendor_session_v95');vendorStore=null;location.reload()}
+function vendorHasActiveSession(){try{const s=JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null');return Boolean(typeof s?.token==='string'&&s.token.trim()&&(!s.storeId||String(s.storeId)===String(vendorStore?.id))&&(!s.expiresAt||(Number.isFinite(Date.parse(s.expiresAt))&&Date.parse(s.expiresAt)>Date.now())))}catch{return false}}
 function vendorSessionFailure(error){return /(?:ORDER|VENDOR|STORE)_SESSION_(?:REQUIRED|INVALID|EXPIRED)/.test(String(error?.message||error||''))}
 function requireSecureVendorLogin(message){
   try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime cleanup:',e)}

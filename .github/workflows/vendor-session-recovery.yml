@@ -14,3 +14,4 @@ jobs:
         with:
           node-version: 22
       - run: node tests/vendor-session-recovery.test.cjs
+      - run: node tests/vendor-entry-switch.test.cjs

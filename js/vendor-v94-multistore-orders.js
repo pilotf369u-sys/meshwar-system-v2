@@ -13,7 +13,7 @@ const VENDOR_OPERATIONAL_STATUSES=['مخزن الشركة','تجهيز شحن','
 const LEGACY_STATUS_MAP={'انتظار رد الموظف':'بانتظار رد الموظف','بانتظار موافقة الزبون':'بانتظار موافقة العميل','بانتظار التسعير':'بانتظار موافقة العميل','تم التسعير / بانتظار موافقة العميل':'بانتظار موافقة العميل','تمت الموافقة - بانتظار الدفع':'بانتظار تأكيد الدفع','تمت الموافقة':'بانتظار تأكيد الدفع','مخزن شركة':'مخزن الشركة','جاري التوصيل مع المندوب':'مندوب','رفض الطلب':'رفض التسليم'};
 
 function session(){try{const value=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');if(!value?.token)return null;if(value.expiresAt&&Date.parse(value.expiresAt)<=Date.now()){sessionStorage.removeItem(SESSION_KEY);return null}return value}catch{return null}}
-function saveSession(payload){sessionStorage.setItem(SESSION_KEY,JSON.stringify({token:payload.session_token,expiresAt:payload.expires_at}))}
+function saveSession(payload){sessionStorage.setItem(SESSION_KEY,JSON.stringify({token:payload.session_token,expiresAt:payload.expires_at,storeId:String(payload.store.id)}))}
 function clearSession(){sessionStorage.removeItem(SESSION_KEY)}
 function storeSubtotal(list){return list.reduce((n,x)=>n+(Number(x.line_total_local)||((Number(x.unit_price_local)||0)*Math.max(1,Number(x.quantity)||1))),0)}
 
