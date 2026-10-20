@@ -92,3 +92,19 @@
 
 .kp5-action-buttons{display:flex;flex-wrap:wrap;gap:8px}.kp5-action-buttons button{flex:1;min-width:170px}
 @media(max-width:760px){.kp5-actions{padding:6px 12px 9px}.kp5-action-buttons{gap:6px}.kp5-action-buttons button{min-width:130px}}
+
+/* Compact customer payments: native expandable summaries preserve original invoice actions. */
+.kp5-payment-card.kp5-payment-compact{padding:0;overflow:hidden}
+.kp5-payment-summary{display:flex;align-items:center;gap:12px;padding:12px 15px;cursor:pointer;list-style:none;flex-wrap:wrap}
+.kp5-payment-summary::-webkit-details-marker{display:none}
+.kp5-payment-summary:focus-visible{outline:2px solid #b89c48;outline-offset:-3px}
+.kp5-payment-identity{display:grid;gap:3px;min-width:145px}
+.kp5-payment-identity b{font-size:14px;color:#0a2f23;direction:ltr;text-align:start}
+.kp5-payment-identity small,.kp5-payment-count{font-size:11px;color:#5e7166}
+.kp5-payment-amount{font-size:14px;font-weight:900;color:#0a2f23;direction:ltr}
+.kp5-payment-status{font-size:11px;color:#176e49;font-weight:800}
+.kp5-payment-count{margin-inline-start:auto}
+.kp5-payment-expand{font-size:22px;color:#80672e;transition:transform .15s}
+.kp5-payment-compact[open] .kp5-payment-expand{transform:rotate(180deg)}
+.kp5-payment-details{padding:4px 15px 12px;border-top:1px solid #e8eee9}
+@media(max-width:600px){.kp5-payment-summary{gap:6px 12px;padding:11px}.kp5-payment-identity{min-width:120px}.kp5-payment-amount{margin-inline-start:auto}.kp5-payment-count{margin-inline-start:0}.kp5-payment-expand{margin-inline-start:auto}.kp5-payment-details{padding:4px 11px 11px}}
