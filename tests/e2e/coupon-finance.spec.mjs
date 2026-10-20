@@ -4,7 +4,6 @@ const helper=fs.readFileSync('js/kinto-coupon-finance-v1.js','utf8');
 function extract(file,name){const s=fs.readFileSync(file,'utf8'),start=s.indexOf('function '+name+'(');if(start<0)throw Error(name);if(name.endsWith('Snapshot'))return s.slice(start).split('\n')[0];const end=s.indexOf('}',start);return s.slice(start,end+1)}
 for(const [file,name]of [['employee-dashboard.html','doorCollectionAmount'],['admin-dashboard.html','doorCollection'],['branch-dashboard.html','doorCollection'],['delivery-dashboard.html','doorCollection'],['admin-branch-reports.html','doorCollection'],['admin-delivery-reports.html','doorCollection']])test(`${file} coupon collection preserves original price and shipping`,async({page})=>{
  await page.setContent('<output id="amount"></output>');await page.addScriptTag({content:helper});
- if(file==='branch-dashboard.html')await page.addScriptTag({content:fs.readFileSync('js/branch-collection-display-v1.js','utf8')});
  await page.addScriptTag({content:'function payType(v){return v}function paymentType(v){return v}function deliveryPayType(v){return v}'+extract(file,name)});
  const values=await page.evaluate(name=>{
   const o={total_price:46000,currency:'IQD',reward_discount_amount:3000,reward_discount_currency:'IQD',delivery_fee:5000,delivery_payment_type:'cod_full'};
