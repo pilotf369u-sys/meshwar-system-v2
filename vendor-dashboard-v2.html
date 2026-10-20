@@ -580,6 +580,8 @@ async function kintoVendorPrintPaidElectronicInvoice(orderId,popup){
     showNotice('تعذر التحقق من الفاتورة الإلكترونية: '+(error?.message||error),true);
   }
 }
+// V95 order bridge calls this existing invoice renderer from the Details action.
+window.kintoVendorPrintPaidElectronicInvoice=kintoVendorPrintPaidElectronicInvoice;
 async function kintoVendorAttachPaidElectronicInvoice(order,modal,body){
   const active=vendorNotifSessionV399(),orderId=String(order?.id||''),details=normalizeOrderDetails(order?.details),storeId=String(vendorStore?.id||'').trim();
   if(!active?.token||!orderId||!kintoVendorInvoiceSourceAllowed(details)||String(details?.store_id||'').trim()!==storeId)return;
