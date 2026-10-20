@@ -43,9 +43,9 @@ begin
   v_filter:=coalesce(nullif(trim(p_status),''),'all');
   if v_filter not in ('all','paid','pending','failed','cancelled','reconciliation_required') then raise exception 'INVALID_STATUS'; end if;
   v_search:=left(trim(coalesce(p_search,'')),80);
-  select count(*) into v_total from private.kinto_payments_p5 p where (v_filter='all' or p.status=v_filter) and (v_search='' or p.kp_number ilike '%'||replace(replace(v_search,'%','\\%'),'_','\\_')||'%' escape '\\' or p.customer_id=v_search);
+  select count(*) into v_total from private.kinto_payments_p5 p where (v_filter='all' or p.status=v_filter) and (v_search='' or position(lower(v_search) in lower(p.kp_number))>0 or p.customer_id=v_search);
   select coalesce(jsonb_agg(jsonb_build_object('kp_number',p.kp_number,'created_at',p.created_at,'amount',p.amount,'currency',p.currency,'status',p.status,'payment_kind',p.payment_kind,'customer_id',p.customer_id,'order_codes',coalesce((select jsonb_agg(o.order_code order by o.created_at,o.id) from public.orders o where o.id=any(p.order_ids)),'[]'::jsonb)) order by p.created_at desc,p.attempt_id desc),'[]'::jsonb) into v_rows
-  from (select * from private.kinto_payments_p5 p where (v_filter='all' or p.status=v_filter) and (v_search='' or p.kp_number ilike '%'||replace(replace(v_search,'%','\\%'),'_','\\_')||'%' escape '\\' or p.customer_id=v_search) order by p.created_at desc,p.attempt_id desc limit 20 offset (v_page-1)*20) p;
+  from (select * from private.kinto_payments_p5 p where (v_filter='all' or p.status=v_filter) and (v_search='' or position(lower(v_search) in lower(p.kp_number))>0 or p.customer_id=v_search) order by p.created_at desc,p.attempt_id desc limit 20 offset (v_page-1)*20) p;
   return jsonb_build_object('page',v_page,'page_size',20,'total',v_total,'pages',ceil(v_total::numeric/20),'payments',v_rows);
 end;$audit$;
 revoke all on function public.kinto_payments_p5_admin_audit_v1(text,integer,text,text) from public;
