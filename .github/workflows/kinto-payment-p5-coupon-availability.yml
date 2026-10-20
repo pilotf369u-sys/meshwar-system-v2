@@ -1,0 +1,30 @@
+name: KINTO Payment P5 coupon availability contract
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261020090000_kinto_payment_p5_available_coupons.sql'
+      - 'js/customer-payment-p5.js'
+      - 'index.html'
+      - 'local-stores.html'
+      - 'store.html'
+      - 'ci/kinto-payment-p5-coupon-availability.test.mjs'
+      - '.github/workflows/kinto-payment-p5-coupon-availability.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261020090000_kinto_payment_p5_available_coupons.sql'
+      - 'js/customer-payment-p5.js'
+      - 'index.html'
+      - 'local-stores.html'
+      - 'store.html'
+      - 'ci/kinto-payment-p5-coupon-availability.test.mjs'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check coupon availability contract
+        run: node ci/kinto-payment-p5-coupon-availability.test.mjs
