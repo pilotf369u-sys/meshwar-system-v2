@@ -51,12 +51,12 @@ const discounted=window.KintoPaymentP5V1.reviewHtml({
   coupon_points:{'store-a':3000,'store-b':0},
   available_coupon_points:{'store-a':[3000],'store-b':[]}
 }, {'store-a':3000});
-assert.match(discounted,/<span>مجموع المنتجات قبل القسيمة<\\/span><del>10,000 IQD<\\/del>/,'discounted store shows its original total crossed out');
-assert.match(discounted,/<span>خصم القسيمة<\\/span><b>−3,000 IQD<\\/b>/,'store discount is itemized');
-assert.match(discounted,/<span>مجموع المتجر بعد القسيمة<\\/span><b>7,000 IQD<\\/b>/,'store net total is displayed');
-assert.match(discounted,/<span>مجموع المنتجات<\\/span><b>20,000 IQD<\\/b>/,'unselected store total stays unchanged');
-assert.match(discounted,/<span>الإجمالي قبل القسائم<\\/span><div><del>30,000 IQD<\\/del><strong>27,000 IQD<\\/strong><\\/div>/,'grand total shows original and server-quoted discounted total');
-assert.match(discounted,/إجمالي الخصم: −3,000 IQD/,'grand discount is explicit');
+assert.ok(discounted.includes('<span>مجموع المنتجات قبل القسيمة</span><del>10,000 IQD</del>'),'discounted store shows its original total crossed out');
+assert.ok(discounted.includes('<span>خصم القسيمة</span><b>−3,000 IQD</b>'),'store discount is itemized');
+assert.ok(discounted.includes('<span>مجموع المتجر بعد القسيمة</span><b>7,000 IQD</b>'),'store net total is displayed');
+assert.ok(discounted.includes('<span>مجموع المنتجات</span><b>20,000 IQD</b>'),'unselected store total stays unchanged');
+assert.ok(discounted.includes('<span>الإجمالي قبل القسائم</span><div><del>30,000 IQD</del><strong>27,000 IQD</strong></div>'),'grand total shows original and server-quoted discounted total');
+assert.ok(discounted.includes('إجمالي الخصم: −3,000 IQD'),'grand discount is explicit');
 assert.equal((discounted.match(/<del>/g)||[]).length,2,'only discounted store plus grand total are crossed out');
 
 console.log('PASS: server-derived coupon eligibility contract and review-render behavior (no live database write).');
