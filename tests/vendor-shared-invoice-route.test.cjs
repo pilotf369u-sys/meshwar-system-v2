@@ -189,6 +189,7 @@ function makeEnvironment({ proof = true, canonicalOrder = null, throwRpc = false
 
   assert.match(vendorHtml, /<script src="js\/kinto-bundle-ui-v93\.js\?v=20261020-p5-paid-goods-invoice-v1"><\/script>/);
   assert.match(vendorHtml, /await kintoVendorAttachPaidElectronicInvoice\(o,modal,body\)/);
+  assert.match(vendorHtml, /window\.kintoVendorPrintPaidElectronicInvoice\s*=\s*kintoVendorPrintPaidElectronicInvoice/, 'V95 must be able to call the existing invoice handler');
   assert.match(vendorHtml, /function closeVendorOrderDetails\(\)/);
 
   const loaderStart = vendorHtml.indexOf('async function loadOrders(){');
