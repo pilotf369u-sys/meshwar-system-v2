@@ -119,6 +119,9 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     const legacy=vendor.locator('#ordersBody tr').filter({hasText:'KN-000123'});
     await expect(legacy).toHaveCount(1);
     await legacy.getByRole('button',{name:'تفاصيل'}).click();
+    const invoiceButton=vendor.getByRole('button',{name:'عرض / طباعة الفاتورة الإلكترونية'});
+    await expect(invoiceButton).toBeVisible();
+    await invoiceButton.click();
     await expect.poll(()=>frameWindow(page,()=>window.__E2E_PRINT_HTML.includes('صافي المنتجات المدفوع إلكترونياً'))).toBe(true);
     const proof=await frameWindow(page,()=>({html:window.__E2E_PRINT_HTML,call:window.__MESH_E2E_RPC_CALLS.filter(x=>x.name==='vendor_paid_electronic_invoice_orders_v1').at(-1)||null}));
     expect(proof.html).toContain('KN-000123');expect(proof.html).toContain('Legacy KP product');
