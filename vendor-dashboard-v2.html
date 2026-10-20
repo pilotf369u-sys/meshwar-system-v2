@@ -545,7 +545,7 @@ function vendorOrderMatchesFilter(o){const status=String(o?.status||'').trim();i
 function renderVendorOrders(){const body=$('ordersBody');if(!body)return;updateVendorOrderCounters();const visible=orders.filter(vendorOrderMatchesFilter);body.innerHTML=visible.map(o=>{const image=vendorOrderProductImage(o),url=vendorOrderProductUrl(o),thumb=image?`<img loading="lazy" decoding="async" src="${esc(image)}" alt="${esc(orderProductName(o))}" class="mx-auto h-14 w-14 rounded-xl border border-amber-400/20 bg-white/5 object-contain p-1" onerror="this.style.display='none'">`:'---',link=url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs font-black text-amber-200 transition hover:bg-amber-500/20">🔗 فتح الرابط</a>`:'---';return `<tr class="border-b border-white/5" data-vendor-order-id="${esc(o.id)}"><td data-label="الصورة">${thumb}</td><td data-label="رقم الطلب"><div class="font-bold">${esc(o.order_code||String(o.id).slice(0,8))}</div><div class="vendor-muted text-xs text-slate-500">${new Date(o.created_at).toLocaleString('ar')}</div></td><td data-label="المنتج">${esc(orderProductName(o))}</td><td data-label="الكمية">${orderQuantity(o)}</td><td data-label="عدد الطرود"><span class="rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-1 text-xs font-black text-amber-200">${orderParcelsCount(o)}</span></td><td data-label="المحافظة / المدينة">${esc(orderCity(o))}</td><td data-label="الحالة"><span class="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs">${esc(o.status||'انتظار رد الموظف')}</span></td><td data-label="رابط المنتج">${link}</td><td data-label="الإجراء"><div class="flex flex-wrap gap-2"><button type="button" onclick="printShippingLabel('${esc(o.id)}')" class="rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs font-black text-sky-200 transition hover:bg-sky-500/20">🖨️ طباعة الملصق</button><button type="button" onclick="openVendorOrderDetails('${esc(o.id)}')" class="rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-xs font-black text-violet-200 transition hover:bg-violet-500/20">تفاصيل</button></div></td></tr>`}).join('')||'<tr><td colspan="9" class="p-6 text-center text-slate-400">لا توجد طلبات ضمن هذا التصنيف.</td></tr>'}
 async function loadOrders(){if(!vendorStore)return;try{const currentStoreId=String(vendorStore.id||'').trim();if(!currentStoreId)throw new Error('معرّف المتجر الحالي غير صالح.');const{data,error}=await sb.from('orders').select('id,order_code,total_price,currency,status,created_at,details').order('created_at',{ascending:false}).limit(500);if(error)throw error;orders=(data||[]).filter(o=>{const d=normalizeOrderDetails(o?.details);return String(d?.source||'')==='local_store'&&String(d?.store_id||'').trim()===currentStoreId});renderVendorOrders();renderFinance();renderStats()}catch(e){console.error('Vendor orders load error:',e);showNotice('تعذر تحميل الطلبات: '+(e.message||e),true)}}
 async function kintoVendorPaidInvoiceProof(order,token){
-  const orderId=String(order?.id||''),storeId=String(vendorStore?.id||'').trim(),details=normalizeOrderDetails(order?.details);
+  const orderId=String(order?._v95OrderId||order?.id||''),storeId=String(vendorStore?.id||'').trim(),details=normalizeOrderDetails(order?.details);
   if(!token||!orderId||!storeId||!kintoVendorInvoiceSourceAllowed(details)||String(details?.store_id||'').trim()!==storeId)return false;
   const{data,error}=await sb.rpc('vendor_paid_electronic_invoice_orders_v1',{p_session_token:token,p_order_ids:[orderId]});
   if(error)throw error;
@@ -554,7 +554,7 @@ async function kintoVendorPaidInvoiceProof(order,token){
 function kintoVendorInvoiceSourceAllowed(details){return ['local_store','local_cart_bundle'].includes(String(details?.source||'').trim())}
 async function kintoVendorPreparePaidElectronicInvoice(order,token){
   if(!await kintoVendorPaidInvoiceProof(order,token))return null;
-  const orderId=String(order.id),storeId=String(vendorStore?.id||'').trim();
+  const orderId=String(order._v95OrderId||order.id),storeId=String(vendorStore?.id||'').trim();
   const{data,error}=await sb.from('orders').select('*').eq('id',orderId).limit(1);
   if(error)throw error;
   const rows=Array.isArray(data)?data:(data?[data]:[]),canonical=rows.find(row=>String(row?.id||'')===orderId);
@@ -568,7 +568,7 @@ async function kintoVendorPreparePaidElectronicInvoice(order,token){
 }
 async function kintoVendorPrintPaidElectronicInvoice(orderId,popup){
   try{
-    const order=orders.find(row=>String(row?.id||'')===String(orderId)),active=vendorNotifSessionV399();
+    const order=orders.find(row=>String(row?._v95OrderId||row?.id||'')===String(orderId)),active=vendorNotifSessionV399();
     if(!order||!active?.token)throw new Error('جلسة التاجر غير صالحة أو انتهت.');
     const invoiceOrder=await kintoVendorPreparePaidElectronicInvoice(order,active.token);
     if(!invoiceOrder)throw new Error('لم يثبت وجود دفعة KP ناجحة لهذا الطلب.');
