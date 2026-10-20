@@ -4,6 +4,7 @@ import vm from 'node:vm';
 
 const migration=readFileSync('supabase/migrations/20261020090000_kinto_payment_p5_available_coupons.sql','utf8');
 const ui=readFileSync('js/customer-payment-p5.js','utf8');
+const css=readFileSync('css/kinto-payment-p5.css','utf8');
 
 assert.match(migration,/private\.require_customer_review_session\(p_session_token\)/,'public quote derives customer identity from the session');
 assert.match(migration,/private\.kinto_payment_p5_quote_v1\(cid,p_items,p_coupon_points\)/,'coupon UI options are based on server-priced cart lines');
@@ -33,6 +34,9 @@ vm.runInNewContext(exposedUi,{window,document:{},console,fetch:async()=>{throw n
 const line={store_id:'store-a',store_name:'Test store',product_name:'Product',product_image:'',quantity:1,unit_price_local:10000,line_total_local:10000,currency:'IQD',selected_options:{}};
 const hidden=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:10000,currency:'IQD',available_coupon_points:{'store-a':[]}}, {});
 assert.doesNotMatch(hidden,/<select data-coupon-store=/,'no coupon dropdown appears when none is available');
+assert.match(hidden,/<details class="kp5-store-details"[^>]*>/,'store is presented as a collapsible accordion');
+assert.doesNotMatch(hidden,/<details class="kp5-store-details"[^>]*\bopen\b/,'store details start collapsed');
+assert.match(hidden,/1 منتجات · بدون قسيمة/,'collapsed store summary includes product count and coupon state');
 assert.match(hidden,/لا توجد قسائم متاحة لهذا المتجر/);
 const available=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:7000,currency:'IQD',available_coupon_points:{'store-a':[3000]}}, {});
 assert.match(available,/<option value="3000"/,'available store tier appears');
@@ -51,11 +55,17 @@ const discounted=window.KintoPaymentP5V1.reviewHtml({
   coupon_points:{'store-a':3000,'store-b':0},
   available_coupon_points:{'store-a':[3000],'store-b':[]}
 }, {'store-a':3000});
-assert.ok(discounted.includes('<span>مجموع المنتجات قبل القسيمة</span><del>10,000 IQD</del>'),'discounted store shows its original total crossed out');
-assert.ok(discounted.includes('<span>خصم القسيمة</span><b>−3,000 IQD</b>'),'store discount is itemized');
-assert.ok(discounted.includes('<span>مجموع المتجر بعد القسيمة</span><b>7,000 IQD</b>'),'store net total is displayed');
-assert.ok(discounted.includes('<span>مجموع المنتجات</span><b>20,000 IQD</b>'),'unselected store total stays unchanged');
-assert.ok(discounted.includes('<span>الإجمالي قبل القسائم</span><div><del>30,000 IQD</del><strong>27,000 IQD</strong></div>'),'grand total shows original and server-quoted discounted total');
+assert.ok(discounted.includes('<small>قبل القسيمة</small><del>10,000 IQD</del>'),'discounted store shows its original total crossed out');
+assert.ok(discounted.includes('<small>خصم القسيمة</small><b>−3,000 IQD</b>'),'store discount is itemized');
+assert.ok(discounted.includes('<small>بعد القسيمة</small><strong>7,000 IQD</strong>'),'store net total is displayed');
+assert.ok(discounted.includes('<span class="kp5-store-name">Second test store</span>'),'unselected store remains visible in the collapsed list');
+assert.ok(discounted.includes('<strong>الإجمالي النهائي 27,000 IQD</strong>'),'grand total uses the server-quoted discounted amount');
+assert.match(discounted,/<details class="kp5-store-details"[^>]*open>/,'selected store can remain expanded after recalculation');
+const collapsed=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:10000,currency:'IQD',available_coupon_points:{'store-a':[]}}, {}, 'store-a');
+assert.match(collapsed,/<details class="kp5-store-details"[^>]*open>/,'the caller can restore the expanded store');
+assert.match(css,/\.kp5-checkout-summary\{position:sticky/,'final total remains visible while reviewing long carts');
+assert.match(css,/@media\(max-width:760px\)/,'compact layout adapts for tablets and phones');
+assert.match(css,/@media\(min-width:1000px\)/,'laptop spacing is tuned separately');
 assert.ok(discounted.includes('إجمالي الخصم: −3,000 IQD'),'grand discount is explicit');
 assert.equal((discounted.match(/<del>/g)||[]).length,2,'only discounted store plus grand total are crossed out');
 
