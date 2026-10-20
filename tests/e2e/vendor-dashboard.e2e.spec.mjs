@@ -109,9 +109,11 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
         id:'legacy-paid-electronic',customer_id:'e2e-customer',order_code:'KN-000123',reference_order_no:'REF-123',
         status:'تم التسديد',total_price:217000,currency:'IQD',delivery_payment_type:'cod_full',
         reward_discount_amount:1000,reward_discount_currency:'IQD',reward_discount_snapshot:{amount:1000,currency:'IQD'},
-        created_at:new Date().toISOString(),details:{source:'local_cart_bundle',checkout_contract:'independent_vendor_orders',multi_store:false,store_id:storeId,store_name:'KINTO',customer:{name:'عميل الاختبار'},items:[
-          {store_id:storeId,store_name:'KINTO',product_id:'p-1',product_name:'Legacy KP product',quantity:1,unit_price_local:218000,line_total_local:218000,currency:'IQD'},
-          {store_id:'different-store',store_name:'Other shop',product_id:'p-secret',product_name:'Must not appear in vendor invoice',quantity:1,unit_price_local:999999,line_total_local:999999,currency:'IQD'}
+        created_at:new Date().toISOString(),details:{source:'local_cart_bundle',checkout_contract:'independent_vendor_orders',multi_store:false,store_id:storeId,store_name:'KINTO',customer:{name:'عميل الاختبار'},stores:[
+          {store_id:storeId,store_name:'KINTO',subtotal_local:218000},
+          {store_id:'different-store',store_name:'Other shop',subtotal_local:999999}
+        ],items:[
+          {store_id:storeId,store_name:'KINTO',product_id:'p-1',product_name:'Legacy KP product',quantity:1,unit_price_local:218000,line_total_local:218000,currency:'IQD'}
         ]}
       });
       await window.loadOrders();
