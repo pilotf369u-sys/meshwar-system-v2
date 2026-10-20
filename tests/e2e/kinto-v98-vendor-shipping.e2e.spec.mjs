@@ -228,7 +228,7 @@ test('V107 shows one canonical color-coded collection status in every invoice', 
     read('delivery-dashboard.html')
   ]);
 
-  for (const source of [sharedInvoice, vendorInvoice, courier]) {
+  for (const source of [sharedInvoice, vendorInvoice]) {
     expect(source).toContain('تحصيل كامل عند الاستلام');
     expect(source).toContain('البضاعة مدفوعة');
     expect(source).toContain('مدفوع مقدماً شامل التوصيل');
@@ -238,6 +238,12 @@ test('V107 shows one canonical color-coded collection status in every invoice', 
   expect(vendorInvoice).toContain('invoiceCollectionInfo');
   expect(vendorInvoice).toContain('collection-status ${collection.tone}');
   expect(courier).toContain('deliveryCollectionBadge(o)');
+  expect(courier).toContain('غير مدفوع — حصّل المبلغ الموضح');
+  expect(courier).toContain('البضاعة مدفوعة إلكترونياً — حصّل أجرة التوصيل فقط');
+  expect(courier).toContain('مدفوع بالكامل — لا تحصّل أي مبلغ');
+  expect(courier).toContain('المطلوب تحصيله من العميل');
+  expect(courier).not.toContain('js/kinto-bundle-ui-v93.js');
+  expect(courier).not.toContain('data-courier-electronic-invoice');
   expect(sql).toContain("'delivery_payment_type', o.delivery_payment_type");
   expect(sql).toContain('private.require_vendor_session(p_session_token)');
 });
