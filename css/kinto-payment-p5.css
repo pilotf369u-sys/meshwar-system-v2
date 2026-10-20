@@ -46,7 +46,7 @@
 .kp5-store-lines .kp5-line img{width:46px;height:46px}
 .kp5-store-lines .kp5-line b,.kp5-store-lines .kp5-line span,.kp5-store-lines .kp5-line strong{font-size:13px}
 .kp5-store-lines .kp5-line small{font-size:11px}
-.kp5-checkout-summary{position:sticky;bottom:0;z-index:3;margin:8px -2px 0;padding:7px 2px 0;background:#fffdf7;box-shadow:0 -7px 14px rgba(10,47,35,.07);border-top:1px solid #d9bd67}
+.kp5-checkout-summary{margin:0 0 5px;padding:6px 2px 5px;background:#fffdf7;border-top:1px solid #d9bd67}
 .kp5-grand{font-size:15px;gap:9px;padding:8px 0}
 .kp5-grand>span,.kp5-grand>strong{font-size:14px}
 .kp5-grand-discounted{align-items:center}
@@ -55,7 +55,7 @@
 .kp5-grand-discounted>strong{color:#0a2f23;text-align:end}
 .kp5-discount-summary{margin:0 0 5px;text-align:end;color:#8d4c26;font-size:12px;font-weight:800}
 .kp5-checkout-summary .kp5-note{margin:3px 0 0;padding:7px 10px;font-size:11px;line-height:1.45}
-.kp5-actions{flex:none;position:relative;padding:9px 18px 14px;background:#fffdf7}
+.kp5-actions{flex:none;display:block;position:relative;max-height:40dvh;overflow:auto;padding:7px 18px 12px;background:#fffdf7;border-top:1px solid #e6e2d2}
 .kp5-actions button{font-size:14px;min-height:44px}
 @media(max-width:760px){
  .kp5-backdrop{padding:8px}
@@ -89,3 +89,6 @@
  .kp5-content{padding-inline:22px}
  .kp5-store-details>summary{padding:13px 17px}
 }
+
+.kp5-action-buttons{display:flex;flex-wrap:wrap;gap:8px}.kp5-action-buttons button{flex:1;min-width:170px}
+@media(max-width:760px){.kp5-actions{padding:6px 12px 9px}.kp5-action-buttons{gap:6px}.kp5-action-buttons button{min-width:130px}}
