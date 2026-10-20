@@ -104,10 +104,20 @@ async function openDetails(id){
   const o=runtime.getOrders().find(x=>String(x.id)===String(id));if(o&&!o._v94GlobalOrder)return runtime.nativeOpenVendorOrderDetails(id);if(!o)return runtime.showNotice('تعذر العثور على حصة المتجر.',true);
   const active=session();
   if(o._v94GlobalOrder&&active?.token){
+    // Open the blank invoice tab during the original click: browsers block async popups.
+    // Close it and preserve the original V95 invoice route when this is not a proven paid KP.
+    const popup=window.open('','_blank','width=1000,height=800');
     try{
       const orderId=String(o._v95OrderId||o.id),{data,error}=await runtime.sb.rpc('vendor_paid_electronic_invoice_orders_v1',{p_session_token:active.token,p_order_ids:[orderId]});
-      if(!error&&Array.isArray(data)&&data.some(row=>String(row?.order_id||'')===orderId))return runtime.nativeOpenVendorOrderDetails(id);
+      if(error)throw error;
+      if(Array.isArray(data)&&data.some(row=>String(row?.order_id||'')===orderId)){
+        if(typeof window.kintoVendorPrintPaidElectronicInvoice!=='function')throw new Error('مولّد فاتورة التاجر غير متوفر');
+        if(!popup){runtime.showNotice('يرجى السماح بالنوافذ المنبثقة لعرض الفاتورة الإلكترونية.',true);return}
+        await window.kintoVendorPrintPaidElectronicInvoice(orderId,popup);
+        return;
+      }
     }catch(error){console.warn('Vendor electronic invoice proof unavailable',error)}
+    try{if(popup&&!popup.closed)popup.close()}catch(_){}
   }
   let secureDetails=null,shippingDetails=null;
   if(o._v95SegmentId&&active){
