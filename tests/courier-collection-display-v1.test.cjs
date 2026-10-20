@@ -1,0 +1,23 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('js/courier-collection-display-v1.js','utf8'),html=fs.readFileSync('delivery-dashboard.html','utf8');
+const names=['deliveryPayType','doorCollection','deliveryCollectionBadge','money','deliveryNet'];
+const helpers=names.map(name=>html.split('\n').find(line=>line.startsWith('function '+name+'('))).join('\n');
+const ctx={window:{KintoCourierSessionV149:{read:()=>({token:'courier-session'})},KintoCouponFinanceV1:{goods:o=>Math.max(0,Number(o.total_price)-Number(o.reward_discount_amount||0))}},console:{warn(){}},esc:String};
+let fail=false,bad=false,seen=[];
+ctx.getDeliverySb=async()=>({rpc:async(name,args)=>{seen.push(args.p_order_ids.length);assert.equal(name,'courier_paid_electronic_invoice_orders_v1');assert.equal(args.p_session_token,'courier-session');return fail?{error:Error('offline')}:{data:bad?null:args.p_order_ids.filter(id=>String(id).startsWith('paid')).map(order_id=>({order_id}))}}});
+vm.createContext(ctx);vm.runInContext(source+'\n'+helpers,ctx);
+(async()=>{
+ const orders=[{id:'paid-1',total_price:218000,reward_discount_amount:1000,delivery_fee:5000,delivery_payment_type:'cod_full'},{id:'manual',total_price:218000,reward_discount_amount:1000,delivery_fee:5000,delivery_payment_type:'cod_full'},{id:'prepaid',total_price:218000,delivery_fee:5000,delivery_payment_type:'paid_prepaid'}],before=JSON.stringify(orders);
+ const rows=await ctx.window.KintoCourierCollectionV1.prepare(orders);
+ assert.equal(ctx.doorCollection(rows[0]),5000);assert.equal(ctx.deliveryNet(rows[0]),0);assert(ctx.deliveryCollectionBadge(rows[0]).includes('حصّل أجرة التوصيل فقط'));
+ assert.equal(ctx.doorCollection(rows[1]),222000);assert.equal(ctx.deliveryNet(rows[1]),217000);assert(ctx.deliveryCollectionBadge(rows[1]).includes('حصّل المبلغ الموضح'));
+ assert.equal(ctx.doorCollection(rows[2]),0);assert(ctx.deliveryCollectionBadge(rows[2]).includes('لا تحصّل أي مبلغ'));
+ assert.equal(JSON.stringify(orders),before);
+ seen=[];await ctx.window.KintoCourierCollectionV1.prepare(Array.from({length:205},(_,i)=>({...orders[0],id:'paid-'+i})));assert.deepEqual(seen,[100,100,5]);
+ fail=true;const unknown=await ctx.window.KintoCourierCollectionV1.prepare(orders);assert.equal(ctx.doorCollection(unknown[0]),null);assert.equal(ctx.deliveryNet(unknown[0]),null);assert.equal(ctx.money(null,'IQD'),'بانتظار التحقق');assert(ctx.deliveryCollectionBadge(unknown[0]).includes('لا تحصّل المبلغ قبل التحقق'));assert.equal(ctx.doorCollection(unknown[2]),0);
+ fail=false;bad=true;assert.equal(ctx.doorCollection((await ctx.window.KintoCourierCollectionV1.prepare(orders))[0]),null);
+ assert(!source.includes('printInvoice'));assert(!source.includes('window.open'));assert(!html.includes('js/kinto-bundle-ui-v93.js'));assert(!html.includes('data-courier-electronic-invoice'));
+ assert(html.includes("unsettled.some(o=>o._courierCollectionUnknownV1)"));assert(html.includes('deliveryOrders=await window.KintoCourierCollectionV1.prepare(deliveryOrders)'));
+ const sql=fs.readFileSync('sql/courier-paid-invoice-proof-v1.sql','utf8');assert(sql.includes('private.kinto_order_visible_v1(to_jsonb(o),actor)'));assert(sql.includes("a.status='succeeded'"));
+ console.log('PASS courier collection: paid=delivery only, manual=net goods+delivery, fully paid=zero, failed verification=unknown, batching, no invoice, no stored order mutation');
+})().catch(error=>{console.error(error);process.exit(1)});
