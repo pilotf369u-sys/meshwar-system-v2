@@ -109,7 +109,7 @@ async function openDetails(id){
       if(!error&&Array.isArray(data)&&data.some(row=>String(row?.order_id||'')===orderId))return runtime.nativeOpenVendorOrderDetails(id);
     }catch(error){console.warn('Vendor electronic invoice proof unavailable',error)}
   }
-  let secureDetails=null,shippingDetails=null,active=session();
+  let secureDetails=null,shippingDetails=null;
   if(o._v95SegmentId&&active){
     try{if(detailCache.has(String(o.id)))secureDetails=detailCache.get(String(o.id));else{const{data,error}=await runtime.sb.rpc('vendor_get_order_segment_details',{p_session_token:active.token,p_segment_id:o._v95SegmentId});if(error)throw error;secureDetails=data;detailCache.set(String(o.id),data)}if(shippingControlCache.has(String(o._v95SegmentId)))shippingDetails=shippingControlCache.get(String(o._v95SegmentId));else{let result=await runtime.sb.rpc('vendor_get_order_shipping_control',{p_session_token:active.token,p_segment_id:o._v95SegmentId});if(result.error&&String(result.error.message||'').includes('vendor_get_order_shipping_control'))result=await runtime.sb.rpc('vendor_get_order_segment_shipping',{p_session_token:active.token,p_segment_id:o._v95SegmentId});if(result.error)throw result.error;shippingDetails=result.data;shippingControlCache.set(String(o._v95SegmentId),shippingDetails)}}catch(e){runtime.showNotice('تعذر تحميل تفاصيل حصة المتجر: '+(e.message||e),true);return}
   }
