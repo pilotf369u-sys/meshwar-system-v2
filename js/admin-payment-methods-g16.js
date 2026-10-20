@@ -358,10 +358,40 @@ async function change(action,args){
  catch(e){message(e?.message||'تعذر حفظ البيانات.',true)}
  finally{busy=false}
 }
+
+let auditPageP5=1;
+function mountPaymentAuditP5(){
+ const host=root();if(!host)return null;let panel=document.getElementById('g16PaymentAuditP5');if(panel)return panel;
+ panel=document.createElement('section');panel.id='g16PaymentAuditP5';panel.dir='rtl';panel.style.cssText='margin:16px 0;padding:13px;border:1px solid #d6c184;border-radius:12px;background:#fff;color:#173227';
+ panel.innerHTML='<h4 style="margin:0 0 9px">سجل عمليات الدفع الإلكتروني — للقراءة فقط</h4><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:9px"><select id="g16AuditFilterP5" aria-label="حالة الدفعة"><option value="all">جميع الحالات</option><option value="paid">الناجحة</option><option value="pending">المعلّقة</option><option value="reconciliation_required">تحتاج مراجعة</option><option value="failed">المرفوضة</option><option value="cancelled">الملغاة</option></select><input id="g16AuditSearchP5" maxlength="80" placeholder="بحث برقم KP أو معرّف العميل" aria-label="بحث الدفعات"><button type="button" id="g16AuditReloadP5">بحث / تحديث</button></div><div id="g16AuditStateP5" role="status">اضغط تحديث لقراءة السجل.</div><div id="g16AuditRowsP5" style="overflow-x:auto"></div><div id="g16AuditPagerP5" style="display:flex;align-items:center;gap:10px;margin-top:9px"></div><p class="mini">هذا السجل للمتابعة فقط، ولا يغيّر حالة الدفع أو ينفّذ تحصيلاً.</p>';
+ const form=document.getElementById('g16Form');if(form)host.insertBefore(panel,form);else host.appendChild(panel);
+ panel.querySelector('#g16AuditReloadP5').onclick=()=>loadPaymentAuditP5(1);
+ panel.querySelector('#g16AuditFilterP5').onchange=()=>loadPaymentAuditP5(1);
+ panel.querySelector('#g16AuditSearchP5').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();loadPaymentAuditP5(1)}};
+ return panel;
+}
+async function loadPaymentAuditP5(page=1){
+ const panel=mountPaymentAuditP5();if(!panel)return;
+ const status=panel.querySelector('#g16AuditStateP5'),rows=panel.querySelector('#g16AuditRowsP5'),pager=panel.querySelector('#g16AuditPagerP5');
+ status.textContent='جارٍ قراءة عمليات الدفع...';
+ try{
+  const sb=await window.ensureCustomerSupabase();
+  const {data,error}=await sb.rpc('kinto_payments_p5_admin_audit_v1',{p_session_token:token(),p_page:page,p_status:panel.querySelector('#g16AuditFilterP5').value,p_search:panel.querySelector('#g16AuditSearchP5').value.trim()});
+  if(error)throw error;
+  auditPageP5=Number(data.page)||1;
+  const statuses={paid:'تم التسديد',pending:'معلّقة',failed:'مرفوضة',cancelled:'ملغاة',reconciliation_required:'تحتاج مراجعة'};
+  rows.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th>رقم KP</th><th>التاريخ</th><th>العميل</th><th>المبلغ</th><th>الحالة</th><th>طلبات KN</th></tr></thead><tbody>'+((data.payments||[]).map(p=>'<tr><td>'+esc(p.kp_number)+'</td><td>'+esc(new Date(p.created_at).toLocaleString('ar'))+'</td><td>'+esc(p.customer_id)+'</td><td>'+esc(Number(p.amount).toLocaleString('en-US')+' '+p.currency)+'</td><td>'+esc(statuses[p.status]||p.status)+'</td><td>'+esc((p.order_codes||[]).join('، ')||'—')+'</td></tr>').join('')||'<tr><td colspan="6">لا توجد عمليات مطابقة.</td></tr>')+'</tbody></table>';
+  const pages=Math.max(1,Number(data.pages)||1);status.textContent='عدد العمليات: '+(Number(data.total)||0);
+  pager.innerHTML='<button type="button" data-audit-prev '+(auditPageP5<=1?'disabled':'')+'>السابق</button><span>صفحة '+auditPageP5+' من '+pages+'</span><button type="button" data-audit-next '+(auditPageP5>=pages?'disabled':'')+'>التالي</button>';
+  pager.querySelector('[data-audit-prev]').onclick=()=>loadPaymentAuditP5(auditPageP5-1);
+  pager.querySelector('[data-audit-next]').onclick=()=>loadPaymentAuditP5(auditPageP5+1);
+ }catch(error){status.textContent='تعذر قراءة سجل الدفعات: '+(error.message||error);rows.innerHTML='';pager.innerHTML=''}
+}
+
 async function load(){
  if(!root()||busy)return;busy=true;message('جارٍ تحميل طرق الدفع...');
  try{
-  const catalog=await rpc();paint(catalog);
+  const catalog=await rpc();paint(catalog);mountPaymentAuditP5();loadPaymentAuditP5(1);
   try{
    const mode=await runtimeRpc('get');setRuntimeControlsAvailable(true);const p4=await paymentModeP4Read();let p6=null;try{ensureP6SimulatorControls();p6=await paymentP6Admin('get');await refreshP6Simulator()}catch{}paintRuntime({...mode,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_target_mode:p4.target_mode,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{}),...(p6?{simulator_enabled:p6.simulator_enabled,electronic_admission_ready:p6.electronic_admission_ready,emergency_stop:p6.emergency_stop}: {})});
    message('تم تحميل الإعدادات ووسائل الدفع؛ يبقى OTP مطلوباً عند تغيير بيانات التحويل.');
