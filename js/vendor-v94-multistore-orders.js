@@ -141,7 +141,8 @@ async function openPaidElectronicVendorInvoice(o){
     confirmed=Array.isArray(data)&&data.some(row=>String(row?.order_id||'')===orderId);
   }
   if(!confirmed)return false;
-  if(String(d.source||'')!=='local_store'||String(d.store_id||'')!==storeId)throw new Error('تعذر إثبات ملكية المتجر للفاتورة.');
+  const validStoreOrder=String(d.source||'')==='local_store'||(String(d.source||'')==='local_cart_bundle'&&String(d.checkout_contract||'')==='independent_vendor_orders'&&[false,'false'].includes(d.multi_store));
+  if(!validStoreOrder||String(d.store_id||'')!==storeId)throw new Error('تعذر إثبات ملكية المتجر للفاتورة.');
   const items=(Array.isArray(d.items)?d.items:[]).filter(item=>!item?.store_id||String(item.store_id)===storeId);
   if(!items.length)throw new Error('لا توجد منتجات لهذا المتجر ضمن الفاتورة.');
   const storeName=String(d.store_name||runtime.getStore()?.store_name||'المتجر'),currency=String(canonical.currency||o.currency||items[0]?.currency||'IQD');

@@ -39,6 +39,21 @@ function setup({type='cod_full',proof=[],storeId='store-1',sessionToken='vendor-
     assert.equal(test.order.delivery_payment_type,'cod_full','saved legacy order remains unchanged');
   }
   {
+    const test=setup({proof:[{order_id:'kn-legacy'}]});
+    test.order.details.source='local_cart_bundle';
+    test.order.details.checkout_contract='independent_vendor_orders';
+    test.order.details.multi_store=false;
+    assert.equal(await test.context.openPaidElectronicVendorInvoice(test.order),true,'legacy per-store bundle contract remains supported');
+  }
+  {
+    const test=setup({proof:[{order_id:'kn-legacy'}]});
+    test.order.details.source='local_cart_bundle';
+    test.order.details.checkout_contract='shared_multi_store';
+    test.order.details.multi_store=true;
+    await assert.rejects(test.context.openPaidElectronicVendorInvoice(test.order),/إثبات ملكية المتجر/,'unscoped multi-store parent is rejected');
+    assert.equal(test.printed,null);
+  }
+  {
     const test=setup({proof:[]});
     assert.equal(await test.context.openPaidElectronicVendorInvoice(test.order),false,'an ordinary manual cod_full order gets no electronic invoice');
     assert.equal(test.printed,null);
