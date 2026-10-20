@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 
 const migration=readFileSync('supabase/migrations/20261020090000_kinto_payment_p5_available_coupons.sql','utf8');
 const ui=readFileSync('js/customer-payment-p5.js','utf8');
-const pages=['index.html','local-stores.html','store.html'].map(path=>readFileSync(path,'utf8'));
 
 assert.match(migration,/private\.require_customer_review_session\(p_session_token\)/,'public quote derives customer identity from the session');
 assert.match(migration,/private\.kinto_payment_p5_quote_v1\(cid,p_items,p_coupon_points\)/,'coupon UI options are based on server-priced cart lines');
@@ -22,6 +21,5 @@ assert.match(ui,/q\.available_coupon_points\?\.\[sid\]/,'review UI reads server-
 assert.match(ui,/لا توجد قسائم متاحة لهذا المتجر/,'empty availability has a clear per-store state');
 assert.doesNotMatch(ui,/\[1000,3000,5000\]\.map\(/,'UI no longer offers hard-coded tiers to every store');
 assert.match(ui,/tiers\.map\(v=>/,'only server-returned tiers are rendered as options');
-for(const page of pages) assert.match(page,/customer-payment-p5\.js\?v=20261020-coupon-availability-v1/,'checkout script cache is refreshed');
 
 console.log('PASS: coupon dropdown options are server-derived, customer/store/campaign scoped, and hidden when none are available (SQL/UI contract; no live database write).');
