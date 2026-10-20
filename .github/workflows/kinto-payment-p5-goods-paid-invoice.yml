@@ -1,0 +1,41 @@
+name: KINTO P5 goods-paid invoice and collection
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261020123000_kinto_payment_p5_goods_paid_collection.sql'
+      - 'supabase/verification/kinto-payment-p5-goods-paid-collection*.sql'
+      - 'js/kinto-bundle-ui-v93.js'
+      - 'dashboard.html'
+      - 'tests/invoice-order-match-v58.test.cjs'
+      - 'ci/kinto-payment-p5-collection.integration.mjs'
+      - '.github/workflows/kinto-payment-p5-goods-paid-invoice.yml'
+jobs:
+  invoice-and-sql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: kinto_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated PostgreSQL client
+        run: npm install --prefix "$RUNNER_TEMP/kinto-pg" --ignore-scripts --no-audit --no-fund pg@8.16.3
+      - name: Render invoice cases (coupon, no coupon, manual)
+        run: node tests/invoice-order-match-v58.test.cjs
+      - name: Execute collection migration and scoped P5 list RPC on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+          KINTO_PG_MODULE: ${{ runner.temp }}/kinto-pg/node_modules/pg/lib/index.js
+        run: node ci/kinto-payment-p5-collection.integration.mjs
