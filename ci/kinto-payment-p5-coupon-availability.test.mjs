@@ -1,5 +1,6 @@
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 
 const migration=readFileSync('supabase/migrations/20261020090000_kinto_payment_p5_available_coupons.sql','utf8');
 const ui=readFileSync('js/customer-payment-p5.js','utf8');
@@ -22,4 +23,19 @@ assert.match(ui,/لا توجد قسائم متاحة لهذا المتجر/,'emp
 assert.doesNotMatch(ui,/\[1000,3000,5000\]\.map\(/,'UI no longer offers hard-coded tiers to every store');
 assert.match(ui,/tiers\.map\(v=>/,'only server-returned tiers are rendered as options');
 
-console.log('PASS: coupon dropdown options are server-derived, customer/store/campaign scoped, and hidden when none are available (SQL/UI contract; no live database write).');
+const exposedUi=ui.replace(
+  "window.KintoPaymentP5V1={call,checkout,isElectronic,getMode,loadPayments,version:'p5-simulator-v1'};",
+  "window.KintoPaymentP5V1={call,checkout,isElectronic,getMode,loadPayments,reviewHtml,version:'p5-simulator-v1'};"
+);
+assert.notEqual(exposedUi,ui,'renderer can be exercised in this isolated test');
+const window={};
+vm.runInNewContext(exposedUi,{window,document:{},console,fetch:async()=>{throw new Error('not called')}});
+const line={store_id:'store-a',store_name:'Test store',product_name:'Product',product_image:'',quantity:1,unit_price_local:10000,line_total_local:10000,currency:'IQD',selected_options:{}};
+const hidden=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:10000,currency:'IQD',available_coupon_points:{'store-a':[]}}, {});
+assert.doesNotMatch(hidden,/<select data-coupon-store=/,'no coupon dropdown appears when none is available');
+assert.match(hidden,/لا توجد قسائم متاحة لهذا المتجر/);
+const available=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:7000,currency:'IQD',available_coupon_points:{'store-a':[3000]}}, {});
+assert.match(available,/<option value="3000"/,'available store tier appears');
+assert.doesNotMatch(available,/<option value="1000"|<option value="5000"/,'unavailable tiers stay hidden');
+
+console.log('PASS: server-derived coupon eligibility contract and review-render behavior (no live database write).');
