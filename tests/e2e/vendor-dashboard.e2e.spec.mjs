@@ -97,6 +97,42 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
     await expect(vendor.locator('#ordersBody tr').filter({hasText:'KN-009599'})).toHaveCount(1);await expect(vendor.locator('#ordersBody')).toContainText('Realtime Segment Product');
   });
 
+  test('vendor invoice: legacy KP proof opens shared store-only electronic invoice while manual cod_full stays unchanged',async({page})=>{
+    const vendor=await openVendor(page,{authenticated:true});
+    await frameWindow(page,async()=>{
+      const storeId=window.__MESH_E2E_STORE.id;
+      window.__E2E_PRINT_HTML='';
+      window.__E2E_PAID_ELECTRONIC_ORDER_IDS=['legacy-paid-electronic'];
+      window.open=()=>({document:{open(){},write:s=>{window.__E2E_PRINT_HTML+=String(s)},close(){}}});
+      if(window.KintoBundleV93)window.KintoBundleV93.hydrateCustomer=async()=>null;
+      window.__MESH_E2E_DB.orders.unshift({
+        id:'legacy-paid-electronic',customer_id:'e2e-customer',order_code:'KN-000123',reference_order_no:'REF-123',
+        status:'تم التسديد',total_price:217000,currency:'IQD',delivery_payment_type:'cod_full',
+        reward_discount_amount:1000,reward_discount_currency:'IQD',reward_discount_snapshot:{amount:1000,currency:'IQD'},
+        created_at:new Date().toISOString(),details:{source:'local_cart_bundle',checkout_contract:'independent_vendor_orders',multi_store:false,store_id:storeId,store_name:'KINTO',customer:{name:'عميل الاختبار'},items:[
+          {store_id:storeId,store_name:'KINTO',product_id:'p-1',product_name:'Legacy KP product',quantity:1,unit_price_local:218000,line_total_local:218000,currency:'IQD'},
+          {store_id:'different-store',store_name:'Other shop',product_id:'p-secret',product_name:'Must not appear in vendor invoice',quantity:1,unit_price_local:999999,line_total_local:999999,currency:'IQD'}
+        ]}
+      });
+      await window.loadOrders();
+    });
+    const legacy=vendor.locator('#ordersBody tr').filter({hasText:'KN-000123'});
+    await expect(legacy).toHaveCount(1);
+    await legacy.getByRole('button',{name:'تفاصيل'}).click();
+    await expect.poll(()=>frameWindow(page,()=>window.__E2E_PRINT_HTML.includes('صافي المنتجات المدفوع إلكترونياً'))).toBe(true);
+    const proof=await frameWindow(page,()=>({html:window.__E2E_PRINT_HTML,call:window.__MESH_E2E_RPC_CALLS.filter(x=>x.name==='vendor_paid_electronic_invoice_orders_v1').at(-1)||null}));
+    expect(proof.html).toContain('KN-000123');expect(proof.html).toContain('Legacy KP product');
+    expect(proof.html).toContain('217,000 IQD');expect(proof.html).toContain('البضاعة مدفوعة — التوصيل عند الاستلام');
+    expect(proof.html).not.toContain('Must not appear in vendor invoice');expect(proof.html).not.toContain('999,999 IQD');
+    expect(proof.call.args).toEqual({p_session_token:'e2e-secure-token',p_order_ids:['legacy-paid-electronic']});
+
+    await frameWindow(page,async()=>{window.__E2E_PRINT_HTML='';window.__E2E_PAID_ELECTRONIC_ORDER_IDS=[];const legacyRow=window.__MESH_E2E_DB.orders.find(x=>x.id==='legacy-paid-electronic');legacyRow.details.source='local_store';delete legacyRow.details.checkout_contract;delete legacyRow.details.multi_store;await window.loadOrders()});
+    await legacy.getByRole('button',{name:'تفاصيل'}).click();
+    await expect(vendor.locator('#vendorOrderDetailsModal')).toHaveClass(/flex/);
+    await expect(vendor.locator('#vendorOrderDetailsBody')).not.toContainText('عرض / طباعة الفاتورة الإلكترونية');
+    expect(await frameWindow(page,()=>window.__E2E_PRINT_HTML)).toBe('');
+  });
+
   test('V95: legacy browser sessions must re-authenticate before global orders expose customer data',async({page})=>{
     const vendor=await openVendor(page);
     await frameWindow(page,async()=>{const storeId=window.__MESH_E2E_STORE.id;window.__MESH_E2E_DB.orders.unshift({id:'global-without-session',order_code:'KN-009599',total_price:16000,currency:'IQD',status:'تم التسديد',created_at:new Date().toISOString(),details:{source:'local_cart_bundle',bundle_stock_lifecycle_state:'deducted',items:[{store_id:storeId,store_name:'Test Store',product_id:'p-1',product_name:'Protected Product',quantity:1,unit_price_local:16000,line_total_local:16000,currency:'IQD'}],stores:[{store_id:storeId,store_name:'Test Store'}],store_statuses:{[storeId]:'بانتظار التسديد'}}});await window.loadOrders()});
