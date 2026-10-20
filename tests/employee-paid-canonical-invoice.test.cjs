@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'employee-dashboard.html'),'utf8');
+const sql=fs.readFileSync(path.join(root,'supabase/migrations/20261020220000_kinto_employee_paid_invoice_proof_v1.sql'),'utf8');
+assert.match(html,/void kintoEmployeeAttachPaidInvoice\(o\)/);
+assert.match(html,/employee_paid_electronic_invoice_orders_v1/);
+assert.match(html,/window\.KintoBundleV93\.printInvoice\(invoice,\{canonicalOnly:true,invoiceWindow:popup\}\)/);
+assert.match(html,/delivery_payment_type:'product_paid_delivery_cod'/);
+assert.match(html,/if\(!Array\.isArray\(data\)\|\|!data\.some/);
+assert.match(sql,/private\.require_employee_session_v143\(p_session_token\)/);
+assert.match(sql,/p\.status='paid' and p\.payment_kind='cart'/);
+assert.match(sql,/a\.status='succeeded'/);
+assert.doesNotMatch(sql,/\bupdate\s+(?:public\.)?orders\b|\bdelete\s+from\b/i);
+console.log('PASS employee uses shared customer invoice only with employee-session KP proof');
