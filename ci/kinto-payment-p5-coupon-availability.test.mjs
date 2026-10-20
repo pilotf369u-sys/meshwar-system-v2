@@ -73,7 +73,8 @@ assert.match(restoredOpen,/<details class="kp5-store-details"[^>]*open>/,'the ca
 assert.match(css,/\.kp5-actions \.kp5-checkout-summary\{margin:/,'final total sits in the fixed modal footer above the action buttons');
 assert.match(css,/@media\(max-width:760px\)/,'compact layout adapts for tablets and phones');
 assert.match(css,/@media\(min-width:1000px\)/,'laptop spacing is tuned separately');
-assert.ok(discounted.includes('إجمالي الخصم: −3,000 IQD'),'grand discount is explicit');
-assert.equal((discounted.match(/<del>/g)||[]).length,2,'only discounted store plus grand total are crossed out');
+assert.equal((discounted.match(/<del>/g)||[]).length,1,'only the discounted store original is crossed out inside store details');
+assert.equal((discountedSummary.match(/<del>/g)||[]).length,1,'only the original grand total is crossed out in the persistent summary');
+assert.match(css,/\.kp5-actions\{flex:none;display:block/,'checkout summary lives outside the scrolling product list');
 
 console.log('PASS: server-derived coupon eligibility contract and review-render behavior (no live database write).');
