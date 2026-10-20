@@ -39,9 +39,6 @@
   const lines=Array.isArray(q?.lines)?q.lines:[];
   const groups={};
   for(const x of lines)(groups[x.store_id]??=[]).push(x);
-  const originalTotal=lines.reduce((n,x)=>n+Number(x.line_total_local||0),0);
-  const finalTotal=Number(q?.amount||0);
-  const totalDiscount=Math.max(0,originalTotal-finalTotal);
   const storeMarkup=Object.entries(groups).map(([sid,items])=>{
     const currency=items[0].currency;
     const originalStoreTotal=items.reduce((n,x)=>n+Number(x.line_total_local||0),0);
@@ -66,17 +63,23 @@
       summaryAmounts+'</summary><div class="kp5-store-details-body">'+couponControl+
       '<div class="kp5-store-lines">'+items.map(lineHtml).join('')+'</div></div></details></section>';
   }).join('');
-  const grandTotal=totalDiscount>0
+  return '<p class="kp5-lead">راجع المنتجات والتفرعات والأسعار المحسوبة من الخادم. أسعار المتاجر تبقى بعملتها الأصلية.</p>'+storeMarkup;
+ }
+ function checkoutSummaryHtml(q){
+  const lines=Array.isArray(q?.lines)?q.lines:[];
+  const originalTotal=lines.reduce((n,x)=>n+Number(x.line_total_local||0),0);
+  const finalTotal=Number(q?.amount||0);
+  const totalDiscount=Math.max(0,originalTotal-finalTotal);
+  const totals=totalDiscount>0
     ?'<div class="kp5-grand kp5-grand-discounted"><span>الإجمالي قبل القسائم <del>'+money(originalTotal,q.currency)+'</del></span><strong>الإجمالي النهائي '+money(finalTotal,q.currency)+'</strong></div>'+
      '<p class="kp5-discount-summary">إجمالي الخصم: −'+money(totalDiscount,q.currency)+'</p>'
     :'<div class="kp5-grand"><span>الإجمالي النهائي</span><strong>'+money(finalTotal,q.currency)+'</strong></div>';
-  return '<p class="kp5-lead">راجع المنتجات والتفرعات والأسعار المحسوبة من الخادم. أسعار المتاجر تبقى بعملتها الأصلية.</p>'+storeMarkup+
-    '<div class="kp5-checkout-summary">'+grandTotal+'<p class="kp5-note">الشحن غير مشمول في هذا المبلغ ويُحدد لاحقاً. لا يتم تحصيل أي أموال حقيقية.</p></div>';
+  return '<div class="kp5-checkout-summary">'+totals+'<p class="kp5-note">الشحن غير مشمول في هذا المبلغ ويُحدد لاحقاً. لا يتم تحصيل أي أموال حقيقية.</p></div>';
  }
  function message(root,title,body,actions=''){setContent(root,`<div class="kp5-state"><h3>${esc(title)}</h3><p>${esc(body)}</p></div>`,actions)}
  async function checkout({items,shipping,onPaid}){
   const root=ensureModal(),couponPoints={};let idempotency=crypto.randomUUID(),quote,expandedStoreId=null;
-  const quoteNow=async()=>{quote=await call('quote',{items,coupon_points:couponPoints});setContent(root,reviewHtml(quote,couponPoints,expandedStoreId),'<button class="kp5-primary" data-confirm>تأكيد الطلب وحجز المنتجات</button><button class="kp5-secondary" data-cancel>رجوع إلى السلة</button>');root.querySelectorAll('[data-store-details]').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)expandedStoreId=d.dataset.storeDetails;else if(expandedStoreId===d.dataset.storeDetails)expandedStoreId=null}));root.querySelectorAll('[data-coupon-store]').forEach(s=>s.addEventListener('change',async()=>{expandedStoreId=s.dataset.couponStore;couponPoints[s.dataset.couponStore]=Number(s.value);try{await quoteNow()}catch(e){couponPoints[s.dataset.couponStore]=0;alert('القسيمة غير متاحة لهذا المتجر: '+e.message);await quoteNow()}}));root.querySelector('[data-confirm]').addEventListener('click',reserve);root.querySelector('[data-cancel]').addEventListener('click',()=>root.remove())};
+  const quoteNow=async()=>{quote=await call('quote',{items,coupon_points:couponPoints});setContent(root,reviewHtml(quote,couponPoints,expandedStoreId),checkoutSummaryHtml(quote)+'<div class="kp5-action-buttons"><button class="kp5-primary" data-confirm>تأكيد الطلب وحجز المنتجات</button><button class="kp5-secondary" data-cancel>رجوع إلى السلة</button></div>');root.querySelectorAll('[data-store-details]').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)expandedStoreId=d.dataset.storeDetails;else if(expandedStoreId===d.dataset.storeDetails)expandedStoreId=null}));root.querySelectorAll('[data-coupon-store]').forEach(s=>s.addEventListener('change',async()=>{expandedStoreId=s.dataset.couponStore;couponPoints[s.dataset.couponStore]=Number(s.value);try{await quoteNow()}catch(e){couponPoints[s.dataset.couponStore]=0;alert('القسيمة غير متاحة لهذا المتجر: '+e.message);await quoteNow()}}));root.querySelector('[data-confirm]').addEventListener('click',reserve);root.querySelector('[data-cancel]').addEventListener('click',()=>root.remove())};
   const reserve=async()=>{const btn=root.querySelector('[data-confirm]');if(btn)btn.disabled=true;try{const r=await call('reserve',{idempotency_key:idempotency,items,coupon_points:couponPoints});if(r.reused&&r.status==='paid'){await onPaid?.(r);root.remove();return}await start(r.attempt_id,r.kp_number)}catch(e){message(root,'تعذر تأكيد الطلب',e.message,'<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}};
   const start=async(attempt,kp)=>{try{await call('start',{attempt_id:attempt});paymentScreen(attempt,kp)}catch(e){message(root,'جارٍ التحقق','انقطع الاتصال أثناء بدء المحاولة. نتحقق من حالتها قبل أي إجراء.');void poll(attempt,kp)}};
   const showResult=async r=>{if(r.status==='paid'){await onPaid?.(r);message(root,'تم التسديد تجريبياً',`تم اعتماد الدفعة ${kp}، وأُنشئت الطلبات الأصلية لكل متجر. لا يوجد تحصيل حقيقي.`, '<button class="kp5-primary" data-done>عرض مدفوعاتي</button>');root.querySelector('[data-done]').onclick=()=>{root.remove();location.href='dashboard.html?tab=myPayments'}}else if(r.status==='failed'||r.status==='cancelled'){message(root,'لم يُعتمد الطلب',`حالة الدفعة ${kp}: ${r.status==='failed'?'مرفوضة':'ملغاة'}. لم تُنشأ طلبات تشغيلية، وبقيت السلة محفوظة.`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}else{message(root,'جارٍ التحقق',`حالة الدفعة ${kp} غير محسومة. سيبقى الحجز محفوظاً حتى المطابقة.`, '<button class="kp5-secondary" data-check>التحقق مجدداً</button>');root.querySelector('[data-check]').onclick=()=>poll(attempt,kp)}};
