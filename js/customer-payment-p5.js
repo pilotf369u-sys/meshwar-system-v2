@@ -52,6 +52,7 @@
       ?'<label class="kp5-coupon">قسيمة هذا المتجر<select data-coupon-store="'+esc(sid)+'"><option value="0">بدون قسيمة</option>'+couponOptions+'</select></label>'
       :'<p class="kp5-coupon-unavailable">لا توجد قسائم متاحة لهذا المتجر</p>';
     const couponStatus=storeDiscount>0?'تم تطبيق القسيمة':(tiers.length?'قسيمة متاحة':'بدون قسيمة');
+    const productCount=items.length===1?'منتج واحد':items.length===2?'منتجان':items.length+' منتجات';
     const summaryAmounts=storeDiscount>0
       ?'<div class="kp5-store-summary-values kp5-has-coupon">'+
        '<span class="kp5-store-before"><small>قبل القسيمة</small><del>'+money(originalStoreTotal,currency)+'</del></span>'+
@@ -59,7 +60,7 @@
        '<span class="kp5-store-after"><small>بعد القسيمة</small><strong>'+money(finalStoreTotal,currency)+'</strong></span></div>'
       :'<div class="kp5-store-summary-values kp5-no-coupon"><span><small>مجموع المتجر</small><strong>'+money(originalStoreTotal,currency)+'</strong></span></div>';
     return '<section class="kp5-store"><details class="kp5-store-details" data-store-details="'+esc(sid)+'" '+(expandedStoreId===sid?'open':'')+'>'+
-      '<summary><span class="kp5-store-summary-heading"><span class="kp5-store-name">'+esc(items[0].store_name)+'</span><span class="kp5-store-meta">'+items.length+' منتجات · '+couponStatus+'</span></span>'+
+      '<summary><span class="kp5-store-summary-heading"><span class="kp5-store-name">'+esc(items[0].store_name)+'</span><span class="kp5-store-meta">'+productCount+' · '+couponStatus+'</span></span>'+
       summaryAmounts+'</summary><div class="kp5-store-details-body">'+couponControl+
       '<div class="kp5-store-lines">'+items.map(lineHtml).join('')+'</div></div></details></section>';
   }).join('');
