@@ -36,8 +36,12 @@ const hidden=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:10000,curre
 assert.doesNotMatch(hidden,/<select data-coupon-store=/,'no coupon dropdown appears when none is available');
 assert.match(hidden,/<details class="kp5-store-details"[^>]*>/,'store is presented as a collapsible accordion');
 assert.doesNotMatch(hidden,/<details class="kp5-store-details"[^>]*\bopen\b/,'store details start collapsed');
-assert.match(hidden,/1 منتجات · بدون قسيمة/,'collapsed store summary includes product count and coupon state');
+assert.match(hidden,/منتج واحد · بدون قسيمة/,'collapsed store summary includes an Arabic product count and coupon state');
 assert.match(hidden,/لا توجد قسائم متاحة لهذا المتجر/);
+const manyLines=Array.from({length:20},(_,i)=>({...line,product_name:'Product '+(i+1),line_total_local:1000}));
+const manyHtml=window.KintoPaymentP5V1.reviewHtml({lines:manyLines,amount:20000,currency:'IQD',available_coupon_points:{'store-a':[]}}, {});
+assert.equal((manyHtml.match(/class="kp5-line"/g)||[]).length,20,'all 20 products remain available inside the collapsed store details');
+assert.match(manyHtml,/20 منتجات · بدون قسيمة/,'long-cart store summary shows the item count');
 const available=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:7000,currency:'IQD',available_coupon_points:{'store-a':[3000]}}, {});
 assert.match(available,/<option value="3000"/,'available store tier appears');
 assert.doesNotMatch(available,/<option value="1000"|<option value="5000"/,'unavailable tiers stay hidden');
