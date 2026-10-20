@@ -117,6 +117,15 @@ function makeEnvironment({ proof = true, canonicalOrder = null, throwRpc = false
   }
 
   {
+    const env = makeEnvironment();
+    env.order.details.source = 'local_cart_bundle';
+    env.dbOrder.details.source = 'local_cart_bundle';
+    const invoice = await env.context.kintoVendorPreparePaidElectronicInvoice(env.order, 'vendor-session-token');
+    assert.equal(invoice.order_code, 'KN-000123', 'legacy cart-bundle KN rows with server KP proof use the shared invoice');
+    assert.equal(env.state.rpcCalls.length, 1, 'cart source alone is never trusted; server proof is still required');
+  }
+
+  {
     const env = makeEnvironment({ proof: false });
     const invoice = await env.context.kintoVendorPreparePaidElectronicInvoice(env.order, 'vendor-session-token');
     assert.equal(invoice, null, 'a manual order or a failed/pending attempt has no electronic invoice route');
