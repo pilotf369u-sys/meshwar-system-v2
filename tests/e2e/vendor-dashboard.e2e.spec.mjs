@@ -79,7 +79,7 @@ test.describe('MeshWar vendor E2E integration gate',()=>{
 
   test('V95: secure store segments, full customer details and atomic status with legacy fallback',async({page})=>{
     const vendor=await openVendor(page);
-    await frameWindow(page,async()=>{sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token',expiresAt:new Date(Date.now()+3600000).toISOString()}));await window.loadOrders()});
+    await frameWindow(page,async()=>{window.__E2E_LEGACY_ONLY_VENDOR=false;sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token',expiresAt:new Date(Date.now()+3600000).toISOString()}));await window.loadOrders()});
     const segmentRow=vendor.locator('#ordersBody tr').filter({hasText:'KN-009501'});
     await expect(segmentRow).toHaveCount(1);await expect(segmentRow).toContainText('Segment Product');
     await expect(segmentRow.locator('td[data-label="المحافظة / المدينة"]')).toContainText('بغداد / الكرادة');
