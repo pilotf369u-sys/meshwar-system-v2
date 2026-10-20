@@ -562,7 +562,8 @@ async function kintoVendorPreparePaidElectronicInvoice(order,token){
   if(String(details?.source||'')!=='local_store'||String(details?.store_id||'').trim()!==storeId)throw new Error('تعذر إثبات ملكية المتجر للفاتورة.');
   const items=Array.isArray(details.items)?details.items:[];
   if(!items.length||items.some(item=>item?.store_id&&String(item.store_id).trim()!==storeId))throw new Error('بيانات منتجات الفاتورة لا تطابق هذا المتجر.');
-  return{...canonical,delivery_payment_type:'product_paid_delivery_cod',details:{...details,delivery_payment_type:'product_paid_delivery_cod',items}};
+  const storeName=String(details.store_name||vendorStore?.store_name||'المتجر'),subtotal=items.reduce((sum,item)=>sum+(Number(item.line_total_local)||((Number(item.unit_price_local)||0)*Math.max(1,Number(item.quantity)||1))),0);
+  return{...canonical,delivery_payment_type:'product_paid_delivery_cod',details:{...details,store_id:storeId,store_name:storeName,stores:[{store_id:storeId,store_name:storeName,subtotal_local:subtotal}],delivery_payment_type:'product_paid_delivery_cod',items}};
 }
 async function kintoVendorPrintPaidElectronicInvoice(orderId,popup){
   try{
