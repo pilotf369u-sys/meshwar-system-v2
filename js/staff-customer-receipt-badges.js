@@ -2,11 +2,24 @@
 (()=>{
 'use strict';
 const role=document.currentScript?.dataset.receiptRole;
-const config={employee:['KintoEmployeeSessionV143',()=>ensureEmployeeSupabase()],admin:['KintoAdminSessionV147',()=>ensureCustomerSupabase()],branch:['KintoBranchSessionV148',()=>getSb()]}[role];
+const config={employee:['KintoEmployeeSessionV143',()=>ensureEmployeeSupabase()],admin:['KintoAdminSessionV147',()=>ensureCustomerSupabase()],branch:['KintoBranchSessionV148',()=>getSb()],vendor:[null,()=>window.MeshwarVendorRuntime?.sb]}[role];
 if(!config)return;
 const selector='[data-customer-receipt-order]';
 let busy=false,timer,stamp='',last=0,sessionToken='',cached=new Set(),retryAt=0;
-const token=()=>String(window[config[0]]?.read?.()?.token||'');
+const token=()=>{
+ if(role!=='vendor')return String(window[config[0]]?.read?.()?.token||'');
+ const s=window.MeshwarVendorV94?.session?.(),store=window.MeshwarVendorRuntime?.getStore?.();
+ if(!s?.token||!store?.id||(s.storeId&&String(s.storeId)!==String(store.id)))return '';
+ if(s.expiresAt&&(!Number.isFinite(Date.parse(s.expiresAt))||Date.parse(s.expiresAt)<=Date.now()))return '';
+ return String(s.token);
+};
+function discoverVendorSlots(){
+ if(role!=='vendor')return;
+ document.querySelectorAll('#ordersBody tr[data-vendor-order-id]').forEach(row=>{
+  const cell=row.querySelector('[data-label="الحالة"]');if(!cell||cell.querySelector(selector))return;
+  const slot=document.createElement('div');slot.dataset.customerReceiptOrder=row.dataset.vendorOrderId;cell.prepend(slot);
+ });
+}
 function draw(slot,confirmed){
  if(!confirmed){if(slot.childNodes.length)slot.replaceChildren();return;}
  if(slot.querySelector('.customer-receipt-confirmed'))return;
@@ -21,12 +34,13 @@ function arrange(slot){
  let strip=slot.closest('.kinto-order-indicators');
  if(!strip){strip=document.createElement('div');strip.className='kinto-order-indicators';slot.before(strip);strip.appendChild(slot);}
  // Move the original nodes, preserving stock-warning click handlers and gift conditions.
- const stock=cell?.querySelector('[data-stock-icon-slot],[data-admin-stock-slot]');
+ const stock=cell?.querySelector('[data-stock-icon-slot],[data-admin-stock-slot],.vendor-order-icons-v66');
  if(stock&&stock.parentElement!==strip)strip.appendChild(stock);
 }
 function installIndicators(){
  const style=document.createElement('style');
  style.textContent='.kinto-order-indicators{display:flex;align-items:center;justify-content:flex-start;gap:4px;flex-wrap:nowrap;direction:rtl;width:max-content;max-width:100%}.kinto-order-indicators>div{flex:none;line-height:1}.kinto-order-indicators>div:empty{display:none}.kinto-order-indicators [data-stock-icon-slot] button,.kinto-order-indicators [data-stock-icon-slot] span[title],.kinto-order-indicators [data-admin-stock-slot] button,.kinto-order-indicators [data-admin-stock-slot] span[title]{font-size:18px!important;padding:2px!important;line-height:1!important}.kinto-order-indicators button:focus-visible,.kinto-order-indicators [tabindex]:focus-visible{outline:2px solid #d4af37;outline-offset:2px}';
+ style.textContent+='.kinto-order-indicators>.vendor-order-icons-v66{margin:0!important;gap:2px}.kinto-order-indicators .vendor-order-icons-v66 button,.kinto-order-indicators .vendor-order-icons-v66 span[title]{font-size:18px!important;padding:2px!important;line-height:1!important}';
  document.head.appendChild(style);
  let tip;
  const close=()=>{tip?.remove();tip=null};
@@ -46,7 +60,7 @@ function installIndicators(){
 }
 async function refresh(){
  if(busy||document.hidden)return;
- const slots=[...document.querySelectorAll(selector)];slots.forEach(arrange);const ids=[...new Set(slots.map(s=>s.dataset.customerReceiptOrder).filter(Boolean))],current=token(),key=current+'|'+ids.join(',');
+ discoverVendorSlots();const slots=[...document.querySelectorAll(selector)];slots.forEach(arrange);const ids=[...new Set(slots.map(s=>s.dataset.customerReceiptOrder).filter(Boolean))],current=token(),key=current+'|'+ids.join(',');
  if(current!==sessionToken){slots.forEach(s=>draw(s,false));sessionToken=current;stamp='';cached=new Set();retryAt=0;}
  if(!current||!ids.length||Date.now()<retryAt)return;
  if(key===stamp&&Date.now()-last<30000){slots.forEach(s=>draw(s,cached.has(s.dataset.customerReceiptOrder)));return;}
@@ -54,7 +68,7 @@ async function refresh(){
  try{
   const sb=await config[1](),confirmed=new Set();
   for(let i=0;i<ids.length;i+=100){
-   const {data,error}=await sb.rpc('staff_customer_receipts_v1',{p_role:role,p_session_token:current,p_order_ids:ids.slice(i,i+100)});
+   const {data,error}=await sb.rpc(role==='vendor'?'vendor_customer_receipts_v1':'staff_customer_receipts_v1',{...(role==='vendor'?{}:{p_role:role}),p_session_token:current,p_order_ids:ids.slice(i,i+100)});
    if(error)throw error;
    if(!Array.isArray(data))throw Error('RECEIPT_RESPONSE_INVALID');
    data.forEach(r=>{if(r.confirmed_at)confirmed.add(String(r.order_id))});
@@ -69,6 +83,6 @@ async function refresh(){
  }finally{busy=false;schedule();}
 }
 function schedule(){clearTimeout(timer);timer=setTimeout(refresh,150)}
-function start(){installIndicators();new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();document.addEventListener('visibilitychange',schedule);setInterval(refresh,30000)}
+function start(){installIndicators();new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();document.addEventListener('visibilitychange',schedule);window.addEventListener('meshwar:vendor-segment-adapter-ready',schedule);setInterval(refresh,30000)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
