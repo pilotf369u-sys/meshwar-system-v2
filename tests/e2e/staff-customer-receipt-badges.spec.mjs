@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 import fs from 'node:fs';
 const source=fs.readFileSync('js/staff-customer-receipt-badges.js','utf8');
-for(const role of ['employee','admin','branch'])test(`${role} receipt badge preserves warning, gift and unsaved fields`,async({page})=>{
+for(const role of ['employee','admin','branch','vendor'])test(`${role} receipt badge preserves warning, gift and unsaved fields`,async({page})=>{
  await page.setViewportSize(role==='admin'?{width:390,height:844}:{width:1100,height:800});
  await page.setContent('<table style="width:100px"><tbody><tr><td><div data-customer-receipt-order="confirmed"></div><div data-stock-icon-slot="confirmed"><span style="display:inline-flex;align-items:center;gap:2px"><button style="border:0;background:transparent" id="warning" title="تغيّر الطلب — فتح الفاتورة">⚠</button><span id="gift" title="طلب عروض" tabindex="0">🎁</span></span></div><select id="status"><option>تم التسليم</option></select></td></tr></tbody></table><div data-customer-receipt-order="delivered-only"></div><input id="price" value="218000">');
  await page.evaluate(({role,source})=>{
@@ -10,6 +10,8 @@ for(const role of ['employee','admin','branch'])test(`${role} receipt badge pres
   window.KintoEmployeeSessionV143=window.KintoAdminSessionV147=window.KintoBranchSessionV148=session;
   const client={rpc:async(name,args)=>{calls.push({name,args});return failReceipt?{error:{message:'unavailable'}}:{data:[{order_id:'confirmed',confirmed_at:'2026-10-21T00:00:00Z'}]}}};
   window.ensureEmployeeSupabase=window.ensureCustomerSupabase=window.getSb=async()=>client;
+  window.MeshwarVendorRuntime={sb:client,getStore:()=>({id:'store-a'})};
+  window.MeshwarVendorV94={session:()=>({token:sessionToken,storeId:'store-a',expiresAt:'2099-01-01'})};
   window.setInterval=fn=>{window.refreshReceipt=fn;return 1};
   const script=document.createElement('script');script.dataset.receiptRole=role;script.textContent=source;document.body.appendChild(script);
  },{role,source});
@@ -35,7 +37,8 @@ for(const role of ['employee','admin','branch'])test(`${role} receipt badge pres
  await expect(page.locator('#price')).toHaveValue('999');
  await expect(page.locator('#warning')).toHaveText('⚠');await expect(page.locator('#gift')).toHaveText('🎁');
  expect(await page.evaluate(()=>calls.length)).toBe(1);
- expect(await page.evaluate(()=>calls[0].args.p_role)).toBe(role);
+ expect(await page.evaluate(()=>calls[0].args.p_role)).toBe(role==='vendor'?undefined:role);
+ expect(await page.evaluate(()=>calls[0].name)).toBe(role==='vendor'?'vendor_customer_receipts_v1':'staff_customer_receipts_v1');
  // A different session cannot retain the previous account's proof if verification fails.
  await page.evaluate(()=>{window.sessionToken='session-b';window.failReceipt=true;window.refreshReceipt()});
  await expect(page.locator('.customer-receipt-confirmed')).toHaveCount(0);
