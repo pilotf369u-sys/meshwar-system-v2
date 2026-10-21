@@ -10,7 +10,7 @@ test('all original and external-shipping staff save handlers use sessions and pr
   assert(!/from\('orders'\)\.update\((?:payload|orderPatch)\)/.test(s));
   assert(s.includes("rpc('kinto_approve_paid_order_v1'"));
  }
- assert(fs.readFileSync('external-shipping-shell.html','utf8').includes('external-shipping-native-order-render-v1.js?v=20261018-coupon-finance-v1'));
+ assert(fs.readFileSync('external-shipping-shell.html','utf8').includes('external-shipping-native-order-render-v1.js?v=20261021-receipt-badges-v1'));
 });
 test('price guard is staged separately from additive SQL, and rollback preserves existing guards',()=>{
  const additive=fs.readFileSync('sql/kinto-order-save-session-v1.sql','utf8');
