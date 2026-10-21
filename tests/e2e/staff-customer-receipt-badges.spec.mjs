@@ -2,7 +2,6 @@ import {test,expect} from '@playwright/test';
 import fs from 'node:fs';
 const source=fs.readFileSync('js/staff-customer-receipt-badges.js','utf8');
 for(const role of ['employee','admin','branch'])test(`${role} receipt badge preserves warning, gift and unsaved fields`,async({page})=>{
- await page.goto('/');
  await page.setContent('<main><span id="warning">⚠</span><span id="gift">🎁</span><div data-customer-receipt-order="confirmed"></div><div data-customer-receipt-order="delivered-only"></div><input id="price" value="218000"><select id="status"><option>تم التسليم</option></select></main>');
  await page.evaluate(({role,source})=>{
   window.sessionToken='session-a';window.calls=[];window.failReceipt=false;
@@ -29,7 +28,7 @@ for(const role of ['employee','admin','branch'])test(`${role} receipt badge pres
  await expect(page.locator('#price')).toHaveValue('999');
 });
 test('receipt lookups batch at 100 and do not write order data',async({page})=>{
- await page.goto('/');await page.setContent('<main></main>');
+ await page.setContent('<main></main>');
  await page.evaluate(source=>{
   window.calls=[];window.KintoBranchSessionV148={read:()=>({token:'branch-session'})};
   window.getSb=async()=>({rpc:async(name,args)=>{calls.push({name,args});return {data:[]}}});

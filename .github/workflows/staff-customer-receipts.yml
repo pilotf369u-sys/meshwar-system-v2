@@ -14,6 +14,7 @@ jobs:
         options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
+      - run: node tests/staff-receipt-page-syntax.test.cjs
       - run: psql -h localhost -U postgres -d postgres -f tests/sql/staff-customer-receipts-v1.sql
         env:
           PGPASSWORD: postgres
