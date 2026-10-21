@@ -1,0 +1,40 @@
+import {test,expect} from '@playwright/test';
+import fs from 'node:fs';
+const html=fs.readFileSync('dashboard.html','utf8');
+const functions=['customerDecisionPageStyle','customerReceiptState','confirmCustomerReceipt','openCustomerReviewsFromInvoice','appendCustomerDeliveryPage'].map(name=>html.split('\n').find(line=>line.startsWith('function '+name+'(')||line.startsWith('async function '+name+'('))).join('\n');
+for(const mobile of [false,true])test(`electronic invoice receipt and review ${mobile?'mobile':'desktop'}`,async({page})=>{
+ await page.setViewportSize(mobile?{width:390,height:844}:{width:1200,height:900});
+ await page.goto('/');
+ await page.setContent('<button class="review-tab-btn">تقييماتي</button><main class="invoice"><div class="actions">طباعة</div></main>');
+ await page.evaluate(()=>{
+  window.currentCustomerOrdersGlobal=[];window.calls=[];window.receipt={confirmed:false};window.failConfirm=false;
+  window.KintoCustomerSessionV150={read:()=>({token:'test-session'})};
+  window.ensureCustomerPortalSupabase=async()=>({rpc:async(name,args)=>{calls.push({name,args});if(name==='customer_confirm_order_receipt_v60'){if(failConfirm)return {error:{message:'rejected'}};receipt={confirmed:true};}return {data:receipt}}});
+  window.KintoBundleV93={printInvoice:async()=>window};
+  document.querySelector('.review-tab-btn').onclick=()=>window.reviewOpened=true;
+  window.close=()=>{};Object.defineProperty(window,'opener',{value:window,configurable:true});
+ });
+ await page.addScriptTag({content:functions});
+ await page.addScriptTag({path:'js/customer-invoice-receipt.js'});
+ await page.evaluate(()=>KintoBundleV93.printInvoice({id:'paid-order',status:'تم الشحن'}));
+ await expect(page.locator('.customer-delivery-confirm')).toHaveCount(0);
+ await page.evaluate(()=>KintoBundleV93.printInvoice({id:'paid-order',status:'تم التسليم'}));
+ await expect(page.locator('.customer-delivery-confirm')).toBeVisible();
+ await expect(page.locator('.customer-delivery-review')).toHaveCount(0);
+ await page.evaluate(()=>window.failConfirm=true);
+ page.once('dialog',dialog=>dialog.accept());
+ await page.locator('.customer-delivery-confirm').click();
+ await expect(page.locator('.customer-delivery-confirm')).toBeEnabled();
+ await expect(page.locator('.customer-delivery-review')).toHaveCount(0);
+ await page.evaluate(()=>window.failConfirm=false);
+ // No index lookup: this order is from My Payments and absent from the My Orders array.
+ await page.locator('.customer-delivery-confirm').click();
+ await expect(page.locator('.customer-delivery-review')).toBeVisible();
+ await expect(page.locator('#customerDeliveryConfirmation')).toContainText('رأيك يسعدنا');
+ await expect(page.locator('.customer-delivery-confirm')).toHaveCount(0);
+ expect(await page.evaluate(()=>calls.find(c=>c.name==='customer_confirm_order_receipt_v60').args)).toEqual({p_session_token:'test-session',p_order_id:'paid-order'});
+ await page.evaluate(()=>KintoBundleV93.printInvoice({id:'paid-order',status:'تم التسليم'}));
+ await expect(page.locator('#customerDeliveryConfirmation')).toHaveCount(1);
+ await page.locator('.customer-delivery-review').click();
+ expect(await page.evaluate(()=>reviewOpened)).toBe(true);
+});
