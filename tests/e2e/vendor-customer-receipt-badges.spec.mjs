@@ -6,6 +6,9 @@ for(const segments of [false,true])test('vendor receipt badge in actual '+(segme
  await page.addInitScript(()=>{window.__E2E_CUSTOMER_RECEIPT_IDS=['o-paid','global-e2e-1']});
  const frame=await openVendor(page,{authenticated:segments});
  await frameWindow(page,()=>{
+  // Persist the campaign in the mock source too: initial/background reads must retain it.
+  const seeded=window.__MESH_E2E_DB.orders.find(o=>o.id==='o-paid');
+  if(seeded)seeded.details={...(typeof seeded.details==='string'?JSON.parse(seeded.details):seeded.details),deal_campaign_id:'receipt-test-campaign'};
   const rt=window.MeshwarVendorRuntime;
   rt.setOrders(rt.getOrders().filter(o=>['o-paid','o-unpaid','global-e2e-1'].includes(o._v95OrderId||o.id)).map(o=>o.id==='o-paid'?{...o,details:{...(typeof o.details==='string'?JSON.parse(o.details):o.details),deal_campaign_id:'receipt-test-campaign'}}:o));
   window.renderVendorOrders();window.MeshwarVendorOrderIndicatorsV66?.decorate();
