@@ -24,7 +24,7 @@ set role anon;
 do $$declare ids uuid[]:=array['00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000004']::uuid[];n int;r text;begin
  foreach r in array array['admin','employee','branch'] loop
  select count(*) into n from staff_customer_receipts_v1(r,'valid',ids);
- if n!=case when r='branch' then 1 else 2 end then raise exception 'WRONG_VISIBILITY % %',r,n;end if;
+ if n!=(case when r='branch' then 1 else 2 end) then raise exception 'WRONG_VISIBILITY % %',r,n;end if;
  end loop;
  if exists(select 1 from staff_customer_receipts_v1('branch','valid',null)) then raise exception 'NULL_IDS';end if;
  begin perform * from staff_customer_receipts_v1('employee','invalid',ids);raise exception 'AUTH_BYPASS';exception when insufficient_privilege then null;end;
