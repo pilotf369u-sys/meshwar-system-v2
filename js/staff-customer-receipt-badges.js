@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const role=document.currentScript?.dataset.receiptRole;
-const config={employee:['KintoEmployeeSessionV143',()=>ensureEmployeeSupabase()],admin:['KintoAdminSessionV147',()=>ensureCustomerSupabase()],branch:['KintoBranchSessionV148',()=>getSb()],vendor:[null,()=>window.MeshwarVendorRuntime?.sb]}[role];
+const config={employee:['KintoEmployeeSessionV143',()=>ensureEmployeeSupabase()],admin:['KintoAdminSessionV147',()=>ensureCustomerSupabase()],branch:['KintoBranchSessionV148',()=>getSb()],courier:['KintoCourierSessionV149',()=>getDeliverySb()],vendor:[null,()=>window.MeshwarVendorRuntime?.sb]}[role];
 if(!config)return;
 const selector='[data-customer-receipt-order]';
 let busy=false,timer,stamp='',last=0,sessionToken='',cached=new Set(),retryAt=0;
@@ -53,7 +53,7 @@ function installIndicators(){
   tip.style.top=(r.bottom+b.height+8<window.innerHeight?r.bottom+5:Math.max(8,r.top-b.height-5))+'px';
  }
  const target=e=>{const el=e.target.closest?.('[title]');return el?.closest('.kinto-order-indicators')?el:null};
- document.addEventListener('click',e=>{const el=target(e);if(el)show(el);else close()});
+ document.addEventListener('click',e=>{const el=target(e);if(el){if(role==='courier'&&el.matches('.customer-receipt-confirmed'))e.stopPropagation();show(el)}else close()},{capture:role==='courier'});
  document.addEventListener('focusin',e=>{const el=target(e);if(el)show(el)});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')close();else if((e.key==='Enter'||e.key===' ')&&target(e)?.matches('span[title]')){e.preventDefault();show(target(e))}});
  window.addEventListener('scroll',close,true);
@@ -68,7 +68,7 @@ async function refresh(){
  try{
   const sb=await config[1](),confirmed=new Set();
   for(let i=0;i<ids.length;i+=100){
-   const {data,error}=await sb.rpc(role==='vendor'?'vendor_customer_receipts_v1':'staff_customer_receipts_v1',{...(role==='vendor'?{}:{p_role:role}),p_session_token:current,p_order_ids:ids.slice(i,i+100)});
+   const {data,error}=await sb.rpc(role==='vendor'?'vendor_customer_receipts_v1':role==='courier'?'courier_customer_receipts_v1':'staff_customer_receipts_v1',{...(['vendor','courier'].includes(role)?{}:{p_role:role}),p_session_token:current,p_order_ids:ids.slice(i,i+100)});
    if(error)throw error;
    if(!Array.isArray(data))throw Error('RECEIPT_RESPONSE_INVALID');
    data.forEach(r=>{if(r.confirmed_at)confirmed.add(String(r.order_id))});
