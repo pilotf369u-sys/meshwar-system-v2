@@ -17,11 +17,11 @@ function draw(slot,confirmed){
  slot.appendChild(badge);
 }
 function arrange(slot){
- const cell=slot.closest('td')||slot.parentElement;if(!cell)return;
+ const cell=slot.closest('td');if(!slot.parentElement)return;
  let strip=slot.closest('.kinto-order-indicators');
  if(!strip){strip=document.createElement('div');strip.className='kinto-order-indicators';slot.before(strip);strip.appendChild(slot);}
  // Move the original nodes, preserving stock-warning click handlers and gift conditions.
- const stock=cell.querySelector('[data-stock-icon-slot],[data-admin-stock-slot]');
+ const stock=cell?.querySelector('[data-stock-icon-slot],[data-admin-stock-slot]');
  if(stock&&stock.parentElement!==strip)strip.appendChild(stock);
 }
 function installIndicators(){
