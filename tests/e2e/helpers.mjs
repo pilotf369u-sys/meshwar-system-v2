@@ -26,7 +26,7 @@ export function fixtureDb(){
 }
 
 const mockSupabaseModule=String.raw`
-export function createClient(){
+export function createClient(_url,_key,options={}){
   const db=globalThis.__MESH_E2E_DB;
   const matches=(row,filters)=>filters.every(([k,v])=>String(row?.[k]??'')===String(v));
   class Query{
@@ -36,6 +36,12 @@ export function createClient(){
     async single(){const result=await this.maybeSingle();return result.data?result:{data:null,error:{message:'ROW_NOT_FOUND'}}}
     insert(rows){this.mode='insert';this.payload=Array.isArray(rows)?rows:[rows];return this} update(payload){this.mode='update';this.payload=payload;return this} delete(){this.mode='delete';return this}
     async exec(){
+      if(this.table==='local_products'&&this.mode!=='select'&&options.global?.fetch){
+        const u=new URL('https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/local_products');u.searchParams.set('select','*');
+        for(const[k,v]of this.filters)u.searchParams.append(k,v===null?'is.null':'eq.'+v);
+        const response=await options.global.fetch(u.href,{method:{insert:'POST',update:'PATCH',delete:'DELETE'}[this.mode],headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:this.mode==='delete'?undefined:JSON.stringify(this.payload)});
+        const data=await response.json();return response.ok?{data,error:null}:{data:null,error:data};
+      }
       const rows=db[this.table]||(db[this.table]=[]);
       if(this.mode==='insert'){const now=new Date().toISOString();const added=this.payload.map((r,i)=>({...r,id:r.id||'e2e-'+Date.now()+'-'+i,created_at:r.created_at||now,updated_at:r.updated_at||now}));rows.push(...added);return{data:added,error:null};}
       const selected=rows.filter(r=>matches(r,this.filters));
@@ -45,7 +51,7 @@ export function createClient(){
     }
     then(resolve,reject){return this.exec().then(resolve,reject)}
   }
-  return{from:table=>new Query(table),rpc:async(name,args)=>{(globalThis.__MESH_E2E_RPC_CALLS||(globalThis.__MESH_E2E_RPC_CALLS=[])).push({name,args});if(name==='customer_session_identity_v150')return{data:{ok:true,customer:db.customers[0]},error:null};if(name==='customer_review_login_v132')return{data:{ok:true,session_token:'e2e-review-token',expires_at:new Date(Date.now()+3600000).toISOString()},error:null};if(name==='customer_review_ready_products_v132')return{data:{items:[{order_id:'o-paid',product_id:'p-1',product_name:'Test Product 01',product_image:'',ready_for_review:true,review_id:null}],ready_count:1},error:null};if(name==='vendor_dashboard_summary_v166')return{data:globalThis.__E2E_DASHBOARD_SUMMARY_V166||{currencies:[]},error:null};if(name==='vendor_login')return{data:globalThis.__MESH_E2E_STORE,error:null};if(name==='vendor_login_session')return{data:{store:globalThis.__MESH_E2E_STORE,session_token:'e2e-secure-token',expires_at:new Date(Date.now()+3600000).toISOString()},error:null};if(name==='vendor_list_order_segments')return{data:db.order_store_segments.map(({customer,...row})=>row),error:null};if(name==='vendor_get_order_segment_details'){const row=db.order_store_segments.find(x=>x.segment_id===args.p_segment_id);return{data:row?{...row,items:row.items_preview,customer_snapshot:row.customer}:null,error:row?null:{message:'ORDER_SEGMENT_NOT_FOUND'}}}if(name==='vendor_advance_order_segment_status'){const row=db.order_store_segments.find(x=>x.segment_id===args.p_segment_id);if(!row||row.store_status!==args.p_expected_status)return{data:null,error:{message:'ORDER_STATUS_CONFLICT'}};row.store_status=args.p_next_status;globalThis.__MESH_E2E_CANONICAL_STATUS={order_id:row.order_id,status:args.p_next_status};const order=db.orders.find(x=>x.id===row.order_id);if(order)order.status=args.p_next_status;return{data:{segment_id:row.segment_id,order_id:row.order_id,store_status:row.store_status,canonical_order_status:row.store_status},error:null}}return{data:{ok:true,args},error:null}},storage:{from:()=>({upload:async()=>({error:null}),getPublicUrl:()=>({data:{publicUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}})})},channel:()=>({on(_event,filter,handler){if(filter?.table==='orders')globalThis.__MESH_E2E_ORDERS_REALTIME=handler;return this},subscribe(){return this}}),removeChannel:async()=>{}};
+  return{from:table=>new Query(table==='kinto_local_stores_public_v1'?'local_stores':table),rpc:async(name,args)=>{(globalThis.__MESH_E2E_RPC_CALLS||(globalThis.__MESH_E2E_RPC_CALLS=[])).push({name,args});if(name==='customer_session_identity_v150')return{data:{ok:true,customer:db.customers[0]},error:null};if(name==='customer_review_login_v132')return{data:{ok:true,session_token:'e2e-review-token',expires_at:new Date(Date.now()+3600000).toISOString()},error:null};if(name==='customer_review_ready_products_v132')return{data:{items:[{order_id:'o-paid',product_id:'p-1',product_name:'Test Product 01',product_image:'',ready_for_review:true,review_id:null}],ready_count:1},error:null};if(name==='vendor_dashboard_summary_v166')return{data:globalThis.__E2E_DASHBOARD_SUMMARY_V166||{currencies:[]},error:null};if(name==='vendor_login')return{data:globalThis.__MESH_E2E_STORE,error:null};if(name==='vendor_login_session')return{data:{store:globalThis.__MESH_E2E_STORE,session_token:'e2e-secure-token',expires_at:new Date(Date.now()+3600000).toISOString()},error:null};if(name==='vendor_list_order_segments')return{data:(globalThis.__E2E_LEGACY_ONLY_VENDOR?[]:db.order_store_segments).map(({customer,...row})=>row),error:null};if(name==='vendor_get_order_segment_details'){const row=db.order_store_segments.find(x=>x.segment_id===args.p_segment_id);return{data:row?{...row,items:row.items_preview,customer_snapshot:row.customer}:null,error:row?null:{message:'ORDER_SEGMENT_NOT_FOUND'}}}if(name==='vendor_paid_electronic_invoice_orders_v1'){const ids=new Set((globalThis.__E2E_PAID_ELECTRONIC_ORDER_IDS||[]).map(String));return{data:(args.p_order_ids||[]).filter(id=>ids.has(String(id))).map(order_id=>({order_id:String(order_id)})),error:null}}if(name==='vendor_advance_order_segment_status'){const row=db.order_store_segments.find(x=>x.segment_id===args.p_segment_id);if(!row||row.store_status!==args.p_expected_status)return{data:null,error:{message:'ORDER_STATUS_CONFLICT'}};row.store_status=args.p_next_status;globalThis.__MESH_E2E_CANONICAL_STATUS={order_id:row.order_id,status:args.p_next_status};const order=db.orders.find(x=>x.id===row.order_id);if(order)order.status=args.p_next_status;return{data:{segment_id:row.segment_id,order_id:row.order_id,store_status:row.store_status,canonical_order_status:row.store_status},error:null}}return{data:{ok:true,args},error:null}},storage:{from:()=>({upload:async()=>({error:null}),getPublicUrl:()=>({data:{publicUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}})})},channel:()=>({on(_event,filter,handler){if(filter?.table==='orders')globalThis.__MESH_E2E_ORDERS_REALTIME=handler;return this},subscribe(){return this}}),removeChannel:async()=>{}};
 }
 `;
 
@@ -69,7 +75,8 @@ function initBrowserFixture({db,store}){
   };
   window.fetch=async(input,init={})=>{
     const url=typeof input==='string'?input:String(input?.url||'');if(!url.startsWith(SB))return nativeFetch(input,init);
-    const u=new URL(url),table=u.pathname.split('/').pop(),method=String(init.method||'GET').toUpperCase();
+    const u=new URL(url),method=String(init.method||'GET').toUpperCase();let table=u.pathname.split('/').pop();if(table==='kinto_local_stores_public_v1')table='local_stores';
+    if(table==='kinto_store_operation_session_v1'){const a=JSON.parse(init.body||'{}');if(a.p_session_token!=='e2e-secure-token')return new Response(JSON.stringify({message:'STORE_SESSION_INVALID'}),{status:401});table=a.p_operation;init={...init,body:JSON.stringify(a.p_args)}}
     if(table==='vendor_get_profit_margin'&&method==='POST')return new Response(JSON.stringify(window.__MESH_E2E_STORE.profit_margin_percent??null),{status:200,headers:{'content-type':'application/json'}});
     if(table==='vendor_set_profit_margin'&&method==='POST'){
       const body=JSON.parse(init.body||'{}'),margin=Number(body.p_margin);window.__MESH_E2E_STORE.profit_margin_percent=margin;
@@ -85,6 +92,32 @@ function initBrowserFixture({db,store}){
       const body=JSON.parse(init.body||'{}'),rows=window.__MESH_E2E_DB.vendor_operating_expenses||(window.__MESH_E2E_DB.vendor_operating_expenses=[]),now=new Date().toISOString();
       const row={id:'rpc-'+Date.now(),store_id:String(body.p_store_id||''),amount:Number(body.p_amount),currency:body.p_currency||null,category:body.p_category||'تشغيلي',note:body.p_note||null,expense_date:body.p_expense_date||now.slice(0,10),created_at:now,updated_at:now};rows.push(row);
       return new Response(JSON.stringify(row),{status:200,headers:{'content-type':'application/json'}});
+    }
+    if(table==='kinto_category_write_session_v1'&&method==='POST'){
+      const a=JSON.parse(init.body||'{}'),sid=window.__MESH_E2E_STORE.id;if(a.p_session_token!=='e2e-secure-token')return new Response(JSON.stringify({message:'SESSION_INVALID'}),{status:401});
+      const rows=window.__MESH_E2E_DB.store_categories;let selected=rows.filter(r=>r.id===a.p_id&&r.store_id===sid);
+      if(a.p_action==='insert'){const row={...a.p_patch,id:'category-rpc-'+Date.now(),store_id:sid};rows.push(row);selected=[row]}
+      if(a.p_action==='update')selected.forEach(r=>Object.assign(r,a.p_patch));if(a.p_action==='delete')for(let i=rows.length-1;i>=0;i--)if(selected.includes(rows[i]))rows.splice(i,1);
+      return new Response(JSON.stringify(selected),{status:200,headers:{'Content-Type':'application/json'}});
+    }
+    if(['kinto_vendor_products_read_session_v1','kinto_vendor_orders_read_session_v1'].includes(table)&&method==='POST'){
+      const args=JSON.parse(init.body||'{}');if(args.p_session_token!=='e2e-secure-token')return new Response(JSON.stringify({message:'VENDOR_SESSION_INVALID'}),{status:401});
+      const sid=window.__MESH_E2E_STORE.id,source=table.includes('products')?window.__MESH_E2E_DB.local_products:window.__MESH_E2E_DB.orders;
+      let selected=source.filter(r=>{if(table.includes('products'))return r.store_id===sid;let d=r.details;if(typeof d==='string'){try{d=JSON.parse(d)}catch{d={}}}return d?.store_id===sid||(d?.items||[]).some(i=>i.store_id===sid)});
+      selected=applyFilters(selected,u.searchParams);return new Response(JSON.stringify(selected),{status:200,headers:{'content-type':'application/json'}});
+    }
+    if(table==='kinto_vendor_product_write_session_v1'&&method==='POST'){
+      const args=JSON.parse(init.body||'{}'),sid=window.__MESH_E2E_STORE.id,rows=window.__MESH_E2E_DB.local_products;
+      (window.__MESH_E2E_PRODUCT_WRITES||(window.__MESH_E2E_PRODUCT_WRITES=[])).push(args);
+      if(args.p_session_token!=='e2e-secure-token'||(args.p_patch?.store_id&&args.p_patch.store_id!==sid))return new Response(JSON.stringify({message:'VENDOR_SESSION_INVALID'}),{status:400});
+      if(window.__MESH_E2E_BEFORE_PRODUCT_WRITE)await window.__MESH_E2E_BEFORE_PRODUCT_WRITE(args);
+      let selected=rows.filter(r=>r.id===args.p_id&&r.store_id===sid);
+      for(const f of args.p_filters||[])selected=selected.filter(r=>f.op==='is'?r[f.field]==null:f.field==='options'?JSON.stringify(r.options)===JSON.stringify(f.value):String(r[f.field]??'')===String(f.value));
+      if(args.p_action==='update'&&!selected.length)console.warn('E2E product CAS conflict',JSON.stringify({filters:args.p_filters,actual:rows.find(r=>r.id===args.p_id)}));
+      if(args.p_action==='insert'){const row={...args.p_patch,store_id:sid,id:'rpc-product-'+Date.now(),created_at:new Date().toISOString(),updated_at:new Date().toISOString()};rows.push(row);selected=[row]}
+      if(args.p_action==='update')selected.forEach(r=>Object.assign(r,args.p_patch,{updated_at:new Date().toISOString()}));
+      if(args.p_action==='delete')for(let i=rows.length-1;i>=0;i--)if(selected.includes(rows[i]))rows.splice(i,1);
+      return new Response(JSON.stringify(selected),{status:200,headers:{'content-type':'application/json'}});
     }
     const rows=window.__MESH_E2E_DB[table]||(window.__MESH_E2E_DB[table]=[]);let selected=applyFilters(rows,u.searchParams);
     if(method==='PATCH'){const body=JSON.parse(init.body||'{}');selected.forEach(r=>Object.assign(r,body));return new Response(JSON.stringify(selected),{status:200,headers:{'content-type':'application/json'}})}
@@ -103,7 +136,7 @@ export async function installMocks(page){
   await page.context().route('https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',r=>r.fulfill({status:200,contentType:'text/javascript',body:"window.JsBarcode=function(){return true};window.print=function(){};"}));return db;
 }
 
-export async function openVendor(page){await page.goto('/vendor-dashboard.html');const frame=page.frameLocator('#vendorFrame');await frame.locator('#dashboardView').waitFor({state:'visible'});await frame.locator('#vendorOrderSmartSearch').waitFor();await frame.locator('#vendorTabBtn-categories').waitFor();return frame;}
+export async function openVendor(page,{authenticated=false}={}){await page.addInitScript(includeSegments=>{sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token',expiresAt:'2099-01-01'}));window.__E2E_LEGACY_ONLY_VENDOR=!includeSegments},authenticated);await page.goto('/vendor-dashboard.html');const frame=page.frameLocator('#vendorFrame');await frame.locator('#dashboardView').waitFor({state:'visible'});await frame.locator('#vendorOrderSmartSearch').waitFor();await frame.locator('#vendorTabBtn-categories').waitFor();return frame;}
 
 export async function frameWindow(page,fn,arg){
   let last;

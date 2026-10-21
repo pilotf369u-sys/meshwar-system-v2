@@ -1,0 +1,18 @@
+import {test,expect} from '@playwright/test';
+const aid='00000000-0000-0000-0000-000000000010',bid='00000000-0000-0000-0000-000000000030',cid='00000000-0000-0000-0000-000000000001';
+async function mock(page){
+ await page.addInitScript(({aid,bid,cid})=>{sessionStorage.setItem('kinto_admin_session_v147',JSON.stringify({token:'admin-e2e-token',expiresAt:'2099-01-01',admin:{id:aid}}));window.__directoryTest={calls:[],directCustomerCalls:0,customer:{id:cid,name:'Session Customer',phone:'07701234567',secondary_phone:'07801234567',code:'C-1',state:'Erbil',address:'Complete delivery address',country:'Iraq',created_at:'2026-10-01'}};},{aid,bid,cid});
+ await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm',r=>r.fulfill({contentType:'text/javascript',body:`export function createClient(){const t=window.__directoryTest;class Query{constructor(table){this.table=table}select(value){if(String(value).includes('customers!'))throw Error('RAW_CUSTOMER_JOIN_FORBIDDEN');return this}eq(){return this}in(){return this}not(){return this}or(){return this}order(){return this}range(){return this}limit(){return this}maybeSingle(){return this}then(ok,bad){return Promise.resolve({data:this.table==='orders'?[{id:'order-one',customer_id:'${cid}',branch_id:'${bid}',order_code:'KN-TEST',customer_name:'Session Customer',total_price:50,currency:'IQD',created_at:'2026-10-01',status:'محولة إلى الفرع',details:'{}'}]:[],count:0,error:null}).then(ok,bad)}}return {from:table=>{if(table==='customers'){t.directCustomerCalls++;throw Error('DIRECT_CUSTOMER_TABLE_FORBIDDEN')}return new Query(table)},rpc:async(name,args)=>{t.calls.push({name,args});if(name==='admin_session_identity_v147')return {data:{ok:true,admin:{id:'${aid}',role:'admin',name:'Admin'}}};if(name==='kinto_staff_directory_session_v1')return {data:args.p_table==='branches'?[{id:'${bid}',name:'Session Branch'}]:[]};if(name==='kinto_customer_directory_session_v1')return {data:{rows:[t.customer],count:1}};if(name==='get_site_settings')return {data:{}};return {data:{}}},channel:()=>({on(){return this},subscribe(){return this}})}}`}));
+ page.on('dialog',d=>d.accept());
+}
+test('admin customer list and search hydrate from session RPC after raw table access is denied',async({page})=>{
+ await mock(page);await page.goto('/admin-dashboard.html?adminId='+aid);await page.waitForFunction(()=>typeof loadCustomers==='function');await page.evaluate(()=>{showSection('customers');return loadCustomers()});
+ await expect(page.locator('#custTableBody')).toContainText('Session Customer');await expect(page.locator('#custTableBody')).toContainText('Complete delivery address');
+ await page.locator('#customerSearchInput').fill('Session');await page.evaluate(()=>loadCustomers());
+ const result=await page.evaluate(()=>__directoryTest);expect(result.directCustomerCalls).toBe(0);expect(result.calls.some(x=>x.name==='kinto_customer_directory_session_v1'&&x.args.p_search==='Session')).toBeTruthy();
+});
+test('branch manifest retains phone, province, address and customer code without a raw join',async({page})=>{
+ await mock(page);await page.goto('/branch-manifest.html?adminId='+aid+'&branchId='+bid);
+ await expect(page.locator('#manifestBody')).toContainText('Complete delivery address');await expect(page.locator('#manifestBody')).toContainText('Erbil');await expect(page.locator('#manifestBody')).toContainText('07701234567');await expect(page.locator('#manifestBody')).toContainText('C-1');
+ const result=await page.evaluate(()=>__directoryTest);expect(result.directCustomerCalls).toBe(0);const call=result.calls.find(x=>x.name==='kinto_customer_directory_session_v1');expect(call.args.p_role).toBe('admin');expect(call.args.p_session_token).toBe('admin-e2e-token');
+});

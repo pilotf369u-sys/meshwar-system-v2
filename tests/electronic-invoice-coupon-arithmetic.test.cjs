@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../js/kinto-bundle-ui-v93.js'),'utf8');
+const names=['details','collectionInfo','rewardInfo','paidGoodsInfo'];
+const bodies=names.map(name=>source.split('\n').find(line=>line.startsWith('function '+name+'('))).join('\n');
+const first=(...values)=>{for(const value of values)if(value!==null&&value!==undefined&&String(value).trim())return String(value).trim();return ''};
+const paidGoodsInfo=new Function('first',bodies+';return paidGoodsInfo')(first);
+const order={total_price:218000,currency:'IQD',delivery_payment_type:'product_paid_delivery_cod',reward_discount_amount:1000,reward_discount_currency:'IQD',details:{items:[{line_total_local:49000},{line_total_local:123000},{line_total_local:46000}]}};
+const before=JSON.stringify(order),group={subtotal_local:218000,currency:'IQD'};
+assert.equal(order.details.items.reduce((sum,item)=>sum+item.line_total_local,0),218000);
+assert.deepEqual(paidGoodsInfo(order,group),{currency:'IQD',gross:218000,coupon:1000,net:217000,discounted:true});
+assert.equal(paidGoodsInfo({...order,reward_discount_amount:0},group).net,218000);
+assert.equal(paidGoodsInfo({...order,reward_discount_currency:'USD'},group).net,218000);
+assert.equal(paidGoodsInfo({...order,total_price:500},group).net,0);
+assert.equal(paidGoodsInfo({...order,delivery_payment_type:'cod_full'},group),null);
+assert.equal(paidGoodsInfo({...order,delivery_payment_type:'paid_prepaid'},group),null);
+assert.equal(JSON.stringify(order),before);
+console.log('PASS electronic invoice gross minus coupon; manual invoices and saved order unchanged');

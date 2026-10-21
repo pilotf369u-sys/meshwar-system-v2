@@ -1,0 +1,96 @@
+(() => {
+ 'use strict';
+ const PRODUCTION_URL='https://hsmmbloouskqdnptiiad.supabase.co';
+ const PRODUCTION_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const config=()=>window.KINTO_PAYMENT_P5_CONFIG||{url:PRODUCTION_URL,anonKey:PRODUCTION_KEY};
+ const token=()=>String(window.KintoCustomerSessionV150?.read?.()?.token||'').trim();
+ async function call(action,payload={}){
+  const cfg=config(), session=token(); if(!session)throw new Error('CUSTOMER_SESSION_REQUIRED');
+  const r=await fetch(`${String(cfg.url).replace(/\/$/,'')}/functions/v1/kinto-payment-p5`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',apikey:cfg.anonKey,Authorization:`Bearer ${cfg.anonKey}`},body:JSON.stringify({action,session_token:session,...payload})});
+  const j=await r.json().catch(()=>({}));if(!r.ok||j.ok!==true)throw new Error(j.error||'PAYMENT_REQUEST_FAILED');return j.data;
+ }
+ // Reading the effective mode does not require the P5 Edge Function: the
+ // existing session-checked RPC is the authoritative source. This lets the
+ // established manual checkout continue while P5 is undeployed. A failed RPC
+ // still returns unknown; it never silently selects manual.
+ async function readModeFromDatabase(){
+  const cfg=config(),session=token();if(!session)throw new Error('CUSTOMER_SESSION_REQUIRED');
+  const response=await fetch(`${String(cfg.url).replace(/\/$/,'')}/rest/v1/rpc/kinto_payment_p5_mode_read_v1`,{
+   method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',apikey:cfg.anonKey,Authorization:`Bearer ${cfg.anonKey}`},
+   body:JSON.stringify({p_session_token:session})
+  });
+  const result=await response.json().catch(()=>null);
+  if(!response.ok||!result||typeof result!=='object')throw new Error('PAYMENT_MODE_UNAVAILABLE');
+  return result;
+ }
+ function normalizeMode(m){
+  if(m?.effective_mode==='manual'&&m.transition_state==='stable')return 'manual';
+  if(m?.effective_mode==='electronic'&&m.test_access_required===true)return 'unauthorized';
+  if(m?.effective_mode==='electronic'&&m.transition_state==='stable'&&m.checkout_available===true)return 'electronic';
+  if(m?.transition_state==='draining'||m?.effective_mode==='electronic')return 'blocked';
+  return 'unknown';
+ }
+ function ensureModal(){let root=document.getElementById('kintoPaymentP5Modal');if(root)return root;root=document.createElement('div');root.id='kintoPaymentP5Modal';root.className='kp5-backdrop';root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label','مراجعة الطلب والدفع');root.innerHTML='<section class="kp5-dialog"><header><div><small>KINTO • الدفع التجريبي</small><h2>مراجعة الطلب والدفع</h2></div><button type="button" class="kp5-close" aria-label="إغلاق">×</button></header><div class="kp5-content"></div><footer class="kp5-actions"></footer></section>';root.querySelector('.kp5-close').addEventListener('click',()=>root.remove());root.addEventListener('click',e=>{if(e.target===root)root.remove()});document.body.append(root);return root}
+ const money=(n,c)=>`${Number(n||0).toLocaleString('en-US',{maximumFractionDigits:3})} ${esc(c||'')}`;
+ function setContent(root,html,actions=''){root.querySelector('.kp5-content').innerHTML=html;root.querySelector('.kp5-actions').innerHTML=actions}
+ function lineHtml(x){let opts=x.selected_options||{},variant=[['color','اللون'],['size','المقاس'],['volume','الحجم']].filter(([k])=>opts[k]).map(([k,l])=>`${l}: ${esc(opts[k])}`).join(' · ');return `<article class="kp5-line"><img src="${esc(x.product_image||'')}" alt=""><div><b>${esc(x.product_name)}</b><small>${esc(x.store_name)}${variant?' · '+variant:''}</small><span>${esc(x.quantity)} × ${money(x.unit_price_local,x.currency)}</span></div><strong>${money(x.line_total_local,x.currency)}</strong></article>`}
+ function reviewHtml(q,couponPoints,expandedStoreId=null){
+  const lines=Array.isArray(q?.lines)?q.lines:[];
+  const groups={};
+  for(const x of lines)(groups[x.store_id]??=[]).push(x);
+  const storeMarkup=Object.entries(groups).map(([sid,items])=>{
+    const currency=items[0].currency;
+    const originalStoreTotal=items.reduce((n,x)=>n+Number(x.line_total_local||0),0);
+    // Totals come from the server quote; the browser's coupon selector is never authoritative.
+    const storeDiscount=Math.max(0,Number(q?.coupon_points?.[sid]||0));
+    const finalStoreTotal=Math.max(0,originalStoreTotal-storeDiscount);
+    const tiers=(Array.isArray(q.available_coupon_points?.[sid])?q.available_coupon_points[sid]:[]).map(Number).filter(v=>[1000,3000,5000].includes(v));
+    const selectedCoupon=Number(couponPoints?.[sid]||0);
+    const couponOptions=tiers.map(v=>'<option value="'+v+'" '+(selectedCoupon===v?'selected':'')+'>خصم '+money(v,currency)+'</option>').join('');
+    const couponControl=tiers.length
+      ?'<label class="kp5-coupon">قسيمة هذا المتجر<select data-coupon-store="'+esc(sid)+'"><option value="0">بدون قسيمة</option>'+couponOptions+'</select></label>'
+      :'<p class="kp5-coupon-unavailable">لا توجد قسائم متاحة لهذا المتجر</p>';
+    const couponStatus=storeDiscount>0?'تم تطبيق القسيمة':(tiers.length?'قسيمة متاحة':'بدون قسيمة');
+    const productCount=items.length===1?'منتج واحد':items.length===2?'منتجان':items.length+' منتجات';
+    const summaryAmounts=storeDiscount>0
+      ?'<div class="kp5-store-summary-values kp5-has-coupon">'+
+       '<span class="kp5-store-before"><small>قبل القسيمة</small><del>'+money(originalStoreTotal,currency)+'</del></span>'+
+       '<span class="kp5-store-discount"><small>خصم القسيمة</small><b>−'+money(storeDiscount,currency)+'</b></span>'+
+       '<span class="kp5-store-after"><small>بعد القسيمة</small><strong>'+money(finalStoreTotal,currency)+'</strong></span></div>'
+      :'<div class="kp5-store-summary-values kp5-no-coupon"><span><small>مجموع المتجر</small><strong>'+money(originalStoreTotal,currency)+'</strong></span></div>';
+    return '<section class="kp5-store"><details class="kp5-store-details" data-store-details="'+esc(sid)+'" '+(expandedStoreId===sid?'open':'')+'>'+
+      '<summary><span class="kp5-store-summary-heading"><span class="kp5-store-name">'+esc(items[0].store_name)+'</span><span class="kp5-store-meta">'+productCount+' · '+couponStatus+'</span></span>'+
+      summaryAmounts+'</summary><div class="kp5-store-details-body">'+couponControl+
+      '<div class="kp5-store-lines">'+items.map(lineHtml).join('')+'</div></div></details></section>';
+  }).join('');
+  return '<p class="kp5-lead">راجع المنتجات والتفرعات والأسعار المحسوبة من الخادم. أسعار المتاجر تبقى بعملتها الأصلية.</p>'+storeMarkup;
+ }
+ function checkoutSummaryHtml(q){
+  const lines=Array.isArray(q?.lines)?q.lines:[];
+  const originalTotal=lines.reduce((n,x)=>n+Number(x.line_total_local||0),0);
+  const finalTotal=Number(q?.amount||0);
+  const totalDiscount=Math.max(0,originalTotal-finalTotal);
+  const totals=totalDiscount>0
+    ?'<div class="kp5-grand kp5-grand-discounted"><span>الإجمالي قبل القسائم <del>'+money(originalTotal,q.currency)+'</del></span><strong>الإجمالي النهائي '+money(finalTotal,q.currency)+'</strong></div>'+
+     '<p class="kp5-discount-summary">إجمالي الخصم: −'+money(totalDiscount,q.currency)+'</p>'
+    :'<div class="kp5-grand"><span>الإجمالي النهائي</span><strong>'+money(finalTotal,q.currency)+'</strong></div>';
+  return '<div class="kp5-checkout-summary">'+totals+'<p class="kp5-note">الشحن غير مشمول في هذا المبلغ ويُحدد لاحقاً. لا يتم تحصيل أي أموال حقيقية.</p></div>';
+ }
+ function message(root,title,body,actions=''){setContent(root,`<div class="kp5-state"><h3>${esc(title)}</h3><p>${esc(body)}</p></div>`,actions)}
+ async function checkout({items,shipping,onPaid}){
+  const root=ensureModal(),couponPoints={};let idempotency=crypto.randomUUID(),quote,expandedStoreId=null;
+  const quoteNow=async()=>{quote=await call('quote',{items,coupon_points:couponPoints});setContent(root,reviewHtml(quote,couponPoints,expandedStoreId),checkoutSummaryHtml(quote)+'<div class="kp5-action-buttons"><button class="kp5-primary" data-confirm>تأكيد الطلب وحجز المنتجات</button><button class="kp5-secondary" data-cancel>رجوع إلى السلة</button></div>');root.querySelectorAll('[data-store-details]').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)expandedStoreId=d.dataset.storeDetails;else if(expandedStoreId===d.dataset.storeDetails)expandedStoreId=null}));root.querySelectorAll('[data-coupon-store]').forEach(s=>s.addEventListener('change',async()=>{expandedStoreId=s.dataset.couponStore;couponPoints[s.dataset.couponStore]=Number(s.value);try{await quoteNow()}catch(e){couponPoints[s.dataset.couponStore]=0;alert('القسيمة غير متاحة لهذا المتجر: '+e.message);await quoteNow()}}));root.querySelector('[data-confirm]').addEventListener('click',reserve);root.querySelector('[data-cancel]').addEventListener('click',()=>root.remove())};
+  const reserve=async()=>{const btn=root.querySelector('[data-confirm]');if(btn)btn.disabled=true;try{const r=await call('reserve',{idempotency_key:idempotency,items,coupon_points:couponPoints});if(r.reused&&r.status==='paid'){await onPaid?.(r);root.remove();return}await start(r.attempt_id,r.kp_number)}catch(e){message(root,'تعذر تأكيد الطلب',e.message,'<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}};
+  const start=async(attempt,kp)=>{try{await call('start',{attempt_id:attempt});paymentScreen(attempt,kp)}catch(e){message(root,'جارٍ التحقق','انقطع الاتصال أثناء بدء المحاولة. نتحقق من حالتها قبل أي إجراء.');void poll(attempt,kp)}};
+  const showResult=async r=>{if(r.status==='paid'){await onPaid?.(r);message(root,'تم التسديد تجريبياً',`تم اعتماد الدفعة ${kp}، وأُنشئت الطلبات الأصلية لكل متجر. لا يوجد تحصيل حقيقي.`, '<button class="kp5-primary" data-done>عرض مدفوعاتي</button>');root.querySelector('[data-done]').onclick=()=>{root.remove();location.href='dashboard.html?tab=myPayments'}}else if(r.status==='failed'||r.status==='cancelled'){message(root,'لم يُعتمد الطلب',`حالة الدفعة ${kp}: ${r.status==='failed'?'مرفوضة':'ملغاة'}. لم تُنشأ طلبات تشغيلية، وبقيت السلة محفوظة.`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}else{message(root,'جارٍ التحقق',`حالة الدفعة ${kp} غير محسومة. سيبقى الحجز محفوظاً حتى المطابقة.`, '<button class="kp5-secondary" data-check>التحقق مجدداً</button>');root.querySelector('[data-check]').onclick=()=>poll(attempt,kp)}};
+  const paymentScreen=(attempt,kp)=>{setContent(root,`<div class="kp5-state"><h3>دفع تجريبي</h3><p>رقم الدفعة ${esc(kp)}. محاكاة آمنة بلا تحصيل أو اتصال بمصرف.</p><section class="kp5-test-card" aria-label="بطاقة اختبار KINTO"><div class="kp5-test-card-mark">KINTO <span>SIMULATOR</span></div><strong dir="ltr">4242 4242 4242 4242</strong><div><span>الصلاحية</span><b dir="ltr">12/30</b><span>رمز الاختبار</span><b dir="ltr">123</b></div><small>بطاقة اختبار ثابتة — لا تدخل بيانات بطاقتك الحقيقية</small></section><p class="kp5-note">لا يتم تخزين بيانات البطاقة أو إرسالها إلى شركة دفع. يتحقق خادم KINTO من البطاقة الافتراضية والدفعة والحجز.</p></div>`, '<button class="kp5-primary" data-pay>ادفع تجريبياً</button><button class="kp5-secondary" data-scenario="failure">اختبار الرفض</button><button class="kp5-secondary" data-scenario="cancel">إلغاء الدفع</button><button class="kp5-secondary" data-scenario="disconnect">انقطاع الاتصال / نتيجة مجهولة</button>');root.querySelector('[data-pay]').onclick=async()=>{root.querySelectorAll('button').forEach(x=>x.disabled=true);message(root,'جارٍ التحقق','يتحقق خادم KINTO من البطاقة الافتراضية والدفعة.');try{await showResult(await call('pay',{attempt_id:attempt,card:{number:'4242 4242 4242 4242',expiry:'12/30',cvv:'123'},shipping}))}catch{message(root,'جارٍ التحقق',`تعذر استلام الرد عن الدفعة ${kp}. لا نفترض النجاح أو الفشل؛ نتحقق من سجل الخادم.`);void poll(attempt,kp)}};root.querySelectorAll('[data-scenario]').forEach(b=>b.onclick=async()=>{root.querySelectorAll('button').forEach(x=>x.disabled=true);message(root,'جارٍ التحقق','نتحقق من النتيجة خادمياً. أبقِ هذه النافذة مفتوحة.');try{await showResult(await call('simulate',{attempt_id:attempt,scenario:b.dataset.scenario,shipping}))}catch{message(root,'جارٍ التحقق',`تعذر استلام الرد عن الدفعة ${kp}. لا نفترض النجاح أو الفشل؛ نتحقق من سجل الخادم.`);void poll(attempt,kp)}})};
+  const poll=async(attempt,kp)=>{for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,2000));try{const s=await call('status',{attempt_id:attempt});if(s.status==='paid'){await onPaid?.(s);message(root,'تم التسديد تجريبياً',`تم اعتماد الدفعة ${kp}.`, '<button class="kp5-primary" data-done>عرض مدفوعاتي</button>');root.querySelector('[data-done]').onclick=()=>{root.remove();location.href='dashboard.html?tab=myPayments'};return}if(['failed','cancelled','expired'].includes(s.status)){message(root,'لم يُعتمد الطلب',`حالة الدفعة ${kp}: ${s.status}. لم تُنشأ طلبات تشغيلية.`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove();return}}catch{}}message(root,'النتيجة ما زالت قيد المطابقة',`الدفعة ${kp} غير محسومة. لا تغلقها كنجاح أو فشل؛ سيبقى الحجز قائماً.`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()};
+  try{await quoteNow()}catch(e){message(root,'تعذرت مراجعة الطلب',e.message,'<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}
+ }
+ let modePromise=null,modeAt=0,modeValue='unknown';
+ async function getMode(){if(modePromise&&Date.now()-modeAt<15000)return modePromise;modeAt=Date.now();modePromise=call('mode').then(normalizeMode).catch(async()=>{try{return normalizeMode(await readModeFromDatabase())}catch{return 'unknown'}}).then(value=>(modeValue=value,modeValue));return modePromise}
+ async function isElectronic(){return (await getMode())==='electronic'}
+ async function loadPayments(page=1){return call('list',{page})}
+ window.KintoPaymentP5V1={call,checkout,isElectronic,getMode,loadPayments,version:'p5-simulator-v1'};
+})();

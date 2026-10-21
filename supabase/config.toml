@@ -3,3 +3,9 @@ verify_jwt = false
 
 [functions.kinto-payment-security-g16]
 verify_jwt = false
+
+# The function uses KINTO's server-verified customer session token and checks
+# production simulator admission through the service-only P6 database gate.
+# The isolated P5 project additionally retains its explicit test-account gate.
+[functions.kinto-payment-p5]
+verify_jwt = false

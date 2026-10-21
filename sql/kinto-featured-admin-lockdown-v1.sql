@@ -1,0 +1,12 @@
+-- Manual separate stage; only after client migration and real-session smoke checks.
+BEGIN;
+REVOKE ALL ON FUNCTION public.admin_delete_merchant_featured_slot_v2(uuid,uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.admin_list_merchant_featured_slots() FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.admin_list_merchant_featured_slots(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.admin_toggle_merchant_featured_slot(uuid,boolean) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.admin_toggle_merchant_featured_slot(uuid,uuid,boolean) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.admin_upsert_merchant_featured_slot(uuid,uuid,character varying,text,text,character varying,uuid[],timestamp with time zone,timestamp with time zone,boolean) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.admin_upsert_merchant_featured_slot(uuid,uuid,uuid,character varying,text,text,character varying,uuid[],timestamp with time zone,timestamp with time zone,boolean) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.admin_upsert_merchant_featured_slot_v2(uuid,uuid,uuid,character varying,text,text,character varying,uuid[],timestamp with time zone,timestamp with time zone,boolean) FROM PUBLIC,anon,authenticated;
+DO $$ DECLARE f regprocedure; BEGIN FOREACH f IN ARRAY ARRAY['public.admin_delete_merchant_featured_slot_v2(uuid,uuid)'::regprocedure,'public.admin_list_merchant_featured_slots()'::regprocedure,'public.admin_list_merchant_featured_slots(uuid)'::regprocedure,'public.admin_toggle_merchant_featured_slot(uuid,boolean)'::regprocedure,'public.admin_toggle_merchant_featured_slot(uuid,uuid,boolean)'::regprocedure,'public.admin_upsert_merchant_featured_slot(uuid,uuid,character varying,text,text,character varying,uuid[],timestamp with time zone,timestamp with time zone,boolean)'::regprocedure,'public.admin_upsert_merchant_featured_slot(uuid,uuid,uuid,character varying,text,text,character varying,uuid[],timestamp with time zone,timestamp with time zone,boolean)'::regprocedure,'public.admin_upsert_merchant_featured_slot_v2(uuid,uuid,uuid,character varying,text,text,character varying,uuid[],timestamp with time zone,timestamp with time zone,boolean)'::regprocedure] LOOP IF has_function_privilege('anon',f,'EXECUTE') OR has_function_privilege('authenticated',f,'EXECUTE') THEN RAISE EXCEPTION 'LEGACY_CAMPAIGN_EXECUTE_REMAINS: %',f; END IF; END LOOP; END $$;
+COMMIT;

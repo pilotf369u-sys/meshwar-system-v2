@@ -100,7 +100,7 @@ function readCache(storeId){try{const v=JSON.parse(localStorage.getItem(cacheKey
 
 async function fetchStoreBundle(storeId){
   const encoded=encodeURIComponent(storeId);
-  const [stores,products]=await Promise.all([restRequest(`local_stores?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encoded}&status=eq.active&limit=1`,{timeout:3000}),restRequest(`local_products?select=id,product_name,image_url,description,base_price,discount_price,stock_quantity,low_stock_threshold,is_out_of_stock,options&store_id=eq.${encoded}&order=created_at.desc`,{timeout:3000})]);
+  const [stores,products]=await Promise.all([restRequest(`kinto_local_stores_public_v1?select=id,store_name,commission_rate,exchange_rate,status&id=eq.${encoded}&status=eq.active&limit=1`,{timeout:3000}),restRequest(`local_products?select=id,product_name,image_url,description,base_price,discount_price,stock_quantity,low_stock_threshold,is_out_of_stock,options&store_id=eq.${encoded}&order=created_at.desc`,{timeout:3000})]);
   const store=Array.isArray(stores)?stores[0]:null;if(!store)throw new Error('المتجر غير موجود أو غير نشط، أو أن RLS يمنع قراءته.');return{store,products:Array.isArray(products)?products:[]};
 }
 
@@ -147,7 +147,7 @@ async function createOrder(product,store,selection={},requestedQuantity=1){
   let reservation=null;
   try{
     requestedQuantity=Math.max(1,Math.floor(Number(requestedQuantity)||1));reservation=await reserveStock(product.id,requestedQuantity);
-    const customerRows=await restRequest(`customers?select=*&id=eq.${encodeURIComponent(customerId)}&limit=1`,{timeout:3000});const customer=Array.isArray(customerRows)?customerRows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل.');
+    const {data:customerRows,error:customerError}=await KintoCustomerDirectoryV1.from(null).eq('id',customerId).limit(1);if(customerError)throw customerError;const customer=Array.isArray(customerRows)?customerRows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل.');
     const rows=await restRequest('orders?select=order_code&order=created_at.desc&limit=1000',{timeout:3000});const vendor=vendorPrice(product),usd=customerPriceUsd(product,store),iqd=customerPriceIqd(product,store);if(vendor===null||usd===null||iqd===null)throw new Error('سعر المنتج غير صالح.');
     let max=1000;(rows||[]).forEach(r=>{const m=String(r.order_code||'').match(/^MW-(\d+)$/i);if(m)max=Math.max(max,Number(m[1]))});const orderCode='MW-'+(max+1);
     const selectedColor=String(selection.color||'').trim(),selectedSize=String(selection.size||'').trim(),selectedVolume=String(selection.volume||'').trim();const unitIqd=ceilPrice(iqd),totalIqd=ceilPrice(unitIqd*requestedQuantity);

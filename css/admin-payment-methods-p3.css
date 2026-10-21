@@ -1,0 +1,145 @@
+/* Payment-P3: scoped to the existing admin payment-methods card only. */
+#g16PaymentMethods {
+  --payment-p3-green: #0a2f23;
+  --payment-p3-green-raised: #124535;
+  --payment-p3-green-soft: #1b5843;
+  --payment-p3-gold: #e5c56a;
+  --payment-p3-gold-soft: #f5e8b9;
+  --payment-p3-cream: #fffdf5;
+  --payment-p3-text: #f9f7ee;
+  --payment-p3-muted: #e0e9e2;
+  --payment-p3-error: #ffd5cc;
+  color: var(--payment-p3-text);
+  background: var(--payment-p3-green) !important;
+  border: 1px solid var(--payment-p3-gold) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 14px 32px rgb(10 47 35 / 18%);
+}
+
+#g16PaymentMethods > h3,
+#g16PaymentMethods h4 {
+  color: var(--payment-p3-gold) !important;
+}
+
+#g16PaymentMethods > .mini,
+#g16PaymentMethods .mini,
+#g16PaymentMethods #g16GatewayState,
+#g16PaymentMethods label,
+#g16PaymentMethods small,
+#g16PaymentMethods p {
+  color: var(--payment-p3-muted);
+}
+
+#g16PaymentMethods #g16RuntimeControls,
+#g16PaymentMethods #paymentProvidersP2 {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 900px !important;
+  margin: 14px 0 !important;
+  padding: clamp(14px, 2.5vw, 22px) !important;
+  color: var(--payment-p3-text);
+  background: var(--payment-p3-green-raised) !important;
+  border: 1px solid rgb(229 197 106 / 75%) !important;
+  border-radius: 14px !important;
+}
+
+#g16PaymentMethods #g16RuntimeControls h4,
+#g16PaymentMethods #paymentProvidersP2 h4 {
+  margin: 0 0 12px;
+}
+
+#g16PaymentMethods #g16Form {
+  width: 100%;
+  max-width: 760px !important;
+  padding: clamp(14px, 2.5vw, 22px);
+  background: var(--payment-p3-green-raised);
+  border: 1px solid rgb(229 197 106 / 65%);
+  border-radius: 14px;
+}
+
+#g16PaymentMethods input,
+#g16PaymentMethods select,
+#g16PaymentMethods textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  color: #17251e;
+  background: var(--payment-p3-cream);
+  border: 1px solid #c9b56c;
+  border-radius: 8px;
+}
+
+#g16PaymentMethods textarea { min-height: 76px; }
+
+#g16PaymentMethods button {
+  min-height: 42px;
+  padding: 9px 14px;
+  color: #10251b;
+  background: var(--payment-p3-gold);
+  border: 1px solid #f3df9a;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#g16PaymentMethods button:hover:not(:disabled) { background: var(--payment-p3-gold-soft); }
+#g16PaymentMethods button:disabled { opacity: .62; cursor: not-allowed; }
+#g16PaymentMethods :focus-visible { outline: 3px solid #fff4c8; outline-offset: 2px; }
+
+#g16PaymentMethods #g16List { width: 100%; }
+#g16PaymentMethods .g16-method,
+#g16PaymentMethods .payment-p2-provider {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  color: var(--payment-p3-text);
+  background: var(--payment-p3-green-soft);
+  border: 1px solid rgb(229 197 106 / 75%);
+  border-radius: 11px;
+}
+
+#g16PaymentMethods .g16-method > div:first-child,
+#g16PaymentMethods .payment-p2-provider > div:first-child { min-width: min(100%, 240px); }
+#g16PaymentMethods .g16-method p,
+#g16PaymentMethods .payment-p2-provider p { margin: 6px 0; }
+#g16PaymentMethods .g16-method > div:last-child,
+#g16PaymentMethods .payment-p2-provider-actions,
+#g16PaymentMethods .payment-p2-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#g16PaymentMethods .payment-p2-actions { margin-top: 12px; }
+#g16PaymentMethods .payment-p2-actions input { flex: 1 1 240px; }
+#g16PaymentMethods .g16-bank-mark {
+  color: var(--payment-p3-gold) !important;
+  background: var(--payment-p3-green) !important;
+  border-color: var(--payment-p3-gold) !important;
+}
+#g16PaymentMethods #g16CustomerPreview {
+  color: var(--payment-p3-text);
+  background: var(--payment-p3-green-raised);
+  border-color: var(--payment-p3-gold) !important;
+}
+#g16PaymentMethods [data-state="error"] { color: var(--payment-p3-error) !important; }
+#g16PaymentMethods [data-state="ok"] { color: #d8f4df !important; }
+
+@media (max-width: 640px) {
+  #g16PaymentMethods { padding: 14px !important; }
+  #g16PaymentMethods .g16-method,
+  #g16PaymentMethods .payment-p2-provider { align-items: stretch; }
+  #g16PaymentMethods .g16-method > div:last-child,
+  #g16PaymentMethods .payment-p2-provider-actions,
+  #g16PaymentMethods .payment-p2-actions { width: 100%; }
+  #g16PaymentMethods .g16-method button,
+  #g16PaymentMethods .payment-p2-provider button,
+  #g16PaymentMethods .payment-p2-actions button { flex: 1 1 150px; }
+}

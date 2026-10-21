@@ -1,0 +1,13 @@
+[
+  {
+    "nspname": "private",
+    "proname": "require_vendor_session",
+    "args": "p_session_token text",
+    "definition": "CREATE OR REPLACE FUNCTION private.require_vendor_session(p_session_token text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'private', 'extensions', 'pg_temp'\nAS $function$\r\ndeclare\r\n  v_store_id uuid;\r\n  v_token_hash bytea;\r\nbegin\r\n  if coalesce(length(p_session_token), 0) < 32 then\r\n    raise exception 'VENDOR_SESSION_INVALID'\r\n      using errcode = '28000';\r\n  end if;\r\n\r\n  v_token_hash := digest(\r\n    p_session_token,\r\n    'sha256'\r\n  );\r\n\r\n  select s.store_id\r\n  into v_store_id\r\n  from public.vendor_sessions s\r\n  join public.local_stores ls\r\n    on ls.id = s.store_id\r\n  where s.token_hash = v_token_hash\r\n    and s.revoked_at is null\r\n    and s.expires_at > now()\r\n    and lower(\r\n      trim(coalesce(ls.status, ''))\r\n    ) = 'active'\r\n  limit 1;\r\n\r\n  if v_store_id is null then\r\n    raise exception 'VENDOR_SESSION_INVALID'\r\n      using errcode = '28000';\r\n  end if;\r\n\r\n  update public.vendor_sessions\r\n  set last_seen_at = now()\r\n  where token_hash = v_token_hash;\r\n\r\n  return v_store_id;\r\nend;\r\n$function$\n"
+  },
+  {
+    "nspname": "private",
+    "proname": "v94_jsonb_object",
+    "definition": "CREATE OR REPLACE FUNCTION private.v94_jsonb_object(p_value jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n IMMUTABLE\nAS $function$\r\ndeclare\r\n  v_result jsonb;\r\nbegin\r\n  if p_value is null then\r\n    return '{}'::jsonb;\r\n  end if;\r\n\r\n  if jsonb_typeof(p_value) = 'object' then\r\n    return p_value;\r\n  end if;\r\n\r\n  if jsonb_typeof(p_value) = 'string' then\r\n    begin\r\n      v_result := (p_value #>> '{}')::jsonb;\r\n\r\n      if jsonb_typeof(v_result) = 'object' then\r\n        return v_result;\r\n      end if;\r\n    exception when others then\r\n      return '{}'::jsonb;\r\n    end;\r\n  end if;\r\n\r\n  return '{}'::jsonb;\r\nend;\r\n$function$\n"
+  }
+]

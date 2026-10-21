@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" class="dark kinto-booting" style="background-color:#063b32!important;color-scheme:dark">
 <head>
+<script src="js/kinto-order-data-session-v1.js?v=20261016-order-privacy-v1" data-role="customer"></script>
+<script src="js/kinto-customer-directory-v1.js?v=20261016-v1" data-role="customer"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#063b32">
@@ -63,7 +65,7 @@
 })();
     </script>
     <link rel="manifest" href="manifest.json">
-    <script src="js/kinto-pwa-v275.js?v=20261013-app-sync" defer></script>
+    <script src="js/kinto-pwa-v275.js?v=20261021-app-sync" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/site-identity-v16.css?v=20260828-v27">
     <link rel="stylesheet" href="css/site-identity-v17.css?v=20260828-v27">
@@ -182,6 +184,7 @@
     .kinto-hero-copy-shell{box-sizing:border-box;min-height:150px}
     @media(max-width:767px){.mw-home-hero-grid{grid-template-rows:minmax(150px,auto) auto}.kinto-hero-copy-shell{min-height:150px}}
     </style>
+    <link rel="stylesheet" href="css/kinto-payment-p5.css?v=20261020-store-accordion-v1">
 </head>
 <body style="background-color:#063b32!important">
 
@@ -227,7 +230,6 @@
 
   <section id="kintoFeaturedStoreSlot" class="header-container kinto-featured-store kinto-featured-store-v19 kinto-featured-store-v20 kinto-featured-store-v21" aria-hidden="true"><div class="kinto-featured-logo-wrap"></div><div class="kinto-featured-copy"></div></section>
 
-    <button class="fixed-order-btn" onclick="document.getElementById('orderModal').style.display='block'"><i class="fa-solid fa-cart-shopping"></i> طلب منتج</button>
     <section id="meshwarTicker" class="mx-auto mt-6 max-w-7xl overflow-hidden rounded-2xl border border-amber-400/25 bg-slate-900/75 px-3 py-3 shadow-lg backdrop-blur-md"><div class="meshwar-ticker-track whitespace-nowrap text-sm font-black text-amber-200 md:text-base">✨ عروض KINTO الجديدة قريباً • تابع أحدث المتاجر والخصومات والخدمات من مكان واحد • أهلاً بكم في KINTO ✨</div></section>
 
     <section id="localStoresPublic" class="local-stores-shell">
@@ -351,6 +353,7 @@
                     .then(({ createClient }) => {
                         if (!window.KintoSupabase) {
                             window.KintoSupabase = createClient(MAIN_SUPABASE_URL, MAIN_SUPABASE_KEY, {
+                                global: {fetch:window.KintoOrderDataSessionV1.fetch},
                                 auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
                             });
                         }
@@ -597,7 +600,7 @@ document.getElementById('backToLocalStoresBtn')?.addEventListener('click',showLo
 window.showLocalStoreList=showLocalStoreList;
 function renderLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');if(!grid)return;const rows=localPublicStores.filter(s=>localActiveSpecialty==='الكل'||String(s.store_type||'شامل')===localActiveSpecialty);grid.style.display='grid';grid.innerHTML=rows.map(s=>`<article class="local-public-card"><img class="local-public-logo" src="${localEsc(s.logo_url||localPlaceholder)}" onerror="this.onerror=null;this.src='${localEsc(localPlaceholder)}'" alt="${localEsc(s.store_name||'متجر')}"><div class="local-public-name">${localEsc(s.store_name||'متجر محلي')}</div><div class="local-public-meta">${localEsc(s.specialty||s.store_type||'شامل')}</div><div class="local-public-location"><span>${localCountryFlag(s.country)}</span><span>${localEsc(s.governorate||s.country||'غير محدد')}</span></div><div class="local-public-chip">${localEsc(s.default_currency||'')} · متجر نشط</div><button type="button" class="local-public-open" style="pointer-events:auto;cursor:pointer" onclick="openStore('${String(s.store_url||'').replace(/'/g,"\'")}', '${String(s.id||'').replace(/'/g,"\'")}')">✨ فتح المتجر</button></article>`).join('')||'<div class="local-empty">لا توجد متاجر ضمن هذا التخصص حالياً.</div>'}
 function renderLocalSpecialtyFilters(){const box=document.getElementById('localSpecialtyFilters');if(!box)return;const specs=['الكل',...new Set(localPublicStores.map(s=>String(s.store_type||'شامل').trim()).filter(Boolean))];box.replaceChildren(...specs.map(x=>{const label=String(x||'').trim()||'شامل',b=document.createElement('button'),t=document.createElement('span');b.type='button';b.className='local-filter-btn '+(label===localActiveSpecialty?'active':'');b.dataset.specialty=label;b.setAttribute('aria-label',label);b.style.setProperty('color','#ffffff','important');b.style.setProperty('-webkit-text-fill-color','#ffffff','important');b.style.setProperty('opacity','1','important');b.style.setProperty('visibility','visible','important');t.textContent=label;t.style.setProperty('display','inline','important');t.style.setProperty('color','#ffffff','important');t.style.setProperty('-webkit-text-fill-color','#ffffff','important');t.style.setProperty('opacity','1','important');t.style.setProperty('visibility','visible','important');b.replaceChildren(t);b.addEventListener('click',()=>{localActiveSpecialty=label;renderLocalSpecialtyFilters();renderLocalPublicStores()});return b}));box.hidden=false}
-async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('local_stores').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false}).range(0,999);if(error)throw error;localPublicStores=data||[];try{const {data:positions,error:orderError}=await localStoresSb.rpc('kinto_list_local_store_order_v188');if(orderError)throw orderError;const rank=new Map((positions||[]).map(x=>[String(x.store_id),Number(x.display_position)]));localPublicStores.sort((a,b)=>(rank.get(String(a.id))??Number.MAX_SAFE_INTEGER)-(rank.get(String(b.id))??Number.MAX_SAFE_INTEGER));}catch(e){console.warn('V188 order unavailable',e)}window.KintoLocalPublicStores=localPublicStores;renderLocalSpecialtyFilters();renderLocalPublicStores();window.dispatchEvent(new CustomEvent('kinto:local-stores-data',{detail:{stores:localPublicStores}}));const storeId=new URLSearchParams(window.location.search).get('storeId');if(storeId){await openStore('',storeId)}}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class="local-empty">تعذر تحميل المتاجر المحلية حالياً.</div>'}}
+async function loadLocalPublicStores(){const grid=document.getElementById('localStoresPublicGrid');try{const{data,error}=await localStoresSb.from('kinto_local_stores_public_v1').select('id,store_name,logo_url,store_url,country,governorate,store_type,specialty,default_currency,status').eq('status','active').order('created_at',{ascending:false}).range(0,999);if(error)throw error;localPublicStores=data||[];try{const {data:positions,error:orderError}=await localStoresSb.rpc('kinto_list_local_store_order_v188');if(orderError)throw orderError;const rank=new Map((positions||[]).map(x=>[String(x.store_id),Number(x.display_position)]));localPublicStores.sort((a,b)=>(rank.get(String(a.id))??Number.MAX_SAFE_INTEGER)-(rank.get(String(b.id))??Number.MAX_SAFE_INTEGER));}catch(e){console.warn('V188 order unavailable',e)}window.KintoLocalPublicStores=localPublicStores;renderLocalSpecialtyFilters();renderLocalPublicStores();window.dispatchEvent(new CustomEvent('kinto:local-stores-data',{detail:{stores:localPublicStores}}));const storeId=new URLSearchParams(window.location.search).get('storeId');if(storeId){await openStore('',storeId)}}catch(e){console.error('Local stores public load error:',e);if(grid)grid.innerHTML='<div class="local-empty">تعذر تحميل المتاجر المحلية حالياً.</div>'}}
 loadLocalPublicStores();
 </script>
 
@@ -635,14 +638,14 @@ loadLocalPublicStores();
 })();
 </script>
 <script src="js/local-store-pricing.js?v=20260927-video-pause-v277"></script>
-<script type="module" src="js/local-store-card-v3.js?v=20260829-final-v33"></script>
-<script src="js/local-store-product-details-v4.js?v=20260829-direct-v31bb" data-mw-product-details-v4></script>
+<script type="module" src="js/local-store-card-v3.js?v=20261017-store-control-v1"></script>
+<script src="js/local-store-product-details-v4.js?v=20261017-store-control-v1" data-mw-product-details-v4></script>
 <link rel="stylesheet" href="css/hero-v193-modern.css?v=20261012-v193">
 <link rel="stylesheet" href="css/home-v196-showcase.css?v=20261013-v196">
 <link rel="stylesheet" href="css/home-v197-featured-global-fix.css?v=20261013-v197">
 <link rel="stylesheet" href="css/home-v198-banner-correction.css?v=20261013-v198">
 <link rel="stylesheet" href="css/hero-v14-emerald-glass.css?v=20260828-v15-brand-hero"><script src="js/index-featured-campaigns-v1.js?v=20260828-v28-kinto"></script>
-    <script src="js/home-store-portals-v55.js?v=20260925-v213"></script>
+    <script src="js/home-store-portals-v55.js?v=20261017-store-control-v1"></script>
     <script src="js/local-products-pagination-v60.js?v=20260831"></script>
     <script src="js/product-deeplink-v56.js?v=20260831"></script>
 <link rel="stylesheet" href="css/customer-favorites-nav-v148.css?v=20260912-v148">
@@ -691,7 +694,8 @@ body>#kintoLocalCartTrigger,
 body>.kinto-local-cart-backdrop,
 body>#kintoLocalCartDrawer{display:none!important}
 </style>
-<script src="js/local-cart-v93.js?v=20261007-v52-stock-limits"></script>\n<script id="kintoMobileAppNavRuntimeV222">
+<script src="js/customer-payment-p5.js?v=20261020-store-accordion-v1"></script>
+<script src="js/local-cart-v93.js?v=20261016-order-privacy-v1"></script>\n<script id="kintoMobileAppNavRuntimeV222">
 (()=>{const stores=document.getElementById('kintoMobileStores'),storesMenu=document.getElementById('kintoMobileStoresMenu');stores?.addEventListener('click',()=>storesMenu?.classList.toggle('open'));document.addEventListener('click',e=>{if(storesMenu&&!storesMenu.contains(e.target)&&!stores?.contains(e.target))storesMenu.classList.remove('open')});const sync=()=>{const id=typeof window.getStoredCustomerId==='function'?String(window.getStoredCustomerId()||'').trim():String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim(),hasSession=Boolean(window.KintoCustomerSessionV150?.read?.()),loggedIn=Boolean(id||hasSession);const chat=document.getElementById('kintoMobileChat'),favorites=document.getElementById('kintoMobileFavorites'),account=document.getElementById('kintoMobileAccount'),cart=document.getElementById('kintoMobileCart'),orders=document.getElementById('kintoMobileOrders');if(!chat||!favorites||!account||!cart||!orders)return;const dash=tab=>'dashboard.html?'+new URLSearchParams({...((id)?{customerId:id}:{}),tab}).toString();chat.href=loggedIn?dash('chatHelp'):'login.html';favorites.href=loggedIn?dash('favorites'):'login.html';account.href=loggedIn?'dashboard.html?'+new URLSearchParams({...((id)?{customerId:id}:{}),openAccount:'1'}).toString():'login.html';cart.href=loggedIn?dash('drafts'):'login.html';orders.href=loggedIn?dash('activeOrders'):'login.html';const badge=document.getElementById('kintoMobileCartBadge'),count=Number(window.KintoLocalCartV93?.getCount?.()||0);if(badge){badge.textContent=count>99?'99+':String(count);badge.classList.toggle('show',count>0)}};window.KintoMobileAppNavV319=Object.freeze({sync});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();window.addEventListener('storage',sync);window.addEventListener('kinto:local-cart-change',sync);setTimeout(sync,0);setTimeout(sync,800);
 async function syncChatUnread(){const id=typeof window.getStoredCustomerId==='function'?String(window.getStoredCustomerId()||'').trim():String(localStorage.getItem('meshwar_customer_id')||localStorage.getItem('viewingCustomerId')||'').trim(),badge=document.getElementById('kintoMobileChatBadge');if(!badge||!id)return;try{const sb=await window.ensureMainSupabase();let r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('read_by_customer',false).in('sender_type',['employee','admin']);if(r.error&&/read_by_customer/i.test(String(r.error.message||'')))r=await sb.from('messages').select('id',{count:'exact',head:true}).eq('customer_id',id).eq('is_read',false).in('sender_type',['employee','admin']);if(r.error)throw r.error;const n=Number(r.count||0);badge.textContent=n>99?'99+':String(n);badge.classList.toggle('show',n>0)}catch(e){console.warn('Home chat unread count error:',e);badge.classList.remove('show')}}syncChatUnread();setTimeout(syncChatUnread,800)})();
 </script>
@@ -938,6 +942,7 @@ html body section#localStoresPublic #localStoresPublicGrid.local-stores-grid{
  }
 }
 </style>
-<script src="js/kinto-connectivity-v275.js?v=20261013-app-sync" defer></script>
+<script type="module" src="js/local-store-enhancements.js"></script>
+<script src="js/kinto-connectivity-v275.js?v=20261021-app-sync" defer></script>
 </body>
 </html>

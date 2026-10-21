@@ -1,0 +1,176 @@
+name: KINTO ACL Stage 1 static gate
+on:
+  pull_request:
+    paths:
+      - 'sql/kinto-*.sql'
+      - 'ci/sensitive-session-*'
+      - 'ci/staff-directory*'
+      - 'ci/featured-admin*'
+      - 'ci/site-admin*'
+      - 'ci/vendor-media*'
+      - 'ci/vendor-category-session*'
+      - 'ci/private-media*'
+      - 'ci/customer-profile*'
+      - 'ci/customer-directory*'
+      - 'ci/legacy-reward*'
+      - 'ci/settlement-*'
+      - 'ci/coupon-finance*'
+      - 'ci/review-media*'
+      - 'ci/fixtures/review-media*'
+      - 'js/customer-product-reviews-v135.js'
+      - 'ci/fixtures/coupon-settlement*'
+      - 'js/kinto-coupon-finance-v1.js'
+      - 'ci/order-save*'
+      - 'ci/order-delete*'
+      - 'ci/product-assignment*'
+      - 'ci/order-privacy*'
+      - 'ci/order-workflow*'
+      - 'ci/fixtures/workflow-loyalty*'
+      - 'ci/store-control*'
+      - 'ci/control-surface*'
+      - 'ci/attachment-edge*'
+      - 'js/kinto-store-control-v1.js'
+      - 'js/kinto-attachment-access-v1.js'
+      - 'supabase/functions/kinto-attachment-access-v1/**'
+      - 'js/kinto-order-data-session-v1.js'
+      - 'js/kinto-vendor-products-v1.js'
+      - 'js/kinto-order-assignment-v1.js'
+      - 'ci/fixtures/order-delete*'
+      - 'ci/fixtures/order-save*'
+      - 'admin-dashboard.html'
+      - 'employee-dashboard.html'
+      - 'external-shipping-shell.html'
+      - 'js/external-shipping-native-order-render-v1.js'
+      - 'js/kinto-settlements-v1.js'
+      - 'branch-dashboard.html'
+      - 'admin-branches.html'
+      - 'admin-branch-reports.html'
+      - 'admin-delivery-reports.html'
+      - 'ci/fixtures/legacy-reward*'
+      - 'ci/fixtures/customer-directory*'
+      - 'js/kinto-customer-directory-v1.js'
+      - 'ci/fixtures/customer-profile*'
+      - 'dashboard.html'
+      - 'ci/fixtures/private-media*'
+      - 'js/local-store-categories-v9.js'
+      - 'js/vendor-product-edit-fields-v26.js'
+      - 'ci/fixtures/vendor-media*'
+      - 'js/kinto-vendor-media-v1.js'
+      - 'js/vendor-featured-requests-v2.js'
+      - 'js/local-store-product-details-v4*'
+      - 'vendor-dashboard*.html'
+      - 'ci/fixtures/site-admin*'
+      - 'js/admin-brand-logo-v15.js'
+      - 'ci/fixtures/featured-admin*'
+      - 'ci/fixtures/staff-account*'
+      - 'js/kinto-staff-directory-v1.js'
+      - 'ci/fixtures/sensitive-rpc-*'
+      - 'js/admin-featured-*.js'
+      - 'admin-content-cms.html'
+      - 'scripts/verify_kinto_session_rpc_v1.py'
+      - 'scripts/verify_kinto_acl_stage1.py'
+      - '.github/workflows/kinto-acl-stage1.yml'
+  workflow_dispatch:
+jobs:
+  static-acl-contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: kinto_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify ACL SQL scope and rollback contract
+        run: python scripts/verify_kinto_acl_stage1.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned isolated PostgreSQL runtime
+        run: npm install --prefix "$RUNNER_TEMP/kinto-pg" --ignore-scripts --no-audit --no-fund @electric-sql/pglite@0.5.8 pg@8.16.3
+      - name: Execute isolated authorization and UI migration tests
+        run: |
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/sensitive-session-rpc.integration.mjs
+          node --test ci/sensitive-session-ui.test.mjs ci/staff-directory-client.test.mjs ci/featured-admin-session-ui.test.mjs ci/site-admin-session-ui.test.mjs ci/vendor-media-client.test.mjs ci/vendor-category-session.test.mjs ci/customer-profile-ui.test.mjs ci/customer-directory-client.test.mjs ci/legacy-reward-retirement.test.mjs ci/settlement-client.test.mjs ci/order-save-client.test.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/staff-directory.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/featured-admin-session.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/site-admin-session.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/vendor-media-session.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/private-media-storage.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/customer-profile-session.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/customer-directory.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/legacy-reward-retirement.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/settlement-session.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/review-media.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/order-save-session.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/order-delete.integration.mjs
+          KINTO_PGLITE_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/@electric-sql/pglite/dist/index.js" node ci/product-assignment.integration.mjs
+      - name: Verify private attachment Edge authorization
+        run: node --test ci/attachment-edge.test.mjs
+      - name: Verify on PostgreSQL 17 with real pgcrypto and API roles
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/sensitive-session-rpc.integration.mjs
+      - name: Customer profile writes on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/customer-profile-session.integration.mjs
+      - name: Customer directory on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/customer-directory.integration.mjs
+      - name: Retired legacy reward RPC on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/legacy-reward-retirement.integration.mjs
+      - name: Atomic settlement sessions and concurrency on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/settlement-session.integration.mjs
+      - name: Review image preflight and finalize on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/review-media.integration.mjs
+      - name: Staff order pricing on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/order-save-session.integration.mjs
+      - name: Unused order deletion privilege on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/order-delete.integration.mjs
+      - name: Product ownership and scoped order assignments on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/product-assignment.integration.mjs
+      - name: Staff accounts on PostgreSQL 17 after table lockdown
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/staff-directory.integration.mjs
+      - name: Featured administration on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/featured-admin-session.integration.mjs
+      - name: Site administration and scoped Storage guards on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/site-admin-session.integration.mjs
+      - name: Vendor media session tickets and Storage guards on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/vendor-media-session.integration.mjs
+      - name: Private media API isolation and existing Edge handlers on PostgreSQL 17
+        env:
+          KINTO_TEST_DATABASE_URL: postgresql://postgres:isolated-test-only@localhost:5432/kinto_test
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-pg/node_modules/pg/lib/index.js" node ci/private-media-storage.integration.mjs

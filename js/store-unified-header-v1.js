@@ -23,7 +23,7 @@ function safeCustomerCode(value){
 }
 async function customerProfile(client,id){
   if(!id)return null;
-  try{const{data,error}=await client.from('customers').select('id,name,code').eq('id',id).maybeSingle();if(error)throw error;return data||null}catch(error){console.warn('KINTO store customer profile lookup failed:',error);return null}
+  try{const{data,error}=await KintoCustomerDirectoryV1.from(client).select('id,name,code').eq('id',id).maybeSingle();if(error)throw error;return data||null}catch(error){console.warn('KINTO store customer profile lookup failed:',error);return null}
 }
 function showCustomer(id,name,customerCode){
   if(!id)return;

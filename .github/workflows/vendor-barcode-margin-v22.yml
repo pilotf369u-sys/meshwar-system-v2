@@ -26,7 +26,7 @@ jobs:
       - name: Validate V22 syntax and shell wiring
         run: |
           node --check js/vendor-barcode-margin-autopricing-v22.js
-          grep -Fq '<script defer src="js/vendor-barcode-margin-autopricing-v22.js?v=20261010-v22-canonical-barcode"></script>' vendor-dashboard.html
+          grep -Fq '<script defer src="js/vendor-barcode-margin-autopricing-v22.js?v=20261016-product-session-v1"></script>' vendor-dashboard.html
           grep -Fq 'MeshwarVendorBarcodeMarginV22?.install(frame.contentWindow)' vendor-dashboard.html
           grep -Fq "p?.barcode||p?.sku" js/vendor-barcode-margin-autopricing-v22.js
           ! grep -Fq 'sku=eq.' js/vendor-barcode-margin-autopricing-v22.js

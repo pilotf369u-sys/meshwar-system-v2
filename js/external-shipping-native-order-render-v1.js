@@ -4,7 +4,7 @@
 const script=document.currentScript;
 const screen=String(script?.dataset?.meshwarScreen||'').trim().toLowerCase();
 if(screen!=='employee'&&screen!=='admin')return;
-const VERSION='20260829-native-render-v40';
+const VERSION='20261015-external-shipping-guard-v43';
 const num=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
 const fee=o=>Math.max(0,num(o?.external_shipping_fee));
 const localFee=o=>Math.max(0,num(o?.delivery_fee));
@@ -16,7 +16,7 @@ const extCurrencyValue=o=>{
   if(fee(o)===0&&ext==='USD'&&base&&base!=='USD')return base;
   return ext||base||'USD';
 };
-function collectionDue(o){const t=payTypeValue(o);if(t==='paid_prepaid')return 0;if(t==='product_paid_delivery_cod')return fee(o)+localFee(o);return product(o)+fee(o)+localFee(o)}
+function collectionDue(o){const t=payTypeValue(o);if(t==='paid_prepaid')return 0;if(t==='product_paid_delivery_cod')return fee(o)+localFee(o);return window.KintoCouponFinanceV1.goods(o)+fee(o)+localFee(o)}
 function symbol(v){const s=String(v||'').trim().toUpperCase();if(s==='USD'||s==='$')return'$';if(s==='IQD')return'IQD';if(s==='TRY'||s==='TL')return'TL';if(s==='EUR'||s==='€')return'€';if(s==='SYP')return'SYP';return String(v||'USD')}
 function shortCurrencyOptions(current){const cur=String(current||'USD'),values=[cur,'USD','IQD','TRY','EUR','SYP','$'];return [...new Set(values.filter(Boolean))].map(v=>`<option value="${escapeHtml(v)}" ${v===cur?'selected':''}>${escapeHtml(symbol(v))}</option>`).join('')}
 function adminShortCurrencyOptions(current){const cur=String(current||'USD'),values=[cur,'USD','IQD','TRY','EUR','SYP','$'];return [...new Set(values.filter(Boolean))].map(v=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(symbol(v))}</option>`).join('')}
@@ -78,7 +78,62 @@ function installEmployee(){
     if(can('pricing')){const raw=document.getElementById('price-'+encodedId)?.value??'';if(raw==='')payload.total_price=null;else{const n=Number(raw);if(!Number.isFinite(n)||n<0)return alert('أدخل مبلغاً صحيحاً');payload.total_price=n;payload.currency=document.getElementById('currency-'+encodedId)?.value||'$';if(n>0&&o.status==='انتظار رد الموظف'&&status==='انتظار رد الموظف'){status='بانتظار موافقة العميل';payload.status=status}}}
     if(status!=='رفض الطلب'&&Object.prototype.hasOwnProperty.call(o,'rejection_reason'))payload.rejection_reason=null;
     const parcelsRaw=document.getElementById('parcels-'+encodedId)?.value??orderParcelsCount(o),parcelsCount=Math.max(1,Math.floor(Number(parcelsRaw)||1));payload.details=JSON.stringify({...parseDetails(o.details),parcels_count:parcelsCount});
-    try{const sb=await ensureEmployeeSupabase(),{error}=await sb.from('orders').update(payload).eq('id',id);if(error)throw error;await Promise.all([loadPipelineOrders(),refreshPipelineCounts()])}catch(e){console.error('Order save error:',e);alert('تعذر الحفظ: '+(e.message||e))}
+    try{
+      const sb=await ensureEmployeeSupabase();
+      let error;
+      if(payload.status==='تم التسديد'&&o.status!=='تم التسديد'){
+        await checkEmployeePaymentStockV53(o);
+        const token=window.KintoEmployeeSessionV143?.read?.()?.token;
+        if(!token)throw new Error('EMPLOYEE_SESSION_REQUIRED');
+        const {external_shipping_fee,external_shipping_currency,...approvalPatch}=payload;
+        ({error}=await sb.rpc('kinto_approve_paid_order_v1',{
+          p_session_token:String(token),p_actor:'employee',p_order_id:id,
+          p_expected_status:o.status,p_patch:approvalPatch
+        }));
+        if(error)throw error;
+        // External-shipping fields are not part of the protected payment RPC.
+        // Preserve the existing shipping editor through a separate status-free update.
+        if(external_shipping_fee!==o.external_shipping_fee ||
+           external_shipping_currency!==o.external_shipping_currency){
+          ({error}=await sb.rpc('kinto_approve_external_shipping_v1',{
+            p_session_token:String(token),p_actor:'employee',p_order_id:id,
+            p_expected_status:payload.status,
+            p_expected_fee:o.external_shipping_fee,
+            p_expected_currency:o.external_shipping_currency,
+            p_new_fee:external_shipping_fee,p_new_currency:external_shipping_currency
+          }));
+        }
+       }else{
+        if(payload.delivery_payment_type!==o.delivery_payment_type){
+          const token=window.KintoEmployeeSessionV143?.read?.()?.token;
+          if(!token)throw new Error('EMPLOYEE_SESSION_REQUIRED');
+          ({error}=await sb.rpc('kinto_approve_payment_type_v1',{
+            p_session_token:String(token),p_actor:'employee',p_order_id:id,
+            p_expected_status:o.status,p_expected_type:o.delivery_payment_type,
+            p_new_type:payload.delivery_payment_type
+          }));
+          if(error)throw error;
+        }
+        const {external_shipping_fee,external_shipping_currency,...orderPatch}=payload;
+        const saveToken=window.KintoEmployeeSessionV143?.read?.()?.token;if(!saveToken)throw new Error('STAFF_SESSION_REQUIRED');
+        ({error}=await sb.rpc('kinto_save_staff_order_session_v1',{p_role:'employee',p_session_token:String(saveToken),p_order_id:id,p_expected_status:o.status,p_expected_price:o.total_price,p_expected_currency:o.currency,p_patch:orderPatch}));
+        if(error)throw error;
+        if(external_shipping_fee!==o.external_shipping_fee ||
+           external_shipping_currency!==o.external_shipping_currency){
+          const token=window.KintoEmployeeSessionV143?.read?.()?.token;
+          if(!token)throw new Error('EMPLOYEE_SESSION_REQUIRED');
+          ({error}=await sb.rpc('kinto_approve_external_shipping_v1',{
+            p_session_token:String(token),p_actor:'employee',p_order_id:id,
+            p_expected_status:payload.status,
+            p_expected_fee:o.external_shipping_fee,
+            p_expected_currency:o.external_shipping_currency,
+            p_new_fee:external_shipping_fee,p_new_currency:external_shipping_currency
+          }));
+        }
+      }
+      if(error)throw error;
+      await Promise.all([loadPipelineOrders(),refreshPipelineCounts()]);
+    }catch(e){console.error('Order save error:',e);alert('تعذر الحفظ: '+(e.message||e))}
   };
   setTimeout(()=>{employeeHeader();loadPipelineOrders?.()},0);
 }
@@ -107,7 +162,59 @@ function installAdmin(){
     if(status==='مندوب'){if(!isAdminUuid(agentId))return alert('معرف موظف التوصيل غير صالح. يجب أن يكون UUID صحيحاً.');payload.delivery_agent_id=agentId}else if(o.status==='مندوب'){payload.delivery_agent_id=null}
     if(raw==='')payload.total_price=null;else{const n=Number(raw);if(!Number.isFinite(n)||n<0)return alert('أدخل مبلغاً صحيحاً');payload.total_price=n;payload.currency=document.getElementById('adminCurrency-'+encodedId)?.value||'$';if(n>0&&o.status==='انتظار رد الموظف'&&status==='انتظار رد الموظف'){status='بانتظار موافقة العميل';payload.status=status}}
     if(status==='رفض الطلب'&&!reason)return alert('أدخل سبب الرفض');
-    try{const sb=await ensureCustomerSupabase(),{error}=await sb.from('orders').update(payload).eq('id',id);if(error)throw error;await Promise.all([loadAdminOrders(),refreshAdminPipelineCounts()])}catch(e){console.error('Admin order save error:',e);alert('تعذر الحفظ: '+(e.message||e))}
+    try{
+      const sb=await ensureCustomerSupabase();
+      let error;
+      if(payload.status==='تم التسديد'&&o.status!=='تم التسديد'){
+        const token=window.KintoAdminSessionV147?.read?.()?.token;
+        if(!token)throw new Error('ADMIN_SESSION_REQUIRED');
+        const {external_shipping_fee,external_shipping_currency,...approvalPatch}=payload;
+        ({error}=await sb.rpc('kinto_approve_paid_order_v1',{
+          p_session_token:String(token),p_actor:'admin',p_order_id:id,
+          p_expected_status:o.status,p_patch:approvalPatch
+        }));
+        if(error)throw error;
+        if(external_shipping_fee!==o.external_shipping_fee ||
+           external_shipping_currency!==o.external_shipping_currency){
+          ({error}=await sb.rpc('kinto_approve_external_shipping_v1',{
+            p_session_token:String(token),p_actor:'admin',p_order_id:id,
+            p_expected_status:payload.status,
+            p_expected_fee:o.external_shipping_fee,
+            p_expected_currency:o.external_shipping_currency,
+            p_new_fee:external_shipping_fee,p_new_currency:external_shipping_currency
+          }));
+        }
+       }else{
+        if(payload.delivery_payment_type!==o.delivery_payment_type){
+          const token=window.KintoAdminSessionV147?.read?.()?.token;
+          if(!token)throw new Error('ADMIN_SESSION_REQUIRED');
+          ({error}=await sb.rpc('kinto_approve_payment_type_v1',{
+            p_session_token:String(token),p_actor:'admin',p_order_id:id,
+            p_expected_status:o.status,p_expected_type:o.delivery_payment_type,
+            p_new_type:payload.delivery_payment_type
+          }));
+          if(error)throw error;
+        }
+        const {external_shipping_fee,external_shipping_currency,...orderPatch}=payload;
+        const saveToken=window.KintoAdminSessionV147?.read?.()?.token;if(!saveToken)throw new Error('STAFF_SESSION_REQUIRED');
+        ({error}=await sb.rpc('kinto_save_staff_order_session_v1',{p_role:'admin',p_session_token:String(saveToken),p_order_id:id,p_expected_status:o.status,p_expected_price:o.total_price,p_expected_currency:o.currency,p_patch:orderPatch}));
+        if(error)throw error;
+        if(external_shipping_fee!==o.external_shipping_fee ||
+           external_shipping_currency!==o.external_shipping_currency){
+          const token=window.KintoAdminSessionV147?.read?.()?.token;
+          if(!token)throw new Error('ADMIN_SESSION_REQUIRED');
+          ({error}=await sb.rpc('kinto_approve_external_shipping_v1',{
+            p_session_token:String(token),p_actor:'admin',p_order_id:id,
+            p_expected_status:payload.status,
+            p_expected_fee:o.external_shipping_fee,
+            p_expected_currency:o.external_shipping_currency,
+            p_new_fee:external_shipping_fee,p_new_currency:external_shipping_currency
+          }));
+        }
+      }
+      if(error)throw error;
+      await Promise.all([loadAdminOrders(),refreshAdminPipelineCounts()]);
+    }catch(e){console.error('Admin order save error:',e);alert('تعذر الحفظ: '+(e.message||e))}
   };
   setTimeout(()=>{adminHeader();loadAdminOrders?.()},0);
 }

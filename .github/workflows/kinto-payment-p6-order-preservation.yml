@@ -1,0 +1,28 @@
+name: KINTO Payment P6 order-preservation contracts
+on:
+  pull_request:
+    paths:
+      - 'js/admin-payment-methods-g16.js'
+      - 'supabase/migrations/20261019230000_kinto_payment_p6_preserve_manual_orders.sql'
+      - 'tests/admin-payment-mode-save.test.mjs'
+      - 'ci/kinto-payment-p6-order-preservation.test.mjs'
+      - '.github/workflows/kinto-payment-p6-order-preservation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'js/admin-payment-methods-g16.js'
+      - 'supabase/migrations/20261019230000_kinto_payment_p6_preserve_manual_orders.sql'
+      - 'tests/admin-payment-mode-save.test.mjs'
+      - 'ci/kinto-payment-p6-order-preservation.test.mjs'
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify P4 transition preserves existing orders
+        run: node ci/kinto-payment-p6-order-preservation.test.mjs
+      - name: Exercise admin manual/electronic/manual switching and legacy guard behavior
+        run: node --test tests/admin-payment-mode-save.test.mjs

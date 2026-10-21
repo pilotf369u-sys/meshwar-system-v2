@@ -97,7 +97,8 @@ test('V101 checkout carries destination and resolves an active same-currency fal
     read('js/local-cart-v93.js')
   ]);
 
-  expect(cart).toContain('customers?select=*');
+  expect(cart).toContain("KintoCustomerDirectoryV1.from(null).eq('id',id).limit(1)");
+  expect(cart).not.toContain('customers?select=*');
   expect(cart).toContain('shippingDestination(customer)');
   expect(cart).toContain("rpc/checkout_independent_vendor_orders_v101");
   expect(sql).toContain("'app.checkout_customer_shipping'");
@@ -146,7 +147,7 @@ test('V103 projects customer location and atomically mirrors independent order s
   expect(adapter).toContain('function orderLocation(o)');
   expect(adapter).toContain('📍');
   expect(adapter).toContain('حالة الشحنة');
-  expect(shell).toContain('v66-order-indicators');
+  expect(shell).toContain('vendor-v94-multistore-orders.js?v=20261021-session-recovery-v1');
 });
 
 test('V104 lets the owning vendor atomically control shipping per independent order', async () => {
@@ -169,7 +170,7 @@ test('V104 lets the owning vendor atomically control shipping per independent or
   expect(adapter).toContain('vendor_update_order_shipping');
   expect(adapter).toContain('vendorFreeShippingChanged');
   expect(adapter).toContain('p_expected_version:Number(panel.dataset.version)');
-  expect(shell).toContain('v66-order-indicators');
+  expect(shell).toContain('vendor-v94-multistore-orders.js?v=20261021-session-recovery-v1');
 });
 
 test('V105 defers shipping to the vendor and keeps every invoice on canonical data', async () => {
@@ -190,7 +191,7 @@ test('V105 defers shipping to the vendor and keeps every invoice on canonical da
   expect(invoice).toContain('بانتظار تحديد الأجرة');
   expect(invoice).toContain('أجرة التوصيل');
   expect(invoice).toContain('t.deliveryCurrency');
-  expect(shell).toContain('v66-order-indicators');
+  expect(shell).toContain('vendor-v94-multistore-orders.js?v=20261021-session-recovery-v1');
 });
 
 test('V310 replaces legacy V112 rewards with store-scoped secure KINTO coupons', async () => {
@@ -200,7 +201,7 @@ test('V310 replaces legacy V112 rewards with store-scoped secure KINTO coupons',
   ]);
   for (const source of [admin, employee, dashboard]) {
     expect(source).not.toContain('rewards-loyalty-v112.js?v=20260905-v112');
-    expect(source).toContain('kinto-points-v310.js?v=20260928-v310');
+    expect(source).toContain('kinto-points-v310.js?v=20261017-store-control-v1');
   }
   expect(kinto).toContain("customer_loyalty_summary_v310");
   expect(kinto).toContain("customer_apply_coupon_v310");
@@ -227,7 +228,7 @@ test('V107 shows one canonical color-coded collection status in every invoice', 
     read('delivery-dashboard.html')
   ]);
 
-  for (const source of [sharedInvoice, vendorInvoice, courier]) {
+  for (const source of [sharedInvoice, vendorInvoice]) {
     expect(source).toContain('تحصيل كامل عند الاستلام');
     expect(source).toContain('البضاعة مدفوعة');
     expect(source).toContain('مدفوع مقدماً شامل التوصيل');
@@ -237,6 +238,12 @@ test('V107 shows one canonical color-coded collection status in every invoice', 
   expect(vendorInvoice).toContain('invoiceCollectionInfo');
   expect(vendorInvoice).toContain('collection-status ${collection.tone}');
   expect(courier).toContain('deliveryCollectionBadge(o)');
+  expect(courier).toContain('غير مدفوع — حصّل المبلغ الموضح');
+  expect(courier).toContain('البضاعة مدفوعة إلكترونياً — حصّل أجرة التوصيل فقط');
+  expect(courier).toContain('مدفوع بالكامل — لا تحصّل أي مبلغ');
+  expect(courier).toContain('المطلوب تحصيله من العميل');
+  expect(courier).not.toContain('js/kinto-bundle-ui-v93.js');
+  expect(courier).not.toContain('data-courier-electronic-invoice');
   expect(sql).toContain("'delivery_payment_type', o.delivery_payment_type");
   expect(sql).toContain('private.require_vendor_session(p_session_token)');
 });

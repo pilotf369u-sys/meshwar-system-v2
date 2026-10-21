@@ -20,7 +20,7 @@
   function firstList(...values){for(const value of values){const x=list(value);if(x.length)return x}return[]}
   function storeId(win){try{return String(JSON.parse(win.sessionStorage.getItem(STORE_KEY)||'null')?.id||'').trim()}catch{return''}}
   async function rest(win,path){
-    const r=await win.fetch(`${SB_URL}/rest/v1/${path}`,{cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,Accept:'application/json'}});
+    const r=await (win.KintoOrderDataSessionV1||window.KintoOrderDataSessionV1).forWindow(win,(win.KintoVendorProductsV1||window.KintoVendorProductsV1).forWindow(win))(`${SB_URL}/rest/v1/${path}`,{cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,Accept:'application/json'}});
     if(!r.ok)throw new Error(await r.text()||`HTTP ${r.status}`);
     const text=await r.text();return text?JSON.parse(text):null;
   }

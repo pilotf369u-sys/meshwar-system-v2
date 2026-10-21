@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const root=path.join(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'admin-dashboard.html'),'utf8');
+const sql=fs.readFileSync(path.join(root,'supabase/migrations/20261020230000_kinto_admin_paid_invoice_proof_v1.sql'),'utf8');
+assert.match(html,/void kintoAdminAttachPaidInvoice\(o\)/);
+assert.match(html,/admin_paid_electronic_invoice_orders_v1/);
+assert.match(html,/window\.KintoBundleV93\.printInvoice\(invoice,\{canonicalOnly:true,invoiceWindow:popup\}\)/);
+assert.match(html,/delivery_payment_type:'product_paid_delivery_cod'/);
+assert.match(html,/body\.dataset\.kintoAdminPaidProof=id/);
+assert.match(html,/invoiceButton:box\.dataset\.kintoAdminPaidProof!==String\(o\.id\)/);
+assert.match(html,/body\.querySelector\('\.kinto-v94-invoice-actions'\)\?\.remove\(\)/);
+assert.match(sql,/private\.require_admin_session_v147\(p_session_token\)/);
+assert.match(sql,/p\.status='paid' and p\.payment_kind='cart'/);
+assert.match(sql,/a\.status='succeeded'/);
+assert.doesNotMatch(sql,/\bupdate\s+(?:public\.)?orders\b|\bdelete\s+from\b/i);
+console.log('PASS admin verified-KP shared invoice route');

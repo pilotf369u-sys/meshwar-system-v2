@@ -10,7 +10,7 @@ const product=o=>Math.max(0,n(o?.total_price));
 const currency=o=>String(o?.external_shipping_currency||o?.currency||'USD');
 const pay=o=>String(o?.delivery_payment_type||'cod_full');
 function gross(o){return product(o)+fee(o)+localFee(o)}
-function due(o){const t=pay(o);if(t==='paid_prepaid')return 0;if(t==='product_paid_delivery_cod')return fee(o)+localFee(o);return gross(o)}
+function due(o){const t=pay(o);if(t==='paid_prepaid')return 0;if(t==='product_paid_delivery_cod')return fee(o)+localFee(o);return window.KintoCouponFinanceV1.goods(o)+fee(o)+localFee(o)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function currencyOptions(selected,base){const list=['USD','IQD','TRY','TL','SYP','EUR','$','€'],cur=String(selected||base||'USD');return [...new Set([cur,...list])].map(x=>`<option value="${esc(x)}" ${x===cur?'selected':''}>${esc(x)}</option>`).join('')}
 function topShell(targetScreen,params){const q=new URLSearchParams({screen:targetScreen,...params});return'external-shipping-shell.html?'+q.toString()}
@@ -95,7 +95,7 @@ function installAdmin(){
 async function fetchManifestExternalRows(){
   const branchId=String(new URLSearchParams(location.search).get('branchId')||document.getElementById('branchSelect')?.value||'').trim();
   if(!branchId||typeof window.getSb!=='function')return[];
-  const sb=await window.getSb(),{data,error}=await sb.from('orders').select('id,order_code,total_price,currency,delivery_fee,delivery_payment_type,external_shipping_fee,external_shipping_currency').eq('branch_id',branchId).order('created_at',{ascending:false}).limit(10000);
+  const sb=await window.getSb(),{data,error}=await sb.from('orders').select('id,order_code,total_price,currency,delivery_fee,delivery_payment_type,external_shipping_fee,external_shipping_currency,reward_discount_amount,reward_discount_currency').eq('branch_id',branchId).order('created_at',{ascending:false}).limit(10000);
   if(error){console.warn('External manifest rows unavailable:',error);return[]}
   return data||[];
 }
@@ -131,7 +131,7 @@ function installDelivery(){
   if(typeof window.loadFinance==='function'&&typeof window.fetchCourierOrders==='function'&&!window.__mwExternalDeliveryFinanceV2){
     window.loadFinance=async function(){
       try{
-        const rows=(await window.fetchCourierOrders('status,total_price,currency,delivery_fee,delivery_payment_type,external_shipping_fee,external_shipping_currency,is_settled,delivery_agent_id,courier_id,branch_id,details')).filter(o=>o.status==='تم التسليم'),unsettled=rows.filter(o=>o.is_settled!==true),by={};let pieces=0,parcels=0;
+        const rows=(await window.fetchCourierOrders('status,total_price,reward_discount_amount,reward_discount_currency,currency,delivery_fee,delivery_payment_type,external_shipping_fee,external_shipping_currency,is_settled,delivery_agent_id,courier_id,branch_id,details')).filter(o=>o.status==='تم التسليم'),unsettled=rows.filter(o=>o.is_settled!==true),by={};let pieces=0,parcels=0;
         unsettled.forEach(o=>{const cur=o.currency||'بدون عملة';if(!by[cur])by[cur]={collected:0,fees:0,net:0};by[cur].collected+=due(o);by[cur].fees+=localFee(o);by[cur].net+=Math.max(0,due(o)-localFee(o));pieces+=typeof window.deliveryOrderQuantity==='function'?window.deliveryOrderQuantity(o):1;parcels+=typeof window.deliveryParcelsCount==='function'?window.deliveryParcelsCount(o):1});
         const fmt=k=>Object.entries(by).map(([c,v])=>`${v[k].toFixed(2)} ${c}`).join(' / ')||'0.00';
         if(window.cardShipments)window.cardShipments.textContent=unsettled.length;if(window.cardPieces)window.cardPieces.textContent=pieces;if(window.cardParcels)window.cardParcels.textContent=parcels;if(window.cardCollected)window.cardCollected.textContent=fmt('collected');if(window.cardFees)window.cardFees.textContent=fmt('fees');if(window.cardNet)window.cardNet.textContent=fmt('net');

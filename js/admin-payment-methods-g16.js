@@ -3,7 +3,38 @@
 const root=()=>document.getElementById('g16PaymentMethods');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const token=()=>window.KintoAdminSessionV147?.read?.()?.token||'';
-let methods=[],busy=false,pendingChallenge='';
+let methods=[],settings={},busy=false,pendingChallenge='';
+let p2ScriptPromise=null;
+function ensurePaymentP3Styles(){
+ if(document.getElementById('paymentMethodsP3Styles'))return;
+ const link=document.createElement('link');link.id='paymentMethodsP3Styles';link.rel='stylesheet';
+ link.href=new URL('css/admin-payment-methods-p3.css',document.baseURI).href;
+ document.head.append(link);
+}
+function mountPaymentProvidersP2(){
+ const container=root(),form=document.getElementById('g16Form');
+ ensurePaymentP3Styles();
+ if(!container||!form||document.getElementById('paymentProvidersP2'))return;
+ const section=document.createElement('section');section.id='paymentProvidersP2';section.dir='rtl';
+ section.className='payment-p2-panel';
+ section.innerHTML='<h4>مزودات الدفع — Payment-P2</h4><p id="paymentProvidersP2State" class="mini" role="status" aria-live="polite">حالة الدفع المعتمدة تظهر في G16؛ التحصيل الحقيقي مغلق.</p><div id="paymentProvidersP2List"></div><div class="payment-p2-actions"><button type="button" id="paymentProvidersP2Reload" class="btn-dark">تحديث القائمة</button><input id="paymentProvidersP2Reason" maxlength="500" placeholder="سبب إيقاف الطوارئ (8 أحرف على الأقل)" aria-label="سبب إيقاف الطوارئ"><button type="button" id="paymentProvidersP2Stop" class="btn-dark">إيقاف المحاولات الجديدة فوراً</button><button type="button" id="paymentProvidersP2Resume" class="btn-dark" disabled>التحصيل الحقيقي مغلق</button></div><p id="paymentProvidersP2Status" class="mini" role="status" aria-live="polite"></p><p class="mini">محاكي KINTO هو وسيلة دفع بلا تحصيل حقيقي لجميع العملاء عند تفعيله بأمان من لوحة G16. شركات الدفع غير مربوطة حالياً. لا تدخل مفاتيح أو أسرار هنا، والتحصيل الحقيقي مغلق دائماً.</p>';
+ container.insertBefore(section,form);
+}
+async function loadPaymentProvidersP2(){
+ mountPaymentProvidersP2();
+ if(typeof window.loadPaymentProvidersP2==='function')return window.loadPaymentProvidersP2();
+ if(!p2ScriptPromise){
+  p2ScriptPromise=new Promise((resolve,reject)=>{
+   const script=document.createElement('script');
+   script.src=new URL('js/admin-payment-providers-p2.js',document.baseURI).href;
+   script.async=true;script.onload=resolve;script.onerror=()=>reject(Error('تعذر تحميل إعدادات Payment-P2.'));
+   document.head.append(script);
+  });
+ }
+ await p2ScriptPromise;
+ if(typeof window.loadPaymentProvidersP2!=='function')throw Error('خدمة إعدادات Payment-P2 غير متاحة.');
+ return window.loadPaymentProvidersP2();
+}
 async function secure(action,payload){
  const sb=await window.ensureCustomerSupabase();
  const {data,error}=await sb.functions.invoke('kinto-payment-security-g16',{body:{action,session_token:token(),...payload}});
@@ -40,11 +71,230 @@ async function rpc(action='list',extra={}){
  const {data,error}=await sb.rpc('kinto_payment_admin_g16',{p_session_token:t,p_action:action,...extra});
  if(error)throw error;return data;
 }
-const message=(v,bad=false)=>{const el=document.getElementById('g16Message');if(el){el.textContent=v;el.style.color=bad?'#b91c1c':'#166534'}};
+async function runtimeRpc(action='get',extra={}){
+ const t=token();if(!t)throw Error('جلسة الأدمن غير متاحة. يرجى تسجيل الدخول مجدداً.');
+ const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.rpc('kinto_payment_mode_admin_g16',{p_session_token:t,p_action:action,...extra});
+ if(error){
+  let detail='';try{const j=await error.context?.json?.();detail=String(j?.message||j?.error||'')}catch{}
+  if(detail.includes('GATEWAY_INTEGRATION_NOT_DEPLOYED'))throw Error('لا يمكن تفعيل التحصيل الحي قبل اكتمال ربط البوابة ومراجعتها.');
+  throw Error(detail||error.message||'تعذر حفظ إعداد مسار الدفع.');
+ }
+ if(!data?.payment_mode)throw Error(data?.error||'تعذر قراءة إعدادات مسار الدفع.');
+ return data;
+}
+async function paymentModeTransitionP4(targetMode){
+ const t=token();if(!t)throw Error('جلسة الأدمن غير متاحة. يرجى تسجيل الدخول مجدداً.');
+ const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.rpc('kinto_payment_mode_transition_p4',{p_session_token:t,p_target_mode:targetMode,
+  p_verified_unpaid_order_ids:[],p_admin_confirmed_no_payment:false});
+ if(error){
+  const detail=String(error.message||'');
+  if(/kinto_payment_mode_transition_p4|PGRST202|does not exist|Could not find the function/i.test(detail))return null;
+  throw error;
+ }
+ // Older production function versions ask administrators to attest and cancel
+ // legacy manual orders. Never repeat that destructive request from the UI.
+ if(!data?.ok&&data?.error==='MANUAL_ORDERS_REQUIRE_REVIEW'){
+  throw Error('خادم الدفع ما زال يستخدم شرط مراجعة الطلبات اليدوية القديم. لم يُرسل هذا المتصفح أي أمر إلغاء؛ يلزم تطبيق ترحيل حفظ الطلبات قبل متابعة التبديل.');
+ }
+ if(!data?.ok){
+  const errors={
+   ELECTRONIC_ADMISSION_NOT_READY:'الدفع الإلكتروني غير جاهز حالياً؛ بقي النظام اليدوي فعالاً ولم يبدأ التبديل.',
+   PAYMENT_ATTEMPTS_REQUIRE_RECONCILIATION:'توجد محاولات معلقة أو مجهولة النتيجة. لن يُفتح النظام اليدوي حتى تتم مطابقتها بأمان.',
+   EMERGENCY_STOP_REQUIRED:'فعّل إيقاف المحاولات الإلكترونية الجديدة قبل العودة إلى النظام اليدوي.',
+  };
+  throw Error(errors[data?.error]||data?.error||'تعذر إكمال التبديل الآمن.');
+ }
+ return data;
+}
+async function paymentP6Admin(action){
+ const t=token();if(!t)throw Error('جلسة الأدمن غير متاحة. يرجى تسجيل الدخول مجدداً.');
+ const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.rpc('kinto_payment_p6_simulator_admin_v1',{p_session_token:t,p_action:action});
+ if(error)throw Error(String(error.message||'تعذر التحقق من إعداد المحاكي.').replace(/^.*?: /,''));
+ if(!data?.ok)throw Error(data?.error||'رفض الخادم إجراء المحاكي.');
+ return data;
+}
+async function paymentP2Admin(action,extra={}){
+ const t=token();if(!t)throw Error('جلسة الأدمن غير متاحة. يرجى تسجيل الدخول مجدداً.');
+ const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.rpc('kinto_payment_provider_admin_p2',{p_session_token:t,p_action:action,...extra});
+ if(error)throw error;if(data?.ok===false)throw Error(data.error||'تعذر تنفيذ إجراء Payment-P2.');return data;
+}
+function ensureP6SimulatorControls(){
+ const parent=document.getElementById('g16RuntimeControls');if(!parent)return null;
+ let panel=document.getElementById('g16P6SimulatorControls');if(panel)return panel;
+ panel=document.createElement('section');panel.id='g16P6SimulatorControls';panel.dir='rtl';
+ panel.innerHTML='<h5>محاكي KINTO لجميع العملاء — لا تحصيل حقيقي</h5><p id="g16P6SimulatorState" class="mini" role="status" aria-live="polite">جارٍ قراءة حالة المحاكي...</p><div class="payment-p2-actions"><button type="button" id="g16P6Prepare" class="btn-dark">تجهيز Sandbox</button><button type="button" id="g16P6Open" class="btn-green">فتح استقبال المحاكي</button><button type="button" id="g16P6Manual" class="btn-dark">إيقاف المحاكي والعودة لليدوي</button></div>';
+ panel.style.cssText='margin-top:12px;padding:12px;border:1px solid #b99b52;border-radius:9px;background:#fff;color:#173227';
+ panel.querySelector('#g16P6Prepare').onclick=p6PrepareSimulator;
+ panel.querySelector('#g16P6Open').onclick=p6OpenSimulator;
+ panel.querySelector('#g16P6Manual').onclick=p6ReturnManual;
+ parent.append(panel);return panel;
+}
+async function refreshP6Simulator(){
+ ensureP6SimulatorControls();const state=document.getElementById('g16P6SimulatorState');if(!state)return null;
+ const data=await paymentP6Admin('get');
+ state.textContent=`الاختيار: ${data.payment_mode==='electronic'?'إلكتروني Sandbox':'يدوي'} — الوضع الفعلي: ${data.effective_mode==='electronic'?'إلكتروني':'يدوي'} (${data.transition_state}) — جاهزية المحاكي: ${data.simulator_enabled&&data.electronic_admission_ready?'مجهز':'مغلق'} — إيقاف الطوارئ: ${data.emergency_stop?'مفعّل':'غير مفعّل'} — حجوزات/مطابقة: ${data.active_holds}/${data.unresolved_attempts} — التحصيل الحقيقي: مغلق`;
+ return data;
+}
+async function p6PrepareSimulator(){
+ if(busy)return;busy=true;runtimeStatus('جارٍ تجهيز محاكي الاختبار بلا تحصيل...');
+ try{const data=await paymentP6Admin('prepare');await refreshP6Simulator();const p4=await paymentModeP4Read();if(p4)paintRuntime({...settings,simulator_enabled:data.simulator_enabled,electronic_admission_ready:p4.electronic_admission_ready,effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list});runtimeStatus('تم تجهيز المحاكي فقط. لم يتغير المسار الفعلي؛ استخدم «فتح استقبال المحاكي» بعد مراجعة الحالات.')}
+ catch(e){runtimeStatus(e?.message||'تعذر تجهيز محاكي الدفع.',true)}finally{busy=false}
+}
+async function activateP6SimulatorSequence(){
+ const current=await paymentP6Admin('get');
+ if(!(current.simulator_enabled&&current.electronic_admission_ready))await paymentP6Admin('prepare');
+ const transition=await paymentModeTransitionP4('electronic');
+ if(!transition?.ok||transition.effective_mode!=='electronic')throw Error('لم يكتمل انتقال P4؛ بقي فتح المحاكي مغلقاً.');
+ await paymentP6Admin('open');
+ const mode=await runtimeRpc('get');const p4=await paymentModeP4Read();const p6=await paymentP6Admin('get');
+ paintRuntime({...mode,simulator_enabled:p6.simulator_enabled,electronic_admission_ready:p6.electronic_admission_ready,
+  emergency_stop:p6.emergency_stop,effective_payment_mode:p4?.effective_mode||p6.effective_mode,
+  p4_transition_state:p4?.transition_state||p6.transition_state,p4_active_holds:p4?.active_holds,
+  p4_unresolved_attempts:p4?.unresolved_attempts,unresolved_attempt_list:p4?.unresolved_attempt_list});
+ try{await refreshP6Simulator()}catch{}
+}
+async function p6OpenSimulator(){
+ if(busy)return;if(!confirm('سيبدأ استقبال طلبات جديدة عبر محاكي KINTO لجميع العملاء. لا توجد أموال أو بطاقات مصرفية حقيقية. هل تتابع؟'))return;
+ busy=true;runtimeStatus('جارٍ التحقق من جاهزية المحاكي والانتقال الآمن...');
+ try{await activateP6SimulatorSequence();runtimeStatus('استقبل المحاكي الطلبات الجديدة بأمان. لا يوجد تحصيل حقيقي؛ إيقاف الطوارئ يبقى متاحاً.')}
+ catch(e){runtimeStatus(e?.message||'تعذر فتح محاكي الدفع.',true);try{await refreshP6Simulator()}catch{}}
+ finally{busy=false}
+}
+async function p6ReturnManual(){
+ if(busy)return;const reason=prompt('سبب إيقاف محاكي الدفع وإيقاف المحاولات الجديدة:','العودة إلى النظام اليدوي');if(reason===null)return;if(reason.trim().length<8){runtimeStatus('اكتب سبباً من 8 أحرف على الأقل.',true);return}
+ if(!confirm('سيتوقف استقبال محاولات جديدة فوراً. ستبقى المحاولات المجهولة محجوزة حتى مطابقتها، ولن تُلغى دفعة ناجحة. متابعة؟'))return;
+ busy=true;runtimeStatus('جارٍ إيقاف المحاولات الجديدة ثم تصفية المحاولات السابقة...');
+ try{await paymentP2Admin('emergency_stop',{p_reason:reason.trim()});const transition=await paymentModeTransitionP4('manual');if(!transition?.ok||transition.effective_mode!=='manual'){await refreshP6Simulator();throw Error('تم تفعيل إيقاف الطوارئ، لكن بقيت محاولات تتطلب المطابقة. أكملها ثم أعد المحاولة؛ لم يُغلق سجل المحاكي.')}await paymentP6Admin('close');const mode=await runtimeRpc('get');const p4=await paymentModeP4Read();const p6=await paymentP6Admin('get');paintRuntime({...mode,simulator_enabled:p6.simulator_enabled,electronic_admission_ready:p6.electronic_admission_ready,emergency_stop:p6.emergency_stop,effective_payment_mode:p4?.effective_mode||'manual',p4_transition_state:p4?.transition_state||'stable',p4_active_holds:p4?.active_holds,p4_unresolved_attempts:p4?.unresolved_attempts,unresolved_attempt_list:p4?.unresolved_attempt_list});await refreshP6Simulator();runtimeStatus('عاد المسار اليدوي بعد إيقاف استقبال الجديد وتصفية الحجوزات. بقيت الدفعات السابقة محفوظة.')}
+ catch(e){runtimeStatus(e?.message||'تعذر إكمال العودة لليدوي.',true);try{await refreshP6Simulator()}catch{}}
+ finally{busy=false}
+}
+async function paymentModeP4Read(){
+ const t=token();if(!t)return null;const sb=await window.ensureCustomerSupabase();
+ const {data,error}=await sb.rpc('kinto_payment_p4_admin_read',{p_session_token:t});
+ if(error){const detail=String(error.message||'');if(/kinto_payment_p4_admin_read|PGRST202|does not exist|Could not find the function/i.test(detail))return null;throw error}
+ return data||null;
+}
+function ensureP4ReconciliationPanel(){
+ const parent=document.getElementById('g16RuntimeControls');if(!parent)return null;
+ let panel=document.getElementById('g16P4Reconciliation');if(panel)return panel;
+ panel=document.createElement('section');panel.id='g16P4Reconciliation';panel.dir='rtl';
+ panel.style.cssText='margin-top:12px;padding:12px;border:1px solid #b99b52;border-radius:9px;background:#fff';
+ panel.innerHTML='<h5 style="margin:0 0 8px">مطابقة محاولات الدفع المعلّقة</h5><p class="mini">لا يُحرر الحجز عند انقطاع الاتصال أو وصول إشعار متأخر. طابق حالة العملية مع مزودها أولاً، ثم سجّل مرجع التحقق أو الاسترداد.</p><div id="g16P4ReconciliationRows"></div>';
+ parent.append(panel);return panel;
+}
+async function reconcileP4Attempt(attemptId,resolution){
+ if(busy)return;
+ const title=resolution==='refunded'?'تأكيد استرداد مستقر من مزود الدفع':'تأكيد أن المزود لم يحصّل أي مبلغ';
+ if(!confirm(title+' للمحاولة '+attemptId+'؟ سيحرر الخادم حجز المخزون بعد حفظ سجل المطابقة.'))return;
+ const evidence=prompt('أدخل مرجع استعلام المزود أو مرجع الاسترداد (8 أحرف على الأقل):','');
+ if(evidence===null)return;
+ if(evidence.trim().length<8){runtimeStatus('مرجع التحقق يجب أن يتكون من 8 أحرف على الأقل.',true);return;}
+ busy=true;runtimeStatus('جارٍ تسجيل المطابقة والتحقق من مرجعها...');
+ try{
+  const sb=await window.ensureCustomerSupabase();
+  const {data,error}=await sb.rpc('kinto_payment_attempt_reconcile_p4',{p_session_token:token(),p_attempt_id:attemptId,
+   p_resolution:resolution,p_evidence_reference:evidence.trim()});
+  if(error)throw error;if(!data?.ok)throw Error(data?.error||'تعذرت مطابقة محاولة الدفع.');
+  const p4=await paymentModeP4Read();if(p4)paintRuntime({...settings,effective_payment_mode:p4.effective_mode,
+   p4_transition_state:p4.transition_state,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,
+   unresolved_attempt_list:p4.unresolved_attempt_list});
+  runtimeStatus(data.resolution==='refunded'?'سُجل الاسترداد وتحرر الحجز. يمكنك إكمال العودة لليدوي.':'تأكد عدم التحصيل وتحرر الحجز. يمكنك إكمال العودة لليدوي.');
+ }catch(e){runtimeStatus(e?.message||'تعذرت مطابقة محاولة الدفع.',true)}finally{busy=false}
+}
+function paintP4Reconciliation(attempts){
+ const panel=ensureP4ReconciliationPanel(),rows=document.getElementById('g16P4ReconciliationRows');if(!panel||!rows)return;
+ rows.replaceChildren();const list=Array.isArray(attempts)?attempts:[];panel.hidden=list.length===0;
+ for(const a of list){
+  const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid #e5e7eb';
+  const info=document.createElement('span');info.textContent=`${a.attempt_id} — ${a.provider_key} — ${a.amount} ${a.currency} — ${a.status}`;info.style.cssText='overflow-wrap:anywhere;flex:1';
+  const select=document.createElement('select');select.setAttribute('aria-label','نتيجة المطابقة');
+  for(const [value,label] of [['confirmed_no_charge','لم يحدث تحصيل'],['refunded','تم الاسترداد']]){const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option)}
+  const button=document.createElement('button');button.type='button';button.className='btn-dark';button.textContent='مطابقة وتحرير الحجز';button.onclick=()=>reconcileP4Attempt(a.attempt_id,select.value);
+  row.append(info,select,button);rows.append(row);
+ }
+}
+const message=(v,bad=false)=>{const el=document.getElementById('g16Message');if(el){el.textContent=v;el.dataset.state=bad?'error':'ok'}};
+function runtimeStatus(v,bad=false){const el=document.getElementById('g16RuntimeStatus');if(el){el.textContent=v;el.dataset.state=bad?'error':'ok'}}
+function setRuntimeControlsAvailable(available){
+ for(const id of ['g16PaymentMode','g16GatewayEnvironment','g16SaveRuntime']){
+  const el=document.getElementById(id);if(el)el.disabled=!available;
+ }
+ const gatewaySwitch=document.getElementById('g16GatewaySwitch');
+ if(gatewaySwitch&&!available)gatewaySwitch.disabled=true;
+}
+function paintRuntime(data){
+ settings=data||{};
+ const mode=document.getElementById('g16PaymentMode'),env=document.getElementById('g16GatewayEnvironment');
+ if(mode)mode.value=settings.payment_mode==='electronic'?'electronic':'manual';
+ if(env)env.value=settings.gateway_environment==='live'?'live':'sandbox';
+ const effective=settings.effective_payment_mode==='electronic'?'إلكتروني':'يدوي';
+ const selected=settings.payment_mode==='electronic'?(settings.effective_payment_mode==='electronic'?'إلكتروني (الوضع الفعلي)':'إلكتروني (اختيار محفوظ فقط)'):'يدوي';
+ const ready=settings.gateway_integration_ready===true;
+ const simulatorActive=settings.effective_payment_mode==='electronic'&&settings.simulator_enabled===true&&settings.emergency_stop===false&&settings.p4_transition_state==='stable';
+ const state=document.getElementById('g16GatewayState');
+ if(state)state.textContent='المسار المحدد: '+selected+' — المسار الفعلي حالياً: '+effective+' — '+(simulatorActive?'محاكي KINTO مفتوح بلا تحصيل':'التحصيل المالي الحقيقي مغلق');
+ const sw=document.getElementById('g16GatewaySwitch');
+ if(sw){sw.disabled=true;sw.textContent='التحصيل الحقيقي مغلق دائماً';sw.title='لا يوجد ربط ببوابة فعلية. استخدم عناصر محاكي KINTO أدناه.'}
+ const transition=settings.p4_transition_state==='draining'?'التبديل قيد التصفية؛ استقبال الطلبات الجديدة متوقف حتى إكمال التسوية أو إلغاء الانتقال.':'';
+ const holds=Number(settings.p4_active_holds)||0,unresolved=Number(settings.p4_unresolved_attempts)||0;
+ const ledger=holds||unresolved?`حجوزات نشطة: ${holds} — محاولات تحتاج مطابقة: ${unresolved}.`:'';
+ const activeMode=settings.effective_payment_mode==='electronic'
+  ?(simulatorActive?'وضع الطلبات الإلكتروني فعّال عبر محاكي KINTO بلا تحصيل.':'الوضع الفعلي إلكتروني لكن استقبال المحاكي مغلق؛ لا تنشأ طلبات إلكترونية حتى اكتمال الجاهزية.')
+  :'الوضع الفعلي يدوي؛ الاختيار الإلكتروني لا يغيّر ذلك قبل إكمال الانتقال الآمن.';
+ runtimeStatus([transition,ledger,activeMode].filter(Boolean).join(' '));
+ paintP4Reconciliation(data?.unresolved_attempt_list);
+}
+async function saveRuntime(){
+ if(busy)return;
+ const mode=document.getElementById('g16PaymentMode')?.value||'manual';
+ const environment=document.getElementById('g16GatewayEnvironment')?.value||'sandbox';
+ if(mode==='manual'&&(settings.effective_payment_mode==='electronic'||settings.payment_mode==='electronic'||settings.simulator_enabled===true||settings.electronic_admission_ready===true||settings.p4_transition_state==='draining'))return p6ReturnManual();
+ if(environment==='live'&&!settings.gateway_integration_ready){runtimeStatus('بيئة الإنتاج غير متاحة قبل اكتمال ربط البوابة والمراجعة.',true);return}
+ busy=true;runtimeStatus('جارٍ حفظ الإعدادات...');
+ try{
+  // Selecting Sandbox is a saved admin preference, not permission to stop
+  // manual intake. Keep P4's effective mode manual until the server reports
+  // that the electronic path is ready. Never defer while P4 is already
+  // draining or electronic; those states must pass through its safe transition.
+  const p4State=settings.p4_transition_state||'stable';
+  const saveSandboxPreferenceOnly=mode==='electronic'&&environment==='sandbox'
+   &&settings.effective_payment_mode==='manual'&&p4State==='stable'
+   &&settings.gateway_integration_ready!==true;
+  if(saveSandboxPreferenceOnly&&!confirm('سيُجهّز محاكي KINTO ثم ينقل الطلبات الجديدة إليه لجميع العملاء. الدفع بلا تحصيل حقيقي. هل تتابع؟'))return;
+  const transition=saveSandboxPreferenceOnly?null:await paymentModeTransitionP4(mode);
+  // In the not-ready Sandbox case, persist only G16's selected preference.
+  // P4 remains manual/stable, so the current manual checkout is unaffected.
+  // When the electronic path is ready, P4 still owns the mode transition and
+  // updates G16 atomically as before.
+  const updated=transition?await runtimeRpc('get'):await runtimeRpc('set_mode',{p_payment_mode:mode});
+  const withEnv=environment!==(updated.gateway_environment||'sandbox')?await runtimeRpc('set_environment',{p_gateway_environment:environment}):updated;
+  const p4=await paymentModeP4Read();
+  paintRuntime({...withEnv,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_target_mode:p4.target_mode,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{} )});
+  if(saveSandboxPreferenceOnly){const p6=await paymentP6Admin('prepare');const p4=await paymentModeP4Read();paintRuntime({...withEnv,simulator_enabled:p6.simulator_enabled,electronic_admission_ready:p6.electronic_admission_ready,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{})});runtimeStatus('حُفظ اختيار Sandbox وجُهّز المحاكي فقط. بقي استقبال الطلبات مغلقاً وإيقاف الطوارئ مفعّلاً؛ استخدم زر فتح الاستقبال بعد مراجعة الجاهزية.');return}
+  runtimeStatus(saveSandboxPreferenceOnly
+   ?'حُفظ اختيار الدفع الإلكتروني Sandbox. يبقى الوضع الفعلي يدوياً وتستمر الطلبات اليدوية حتى تكتمل جاهزية المحاكي ويُجرى انتقال آمن من الأدمن.'
+   :transition?.effective_mode==='electronic'?'تم التبديل بأمان. يبقى التحصيل الإلكتروني الحقيقي مغلقاً.'
+   :mode==='electronic'&&!withEnv.gateway_integration_ready?'حُفظ اختيار الإلكتروني إعداداً فقط. بقي المسار الفعلي يدوياً والتحصيل مغلقاً.'
+   :'تم حفظ إعداد المسار.');
+ }catch(e){try{paintRuntime(await runtimeRpc('get'))}catch{}runtimeStatus(e?.message||'تعذر حفظ الإعدادات.',true)}
+ finally{busy=false}
+}
+async function toggleGateway(){
+ if(busy||!settings.gateway_integration_ready)return;
+ const next=!settings.gateways_enabled;
+ if(next&&!confirm('تأكيد تفعيل إنشاء محاولات دفع جديدة؟'))return;
+ if(!next&&!confirm('إيقاف إنشاء محاولات دفع إلكترونية جديدة؟ ستستمر مطابقة العمليات السابقة.'))return;
+ busy=true;runtimeStatus('جارٍ تحديث مفتاح إيقاف التحصيل...');
+ try{paintRuntime(await runtimeRpc('gateway_switch',{p_enabled:next}));runtimeStatus(next?'تم تفعيل استقبال محاولات جديدة.':'تم إيقاف محاولات الدفع الجديدة؛ تبقى مطابقة العمليات السابقة مستمرة.')}
+ catch(e){runtimeStatus(e?.message||'تعذر تحديث مفتاح الإيقاف.',true)}finally{busy=false}
+}
 function paint(data){
  methods=data.methods||[];
  const list=document.getElementById('g16List');if(!list)return;
- document.getElementById('g16GatewayState').textContent='الدفع الإلكتروني: متوقف — الربط الفعلي سيضاف لاحقاً في مرحلة مستقلة';
  list.replaceChildren();const pv=document.getElementById('g16CustomerPreview');if(pv){pv.hidden=true;pv.textContent=''}
  for(const m of methods){
   const card=document.createElement('div');card.className='g16-method';
@@ -108,11 +358,52 @@ async function change(action,args){
  catch(e){message(e?.message||'تعذر حفظ البيانات.',true)}
  finally{busy=false}
 }
+
+let auditPageP5=1;
+function mountPaymentAuditP5(){
+ const host=root();if(!host)return null;let panel=document.getElementById('g16PaymentAuditP5');if(panel)return panel;
+ panel=document.createElement('section');panel.id='g16PaymentAuditP5';panel.dir='rtl';panel.style.cssText='margin:16px 0;padding:13px;border:1px solid #d6c184;border-radius:12px;background:#fff;color:#173227';
+ panel.innerHTML='<h4 style="margin:0 0 9px">سجل عمليات الدفع الإلكتروني — للقراءة فقط</h4><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:9px"><select id="g16AuditFilterP5" aria-label="حالة الدفعة"><option value="all">جميع الحالات</option><option value="paid">الناجحة</option><option value="pending">المعلّقة</option><option value="reconciliation_required">تحتاج مراجعة</option><option value="failed">المرفوضة</option><option value="cancelled">الملغاة</option></select><input id="g16AuditSearchP5" maxlength="80" placeholder="بحث برقم KP أو معرّف العميل" aria-label="بحث الدفعات"><button type="button" id="g16AuditReloadP5">بحث / تحديث</button></div><div id="g16AuditStateP5" role="status">اضغط تحديث لقراءة السجل.</div><div id="g16AuditRowsP5" style="overflow-x:auto"></div><div id="g16AuditPagerP5" style="display:flex;align-items:center;gap:10px;margin-top:9px"></div><p class="mini">هذا السجل للمتابعة فقط، ولا يغيّر حالة الدفع أو ينفّذ تحصيلاً.</p>';
+ const form=document.getElementById('g16Form');if(form)host.insertBefore(panel,form);else host.appendChild(panel);
+ panel.querySelector('#g16AuditReloadP5').onclick=()=>loadPaymentAuditP5(1);
+ panel.querySelector('#g16AuditFilterP5').onchange=()=>loadPaymentAuditP5(1);
+ panel.querySelector('#g16AuditSearchP5').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();loadPaymentAuditP5(1)}};
+ return panel;
+}
+async function loadPaymentAuditP5(page=1){
+ const panel=mountPaymentAuditP5();if(!panel)return;
+ const status=panel.querySelector('#g16AuditStateP5'),rows=panel.querySelector('#g16AuditRowsP5'),pager=panel.querySelector('#g16AuditPagerP5');
+ status.textContent='جارٍ قراءة عمليات الدفع...';
+ try{
+  const sb=await window.ensureCustomerSupabase();
+  const {data,error}=await sb.rpc('kinto_payments_p5_admin_audit_v1',{p_session_token:token(),p_page:page,p_status:panel.querySelector('#g16AuditFilterP5').value,p_search:panel.querySelector('#g16AuditSearchP5').value.trim()});
+  if(error)throw error;
+  auditPageP5=Number(data.page)||1;
+  const statuses={paid:'تم التسديد',pending:'معلّقة',failed:'مرفوضة',cancelled:'ملغاة',reconciliation_required:'تحتاج مراجعة'};
+  rows.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th>رقم KP</th><th>التاريخ</th><th>العميل</th><th>المبلغ</th><th>الحالة</th><th>طلبات KN</th></tr></thead><tbody>'+((data.payments||[]).map(p=>'<tr><td>'+esc(p.kp_number)+'</td><td>'+esc(new Date(p.created_at).toLocaleString('ar'))+'</td><td>'+esc(p.customer_id)+'</td><td>'+esc(Number(p.amount).toLocaleString('en-US')+' '+p.currency)+'</td><td>'+esc(statuses[p.status]||p.status)+'</td><td>'+esc((p.order_codes||[]).join('، ')||'—')+'</td></tr>').join('')||'<tr><td colspan="6">لا توجد عمليات مطابقة.</td></tr>')+'</tbody></table>';
+  const pages=Math.max(1,Number(data.pages)||1);status.textContent='عدد العمليات: '+(Number(data.total)||0);
+  pager.innerHTML='<button type="button" data-audit-prev '+(auditPageP5<=1?'disabled':'')+'>السابق</button><span>صفحة '+auditPageP5+' من '+pages+'</span><button type="button" data-audit-next '+(auditPageP5>=pages?'disabled':'')+'>التالي</button>';
+  pager.querySelector('[data-audit-prev]').onclick=()=>loadPaymentAuditP5(auditPageP5-1);
+  pager.querySelector('[data-audit-next]').onclick=()=>loadPaymentAuditP5(auditPageP5+1);
+ }catch(error){status.textContent='تعذر قراءة سجل الدفعات: '+(error.message||error);rows.innerHTML='';pager.innerHTML=''}
+}
+
 async function load(){
  if(!root()||busy)return;busy=true;message('جارٍ تحميل طرق الدفع...');
- try{paint(await rpc());message('إدارة طرق الدفع مستقلة حالياً عن الطلبات؛ لا يتم إرسال بيانات الدفع تلقائياً.')}
- catch(e){message(e?.message||'تعذر التحميل. تأكد من تنفيذ SQL الخاص بالمرحلة.',true)}
- finally{busy=false}
+ try{
+  const catalog=await rpc();paint(catalog);mountPaymentAuditP5();loadPaymentAuditP5(1);
+  try{
+   const mode=await runtimeRpc('get');setRuntimeControlsAvailable(true);const p4=await paymentModeP4Read();let p6=null;try{ensureP6SimulatorControls();p6=await paymentP6Admin('get');await refreshP6Simulator()}catch{}paintRuntime({...mode,...(p4?{effective_payment_mode:p4.effective_mode,p4_transition_state:p4.transition_state,p4_target_mode:p4.target_mode,p4_active_holds:p4.active_holds,p4_unresolved_attempts:p4.unresolved_attempts,unresolved_attempt_list:p4.unresolved_attempt_list}:{}),...(p6?{simulator_enabled:p6.simulator_enabled,electronic_admission_ready:p6.electronic_admission_ready,emergency_stop:p6.emergency_stop}: {})});
+   message('تم تحميل الإعدادات ووسائل الدفع؛ يبقى OTP مطلوباً عند تغيير بيانات التحويل.');
+  }catch(e){
+   paintRuntime({payment_mode:'manual',gateway_environment:'sandbox',gateways_enabled:false,gateway_integration_ready:false,effective_payment_mode:'manual'});
+   setRuntimeControlsAvailable(false);
+   runtimeStatus('إعداد وضع الدفع ينتظر تطبيق ترحيل G16؛ بقيت وسائل الدفع اليدوية متاحة.',true);
+   message('تم تحميل وسائل الدفع اليدوية. إعداد وضع الدفع غير متاح حتى تطبيق SQL الخاص بـG16.');
+  }
+ }
+ catch(e){message(e?.message||'تعذر تحميل وسائل الدفع. تحقق من ترحيل كتالوج G16.',true)}
+ finally{busy=false;loadPaymentProvidersP2().catch(error=>status(error?.message||'تعذر تحميل إعدادات Payment-P2.',true))}
 }
 window.loadAdminPaymentMethodsG16=load;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -120,6 +411,8 @@ window.addEventListener('DOMContentLoaded',()=>{
  f.elements.methodType.addEventListener('change',fields);
  document.getElementById('g16Reset').onclick=()=>fill(null);
  document.getElementById('g16Reload').onclick=load;
+ document.getElementById('g16SaveRuntime').onclick=saveRuntime;
+ document.getElementById('g16GatewaySwitch').onclick=toggleGateway;
  f.addEventListener('submit',e=>{
   e.preventDefault();const x=f.elements;
   const args={p_label:x.methodLabel.value.trim(),p_provider:x.methodProvider.value.trim(),p_recipient_name:x.recipientName.value.trim(),p_account_reference:x.accountReference.value.trim(),p_instructions:x.instructions.value.trim()};

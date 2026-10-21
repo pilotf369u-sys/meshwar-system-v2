@@ -1,6 +1,16 @@
 <!doctype html>
 <html lang="ar" dir="rtl" class="dark">
 <head>
+<script id="vendor-canonical-entry-v1">
+// This page is the inner frame; the host installs the active merchant modules.
+if(window.top===window.self){document.documentElement.style.visibility='hidden';location.replace('vendor-dashboard.html'+location.search+location.hash)}
+</script>
+<script src="js/kinto-coupon-finance-v1.js?v=20261018-v1"></script>
+<script src="js/kinto-store-control-v1.js?v=20261017-v1"></script>
+<script src="js/kinto-order-data-session-v1.js?v=20261016-order-privacy-v1" data-role="vendor"></script>
+  <script src="js/kinto-vendor-products-v1.js?v=20261017-store-control-v1"></script>
+<script src="js/kinto-customer-directory-v1.js?v=20261016-v1" data-role="vendor"></script>
+  <script src="js/kinto-vendor-media-v1.js?v=20261016-v1"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>لوحة صاحب المتجر - MeshWar</title>
@@ -70,7 +80,7 @@
     </div>
     <div class="space-y-3">
       <input id="loginIdentity" class="field" autocomplete="username" placeholder="اسم المستخدم أو رقم الهاتف">
-      <input id="loginPassword" class="field" type="password" autocomplete="current-password" placeholder="كلمة المرور">
+      <input id="loginPassword" class="field" type="password" autocomplete="current-password" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter'){event.preventDefault();vendorLogin()}">
       <button id="loginBtn" type="button" onclick="vendorLogin()" class="w-full rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 px-5 py-3 font-black shadow-lg shadow-sky-500/15 transition hover:scale-[1.01] hover:shadow-sky-500/25">دخول إلى المتجر</button>
       <p id="loginNotice" class="min-h-5 text-center text-xs text-rose-300"></p>
     </div>
@@ -222,7 +232,7 @@
           <button type="button" class="vendor-order-filter" data-finance-filter="pending" onclick="setVendorFinanceFilter('pending')">المعلق</button>
           <button type="button" class="vendor-order-filter" data-finance-filter="paid" onclick="setVendorFinanceFilter('paid')">المدفوع</button>
         </div>
-        <div class="vendor-table-wrap"><table class="vendor-responsive-table text-sm"><colgroup><col style="width:18%"><col style="width:18%"><col style="width:15%"><col style="width:14%"><col style="width:18%"><col style="width:17%"></colgroup><thead class="border-b border-white/10 text-slate-400"><tr><th>رقم الطلب</th><th>المبلغ الكلي</th><th>العمولة (%)</th><th>أخرى</th><th>المبلغ الصافي</th><th>حالة الدفع</th></tr></thead><tbody id="vendorFinanceBody"></tbody></table></div>
+        <div class="vendor-table-wrap"><table class="vendor-responsive-table text-sm"><colgroup><col style="width:18%"><col style="width:18%"><col style="width:15%"><col style="width:14%"><col style="width:18%"><col style="width:17%"></colgroup><thead class="border-b border-white/10 text-slate-400"><tr><th>رقم الطلب</th><th>أساس العمولة بعد كوبون التاجر</th><th>العمولة (%)</th><th>أخرى</th><th>المبلغ الصافي</th><th>حالة الدفع</th></tr></thead><tbody id="vendorFinanceBody"></tbody></table></div>
       </div>
     </section>
 
@@ -341,7 +351,7 @@
 const SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
 const SUPABASE_KEY='sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
 const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:window.KintoOrderDataSessionV1.forWindow(window,window.KintoVendorProductsV1.fetch)}});
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const PLACEHOLDER='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" rx="24" fill="#1e293b"/><path d="M30 80l18-20 14 14 12-13 18 19" fill="none" stroke="#64748b" stroke-width="6"/><circle cx="42" cy="38" r="9" fill="#64748b"/></svg>`);
@@ -387,12 +397,15 @@ async function syncProductPricingSnapshots(){
 function storeSession(){try{return JSON.parse(sessionStorage.getItem('meshwar_vendor_store')||'null')}catch{return null}}
 function saveStoreSession(s){sessionStorage.setItem('meshwar_vendor_store',JSON.stringify(s))}
 
-async function vendorLogin(){const identity=$('loginIdentity').value.trim(),password=$('loginPassword').value,notice=$('loginNotice');notice.textContent='';if(!identity||!password){notice.textContent='أدخل اسم المستخدم/الهاتف وكلمة المرور.';return}const btn=$('loginBtn');btn.disabled=true;btn.textContent='جاري التحقق...';try{const{data,error}=await sb.rpc('vendor_login',{p_identity:identity,p_password:password});if(error)throw error;const store=Array.isArray(data)?data[0]:data;if(!store)throw new Error('بيانات الدخول غير صحيحة أو المتجر غير نشط.');vendorStore=store;saveStoreSession(store);openDashboard()}catch(e){console.error('Vendor login error:',e);notice.textContent=e.message||String(e)}finally{btn.disabled=false;btn.textContent='دخول إلى المتجر'}}
-function vendorLogout(){try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime cleanup:',e)}sessionStorage.removeItem('meshwar_vendor_store');vendorStore=null;location.reload()}
+async function vendorLogin(){const identity=$('loginIdentity').value.trim(),password=$('loginPassword').value,notice=$('loginNotice');notice.textContent='';if(!identity||!password){notice.textContent='أدخل اسم المستخدم/الهاتف وكلمة المرور.';return}const btn=$('loginBtn');btn.disabled=true;btn.textContent='جاري التحقق...';try{const{data,error}=await sb.rpc('vendor_login_session',{p_identity:identity,p_password:password});if(error)throw error;const store=data?.store;if(!store||!data?.session_token)throw new Error('بيانات الدخول غير صحيحة أو المتجر غير نشط.');sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:data.session_token,expiresAt:data.expires_at,storeId:String(store.id)}));vendorStore=store;saveStoreSession(store);await openDashboard()}catch(e){console.error('Vendor login error:',e);notice.textContent=e.message||String(e)}finally{btn.disabled=false;btn.textContent='دخول إلى المتجر'}}
+function vendorLogout(){try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime cleanup:',e)}sessionStorage.removeItem('meshwar_vendor_store');sessionStorage.removeItem('meshwar_vendor_session_v95');vendorStore=null;location.reload()}
+function vendorHasActiveSession(){try{const s=JSON.parse(sessionStorage.getItem('meshwar_vendor_session_v95')||'null');return Boolean(typeof s?.token==='string'&&s.token.trim()&&(!s.storeId||String(s.storeId)===String(vendorStore?.id))&&(!s.expiresAt||(Number.isFinite(Date.parse(s.expiresAt))&&Date.parse(s.expiresAt)>Date.now())))}catch{return false}}
+function vendorSessionFailure(error){return /(?:ORDER|VENDOR|STORE)_SESSION_(?:REQUIRED|INVALID|EXPIRED)/.test(String(error?.message||error||''))}
 function requireSecureVendorLogin(message){
   try{if(vendorOrdersRealtime)sb.removeChannel(vendorOrdersRealtime)}catch(e){console.warn('Vendor realtime cleanup:',e)}
   sessionStorage.removeItem('meshwar_vendor_store');
-  vendorStore=null;orders=[];
+  sessionStorage.removeItem('meshwar_vendor_session_v95');
+  vendorStore=null;orders=[];products=[];
   $('dashboardView').classList.add('hidden');
   $('loginView').classList.remove('hidden');
   $('loginPassword').value='';
@@ -407,19 +420,18 @@ async function loadDashboardOrders(){
   const secureOrdersLoader=window.MeshwarVendorV94?.loadOrders;
   return secureOrdersLoader?secureOrdersLoader():loadOrders();
 }
-async function openDashboard(){if(!vendorStore)return;$('loginView').classList.add('hidden');$('dashboardView').classList.remove('hidden');$('storeName').textContent=vendorStore.store_name||'المتجر';$('storeMeta').textContent=[vendorStore.specialty,vendorStore.governorate].filter(Boolean).join(' • ');$('storeLogo').src=vendorStore.logo_url||PLACEHOLDER;$('storeLogo').onerror=()=>{$('storeLogo').src=PLACEHOLDER};$('exchangeRate').value=vendorStore.exchange_rate||1;$('exchangeBase').value='USD';$('exchangeTarget').value=vendorStore.exchange_target_currency||'IQD';renderExchangePreview();await Promise.all([loadProducts(),loadDashboardOrders(),loadFinance(),loadVendorNotifV399()]);await setupVendorOrdersRealtime()}
+async function openDashboard(){if(!vendorStore)return;if(!vendorHasActiveSession())return requireSecureVendorLogin('انتهت جلسة المتجر الآمنة. سجّل الدخول مجدداً لعرض المنتجات والطلبات.');$('loginView').classList.add('hidden');$('dashboardView').classList.remove('hidden');$('storeName').textContent=vendorStore.store_name||'المتجر';$('storeMeta').textContent=[vendorStore.specialty,vendorStore.governorate].filter(Boolean).join(' • ');$('storeLogo').src=vendorStore.logo_url||PLACEHOLDER;$('storeLogo').onerror=()=>{$('storeLogo').src=PLACEHOLDER};$('exchangeRate').value=vendorStore.exchange_rate||1;$('exchangeBase').value='USD';$('exchangeTarget').value=vendorStore.exchange_target_currency||'IQD';renderExchangePreview();await Promise.all([loadProducts(),loadDashboardOrders(),loadFinance(),loadVendorNotifV399()]);await setupVendorOrdersRealtime()}
 function toggleTheme(){document.documentElement.classList.toggle('dark');document.documentElement.classList.toggle('light')}
 
-async function loadProducts(){if(!vendorStore)return;const{data,error}=await sb.from('local_products').select('*').eq('store_id',vendorStore.id).order('created_at',{ascending:false});if(error){showNotice('تعذر تحميل المنتجات: '+error.message,true);return}products=data||[];await syncProductPricingSnapshots();renderProducts();renderStats()}
+async function loadProducts(){if(!vendorStore)return;const{data,error}=await sb.from('local_products').select('*').eq('store_id',vendorStore.id).order('created_at',{ascending:false});if(error){if(vendorSessionFailure(error))return requireSecureVendorLogin('انتهت جلسة المتجر الآمنة. سجّل الدخول مجدداً لعرض المنتجات والطلبات.');showNotice('تعذر تحميل المنتجات: '+error.message,true);return}products=data||[];await syncProductPricingSnapshots();renderProducts();renderStats()}
 function renderProducts(){const rate=Number(vendorStore?.exchange_rate||1),target=vendorStore?.exchange_target_currency||vendorStore?.default_currency||'',rows=products.map(p=>{const opt=safeOptions(p.options),stock=Number(p.stock_quantity||0),threshold=Number(p.low_stock_threshold||0),low=stock<=threshold,vendorUsd=Number(p.discount_price??p.base_price??0),commission=Number(vendorStore?.commission_rate??10),pricing=window.MeshwarLocalPricing,customerUsd=pricing.customerPriceUSD(vendorUsd,commission),converted=(String(target||'').toUpperCase()==='USD'?customerUsd:pricing.customerPriceLocal(vendorUsd,commission,rate));return `<tr class="border-b border-white/5 ${low?'bg-amber-500/5':''}"><td class="p-3"><div class="flex items-center gap-3"><img loading="lazy" decoding="async" class="h-12 w-12 rounded-xl object-cover" src="${esc(p.image_url||PLACEHOLDER)}" onerror="this.src='${esc(PLACEHOLDER)}'"><div><div class="vendor-text text-[1.1rem] font-black text-white">${esc(p.product_name)}</div><div style="color:#ffffff;font-size:.95rem;font-weight:500;line-height:1.5">${esc(p.description||'')}</div></div></div></td><td><div class="font-bold"><span dir="ltr" style="display:inline-block;direction:ltr;unicode-bidi:isolate">${money(vendorUsd,'USD')}</span></div><div class="text-xs text-sky-300">سعر العميل: <span dir="ltr" style="display:inline-block;direction:ltr;unicode-bidi:isolate">${money(customerUsd,'USD')} / ${money(converted,target)}</span></div>${p.discount_price!=null?`<div class="vendor-muted text-xs text-slate-500 line-through"><span dir="ltr" style="display:inline-block;direction:ltr;unicode-bidi:isolate">${money(p.base_price,'USD')}</span></div>`:''}</td><td><span class="rounded-full px-2 py-1 text-xs font-black ${stock===0?'bg-rose-500/15 text-rose-300':low?'bg-amber-500/15 text-amber-300':'bg-emerald-500/15 text-emerald-300'}">${stock}</span></td><td class="max-w-[260px] text-xs text-slate-300">${[opt.colors.join(' / '),opt.sizes.join(' / '),opt.volumes.join(' / ')].filter(Boolean).map(esc).join('<br>')||'—'}</td><td>${p.is_out_of_stock||stock===0?'<span class="text-rose-300">نفد</span>':low?'<span class="text-amber-300">منخفض</span>':'<span class="text-emerald-300">متوفر</span>'}</td><td><div class="flex gap-1"><button onclick="editProduct('${p.id}')" class="rounded-lg bg-sky-600 px-2 py-1 text-xs font-bold">تعديل</button><button onclick="deleteProduct('${p.id}')" class="rounded-lg bg-rose-600 px-2 py-1 text-xs font-bold">حذف</button></div></td></tr>`}).join('');$('productsBody').innerHTML=rows||'<tr><td colspan="6" class="p-6 text-center text-slate-400">لا توجد منتجات بعد.</td></tr>';const low=products.filter(p=>Number(p.stock_quantity||0)<=Number(p.low_stock_threshold||0));const b=$('lowStockBanner');if(low.length){b.textContent=`⚠️ ${low.length} منتج وصل إلى حد المخزون المنخفض أو نفد.`;b.classList.remove('hidden')}else b.classList.add('hidden')}
 
 const PRODUCT_IMAGES_BUCKET='product-images';
 async function uploadProductImage(file){
   if(!file||!vendorStore?.id)return null;
-  const ext=(String(file.name||'').split('.').pop()||'jpg').replace(/[^a-zA-Z0-9]/g,'').toLowerCase()||'jpg';
-  const name=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2))+'.'+ext;
-  const path=vendorStore.id+'/'+name;
-  const{error}=await sb.storage.from(PRODUCT_IMAGES_BUCKET).upload(path,file,{cacheControl:'31536000',upsert:false,contentType:file.type||undefined});
+  if(!window.KintoVendorMediaV1)throw new Error('تعذر تحميل خدمة رفع الصور. حدّث الصفحة.');
+  const info=await window.KintoVendorMediaV1.ticket(vendorStore.id,file,'product'),path=info.path;
+  const{error}=await sb.storage.from(PRODUCT_IMAGES_BUCKET).upload(path,file,{cacheControl:'31536000',upsert:false,contentType:info.mime_type});
   if(error)throw error;
   const{data}=sb.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path);
   if(!data?.publicUrl)throw new Error('تعذر الحصول على رابط الصورة بعد الرفع.');
@@ -488,7 +500,7 @@ function vendorFinancePageRows(rows,body){
 }
 window.vendorFinanceChangePage=delta=>{vendorFinancePage=Math.max(1,vendorFinancePage+delta);renderVendorFinanceTable()};
 
-function renderVendorFinanceTable(){const body=$('vendorFinanceBody');if(!body)return;const cur=financeCurrency(),rows=vendorFinancialRows().filter(r=>activeVendorFinanceFilter==='all'||r.paymentStatus===activeVendorFinanceFilter);body.innerHTML=vendorFinancePageRows(rows,body).map(r=>{const o=r.order,d=normalizeOrderDetails(o.details),paid=r.paymentStatus==='paid';return `<tr class="border-b border-white/5"><td data-label="رقم الطلب"><b>${esc(o.order_code||String(o.id).slice(0,8))}</b><div class="vendor-muted text-xs text-slate-500">${new Date(o.created_at).toLocaleDateString('en-US')}</div></td><td data-label="المبلغ الكلي">${money(r.total,o.currency||cur)}</td><td data-label="العمولة (%)">${Number(r.rate||0).toLocaleString('en-US',{maximumFractionDigits:2})}%<div class="vendor-muted text-xs text-slate-500">${money(r.commission,o.currency||cur)}</div></td><td data-label="أخرى">${money(r.other,o.currency||cur)}</td><td data-label="المبلغ الصافي"><b>${money(r.net,o.currency||cur)}</b></td><td data-label="حالة الدفع"><span class="rounded-full border px-2 py-1 text-xs font-black ${paid?'border-emerald-400/30 bg-emerald-500/10 text-emerald-200':'border-amber-400/30 bg-amber-500/10 text-amber-200'}">${paid?'مدفوع':'معلق'}</span>${paid&&d.vendor_paid_at?`<div class="vendor-muted mt-1 text-[10px] text-slate-500">${esc(new Date(d.vendor_paid_at).toLocaleString('en-US'))}</div>`:''}</td></tr>`}).join('')||'<tr><td colspan="6" class="p-6 text-center text-slate-400">لا توجد حركات مالية ضمن هذا التصنيف.</td></tr>'}
+function renderVendorFinanceTable(){const body=$('vendorFinanceBody');if(!body)return;const cur=financeCurrency(),rows=vendorFinancialRows().filter(r=>activeVendorFinanceFilter==='all'||r.paymentStatus===activeVendorFinanceFilter);body.innerHTML=vendorFinancePageRows(rows,body).map(r=>{const o=r.order,d=normalizeOrderDetails(o.details),paid=r.paymentStatus==='paid';return `<tr class="border-b border-white/5"><td data-label="رقم الطلب"><b>${esc(o.order_code||String(o.id).slice(0,8))}</b><div class="vendor-muted text-xs text-slate-500">${new Date(o.created_at).toLocaleDateString('en-US')}</div></td><td data-label="المبلغ الكلي">${money(r.total,o.currency||cur)}${window.KintoCouponFinanceV1.breakdown(d.vendor_finance_snapshot,money,o.currency||cur)}</td><td data-label="العمولة (%)">${Number(r.rate||0).toLocaleString('en-US',{maximumFractionDigits:2})}%<div class="vendor-muted text-xs text-slate-500">${money(r.commission,o.currency||cur)}</div></td><td data-label="أخرى">${money(r.other,o.currency||cur)}</td><td data-label="المبلغ الصافي"><b>${money(r.net,o.currency||cur)}</b></td><td data-label="حالة الدفع"><span class="rounded-full border px-2 py-1 text-xs font-black ${paid?'border-emerald-400/30 bg-emerald-500/10 text-emerald-200':'border-amber-400/30 bg-amber-500/10 text-amber-200'}">${paid?'مدفوع':'معلق'}</span>${paid&&d.vendor_paid_at?`<div class="vendor-muted mt-1 text-[10px] text-slate-500">${esc(new Date(d.vendor_paid_at).toLocaleString('en-US'))}</div>`:''}</td></tr>`}).join('')||'<tr><td colspan="6" class="p-6 text-center text-slate-400">لا توجد حركات مالية ضمن هذا التصنيف.</td></tr>'}
 async function exportVendorPaidStatement(){
   const rows=vendorFinancialRows().filter(r=>r.paymentStatus==='paid'),cur=financeCurrency();
   if(!rows.length)return showNotice('لا توجد طلبات مدفوعة لإصدار كشف حساب.',true);
@@ -539,7 +551,59 @@ function updateVendorOrderCounters(){const keys=['all','pending','delivery','del
 function vendorOrderMatchesFilter(o){const status=String(o?.status||'').trim();if(activeVendorOrderFilter==='all')return true;if(activeVendorOrderFilter==='delivered')return isDeliveredOrder(status);if(activeVendorOrderFilter==='returns')return /مرتجع|ارجاع|إرجاع|مرفوض|رفض|ملغي|ملغى|return/i.test(status);if(activeVendorOrderFilter==='delivery')return /مندوب|قيد التوصيل|تم الشحن|شحن|توزيع|فرع|delivery|courier/i.test(status)&&!isDeliveredOrder(status);if(activeVendorOrderFilter==='pending')return /انتظار|بانتظار|موافقة|تدقيق|جديد|pending|approval/i.test(status);return true}
 function renderVendorOrders(){const body=$('ordersBody');if(!body)return;updateVendorOrderCounters();const visible=orders.filter(vendorOrderMatchesFilter);body.innerHTML=visible.map(o=>{const image=vendorOrderProductImage(o),url=vendorOrderProductUrl(o),thumb=image?`<img loading="lazy" decoding="async" src="${esc(image)}" alt="${esc(orderProductName(o))}" class="mx-auto h-14 w-14 rounded-xl border border-amber-400/20 bg-white/5 object-contain p-1" onerror="this.style.display='none'">`:'---',link=url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs font-black text-amber-200 transition hover:bg-amber-500/20">🔗 فتح الرابط</a>`:'---';return `<tr class="border-b border-white/5" data-vendor-order-id="${esc(o.id)}"><td data-label="الصورة">${thumb}</td><td data-label="رقم الطلب"><div class="font-bold">${esc(o.order_code||String(o.id).slice(0,8))}</div><div class="vendor-muted text-xs text-slate-500">${new Date(o.created_at).toLocaleString('ar')}</div></td><td data-label="المنتج">${esc(orderProductName(o))}</td><td data-label="الكمية">${orderQuantity(o)}</td><td data-label="عدد الطرود"><span class="rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-1 text-xs font-black text-amber-200">${orderParcelsCount(o)}</span></td><td data-label="المحافظة / المدينة">${esc(orderCity(o))}</td><td data-label="الحالة"><span class="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs">${esc(o.status||'انتظار رد الموظف')}</span></td><td data-label="رابط المنتج">${link}</td><td data-label="الإجراء"><div class="flex flex-wrap gap-2"><button type="button" onclick="printShippingLabel('${esc(o.id)}')" class="rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs font-black text-sky-200 transition hover:bg-sky-500/20">🖨️ طباعة الملصق</button><button type="button" onclick="openVendorOrderDetails('${esc(o.id)}')" class="rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-xs font-black text-violet-200 transition hover:bg-violet-500/20">تفاصيل</button></div></td></tr>`}).join('')||'<tr><td colspan="9" class="p-6 text-center text-slate-400">لا توجد طلبات ضمن هذا التصنيف.</td></tr>'}
 async function loadOrders(){if(!vendorStore)return;try{const currentStoreId=String(vendorStore.id||'').trim();if(!currentStoreId)throw new Error('معرّف المتجر الحالي غير صالح.');const{data,error}=await sb.from('orders').select('id,order_code,total_price,currency,status,created_at,details').order('created_at',{ascending:false}).limit(500);if(error)throw error;orders=(data||[]).filter(o=>{const d=normalizeOrderDetails(o?.details);return String(d?.source||'')==='local_store'&&String(d?.store_id||'').trim()===currentStoreId});renderVendorOrders();renderFinance();renderStats()}catch(e){console.error('Vendor orders load error:',e);showNotice('تعذر تحميل الطلبات: '+(e.message||e),true)}}
-function openVendorOrderDetails(orderId){const o=orders.find(x=>String(x.id)===String(orderId));if(!o)return showNotice('تعذر العثور على الطلب.',true);let modal=document.getElementById('vendorOrderDetailsModal');if(!modal){modal=document.createElement('div');modal.id='vendorOrderDetailsModal';modal.className='fixed inset-0 z-[80] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm';modal.innerHTML='<div class="glass w-full max-w-lg rounded-3xl p-5"><div class="mb-4 flex items-center justify-between"><h3 class="vendor-text text-lg font-black">تفاصيل الطلب</h3><button type="button" class="rounded-lg bg-rose-500 px-3 py-1 font-black" onclick="closeVendorOrderDetails()">×</button></div><div id="vendorOrderDetailsBody" class="grid gap-3 sm:grid-cols-2"></div></div>';document.body.appendChild(modal)}const body=document.getElementById('vendorOrderDetailsBody');body.innerHTML=`<div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">رقم الطلب</div><div class="mt-1 font-black">${esc(o.order_code||o.id)}</div></div><div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">الحالة</div><div class="mt-1 font-black">${esc(o.status||'')}</div></div><div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">المنتج</div><div class="mt-1 font-black">${esc(orderProductName(o))}</div></div><div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">المحافظة / المدينة</div><div class="mt-1 font-black">${esc(orderCity(o))}</div></div><div class="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-3"><div class="vendor-muted text-xs text-slate-400">عدد القطع</div><div class="mt-1 text-xl font-black text-sky-200">${orderQuantity(o)}</div></div><div class="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3"><div class="vendor-muted text-xs text-slate-400">عدد الطرود</div><div class="mt-1 text-xl font-black text-amber-200">${orderParcelsCount(o)}</div></div>`;modal.classList.remove('hidden');modal.classList.add('flex')}
+async function kintoVendorPaidInvoiceProof(order,token){
+  const orderId=String(order?._v95OrderId||order?.id||''),storeId=String(vendorStore?.id||'').trim(),details=normalizeOrderDetails(order?.details);
+  if(!token||!orderId||!storeId||!kintoVendorInvoiceSourceAllowed(details)||String(details?.store_id||'').trim()!==storeId)return false;
+  const{data,error}=await sb.rpc('vendor_paid_electronic_invoice_orders_v1',{p_session_token:token,p_order_ids:[orderId]});
+  if(error)throw error;
+  return Array.isArray(data)&&data.some(row=>String(row?.order_id||'')===orderId);
+}
+function kintoVendorInvoiceSourceAllowed(details){return ['local_store','local_cart_bundle'].includes(String(details?.source||'').trim())}
+async function kintoVendorPreparePaidElectronicInvoice(order,token){
+  if(!await kintoVendorPaidInvoiceProof(order,token))return null;
+  const orderId=String(order._v95OrderId||order.id),storeId=String(vendorStore?.id||'').trim();
+  const{data,error}=await sb.from('orders').select('*').eq('id',orderId).limit(1);
+  if(error)throw error;
+  const rows=Array.isArray(data)?data:(data?[data]:[]),canonical=rows.find(row=>String(row?.id||'')===orderId);
+  if(!canonical)throw new Error('تعذر تحميل بيانات الفاتورة الأصلية.');
+  const details=normalizeOrderDetails(canonical.details);
+  if(!kintoVendorInvoiceSourceAllowed(details)||String(details?.store_id||'').trim()!==storeId)throw new Error('تعذر إثبات ملكية المتجر للفاتورة.');
+  const items=Array.isArray(details.items)?details.items:[];
+  if(!items.length||items.some(item=>item?.store_id&&String(item.store_id).trim()!==storeId))throw new Error('بيانات منتجات الفاتورة لا تطابق هذا المتجر.');
+  const storeName=String(details.store_name||vendorStore?.store_name||'المتجر'),subtotal=items.reduce((sum,item)=>sum+(Number(item.line_total_local)||((Number(item.unit_price_local)||0)*Math.max(1,Number(item.quantity)||1))),0);
+  return{...canonical,delivery_payment_type:'product_paid_delivery_cod',details:{...details,store_id:storeId,store_name:storeName,stores:[{store_id:storeId,store_name:storeName,subtotal_local:subtotal}],delivery_payment_type:'product_paid_delivery_cod',items}};
+}
+async function kintoVendorPrintPaidElectronicInvoice(orderId,popup){
+  try{
+    const order=orders.find(row=>String(row?._v95OrderId||row?.id||'')===String(orderId)),active=vendorNotifSessionV399();
+    if(!order||!active?.token)throw new Error('جلسة التاجر غير صالحة أو انتهت.');
+    const invoiceOrder=await kintoVendorPreparePaidElectronicInvoice(order,active.token);
+    if(!invoiceOrder)throw new Error('لم يثبت وجود دفعة KP ناجحة لهذا الطلب.');
+    const invoice=window.KintoBundleV93?.printInvoice;
+    if(typeof invoice!=='function')throw new Error('تعذر تحميل مولّد فاتورة KINTO. أعد تحميل الصفحة.');
+    await invoice(invoiceOrder,{canonicalOnly:true,invoiceWindow:popup});
+  }catch(error){
+    try{if(popup&&!popup.closed)popup.close()}catch(_){}
+    showNotice('تعذر التحقق من الفاتورة الإلكترونية: '+(error?.message||error),true);
+  }
+}
+// V95 order bridge calls this existing invoice renderer from the Details action.
+window.kintoVendorPrintPaidElectronicInvoice=kintoVendorPrintPaidElectronicInvoice;
+async function kintoVendorAttachPaidElectronicInvoice(order,modal,body){
+  const active=vendorNotifSessionV399(),orderId=String(order?.id||''),details=normalizeOrderDetails(order?.details),storeId=String(vendorStore?.id||'').trim();
+  if(!active?.token||!orderId||!kintoVendorInvoiceSourceAllowed(details)||String(details?.store_id||'').trim()!==storeId)return;
+  try{
+    if(!await kintoVendorPaidInvoiceProof(order,active.token))return;
+    if(modal.dataset.orderId!==orderId||body.dataset.orderId!==orderId||body.querySelector('[data-kinto-paid-electronic-invoice]'))return;
+    const action=document.createElement('div');action.className='sm:col-span-2 mt-1';
+    const button=document.createElement('button');button.type='button';button.dataset.kintoPaidElectronicInvoice='true';button.className='w-full rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm font-black text-amber-100 transition hover:bg-amber-500/20';button.textContent='عرض / طباعة الفاتورة الإلكترونية';
+    button.addEventListener('click',()=>{const popup=window.open('','_blank','width=1000,height=800');if(!popup){showNotice('يرجى السماح بالنوافذ المنبثقة لطباعة الفاتورة.',true);return}void kintoVendorPrintPaidElectronicInvoice(orderId,popup)});
+    action.appendChild(button);body.appendChild(action);
+  }catch(error){console.warn('Vendor paid invoice proof unavailable',error)}
+}
+async function openVendorOrderDetails(orderId){const o=orders.find(x=>String(x.id)===String(orderId));if(!o)return showNotice('تعذر العثور على الطلب.',true);let modal=document.getElementById('vendorOrderDetailsModal');if(!modal){modal=document.createElement('div');modal.id='vendorOrderDetailsModal';modal.className='fixed inset-0 z-[80] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm';modal.innerHTML='<div class="glass w-full max-w-lg rounded-3xl p-5"><div class="mb-4 flex items-center justify-between"><h3 class="vendor-text text-lg font-black">تفاصيل الطلب</h3><button type="button" class="rounded-lg bg-rose-500 px-3 py-1 font-black" onclick="closeVendorOrderDetails()">×</button></div><div id="vendorOrderDetailsBody" class="grid gap-3 sm:grid-cols-2"></div></div>';document.body.appendChild(modal)}const body=document.getElementById('vendorOrderDetailsBody');body.innerHTML=`<div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">رقم الطلب</div><div class="mt-1 font-black">${esc(o.order_code||o.id)}</div></div><div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">الحالة</div><div class="mt-1 font-black">${esc(o.status||'')}</div></div><div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">المنتج</div><div class="mt-1 font-black">${esc(orderProductName(o))}</div></div><div class="rounded-2xl border border-white/10 bg-white/5 p-3"><div class="vendor-muted text-xs text-slate-400">المحافظة / المدينة</div><div class="mt-1 font-black">${esc(orderCity(o))}</div></div><div class="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-3"><div class="vendor-muted text-xs text-slate-400">عدد القطع</div><div class="mt-1 text-xl font-black text-sky-200">${orderQuantity(o)}</div></div><div class="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3"><div class="vendor-muted text-xs text-slate-400">عدد الطرود</div><div class="mt-1 text-xl font-black text-amber-200">${orderParcelsCount(o)}</div></div>`;
+modal.dataset.orderId=String(o.id);body.dataset.orderId=String(o.id);modal.classList.remove('hidden');modal.classList.add('flex');await kintoVendorAttachPaidElectronicInvoice(o,modal,body)}
+
 function closeVendorOrderDetails(){const modal=document.getElementById('vendorOrderDetailsModal');if(!modal)return;modal.classList.add('hidden');modal.classList.remove('flex')}
 async function loadFinance(){renderFinance();renderStats()}
 function financeCurrency(){const x=[...new Set(orders.map(r=>r.currency).filter(Boolean))];return x.length===1?x[0]:(vendorStore?.exchange_target_currency||vendorStore?.default_currency||'IQD')}
@@ -608,7 +672,7 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
 <script defer src="js/vendor-kinto-deals-g3g.js?v=20261004-live-state-no-flash"></script>
 <script defer src="js/kinto-deals-merchant-ad-image-g13.js?v=20261004"></script>
 <script defer src="js/vendor-kinto-deals-g4c-draft.js?v=20261004-g13-auto-upload"></script>
-<script src="js/kinto-bundle-ui-v93.js?v=20261007-v58-invoice-order-match"></script>
+<script src="js/kinto-bundle-ui-v93.js?v=20261020-p5-paid-goods-invoice-v1"></script>
 <script defer src="js/vendor-order-indicators-v66.js?v=20261008-v67-runtime-ready"></script>
 <script defer src="js/vendor-settlement-archive-v163.js?v=20261010-live-archive"></script>
 <script defer src="js/vendor-dashboard-summary-v166.js?v=20261010-lifetime"></script>

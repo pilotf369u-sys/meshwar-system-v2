@@ -13,7 +13,7 @@ const VENDOR_OPERATIONAL_STATUSES=['مخزن الشركة','تجهيز شحن','
 const LEGACY_STATUS_MAP={'انتظار رد الموظف':'بانتظار رد الموظف','بانتظار موافقة الزبون':'بانتظار موافقة العميل','بانتظار التسعير':'بانتظار موافقة العميل','تم التسعير / بانتظار موافقة العميل':'بانتظار موافقة العميل','تمت الموافقة - بانتظار الدفع':'بانتظار تأكيد الدفع','تمت الموافقة':'بانتظار تأكيد الدفع','مخزن شركة':'مخزن الشركة','جاري التوصيل مع المندوب':'مندوب','رفض الطلب':'رفض التسليم'};
 
 function session(){try{const value=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');if(!value?.token)return null;if(value.expiresAt&&Date.parse(value.expiresAt)<=Date.now()){sessionStorage.removeItem(SESSION_KEY);return null}return value}catch{return null}}
-function saveSession(payload){sessionStorage.setItem(SESSION_KEY,JSON.stringify({token:payload.session_token,expiresAt:payload.expires_at}))}
+function saveSession(payload){sessionStorage.setItem(SESSION_KEY,JSON.stringify({token:payload.session_token,expiresAt:payload.expires_at,storeId:String(payload.store.id)}))}
 function clearSession(){sessionStorage.removeItem(SESSION_KEY)}
 function storeSubtotal(list){return list.reduce((n,x)=>n+(Number(x.line_total_local)||((Number(x.unit_price_local)||0)*Math.max(1,Number(x.quantity)||1))),0)}
 
@@ -45,6 +45,7 @@ async function performSegmentOrdersLoad(){
   const store=runtime.getStore();if(!store)return;
   const storeId=String(store.id||'').trim();if(!storeId)throw new Error('معرّف المتجر الحالي غير صالح.');
   const active=session();
+  if(!active){runtime.requireSecureLogin?.('انتهت جلسة المتجر الآمنة. سجّل الدخول مجدداً لعرض المنتجات والطلبات.');return}
   try{
     let rows;
     if(active){
@@ -63,7 +64,7 @@ async function performSegmentOrdersLoad(){
     }
     runtime.setOrders(rows);renderOrders();runtime.renderFinance();runtime.renderStats();window.MeshwarVendorOrderStatusContrastV18?.decorateStatuses(window);
   }catch(e){
-    if(active&&String(e?.message||'').includes('VENDOR_SESSION_INVALID')){clearSession();runtime.requireSecureLogin?.('انتهت جلسة المتجر الآمنة. سجّل الدخول مجدداً لتحديث الطلبات.');return}
+    if(/(?:ORDER|VENDOR|STORE)_SESSION_(?:REQUIRED|INVALID|EXPIRED)/.test(String(e?.message||''))){clearSession();runtime.requireSecureLogin?.('انتهت جلسة المتجر الآمنة. سجّل الدخول مجدداً لتحديث الطلبات.');return}
     console.error('Vendor V95 segment load error',e);
     try{const fallback=await fetchLegacy(storeId);if(fallback.some(o=>o._v95Source==='legacy-global')){runtime.showNotice('تعذر تحميل شرائح الطلبات الآمنة: '+String(e?.message||'خطأ غير معروف')+'. لم تُعرض بيانات العميل أو أدوات الحالة حفاظاً على الخصوصية.',true);return}runtime.setOrders(fallback);renderOrders();runtime.renderFinance();runtime.renderStats()}catch(fallbackError){runtime.showNotice('تعذر تحميل طلبات المتجر: '+(fallbackError.message||fallbackError),true)}
   }
@@ -102,7 +103,24 @@ function renderOrders(){
 
 async function openDetails(id){
   const o=runtime.getOrders().find(x=>String(x.id)===String(id));if(o&&!o._v94GlobalOrder)return runtime.nativeOpenVendorOrderDetails(id);if(!o)return runtime.showNotice('تعذر العثور على حصة المتجر.',true);
-  let secureDetails=null,shippingDetails=null,active=session();
+  const active=session();
+  if(o._v94GlobalOrder&&active?.token){
+    // Open the blank invoice tab during the original click: browsers block async popups.
+    // Close it and preserve the original V95 invoice route when this is not a proven paid KP.
+    const popup=window.open('','_blank','width=1000,height=800');
+    try{
+      const orderId=String(o._v95OrderId||o.id),{data,error}=await runtime.sb.rpc('vendor_paid_electronic_invoice_orders_v1',{p_session_token:active.token,p_order_ids:[orderId]});
+      if(error)throw error;
+      if(Array.isArray(data)&&data.some(row=>String(row?.order_id||'')===orderId)){
+        if(typeof window.kintoVendorPrintPaidElectronicInvoice!=='function')throw new Error('مولّد فاتورة التاجر غير متوفر');
+        if(!popup){runtime.showNotice('يرجى السماح بالنوافذ المنبثقة لعرض الفاتورة الإلكترونية.',true);return}
+        await window.kintoVendorPrintPaidElectronicInvoice(orderId,popup);
+        return;
+      }
+    }catch(error){console.warn('Vendor electronic invoice proof unavailable',error)}
+    try{if(popup&&!popup.closed)popup.close()}catch(_){}
+  }
+  let secureDetails=null,shippingDetails=null;
   if(o._v95SegmentId&&active){
     try{if(detailCache.has(String(o.id)))secureDetails=detailCache.get(String(o.id));else{const{data,error}=await runtime.sb.rpc('vendor_get_order_segment_details',{p_session_token:active.token,p_segment_id:o._v95SegmentId});if(error)throw error;secureDetails=data;detailCache.set(String(o.id),data)}if(shippingControlCache.has(String(o._v95SegmentId)))shippingDetails=shippingControlCache.get(String(o._v95SegmentId));else{let result=await runtime.sb.rpc('vendor_get_order_shipping_control',{p_session_token:active.token,p_segment_id:o._v95SegmentId});if(result.error&&String(result.error.message||'').includes('vendor_get_order_shipping_control'))result=await runtime.sb.rpc('vendor_get_order_segment_shipping',{p_session_token:active.token,p_segment_id:o._v95SegmentId});if(result.error)throw result.error;shippingDetails=result.data;shippingControlCache.set(String(o._v95SegmentId),shippingDetails)}}catch(e){runtime.showNotice('تعذر تحميل تفاصيل حصة المتجر: '+(e.message||e),true);return}
   }
@@ -131,7 +149,7 @@ async function setStatus(id,next){
   return legacySetStatus(o,target);
 }
 
-async function legacySetStatus(o,next){const storeId=String(runtime.getStore()?.id||''),orderId=o._v95OrderId||o.id;try{const{data,error}=await runtime.sb.from('orders').select('id,status,details').eq('id',orderId).limit(1);if(error)throw error;const row=Array.isArray(data)?data[0]:null,d=parse(row?.details),paid=String(d.bundle_stock_lifecycle_state||'')==='deducted'||String(row?.status||'')==='تم التسديد';if(!row||!paid||!Array.isArray(d.items)||!d.items.some(x=>String(x.store_id)===storeId))throw new Error('الطلب غير صالح للتحديث');d.store_statuses={...(d.store_statuses||{}),[storeId]:next};const{error:updateError}=await runtime.sb.from('orders').update({details:JSON.stringify(d)}).eq('id',orderId);if(updateError)throw updateError;runtime.showNotice('تم تحديث حالة حصة المتجر إلى: '+next);runtime.closeVendorOrderDetails();await loadSegmentOrders()}catch(e){runtime.showNotice('تعذر تحديث حالة حصة المتجر: '+(e.message||e),true)}}
+async function legacySetStatus(o,next){const storeId=String(runtime.getStore()?.id||''),orderId=o._v95OrderId||o.id;try{const{data,error}=await runtime.sb.from('orders').select('id,status,details').eq('id',orderId).limit(1);if(error)throw error;const row=Array.isArray(data)?data[0]:null,d=parse(row?.details),paid=String(d.bundle_stock_lifecycle_state||'')==='deducted'||String(row?.status||'')==='تم التسديد';if(!row||!paid||!Array.isArray(d.items)||!d.items.some(x=>String(x.store_id)===storeId))throw new Error('الطلب غير صالح للتحديث');d.store_statuses={...(d.store_statuses||{}),[storeId]:next};const{error:updateError}=await runtime.sb.rpc('kinto_vendor_legacy_status_session_v1',{p_session_token:session()?.token||'',p_order_id:orderId,p_next_status:next});if(updateError)throw updateError;runtime.showNotice('تم تحديث حالة حصة المتجر إلى: '+next);runtime.closeVendorOrderDetails();await loadSegmentOrders()}catch(e){runtime.showNotice('تعذر تحديث حالة حصة المتجر: '+(e.message||e),true)}}
 
 async function secureLogin(){
   const identity=document.getElementById('loginIdentity')?.value.trim()||'',password=document.getElementById('loginPassword')?.value||'',notice=document.getElementById('loginNotice'),button=document.getElementById('loginBtn');

@@ -4,6 +4,8 @@ import { installMocks, frameWindow } from './helpers.mjs';
 test('slow product thumbnails do not block merchant startup and load when products are opened', async ({ page }) => {
   await installMocks(page);
   await page.addInitScript(() => {
+    sessionStorage.setItem('meshwar_vendor_session_v95',JSON.stringify({token:'e2e-secure-token',expiresAt:'2099-01-01'}));
+    window.__E2E_LEGACY_ONLY_VENDOR=true;
     window.addEventListener('kinto-vendor-runtime-ready', () => {
       for (const product of window.__MESH_E2E_DB?.local_products || [])
         product.image_url = '/__slow-vendor-thumb.gif?id=' + product.id;
