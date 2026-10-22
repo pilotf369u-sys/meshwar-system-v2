@@ -86,10 +86,14 @@ public class ShoppingActivity extends Activity {
    }catch(JSONException e){status.setText("تعذرت قراءة بيانات المنتج؛ لم نحفظ شيئاً. حدّث الصفحة وجرب.");}
   });
  }
- private TextView line(String value){TextView t=new TextView(this);t.setText(value);t.setTextSize(15);t.setPadding(18,8,18,8);return t;}
+ private TextView line(String value){TextView t=new TextView(this);t.setText(value);t.setTextSize(14);t.setTextColor(android.graphics.Color.rgb(35,57,47));t.setPadding(18,10,18,10);t.setTextDirection(android.view.View.TEXT_DIRECTION_FIRST_STRONG);return t;}
+ private void styleField(EditText field){
+  android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();bg.setColor(android.graphics.Color.WHITE);bg.setCornerRadius(16*getResources().getDisplayMetrics().density);bg.setStroke(2,android.graphics.Color.rgb(214,221,213));field.setBackground(bg);field.setPadding(24,14,24,14);field.setTextColor(android.graphics.Color.rgb(10,47,35));field.setTextSize(17);
+  LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.setMargins(12,4,12,12);field.setLayoutParams(params);field.setMinHeight(Math.round(48*getResources().getDisplayMetrics().density));
+ }
  private String priceLabel(JSONObject item){double price=item.optDouble("price",Double.NaN);if(!Double.isFinite(price)||price<=0)return "السعر: لم نتمكن من قراءته بثقة";return ("visible-basket-offer".equals(item.optString("priceSource"))?"سعر عرض السلة المرصود: ":"السعر المرصود: ")+String.format(java.util.Locale.US,"%.2f",price)+" ليرة تركية";}
  private void confirmProduct(JSONObject item){
-  LinearLayout details=new LinearLayout(this);details.setOrientation(LinearLayout.VERTICAL);
+  LinearLayout details=new LinearLayout(this);details.setOrientation(LinearLayout.VERTICAL);details.setPadding(20,16,20,20);details.setLayoutDirection(android.view.View.LAYOUT_DIRECTION_RTL);details.setBackgroundColor(android.graphics.Color.rgb(250,250,246));
   details.addView(line(item.optString("sourceName","Trendyol")+" — "+item.optString("title")));
   String image=item.optString("image");if(!image.isEmpty()){
    ImageView preview=new ImageView(this);preview.setAdjustViewBounds(true);preview.setScaleType(ImageView.ScaleType.FIT_CENTER);details.addView(preview,new LinearLayout.LayoutParams(-1,Math.round(150*getResources().getDisplayMetrics().density)));loadPreview(image,preview);
@@ -98,28 +102,27 @@ public class ShoppingActivity extends Activity {
   final Pricing.Snapshot snapshot=quote;
   if(!Double.isFinite(item.optDouble("price",Double.NaN))||item.optDouble("price",0)<=0){new AlertDialog.Builder(this).setMessage("السعر غير مؤكد؛ لم نحسب قيمة أو نضف طلباً.").setPositiveButton("حسناً",null).show();return;}
   if(snapshot==null){new AlertDialog.Builder(this).setMessage("لا توجد إعدادات صرف وعمولة متاحة للقراءة. لم نضع أسعاراً افتراضية. استخدم تجربة البيانات المصطنعة من KINTO لاختبار المسار فقط.").setPositiveButton("حسناً",null).show();return;}
-  details.addView(line(snapshot.source.equals("synthetic-fixture")?"أسعار اختبار فقط: 1 دولار = 40 ليرة و1300 دينار، وعمولة 10% — ليست إعدادات الأدمن":"تقدير وفق إعدادات الأدمن المقروءة الآن"));
-  details.addView(line("الصرف المعتمد: 1 USD = "+snapshot.sourcePerUsd.toPlainString()+" "+snapshot.fromCurrency+"، و1 USD = "+snapshot.targetPerUsd.toPlainString()+" "+snapshot.toCurrency+"\nعمولة KINTO: "+snapshot.commission.toPlainString()+"% تضاف إلى قيمة المنتج"));
+  if(snapshot.source.equals("synthetic-fixture"))details.addView(line("بيانات اختبار مصطنعة — ليست أسعاراً معتمدة للشراء"));
   details.addView(line("السعر للمنتج فقط، ولا يشمل الشحن. تُحدد تكلفة الشحن بعد مراجعة الموظف للطلب."));
   if("visible-basket-offer".equals(item.optString("priceSource"))){details.addView(line("عرض يُطبق داخل سلة ترنديول؛ يلزم تأكيد استحقاقه والسعر النهائي عند الشراء."));double before=item.optDouble("priceBeforeBasketDiscount",Double.NaN);if(Double.isFinite(before))details.addView(line("قبل خصم السلة: "+String.format(java.util.Locale.US,"%.2f",before)+" ليرة تركية"));}
   if("structured".equals(item.optString("priceSource")))details.addView(line("السعر من بيانات الصفحة؛ طابقه مع السعر الظاهر قبل الحفظ."));
   if("AMBIGUOUS_PRICE".equals(item.optString("warning")))details.addView(line("وجدنا أسعاراً مختلفة؛ لم نعتمد سعراً تلقائياً."));
   JSONObject observed=item.optJSONObject("observedOptions"),required=item.optJSONObject("optionRequirements");
   String observedSize=observed==null?"":observed.optString("size"),observedColor=observed==null?"":observed.optString("color");
-  details.addView(line("اختر اللون والمقاس في ترنديول أولاً، ثم طابقهما هنا. الحقول قابلة للتصحيح؛ القراءة التلقائية ما زالت تجريبية."));
+  details.addView(line("اختر اللون والمقاس في ترنديول أولاً، ثم طابقهما هنا. راجع الخيارات وصحّحها عند الحاجة."));
   details.addView(line(observedSize.isEmpty()?"المقاس — اكتب المختار إن كان مطلوباً":"المقاس المقروء من الصفحة — طابقه"));
-  EditText size=new EditText(this);size.setSingleLine(true);size.setText(observedSize);size.setHint("المقاس أو الحجم؛ فارغ إذا لا يوجد");size.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(60)});details.addView(size);
+  EditText size=new EditText(this);size.setSingleLine(true);size.setText(observedSize);size.setHint("المقاس أو الحجم؛ فارغ إذا لا يوجد");size.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(60)});styleField(size);details.addView(size);
   details.addView(line(observedColor.isEmpty()?"اللون — اكتب المختار إن كان مطلوباً":"اللون المقروء من الصفحة — طابقه"));
-  EditText color=new EditText(this);color.setSingleLine(true);color.setText(observedColor);color.setHint("اللون؛ فارغ إذا لا يوجد");color.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(60)});details.addView(color);
-  details.addView(line("الكمية المطلوبة (1–99 للتجربة؛ لا تحقق مخزون)"));
-  EditText quantity=new EditText(this);quantity.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);quantity.setSingleLine(true);quantity.setText("1");details.addView(quantity);
-  TextView total=line("");details.addView(total);
-  quantity.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence t,int a,int c,int f){}public void onTextChanged(CharSequence t,int a,int before,int count){try{total.setText("السعر المحوّل: "+Pricing.total(item.optString("price"),CartRules.quantity(t.toString()),snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");}catch(IllegalArgumentException e){total.setText("المجموع غير متاح: تحقق من الكمية أو السعر");}}public void afterTextChanged(android.text.Editable e){}});
-  try{total.setText("السعر المحوّل: "+Pricing.total(item.optString("price"),1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");}catch(IllegalArgumentException e){total.setText("المجموع غير متاح؛ السعر غير مقروء");}
+  EditText color=new EditText(this);color.setSingleLine(true);color.setText(observedColor);color.setHint("اللون؛ فارغ إذا لا يوجد");color.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(60)});styleField(color);details.addView(color);
+  details.addView(line("الكمية المطلوبة (1–99)"));
+  EditText quantity=new EditText(this);quantity.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);quantity.setSingleLine(true);quantity.setText("1");styleField(quantity);details.addView(quantity);
+  TextView total=line("");total.setTextSize(21);total.setTypeface(null,android.graphics.Typeface.BOLD);total.setTextColor(android.graphics.Color.rgb(10,47,35));total.setPadding(20,22,20,22);details.addView(total);
+  quantity.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence t,int a,int c,int f){}public void onTextChanged(CharSequence t,int a,int before,int count){try{total.setText("إجمالي المنتجات: "+Pricing.total(item.optString("price"),CartRules.quantity(t.toString()),snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");}catch(IllegalArgumentException e){total.setText("المجموع غير متاح: تحقق من الكمية أو السعر");}}public void afterTextChanged(android.text.Editable e){}});
+  try{total.setText("إجمالي المنتجات: "+Pricing.total(item.optString("price"),1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");}catch(IllegalArgumentException e){total.setText("المجموع غير متاح؛ السعر غير مقروء");}
   CheckBox confirmed=new CheckBox(this);confirmed.setText("طابقت المقاس واللون مع ترنديول، أو المنتج بلا هذه الخيارات");details.addView(confirmed);
-  details.addView(line("سيضاف إلى طلب KINTO تجريبي على الجهاز. لا تحقق مخزون ولا إرسال إلى الموظف ولا دفع فعلي."));
+  details.addView(line("يُحفظ على جهازك فقط في هذه النسخة. لم يُرسل إلى الموظف؛ لا حجز للمخزون ولا دفع."));
   ScrollView scroll=new ScrollView(this);scroll.addView(details);
-  AlertDialog dialog=new AlertDialog.Builder(this).setTitle("تأكيد المنتج — تجربة").setView(scroll).setPositiveButton("أؤكد الإضافة إلى الطلب التجريبي",null).setNegativeButton("إلغاء",null).create();
+  AlertDialog dialog=new AlertDialog.Builder(this).setTitle("مراجعة المنتج").setView(scroll).setPositiveButton("أؤكد الإضافة",null).setNegativeButton("إلغاء",null).create();
   dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
    String chosenSize=size.getText().toString().trim(),chosenColor=color.getText().toString().trim();
    if(required!=null&&required.optBoolean("size")&&chosenSize.isEmpty()){size.setError("اختر المقاس في ترنديول وأكده هنا");return;}
@@ -127,6 +130,10 @@ public class ShoppingActivity extends Activity {
    if(!confirmed.isChecked()){Toast.makeText(this,"أكد مطابقة الخيارات أولاً",Toast.LENGTH_SHORT).show();return;}
    try{int count=CartRules.quantity(quantity.getText().toString());JSONObject options=new JSONObject();options.put("size",chosenSize);options.put("color",chosenColor);item.put("selectedOptions",options);item.put("quantity",count);item.put("optionsConfirmed",true);item.put("sizeOrigin",!chosenSize.isEmpty()&&chosenSize.equals(observedSize)?"page-confirmed":"user-confirmed");item.put("colorOrigin",!chosenColor.isEmpty()&&chosenColor.equals(observedColor)?"page-confirmed":"user-confirmed");double unit=item.optDouble("price",Double.NaN);item.put("lineTotal",Double.isFinite(unit)&&unit>0?CartRules.total(unit,count):JSONObject.NULL);item.put("cartKey",CartRules.key(item.optString("source"),item.optString("productId"),item.optString("merchantId"),chosenSize,chosenColor));if(snapshot.toCurrency.equals("IQD"))item.put("convertedTotalIQD",Pricing.total(item.optString("price"),count,snapshot));item.put("exchangeRate",snapshot.rate.toPlainString());item.put("sourcePerUsd",snapshot.sourcePerUsd.toPlainString());item.put("targetPerUsd",snapshot.targetPerUsd.toPlainString());item.put("sourceCurrency",snapshot.fromCurrency);item.put("displayCurrency",snapshot.toCurrency);item.put("pricingRevision",snapshot.revision);item.put("convertedTotal",Pricing.total(item.optString("price"),count,snapshot));item.put("commissionPercent",snapshot.commission.toPlainString());item.put("pricingSource",snapshot.source);item.put("testOnly",true);item.put("fixture",fixture);item.put("shipping",JSONObject.NULL);setResult(RESULT_OK,new android.content.Intent().putExtra("product",item.toString()));dialog.dismiss();finish();}catch(IllegalArgumentException e){quantity.setError("أدخل عدداً صحيحاً من 1 إلى 99");}catch(JSONException e){Toast.makeText(this,"تعذر تجهيز التجربة",Toast.LENGTH_SHORT).show();}
   }));dialog.show();
+  dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.rgb(250,250,246)));
+  dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(android.graphics.Color.rgb(10,47,35));
+  dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTypeface(null,android.graphics.Typeface.BOLD);
+  dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(android.graphics.Color.rgb(90,100,95));
  }
  private void loadPreview(String raw,ImageView target){
   try{java.net.URI u=new java.net.URI(raw);String h=u.getHost();if(!"https".equalsIgnoreCase(u.getScheme())||u.getRawUserInfo()!=null||h==null||(u.getPort()!=-1&&u.getPort()!=443))return;h=h.toLowerCase(java.util.Locale.ROOT);if(!(h.equals("dsmcdn.com")||h.endsWith(".dsmcdn.com")||h.equals("trendyolcdn.com")||h.endsWith(".trendyolcdn.com")||h.equals("trendyol.com")||h.endsWith(".trendyol.com")))return;}catch(Exception e){return;}
