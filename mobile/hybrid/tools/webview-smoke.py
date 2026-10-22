@@ -34,9 +34,14 @@ time.sleep(5)
 s=text();assert 'طلب تجريبي' not in s and 'الموقع حي' not in s,s
 for label,role in [('فاتورة العميل','CUSTOMER'),('فاتورة الموظف','STAFF'),('فاتورة التاجر','VENDOR')]:
  click(label)
- for _ in range(12):
+ # Focus the attached document once; cold software-rendered WebViews may expose
+ # only their title to accessibility until focused. Keep assertions on real body/layout.
+ focused=False
+ for _ in range(40):
   s=text()
   if 'INVOICE_'+role in s and 'LAYOUT_PASS' in s:break
+  if not focused and 'طباعة / PDF' in s:
+   adb('shell','input','tap','540','500');focused=True
   time.sleep(1)
  assert 'INVOICE_'+role in s,s
  assert 'LAYOUT_PASS' in s,s
