@@ -31,7 +31,8 @@ Rollback: rollback/pre-hybrid-preview-20261022 (same base).
 The existing admin code reads `currencies(name,rate)` and
 `settings(key=site_commission,value)`. Read-only anonymous requests on 2026-10-22
 returned HTTP 200 with empty arrays. That can mean policy filtering or missing
-rows; it is NOT evidence that the admin has no settings. `get_site_settings`
+rows; a subsequent read-only SQL inspection confirmed these specific tables/keys
+are empty (not a claim about every pricing source). `get_site_settings`
 returned public branding, with no conversion fields. No schema/policy was changed.
 
 AdminPricing is a candidate read-only adapter behind a disabled live-contract gate.

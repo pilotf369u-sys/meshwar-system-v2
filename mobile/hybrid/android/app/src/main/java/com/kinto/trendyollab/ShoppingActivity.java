@@ -11,7 +11,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public class ShoppingActivity extends Activity {
- private WebView web; private TextView status;  private String injectScript, readerScript; private boolean reading=false;
+ private WebView web; private TextView status;  private String injectScript, readerScript; private boolean reading=false; private String currentProductPage="";
  private boolean fixture; private volatile Pricing.Snapshot quote;
  @Override public void onCreate(Bundle state) {
   super.onCreate(state); fixture=getIntent().getBooleanExtra("fixture",false);
@@ -31,22 +31,22 @@ public class ShoppingActivity extends Activity {
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
   try{injectScript=asset("order-button.js");readerScript=asset("product-reader.js");}catch(IOException e){status.setText("تعذر تحميل زر الصفحة؛ أعد فتح التطبيق");}
   web.setWebViewClient(new WebViewClient(){
-   @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())capture();return true;}if(fixture&&!url.equals("https://www.trendyol.com/fixture-p-123456"))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج ترنديول؛ لم يتم فتحه في المختبر");return true;}return false;}
+   @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())view.post(()->capture());return true;}if(fixture&&!url.equals("https://www.trendyol.com/fixture-p-123456"))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج ترنديول؛ لم يتم فتحه في المختبر");return true;}return false;}
    @Override public void onPageStarted(WebView v,String url,android.graphics.Bitmap icon){if(!UrlPolicy.allowed(url)){v.stopLoading();status.setText("تم إيقاف رابط غير مسموح");}}
-   @Override public void onPageFinished(WebView v,String url){if(UrlPolicy.allowed(url)){status.setText("اختر منتجاً — نقرأ البيانات لتأكيدها قبل الحفظ");if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
-   @Override public void doUpdateVisitedHistory(WebView v,String url,boolean reload){if(UrlPolicy.allowed(url)&&injectScript!=null)v.evaluateJavascript(injectScript,null);}
+   @Override public void onPageFinished(WebView v,String url){if(UrlPolicy.allowed(url)){currentProductPage=url;status.setText("اختر منتجاً — نقرأ البيانات لتأكيدها قبل الحفظ");if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
+   @Override public void doUpdateVisitedHistory(WebView v,String url,boolean reload){if(UrlPolicy.allowed(url)){currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())status.setText("تعذر فتح الصفحة. تحقق من الاتصال أو حدّث مرة واحدة.");}
   });
-  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=new Pricing.Snapshot("50","10","synthetic-fixture");try{web.loadDataWithBaseURL("https://www.trendyol.com/fixture-p-123456",asset("fixture-product.html"),"text/html","UTF-8",null);}catch(Exception e){finish();}}
+  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=new Pricing.Snapshot("50","10","synthetic-fixture");currentProductPage="https://www.trendyol.com/fixture-p-123456";try{web.loadDataWithBaseURL("https://www.trendyol.com/fixture-p-123456",asset("fixture-product.html"),"text/html","UTF-8","https://www.trendyol.com/fixture-p-123456");}catch(Exception e){finish();}}
   else { web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/"); new Thread(()->{try{quote=AdminPricing.load();}catch(Exception e){runOnUiThread(()->status.setText("تعذر قراءة سعر الصرف والعمولة المعتمدين؛ لن نفترض سعراً. يمكن تجربة البيانات المصطنعة من القائمة الرئيسية."));}},"kinto-public-pricing").start(); }
  }
  private Button button(String text){Button b=new Button(this);b.setText(text);b.setAllCaps(false);return b;}
  private String asset(String name)throws IOException{try(InputStream in=getAssets().open(name)){ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] buffer=new byte[4096];int n;while((n=in.read(buffer))!=-1)bytes.write(buffer,0,n);return new String(bytes.toByteArray(),StandardCharsets.UTF_8);}}
  private void capture(){
-  final String url=web.getUrl();if(!UrlPolicy.product(url)){new AlertDialog.Builder(this).setMessage("افتح صفحة منتج أولاً. لم نحفظ شيئاً.").setPositiveButton("حسناً",null).show();return;}
+  final String url=currentProductPage;if(!UrlPolicy.product(url)){new AlertDialog.Builder(this).setMessage("افتح صفحة منتج أولاً. لم نحفظ شيئاً.").setPositiveButton("حسناً",null).show();return;}
   if(reading||readerScript==null)return;reading=true;status.setText("جاري قراءة بيانات المنتج...");
   web.evaluateJavascript(readerScript,result->{reading=false;
-   if(!url.equals(web.getUrl())){status.setText("تغيرت الصفحة؛ اضغط الإضافة من المنتج الجديد");return;}
+   if(!url.equals(currentProductPage)){status.setText("تغيرت الصفحة؛ اضغط الإضافة من المنتج الجديد");return;}
    try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);
     if(item.has("error")||!url.equals(item.optString("pageUrl")))throw new JSONException("Page mismatch");
     item.put("url",url);item.put("savedAt",System.currentTimeMillis());status.setText("راجع السعر والصورة قبل الحفظ — سلة تجريبية فقط");confirmProduct(item);
