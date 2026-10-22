@@ -1,0 +1,16 @@
+<!doctype html><html dir="rtl" lang="ar"><meta charset="utf-8"><title>Global pricing isolated UI test</title><style>body{font:16px Arial;background:#0a2f23;color:#f2cd78;padding:20px}input,select,button{padding:9px;margin:5px;font-size:16px}table{width:100%}td input{max-width:180px}label{display:block}fieldset{margin:15px 0}</style><h1>اختبار إعدادات التسعير — بيانات مصطنعة</h1><p id="testResult">WAITING_ADMIN_UI</p><div id="pricing"><h3>الإعدادات السابقة</h3><input id="siteCommission" value="9"><input id="baseShippingFee" value="987654"></div>
+<script>
+const initial={schema_version:1,formula:'usd_cross_markup_v1',shipping_included:false,revision:1,updated_at:'2026-10-22T00:00:00Z',enabled:true,commission_percent:'10',display_currency:'IQD',currencies:[{code:'USD',name:'دولار',per_usd:'1'},{code:'TRY',name:'ليرة',per_usd:'40'},{code:'IQD',name:'دينار',per_usd:'1300'}]};let saved;
+window.ensureCustomerSupabase=async()=>({rpc:async(name,payload)=>{if(name==='kinto_global_pricing_read_v1')return {data:structuredClone(initial)};if(name==='kinto_global_pricing_save_v1'){saved=payload;return {data:{...structuredClone(initial),...payload.p_config,revision:2}}}throw Error('Unexpected RPC')}});
+window.KintoAdminSessionV147={identity:async()=>({id:'test-admin'}),read:()=>({token:'test-admin'})};
+</script><script src="../../../js/kinto-global-pricing-core-v1.js" defer></script><script src="../../../js/admin-global-pricing-v1.js" defer></script><script>
+window.addEventListener('load',()=>{let tries=0;const timer=setInterval(async()=>{const $=id=>document.getElementById(id);if(!$('gpSave')||$('gpSave').disabled){if(++tries>30){$('testResult').textContent='FAIL_UI_LOAD';clearInterval(timer)}return;}clearInterval(timer);try{
+ if(!$('gpExample').textContent.includes('35750'))throw Error('initial cross price');
+ $('gpCommission').value='20';$('gpCommission').dispatchEvent(new Event('input',{bubbles:true}));if(!$('gpExample').textContent.includes('39000'))throw Error('commission preview');
+ $('gpAdd').click();const row=$('gpRates').lastElementChild;row.querySelector('[data-code]').value='EUR';row.querySelector('[data-name]').value='يورو';row.querySelector('[data-rate]').value='0.8';row.querySelector('[data-code]').dispatchEvent(new Event('input',{bubbles:true}));$('gpDisplay').value='USD';$('gpDisplay').dispatchEvent(new Event('change'));
+ $('gpSave').click();await new Promise(r=>setTimeout(r,100));
+ if(!saved||saved.p_expected_revision!==1||saved.p_config.display_currency!=='USD'||saved.p_config.currencies.length!==4||saved.p_session_token!=='test-admin')throw Error('save payload');
+ if($('baseShippingFee').value!=='987654'||$('siteCommission').value!=='9'||Object.keys(saved.p_config).some(k=>k.includes('shipping')))throw Error('legacy pricing or shipping changed');
+ $('testResult').textContent='PASS_ADMIN_UI';
+ }catch(e){$('testResult').textContent='FAIL_ADMIN_UI_'+e.message}},50)});
+</script></html>
