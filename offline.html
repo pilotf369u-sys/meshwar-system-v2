@@ -18,13 +18,13 @@ button{border:1px solid rgba(255,215,96,.8);background:#e6b83f;color:#0a2f23;bor
 </head>
 <body>
 <main class="wrap">
-<img class="logo" src="/images/meshwar-logo.png" alt="KINTO">
+<img class="logo" src="./images/meshwar-logo.png" alt="KINTO">
 <h1>لا يوجد اتصال بالإنترنت</h1>
 <p>تحقق من الشبكة ثم حاول مرة أخرى.</p>
 <button type="button" onclick="location.reload()">إعادة المحاولة</button>
 </main>
 <script>
-window.addEventListener('online',function(){location.replace('/index.html')});
+window.addEventListener('online',function(){location.reload()});
 </script>
 </body>
 </html>
