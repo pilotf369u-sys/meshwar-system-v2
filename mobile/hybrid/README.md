@@ -1,3 +1,26 @@
+# Android preview 0.3 — store navigation and mobile invoice layout
+
+The external store has no persistent top toolbar. Its isolated local bottom bar
+matches the customer navigation choices and navy/gold styling. It contains no
+session, badges or account data. A fixed action enum returns to MainActivity,
+where the existing trusted customer links resolve the logged-in destination.
+The external site cannot trigger these actions: they are handled only by the
+separate, JavaScript-disabled navigation WebView. Product capture and explicit
+confirmation are unchanged.
+
+Canonical invoices receive a bundled screen-only mobile stylesheet: stacked
+brand/barcode/date, single-column customer/totals, readable amounts, and horizontal
+scroll for the six-column product table. Print CSS and invoice data are untouched.
+The offline invoice fixture copies the existing canonical CSS and asserts header
+non-overlap, stacked cards and no page overflow for all three popup patterns.
+
+New disposable preview identity: com.kinto.preview.hybrid.v3 / KINTO Preview 3.
+Install beside Preview 2; this build cannot update its disposable signing key.
+Production package, fingerprint and assetlinks remain unchanged.
+
+Rollback source: 9b08327c000d73f05e86b25f1e040ab5cb286e30.
+No hosting, database, production order or payment changes.
+
 # Android preview 0.2 — wrapper compatibility fixes
 
 This revision removes the permanent native header/navigation strip. Website

@@ -23,16 +23,23 @@ def click(text,attempts=6,scroll=False):
  raise AssertionError('Missing control: '+text+'; texts='+repr([n.get('text') for n in nodes()]))
 
 print(adb('install','--no-streaming','-r',os.environ['KINTO_APK']))
-print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v2/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true'))
+print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v3/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true'))
 time.sleep(8)
 adb('shell','input','keyevent','82');click('تجربة كاملة');time.sleep(8)
+texts=' '.join(n.get('text','') for n in nodes())
+assert 'KINTO | المتاجر العالمية' not in texts and 'العودة إلى KINTO' not in texts,texts
+for label in ['الرئيسية','المتاجر','السلة','طلباتي','الدردشة','مفضلاتي','حسابي']:assert label in texts,texts
+click('السلة');time.sleep(2)
+assert 'NAV_CART_PASS' in ' '.join(n.get('text','') for n in nodes())
+print('PASS: no external store top strip; seven customer navigation actions visible; cart action returns to trusted KINTO renderer')
+adb('shell','input','keyevent','82');click('تجربة كاملة');time.sleep(5)
 click('أضف إلى KINTO')
 time.sleep(2)
 texts=' '.join(n.get('text','') for n in nodes())
 assert '5500' in texts, texts
 click('طابقت',scroll=True);click('أؤكد الإضافة')
 time.sleep(2)
-raw=adb('shell','run-as','com.kinto.preview.hybrid.v2','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml')
+raw=adb('shell','run-as','com.kinto.preview.hybrid.v3','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml')
 root=E.fromstring(raw);s=next(x.text for x in root if x.get('name')=='preview_global_orders_v1')
 orders=json.loads(s);assert len(orders)==1,orders
 p=orders[0]
@@ -41,7 +48,7 @@ assert p['pricingSource']=='synthetic-fixture' and p['convertedTotalIQD']=='5500
 assert p['selectedOptions']=={'size':'L','color':'Haki'},p
 assert p['shipping'] is None and p['testOrderCode'].startswith('TEST-'),p
 # Separate WebView storage directories exist in the shared UID, and no generic bridge.
-dirs=adb('shell','run-as','com.kinto.preview.hybrid.v2','ls')
+dirs=adb('shell','run-as','com.kinto.preview.hybrid.v3','ls')
 assert 'app_webview_kinto-account' in dirs and 'app_webview_external-shopping' in dirs,dirs
 print('PASS: install, launch, product reader, L/Haki, 5500 synthetic quote, explicit confirmation, persisted local TEST order, separate WebView directories')
 print(json.dumps({k:p[k] for k in ['testOrderCode','testOnly','serverSubmitted','selectedOptions','convertedTotalIQD','shipping']},ensure_ascii=False))

@@ -1,6 +1,6 @@
 """Offline regression of app wrapper only; no role login or real invoice data."""
 import subprocess,time,xml.etree.ElementTree as E,re,os
-P='com.kinto.preview.hybrid.v2'
+P='com.kinto.preview.hybrid.v3'
 def adb(*args):
  r=subprocess.run(['adb',*args],capture_output=True,text=True,timeout=60)
  if r.returncode:raise RuntimeError(r.stdout+r.stderr)
@@ -26,9 +26,10 @@ for label,role in [('فاتورة العميل','CUSTOMER'),('فاتورة ال�
  click(label)
  for _ in range(12):
   s=text()
-  if 'INVOICE_'+role in s:break
+  if 'INVOICE_'+role in s and 'LAYOUT_PASS' in s:break
   time.sleep(1)
  assert 'INVOICE_'+role in s,s
+ assert 'LAYOUT_PASS' in s,s
  assert 'طباعة / PDF' in s,s
  click('إغلاق');time.sleep(1)
 print('PASS: customer/staff/vendor document.write invoices including async window.open, visible print control and close; no persistent app header')

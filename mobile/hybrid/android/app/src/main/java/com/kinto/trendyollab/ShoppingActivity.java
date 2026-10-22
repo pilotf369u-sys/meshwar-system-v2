@@ -19,13 +19,18 @@ public class ShoppingActivity extends Activity {
   LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(Color.rgb(10,47,35));
   // Keep controls away from system status/navigation bars, including edge-to-edge Android 15.
   root.setOnApplyWindowInsetsListener((v,i)->{v.setPadding(i.getSystemWindowInsetLeft(),i.getSystemWindowInsetTop(),i.getSystemWindowInsetRight(),i.getSystemWindowInsetBottom()); return i;});
-  TextView title=new TextView(this); title.setText("KINTO | المتاجر العالمية"); title.setTextColor(Color.rgb(242,205,120)); title.setTextSize(19); title.setPadding(16,10,16,6); root.addView(title);
-  status=new TextView(this); status.setText("طلب تجريبي على الجهاز — لا إرسال أو دفع فعلي"); status.setTextColor(Color.WHITE); status.setPadding(16,0,16,8); root.addView(status);
-  LinearLayout tools=new LinearLayout(this); tools.setOrientation(LinearLayout.HORIZONTAL);
-  Button home=button("ترنديول"); home.setOnClickListener(v->{if(!fixture)web.loadUrl("https://www.trendyol.com/");}); tools.addView(home,new LinearLayout.LayoutParams(0,-2,1));
-  Button reload=button("تحديث"); reload.setOnClickListener(v->web.reload());tools.addView(reload,new LinearLayout.LayoutParams(0,-2,1));
-  Button back=button("العودة إلى KINTO");back.setOnClickListener(v->finish()); tools.addView(back,new LinearLayout.LayoutParams(0,-2,1));root.addView(tools);
+  // No persistent title/status/tools above the external store. Status remains accessible via toasts.
+  status=new TextView(this){@Override public void setText(CharSequence value,TextView.BufferType type){super.setText(value,type);if(value!=null&&value.length()>0)Toast.makeText(ShoppingActivity.this,value,Toast.LENGTH_LONG).show();}};
   web=new WebView(this); root.addView(web,new LinearLayout.LayoutParams(-1,0,1));
+  WebView navigation=new WebView(this);navigation.setBackgroundColor(Color.rgb(17,26,47));
+  navigation.getSettings().setJavaScriptEnabled(false);navigation.getSettings().setAllowFileAccess(false);navigation.getSettings().setAllowContentAccess(false);
+  navigation.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest request){
+   String action=request.getUrl().getHost();if(request.isForMainFrame()&&"kinto-nav".equals(request.getUrl().getScheme())&&java.util.Arrays.asList("home","stores","cart","orders","chat","favorites","account").contains(action)){
+    setResult(RESULT_OK,new android.content.Intent().putExtra("navigation",action));finish();
+   }return true;
+  }});
+  root.addView(navigation,new LinearLayout.LayoutParams(-1,Math.round(66*getResources().getDisplayMetrics().density)));
+  try{navigation.loadDataWithBaseURL(null,asset("customer-navigation.html"),"text/html","UTF-8",null);}catch(IOException e){finish();}
   setContentView(root);
   WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setSupportMultipleWindows(false);settings.setJavaScriptCanOpenWindowsAutomatically(false);
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
