@@ -63,7 +63,7 @@ def main():
         for member in archive:
             path = member.name
             top = path.split('/')[0]
-            selected = path in PAGES or path == 'manifest.json' or (
+            selected = path in PAGES or path in {'manifest.json', '.htaccess'} or (
                 top in ASSETS and Path(path).suffix.lower() in ASSETS[top])
             if selected:
                 if not member.isfile():
@@ -71,7 +71,7 @@ def main():
                         continue
                     raise SystemExit('Refusing non-regular release file: ' + path)
                 files[path] = archive.extractfile(member).read()
-    missing = set(PAGES + ['manifest.json']) - files.keys()
+    missing = set(PAGES + ['manifest.json', '.htaccess']) - files.keys()
     if missing:
         raise SystemExit('Missing required files: ' + ', '.join(sorted(missing)))
     errors = []
