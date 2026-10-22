@@ -43,6 +43,7 @@ public class MainActivity extends Activity {
    });
    child.setWebChromeClient(chromeClient());((WebView.WebViewTransport)msg.obj).setWebView(child);msg.sendToTarget();return true;
   }
+  @Override public void onReceivedTitle(WebView v,String title){if(popupViews.contains(v))v.post(()->{if(popupViews.contains(v))injectCompat(v);});}
   @Override public void onProgressChanged(WebView v,int progress){if(progress==100&&(accountUrl(v.getUrl())||popupViews.contains(v)))injectCompat(v);}
   @Override public void onCloseWindow(WebView v){closePopup(v);}
   @Override public void onShowCustomView(View view,CustomViewCallback cb){if(fullVideo!=null){cb.onCustomViewHidden();return;}fullVideo=view;fullVideoCallback=cb;view.setBackgroundColor(Color.BLACK);surface.addView(view,new FrameLayout.LayoutParams(-1,-1));getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);}
