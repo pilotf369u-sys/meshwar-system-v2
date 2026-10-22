@@ -1,0 +1,5 @@
+import com.kinto.trendyollab.Pricing;
+public class PricingCheck {
+ static void deny(Runnable r){try{r.run();throw new AssertionError("must deny");}catch(IllegalArgumentException expected){}}
+ public static void main(String[] a){var p=new Pricing.Snapshot("50","10","synthetic-fixture");if(!Pricing.total("100",2,p).equals("11000"))throw new AssertionError();if(!Pricing.total("0.01",1,p).equals("1"))throw new AssertionError();deny(()->Pricing.total("NaN",1,p));deny(()->Pricing.total("0",1,p));deny(()->Pricing.total("100",100,p));deny(()->new Pricing.Snapshot("0","10","x"));deny(()->new Pricing.Snapshot("50","-1","x"));var cross=new Pricing.Snapshot("40","1300","10","TRY","IQD","test",1);if(!Pricing.total("1000",1,cross).equals("35750"))throw new AssertionError();var usd=new Pricing.Snapshot("40","1","10","TRY","USD","test",1);if(!Pricing.total("1",1,usd).equals("0.03"))throw new AssertionError();System.out.println("Pricing fixture totals, rounding, quantities and invalid input passed; shipping excluded");}
+}

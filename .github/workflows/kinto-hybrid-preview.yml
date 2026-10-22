@@ -1,0 +1,95 @@
+name: KINTO hybrid isolated preview
+on:
+  push:
+    branches: [app/kinto-hybrid-preview-20261022, app/kinto-android-webview-fixes-20261022, app/kinto-navigation-invoice-20261022, app/kinto-global-pricing-20261022]
+    paths: ['mobile/hybrid/**', 'js/*global-pricing*', 'sql/kinto-global-pricing*', 'admin-dashboard.html', '.github/workflows/kinto-hybrid-preview.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
+          log-accepted-android-sdk-licenses: false
+      - name: Reader and existing PWA tests
+        run: |
+          node --test mobile/hybrid/android/checks/product-reader.test.cjs
+          node tests/pwa-hosting-contract.cjs
+      - name: Pure Java boundary and pricing tests
+        run: |
+          mkdir -p "$RUNNER_TEMP/kinto-checks"
+          javac -d "$RUNNER_TEMP/kinto-checks" mobile/hybrid/android/app/src/main/java/com/kinto/trendyollab/{UrlPolicy,CartRules,Pricing}.java mobile/hybrid/android/checks/{UrlPolicyCheck,CartRulesCheck,PricingCheck}.java
+          for check in UrlPolicyCheck CartRulesCheck PricingCheck; do java -cp "$RUNNER_TEMP/kinto-checks" "$check"; done
+      - name: Build and verify private preview only
+        env:
+          KINTO_BUILD_OUTPUT: ${{ runner.temp }}/kinto-preview-output
+          KINTO_PREVIEW_KEYSTORE: ${{ runner.temp }}/kinto-preview.keystore
+          KINTO_PREVIEW_PASSWORD_FILE: ${{ runner.temp }}/kinto-preview-password
+        run: |
+          umask 077
+          openssl rand -base64 32 > "$KINTO_PREVIEW_PASSWORD_FILE"
+          keytool -genkeypair -keystore "$KINTO_PREVIEW_KEYSTORE" -storepass:file "$KINTO_PREVIEW_PASSWORD_FILE" -keypass:file "$KINTO_PREVIEW_PASSWORD_FILE" -alias kinto-preview -dname 'CN=KINTO Disposable CI Preview' -keyalg RSA -keysize 2048 -validity 3650
+          bash mobile/hybrid/tools/build-preview.sh
+      - name: Enable KVM for synthetic UI test
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Android 35 synthetic local-order flow
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.4.apk
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          script: |
+            python3 mobile/hybrid/tools/webview-smoke.py
+            python3 mobile/hybrid/tools/emulator-smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: KINTO-Hybrid-Preview-APK
+          path: |
+            ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.4.apk
+            ${{ runner.temp }}/kinto-preview-output/invoice-test.png
+            ${{ runner.temp }}/kinto-preview-output/store-test.png
+            ${{ runner.temp }}/kinto-preview-output/navigation-return-test.png
+          retention-days: 14
+          if-no-files-found: error
+# Disposable CI signing can require uninstall between downloads. Not production signing.
+# No publishing, Supabase mutation, website deployment, or signing-secret upload.
+
+  pricing-database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: kinto_pricing_test
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --test mobile/hybrid/pricing/core.test.cjs
+      - name: Test admin controls without production access
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --dump-dom "file://$PWD/mobile/hybrid/pricing/admin-fixture.html" > "$RUNNER_TEMP/admin-pricing-ui.html"
+          python3 -c 'import pathlib,os; html=pathlib.Path(os.environ["RUNNER_TEMP"],"admin-pricing-ui.html").read_text(); assert ">PASS_ADMIN_UI<" in html, html'
+      - name: Test isolated database only
+        env:
+          PGPASSWORD: isolated-test-only
+        run: psql -h localhost -U postgres -d kinto_pricing_test -v ON_ERROR_STOP=1 -f mobile/hybrid/pricing/database-check.sql
