@@ -7,9 +7,16 @@ def adb(*args,timeout=90):
  return p.stdout
 
 def nodes():
- adb('shell','uiautomator','dump','/sdcard/kinto-smoke.xml')
- s=adb('shell','cat','/sdcard/kinto-smoke.xml')
- return list(E.fromstring(s[s.index('<?xml'):]).iter('node'))
+ # UIAutomator may return success before its XML exists during WebView cold start.
+ for attempt in range(5):
+  try:
+   adb('shell','rm','-f','/sdcard/kinto-smoke.xml')
+   adb('shell','uiautomator','dump','/sdcard/kinto-smoke.xml')
+   snapshot=adb('shell','cat','/sdcard/kinto-smoke.xml')
+   return list(E.fromstring(snapshot[snapshot.index('<?xml'):]).iter('node'))
+  except (RuntimeError,ValueError,E.ParseError):
+   if attempt==4:raise
+   time.sleep(1)
 
 def click(text,attempts=6,scroll=False):
  for _ in range(attempts):
