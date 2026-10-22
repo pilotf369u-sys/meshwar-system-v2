@@ -1,6 +1,7 @@
 -- Disposable DB only: no real email, identity, password or money.
 CREATE SCHEMA extensions;CREATE EXTENSION pgcrypto WITH SCHEMA extensions;CREATE ROLE service_role;
 \i sql/kinto-world-staff-accounts-v1.sql
+CREATE FUNCTION pg_temp.expect_error(stmt text,expected text) RETURNS void LANGUAGE plpgsql AS $$BEGIN BEGIN EXECUTE stmt;EXCEPTION WHEN OTHERS THEN IF SQLERRM=expected THEN RETURN;END IF;RAISE;END;RAISE EXCEPTION 'EXPECTED_ERROR_NOT_RAISED: %',expected;END $$;
 SET ROLE anon;
 DO $$BEGIN
  BEGIN PERFORM public.kinto_world_staff_security_service_v1('test-admin','request','{}');RAISE EXCEPTION 'OTP_BYPASS';EXCEPTION WHEN insufficient_privilege THEN NULL;END;
