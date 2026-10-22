@@ -29,6 +29,7 @@ adb('shell','input','keyevent','82');click('تجربة كاملة');time.sleep(8
 texts=' '.join(n.get('text','') for n in nodes())
 assert 'KINTO | المتاجر العالمية' not in texts and 'العودة إلى KINTO' not in texts,texts
 for label in ['الرئيسية','المتاجر','السلة','طلباتي','الدردشة','مفضلاتي','حسابي']:assert label in texts,texts
+with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'store-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
 click('السلة');time.sleep(2)
 assert 'NAV_CART_PASS' in ' '.join(n.get('text','') for n in nodes())
 print('PASS: no external store top strip; seven customer navigation actions visible; cart action returns to trusted KINTO renderer')

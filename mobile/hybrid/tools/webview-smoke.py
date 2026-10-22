@@ -30,6 +30,8 @@ for label,role in [('فاتورة العميل','CUSTOMER'),('فاتورة ال�
   time.sleep(1)
  assert 'INVOICE_'+role in s,s
  assert 'LAYOUT_PASS' in s,s
+ if role=='CUSTOMER':
+  with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'invoice-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
  assert 'طباعة / PDF' in s,s
  click('إغلاق');time.sleep(1)
 print('PASS: customer/staff/vendor document.write invoices including async window.open, visible print control and close; no persistent app header')
