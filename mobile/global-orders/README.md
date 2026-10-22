@@ -15,7 +15,7 @@ Staged pages:
 - global-order-review.html: customer login context, optional product draft in #draft URL-encoded JSON, explicit policy consent, owned requests and transfer reference.
 - global-staff-workspace.html: separate workspace using existing session helpers; admin can assign global permission. No menu injected into any existing local panel.
 
-The native Android draft handoff is NOT wired or released yet. Existing Preview 0.4/0.5 continue storing local TEST orders. This avoids making a send button appear functional before SQL activation. No APK in this PR.
+The staged Android source adds an explicit last-product review handoff from the local draft dialog into the trusted shopkinto.com customer renderer. A persisted request UUID prevents duplicate submission on retry; synthetic fixtures are rejected. The web page still requires customer policy consent and recipient details before submission. No account token crosses into the external shopping process. This source is NOT released: installed Preview 0.4/0.5 continue local TEST storage. Release requires owner-approved SQL activation and manual hosting deployment of the new pages; this PR does not publish an APK. Only one product per request is wired in this stage; a multi-product cart remains follow-up work.
 
 Before activation: owner review/approval of SQL, verify real guard behavior and permissions in staging; browser interaction tests; native handoff and account continuity test; clarify final shipping certainty and out-of-stock refund handling. Before production gateway payment: implement and test separate adapter settlement. The SQL file is deliberately not in automatic migrations.
 
