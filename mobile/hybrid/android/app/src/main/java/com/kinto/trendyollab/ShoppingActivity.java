@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 
 public class ShoppingActivity extends Activity {
  private WebView web; private TextView status;  private String injectScript, readerScript; private boolean reading=false; private String currentProductPage="";
- private boolean fixture; private volatile Pricing.Snapshot quote; private volatile long quoteReadAt; private boolean badgeReading=false; private volatile boolean configLoading=false; private final android.os.Handler pricingHandler=new android.os.Handler(android.os.Looper.getMainLooper());
+ private boolean fixture; private volatile Pricing.Snapshot quote; private volatile long quoteReadAt,configAttemptAt; private boolean badgeReading=false; private volatile boolean configLoading=false; private final android.os.Handler pricingHandler=new android.os.Handler(android.os.Looper.getMainLooper());
  @Override public void onCreate(Bundle state) {
   super.onCreate(state); fixture=getIntent().getBooleanExtra("fixture",false);
   getWindow().setStatusBarColor(Color.rgb(10,47,35));
@@ -43,22 +43,22 @@ public class ShoppingActivity extends Activity {
    @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())status.setText("تعذر فتح الصفحة. تحقق من الاتصال أو حدّث مرة واحدة.");}
   });
   if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=new Pricing.Snapshot("40","1300","10","TRY","IQD","synthetic-fixture",1);quoteReadAt=System.currentTimeMillis();currentProductPage="https://www.trendyol.com/fixture-p-123456";try{web.loadDataWithBaseURL("https://www.trendyol.com/fixture-p-123456",asset("fixture-product.html"),"text/html","UTF-8","https://www.trendyol.com/fixture-p-123456");}catch(Exception e){finish();}}
-  else { web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/"); new Thread(()->{try{quote=AdminPricing.load();quoteReadAt=System.currentTimeMillis();}catch(Exception e){runOnUiThread(()->status.setText("تعذر قراءة سعر الصرف والعمولة المعتمدين؛ لن نفترض سعراً. يمكن تجربة البيانات المصطنعة من القائمة الرئيسية."));}},"kinto-public-pricing").start(); }
+  else { web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/");refreshConfigInBackground(); }
  }
  private Button button(String text){Button b=new Button(this);b.setText(text);b.setAllCaps(false);return b;}
  private String asset(String name)throws IOException{try(InputStream in=getAssets().open(name)){ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] buffer=new byte[4096];int n;while((n=in.read(buffer))!=-1)bytes.write(buffer,0,n);return new String(bytes.toByteArray(),StandardCharsets.UTF_8);}}
  private void refreshAndCapture(){
   if(reading)return;
   if(fixture){capture();return;}
-  reading=true;new Thread(()->{try{Pricing.Snapshot fresh=AdminPricing.load();runOnUiThread(()->{quote=fresh;quoteReadAt=System.currentTimeMillis();reading=false;capture();});}catch(Exception e){runOnUiThread(()->{quote=null;reading=false;new AlertDialog.Builder(this).setMessage("تعذر التحقق من إعدادات التسعير المعتمدة. لم نحسب سعراً أو نرسل طلباً. الشحن يُحدَّد بعد مراجعة الموظف.").setPositiveButton("حسناً",null).show();});}},"kinto-price-refresh").start();
+  reading=true;new Thread(()->{try{Pricing.Snapshot fresh=AdminPricing.load();runOnUiThread(()->{if(isFinishing()||isDestroyed())return;quote=fresh;quoteReadAt=System.currentTimeMillis();reading=false;capture();});}catch(Exception e){runOnUiThread(()->{if(isFinishing()||isDestroyed())return;quote=null;reading=false;new AlertDialog.Builder(this).setMessage("تعذر التحقق من إعدادات التسعير المعتمدة. لم نحسب سعراً أو نرسل طلباً. الشحن يُحدَّد بعد مراجعة الموظف.").setPositiveButton("حسناً",null).show();});}},"kinto-price-refresh").start();
  }
  private final Runnable badgeLoop=new Runnable(){public void run(){updatePriceBadge();pricingHandler.postDelayed(this,2000);}};
  @Override protected void onResume(){super.onResume();pricingHandler.removeCallbacks(badgeLoop);pricingHandler.postDelayed(badgeLoop,700);}
  @Override protected void onPause(){pricingHandler.removeCallbacks(badgeLoop);super.onPause();}
  private void badge(String text){web.evaluateJavascript("(()=>{const b=document.getElementById('kinto-lab-order');if(b)b.textContent="+JSONObject.quote("＋ أضف إلى KINTO\n"+text)+";})()",null);}
  private void refreshConfigInBackground(){
-  if(fixture||configLoading||System.currentTimeMillis()-quoteReadAt<30000)return;
-  configLoading=true;new Thread(()->{try{Pricing.Snapshot fresh=AdminPricing.load();quote=fresh;quoteReadAt=System.currentTimeMillis();}catch(Exception ignored){}finally{configLoading=false;}},"kinto-pricing-read").start();
+  if(fixture||configLoading||System.currentTimeMillis()-configAttemptAt<30000)return;
+  configLoading=true;configAttemptAt=System.currentTimeMillis();new Thread(()->{try{Pricing.Snapshot fresh=AdminPricing.load();quote=fresh;quoteReadAt=System.currentTimeMillis();}catch(Exception ignored){}finally{configLoading=false;}},"kinto-pricing-read").start();
  }
  private void updatePriceBadge(){
   refreshConfigInBackground();
