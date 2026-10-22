@@ -22,3 +22,11 @@ Before activation: owner review/approval of SQL, verify real guard behavior and 
 Rollback: revoke all execution on the four public kinto_world_* functions. Preserve private tables and ledger/history. Do not touch any local order/payment functions or delete paid records.
 
 Validation workflow uses disposable PostgreSQL 17 and dummy session guards only. Production credentials, customer sessions and real orders are never required.
+
+## Global-only staff specialization (staged extension)
+
+Admin employee management adds a global employee option via an additive script. Existing local/admin account creation and its OTP endpoint are unchanged. Global-only accounts, hashed passwords, eight-hour sessions, OTP challenges and login attempts live in new private tables; their sessions are never inserted into the local employee session table. The world workspace has a distinct login; global tokens are accepted only by the isolated global workflow. Existing employee assignment remains for compatibility but is not used to create a global-only employee.
+
+The independent kinto-world-staff-security-v1 Edge Function uses the existing security email and Resend environment secrets. It sends OTP and uses a service-only RPC for atomic verification/account creation or disabling. No password, OTP or service key is logged or committed. Five OTP failures lock the challenge; five login failures block that identity for 15 minutes. Admin disabling revokes all global sessions immediately. No local employee/account/payment writes occur.
+
+SQL extension: sql/kinto-world-staff-accounts-v1.sql. Not yet applied. Edge endpoint not yet deployed. Both require explicit activation approval. No staff account is created by development.
