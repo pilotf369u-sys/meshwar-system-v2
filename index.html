@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" class="dark kinto-booting" style="background-color:#063b32!important;color-scheme:dark">
 <head>
+<script>
+/* KINTO static release freshness check: no service worker, auth, or order changes. */
+(()=>{'use strict';
+let current=null;
+let lastRemote=null,checking=false;
+const signature=html=>{const doc=new DOMParser().parseFromString(html,'text/html');return [...doc.querySelectorAll('script[src],link[rel="stylesheet"][href]')].map(e=>e.getAttribute('src')||e.getAttribute('href')).join('|')};
+const show=()=>{if(document.getElementById('kinto-release-notice'))return;const bar=document.createElement('div');bar.id='kinto-release-notice';bar.setAttribute('role','status');bar.dir='rtl';bar.style.cssText='position:fixed;bottom:16px;left:12px;right:12px;z-index:2147483647;max-width:600px;margin:auto;padding:12px 16px;background:#0a2f23;color:#fff;border:1px solid #d4af57;border-radius:12px;box-shadow:0 5px 24px #0006;font:14px Tahoma,Arial,sans-serif;text-align:center';bar.append(document.createTextNode('تحديث جديد من KINTO متاح. احفظ أي تغييرات قبل تحديث الصفحة. '));const btn=document.createElement('button');btn.type='button';btn.textContent='تحديث الآن';btn.style.cssText='background:#d4af57;color:#0a2f23;border:0;border-radius:8px;padding:9px 14px;margin:4px;cursor:pointer;font-weight:bold';btn.onclick=()=>{const url=new URL(location.href);url.searchParams.set('kinto_refresh',Date.now().toString());location.assign(url.href)};bar.append(btn);document.body.append(bar)};
+async function check(){if(checking||document.visibilityState!=='visible')return;if(current===null)current=[...document.querySelectorAll('script[src],link[rel="stylesheet"][href]')].map(e=>e.getAttribute('src')||e.getAttribute('href')).join('|');checking=true;try{const url=new URL(location.href);url.searchParams.set('_kinto_version_check',Date.now().toString());const r=await fetch(url.href,{cache:'no-store',credentials:'same-origin'});if(!r.ok)return;const next=signature(await r.text());if(!next)return;if(next!==current||lastRemote!==null&&next!==lastRemote)show();lastRemote=next}catch(e){}finally{checking=false}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',check,{once:true});else check();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});setInterval(check,300000);
+})();
+</script>
+
 <script src="js/kinto-order-data-session-v1.js?v=20261016-order-privacy-v1" data-role="customer"></script>
 <script src="js/kinto-customer-directory-v1.js?v=20261016-v1" data-role="customer"></script>
     <meta charset="UTF-8">
