@@ -9,3 +9,6 @@ verify_jwt = false
 # The isolated P5 project additionally retains its explicit test-account gate.
 [functions.kinto-payment-p5]
 verify_jwt = false
+
+[functions.kinto-world-staff-security-v1]
+verify_jwt = false
