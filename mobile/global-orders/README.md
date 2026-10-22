@@ -9,7 +9,7 @@ Workflow: customer review request → staff shipping/availability review → exp
 
 Gateway option is reserved and disabled. No existing local payment creation or callback is reused: activating it requires a separate global payment intent, authenticated provider callback, amount/currency/revision checks, idempotent settlement and refund support. Never infer payment from a browser return URL.
 
-The server recomputes submission estimates from approved pricing; these estimates are NOT a payable amount and never authorize purchase. Staff final quote includes explicit shipping and availability acknowledgment. Revision locking rejects stale actions; idempotency keys prevent duplicate customer submissions. Customer data and estimates are separate: exchange-rate/commission snapshots stay private. Requests include confirmed product options and recipient details; images and multi-product basket editing remain follow-up work.
+The server recomputes submission estimates from approved pricing; these estimates are NOT a payable amount and never authorize purchase. Staff final quote includes explicit shipping and availability acknowledgment. Revision locking rejects stale actions; idempotency keys prevent duplicate customer submissions. Customer data and estimates are separate: exchange-rate/commission snapshots stay private. Requests include confirmed product options and recipient details; product images are restricted to the established store CDN hosts. Multi-product basket editing remains follow-up work.
 
 Staged pages:
 - global-order-review.html: customer login context, optional product draft in #draft URL-encoded JSON, explicit policy consent, owned requests and transfer reference.

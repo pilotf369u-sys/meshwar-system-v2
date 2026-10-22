@@ -50,7 +50,7 @@ DECLARE cid uuid; o private.kinto_world_orders_v1; item jsonb; estimates jsonb:=
   OR length(coalesce(trim(item->>'title'),'')) NOT BETWEEN 1 AND 500 OR item->>'options_confirmed' IS DISTINCT FROM 'true'
   OR coalesce(item->>'price','') !~ '^[0-9]{1,12}(\.[0-9]{1,8})?$' OR coalesce(item->>'quantity','') !~ '^[0-9]{1,2}$'
   OR length(coalesce(item->>'size',''))>60 OR length(coalesce(item->>'color',''))>60 THEN RAISE EXCEPTION 'WORLD_ITEM_INVALID'; END IF;
-  entry:=jsonb_build_object('url',item->>'url','title',item->>'title','price',item->>'price','currency','TRY','quantity',(item->>'quantity')::int,'size',coalesce(item->>'size',''),'color',coalesce(item->>'color',''),'options_confirmed',true);
+  entry:=jsonb_build_object('image',CASE WHEN length(coalesce(item->>'image',''))<=2048 AND coalesce(item->>'image','') ~ '^https://([A-Za-z0-9-]+\.)*(dsmcdn\.com|trendyolcdn\.com)/' THEN item->>'image' ELSE '' END,'url',item->>'url','title',item->>'title','price',item->>'price','currency','TRY','quantity',(item->>'quantity')::int,'size',coalesce(item->>'size',''),'color',coalesce(item->>'color',''),'options_confirmed',true);
   normalized:=normalized||jsonb_build_array(entry);
  END LOOP;
  -- Lock a customer/request pair before estimating: safe retry still returns an existing request if rates change.
