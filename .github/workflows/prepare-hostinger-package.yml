@@ -1,0 +1,38 @@
+name: Prepare Hostinger package (no deployment)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: 'Approved full 40-character source commit SHA'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and check static package only
+        env:
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          PACKAGE_DIR: ${{ runner.temp }}/hostinger-package
+        run: python3 scripts/prepare-hostinger-release.py --source "$SOURCE_COMMIT" --output "$PACKAGE_DIR"
+      - name: Save package and review manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: kinto-hostinger-package-${{ github.run_number }}
+          path: ${{ runner.temp }}/hostinger-package/
+          if-no-files-found: error
+          retention-days: 30
+
+# Deliberately no push/pull_request trigger, hosting secrets, SSH, FTP or deploy step.
