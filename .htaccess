@@ -1,0 +1,15 @@
+Options -Indexes
+
+RewriteEngine On
+
+# Block development and backend directories
+RewriteRule ^(sql|supabase|tests|tools|scripts|ci|docs|previews|node_modules)(/|$) - [F,L,NC]
+
+# Block hidden files except domain verification
+RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L]
+
+# Block development files and the isolated payment preview
+RewriteRule ^(README\.md|package(-lock)?\.json|playwright\.config\.mjs|payment-p5-isolated-preview\.html)$ - [F,L,NC]
+
+# Block database scripts, logs and backup files
+RewriteRule \.(sql|log|bak|orig|env|ini|sh|py)$ - [F,L,NC]
