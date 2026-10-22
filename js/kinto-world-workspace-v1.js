@@ -26,6 +26,7 @@
    action(c,o,'quote','اعتماد العرض وإرسال تعليمات التحويل',[['goods','قيمة المنتجات النهائية','number'],['shipping','تكلفة الشحن المعتمدة (0 للمجاني)','number'],['currency','عملة التحصيل','text','IQD'],['expires_at','صالح حتى (خلال 48 ساعة)','datetime-local'],['instructions','تعليمات التحويل واسم المستفيد'],['can_ship','تحققت من إمكانية الشحن','checkbox'],['availability_checked','راجعت التوفر والسعر والخيارات','checkbox']]);
    action(c,o,'reject','تعذر قبول الطلب',[['reason','سبب التعذر']]);
   }
+  if(o.state==='transfer_pending')action(c,o,'reject_transfer','لم يصل التحويل — إعادة للمراجعة',[['reason','نتيجة التحقق'],['not_received_verified','تحققت أن المبلغ لم يصل، وليس تحويلًا جزئيًا','checkbox']]);
   if(o.state==='transfer_pending')action(c,o,'confirm_transfer','تأكيد وصول المبلغ',[['amount','المبلغ المستلم','text',o.quote.total],['currency','العملة','text',o.quote.currency],['reference','مرجع التحقق المصرفي'],['bank_verified','تحققت فعليًا من وصول المبلغ إلى الحساب','checkbox']]);
   if(o.state==='paid')action(c,o,'purchase','تسجيل تنفيذ الشراء',[['reference','مرجع شراء المتجر'],['availability_rechecked','أعدت التحقق من التوفر والخيارات','checkbox'],['within_paid_amount','لا زيادة على المبلغ الذي وافق عليه العميل','checkbox']]);
   if(['paid','purchased'].includes(o.state))action(c,o,'refund_required','تعذر التنفيذ — يحتاج استردادًا',[['reason','سبب الاسترداد']]);

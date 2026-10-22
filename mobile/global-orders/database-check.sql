@@ -61,7 +61,7 @@ END $$;
 RESET ROLE;
 DO $$BEGIN
  IF (SELECT status FROM public.orders WHERE id=1)<>'LOCAL_SENTINEL' OR (SELECT count(*) FROM public.orders)<>1 THEN RAISE EXCEPTION 'LOCAL_MUTATION';END IF;
- IF (SELECT count(*) FROM private.kinto_world_events_v1)<>15 THEN RAISE EXCEPTION 'AUDIT_COUNT';END IF;
+ IF (SELECT count(*) FROM private.kinto_world_events_v1)<>17 THEN RAISE EXCEPTION 'AUDIT_COUNT';END IF;
  IF has_table_privilege('anon','private.kinto_world_orders_v1','SELECT,INSERT,UPDATE,DELETE') OR has_table_privilege('authenticated','private.kinto_world_orders_v1','SELECT,INSERT,UPDATE,DELETE') THEN RAISE EXCEPTION 'DIRECT_ACCESS';END IF;
 END $$;
 SELECT 'PASS global review, quote, transfer verification, purchase, shipping, delivery, role isolation, idempotency, audit and local preservation' AS result;

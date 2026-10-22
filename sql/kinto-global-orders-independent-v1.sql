@@ -2,13 +2,13 @@
 BEGIN;
 CREATE TABLE private.kinto_world_staff_v1(employee_id uuid PRIMARY KEY, enabled boolean NOT NULL DEFAULT true);
 CREATE TABLE private.kinto_world_orders_v1(
- id uuid PRIMARY KEY DEFAULT gen_random_uuid(), customer_id uuid NOT NULL, request_key uuid NOT NULL,
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), order_no bigint GENERATED ALWAYS AS IDENTITY UNIQUE, customer_id uuid NOT NULL, request_key uuid NOT NULL,
  request jsonb NOT NULL, estimates jsonb NOT NULL, state text NOT NULL DEFAULT 'review', revision bigint NOT NULL DEFAULT 0,
  quote jsonb, payment jsonb, purchase jsonb, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(),
  UNIQUE(customer_id,request_key), CHECK(state IN('review','quoted','transfer_pending','paid','purchased','shipping','delivered','rejected','cancelled','refund_pending','refunded'))
 );
 CREATE TABLE private.kinto_world_events_v1(
- id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, order_id uuid NOT NULL REFERENCES private.kinto_world_orders_v1(id),
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, order_id uuid REFERENCES private.kinto_world_orders_v1(id),
  actor_id uuid NOT NULL, actor_role text NOT NULL, action text NOT NULL, revision bigint NOT NULL, detail jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE private.kinto_world_receipts_v1(
@@ -34,9 +34,10 @@ BEGIN
  PERFORM private.kinto_world_actor_v1('admin',p_session_token);
  IF p_employee_id IS NULL OR p_enabled IS NULL THEN RAISE EXCEPTION 'WORLD_INVALID'; END IF;
  INSERT INTO private.kinto_world_staff_v1 VALUES(p_employee_id,p_enabled) ON CONFLICT(employee_id) DO UPDATE SET enabled=excluded.enabled;
+ INSERT INTO private.kinto_world_events_v1(actor_id,actor_role,action,revision,detail) VALUES(private.kinto_world_actor_v1('admin',p_session_token),'admin','assign_staff',0,jsonb_build_object('employee_id',p_employee_id,'enabled',p_enabled));
 END $$;
 CREATE FUNCTION private.kinto_world_public_v1(o private.kinto_world_orders_v1) RETURNS jsonb LANGUAGE sql STABLE SET search_path='' AS $$
- SELECT jsonb_build_object('id',o.id,'reference','KG-'||upper(substr(o.id::text,1,8)),'state',o.state,'revision',o.revision,'request',o.request,'estimates',(SELECT coalesce(jsonb_agg(jsonb_build_object('amount',value->>'amount','currency',value->>'currency','quantity',value->'quantity')),'[]') FROM jsonb_array_elements(o.estimates)),'quote',o.quote,'payment',o.payment,'purchase',o.purchase,'created_at',o.created_at,'updated_at',o.updated_at,'shipping_policy','staff_review','gateway_available',false)
+ SELECT jsonb_build_object('id',o.id,'reference','KG-'||lpad(o.order_no::text,greatest(8,length(o.order_no::text)),'0'),'state',o.state,'revision',o.revision,'request',o.request,'estimates',(SELECT coalesce(jsonb_agg(jsonb_build_object('amount',value->>'amount','currency',value->>'currency','quantity',value->'quantity')),'[]') FROM jsonb_array_elements(o.estimates)),'quote',o.quote,'payment',o.payment,'purchase',o.purchase,'created_at',o.created_at,'updated_at',o.updated_at,'shipping_policy','staff_review','gateway_available',false)
 $$;
 CREATE FUNCTION public.kinto_world_submit_v1(p_session_token text,p_request_key uuid,p_request jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE cid uuid; o private.kinto_world_orders_v1; item jsonb; estimates jsonb:='[]'; normalized jsonb:='[]'; entry jsonb; BEGIN
@@ -101,6 +102,9 @@ DECLARE actor uuid; o private.kinto_world_orders_v1; q jsonb; goods numeric; shi
     q:=jsonb_build_object('goods',goods::text,'shipping',shipping::text,'total',(goods+shipping)::text,'currency',p_data->>'currency','expires_at',expiry,'instructions',p_data->>'instructions','revision',o.revision+1);
     o.quote:=q;next_state:='quoted';
    WHEN 'reject' THEN IF o.state NOT IN('review','quoted') OR length(coalesce(trim(p_data->>'reason'),'')) NOT BETWEEN 3 AND 1000 THEN RAISE EXCEPTION 'WORLD_STATE_OR_REASON'; END IF; next_state:='rejected';o.quote:=jsonb_build_object('reason',p_data->>'reason');
+   WHEN 'reject_transfer' THEN
+    IF o.state<>'transfer_pending' OR p_data->>'not_received_verified' IS DISTINCT FROM 'true' OR length(coalesce(trim(p_data->>'reason'),'')) NOT BETWEEN 3 AND 1000 THEN RAISE EXCEPTION 'WORLD_REVIEW_REQUIRED'; END IF;
+    o.payment:=o.payment||jsonb_build_object('status','not_received','reason',p_data->>'reason');next_state:=CASE WHEN (o.quote->>'expires_at')::timestamptz>now() THEN 'quoted' ELSE 'review' END;
    WHEN 'confirm_transfer' THEN
     IF o.state<>'transfer_pending' OR o.payment->>'method'<>'transfer' OR p_data->>'bank_verified' IS DISTINCT FROM 'true' OR p_data->>'amount' IS DISTINCT FROM o.quote->>'total' OR p_data->>'currency' IS DISTINCT FROM o.quote->>'currency' OR length(coalesce(trim(p_data->>'reference'),'')) NOT BETWEEN 3 AND 160 THEN RAISE EXCEPTION 'WORLD_PAYMENT_VERIFICATION_REQUIRED'; END IF;
     INSERT INTO private.kinto_world_receipts_v1 VALUES(trim(p_data->>'reference'),o.id,'transfer',(o.quote->>'total')::numeric,o.quote->>'currency',actor,now());

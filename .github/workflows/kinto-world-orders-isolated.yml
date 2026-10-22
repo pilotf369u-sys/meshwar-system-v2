@@ -25,6 +25,10 @@ jobs:
         env:
           PGPASSWORD: isolated-test-only
         run: psql -h localhost -U postgres -d kinto_world_test -v ON_ERROR_STOP=1 -f mobile/global-orders/database-check.sql
+      - name: Two-connection idempotency
+        env:
+          PGPASSWORD: isolated-test-only
+        run: bash mobile/global-orders/concurrency-check.sh
       - name: Customer consent and staff quote browser checks
         run: |
           for fixture in staff customer; do
