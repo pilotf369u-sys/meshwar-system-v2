@@ -36,7 +36,7 @@ BEGIN
  INSERT INTO private.kinto_world_staff_v1 VALUES(p_employee_id,p_enabled) ON CONFLICT(employee_id) DO UPDATE SET enabled=excluded.enabled;
 END $$;
 CREATE FUNCTION private.kinto_world_public_v1(o private.kinto_world_orders_v1) RETURNS jsonb LANGUAGE sql STABLE SET search_path='' AS $$
- SELECT jsonb_build_object('id',o.id,'reference','KG-'||upper(substr(o.id::text,1,8)),'state',o.state,'revision',o.revision,'request',o.request,'quote',o.quote,'payment',o.payment,'purchase',o.purchase,'created_at',o.created_at,'updated_at',o.updated_at,'shipping_policy','staff_review','gateway_available',false)
+ SELECT jsonb_build_object('id',o.id,'reference','KG-'||upper(substr(o.id::text,1,8)),'state',o.state,'revision',o.revision,'request',o.request,'estimates',(SELECT coalesce(jsonb_agg(jsonb_build_object('amount',value->>'amount','currency',value->>'currency','quantity',value->'quantity')),'[]') FROM jsonb_array_elements(o.estimates)),'quote',o.quote,'payment',o.payment,'purchase',o.purchase,'created_at',o.created_at,'updated_at',o.updated_at,'shipping_policy','staff_review','gateway_available',false)
 $$;
 CREATE FUNCTION public.kinto_world_submit_v1(p_session_token text,p_request_key uuid,p_request jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE cid uuid; o private.kinto_world_orders_v1; item jsonb; estimates jsonb:='[]'; normalized jsonb:='[]'; entry jsonb; BEGIN

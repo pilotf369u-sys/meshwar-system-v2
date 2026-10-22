@@ -25,3 +25,14 @@ jobs:
         env:
           PGPASSWORD: isolated-test-only
         run: psql -h localhost -U postgres -d kinto_world_test -v ON_ERROR_STOP=1 -f mobile/global-orders/database-check.sql
+      - name: Customer consent and staff quote browser checks
+        run: |
+          for fixture in staff customer; do
+            google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --dump-dom "file://$PWD/mobile/global-orders/$fixture-fixture.html" > "$RUNNER_TEMP/$fixture-world.html"
+          done
+          python3 - <<'PYTEST'
+          import os,pathlib
+          for kind in ['staff','customer']:
+            content=pathlib.Path(os.environ['RUNNER_TEMP'],kind+'-world.html').read_text()
+            assert '>PASS_'+kind.upper()+'_UI<' in content,content
+          PYTEST

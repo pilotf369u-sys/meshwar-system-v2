@@ -17,7 +17,7 @@ SELECT public.kinto_world_submit_v1('test-customer','00000000-0000-0000-0000-000
 SELECT (:'result'::jsonb->>'id') AS oid \gset
 DO $$DECLARE o jsonb; id uuid; data jsonb; BEGIN
  o:=(public.kinto_world_list_v1('customer','test-customer')->0);id:=(o->>'id')::uuid;
- IF jsonb_array_length(public.kinto_world_list_v1('customer','other-customer'))<>0 OR o ? 'estimates' THEN RAISE EXCEPTION 'CUSTOMER_ISOLATION';END IF;
+ IF jsonb_array_length(public.kinto_world_list_v1('customer','other-customer'))<>0 OR (o->'estimates'->0) ? 'commission_percent' OR (o->'estimates'->0->>'amount')<>'35750' THEN RAISE EXCEPTION 'CUSTOMER_ISOLATION';END IF;
  PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_action_v1(%L,%L,%L,0,%L)','customer','other-customer',id,'cancel'),'WORLD_NOT_FOUND');
  PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_action_v1(%L,%L,%L,0,%L)','employee','test-staff',id,'purchase'),'WORLD_PURCHASE_REQUIRES_PAYMENT_AND_RECHECK');
  PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_action_v1(%L,%L,%L,0,%L)','customer','test-customer',id,'confirm_transfer'),'WORLD_ACTION_DENIED');
@@ -36,13 +36,30 @@ DO $$DECLARE o jsonb; id uuid; data jsonb; BEGIN
  o:=public.kinto_world_action_v1('employee','test-staff',id,4,'ship','{"tracking":"TEST-TRACKING"}');
  o:=public.kinto_world_action_v1('employee','test-staff',id,5,'deliver');
  IF o->>'state'<>'delivered' THEN RAISE EXCEPTION 'DELIVERED';END IF;
+ -- A second isolated request exercises expiry/review and recorded full refund.
+ o:=public.kinto_world_submit_v1('test-customer','00000000-0000-0000-0000-000000000011',o->'request');id:=(o->>'id')::uuid;
+ data:=jsonb_set(data,'{expires_at}',to_jsonb(now()-interval '1 hour'));
+ PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_action_v1(%L,%L,%L,0,%L,%L)','employee','test-staff',id,'quote',data),'WORLD_QUOTE_EXPIRY');
+ data:=jsonb_set(data,'{expires_at}',to_jsonb(now()+interval '1 hour'));
+ o:=public.kinto_world_action_v1('employee','test-staff',id,0,'quote',data);
+ o:=public.kinto_world_action_v1('customer','test-customer',id,1,'request_review');
+ o:=public.kinto_world_action_v1('employee','test-staff',id,2,'quote',data);
+ o:=public.kinto_world_action_v1('customer','test-customer',id,3,'transfer','{"reference":"TEST-TRANSFER-2"}');
+ BEGIN
+  PERFORM public.kinto_world_action_v1('employee','test-staff',id,4,'confirm_transfer','{"reference":"TEST-BANK-CHECK","amount":"40750","currency":"IQD","bank_verified":true}');
+  RAISE EXCEPTION 'DUPLICATE_BANK_REFERENCE_ACCEPTED';
+ EXCEPTION WHEN unique_violation THEN NULL; END;
+ o:=public.kinto_world_action_v1('employee','test-staff',id,4,'confirm_transfer','{"reference":"TEST-BANK-2","amount":"40750","currency":"IQD","bank_verified":true}');
+ o:=public.kinto_world_action_v1('employee','test-staff',id,5,'refund_required','{"reason":"TEST unavailable at purchase"}');
+ o:=public.kinto_world_action_v1('employee','test-staff',id,6,'confirm_refund','{"reference":"TEST-REFUND-2","amount":"40750","currency":"IQD"}');
+ IF o->>'state'<>'refunded' THEN RAISE EXCEPTION 'REFUND';END IF;
  PERFORM public.kinto_world_assign_staff_v1('test-admin','00000000-0000-0000-0000-000000000004',false);
  PERFORM pg_temp.expect_error($q$SELECT public.kinto_world_list_v1('employee','test-staff')$q$,'WORLD_ACCESS_DENIED');
 END $$;
 RESET ROLE;
 DO $$BEGIN
  IF (SELECT status FROM public.orders WHERE id=1)<>'LOCAL_SENTINEL' OR (SELECT count(*) FROM public.orders)<>1 THEN RAISE EXCEPTION 'LOCAL_MUTATION';END IF;
- IF (SELECT count(*) FROM private.kinto_world_events_v1)<>7 THEN RAISE EXCEPTION 'AUDIT_COUNT';END IF;
+ IF (SELECT count(*) FROM private.kinto_world_events_v1)<>15 THEN RAISE EXCEPTION 'AUDIT_COUNT';END IF;
  IF has_table_privilege('anon','private.kinto_world_orders_v1','SELECT,INSERT,UPDATE,DELETE') OR has_table_privilege('authenticated','private.kinto_world_orders_v1','SELECT,INSERT,UPDATE,DELETE') THEN RAISE EXCEPTION 'DIRECT_ACCESS';END IF;
 END $$;
 SELECT 'PASS global review, quote, transfer verification, purchase, shipping, delivery, role isolation, idempotency, audit and local preservation' AS result;

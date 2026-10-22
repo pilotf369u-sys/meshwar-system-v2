@@ -12,6 +12,7 @@
  function render(orders){$('orders').replaceChildren();if(!orders.length)$('orders').append(el('p','لا توجد طلبات في هذا المسار.'));
  for(const o of orders){const c=el('article',undefined,'card');c.append(el('h2',o.reference),el('span',core.states[o.state]||o.state,'badge'));
  for(const p of o.request.items)c.append(el('h3',p.title),el('p',`المقاس: ${p.size||'لا يوجد'} • اللون: ${p.color||'لا يوجد'} • الكمية: ${p.quantity}`));
+ for(const q of o.estimates||[])c.append(el('p',`تقدير المنتجات: ${q.amount} ${q.currency} — لا يشمل الشحن، ويخضع للمراجعة`));
  if(staff&&o.request.contact)c.append(el('p',o.request.contact.name+' • '+o.request.contact.phone),el('p',o.request.contact.address));
  if(o.quote?.total)c.append(el('p',`المنتجات: ${o.quote.goods} ${o.quote.currency}`),el('p',`الشحن: ${o.quote.shipping} ${o.quote.currency}`),el('strong',`الإجمالي: ${o.quote.total} ${o.quote.currency}`),el('p','صلاحية العرض: '+new Date(o.quote.expires_at).toLocaleString('ar')),el('p',o.quote.instructions,'instructions'));
  if(o.quote?.reason)c.append(el('p',o.quote.reason));
