@@ -619,9 +619,13 @@
     const keys = visibleNotificationKeys(); if (!keys.length) return setNotificationBadge(0);
     try {
       const sb = sbInstance || await client();
-      const { data, error } = await sb.rpc('customer_notification_read_state_v155', { p_session_token: state.token, p_notification_keys: keys });
-      if (error) throw error;
-      setNotificationBadge(Number(data?.unread_count || 0));
+      let unread = 0;
+      for (let offset = 0; offset < keys.length; offset += 100) {
+        const { data, error } = await sb.rpc('customer_notification_read_state_v155', { p_session_token: state.token, p_notification_keys: keys.slice(offset, offset + 100) });
+        if (error) throw error;
+        unread += Number(data?.unread_count || 0);
+      }
+      setNotificationBadge(unread);
     } catch (error) { console.warn('[KINTO Reviews] notification badge unavailable', error); }
   }
 
@@ -631,8 +635,10 @@
     const keys = visibleNotificationKeys(); if (!keys.length) return setNotificationBadge(0);
     try {
       const sb = await client();
-      const { error } = await sb.rpc('customer_mark_notifications_read_v155', { p_session_token: state.token, p_notification_keys: keys });
-      if (error) throw error;
+      for (let offset = 0; offset < keys.length; offset += 100) {
+        const { error } = await sb.rpc('customer_mark_notifications_read_v155', { p_session_token: state.token, p_notification_keys: keys.slice(offset, offset + 100) });
+        if (error) throw error;
+      }
       setNotificationBadge(0);
     } catch (error) { console.warn('[KINTO Reviews] mark notifications read failed', error); }
   }
