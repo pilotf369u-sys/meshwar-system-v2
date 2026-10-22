@@ -614,8 +614,9 @@
 
   function setNotificationBadge(count) {
     const badge = $('notificationUnreadBadge'); if (!badge) return;
-    badge.textContent = count > 99 ? '99+' : String(Math.max(0, count || 0));
-    badge.classList.toggle('show', count > 0);
+    // The authoritative notification controller owns this badge. A second
+    // asynchronous writer could briefly overwrite the correct count.
+    document.dispatchEvent(new Event('kinto:customer-notifications-refresh'));
   }
 
   async function refreshNotificationBadge(sbInstance) {
