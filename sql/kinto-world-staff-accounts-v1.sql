@@ -16,7 +16,7 @@ DECLARE actor uuid;BEGIN
  IF actor IS NULL THEN RAISE EXCEPTION 'WORLD_STAFF_SESSION_INVALID'; END IF;RETURN actor;END $$;
 CREATE FUNCTION public.kinto_world_staff_login_v1(p_phone text,p_password text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE account private.kinto_world_accounts_v1; identity bytea; token text;BEGIN
- IF length(coalesce(trim(p_phone),'')) NOT BETWEEN 5 AND 40 OR octet_length(coalesce(p_password,'')) NOT BETWEEN 8 AND 72 THEN RETURN '{"ok":false,"error":"WORLD_LOGIN_INVALID"}';END IF;
+ IF length(coalesce(trim(p_phone),'')) NOT BETWEEN 5 AND 40 OR char_length(coalesce(p_password,''))<8 OR octet_length(coalesce(p_password,'')) NOT BETWEEN 8 AND 72 THEN RETURN '{"ok":false,"error":"WORLD_LOGIN_INVALID"}';END IF;
  identity:=extensions.digest(trim(p_phone),'sha256');PERFORM pg_advisory_xact_lock(hashtextextended(encode(identity,'hex'),71023));
  IF (SELECT count(*) FROM private.kinto_world_attempts_v1 WHERE identity_hash=identity AND attempted_at>now()-interval '15 minutes')>=5 THEN RETURN '{"ok":false,"error":"WORLD_LOGIN_LOCKED"}'; END IF;
  SELECT * INTO account FROM private.kinto_world_accounts_v1 WHERE phone=trim(p_phone);
@@ -61,7 +61,7 @@ DECLARE actor uuid; c private.kinto_world_challenges_v1; aid uuid; payload jsonb
  IF c.attempts>=5 THEN RETURN '{"ok":false,"error":"WORLD_CHALLENGE_LOCKED"}';END IF;
  IF p_data->>'code_hash' IS DISTINCT FROM c.code_hash THEN UPDATE private.kinto_world_challenges_v1 SET attempts=attempts+1 WHERE id=c.id;RETURN '{"ok":false,"error":"WORLD_CODE_INVALID"}';END IF;
  IF c.payload->>'operation'='create' THEN
-  IF octet_length(coalesce(p_data->>'password','')) NOT BETWEEN 8 AND 72 THEN RAISE EXCEPTION 'WORLD_PASSWORD_INVALID';END IF;
+  IF char_length(coalesce(p_data->>'password',''))<8 OR octet_length(coalesce(p_data->>'password','')) NOT BETWEEN 8 AND 72 THEN RAISE EXCEPTION 'WORLD_PASSWORD_INVALID';END IF;
   INSERT INTO private.kinto_world_accounts_v1(name,phone,password_hash) VALUES(c.payload->>'name',c.payload->>'phone',extensions.crypt(p_data->>'password',extensions.gen_salt('bf',10))) RETURNING id INTO aid;
  ELSE
   aid:=(c.payload->>'id')::uuid;UPDATE private.kinto_world_accounts_v1 SET enabled=false WHERE id=aid;UPDATE private.kinto_world_sessions_v1 SET revoked_at=now() WHERE account_id=aid;
