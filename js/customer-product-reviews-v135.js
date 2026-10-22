@@ -91,7 +91,7 @@
             <h2>المنتجات الجاهزة للتقييم</h2>
             <p class="reviews-panel-subtitle">شارك تجربتك مع المنتجات التي استلمتها فعلياً. كل تقييم موثّق بالطلب.</p>
           </div>
-          <span class="chip reviews-security-chip"><i class="fa-solid fa-shield-halved"></i> شراء موثّق</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" id="kintoReviewsBackToOrders" class="btn-details" aria-label="العودة إلى طلباتي">↩ العودة إلى طلباتي</button><span class="chip reviews-security-chip"><i class="fa-solid fa-shield-halved"></i> شراء موثّق</span></div>
         </div>
         <div id="reviewUnlock" class="review-unlock" hidden>
           <div class="review-unlock-copy">
@@ -165,6 +165,10 @@
   }
 
   function bindUi() {
+    $('kintoReviewsBackToOrders')?.addEventListener('click', () => {
+      const source = document.querySelector('.tabs-nav [data-tab="activeOrders"]');
+      source?.click();
+    });
     $('reviewModalClose')?.addEventListener('click', closeModal);
     $('reviewCancelBtn')?.addEventListener('click', closeModal);
     $('productReviewModal')?.addEventListener('click', event => { if (event.target === event.currentTarget) closeModal(); });
