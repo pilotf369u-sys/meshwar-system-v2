@@ -66,6 +66,7 @@ jobs:
             ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.3.apk
             ${{ runner.temp }}/kinto-preview-output/invoice-test.png
             ${{ runner.temp }}/kinto-preview-output/store-test.png
+            ${{ runner.temp }}/kinto-preview-output/navigation-return-test.png
           retention-days: 14
           if-no-files-found: error
 # Disposable CI signing can require uninstall between downloads. Not production signing.
