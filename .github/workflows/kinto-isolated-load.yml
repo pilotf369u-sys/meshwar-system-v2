@@ -1,0 +1,63 @@
+name: KINTO isolated concurrent load
+on:
+  pull_request:
+    paths:
+      - 'ci/load/**'
+      - '.github/workflows/kinto-isolated-load.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  concurrent-postgresql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-load-test-only
+          POSTGRES_DB: kinto_load
+        ports:
+          - 5432:5432
+        options: >-
+          --cpus 2 --memory 1024m
+          --health-cmd "pg_isready -U postgres -d kinto_load"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned isolated database driver
+        run: npm install --prefix "$RUNNER_TEMP/kinto-load" --ignore-scripts --no-audit --no-fund pg@8.16.3
+      - name: Exercise deployed schema with up to 4000 virtual users
+        env:
+          KINTO_LOAD_DATABASE_URL: postgresql://postgres:isolated-load-test-only@127.0.0.1:5432/kinto_load
+        run: KINTO_PG_MODULE="$RUNNER_TEMP/kinto-load/node_modules/pg/lib/index.js" node ci/load/run.mjs
+      - name: Upload latency and correctness results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kinto-isolated-load-report
+          path: test-results/load-report.json
+          if-no-files-found: warn
+  bounded-owner-public-reads:
+    needs: concurrent-postgresql
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'test/concurrent-load-20261017' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Owner-authorized bounded public GETs only
+        env:
+          KINTO_LIVE_READONLY_APPROVAL: OWNER_AUTHORIZED_20261017
+        run: node ci/load/public-readonly.mjs
+      - name: Upload bounded public-read report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kinto-bounded-public-read-report
+          path: test-results/live-readonly-report.json
