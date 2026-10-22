@@ -26,6 +26,13 @@ public class MainActivity extends Activity {
  }
  private String asset(String name)throws java.io.IOException{try(java.io.InputStream in=getAssets().open(name)){java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] b=new byte[4096];int n;while((n=in.read(b))!=-1)out.write(b,0,n);return out.toString("UTF-8");}}
  private void injectCompat(WebView v){try{v.evaluateJavascript(asset("kinto-webview-compat.js"),null);}catch(Exception e){Toast.makeText(this,"تعذر تهيئة توافق التطبيق",Toast.LENGTH_SHORT).show();}}
+ // document.write can complete after the blank popup's navigation callbacks.
+ // Retry only while this trusted popup is alive, then stop once its invoice is styled.
+ private void prepareDocument(WebView v,int attempts){v.postDelayed(()->{
+  if(!popupViews.contains(v))return;
+  injectCompat(v);
+  v.evaluateJavascript("Boolean(document.getElementById('kinto-app-invoice-layout'))",done->{if(!"true".equals(done)&&attempts>0)prepareDocument(v,attempts-1);});
+ },500);}
  private void printView(WebView v){PrintManager pm=(PrintManager)getSystemService(PRINT_SERVICE);pm.print("KINTO",v.createPrintDocumentAdapter("KINTO"),new PrintAttributes.Builder().build());}
  private void closePopup(WebView v){int i=popupViews.indexOf(v);if(i<0)return;surface.removeView(popupPanels.remove(i));popupViews.remove(i);v.stopLoading();v.destroy();}
  private void hideVideo(){if(fullVideo==null)return;surface.removeView(fullVideo);fullVideo=null;getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);if(fullVideoCallback!=null){WebChromeClient.CustomViewCallback c=fullVideoCallback;fullVideoCallback=null;c.onCustomViewHidden();}}
@@ -41,7 +48,7 @@ public class MainActivity extends Activity {
     @Override public void onPageStarted(WebView v,String u,android.graphics.Bitmap b){if(!u.equals("about:blank")&&!accountUrl(u)){v.stopLoading();closePopup(v);}}
     @Override public void onPageFinished(WebView v,String u){if(u.equals("about:blank")||accountUrl(u))injectCompat(v);if(accountUrl(u))origin.setText("KINTO — shopkinto.com");}
    });
-   child.setWebChromeClient(chromeClient());((WebView.WebViewTransport)msg.obj).setWebView(child);msg.sendToTarget();return true;
+   child.setWebChromeClient(chromeClient());((WebView.WebViewTransport)msg.obj).setWebView(child);msg.sendToTarget();prepareDocument(child,119);return true;
   }
   @Override public void onReceivedTitle(WebView v,String title){if(popupViews.contains(v))v.post(()->{if(popupViews.contains(v))injectCompat(v);});}
   @Override public void onProgressChanged(WebView v,int progress){if(progress==100&&(accountUrl(v.getUrl())||popupViews.contains(v)))injectCompat(v);}
