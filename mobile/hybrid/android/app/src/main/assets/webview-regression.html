@@ -1,0 +1,13 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>KINTO compatibility tests</title></head><body>
+<h2>اختبار توافق التطبيق</h2><p id="result">READY</p>
+<button onclick="invoice('CUSTOMER',false)">فاتورة العميل</button>
+<button onclick="invoice('STAFF',true)">فاتورة الموظف</button>
+<button onclick="invoice('VENDOR',true)">فاتورة التاجر</button>
+<div id="meshwarVideoFrame" class="kinto-mobile-promo-static"><video id="meshwarPromoVideo" muted playsinline controls preload="metadata" style="width:200px;height:100px"></video></div>
+<button onclick="document.getElementById('meshwarPromoVideo').play().catch(e=>document.getElementById('result').textContent='VIDEO_ERROR_'+e.name)">تشغيل فيديو الاختبار</button>
+<p id="videoResult">VIDEO_WAITING</p>
+<script>
+window.fetch=async function(url){if(String(url).includes('/rpc/get_site_settings'))return {ok:true,json:async()=>({hero_media_type:'video',video_url:'https://shopkinto.com/__kinto_fixture.mp4'})};throw Error('No network in fixture')};
+function invoice(role,asyncOpen){const run=()=>{const p=window.open('','_blank');if(!p){document.getElementById('result').textContent='POPUP_BLOCKED';return;}p.document.open();p.document.write('<!doctype html><html><head><title>فاتورة اختبار</title></head><body><h1>INVOICE_'+role+'</h1><p>1000 IQD — TEST ONLY</p><button onclick="window.close()">إغلاق الفاتورة</button></body></html>');p.document.close();};if(asyncOpen)setTimeout(run,250);else run();}
+const v=document.getElementById('meshwarPromoVideo');v.addEventListener('timeupdate',()=>{if(v.currentTime>0.2)document.getElementById('videoResult').textContent='VIDEO_PLAYING'});v.addEventListener('error',()=>{document.getElementById('videoResult').textContent='VIDEO_ERROR_'+v.error.code});
+</script></body></html>

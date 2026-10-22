@@ -1,3 +1,37 @@
+# Android preview 0.2 — wrapper compatibility fixes
+
+This revision removes the permanent native header/navigation strip. Website
+navigation remains the customer interface; KEYCODE_MENU exposes test tools only.
+Global store links still route through the isolated shopping process.
+
+Invoice cause: the original onCreateWindow only forwarded navigations and never
+showed the temporary WebView. window.open("") + document.write invoices thus had
+no visible window. Child WebViews now show labeled, closable document panels,
+retain the opener's normal browser-origin behavior, support async invoice opens,
+and provide Android print/PDF. External navigation is routed out; no JS native
+bridge is exposed. Three document windows maximum.
+
+Video cause: deployed local-store-pricing.js applyVideo explicitly strips video
+sources for mobile pointer/width. Bundled KINTO-only compatibility restores the
+configured source using the existing read-only get_site_settings RPC, without
+editing the site script, changing stored settings, or auto-playing media. Image
+hero mode remains respected. Explicit hardware acceleration and full-screen video
+callbacks are supported. No mixed-content or certificate bypass.
+
+APK identity com.kinto.preview.hybrid.v2 is separate from the old disposable-key
+preview, so install beside it without uninstalling or disturbing its local drafts.
+No old/production certificate or assetlinks change. CI signing remains disposable.
+
+Offline Android35 regression exercises synthetic customer/staff/vendor invoice
+patterns (document.write, including async open), document close/print control,
+header absence, and actual H264 playback after settings-based source restoration.
+It does not authenticate as those roles or claim to inspect real private invoices.
+The existing synthetic Trendyol flow is run again. See the final delivery for the
+actual completed CI result. Real customer/employee/vendor invoice checks on the
+owner's phone remain acceptance steps.
+
+---
+
 # KINTO hybrid Android preview 0.1
 
 Base: main `dc686cdfaf2d7d78027f86ed6f57642f001f578a`.
