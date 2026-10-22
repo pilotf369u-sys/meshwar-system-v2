@@ -23,7 +23,7 @@ def click(text,attempts=6,scroll=False):
  raise AssertionError('Missing control: '+text+'; texts='+repr([n.get('text') for n in nodes()]))
 
 print(adb('install','--no-streaming','-r',os.environ['KINTO_APK']))
-print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v2/com.kinto.trendyollab.MainActivity'))
+print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v2/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true'))
 time.sleep(8)
 adb('shell','input','keyevent','82');click('تجربة كاملة');time.sleep(8)
 click('أضف إلى KINTO')

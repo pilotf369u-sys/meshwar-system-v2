@@ -23,7 +23,14 @@ print(adb('shell','am','start','-n',P+'/com.kinto.trendyollab.MainActivity','--e
 time.sleep(5)
 s=text();assert 'طلب تجريبي' not in s and 'الموقع حي' not in s,s
 for label,role in [('فاتورة العميل','CUSTOMER'),('فاتورة الموظف','STAFF'),('فاتورة التاجر','VENDOR')]:
- click(label);time.sleep(2);s=text();assert 'INVOICE_'+role in s,s;assert 'طباعة / PDF' in s,s;click('إغلاق');time.sleep(1)
+ click(label)
+ for _ in range(12):
+  s=text()
+  if 'INVOICE_'+role in s:break
+  time.sleep(1)
+ assert 'INVOICE_'+role in s,s
+ assert 'طباعة / PDF' in s,s
+ click('إغلاق');time.sleep(1)
 print('PASS: customer/staff/vendor document.write invoices including async window.open, visible print control and close; no persistent app header')
 click('تشغيل فيديو الاختبار')
 for _ in range(10):
