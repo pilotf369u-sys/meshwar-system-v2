@@ -56,7 +56,10 @@ print('PASS: no external store top strip; seven customer navigation actions visi
 adb('shell','input','keyevent','82');click('تجربة كاملة');time.sleep(5)
 click('أضف إلى KINTO')
 time.sleep(2)
-texts=' '.join(n.get('text','') for n in nodes())
+for _ in range(8):
+ texts=' '.join(n.get('text','') for n in nodes())
+ if '35750' in texts:break
+ adb('shell','input','swipe','500','1400','500','700','350');time.sleep(1)
 assert '35750' in texts, texts
 click('طابقت',scroll=True);click('أؤكد الإضافة')
 time.sleep(2)
