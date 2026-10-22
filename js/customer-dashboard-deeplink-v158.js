@@ -38,7 +38,7 @@ function rememberTab(){
   if(restoringHistory)return;
   const url=new URL(location.href),previous=url.searchParams.get('tab')||document.querySelector('.tabs-nav .tab-btn.active')?.dataset.tab||'activeOrders';
   if(previous===tab)return;
-  if(tab==='notifications'&&previous!=='notifications'){
+  if((tab==='notifications'||tab==='productReviews')&&previous!==tab){
    const old=new URL(url.href);old.searchParams.set('tab',previous);
    history.replaceState({...history.state,kintoCustomerTab:previous},'',old.pathname+old.search+old.hash);
    url.searchParams.set('tab',tab);history.pushState({...history.state,kintoCustomerTab:tab},'',url.pathname+url.search+url.hash);
