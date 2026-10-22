@@ -1,6 +1,70 @@
 # KINTO mobile stores — isolated Android foundation
 
-Status: source foundation only, NOT a store-ready or device-verified release.
+Status: TWA foundation SUPERSEDED as the complete application architecture.
+Do not continue the TWA-only build for the requested production app.
+Global-store tools are REQUIRED scope, not a later optional feature.
+
+## Architecture correction — recovered Trendyol experiment
+
+Recovered source: `app/android-trendyol-lab-v1`, PR #952 (open, not merged),
+commit `72d39a6fe5ad93a10e5a86702e8392f11089d9d3`.
+Files: `android-lab/app/src/main/java/com/kinto/trendyollab/MainActivity.java`,
+`UrlPolicy.java`, `CartRules.java`, `android-lab/app/src/main/assets/product-reader.js`,
+`order-button.js`, and `android-lab/checks/product-reader.test.cjs`.
+Do not merge the old branch wholesale: it carries an older website baseline.
+Its README includes obsolete early-version statements; current code and PR describe V6.
+
+Re-ran the recovered reader/SPA fixtures: 18/18 PASS. This is fixture verification,
+not a new live Trendyol or iPhone test. Java boundary checks could not run locally
+because javac is absent; Android compile/lint also remain pending here.
+The PR reports V5 phone confirmation for size 42/Haki and cart save; V6 basket
+campaign changes still require device verification. No iOS result was found.
+
+Required behavior:
+- Browse supported global sites with KINTO product tools.
+- Convert using ONLY the admin-approved exchange rate and percentage commission;
+  discover the authoritative existing settings and formula before implementing.
+- Show product estimate excluding shipping. Customer wording:
+  **السعر للمنتج فقط، ولا يشمل الشحن. تُحدد تكلفة الشحن بعد مراجعة الموظف للطلب.**
+- Confirm product, seller, selected options, quantity and observed price before
+  adding to the KINTO global-order flow. Existing local-store checkout is untouched.
+- The old lab cart is LOCAL ONLY: no exchange conversion, real ordering,
+  availability verification or employee routing exists there yet.
+
+Selected architecture direction: a hybrid/native app with an isolated external
+shopping browser: Android WebView and iOS WKWebView. Reuse the reader/button
+JavaScript and its fixtures; port the browser host/navigation and confirmation UI.
+Keep KINTO authenticated commerce separate from third-party browsing. Never expose
+KINTO session tokens, payment privileges or a general native bridge to store pages.
+Read untrusted DOM as candidate product data, validate it and require user confirmation;
+server-side authoritative pricing and order validation remain necessary.
+TWA may be evaluated as a KINTO-only component, but cannot implement the whole scope.
+Do not assume Capacitor's default browser plugin supports injection: verify a
+separate native shopping module before choosing a framework dependency.
+
+Each retailer needs its own adapter and Android/iOS device test matrix. Do not
+bypass anti-bot challenges or SSL checks; blocked/unsupported sites must stop the
+capture and explain the limitation. Conditional/Plus/basket offers must not become
+unconditional guaranteed prices. Reuse the lab's fail-closed handling.
+
+Policy gates: Google Play Webviews/Affiliate Spam policy restricts apps primarily
+providing another site's WebView without owner permission. Check retailer rights
+and permissions before release; technical injection success is not permission.
+Apple 4.2 and 5.2 require sufficient functionality and appropriate content rights.
+No acceptance guarantee or all-retailers compatibility claim is made.
+References:
+- https://support.google.com/googleplay/android-developer/answer/9899034
+- https://developer.android.com/privacy-and-security/risks/insecure-webview-native-bridges
+- https://developer.apple.com/documentation/webkit/wkwebview/evaluatejavascript(_:completionhandler:)
+- https://developer.apple.com/app-store/review/guidelines/
+
+Next implementation: selectively recover the lab at its pinned SHA, audit its
+boundaries, prototype the equivalent WKWebView host, then integrate the approved
+rate/commission read path and global-order flow on this isolated branch. Do not
+invent a conversion formula or route experimental items through local checkout.
+
+The sections below retain the initial TWA-only audit for traceability; the
+architecture correction above takes precedence.
 Base/rollback: `dc686cdfaf2d7d78027f86ed6f57642f001f578a`.
 Rollback branch: `rollback/pre-mobile-stores-20261022`.
 Work branch: `app/android-store-foundation-20261022`.
@@ -33,7 +97,7 @@ Existing assetlinks declares `com.kinto.app` and one certificate. Its private ke
 owner and whether it is an old test certificate or Play signing certificate are
 unverified. Never replace it with a generated key or commit any private key.
 
-## Chosen Android starting point
+## Superseded Android-only starting point
 
 TWA via Google's android-browser-helper preserves the existing browser-origin
 sessions, site checkout and live site updates. It avoids duplicating commerce
@@ -45,9 +109,8 @@ linked on the website. No live assetlinks change is included.
 
 Third-party stores/payment domains are not asserted as owned/verified and may
 show browser chrome or open externally. TWA cannot inject a cart button into
-Trendyol/Zara or arbitrary third-party sites. Such shopping integration is a
-separate scope and could change the architecture. This foundation does not claim
-to implement that feature. Test payment return flows explicitly on a device.
+Trendyol/Zara or arbitrary third-party sites. This shopping integration is REQUIRED scope and is not implemented by the
+initial TWA foundation; the architecture correction above supersedes that choice. Test payment return flows explicitly on a device.
 
 ## Build (not publish)
 
