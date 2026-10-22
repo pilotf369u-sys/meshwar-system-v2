@@ -19,6 +19,7 @@ SET ROLE anon;
 SELECT public.kinto_world_staff_login_v1('0000071001','TEST-ONLY-password') AS login \gset
 SELECT (:'login'::jsonb->>'session_token') AS staff_token \gset
 SELECT public.kinto_world_list_v1('world_employee',:'staff_token');
+SELECT pg_temp.expect_error(format('SELECT public.kinto_world_list_v1(%L,%L)','employee',:'staff_token'),'EMPLOYEE_SESSION_INVALID');
 SELECT public.kinto_world_staff_logout_v1(:'staff_token');
 SELECT pg_temp.expect_error(format('SELECT public.kinto_world_list_v1(%L,%L)','world_employee',:'staff_token'),'WORLD_STAFF_SESSION_INVALID');
 DO $$DECLARE r jsonb;BEGIN
@@ -46,3 +47,12 @@ DO $$BEGIN
  IF (SELECT status FROM public.orders WHERE id=1)<>'LOCAL_SENTINEL' THEN RAISE EXCEPTION 'LOCAL_MUTATION';END IF;
 END $$;
 SELECT 'PASS global-only staff login/logout, revoked sessions, login rate limit and unchanged local sentinel';
+
+SET ROLE service_role;
+SELECT public.kinto_world_staff_security_service_v1('test-admin','request',jsonb_build_object('payload',jsonb_build_object('operation','create','name','TEST locked challenge','phone','0000071003'),'code_hash',repeat('d',64))) AS locked_challenge \gset
+SELECT (:'locked_challenge'::jsonb->>'challenge_id') AS locked_id \gset
+SELECT public.kinto_world_staff_security_service_v1('test-admin','verify',jsonb_build_object('challenge_id',:'locked_id','code_hash',repeat('e',64),'password','TEST-only-password')) FROM generate_series(1,5);
+SELECT 1 / CASE WHEN public.kinto_world_staff_security_service_v1('test-admin','verify',jsonb_build_object('challenge_id',:'locked_id','code_hash',repeat('d',64),'password','TEST-only-password'))->>'error'='WORLD_CHALLENGE_LOCKED' THEN 1 ELSE 0 END;
+SELECT 1 / CASE WHEN public.kinto_world_staff_security_service_v1('test-admin','request','{}')->>'error'='WORLD_OTP_RATE_LIMIT' THEN 1 ELSE 0 END;
+RESET ROLE;
+SELECT 'PASS OTP challenge lock and request rate limit';
