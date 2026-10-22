@@ -42,9 +42,13 @@ public class ShoppingActivity extends Activity {
    @Override public void doUpdateVisitedHistory(WebView v,String url,boolean reload){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())status.setText("تعذر فتح الصفحة. تحقق من الاتصال أو حدّث مرة واحدة.");}
   });
-  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=new Pricing.Snapshot("40","1300","10","TRY","IQD","synthetic-fixture",1);quoteReadAt=System.currentTimeMillis();currentProductPage="https://www.trendyol.com/fixture-p-123456";try{web.loadDataWithBaseURL("https://www.trendyol.com/fixture-p-123456",asset("fixture-product.html"),"text/html","UTF-8","https://www.trendyol.com/fixture-p-123456");}catch(Exception e){finish();}}
+  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=fixturePricing();quoteReadAt=System.currentTimeMillis();currentProductPage="https://www.trendyol.com/fixture-p-123456";try{web.loadDataWithBaseURL("https://www.trendyol.com/fixture-p-123456",asset("fixture-product.html"),"text/html","UTF-8","https://www.trendyol.com/fixture-p-123456");}catch(Exception e){finish();}}
   else { web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/");refreshConfigInBackground(); }
  }
+ private Pricing.Snapshot fixturePricing(){try{
+  Pricing.Snapshot parsed=AdminPricing.parse(new JSONObject(asset("pricing-fixture.json")));
+  return new Pricing.Snapshot(parsed.sourcePerUsd.toPlainString(),parsed.targetPerUsd.toPlainString(),parsed.commission.toPlainString(),parsed.fromCurrency,parsed.toCurrency,"synthetic-fixture",parsed.revision);
+ }catch(Exception e){throw new IllegalStateException("Synthetic pricing contract failed",e);}}
  private Button button(String text){Button b=new Button(this);b.setText(text);b.setAllCaps(false);return b;}
  private String asset(String name)throws IOException{try(InputStream in=getAssets().open(name)){ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] buffer=new byte[4096];int n;while((n=in.read(buffer))!=-1)bytes.write(buffer,0,n);return new String(bytes.toByteArray(),StandardCharsets.UTF_8);}}
  private void refreshAndCapture(){

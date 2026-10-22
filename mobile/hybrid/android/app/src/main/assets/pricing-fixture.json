@@ -1,0 +1,1 @@
+{"schema_version":1,"enabled":true,"formula":"usd_cross_markup_v1","shipping_included":false,"revision":1,"display_currency":"IQD","commission_percent":"10","currencies":[{"code":"USD","name":"دولار اختبار","per_usd":"1"},{"code":"TRY","name":"ليرة اختبار","per_usd":"40"},{"code":"IQD","name":"دينار اختبار","per_usd":"1300"}]}
