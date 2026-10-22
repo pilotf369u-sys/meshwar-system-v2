@@ -33,10 +33,17 @@ print(adb('install','--no-streaming','-r',os.environ['KINTO_APK']))
 print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v3/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true'))
 time.sleep(8)
 adb('shell','input','keyevent','82');click('تجربة كاملة');time.sleep(8)
-texts=' '.join(n.get('text','') for n in nodes())
-assert 'KINTO | المتاجر العالمية' not in texts and 'العودة إلى KINTO' not in texts,texts
-for label in ['الرئيسية','المتاجر','السلة','طلباتي','الدردشة','مفضلاتي','حسابي']:assert label in texts,texts
+labels=['الرئيسية','المتاجر','السلة','طلباتي','الدردشة','مفضلاتي','حسابي']
+for _ in range(12):
+ texts=' '.join(n.get('text','') for n in nodes())
+ if all(label in texts for label in labels):break
+ time.sleep(1)
 with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'store-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
+if not all(label in texts for label in labels):
+ print(adb('logcat','-d','-t','160','AndroidRuntime:E','chromium:E','*:S'))
+ print(adb('shell','dumpsys','activity','activities')[-5000:])
+assert 'KINTO | المتاجر العالمية' not in texts and 'العودة إلى KINTO' not in texts,texts
+for label in labels:assert label in texts,texts
 click('السلة');time.sleep(2)
 assert 'NAV_CART_PASS' in ' '.join(n.get('text','') for n in nodes())
 print('PASS: no external store top strip; seven customer navigation actions visible; cart action returns to trusted KINTO renderer')
