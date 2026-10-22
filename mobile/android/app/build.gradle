@@ -1,0 +1,28 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.kinto.app'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'com.kinto.app'
+        minSdk 23
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+    }
+    buildTypes {
+        debug {
+            applicationIdSuffix '.preview'
+            versionNameSuffix '-preview'
+            resValue 'string', 'app_name', 'KINTO Preview'
+        }
+        release {
+            // Unsigned intentionally. Recover/confirm the existing app identity first.
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+}

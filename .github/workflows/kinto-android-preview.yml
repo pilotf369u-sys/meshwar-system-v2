@@ -1,0 +1,35 @@
+name: KINTO Android preview (no publishing)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+      - name: Validate existing PWA contract
+        run: node tests/pwa-hosting-contract.cjs
+      - name: Build preview APK and unsigned bundle, run lint
+        working-directory: mobile/android
+        run: gradle --no-daemon :app:assembleDebug :app:bundleRelease :app:lintDebug :app:signingReport
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kinto-android-preview-${{ github.sha }}
+          path: |
+            mobile/android/app/build/outputs/apk/debug/*.apk
+            mobile/android/app/build/outputs/bundle/release/*.aab
+            mobile/android/app/build/reports/lint-results-debug.html
+          if-no-files-found: error
+          retention-days: 14
