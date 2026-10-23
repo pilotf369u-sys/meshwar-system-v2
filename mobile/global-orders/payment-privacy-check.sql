@@ -22,10 +22,18 @@ DO $$DECLARE o jsonb;id uuid;id2 uuid;req jsonb;q jsonb;BEGIN
  IF o->>'state'<>'paid' OR o::text LIKE '%TEST-PRIVATE-BANK%' OR o->'payment' ? 'staff_reference' OR o->'payment' ? 'customer_reference' THEN RAISE EXCEPTION 'INTERNAL_RECEIPT_EXPOSED';END IF;
  PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_action_v1(%L,%L,%L,2,%L,%L)','world_employee','TEST-privacy-session',id,'purchase','{}'),'WORLD_REVISION_CONFLICT');
  o:=public.kinto_world_action_v1('world_employee','TEST-privacy-session',id,3,'purchase','{"reference":"TEST-STORE-PRIVACY","availability_rechecked":true,"within_paid_amount":true}');
+ PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_action_v1(%L,%L,%L,4,%L,%L)','world_employee','TEST-privacy-session',id,'ship','{"tracking":"TEST-PRIVACY-PARCEL"}'),'WORLD_PREPARATION_REQUIRED');
  o:=public.kinto_world_fulfillment_action_v2('world_employee','TEST-privacy-session',id,4,'prepare_shipping','{"tracking":"TEST-PRIVACY-PARCEL"}');
  o:=public.kinto_world_fulfillment_action_v2('world_employee','TEST-privacy-session',id,5,'ship_world','{"tracking":"TEST-PRIVACY-PARCEL"}');
- o:=public.kinto_world_fulfillment_action_v2('world_employee','TEST-privacy-session',id,6,'deliver_world','{"received_confirmed":true}');
- IF o->>'state'<>'delivered' THEN RAISE EXCEPTION 'LIFECYCLE_REGRESSION';END IF;
+ PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_action_v1(%L,%L,%L,6,%L,%L)','world_employee','TEST-privacy-session',id,'deliver','{}'),'WORLD_DELIVERY_CONFIRMATION_REQUIRED');
+ PERFORM public.kinto_world_dispatch_action_v1('world_employee','TEST-privacy-session',id,6,'route','{"target_role":"branch","target_id":"branch-1"}');
+ PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_action_v1(%L,%L,%L,7,%L,%L)','world_employee','TEST-privacy-session',id,'deliver','{"received_confirmed":true}'),'WORLD_DELIVERY_USE_ASSIGNED_COURIER');
+ PERFORM public.kinto_world_dispatch_action_v1('branch','test-branch-1',id,7,'receive');
+ PERFORM public.kinto_world_dispatch_action_v1('branch','test-branch-1',id,8,'assign_courier','{"target_id":"courier-1"}');
+ PERFORM public.kinto_world_dispatch_action_v1('courier','test-courier-1',id,9,'receive');
+ PERFORM public.kinto_world_dispatch_action_v1('courier','test-courier-1',id,10,'start_delivery');
+ PERFORM public.kinto_world_dispatch_action_v1('courier','test-courier-1',id,11,'deliver');
+ IF (public.kinto_world_staff_search_v2('world_employee','TEST-privacy-session','TEST-PRIVACY-PARCEL')->0->>'state')<>'delivered' THEN RAISE EXCEPTION 'LIFECYCLE_REGRESSION';END IF;
  -- Report with NO transfer reference is supported; internal duplicate receipts still refused.
  o:=public.kinto_world_submit_v1('test-customer','00000000-0000-0000-0000-000000000091',req);id2:=(o->>'id')::uuid;
  o:=public.kinto_world_action_v1('world_employee','TEST-privacy-session',id2,0,'quote',q-'instructions'-'attachment');

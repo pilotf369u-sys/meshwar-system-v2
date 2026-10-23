@@ -51,8 +51,8 @@ DECLARE actor uuid; o private.kinto_world_orders_v1; q jsonb; goods numeric; shi
     IF o.state<>'refund_pending' OR p_data->>'amount' IS DISTINCT FROM o.quote->>'total' OR p_data->>'currency' IS DISTINCT FROM o.quote->>'currency' OR length(coalesce(trim(p_data->>'reference'),'')) NOT BETWEEN 3 AND 160 THEN RAISE EXCEPTION 'WORLD_REFUND_VERIFICATION_REQUIRED'; END IF;
     INSERT INTO private.kinto_world_receipts_v1 VALUES(trim(p_data->>'reference'),o.id,'refund',(o.quote->>'total')::numeric,o.quote->>'currency',actor,now());
     o.payment:=o.payment||jsonb_build_object('refund_reference',p_data->>'reference','refunded_at',now());next_state:='refunded';
-   WHEN 'ship' THEN IF o.state<>'purchased' OR length(coalesce(trim(p_data->>'tracking'),'')) NOT BETWEEN 3 AND 300 THEN RAISE EXCEPTION 'WORLD_STATE'; END IF;o.purchase:=o.purchase||jsonb_build_object('tracking',p_data->>'tracking');next_state:='shipping';
-   WHEN 'deliver' THEN IF o.state<>'shipping' THEN RAISE EXCEPTION 'WORLD_STATE'; END IF;next_state:='delivered';
+   WHEN 'ship' THEN IF o.state<>'purchased' OR NOT(o.purchase ? 'shipping_requested_at') OR length(coalesce(trim(p_data->>'tracking'),'')) NOT BETWEEN 3 AND 300 THEN RAISE EXCEPTION 'WORLD_PREPARATION_REQUIRED'; END IF;o.purchase:=o.purchase||jsonb_build_object('tracking',p_data->>'tracking');next_state:='shipping';
+   WHEN 'deliver' THEN IF o.state<>'shipping' OR p_data->>'received_confirmed' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'WORLD_DELIVERY_CONFIRMATION_REQUIRED'; END IF;IF EXISTS(SELECT FROM private.kinto_world_fulfillment_v1 WHERE order_id=o.id) THEN RAISE EXCEPTION 'WORLD_DELIVERY_USE_ASSIGNED_COURIER';END IF;next_state:='delivered';
    ELSE RAISE EXCEPTION 'WORLD_ACTION_DENIED';
   END CASE;
  END IF;
