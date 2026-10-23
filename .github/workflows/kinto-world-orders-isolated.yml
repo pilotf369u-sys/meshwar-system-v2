@@ -1,7 +1,7 @@
 name: KINTO independent global orders
 on:
   push:
-    branches: [fix/world-workflow-integrated-20261023, app/kinto-world-staff-specialty-20261023, app/kinto-global-orders-independent-20261023]
+    branches: [fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-world-staff-specialty-20261023, app/kinto-global-orders-independent-20261023]
   pull_request:
     paths: ['sql/kinto-global-orders-independent-v1.sql', 'sql/kinto-world-staff-accounts-v1.sql', 'sql/kinto-world-workflow-integration-v1.sql', 'js/admin-world-staff-v1.js', 'supabase/functions/kinto-world-staff-security-v1/**', 'mobile/global-orders/**', 'js/kinto-world*', '*world-workspace*', 'global-order-review.html', 'global-staff-workspace.html']
 permissions:
@@ -44,12 +44,12 @@ jobs:
         run: bash mobile/global-orders/concurrency-check.sh
       - name: Customer consent and staff quote browser checks
         run: |
-          for fixture in staff customer admin-staff dispatch; do
+          for fixture in staff customer admin-staff dispatch customer-integrated employee-integrated; do
             google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --dump-dom "file://$PWD/mobile/global-orders/$fixture-fixture.html" > "$RUNNER_TEMP/$fixture-world.html"
           done
           python3 - <<'PYTEST'
           import os,pathlib
-          for kind in ['staff','customer','admin-staff','dispatch']:
+          for kind in ['staff','customer','admin-staff','dispatch','customer-integrated','employee-integrated']:
             content=pathlib.Path(os.environ['RUNNER_TEMP'],kind+'-world.html').read_text()
             assert '>PASS_'+kind.upper().replace('-','_')+'_UI<' in content,content
           PYTEST
