@@ -43,3 +43,5 @@
 @media(min-width:700px){.kinto-world-employee .world-quote-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}.kinto-world-employee .world-quote-form label{margin:4px 0}.kinto-world-employee .world-quote-form label:has(input[type=checkbox]),.kinto-world-employee .world-quote-form output,.kinto-world-employee .world-quote-form button{grid-column:1/-1}}
 
 .world-embedded .world-whatsapp{display:inline-flex;align-items:center;padding:9px 14px;border-radius:10px;background:#146b3a;color:#fff!important;text-decoration:none;font-weight:700;margin:8px 0}.world-embedded .world-whatsapp+small{display:block;color:#365843;direction:ltr;text-align:right}
+
+.world-embedded[data-workspace=staff] .world-orders{align-items:start}.world-embedded .world-server-changed,.world-embedded .world-legacy-batch{background:#fff1d2;padding:8px;border-radius:8px;color:#664c10}
