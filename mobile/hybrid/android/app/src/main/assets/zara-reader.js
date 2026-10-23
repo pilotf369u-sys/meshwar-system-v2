@@ -45,10 +45,10 @@
  // Structured fallback must match current color, country, URL and every matching size price.
  if(!prices.length&&!foreign&&offers.length){const all=offers.map(({o})=>number(o.price)),p=unique(all);if(all.every(n=>n!==null)&&p.length===1){price=p[0];priceRaw=String(price)+' TRY';priceSource='structured';}}
  const variantPriceValues=offers.map(({o})=>number(o.price));
- if(group&&(!variants.length||!offers.length)||!size&&unique(variantPriceValues).length>1){price=null;priceSource='';}
+ if(group&&(!variants.length||!offers.length)||!size&&unique(variantPriceValues).length>1||price!==null&&variantPriceValues.length&&variantPriceValues.some(n=>n===null||n!==price)){price=null;priceSource='';}
  if(activeChoice?.blocked||!color||colors.length>1||sizes.length>1||foreign||offers.length&&offers.every(({o})=>/OutOfStock|Discontinued|SoldOut/.test(String(o.availability)))){price=null;priceSource='';}
  let image='';const live=list('.product-detail-card__main-image img,.product-detail-image img,.product-detail-images img');
- image=live[0]?.currentSrc||live[0]?.src||variants[0]?.image?.[0]||'';
+ image=variants[0]?.image?.[0]||live[0]?.currentSrc||live[0]?.src||'';
  try{const x=new URL(typeof image==='object'?image.url:image,u.href);image=x.protocol==='https:'&&x.hostname==='static.zara.net'&&!x.username&&!x.password&&(!x.port||x.port==='443')&&x.pathname.startsWith('/assets/')?x.href:'';}catch{image='';}
  return JSON.stringify({source:'zara',sourceName:'ZARA',productId,pageUrl:u.href,title:text(root?.querySelector('h1')?.textContent||document.querySelector('h1')?.textContent||group?.name),image,price,currency:'TRY',priceRaw,priceSource,merchantId:'',observedOptions:{size,color},optionRequirements:{size:true,color:true},selectionKey:key,warning:price===null?'PRICE_NOT_CONFIRMED':''});
 })();
