@@ -23,7 +23,7 @@ This is a non-production release candidate, not authorization to publish.
 
 ## Build outputs and signing
 
-- Candidate identity: com.kinto.preview.hybrid.v16, versionCode16. Not the production identity; final versionCode must exceed any existing Play release.
+- Candidate identity: com.kinto.preview.hybrid.v17, versionCode17. Not the production identity; final versionCode must exceed any existing Play release.
 - Gradle produces unsigned AAB and APK for structural validation only. CI signs a separate candidate APK with a disposable test key outside checkout for device checks. Neither this key nor package is approved for Play publication.
 - Production com.kinto.app and assetlinks fingerprint unchanged:
   43:83:9F:A3:0A:84:72:D1:D0:DE:9B:39:4F:D7:18:4A:0F:1A:2A:3A:73:97:A9:94:73:34:BD:01:0D:CB:7E:33
@@ -59,3 +59,14 @@ This is a non-production release candidate, not authorization to publish.
 - A visible price can be shown as an estimate while options are pending; capture still fails closed until those options are selected and customer confirmation remains mandatory. No price caching across product/variant changes.
 - Trendyol reader/order-button, website and SQL unchanged. Version/package 16 remains non-production with disposable test signing.
 - Fresh public mobile markup was fetched read-only; source replay with DOM parsing retained exact 999.97 TRY, 3XL and Lacivert. This is markup evidence, not a live device guarantee for every product.
+
+## Hepsiburada mobile sticky bar correction, preview 17
+
+- User rejected preview 16 on device: Wohler brush, Agarta toothpaste, Fissler 6L cooker and Acar bowls all visibly priced but not captured. Prior synthetic fixtures did not cover the actual sticky purchase bar.
+- Rollback: rollback/before-hepsi-v17-20261024 at 35769331ea5fbaba185b65e7b437fb2adcf1c215. Working branch: app/hepsi-buybar-v17-20261024, no merge/deploy/SQL.
+- Public storefront-pwa 1.1.7001 chunk 5882 uses sticky-price/default-price/checkout-price/premium-price; the sticky bar lives outside the scoped buybox sibling section and uses no price-current-price selector. Add that exact DOM contract as the primary mobile price source.
+- Follow Trendyol's semantic separation of ordinary/basket/membership prices, without changing Trendyol code. Normal discounted current price is accepted. Conditional basket/Premium prices use the visibly stated ordinary amount before the offer, with a confirmation disclosure. No threshold/membership/coupon eligibility is guessed. Visible ambiguous/missing sticky amounts cannot fall back to stale structured offers.
+- Canonical URL slugs can differ; compare exact store host plus p/pm product ID rather than slug text. Retain seller/variant checks for structured fallback.
+- Gallery extraction remains outside the title scope, so the confirmed image is retained.
+- Fresh read-only public HTML from the four reported product types plus the verified retailer sticky DOM contract reproduced null prices in preview16 and correct baseline amounts in preview17: 399, 18999, 174, 1117.52 TRY. This replay does not prove live JavaScript on every phone; actual device acceptance remains required.
+- Replace Android Hepsi fixture with sticky bar outside buybox, an old price and an unrelated price. Test-only synthetic data remain excluded from the release candidate assets.

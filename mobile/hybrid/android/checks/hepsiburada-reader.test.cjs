@@ -40,3 +40,10 @@ test('Hepsi missing selections can display a current visible price but cannot au
 test('Hepsi structured metadata never supplies a display-only price for an unselected variant',()=>{
  const r=read({product:base(),rows:[{name:'Beden',value:''}]});assert.equal(r.price,null);assert.equal(r.displayPrice,null);
 });
+
+test('Hepsi canonical slug changes retain exact product identity but never another product id',()=>{
+ const p=base();p.offers.url='https://www.hepsiburada.com/renamed-canonical-product-pm-HBC000001';
+ assert.equal(read({product:p,rows}).price,1000);
+ p.offers.url='https://www.hepsiburada.com/renamed-canonical-product-pm-HBC0000010';assert.equal(read({product:p,rows}).price,null);
+ p.offers.url='https://hepsiburada.com.evil.test/renamed-pm-HBC000001';assert.equal(read({product:p,rows}).price,null);
+});
