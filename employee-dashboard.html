@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" class="employee-auth-pending">
 <head>
+<script>window.__kintoWorldEmployeeV1=(()=>{const p=new URLSearchParams(location.search);return p.get("orderScope")==="world"||p.get("workspace")==="global"})();</script>
 <script src="js/kinto-coupon-finance-v1.js?v=20261018-v1"></script>
 <script src="js/kinto-attachment-access-v1.js?v=20261017-v1" data-role="employee"></script>
 <script src="js/kinto-order-data-session-v1.js?v=20261016-order-privacy-v1" data-role="employee"></script>
@@ -863,6 +864,7 @@ html{background:var(--emp-navy);color-scheme:dark}body{background:radial-gradien
 </style>
 <script id="employee-workspace-tabs-v1">
 (function(){
+  if(window.__kintoWorldEmployeeV1)return;
   const modes=['new','process','labels','track'];
   const map={new:'waiting_employee',process:'all',labels:'shipping_prep',track:'all'};
   const hints={new:'إدخال شحنة جديدة — يعرض الطلبات الواردة بانتظار رد الموظف.',process:'معالجة الشحنات — استخدم حالات الطلبات للتنقل بين جميع مراحل الدورة.',labels:'طباعة الملصقات الحرارية — تم إبراز إجراءات الطباعة بمقاس 50mm × 40mm.',track:'تتبع الطلبات — استخدم البحث أو الباركود للوصول إلى الشحنة مباشرة.'};
@@ -965,4 +967,4 @@ printOrderBarcode=window.printOrderBarcode;
 </script>
 <script src="js/staff-customer-receipt-badges.js?v=20261021-compact-v2" data-receipt-role="employee" defer></script>
 
-<link rel="stylesheet" href="css/kinto-world-panels-v1.css?v=20261023-normal-panels"><script src="js/kinto-world-panels-v1.js?v=20261023-normal-panels" data-panel="employee" defer></script>
+<link rel="stylesheet" href="css/kinto-world-panels-v1.css?v=20261023-normal-panels"><script src="js/kinto-world-panels-v1.js?v=20261023-entry-fix" data-panel="employee" defer></script>
