@@ -12,6 +12,8 @@ public class UrlPolicyCheck {
   for(String u:blocked)if(UrlPolicy.allowed(u))throw new AssertionError(u);
   if(UrlPolicy.product("https://www.hepsiburada.com/ara?q=test")||UrlPolicy.product("https://www.hepsiburada.com/a-p-/"))throw new AssertionError("Hepsi non-product");
   if(!UrlPolicy.image("https://productimages.hepsiburada.net/s/test.jpg")||UrlPolicy.image("https://productimages.hepsiburada.net.evil.test/a.jpg")||UrlPolicy.image("https://user@productimages.hepsiburada.net/a.jpg")||UrlPolicy.image("https://productimages.hepsiburada.net:444/a.jpg"))throw new AssertionError("Hepsi image boundary");
+  if(!UrlPolicy.product("https://www.zara.com/tr/tr/kinto-p00000001.html?v1=123")||!UrlPolicy.image("https://static.zara.net/assets/test.jpg"))throw new AssertionError("Zara boundary");
+  for(String u:new String[]{"https://www.zara.com/us/en/kinto-p00000001.html","https://www.zara.com/tr/tr/category-l1.html","https://zara.com.evil.test/tr/tr/kinto-p00000001.html"})if(UrlPolicy.product(u))throw new AssertionError(u);
   System.out.println("URL policy checks passed");
  }
 }
