@@ -18,5 +18,5 @@ def candidateAssets = tasks.register('prepareCandidateAssets', Sync) {
  into(layout.buildDirectory.dir('candidate-assets'))
 }
 tasks.configureEach {
- if (name.startsWith('merge') && name.endsWith('Assets')) dependsOn(candidateAssets)
+ if ((name.startsWith('merge') && name.endsWith('Assets')) || name.toLowerCase().contains('lint')) dependsOn(candidateAssets)
 }
