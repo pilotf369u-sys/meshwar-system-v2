@@ -3,7 +3,7 @@
  const u=new URL(location.href),match=u.pathname.match(/^\/tr\/tr\/[^/]+-p(\d{8})\.html$/);
  if(u.protocol!=='https:'||!['zara.com','www.zara.com'].includes(u.hostname)||u.username||u.password||(u.port&&u.port!=='443')||!match)return JSON.stringify({error:'NOT_PRODUCT'});
  const text=v=>String(v||'').replace(/\s+/g,' ').trim().slice(0,500);
- const visible=e=>!!e&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('[hidden],[aria-hidden="true"],del,s,[class*="recommend"],[class*="similar"],[class*="cart"],[class*="basket"]');
+ const visible=e=>!!e&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('[hidden],[aria-hidden="true"],del,s,[class*="recommend"],[class*="similar"]');
  const list=s=>Array.from(document.querySelectorAll(s)).filter(visible),unique=a=>[...new Set(a.filter(Boolean))];
  const productId=match[1],key=u.pathname+'?v1='+(u.searchParams.get('v1')||'');
  const number=v=>{const s=text(v);return /^\d{1,7}(\.\d{1,2})?$/.test(s)&&Number(s)>0&&Number(s)<10000000?Number(s):null;};
