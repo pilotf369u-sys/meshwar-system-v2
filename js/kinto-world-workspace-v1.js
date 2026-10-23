@@ -42,6 +42,7 @@
   if(o.state==='shipping')action(c,o,'deliver_world','تأكيد تم التسليم',[['received_confirmed','تحققت من تسليم الطلب للعميل','checkbox']]);
   if(o.state==='shipping'){const link=el('a','تحويل إلى الفرع أو التوصيل');link.href='#worldDispatchMailbox';c.append(link);}
  }
+ if(staff){card.querySelector(':scope > h3')?.remove();const amount=card.querySelector(':scope > strong');if(amount)detail.before(amount);}
  if(!staff){
   card.className='world-compact-card';const opener=el('button',undefined,'world-card-opener');opener.type='button';opener.setAttribute('aria-haspopup','dialog');opener.setAttribute('aria-label','عرض تفاصيل الطلب العالمي '+o.reference);
   const heading=el('div',undefined,'world-card-heading');for(const node of [...card.children]){if(node===detail)continue;if(node.tagName==='H3'){node.remove();continue;}if(node.classList.contains('world-kind')){node.textContent='عالمي';heading.append(node);}else if(node.tagName==='H2')heading.append(node);else opener.append(node);}opener.prepend(heading);

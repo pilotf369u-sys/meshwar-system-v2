@@ -37,3 +37,7 @@
 .world-staff-search input{flex:1;min-width:180px}
 .world-quote-total{display:block;padding:12px;background:#f5edd7;color:#0a2f23;border:1px solid #d1b66c;border-radius:10px;font-weight:700}
 .world-quote-form{padding:14px;border:1px solid #d1b66c;border-radius:12px}
+
+.kinto-world-employee .world-head h3{color:#f3d58b}
+.kinto-world-employee .world-policy{color:#b4c5bb}
+@media(min-width:700px){.kinto-world-employee .world-quote-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}.kinto-world-employee .world-quote-form label{margin:4px 0}.kinto-world-employee .world-quote-form label:has(input[type=checkbox]),.kinto-world-employee .world-quote-form output,.kinto-world-employee .world-quote-form button{grid-column:1/-1}}
