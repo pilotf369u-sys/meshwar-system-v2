@@ -56,7 +56,7 @@
  }
  $('orders').append(card);
  }}
- async function load(){const a=actor();render(await rpc(staff&&searchTerm?'kinto_world_staff_search_v2':'kinto_world_list_v1',{p_role:a.role,p_session_token:a.token,...(staff&&searchTerm?{p_search:searchTerm}:{})}));scheduleExpiry();window.dispatchEvent(new CustomEvent('kinto-world-orders-loaded',{detail:{count:cachedOrders.length}}));}
+ async function load(){const a=actor();const orders=await rpc(staff&&searchTerm?'kinto_world_staff_search_v2':'kinto_world_list_v1',{p_role:a.role,p_session_token:a.token,...(staff&&searchTerm?{p_search:searchTerm}:{})});const current=actor();if(current.role!==a.role||current.token!==a.token)throw Error('SESSION_CHANGED');render(orders);scheduleExpiry();window.dispatchEvent(new CustomEvent('kinto-world-orders-loaded',{detail:{count:cachedOrders.length}}));}
  window.KintoWorldWorkspaceV1={actor,rpc,reload:()=>run(load)};
  $('policy').textContent=core.policy;$('refresh').onclick=()=>run(load);
  if(staff){
