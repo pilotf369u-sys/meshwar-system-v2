@@ -77,3 +77,10 @@ dirs=adb('shell','run-as','com.kinto.preview.hybrid.v6','ls')
 assert 'app_webview_kinto-account' in dirs and 'app_webview_external-shopping' in dirs,dirs
 print('PASS: install, launch, product reader, L/Haki, 35750 synthetic quote, explicit confirmation, persisted local TEST order, separate WebView directories')
 print(json.dumps({k:p[k] for k in ['testOrderCode','testOnly','serverSubmitted','selectedOptions','convertedTotalIQD','shipping']},ensure_ascii=False))
+
+# Synthetic captures must never reach the live customer submission page.
+click('إكمال الطلب للمراجعة')
+time.sleep(1)
+texts=' '.join(n.get('text','') for n in nodes())
+assert 'بيانات الاختبار المصطنعة لا تُرسل' in texts,texts
+print('PASS: synthetic fixture explicitly blocked from server submission')

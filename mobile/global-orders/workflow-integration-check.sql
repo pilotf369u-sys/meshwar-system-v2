@@ -33,10 +33,21 @@ DO $$DECLARE o jsonb;id uuid;req jsonb;q jsonb;BEGIN
  PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_dispatch_action_v1(%L,%L,%L,9,%L,%L)','employee','test-staff',id,'reroute','{"target_role":"branch","target_id":"branch-2"}'),'WORLD_DISPATCH_ACTION_DENIED');
  PERFORM public.kinto_world_dispatch_action_v1('courier','test-courier-1',id,9,'deliver');
  IF (public.kinto_world_list_v1('customer','test-customer')->0->>'state')<>'delivered' THEN RAISE EXCEPTION 'DELIVERY_STATE';END IF;
+ o:=public.kinto_world_submit_v1('test-customer','00000000-0000-0000-0000-000000000082',req);id:=(o->>'id')::uuid;
+ o:=public.kinto_world_action_v1('employee','test-staff',id,0,'quote',q);
+ o:=public.kinto_world_action_v1('customer','test-customer',id,1,'transfer','{"reference":"TEST-DIRECT-TRANSFER"}');
+ o:=public.kinto_world_action_v1('employee','test-staff',id,2,'confirm_transfer','{"reference":"TEST-DIRECT-BANK","amount":"40750","currency":"IQD","bank_verified":true}');
+ o:=public.kinto_world_action_v1('employee','test-staff',id,3,'purchase','{"reference":"TEST-DIRECT-PURCHASE","availability_rechecked":true,"within_paid_amount":true}');
+ PERFORM public.kinto_world_dispatch_action_v1('employee','test-staff',id,4,'route','{"target_role":"courier","target_id":"courier-2"}');
+ IF jsonb_array_length(public.kinto_world_dispatch_list_v1('branch','test-branch-2'))<>0 THEN RAISE EXCEPTION 'DIRECT_COURIER_LEAK';END IF;
+ PERFORM public.kinto_world_dispatch_action_v1('courier','test-courier-2',id,5,'receive');
+ PERFORM public.kinto_world_dispatch_action_v1('courier','test-courier-2',id,6,'start_delivery');
+ PERFORM public.kinto_world_dispatch_action_v1('courier','test-courier-2',id,7,'deliver');
+
 END $$;
 RESET ROLE;
 DO $$BEGIN
- IF (SELECT count(*) FROM private.kinto_world_fulfillment_events_v1)<>6 THEN RAISE EXCEPTION 'DISPATCH_AUDIT';END IF;
+ IF (SELECT count(*) FROM private.kinto_world_fulfillment_events_v1)<>10 THEN RAISE EXCEPTION 'DISPATCH_AUDIT';END IF;
  IF (SELECT status FROM public.orders WHERE id=1)<>'LOCAL_SENTINEL' THEN RAISE EXCEPTION 'LOCAL_ORDER_MUTATED';END IF;
  IF has_table_privilege('anon','private.kinto_world_fulfillment_v1','SELECT,INSERT,UPDATE,DELETE') THEN RAISE EXCEPTION 'DIRECT_ACCESS';END IF;
 END $$;
