@@ -55,6 +55,7 @@ jobs:
           done
           google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --window-size=420,1000 --dump-dom "file://$PWD/.kinto-customer-cards-test.html" > "$RUNNER_TEMP/customer-styled.html"
           google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --window-size=420,1000 --hide-scrollbars --screenshot="$RUNNER_TEMP/customer-cards.png" "file://$PWD/.kinto-customer-cards-test.html"
+          google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --window-size=1280,1800 --hide-scrollbars --screenshot="$RUNNER_TEMP/staff-review.png" "file://$PWD/.kinto-employee-page-test.html?orderScope=world"
           python3 - <<'PYTEST'
           import os,pathlib
           styled=pathlib.Path(os.environ['RUNNER_TEMP'],'customer-styled.html').read_text()
@@ -68,5 +69,7 @@ jobs:
         if: always()
         with:
           name: global-customer-card-visual-check
-          path: ${{ runner.temp }}/customer-cards.png
+          path: |
+            ${{ runner.temp }}/customer-cards.png
+            ${{ runner.temp }}/staff-review.png
           retention-days: 7
