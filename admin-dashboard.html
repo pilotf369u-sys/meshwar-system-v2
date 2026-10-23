@@ -461,6 +461,7 @@ function editStore(index){const s=adminGlobalStoresMerged[Number(index)];if(!s)r
 async function addStore(){
   const name=storeName.value.trim(),url=storeUrl.value.trim(),logo=storeImg.value.trim(),category=storeCategory.value,editId=String(storeEditId.value||'').trim(),originalName=String(storeOriginalName.value||'').trim();
   if(!name||!url)return alert('أدخل اسم المتجر والرابط.');
+  if(editId&&adminGlobalStoresMerged.some(x=>String(x.id)===editId&&x.is_active===false))return alert('هذا المتجر مخفي. تعديل بياناته بالدالة القديمة يعيد تفعيله تلقائياً؛ يرجى إظهاره أولاً قبل التعديل.');
   const sb=await ensureCustomerSupabase();let sortOrder=Number(storeSortOrder.value)||0;if(storeSortOrder.value.trim()&&(!Number.isSafeInteger(sortOrder)||sortOrder<1))return alert('أدخل رقم ترتيب صحيحاً أكبر من صفر.');if(!editId&&!originalName&&!sortOrder)sortOrder=Math.max(50,...adminGlobalStoresMerged.map(x=>Number(x.sort_order)||0))+1;
   const common={p_admin_id:getAdminId(),p_logo_url:logo,p_category:category,p_store_url:url,p_sort_order:sortOrder};
   if(editId){const{error}=await sb.rpc('update_global_store',{...common,p_store_id:Number(editId),p_name:name});if(error)return alert(error.message)}
