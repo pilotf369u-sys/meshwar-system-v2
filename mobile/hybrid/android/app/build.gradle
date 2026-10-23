@@ -1,7 +1,10 @@
 plugins { id 'com.android.application' }
 android {
  namespace 'com.kinto.trendyollab'
- compileSdk 35
- defaultConfig { applicationId 'com.kinto.preview.hybrid.v10'; minSdk 28; targetSdk 35; versionCode 10; versionName '0.10-preview' }
+ compileSdk 36
+ // Candidate identity only. Production identity/version/signing await Play Console verification.
+ defaultConfig { applicationId 'com.kinto.preview.hybrid.v15'; minSdk 28; targetSdk 36; versionCode 15; versionName '0.15-candidate' }
+ buildTypes { release { debuggable false; minifyEnabled false; signingConfig null } }
+ sourceSets { main { assets { exclude 'fixture-*', 'pricing-fixture.json', 'webview-regression.html' } } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
