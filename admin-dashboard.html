@@ -421,11 +421,11 @@ let adminGlobalStoresMerged=[];
 function adminStoreDefaults(){return Array.isArray(window.MeshwarGlobalStoreDefaults)?window.MeshwarGlobalStoreDefaults:[]}
 function adminStoreKey(v){return String(v||'').trim().toLocaleLowerCase()}
 function mergeAdminGlobalStores(cloud){
-  const rows=Array.isArray(cloud)?cloud:[],byName=new Map(),bySort=new Map(),used=new Set();
-  rows.forEach(s=>{byName.set(adminStoreKey(s.name),s);const n=Number(s.sort_order);if(n>=1&&n<=50&&!bySort.has(n))bySort.set(n,s)});
-  const merged=adminStoreDefaults().map(d=>{const c=bySort.get(Number(d.sort_order))||byName.get(adminStoreKey(d.name));if(c){used.add(String(c.id));return{...d,...c,_baseline:true,_cloud:true}}return{...d,id:null,_baseline:true,_cloud:false,is_active:true}});
+  const rows=Array.isArray(cloud)?cloud:[],byName=new Map(),used=new Set();
+  rows.forEach(store=>byName.set(adminStoreKey(store.name),store));
+  const merged=adminStoreDefaults().map(d=>{const c=byName.get(adminStoreKey(d.name));if(c){used.add(String(c.id));return {...d,...c,_baseline:true,_cloud:true}}return {...d,id:null,_baseline:true,_cloud:false,is_active:true}});
   rows.forEach(c=>{if(!used.has(String(c.id)))merged.push({...c,_baseline:false,_cloud:true})});
-  return merged.sort((a,b)=>{const aa=Number(a.sort_order)>0?Number(a.sort_order):999999,bb=Number(b.sort_order)>0?Number(b.sort_order):999999;return aa-bb||String(a.name||'').localeCompare(String(b.name||''),'ar')});
+  return merged.sort((a,b)=>(Number(a.sort_order)||999999)-(Number(b.sort_order)||999999)||String(a.name||'').localeCompare(String(b.name||''),'ar'));
 }
 function populateStoreImageOptions(){const el=document.getElementById('storeImageSelect');if(!el)return;const current=el.value,paths=[...new Set(adminStoreDefaults().map(x=>String(x.logo_url||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));el.innerHTML='<option value="">اختر شعاراً من مجلد images/</option>'+paths.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(paths.includes(current))el.value=current}
 function selectStoreImage(value){if(value)document.getElementById('storeImg').value=value}
