@@ -68,7 +68,6 @@ syncHeaderAuth();
 (()=>{'use strict';
 const groupNames={"comprehensive":"المتاجر الشاملة","fashion":"الأزياء والملابس","sports":"الرياضة والأحذية","beauty":"التجميل والعناية","home":"المنزل والأطفال والسوبر ماركت"};
 const groupOrder=["المتاجر الشاملة","الأزياء والملابس","الرياضة والأحذية","التجميل والعناية","المنزل والأطفال والسوبر ماركت"];
-const groups=[];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const directory=document.getElementById('directory');
 function renderStores(rows){
@@ -79,8 +78,8 @@ function renderStores(rows){
     buckets.get(name).push(store);
   });
   directory.innerHTML=[...buckets].filter(([,items])=>items.length).map(([title,stores])=>`<section class="section" data-group="${esc(title)}"><h2>${esc(title)}</h2><div class="grid">${stores.map(store=>{
-    const logo=String(store.logo_url||'');const img=/^(images\\/[a-zA-Z0-9_.-]+|https:\\/\\/[^\\s"'<>]+)$/.test(logo)?logo:'';
-    const url=String(store.store_url||'');const safeUrl=/^https:\\/\\/[^\\s"'<>]+$/.test(url)?url:'#';
+    const logo=String(store.logo_url||'');const img=/^images\/[a-zA-Z0-9_.-]+$/.test(logo)||/^https:\/\/[^\s"'<>]+$/.test(logo)?logo:'';
+    const url=String(store.store_url||'');const safeUrl=/^https:\/\/[^\s"'<>]+$/.test(url)?url:'#';
     return `<div class="card" data-name="${esc(store.name||'')}"><div class="logo">${img?`<img src="${esc(img)}" alt="${esc(store.name||'')}">`:''}</div><h3>${esc(store.name||'')}</h3><a class="open" href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer">تصفح المنتجات</a></div>`;
   }).join('')}</div></section>`).join('')+'<div class="note">اختر متجرك المفضل وتصفح منتجاته مباشرة، ثم استخدم خدمات KINTO لتجربة تسوق وشحن أكثر سهولة وراحة.</div>';
 }
@@ -112,7 +111,21 @@ buttons.forEach(btn=>btn.addEventListener('click',()=>{
   apply();
 }));
 input.addEventListener('input',apply);
-apply();
+async function loadGlobalDirectory(){
+  try{
+    const sb=await ensureKintoSupabase();
+    const {data,error}=await sb.from('global_stores').select('id,name,logo_url,store_url,category,sort_order,is_active').order('sort_order',{ascending:true}).order('id',{ascending:true}).limit(1000);
+    if(error)throw error;
+    renderStores(data||[]);
+    sections=[...document.querySelectorAll('.section')];
+    apply();
+  }catch(error){
+    console.warn('KINTO global stores load failed',error);
+    directory.textContent='تعذر تحميل المتاجر حالياً. يرجى إعادة المحاولة.';
+    count.textContent='0';
+  }
+}
+loadGlobalDirectory();
 })();
 </script>
 <link rel="stylesheet" href="css/customer-favorites-nav-v148.css?v=20260912-v148"><script src="js/customer-favorites-nav-v148.js?v=20260912-v148"></script>
