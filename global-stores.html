@@ -66,18 +66,26 @@ syncHeaderAuth();
 </script>
 <script>
 (()=>{'use strict';
-const groups=[
-['المتاجر الشاملة',[['Trendyol','trendyol.png','https://www.trendyol.com'],['Hepsiburada','hepsiburada.png','https://www.hepsiburada.com'],['N11','N11.png','https://www.n11.com'],['Boyner','boyner.png','https://www.boyner.com.tr/'],['Beymen','beymen.png','https://www.beymen.com/tr/']]],
-['الأزياء والملابس',[['LC Waikiki','waikiki.png','https://www.lcwaikiki.com'],['Defacto','defacto.png','https://www.defacto.com.tr'],['Koton','KOTON.png','https://www.koton.com'],['Mavi','mavi.png','https://www.mavi.com/'],["Colin's",'colins.png','https://www.colins.com.tr/'],['LTB','ltb.png','https://www.ltbjeans.com/'],['U.S. Polo Assn.','uspolo.png','https://tr.uspoloassn.com/'],['Zara','zara.png','https://www.zara.com/tr/'],['H&M','hm.png','https://www2.hm.com/tr_tr/index.html'],['Mango','mango.png','https://shop.mango.com/tr/tr'],['Bershka','bershka.png','https://www.bershka.com/tr/'],['Pull&Bear','pullandbear.png','https://www.pullandbear.com/tr/en/'],['Stradivarius','stradivarius.png','https://www.stradivarius.com/tr/'],['Oysho','oysho.png','https://www.oysho.com/tr/'],['Massimo Dutti','massimodutti.png','https://www.massimodutti.com/tr/'],['Marks & Spencer','marksandspencer.png','https://www.marksandspencer.com.tr/'],['İpekyol','ipekyol.png','https://www.ipekyol.com.tr/'],['Twist','twist.png','https://www.twist.com.tr/'],["D'S Damat",'dsdamat.png','https://www.dsdamat.com/'],['Lacoste','lacoste.png','https://www.lacoste.com.tr/'],['Esswaap','esswaap.png','https://www.esswaap.com/'],['Kayra','kayra.png','https://www.kayra.com/']]],
-['الرياضة والأحذية',[['Nike','nike.png','https://www.nike.com/tr/'],['Adidas','adidas.png','https://www.adidas.com.tr/'],['Puma','puma.png','https://tr.puma.com/'],['FLO','flo.png','https://www.flo.com.tr/'],['SuperStep','superstep.png','https://www.superstep.com.tr/'],['Luvi Shoes','luvishoes.png','https://www.luvishoes.com/']]],
-['التجميل والعناية',[['Gratis','gratis.png','https://www.gratis.com'],['Watsons','watsons.png','https://www.watsons.com.tr'],['Eve Shop','eveshop.png','https://www.eveshop.com.tr/'],['Sephora','sephora.png','https://www.sephora.com.tr/'],['MAD Parfumeur','madparfum.png','https://www.madparfum.com/'],['Golden Rose','goldenrose.png','https://shop.goldenrose.com.tr/'],['Penti','penti.png','https://www.penti.com/tr/']]],
-['المنزل والأطفال والسوبر ماركت',[['Madame Coco','madamecoco.png','https://www.madamecoco.com/'],['English Home','englishhome.png','https://www.englishhome.com/'],['ebebek','ebebek.png','https://kurumsal.ebebek.com/'],['Kanz','kanz.png','https://www.kanzcocuk.com/'],['Toyzz Shop','toyzzshop.png','https://www.toyzzshop.com/'],['Getir','getir.png','https://getir.com/'],['Migros','migros.png','https://www.migros.com.tr/'],['A101','a101.png','https://www.a101.com.tr/'],['BİM','bim.png','https://www.bim.com.tr/'],['Şok Market','sok.png','https://kurumsal.sokmarket.com.tr/']]]];
+const groupNames={"comprehensive":"المتاجر الشاملة","fashion":"الأزياء والملابس","sports":"الرياضة والأحذية","beauty":"التجميل والعناية","home":"المنزل والأطفال والسوبر ماركت"};
+const groupOrder=["المتاجر الشاملة","الأزياء والملابس","الرياضة والأحذية","التجميل والعناية","المنزل والأطفال والسوبر ماركت"];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const directory=document.getElementById('directory');
-directory.innerHTML=groups.map(([title,stores])=>`<section class="section" data-group="${esc(title)}"><h2>${esc(title)}</h2><div class="grid">${stores.map(([name,img,url])=>`<div class="card" data-name="${esc(name)}"><div class="logo"><img src="images/${esc(img)}" alt="${esc(name)}"></div><h3>${esc(name)}</h3><a class="open" href="${esc(url)}" target="_blank" rel="noopener noreferrer">تصفح المنتجات</a></div>`).join('')}</div></section>`).join('')+'<div class="note">اختر متجرك المفضل وتصفح منتجاته مباشرة، ثم استخدم خدمات KINTO لتجربة تسوق وشحن أكثر سهولة وراحة.</div>';
+function renderStores(rows){
+  const buckets=new Map(groupOrder.map(name=>[name,[]]));
+  rows.filter(store=>store.is_active===true).sort((a,b)=>(Number.isFinite(Number(a.sort_order))?Number(a.sort_order):999999)-(Number.isFinite(Number(b.sort_order))?Number(b.sort_order):999999)||Number(a.id)-Number(b.id)).forEach(store=>{
+    const name=groupNames[store.category]||groupNames.comprehensive;
+    if(!buckets.has(name))buckets.set(name,[]);
+    buckets.get(name).push(store);
+  });
+  directory.innerHTML=[...buckets].filter(([,items])=>items.length).map(([title,stores])=>`<section class="section" data-group="${esc(title)}"><h2>${esc(title)}</h2><div class="grid">${stores.map(store=>{
+    const logo=String(store.logo_url||'');const img=/^images\/[a-zA-Z0-9_.-]+$/.test(logo)||/^https:\/\/[^\s"'<>]+$/.test(logo)?logo:'';
+    const url=String(store.store_url||'');const safeUrl=/^https:\/\/[^\s"'<>]+$/.test(url)?url:'#';
+    return `<div class="card" data-name="${esc(store.name||'')}"><div class="logo">${img?`<img src="${esc(img)}" alt="${esc(store.name||'')}">`:''}</div><h3>${esc(store.name||'')}</h3><a class="open" href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer">تصفح المنتجات</a></div>`;
+  }).join('')}</div></section>`).join('')+'<div class="note">اختر متجرك المفضل وتصفح منتجاته مباشرة، ثم استخدم خدمات KINTO لتجربة تسوق وشحن أكثر سهولة وراحة.</div>';
+}
 const input=document.getElementById('storeSearch');
 const count=document.getElementById('storeCount');
-const sections=[...document.querySelectorAll('.section')];
+let sections=[];
 const buttons=[...document.querySelectorAll('.filter-btn')];
 let activeFilter='all';
 function apply(){
@@ -103,7 +111,21 @@ buttons.forEach(btn=>btn.addEventListener('click',()=>{
   apply();
 }));
 input.addEventListener('input',apply);
-apply();
+async function loadGlobalDirectory(){
+  try{
+    const sb=await ensureKintoSupabase();
+    const {data,error}=await sb.from('global_stores').select('id,name,logo_url,store_url,category,sort_order,is_active').order('sort_order',{ascending:true}).order('id',{ascending:true}).limit(1000);
+    if(error)throw error;
+    renderStores(data||[]);
+    sections=[...document.querySelectorAll('.section')];
+    apply();
+  }catch(error){
+    console.warn('KINTO global stores load failed',error);
+    directory.textContent='تعذر تحميل المتاجر حالياً. يرجى إعادة المحاولة.';
+    count.textContent='0';
+  }
+}
+loadGlobalDirectory();
 })();
 </script>
 <link rel="stylesheet" href="css/customer-favorites-nav-v148.css?v=20260912-v148"><script src="js/customer-favorites-nav-v148.js?v=20260912-v148"></script>
