@@ -72,7 +72,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const directory=document.getElementById('directory');
 function renderStores(rows){
   const buckets=new Map(groupOrder.map(name=>[name,[]]));
-  rows.filter(store=>store.is_active===true).sort((a,b)=>(Number(a.sort_order)||999999)-(Number(b.sort_order)||999999)||Number(a.id)-Number(b.id)).forEach(store=>{
+  rows.filter(store=>store.is_active===true).sort((a,b)=>(Number.isFinite(Number(a.sort_order))?Number(a.sort_order):999999)-(Number.isFinite(Number(b.sort_order))?Number(b.sort_order):999999)||Number(a.id)-Number(b.id)).forEach(store=>{
     const name=groupNames[store.category]||groupNames.comprehensive;
     if(!buckets.has(name))buckets.set(name,[]);
     buckets.get(name).push(store);
