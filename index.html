@@ -326,9 +326,8 @@
   const target=document.getElementById('kintoShoppingContacts');
   if(!target)return;
   try{
-    const existing=window.supabase?.createClient;
-    const client=window.supabaseClient||window.sb||window._supabase||(typeof ensureCustomerSupabase==='function'?await ensureCustomerSupabase():null);
-    if(!client||typeof client.rpc!=='function')return;
+    const client=window.KintoSupabase;
+    if(!client||typeof client.rpc!=='function'){setTimeout(hydrateKintoShoppingContacts,1200);return;}
     const {data,error}=await client.rpc('get_site_settings');
     if(error)throw error;
     let settings=data;
