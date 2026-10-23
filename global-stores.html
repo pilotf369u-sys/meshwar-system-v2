@@ -113,7 +113,7 @@ buttons.forEach(btn=>btn.addEventListener('click',()=>{
 input.addEventListener('input',apply);
 async function loadGlobalDirectory(){
   try{
-    const sb=await ensureKintoSupabase();
+    const sb=await (window.KintoSupabaseReady || (window.KintoSupabaseReady=import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').then(({createClient})=>window.KintoSupabase||(window.KintoSupabase=createClient('https://hsmmbloouskqdnptiiad.supabase.co','sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH'))));
     const {data,error}=await sb.from('global_stores').select('id,name,logo_url,store_url,category,sort_order,is_active').order('sort_order',{ascending:true}).order('id',{ascending:true}).limit(1000);
     if(error)throw error;
     renderStores(data||[]);
