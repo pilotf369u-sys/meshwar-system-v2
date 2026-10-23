@@ -16,6 +16,8 @@ public class UrlPolicyCheck {
   for(String raw:new String[]{"https://www.zara.com/us/en/test-p00000001.html","https://www.zara.com/tr/tr/man-l737.html","https://www.zara.com/tr/tr/test-p123.html"})if(UrlPolicy.product(raw))throw new AssertionError(raw);
   for(String raw:new String[]{"http://www.zara.com/tr/tr/","https://www.zara.com.evil.test/tr/tr/","https://user@www.zara.com/tr/tr/","https://www.zara.com:444/tr/tr/"})if(UrlPolicy.allowed(raw))throw new AssertionError(raw);
   if(!UrlPolicy.image("https://static.zara.net/assets/test.jpg")||UrlPolicy.image("https://static.zara.net.evil.test/assets/test.jpg")||UrlPolicy.image("https://static.zara.net/stdstatic/app.js"))throw new AssertionError("Zara image");
+  if(!UrlPolicy.readerMatches("https://www.zara.com/tr/tr/a-p00000001.html?v1=123","https://www.zara.com/tr/tr/other-slug-p00000001.html?v1=123"))throw new AssertionError("Zara identity binding");
+  if(UrlPolicy.readerMatches("https://www.zara.com/tr/tr/a-p00000001.html?v1=123","https://www.zara.com/tr/tr/a-p00000001.html?v1=456")||UrlPolicy.readerMatches("https://www.zara.com/tr/tr/a-p00000001.html?v1=123","https://www.zara.com/tr/tr/a-p00000002.html?v1=123"))throw new AssertionError("Zara variant identity");
   System.out.println("URL policy checks passed");
  }
 }

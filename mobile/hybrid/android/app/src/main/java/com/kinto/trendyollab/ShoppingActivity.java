@@ -72,9 +72,10 @@ public class ShoppingActivity extends Activity {
   if(snapshot==null||(!fixture&&System.currentTimeMillis()-quoteReadAt>300000)){badge("السعر غير متاح — اضغط للتحقق");return;}
   badgeReading=true;web.evaluateJavascript(storeReader(currentProductPage),result->{badgeReading=false;if(!page.equals(currentProductPage))return;try{
    Object decoded=new JSONTokener(result).nextValue();JSONObject item=new JSONObject((String)decoded);
-   if(item.has("error")||!page.equals(item.optString("pageUrl"))||!snapshot.fromCurrency.equals(item.optString("currency")))throw new IllegalArgumentException();
+   if(item.has("error")||!UrlPolicy.readerMatches(page,item.optString("pageUrl"))||!snapshot.fromCurrency.equals(item.optString("currency"))){if(UrlPolicy.source(page).equals("zara")){badge("تعذر ربط بيانات الصفحة (Z_BINDING)");return;}throw new IllegalArgumentException();}
+   if("zara".equals(item.optString("source"))&&item.isNull("price")){badge(zaraIssue(item));return;}
    badge("تقديري: "+Pricing.total(item.getString("price"),1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");
-  }catch(Exception e){badge("السعر غير مؤكد — راجع المنتج");}});
+  }catch(Exception e){badge(UrlPolicy.source(page).equals("zara")?"تعذرت قراءة الصفحة (Z_SCRIPT)":"السعر غير مؤكد — راجع المنتج");}});
  }
  private void capture(){
   final String url=currentProductPage;if(!UrlPolicy.product(url)){new AlertDialog.Builder(this).setMessage("افتح صفحة منتج أولاً. لم نحفظ شيئاً.").setPositiveButton("حسناً",null).show();return;}
@@ -82,15 +83,19 @@ public class ShoppingActivity extends Activity {
   web.evaluateJavascript(storeReader(currentProductPage),result->{reading=false;
    if(!url.equals(currentProductPage)){status.setText("تغيرت الصفحة؛ اضغط الإضافة من المنتج الجديد");return;}
    try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);
-    if(item.has("error")||!url.equals(item.optString("pageUrl"))||quote==null||!quote.fromCurrency.equals(item.optString("currency")))throw new JSONException("Page mismatch");
+    if(item.has("error")||!UrlPolicy.readerMatches(url,item.optString("pageUrl"))||quote==null||!quote.fromCurrency.equals(item.optString("currency")))throw new JSONException("Page mismatch");
     item.put("url",url);item.put("savedAt",System.currentTimeMillis());status.setText("راجع السعر والصورة قبل الحفظ — سلة تجريبية فقط");confirmProduct(item);
-   }catch(JSONException e){status.setText("تعذرت قراءة بيانات المنتج؛ لم نحفظ شيئاً. حدّث الصفحة وجرب.");}
+   }catch(JSONException e){if(UrlPolicy.source(url).equals("zara"))new AlertDialog.Builder(this).setMessage("تعذر ربط أو قراءة صفحة زارا (Z_BINDING_OR_SCRIPT). لم يُحفظ أو يُرسل طلب.").setPositiveButton("حسنًا",null).show();else status.setText("تعذرت قراءة بيانات المنتج؛ لم نحفظ شيئاً. حدّث الصفحة وجرب.");}
   });
  }
  private TextView line(String value){TextView t=new TextView(this);t.setText(value);t.setTextSize(14);t.setTextColor(android.graphics.Color.rgb(35,57,47));t.setPadding(18,10,18,10);t.setTextDirection(android.view.View.TEXT_DIRECTION_FIRST_STRONG);return t;}
  private void styleField(EditText field){
   android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();bg.setColor(android.graphics.Color.WHITE);bg.setCornerRadius(16*getResources().getDisplayMetrics().density);bg.setStroke(2,android.graphics.Color.rgb(214,221,213));field.setBackground(bg);field.setPadding(24,14,24,14);field.setTextColor(android.graphics.Color.rgb(10,47,35));field.setTextSize(17);
   LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.setMargins(12,4,12,12);field.setLayoutParams(params);field.setMinHeight(Math.round(48*getResources().getDisplayMetrics().density));
+ }
+ private String zaraIssue(JSONObject item){String code=item.optString("warning","Z_READ"),message="تعذرت قراءة السعر";
+  switch(code){case "Z_PRICE_SETTLING":message="جارٍ تثبيت السعر الظاهر؛ انتظر لحظات";break;case "Z_COLOR_MISSING":message="تعذر تحديد لون المنتج";break;case "Z_COLOR_AMBIGUOUS":message="ظهرت ألوان مختلفة؛ أعد اختيار اللون";break;case "Z_PRICE_AMBIGUOUS":message="تظهر أسعار حالية مختلفة";break;case "Z_CURRENCY":message="اختر زارا التركية بعملة الليرة";break;case "Z_VARIANT_MISMATCH":message="بيانات الخيار لم تكتمل بعد";break;case "Z_SIZE_UNAVAILABLE":case "Z_UNAVAILABLE":message="الخيار المحدد غير متاح";break;case "Z_SIZE_AMBIGUOUS":message="أعد تحديد المقاس";break;}
+  return message+" ("+code+")";
  }
  private String priceLabel(JSONObject item){double price=item.optDouble("price",Double.NaN);if(!Double.isFinite(price)||price<=0)return "السعر: لم نتمكن من قراءته بثقة";return ("visible-basket-offer".equals(item.optString("priceSource"))?"سعر عرض السلة المرصود: ":"السعر المرصود: ")+String.format(java.util.Locale.US,"%.2f",price)+" ليرة تركية";}
  private void confirmProduct(JSONObject item){
@@ -101,7 +106,7 @@ public class ShoppingActivity extends Activity {
   }
   details.addView(line(priceLabel(item)));
   final Pricing.Snapshot snapshot=quote;
-  if(!Double.isFinite(item.optDouble("price",Double.NaN))||item.optDouble("price",0)<=0){new AlertDialog.Builder(this).setMessage("السعر غير مؤكد؛ لم نحسب قيمة أو نضف طلباً.").setPositiveButton("حسناً",null).show();return;}
+  if(!Double.isFinite(item.optDouble("price",Double.NaN))||item.optDouble("price",0)<=0){new AlertDialog.Builder(this).setMessage("zara".equals(item.optString("source"))?zaraIssue(item)+"\n"+String.valueOf(item.optJSONObject("diagnostics"))+"\nلم يُحفظ أو يُرسل طلب.":"السعر غير مؤكد؛ لم نحسب قيمة أو نضف طلباً.").setPositiveButton("حسناً",null).show();return;}
   if(snapshot==null){new AlertDialog.Builder(this).setMessage("لا توجد إعدادات صرف وعمولة متاحة للقراءة. لم نضع أسعاراً افتراضية. استخدم تجربة البيانات المصطنعة من KINTO لاختبار المسار فقط.").setPositiveButton("حسناً",null).show();return;}
   if(snapshot.source.equals("synthetic-fixture"))details.addView(line("بيانات اختبار مصطنعة — ليست أسعاراً معتمدة للشراء"));
   details.addView(line("السعر للمنتج فقط، ولا يشمل الشحن. تُحدد تكلفة الشحن بعد مراجعة الموظف للطلب."));

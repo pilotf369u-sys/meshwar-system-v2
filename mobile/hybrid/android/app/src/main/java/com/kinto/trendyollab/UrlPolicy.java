@@ -6,5 +6,10 @@ public final class UrlPolicy {
  public static String source(String raw){try{String h=secure(raw).getHost().toLowerCase(Locale.ROOT);if(h.equals("trendyol.com")||h.endsWith(".trendyol.com"))return "trendyol";if(h.equals("hepsiburada.com")||h.equals("www.hepsiburada.com")||h.equals("m.hepsiburada.com"))return "hepsiburada";if(h.equals("zara.com")||h.equals("www.zara.com"))return "zara";}catch(Exception ignored){}return "";}
  public static boolean allowed(String raw){return !source(raw).isEmpty();}
  public static boolean product(String raw){try{String source=source(raw),path=secure(raw).getPath();if(source.equals("zara"))return path.matches("/tr/tr/[^/]+-p[0-9]{8}\\.html");return source.equals("trendyol")?path.matches(".*-p-[0-9]+(?:/.*)?"):source.equals("hepsiburada")&&path.matches(".*-(?:p|pm)-[A-Za-z0-9]{3,40}/?");}catch(Exception e){return false;}}
+ public static boolean readerMatches(String expected,String actual){
+  if(!source(expected).equals("zara"))return expected.equals(actual);
+  try{if(!product(expected)||!product(actual)||!source(actual).equals("zara"))return false;URI a=secure(expected),b=secure(actual);String x=a.getPath().replaceAll("^.*-p([0-9]{8})\\.html$","$1"),y=b.getPath().replaceAll("^.*-p([0-9]{8})\\.html$","$1");return x.equals(y)&&java.util.Objects.equals(variant(a),variant(b));}catch(Exception e){return false;}
+ }
+ private static String variant(URI uri){String q=uri.getRawQuery();if(q==null)return "";String result="";for(String item:q.split("&")){if(item.startsWith("v1=")){if(!result.isEmpty())return "!duplicate"+q;result=java.net.URLDecoder.decode(item.substring(3),java.nio.charset.StandardCharsets.UTF_8);}}return result;}
  public static boolean image(String raw){try{String h=secure(raw).getHost().toLowerCase(Locale.ROOT);return (h.equals("static.zara.net")&&secure(raw).getPath().startsWith("/assets/"))||h.equals("productimages.hepsiburada.net")||h.equals("dsmcdn.com")||h.endsWith(".dsmcdn.com")||h.equals("trendyolcdn.com")||h.endsWith(".trendyolcdn.com")||h.equals("trendyol.com")||h.endsWith(".trendyol.com");}catch(Exception e){return false;}}
 }
