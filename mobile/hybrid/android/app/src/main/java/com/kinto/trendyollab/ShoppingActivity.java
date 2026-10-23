@@ -72,7 +72,9 @@ public class ShoppingActivity extends Activity {
   badgeReading=true;web.evaluateJavascript(UrlPolicy.source(currentProductPage).equals("hepsiburada")?hepsiReaderScript:readerScript,result->{badgeReading=false;if(!page.equals(currentProductPage))return;try{
    Object decoded=new JSONTokener(result).nextValue();JSONObject item=new JSONObject((String)decoded);
    if(item.has("error")||!page.equals(item.optString("pageUrl"))||!snapshot.fromCurrency.equals(item.optString("currency")))throw new IllegalArgumentException();
-   badge("تقديري: "+Pricing.total(item.getString("price"),1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");
+   boolean hepsiOptionsPending="hepsiburada".equals(item.optString("source"))&&item.optBoolean("optionsPending");
+   String amount=hepsiOptionsPending?item.getString("displayPrice"):item.getString("price");
+   badge("تقديري: "+Pricing.total(amount,1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن"+(hepsiOptionsPending?"\nاختر خيارات المنتج أولاً":""));
   }catch(Exception e){badge("السعر غير مؤكد — راجع المنتج");}});
  }
  private void capture(){

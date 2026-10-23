@@ -1,9 +1,9 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const script=fs.readFileSync('mobile/hybrid/android/app/src/main/assets/hepsiburada-reader.js','utf8');
-function read({path='/test-pm-HBC000001',host='www.hepsiburada.com',prices=[],product=null,rows=[],seller='',mobileSeller='',images=[]}={}){
+function read({path='/test-pm-HBC000001',host='www.hepsiburada.com',prices=[],product=null,rows=[],seller='',mobileSeller='',images=[],genericPrices=[],priceParent='',outsidePrices=null}={}){
  const node=t=>({textContent:t,getClientRects:()=>[{}],closest:()=>null});
  const variants=rows.map(({name,value='',selected=[]})=>({...node(''),querySelector:s=>s.includes('variant-name')?node(name):s.includes('variant-value')?node(value):null,querySelectorAll:()=>selected.map(t=>({...node(t),getAttribute:a=>a==='aria-label'?'Seçili '+name+' '+t:null,querySelector:()=>node(t)}))}));
- const doc={querySelector:s=>s==='h1'?node('TEST Hepsi'):s.includes('merchant-name')?node(mobileSeller):s.includes('merchant-label')?node(seller):null,querySelectorAll:s=>s==='[data-test-id="variant-row"]'?variants:s==='[data-test-id="price-current-price"]'?prices.map(node):s.startsWith('img.hb-')?images.map(src=>({...node(''),src})):s==='script[type="application/ld+json"]'&&product?[node(JSON.stringify({'@graph':[product]}))]:[]};
+ const doc={querySelector:s=>s==='h1'?node('TEST Hepsi'):s.includes('merchant-name')?node(mobileSeller):s.includes('merchant-label')?node(seller):null,querySelectorAll:s=>s==='[data-test-id="variant-row"]'?variants:s==='[data-test-id="buybox-area"]'&&outsidePrices? [{...node(''),querySelectorAll:sel=>sel==='[data-test-id="price-current-price"]'?prices.map(t=>({...node(t),parentElement:node(priceParent)})):sel==='[data-test-id="price"]'?genericPrices.map(node):sel==='[data-test-id="variant-row"]'?variants:[]}]:s==='[data-test-id="price-current-price"]'?(outsidePrices||prices).map(t=>({...node(t),parentElement:node(priceParent)})):s==='[data-test-id="price"]'?genericPrices.map(node):s.startsWith('img.hb-')?images.map(src=>({...node(''),src})):s==='script[type="application/ld+json"]'&&product?[node(JSON.stringify({'@graph':[product]}))]:[]};
  return JSON.parse(vm.runInNewContext(script,{location:{protocol:'https:',hostname:host,pathname:new URL('https://'+host+path).pathname,href:'https://'+host+path},document:doc,URL,getComputedStyle:()=>({visibility:'visible'})}));
 }
 const base=()=>({'@type':'Product',sku:'HBCV000001',size:'L',color:'Haki',offers:{'@type':'Offer',url:'https://www.hepsiburada.com/test-pm-HBC000001',price:'1000',priceCurrency:'TRY',seller:{name:'TEST Seller'}}});
@@ -20,3 +20,23 @@ test('Hepsi button follows product/parent SPA paths and disappears on search wit
 
 test('Mobile official-seller badge is not compared against the actual seller name',()=>{const r=read({product:base(),rows,seller:'Resmi Satıcı',mobileSeller:'TEST Seller'});assert.equal(r.price,1000);assert.equal(r.priceSource,'structured');assert.equal(read({product:base(),rows,seller:'Resmi Satıcı',mobileSeller:'OTHER Seller'}).price,null);});
 test('Mobile authorization badge alone is not a seller identity, other safeguards remain',()=>{assert.equal(read({product:base(),rows,seller:'Yetkili Satıcı'}).price,1000);assert.equal(read({product:base(),rows:[{name:'Beden',value:'M'}],seller:'Resmi Satıcı',mobileSeller:'TEST Seller'}).price,null);});
+
+test('Hepsi explicit current price wins over generic old-price markup',()=>{
+ const r=read({prices:['799,90 TL'],genericPrices:['999,90 TL']});assert.equal(r.price,799.90);
+});
+test('Hepsi mobile currency sibling is parsed only as a single plain TRY amount',()=>{
+ assert.equal(read({prices:['799,90'],priceParent:'799,90 TL'}).price,799.90);
+ for(const parent of ['799,90 TL 999,90 TL','Premium ile 799,90 TL','3 x 799,90 TL','799,90 USD'])assert.equal(read({prices:['799,90'],priceParent:parent}).price,null);
+});
+test('Hepsi primary buybox excludes unrelated prices and variants',()=>{
+ const r=read({prices:['799,90 TL'],outsidePrices:['799,90 TL','200 TL']});assert.equal(r.price,799.90);
+});
+test('Hepsi missing selections can display a current visible price but cannot authorize capture',()=>{
+ const r=read({prices:['799,90 TL'],rows:[{name:'Beden',value:''}]});
+ assert.equal(r.displayPrice,799.90);assert.equal(r.price,null);assert.equal(r.optionsPending,true);assert.equal(r.warning,'OPTIONS_REQUIRED');
+ const next=read({prices:['899,90 TL'],rows:[{name:'Beden',value:'L'}]});assert.equal(next.price,899.90);assert.equal(next.optionsPending,false);
+ const conflict=read({prices:['799,90 TL','899,90 TL'],rows:[{name:'Beden',value:''}]});assert.equal(conflict.displayPrice,null);assert.equal(conflict.price,null);
+});
+test('Hepsi structured metadata never supplies a display-only price for an unselected variant',()=>{
+ const r=read({product:base(),rows:[{name:'Beden',value:''}]});assert.equal(r.price,null);assert.equal(r.displayPrice,null);
+});

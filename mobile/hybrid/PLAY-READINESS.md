@@ -23,7 +23,7 @@ This is a non-production release candidate, not authorization to publish.
 
 ## Build outputs and signing
 
-- Candidate identity: com.kinto.preview.hybrid.v15, versionCode15. Not the production identity; final versionCode must exceed any existing Play release.
+- Candidate identity: com.kinto.preview.hybrid.v16, versionCode16. Not the production identity; final versionCode must exceed any existing Play release.
 - Gradle produces unsigned AAB and APK for structural validation only. CI signs a separate candidate APK with a disposable test key outside checkout for device checks. Neither this key nor package is approved for Play publication.
 - Production com.kinto.app and assetlinks fingerprint unchanged:
   43:83:9F:A3:0A:84:72:D1:D0:DE:9B:39:4F:D7:18:4A:0F:1A:2A:3A:73:97:A9:94:73:34:BD:01:0D:CB:7E:33
@@ -50,3 +50,12 @@ This is a non-production release candidate, not authorization to publish.
 - https://support.google.com/googleplay/android-developer/answer/14151465
 
 - https://support.google.com/googleplay/android-developer/answer/9899034
+
+## Hepsiburada follow-up, 2026-10-24
+
+- Rollback before this correction: rollback/before-hepsi-price-v16-20261024 (793c413a39ee0aecfa2f96d0a4035207c01c2b3b).
+- Working branch: app/hepsi-price-v16-20261024, based on the unmerged Play preparation. No merge/deploy/store upload.
+- Hepsi price parsing scopes mobile sibling widgets to their product section, prioritizes explicit current-price nodes over generic old-price nodes, and accepts a currency sibling only when its parent is a single plain TRY amount.
+- A visible price can be shown as an estimate while options are pending; capture still fails closed until those options are selected and customer confirmation remains mandatory. No price caching across product/variant changes.
+- Trendyol reader/order-button, website and SQL unchanged. Version/package 16 remains non-production with disposable test signing.
+- Fresh public mobile markup was fetched read-only; source replay with DOM parsing retained exact 999.97 TRY, 3XL and Lacivert. This is markup evidence, not a live device guarantee for every product.
