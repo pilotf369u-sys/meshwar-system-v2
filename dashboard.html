@@ -19,7 +19,9 @@
     <script defer src="js/kinto-ui-stability-v123.js?v=20260908-v123"></script>
     <script defer src="js/global-theme-toggle-v1.js?v=20260909-customer-v128-toggle-fix"></script>
     <script defer src="js/customer-pagination-v129.js?v=20260909-v129"></script>
-    <title>لوحة العميل - MeshWar</title>
+    <title>حساب العميل | KINTO</title>
+    <link rel="icon" type="image/jpeg" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg">
+    <link rel="shortcut icon" type="image/jpeg" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config={theme:{extend:{colors:{meshgold:'#f5c451',meshnavy:'#07111f'}}}}</script>
@@ -375,6 +377,27 @@ const observer=new MutationObserver(()=>requestAnimationFrame(run));
 function start(){observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class']});document.addEventListener('click',()=>setTimeout(run,60),true);run()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+</script>
+<script>
+// Browser-tab branding only. Never delay or alter the customer account workflow.
+window.addEventListener('load',()=>{
+  (async()=>{
+    try{
+      if(typeof ensureCustomerPortalSupabase!=='function')return;
+      const sb=await ensureCustomerPortalSupabase();
+      const {data,error}=await sb.rpc('get_site_settings');
+      if(error)return;
+      const parse=v=>{if(Array.isArray(v))return parse(v[0]);if(typeof v==='string'){try{return parse(JSON.parse(v))}catch{return{}}}return v&&typeof v==='object'?(v.value!=null?parse(v.value):v):{}};
+      const logo=String(parse(data).brand_logo_url||'').trim();
+      if(!logo)return;
+      const url=new URL(logo,location.href);
+      if(!['https:','http:'].includes(url.protocol))return;
+      const ext=url.pathname.toLowerCase();
+      const type=ext.endsWith('.svg')?'image/svg+xml':ext.endsWith('.png')?'image/png':ext.endsWith('.webp')?'image/webp':ext.endsWith('.gif')?'image/gif':'image/jpeg';
+      for(const rel of ['icon','shortcut icon']){const link=document.querySelector('link[rel="'+rel+'"]');if(link){link.href=url.href;link.type=type;}}
+    }catch(e){console.warn('KINTO customer tab logo fallback retained',e)}
+  })();
+});
 </script>
 </body>
 </html>
