@@ -461,7 +461,7 @@ async function globalStoreAdminSession(){
 }
 async function addStore(){
   const name=storeName.value.trim(),url=storeUrl.value.trim(),logo=storeImg.value.trim(),category=storeCategory.value,editId=String(storeEditId.value||'').trim();
-  if(!name||!/^https:\/\/[^\\s]+$/.test(url))return alert('أدخل اسم المتجر ورابط HTTPS صحيحاً.');
+  if(!name||!/^https:\/\/[^\s]+$/.test(url))return alert('أدخل اسم المتجر ورابط HTTPS صحيحاً.');
   const sortOrder=Number(storeSortOrder.value||Math.max(50,...adminGlobalStoresMerged.map(x=>Number(x.sort_order)||0))+1);
   if(!Number.isSafeInteger(sortOrder)||sortOrder<0)return alert('أدخل ترتيباً صحيحاً لا يقل عن صفر.');
   try{
