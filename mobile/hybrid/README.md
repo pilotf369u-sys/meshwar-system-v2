@@ -1,4 +1,7 @@
-# Android preview 0.9 — Hepsiburada adapter (activation pending)
+# Android preview 0.10 — mobile Hepsiburada seller fix
+
+Mobile markup uses `merchant-name` for identity and `merchant-label` for the official/authorized seller badge. Preview 9 confused these fields and rejected matching structured prices. The adapter now prefers the actual name; known badges alone are not identities. Existing selected-variant, exact URL, currency and multiple-offer guards remain. Trendyol reader, account sessions, SQL and local workflows are unchanged. Preview 10 uses a separate disposable package and requires device acceptance.
+
 
 Adds an independent Hepsiburada reader for HTTPS product and parent-product URLs.
 Price, chosen size/capacity/other variant values and color are confirmed before a
@@ -29,7 +32,7 @@ mocked customer handoff; existing Trendyol, invoices, video and local-flow check
 An optional public markup snapshot check blocks all retailer scripts/network calls
 in its evaluation and is reported independently from live WebView testing.
 
-Preview identity `com.kinto.preview.hybrid.v9` / KINTO Preview 9 is disposable and
+Preview identity `com.kinto.preview.hybrid.v10` / KINTO Preview 10 is disposable and
 separate from Preview 8 and production `com.kinto.app`. Signing files stay outside
 the repository. Local unsent drafts are not automatically migrated between these
 separate preview identities. No production fingerprint/assetlinks changes.
