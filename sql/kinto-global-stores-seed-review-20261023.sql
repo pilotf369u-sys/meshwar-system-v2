@@ -1,6 +1,6 @@
 -- KINTO global stores: REVIEW BEFORE EXECUTION. NOT APPLIED TO PRODUCTION.
 -- Source: global-stores.html (50 stores), preserve Farmasi and all existing records.
--- The admin currently merges by sort_order 1..50, so review collisions before executing.
+-- Farmasi is existing with sort_order 0; 50 new rows use sort_order 1..50.\n-- Existing records are never overwritten. This script is not executed automatically.
 -- PREVIEW:
 SELECT id,name,sort_order,is_active FROM public.global_stores ORDER BY sort_order,id;
 -- SEED (run separately only after reviewing PREVIEW and admin sort-order collisions):
