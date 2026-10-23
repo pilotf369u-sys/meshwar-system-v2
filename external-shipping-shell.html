@@ -40,7 +40,7 @@
           const url=new URL(logo,location.href);
           if(url.protocol!=='https:'&&url.protocol!=='http:')return;
           const link=document.querySelector('link[rel="icon"]');
-          if(link){link.href=url.href;link.type=/\\.svg(?:$|[?#])/i.test(url.pathname)?'image/svg+xml':/\\.png$/i.test(url.pathname)?'image/png':/\\.webp$/i.test(url.pathname)?'image/webp':/\\.gif$/i.test(url.pathname)?'image/gif':'image/jpeg'}
+          if(link){link.href=url.href;const ext=url.pathname.toLowerCase();link.type=ext.endsWith('.svg')?'image/svg+xml':ext.endsWith('.png')?'image/png':ext.endsWith('.webp')?'image/webp':ext.endsWith('.gif')?'image/gif':'image/jpeg'}
           const shortcut=document.querySelector('link[rel="shortcut icon"]');
           if(shortcut){shortcut.href=url.href;shortcut.type=link?.type||'image/jpeg'}
         }catch(e){console.warn('KINTO tab logo fallback retained',e)}
