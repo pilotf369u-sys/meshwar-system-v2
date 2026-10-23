@@ -40,8 +40,10 @@
  const offers=variants.flatMap(v=>[].concat(v.offers||[]).map(o=>({v,o}))).filter(({o})=>o&&o['@type']!=='AggregateOffer'&&o.priceCurrency==='TRY'&&samePage(o.url));
  const values=[];let priceRaw='',foreign=false;
  const priceSelector='[data-qa-id="price-container-current"] data[data-currency],.price-current data[data-currency]';
- const rootPriceNodes=root?Array.from(root.querySelectorAll(priceSelector)).filter(visible):[];
- const currentPriceNodes=Array.from(new Set([...rootPriceNodes,...list('main [data-qa-id="price-container-current"] data[data-currency],main .price-current data[data-currency]')]));
+ // Scope prices to Zara's product purchase panels. A main element can also contain
+ // cart lines and other products, each with a valid price-container-current.
+ const purchasePanels=Array.from(document.querySelectorAll('.product-detail-card-info,.product-detail-info,.product-detail-card-info__main-buttons'));
+ const currentPriceNodes=Array.from(new Set(purchasePanels.flatMap(panel=>Array.from(panel.querySelectorAll(priceSelector)).filter(visible))));
  for(const e of currentPriceNodes){
   if(e.getAttribute('data-currency')!=='TRY'){foreign=true;continue;}
   const n=number(e.getAttribute('value')),shown=displayNumber(e.textContent);if(n!==null&&shown===n){values.push(n);priceRaw=text(e.textContent);}
