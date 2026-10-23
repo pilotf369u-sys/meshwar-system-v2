@@ -3,12 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MeshWar</title>
+<title>KINTO | منصة التسوق الإلكتروني</title>
+<link rel="icon" type="image/jpeg" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg">
+<link rel="shortcut icon" type="image/jpeg" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg">
 <script>(function(){const p=new URLSearchParams(location.search);if(p.get('screen')!=='delivery')return;let t='';try{t=localStorage.getItem('meshwar_global_theme')||localStorage.getItem('meshwar-theme')||''}catch(e){}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme:light)').matches?'light':'dark';document.documentElement.dataset.deliveryShellTheme=t})();</script>
 <style>html,body{margin:0!important;padding:0!important;width:100%!important;max-width:100%!important;height:100%!important;overflow:hidden;background:#020617}html[data-delivery-shell-theme="dark"],html[data-delivery-shell-theme="dark"] body{background:#0a2f23!important}html[data-delivery-shell-theme="light"],html[data-delivery-shell-theme="light"] body{background:#eef2f7!important}#app{position:fixed!important;inset:0!important;width:100vw!important;max-width:none!important;height:100vh!important;margin:0!important;padding:0!important;border:0;display:block}</style>
 </head>
 <body>
-<iframe id="app" title="MeshWar"></iframe>
+<iframe id="app" title="KINTO"></iframe>
 <script>
 (function(){
   const BUILD='20261023-world-entry-fix';
@@ -23,6 +25,26 @@
   frame.addEventListener('load',()=>{
     try{
       const d=frame.contentDocument;
+      // Presentation only: use the CMS brand logo for the outer browser tab.
+      // The iframe owns application behavior; branding must never block it.
+      (async()=>{
+        try{
+          const w=frame.contentWindow;
+          const sb=w.KintoSupabase||(typeof w.ensureCustomerSupabase==='function'?await w.ensureCustomerSupabase():null)||(typeof w.ensureMainSupabase==='function'?await w.ensureMainSupabase():null);
+          if(!sb||typeof sb.rpc!=='function')return;
+          const {data,error}=await sb.rpc('get_site_settings');
+          if(error)return;
+          const parse=v=>{if(Array.isArray(v))return parse(v[0]);if(typeof v==='string'){try{return parse(JSON.parse(v))}catch{return{}}}if(v&&typeof v==='object'){return v.value!=null?parse(v.value):v}return{}};
+          const logo=String(parse(data).brand_logo_url||'').trim();
+          if(!logo)return;
+          const url=new URL(logo,location.href);
+          if(url.protocol!=='https:'&&url.protocol!=='http:')return;
+          const link=document.querySelector('link[rel="icon"]');
+          if(link){link.href=url.href;const ext=url.pathname.toLowerCase();link.type=ext.endsWith('.svg')?'image/svg+xml':ext.endsWith('.png')?'image/png':ext.endsWith('.webp')?'image/webp':ext.endsWith('.gif')?'image/gif':'image/jpeg'}
+          const shortcut=document.querySelector('link[rel="shortcut icon"]');
+          if(shortcut){shortcut.href=url.href;shortcut.type=link?.type||'image/jpeg'}
+        }catch(e){console.warn('KINTO tab logo fallback retained',e)}
+      })();
       const theme=d.createElement('script');
       theme.src='js/global-theme-toggle-v1.js?v=20260909-global-theme-v1.2-toggle-fix';
       theme.dataset.meshwarScreen=screen;
