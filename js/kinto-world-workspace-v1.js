@@ -36,6 +36,14 @@
   if(o.state==='refund_pending')action(c,o,'confirm_refund','تسجيل إعادة كامل المبلغ',[['amount','المبلغ المعاد','text',o.quote.total],['currency','العملة','text',o.quote.currency],['reference','مرجع عملية الاسترداد الفعلية']]);
   if(['purchased','shipping'].includes(o.state)){const link=el('a','تحويل إلى الفرع أو التوصيل');link.href='#worldDispatchMailbox';c.append(link);}
  }
+ if(!staff){
+  card.className='world-compact-card';const opener=el('button',undefined,'world-card-opener');opener.type='button';opener.setAttribute('aria-haspopup','dialog');opener.setAttribute('aria-label','عرض تفاصيل الطلب العالمي '+o.reference);
+  const heading=el('div',undefined,'world-card-heading');for(const node of [...card.children]){if(node===detail)continue;if(node.tagName==='H3'){node.remove();continue;}if(node.classList.contains('world-kind')){node.textContent='عالمي';heading.append(node);}else if(node.tagName==='H2')heading.append(node);else opener.append(node);}opener.prepend(heading);
+  const first=o.request.items[0];if(first&&/^https:\/\/([A-Za-z0-9-]+\.)*(dsmcdn\.com|trendyolcdn\.com)\//.test(first.image||'')){const img=el('img');img.src=first.image;img.alt='';img.className='world-card-thumb';img.loading='lazy';img.referrerPolicy='no-referrer';heading.after(img);}
+  opener.append(el('span','عرض التفاصيل','world-card-cta'));card.prepend(opener);
+  const dialog=el('dialog',undefined,'world-order-dialog');dialog.setAttribute('aria-label','تفاصيل الطلب العالمي '+o.reference);const close=el('button','إغلاق ×','world-dialog-close');close.type='button';const content=el('div',undefined,'world-dialog-content');detail.open=true;content.append(el('h2',o.reference),el('p',core.policy,'world-dialog-policy'),detail);dialog.append(close,content);card.append(dialog);
+  opener.onclick=()=>dialog.showModal();close.onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});dialog.addEventListener('close',()=>{if(opener.isConnected)opener.focus()});
+ }
  $('orders').append(card);
  }}
  async function load(){const a=actor();render(await rpc('kinto_world_list_v1',{p_role:a.role,p_session_token:a.token}));window.dispatchEvent(new CustomEvent('kinto-world-orders-loaded',{detail:{count:cachedOrders.length}}));}
