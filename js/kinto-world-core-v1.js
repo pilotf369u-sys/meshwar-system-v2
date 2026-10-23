@@ -1,5 +1,6 @@
 'use strict';
 const policy='إرسال الطلب لا يعني شراء المنتج أو حجزه. يُنفّذ الشراء بعد تأكيد سداد المبلغ، وبحسب توفر المنتج وخياراته وسعره وقت التنفيذ. تخضع إمكانية الشحن وتكلفته لمراجعة الموظف.';
 const states={review:'قيد المراجعة',quoted:'بانتظار موافقتك والدفع',transfer_pending:'التحويل قيد التحقق',paid:'تم تأكيد التسديد — بانتظار الشراء',purchased:'تم الشراء',shipping:'قيد الشحن',delivered:'تم التسليم',rejected:'تعذر قبول الطلب',cancelled:'ملغي',refund_pending:'بانتظار الاسترداد',refunded:'تم تسجيل الاسترداد'};
-if(typeof module!=='undefined')module.exports={policy,states};
-if(typeof window!=='undefined')window.KintoWorldCore={policy,states};
+function quoteDefaults(o){try{const list=o.estimates||[];if(!list.length||new Set(list.map(x=>x.currency)).size!==1)return null;const currency=list[0].currency;let cents=0n;for(const x of list){const m=/^(\d+)(?:\.(\d{1,2}))?$/.exec(String(x.amount));if(!m)return null;cents+=BigInt(m[1])*100n+BigInt((m[2]||'').padEnd(2,'0'));}const amount=(cents/100n).toString()+(cents%100n?'.'+(cents%100n).toString().padStart(2,'0'):'');const expiry=new Date(Date.now()+24*3600000);const local=new Date(expiry.getTime()-expiry.getTimezoneOffset()*60000).toISOString().slice(0,16);return{goods:o.quote?.goods||amount,currency:o.quote?.currency||currency,expires:local};}catch{return null;}}
+if(typeof module!=='undefined')module.exports={policy,states,quoteDefaults};
+if(typeof window!=='undefined')window.KintoWorldCore={policy,states,quoteDefaults};

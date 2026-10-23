@@ -23,12 +23,12 @@ python3 - "$KINTO_ROOT" "$KINTO_OUT" <<'PY'
 from pathlib import Path
 import sys,zipfile,xml.etree.ElementTree as E
 root,out=map(Path,sys.argv[1:])
-t=E.parse(root/'android/app/src/main/AndroidManifest.xml');m=t.getroot();m.set('package','com.kinto.preview.hybrid.v6')
+t=E.parse(root/'android/app/src/main/AndroidManifest.xml');m=t.getroot();m.set('package','com.kinto.preview.hybrid.v7')
 a='{http://schemas.android.com/apk/res/android}'
 for e in m.iter():
  if e.get(a+'name','').startswith('.'):e.set(a+'name','com.kinto.trendyollab'+e.get(a+'name'))
 app=m.find('application');app.set(a+'debuggable','true')
-m.set(a+'versionCode','6');m.set(a+'versionName','0.6-preview')
+m.set(a+'versionCode','7');m.set(a+'versionName','0.7-preview')
 t.write(out/'AndroidManifest.xml',encoding='utf-8',xml_declaration=True)
 with zipfile.ZipFile(out/'classes.jar','w') as z:
  for p in (out/'classes').rglob('*.class'):z.write(p,p.relative_to(out/'classes'))
@@ -49,13 +49,13 @@ python3 - "$KINTO_ROOT" "$KINTO_OUT" <<'PYWORLD'
 from pathlib import Path
 import sys,zipfile
 root,out=map(Path,sys.argv[1:]);repo=root.parents[1]
-files=['css/kinto-world-workspace-v1.css','js/customer-session-v150.js','js/employee-session-v143.js','js/admin-session-v147.js','js/kinto-world-core-v1.js','js/kinto-world-workspace-v1.js']
+files=['css/kinto-world-workspace-v1.css','js/customer-session-v150.js','js/employee-session-v143.js','js/admin-session-v147.js','js/kinto-world-core-v1.js','js/kinto-world-workspace-v1.js','js/kinto-world-panels-v1.js','css/kinto-world-panels-v1.css']
 with zipfile.ZipFile(out/'unsigned.apk','a',compression=zipfile.ZIP_DEFLATED) as z:
- html=(repo/'global-order-review.html').read_text().replace('href="index.html"','href="https://shopkinto.com/"').replace('href="login.html?next=global-order-review.html"','href="https://shopkinto.com/login.html?next=global-order-review.html"')
+ html=(repo/'mobile/global-orders/customer-integrated-fixture.html').read_text().replace('<base href="../../">','<base href="./">')
  z.writestr('assets/world-review/index.html',html)
  for f in files:z.write(repo/f,'assets/world-review/'+f)
 PYWORLD
 "$KINTO_TOOLS/zipalign" -f 4 "$KINTO_OUT/unsigned.apk" "$KINTO_OUT/aligned.apk"
-"$JAVA_HOME/bin/java" -jar "$KINTO_TOOLS/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$KINTO_OUT/KINTO-Preview-0.6.apk" "$KINTO_OUT/aligned.apk"
-"$JAVA_HOME/bin/java" -jar "$KINTO_TOOLS/lib/apksigner.jar" verify --verbose --print-certs "$KINTO_OUT/KINTO-Preview-0.6.apk"
-"$KINTO_TOOLS/aapt2" dump badging "$KINTO_OUT/KINTO-Preview-0.6.apk"
+"$JAVA_HOME/bin/java" -jar "$KINTO_TOOLS/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$KINTO_OUT/KINTO-Preview-0.7.apk" "$KINTO_OUT/aligned.apk"
+"$JAVA_HOME/bin/java" -jar "$KINTO_TOOLS/lib/apksigner.jar" verify --verbose --print-certs "$KINTO_OUT/KINTO-Preview-0.7.apk"
+"$KINTO_TOOLS/aapt2" dump badging "$KINTO_OUT/KINTO-Preview-0.7.apk"
