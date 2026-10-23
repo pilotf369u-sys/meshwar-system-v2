@@ -142,6 +142,7 @@ if '35750 IQD' not in labels:
 assert '35750 IQD' in labels,labels
 click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
 hepsi=saved_drafts();assert len(hepsi)==1 and hepsi[0]['source']=='hepsiburada' and hepsi[0]['url'].endswith('-p-HBCV0000TEST'),hepsi
+assert hepsi[0]['price']==1000 and hepsi[0]['priceSource']=='visible',hepsi
 assert hepsi[0]['fixture'] is True and hepsi[0]['convertedTotalIQD']=='35750' and hepsi[0]['selectedOptions']=={'size':'L','color':'Haki'},hepsi
 with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'hepsiburada-review-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
 click('إكمال الطلب للمراجعة');time.sleep(1)

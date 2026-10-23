@@ -71,9 +71,9 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
           script: |
-            python3 mobile/hybrid/tools/webview-smoke.py
             python3 mobile/hybrid/tools/emulator-smoke.py
             python3 mobile/hybrid/tools/release-mode-smoke.py
+            python3 mobile/hybrid/tools/webview-smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
