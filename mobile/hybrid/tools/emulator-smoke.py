@@ -161,7 +161,7 @@ for _ in range(12):
 assert '35750 IQD' in labels,labels
 click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
 zara=saved_drafts();assert len(zara)==1 and zara[0]['source']=='zara' and zara[0]['url'].endswith('-p00000001.html'),zara
-assert zara[0]['fixture'] is True and zara[0]['convertedTotalIQD']=='35750' and zara[0]['selectedOptions']=={'size':'L','color':'Haki'},zara
+assert zara[0]['fixture'] is True and zara[0]['priceSource']=='visible' and zara[0]['convertedTotalIQD']=='35750' and zara[0]['selectedOptions']=={'size':'L','color':'Haki'},zara
 with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'zara-review-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
 click('إكمال الطلب للمراجعة');time.sleep(1)
 assert 'بيانات الاختبار المصطنعة لا تُرسل' in ' '.join(n.get('text','') for n in nodes())

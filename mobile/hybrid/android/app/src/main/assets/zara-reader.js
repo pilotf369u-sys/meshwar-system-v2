@@ -15,7 +15,7 @@
  const root=document.querySelector('.product-detail-card-info')||document.querySelector('.product-detail-info');
  const colors=unique(list('[data-qa-action="select-color"][aria-current="true"],.product-detail-color-selector [aria-checked="true"]').map(e=>text(e.querySelector('.screen-reader-text')?.textContent||e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent)));
  // Legacy detail-info wraps the color name AND product reference. Never compare that wrapper with its child.
- if(!colors.length){const names=list('.product-color-extended-name__name');colors.push(...unique(names.length?names.map(e=>text(e.textContent)):list('.product-detail-info__color').map(e=>text(e.querySelector('.product-color-extended-name__name')?.textContent))));}
+ if(!colors.length){const names=list('.product-color-extended-name__name');colors.push(...unique(names.map(e=>text(e.textContent))));}
  const metadataColors=unique((group?.hasVariant||[]).filter(v=>[].concat(v.offers||[]).some(o=>o?.priceCurrency==='TRY'&&samePage(o.url))).map(v=>text(v.color)));
  const color=colors.length===1&&colors[0].length<=60?colors[0]:!colors.length&&metadataColors.length===1&&metadataColors[0].length<=60?metadataColors[0]:'';
  // Only explicit selected size markers; never the first available size or a model's measurements.
