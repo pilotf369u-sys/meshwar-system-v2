@@ -38,7 +38,7 @@
  }
  $('orders').append(card);
  }}
- async function load(){const a=actor();render(await rpc('kinto_world_list_v1',{p_role:a.role,p_session_token:a.token}));window.dispatchEvent(new Event('kinto-world-orders-loaded'));}
+ async function load(){const a=actor();render(await rpc('kinto_world_list_v1',{p_role:a.role,p_session_token:a.token}));window.dispatchEvent(new CustomEvent('kinto-world-orders-loaded',{detail:{count:cachedOrders.length}}));}
  window.KintoWorldWorkspaceV1={actor,rpc,reload:()=>run(load)};
  $('policy').textContent=core.policy;$('refresh').onclick=()=>run(load);
  if(staff){if($('worldStaffLogin'))$('worldStaffLogin').onsubmit=e=>{e.preventDefault();run(async()=>{const data=await rpc('kinto_world_staff_login_v1',{p_phone:$('worldStaffPhone').value.trim(),p_password:$('worldStaffPassword').value});$('worldStaffPassword').value='';if(!data.ok)throw Error(data.error==='WORLD_LOGIN_LOCKED'?'توقف مؤقت بعد محاولات متكررة. حاول بعد 15 دقيقة.':'بيانات الدخول غير صحيحة');window.KintoWorldStaffSessionV1.save(data);$('staffRole').value='world_employee';await load();});};if($('worldStaffLogout'))$('worldStaffLogout').onclick=()=>run(async()=>{const a=actor();try{if(a.role==='world_employee')await rpc('kinto_world_staff_logout_v1',{p_session_token:a.token});}finally{window.KintoWorldStaffSessionV1.clear();$('orders').replaceChildren();location.href='login.html';}});$('staffRole').onchange=()=>run(load);}
