@@ -2,13 +2,13 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),vm=requir
 const script=fs.readFileSync('mobile/hybrid/android/app/src/main/assets/zara-reader.js','utf8');
 const url='https://www.zara.com/tr/tr/test-p00000001.html?v1=100';
 const group=()=>({'@type':'ProductGroup',productGroupID:'00000001',name:'TEST Zara',hasVariant:['L (US L)','M (US M)'].map(size=>({color:'Haki',size,image:['https://static.zara.net/assets/test.jpg'],offers:{'@type':'Offer',url,price:'1000',priceCurrency:'TRY',availability:'https://schema.org/InStock'}}))});
-function setup({href=url,prices=['1000.00'],currency='TRY',colors=['Haki'],sizes=['L (US L)'],product=group(),hidden=false}={}){
+function setup({href=url,prices=['1000.00'],currency='TRY',colors=['Haki'],sizes=['L (US L)'],product=group(),hidden=false,legacy=false}={}){
  let listener;const node=(s,attrs={})=>({textContent:s,getClientRects:()=>hidden?[]:[{}],closest:()=>null,getAttribute:k=>attrs[k]??null,querySelector:()=>null});
  const colorNodes=colors.map(s=>({...node(s),querySelector:()=>node(s)}));
  const sizeNodes=sizes.map(s=>node(s));
  const priceNodes=prices.map(s=>node(s.replace('.',',')+' TL',{'value':s,'data-currency':currency}));
  const root={querySelector:()=>node('TEST Zara'),querySelectorAll:()=>priceNodes};
- const doc={addEventListener:(name,fn)=>listener=fn,querySelector:s=>s==='.product-detail-card-info'?root:s==='h1'?node('TEST Zara'):null,querySelectorAll:s=>s==='script[type="application/ld+json"]'&&product?[node(JSON.stringify(product))]:s.startsWith('[data-qa-action="select-color"]')?colorNodes:s.startsWith('.size-selector-sizes ')?sizeNodes:[]};
+ const doc={addEventListener:(name,fn)=>listener=fn,querySelector:s=>s==='.product-detail-card-info'&&!legacy?root:s==='.product-detail-info'&&legacy?root:s==='h1'?node('TEST Zara'):null,querySelectorAll:s=>s==='script[type="application/ld+json"]'&&product?[node(JSON.stringify(product))]:s.startsWith('[data-qa-action="select-color"]')?(legacy?[]:colorNodes):s==='.product-color-extended-name__name'?colorNodes:s==='.product-detail-info__color'?[node('Haki0000/001/044')]:s==='.product-color-extended-name__name,.product-detail-info__color'?[node('Haki0000/001/044'),...colorNodes]:s.startsWith('.size-selector-sizes ')?sizeNodes:[]};
  const c=vm.createContext({location:new URL(href),document:doc,window:{},URL,getComputedStyle:()=>({visibility:'visible'})});
  return {read:()=>JSON.parse(vm.runInContext(script,c)),context:c,click:(action,label)=>listener({target:{closest:()=>({...node(label,{'data-qa-action':action}),querySelector:()=>node(label)})}})};
 }
@@ -24,3 +24,5 @@ test('Zara shared core admits only Turkish product pages and explicit image CDN'
 
 test('Zara stale visible price during color transition cannot override matching variant metadata',()=>{const p=group();p.hasVariant.forEach(v=>v.offers.price='2000');assert.equal(setup({product:p}).read().price,null);});
 test('Zara size-dependent prices require explicit size; no first available price',()=>{const p=group();p.hasVariant[1].offers.price='2000';assert.equal(setup({prices:[],sizes:[],product:p}).read().price,null);assert.equal(setup({sizes:['L (US L)'],product:p}).read().price,1000);});
+
+test('Legacy Zara color parent includes product reference; use only the inner color name',()=>{const r=setup({legacy:true}).read();assert.equal(r.price,1000);assert.equal(r.observedOptions.color,'Haki');assert.equal(r.image,'https://static.zara.net/assets/test.jpg');});

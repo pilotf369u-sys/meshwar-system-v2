@@ -1,4 +1,6 @@
-# Android preview 0.11 — ZARA Turkey adapter (activation pending)
+# Android preview 0.12 — ZARA Turkey adapter (activation pending)
+
+Preview 12 fixes the legacy product-detail-info layout: the parent color paragraph includes both the color name and product reference. Reading both it and its inner name caused false color ambiguity and null prices. Live DOM inspection confirmed this on Zara. Use only the inner name; mandatory browser and emulator fixtures now include the legacy wrapper. No SQL or existing retailer-reader changes in this correction.
 
 Independent `zara-reader.js`: exact HTTPS zara.com/www.zara.com Turkish `/tr/tr/...-p########.html` product URLs only, TRY current-price `<data>` and selected color. `ProductGroup` metadata matches the 8-digit productGroupID and selected color/size plus v1 URL when supplied; metadata from other regions/variants is not used. Images use only static.zara.net/assets/. Discounted current price is accepted; old price, model measurements, promotions and shipping are not prices.
 
@@ -8,7 +10,7 @@ Observed public mobile HTML from two Turkish clothing products fetched HTTP200 o
 
 SQL review files `sql/kinto-world-zara-v1.sql` and `sql/kinto-world-zara-rollback-v1.sql` change only the world submit URL/image allowlists, guarded by exact source hashes. **Do not activate without explicit owner approval.** No new tables, auth, triggers, local workflows or pricing logic. Activate approved SQL, merge, then owner manually deploys 00-hostinger-release before end-to-end real Zara submission. Preview 11 alone can verify reader/conversion/confirmation locally; live server rejects Zara until activation. Customer/employee HTML cache lines refresh the shared global helper after deployment.
 
-Existing Trendyol and Hepsiburada readers are byte-for-byte unchanged. Separate com.kinto.preview.hybrid.v11 disposable identity; production package, assetlinks and signing untouched.
+Existing Trendyol and Hepsiburada readers are byte-for-byte unchanged. Separate com.kinto.preview.hybrid.v12 disposable identity; production package, assetlinks and signing untouched.
 
 
 ## Earlier Hepsiburada implementation (retained)
@@ -39,7 +41,7 @@ mocked customer handoff; existing Trendyol, invoices, video and local-flow check
 An optional public markup snapshot check blocks all retailer scripts/network calls
 in its evaluation and is reported independently from live WebView testing.
 
-Preview identity `com.kinto.preview.hybrid.v11` / KINTO Preview 11 is disposable and
+Preview identity `com.kinto.preview.hybrid.v12` / KINTO Preview 12 is disposable and
 separate from Preview 8 and production `com.kinto.app`. Signing files stay outside
 the repository. Local unsent drafts are not automatically migrated between these
 separate preview identities. No production fingerprint/assetlinks changes.

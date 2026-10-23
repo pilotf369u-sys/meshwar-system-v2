@@ -52,7 +52,7 @@ jobs:
       - name: Android 35 synthetic local-order flow
         uses: reactivecircus/android-emulator-runner@v2
         env:
-          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.11.apk
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.12.apk
         with:
           api-level: 35
           arch: x86_64
@@ -68,7 +68,7 @@ jobs:
         with:
           name: KINTO-Hybrid-Preview-APK
           path: |
-            ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.11.apk
+            ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.12.apk
             ${{ runner.temp }}/kinto-preview-output/invoice-test.png
             ${{ runner.temp }}/kinto-preview-output/store-test.png
             ${{ runner.temp }}/kinto-preview-output/navigation-return-test.png

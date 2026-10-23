@@ -10,7 +10,8 @@
  const displayNumber=v=>{const s=text(v);if(!/^[\d.,\s]+(?:TL|TRY|₺)$/i.test(s))return null;let n=s.replace(/TL|TRY|₺|\s/gi,'');if(n.includes(','))n=n.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(n))n=n.replace(/\./g,'');return number(n);};
  const root=document.querySelector('.product-detail-card-info')||document.querySelector('.product-detail-info');
  const colors=unique(list('[data-qa-action="select-color"][aria-current="true"],.product-detail-color-selector [aria-checked="true"]').map(e=>text(e.querySelector('.screen-reader-text')?.textContent||e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent)));
- if(!colors.length)colors.push(...unique(list('.product-color-extended-name__name,.product-detail-info__color').map(e=>text(e.textContent))));
+ // Legacy detail-info wraps the color name AND product reference. Never compare that wrapper with its child.
+ if(!colors.length){const names=list('.product-color-extended-name__name');colors.push(...unique(names.length?names.map(e=>text(e.textContent)):list('.product-detail-info__color').map(e=>text(e.querySelector('.product-color-extended-name__name')?.textContent))));}
  const color=colors.length===1&&colors[0].length<=60?colors[0]:'';
  // Only explicit selected size markers; never the first available size or a model's measurements.
  const sizeNodes=list('.size-selector-sizes [aria-checked="true"],.size-selector-sizes [aria-selected="true"],.product-size-selector [aria-pressed="true"],.product-detail-size-selector [aria-checked="true"],[data-qa-qualifier="product-detail-selected-size"]');
