@@ -12,7 +12,7 @@
 <script>
 (function(){
   const BUILD='20261018-coupon-finance-v1';
-  const allowed={admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
+  const allowed={world_employee:'global-staff-workspace.html',admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
   params.delete('screen');
@@ -66,6 +66,7 @@
         d.head.appendChild(customerPolish);
         return; // CUSTOMER_POST_LOGIN_ROOT_FIX_V50: customer uses dashboard.html canonical renderer only.
       }
+      if(screen==='world_employee')return;
       if(screen==='branch'){
         const branchContact=d.createElement('script');
         branchContact.src='js/branch-whatsapp-contact-v1.js?v=20260827-v1';

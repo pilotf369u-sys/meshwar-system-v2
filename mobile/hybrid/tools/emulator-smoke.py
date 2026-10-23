@@ -30,7 +30,7 @@ def click(text,attempts=6,scroll=False):
  raise AssertionError('Missing control: '+text+'; texts='+repr([n.get('text') for n in nodes()]))
 
 print(adb('install','--no-streaming','-r',os.environ['KINTO_APK']))
-print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v5/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true'))
+print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v6/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true'))
 time.sleep(8)
 adb('shell','input','keyevent','82');click('تجربة كاملة');time.sleep(8)
 labels=['الرئيسية','المتاجر','السلة','طلباتي','الدردشة','مفضلاتي','حسابي']
@@ -63,7 +63,7 @@ for _ in range(8):
 assert '35750' in texts, texts
 click('طابقت',scroll=True);click('أؤكد الإضافة')
 time.sleep(2)
-raw=adb('shell','run-as','com.kinto.preview.hybrid.v5','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml')
+raw=adb('shell','run-as','com.kinto.preview.hybrid.v6','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml')
 root=E.fromstring(raw);s=next(x.text for x in root if x.get('name')=='preview_global_orders_v1')
 orders=json.loads(s);assert len(orders)==1,orders
 p=orders[0]
@@ -73,7 +73,24 @@ assert p['selectedOptions']=={'size':'L','color':'Haki'},p
 assert p['sourcePerUsd']=='40' and p['targetPerUsd']=='1300' and p['displayCurrency']=='IQD' and p['pricingRevision']==1,p
 assert p['shipping'] is None and p['testOrderCode'].startswith('TEST-'),p
 # Separate WebView storage directories exist in the shared UID, and no generic bridge.
-dirs=adb('shell','run-as','com.kinto.preview.hybrid.v5','ls')
+dirs=adb('shell','run-as','com.kinto.preview.hybrid.v6','ls')
 assert 'app_webview_kinto-account' in dirs and 'app_webview_external-shopping' in dirs,dirs
 print('PASS: install, launch, product reader, L/Haki, 35750 synthetic quote, explicit confirmation, persisted local TEST order, separate WebView directories')
 print(json.dumps({k:p[k] for k in ['testOrderCode','testOnly','serverSubmitted','selectedOptions','convertedTotalIQD','shipping']},ensure_ascii=False))
+
+# Synthetic captures must never reach the live customer submission page.
+click('إكمال الطلب للمراجعة')
+time.sleep(1)
+texts=' '.join(n.get('text','') for n in nodes())
+assert 'بيانات الاختبار المصطنعة لا تُرسل' in texts,texts
+print('PASS: synthetic fixture explicitly blocked from server submission')
+
+# Load the real bundled review assets without a customer session or any write.
+adb('shell','am','force-stop','com.kinto.preview.hybrid.v6')
+adb('shell','am','start','-n','com.kinto.preview.hybrid.v6/com.kinto.trendyollab.MainActivity','--ez','bundledReviewFixture','true')
+for _ in range(12):
+ texts=' '.join(n.get('text','') for n in nodes())
+ if 'إرسال الطلب لا يعني شراء المنتج' in texts and 'دخول العميل' in texts:break
+ time.sleep(1)
+assert 'إرسال الطلب لا يعني شراء المنتج' in texts and 'دخول العميل' in texts,texts
+print('PASS: bundled customer review HTML, scripts and policy load at the trusted origin without production writes')
