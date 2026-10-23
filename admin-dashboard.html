@@ -424,7 +424,7 @@ function mergeAdminGlobalStores(cloud){
   // Supabase is the sole source of truth. Deleted/hidden rows must never be
   // reintroduced from the legacy 50-store JavaScript list.
   return (Array.isArray(cloud)?cloud:[]).map(store=>({...store,_cloud:true,_baseline:false}))
-    .sort((a,b)=>(Number(a.sort_order)??999999)-(Number(b.sort_order)??999999)||Number(a.id)-Number(b.id));
+    .sort((a,b)=>(Number.isFinite(Number(a.sort_order))?Number(a.sort_order):999999)-(Number.isFinite(Number(b.sort_order))?Number(b.sort_order):999999)||Number(a.id)-Number(b.id));
 }
 function populateStoreImageOptions(){const el=document.getElementById('storeImageSelect');if(!el)return;const current=el.value,paths=[...new Set(adminStoreDefaults().map(x=>String(x.logo_url||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));el.innerHTML='<option value="">اختر شعاراً من مجلد images/</option>'+paths.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(paths.includes(current))el.value=current}
 function selectStoreImage(value){if(value)document.getElementById('storeImg').value=value}
