@@ -11,11 +11,11 @@
 <iframe id="app" title="MeshWar"></iframe>
 <script>
 (function(){
-  const BUILD='20261018-coupon-finance-v1';
+  const BUILD='20261023-world-entry-fix';
   const allowed={world_employee:'employee-dashboard.html',admin:'admin-dashboard.html',employee:'employee-dashboard.html',branch:'branch-dashboard.html',delivery:'delivery-dashboard.html',customer:'dashboard.html',manifest:'branch-manifest.html'};
   const params=new URLSearchParams(location.search),screen=String(params.get('screen')||'').trim().toLowerCase(),target=allowed[screen];
   if(!target){location.replace('login.html?v='+BUILD);return}
-  params.delete('screen');if(screen==='world_employee')params.set('workspace','global');
+  params.delete('screen');if(screen==='world_employee')params.set('orderScope','world');
   params.set('_v',BUILD);
   const qs=params.toString(),frame=document.getElementById('app');
   if(screen==='customer'){location.replace(target+(qs?'?'+qs:''));return}

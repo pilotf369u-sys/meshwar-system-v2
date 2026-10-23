@@ -1,6 +1,6 @@
 (()=>{'use strict';
  const staff=document.currentScript?.dataset.panel==='employee',params=new URLSearchParams(location.search);
- if(staff&&params.get('workspace')!=='global')return;
+ if(staff&&!window.__kintoWorldEmployeeV1&&params.get('orderScope')!=='world'&&params.get('workspace')!=='global')return;
  if(!staff&&params.has('viewedBy'))return; // Preserve the existing staff read-only customer view.
  const start=async()=>{
   const anchor=staff?document.querySelector('#ordersPanel'):document.querySelector('#activeOrders .panel-card');if(!anchor||document.getElementById('kintoWorldEmbedded'))return;
@@ -18,5 +18,5 @@
  };
  async function script(src,data={}){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src+'?v=20261023-normal-panels';Object.assign(s.dataset,data);s.onload=resolve;s.onerror=reject;document.body.append(s);});}
  async function fetchRpc(name,args){const r=await fetch('https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/rpc/'+name,{method:'POST',credentials:'omit',cache:'no-store',headers:{apikey:'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH','Content-Type':'application/json'},body:JSON.stringify(args)});const data=await r.json();if(!r.ok)throw Error(data.message||'request');return data;}
- if(staff){window.onload=()=>start().catch(console.error);}else if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>start().catch(console.error),{once:true});else start().catch(console.error);
+ if(staff){window.addEventListener('kinto-world-orders-loaded',()=>document.documentElement.classList.remove('employee-auth-pending'),{once:true});window.onload=()=>start().catch(console.error);}else if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>start().catch(console.error),{once:true});else start().catch(console.error);
 })();
