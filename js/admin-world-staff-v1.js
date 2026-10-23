@@ -2,7 +2,6 @@
  const host=document.getElementById('employees'),role=document.getElementById('empRole');if(!host||!role)return;
  const option=document.createElement('option');option.value='world_employee';option.textContent='موظف طلبات عالمية';role.append(option);
  const status=document.createElement('p');status.id='worldStaffNotice';status.className='mini';status.setAttribute('role','status');host.querySelector('h3').after(status);
- const open=document.createElement('a');open.href='global-staff-workspace.html?role=admin';open.textContent='إدارة الطلبات العالمية';open.className='btn-green';status.after(open);
  const $=id=>document.getElementById(id),notice=t=>$('worldStaffNotice').textContent=t;
  const original={add:window.addEmployee,confirm:window.confirmEmployeeOtp,cancel:window.cancelEmployeeOtp,load:window.loadEmployees};let pending=null,busy=false;
  function token(){const t=window.KintoAdminSessionV147?.read()?.token;if(!t)throw Error('سجّل دخول الأدمن أولًا');return t;}
