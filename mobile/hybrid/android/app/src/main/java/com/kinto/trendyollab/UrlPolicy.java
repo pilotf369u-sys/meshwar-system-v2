@@ -10,6 +10,6 @@ public final class UrlPolicy {
   if(!source(expected).equals("zara"))return expected.equals(actual);
   try{if(!product(expected)||!product(actual)||!source(actual).equals("zara"))return false;URI a=secure(expected),b=secure(actual);String x=a.getPath().replaceAll("^.*-p([0-9]{8})\\.html$","$1"),y=b.getPath().replaceAll("^.*-p([0-9]{8})\\.html$","$1");return x.equals(y)&&java.util.Objects.equals(variant(a),variant(b));}catch(Exception e){return false;}
  }
- private static String variant(URI uri){String q=uri.getRawQuery();if(q==null)return "";String result="";for(String item:q.split("&")){if(item.startsWith("v1=")){if(!result.isEmpty())return "!duplicate"+q;result=java.net.URLDecoder.decode(item.substring(3),java.nio.charset.StandardCharsets.UTF_8);}}return result;}
+ private static String variant(URI uri)throws Exception{String q=uri.getRawQuery();if(q==null)return "";String result="";for(String item:q.split("&")){if(item.startsWith("v1=")){if(!result.isEmpty())return "!duplicate"+q;result=java.net.URLDecoder.decode(item.substring(3),"UTF-8");}}return result;}
  public static boolean image(String raw){try{String h=secure(raw).getHost().toLowerCase(Locale.ROOT);return (h.equals("static.zara.net")&&secure(raw).getPath().startsWith("/assets/"))||h.equals("productimages.hepsiburada.net")||h.equals("dsmcdn.com")||h.endsWith(".dsmcdn.com")||h.equals("trendyolcdn.com")||h.endsWith(".trendyolcdn.com")||h.equals("trendyol.com")||h.endsWith(".trendyol.com");}catch(Exception e){return false;}}
 }
