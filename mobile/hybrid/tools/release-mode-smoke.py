@@ -3,6 +3,10 @@ import subprocess,os,time,pathlib,xml.etree.ElementTree as E
 package='com.kinto.preview.hybrid.v15'
 def adb(*args):return subprocess.check_output(['adb',*args],text=True,timeout=40)
 apk=pathlib.Path(os.environ['KINTO_APK']).with_name('KINTO-Candidate-0.15.apk')
+# Fixture-gating checks must not depend on live-site animation/network load.
+# Website login/commerce on the release candidate remains a real-device acceptance step.
+adb('shell','svc','wifi','disable')
+adb('shell','svc','data','disable')
 adb('install','--no-streaming','-r',str(apk))
 for flag in ['webviewCompatFixture','bundledReviewFixture','acknowledgeReviewFixture']:
  adb('shell','am','force-stop',package)
@@ -29,4 +33,5 @@ for flag in ['webviewCompatFixture','bundledReviewFixture','acknowledgeReviewFix
  adb('shell','input','keyevent','4')
 run=subprocess.run(['adb','shell','run-as',package,'id'],capture_output=True,text=True,timeout=20)
 assert run.returncode!=0 and 'not debuggable' in run.stderr+run.stdout,(run.stdout,run.stderr)
-print('PASS_RELEASE_MODE: Gradle candidate launches; all three public fixture intents ignored; no test menu; non-debuggable; no production writes')
+adb('shell','svc','wifi','enable')
+print('PASS_RELEASE_MODE_OFFLINE: Gradle candidate launches; all three public fixture intents ignored; no test menu; non-debuggable; no production writes')
