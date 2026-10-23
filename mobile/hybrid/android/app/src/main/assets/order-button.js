@@ -1,8 +1,9 @@
 (() => {
- if (location.protocol !== 'https:' || !(location.hostname === 'trendyol.com' || location.hostname.endsWith('.trendyol.com'))) return;
+ const hepsi=['hepsiburada.com','www.hepsiburada.com','m.hepsiburada.com'].includes(location.hostname);
+ if (location.protocol !== 'https:' || !(hepsi || location.hostname === 'trendyol.com' || location.hostname.endsWith('.trendyol.com'))) return;
  if (window.__kintoLabV2) { window.__kintoLabV2.sync(); return; }
  const sync = () => {
-  const product = /-p-\d+(?:\/.*)?$/.test(location.pathname);
+  const product = hepsi ? /-(?:p|pm)-[A-Za-z0-9]{3,40}\/?$/.test(location.pathname) : /-p-\d+(?:\/.*)?$/.test(location.pathname);
   let button = document.getElementById('kinto-lab-order');
   if (!product) { button?.remove(); return; }
   if (button) return;

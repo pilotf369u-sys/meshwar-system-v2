@@ -1,3 +1,44 @@
+# Android preview 0.9 — Hepsiburada adapter (activation pending)
+
+Adds an independent Hepsiburada reader for HTTPS product and parent-product URLs.
+Price, chosen size/capacity/other variant values and color are confirmed before a
+single-product draft is handed back to the trusted KINTO account renderer. Both
+retailers reuse the current admin TRY exchange/commission settings and existing
+world order/payment/staff/branch/courier lifecycle. Shipping remains staff-reviewed;
+purchase is only after verified payment and availability review.
+
+The external shopping process still has separate WebView storage, no account
+session or native JavaScript bridge, third-party cookies disabled, and no file or
+content access. Only the exact supported retailer hosts and approved image CDNs
+are added. Conditional premium/installment prices and conflicting/missing variant
+selections do not authorize an estimated price. Hepsi DOM selectors were checked
+against a public product page; this is not a guarantee for every live layout.
+
+`sql/kinto-world-hepsiburada-v1.sql` is REVIEW ONLY until the owner explicitly
+approves production SQL. It changes only the existing global submission URL/image
+allowlists, with an expected-source hash and transactional verification. No tables,
+triggers, pricing rules, session helpers or local operations are changed. The paired
+rollback restores the previous submission function without deleting any orders.
+Existing Trendyol normalization/idempotency stays byte-compatible. Browser store
+labels/image/link handling is updated separately for Hepsi.
+
+Tests: unit reader/URL/options/price boundaries; synthetic Android product capture,
+conversion, confirmation and refusal to send fixtures to production; disposable
+Postgres submission/replay/rollback and local-function/trigger/data fingerprints;
+mocked customer handoff; existing Trendyol, invoices, video and local-flow checks.
+An optional public markup snapshot check blocks all retailer scripts/network calls
+in its evaluation and is reported independently from live WebView testing.
+
+Preview identity `com.kinto.preview.hybrid.v9` / KINTO Preview 9 is disposable and
+separate from Preview 8 and production `com.kinto.app`. Signing files stay outside
+the repository. Local unsent drafts are not automatically migrated between these
+separate preview identities. No production fingerprint/assetlinks changes.
+
+Activation order: approve reviewed SQL; activate it; merge reviewed web/native
+changes; prepare release branch; owner manually publishes Hostinger; install V9
+and confirm real-site behavior. No production writes, merges, hosting or store
+publication are performed merely by building this preview.
+
 # Android preview 0.3 — store navigation and mobile invoice layout
 
 The external store has no persistent top toolbar. Its isolated local bottom bar

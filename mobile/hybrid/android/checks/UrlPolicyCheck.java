@@ -6,6 +6,12 @@ public class UrlPolicyCheck {
   for(String u:good)if(!UrlPolicy.allowed(u))throw new AssertionError(u);
   for(String u:bad)if(UrlPolicy.allowed(u))throw new AssertionError(u);
   if(UrlPolicy.product(good[0])||!UrlPolicy.product(good[1])||!UrlPolicy.product(good[2]))throw new AssertionError("product gate");
+  String[] hepsi={"https://www.hepsiburada.com/test-p-HBCV000001", "https://hepsiburada.com/test-pm-HBC000001?magaza=TEST", "https://m.hepsiburada.com/test-p-HBV000001/"};
+  for(String u:hepsi)if(!UrlPolicy.product(u)||!UrlPolicy.source(u).equals("hepsiburada"))throw new AssertionError(u);
+  String[] blocked={"https://hepsiburada.com.evil.test/test-p-HBCV1","https://user@www.hepsiburada.com/test-p-HBCV1","https://www.hepsiburada.com:444/test-p-HBCV1","http://www.hepsiburada.com/test-p-HBCV1","https://checkout.hepsiburada.com/test-p-HBCV1","https://shopkinto.com/test-p-HBCV1"};
+  for(String u:blocked)if(UrlPolicy.allowed(u))throw new AssertionError(u);
+  if(UrlPolicy.product("https://www.hepsiburada.com/ara?q=test")||UrlPolicy.product("https://www.hepsiburada.com/a-p-/"))throw new AssertionError("Hepsi non-product");
+  if(!UrlPolicy.image("https://productimages.hepsiburada.net/s/test.jpg")||UrlPolicy.image("https://productimages.hepsiburada.net.evil.test/a.jpg")||UrlPolicy.image("https://user@productimages.hepsiburada.net/a.jpg")||UrlPolicy.image("https://productimages.hepsiburada.net:444/a.jpg"))throw new AssertionError("Hepsi image boundary");
   System.out.println("URL policy checks passed");
  }
 }

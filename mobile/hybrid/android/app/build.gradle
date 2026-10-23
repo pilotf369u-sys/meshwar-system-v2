@@ -2,6 +2,6 @@ plugins { id 'com.android.application' }
 android {
  namespace 'com.kinto.trendyollab'
  compileSdk 35
- defaultConfig { applicationId 'com.kinto.preview.hybrid.v8'; minSdk 28; targetSdk 35; versionCode 8; versionName '0.8-preview' }
+ defaultConfig { applicationId 'com.kinto.preview.hybrid.v9'; minSdk 28; targetSdk 35; versionCode 9; versionName '0.9-preview' }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }

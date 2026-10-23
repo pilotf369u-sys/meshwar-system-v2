@@ -1,0 +1,38 @@
+(() => {
+ 'use strict';
+ const host=location.hostname.toLowerCase(),match=location.pathname.match(/-(p|pm)-([A-Za-z0-9]{3,40})\/?$/i);
+ if(location.protocol!=='https:'||!['hepsiburada.com','www.hepsiburada.com','m.hepsiburada.com'].includes(host)||!match)return JSON.stringify({error:'NOT_PRODUCT'});
+ const productId=match[2].toUpperCase(),parent=match[1].toLowerCase()==='pm';
+ const text=v=>String(v||'').trim().slice(0,500),visible=e=>!!e&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('del,s,[aria-hidden="true"],[data-test-id*="recommend"],[data-test-id*="sponsored"]');
+ const list=s=>Array.from(document.querySelectorAll(s)).filter(visible),unique=a=>[...new Set(a.filter(Boolean))];
+ const parsePrice=value=>{let s=text(value);if(!s||/%|\d\s*[-–]\s*\d|taksit|premium|kupon|\bx\b/i.test(s))return null;s=s.replace(/TL|TRY|₺/gi,'').replace(/\s/g,'');if(!/^[\d.,]+$/.test(s))return null;if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');const n=Number(s);return Number.isFinite(n)&&n>0&&n<10000000?n:null;};
+ const meta=k=>document.querySelector('meta[property="'+k+'"]')?.content||'';
+ const params=new URL(location.href).searchParams,merchant=params.get('magaza')||params.get('merchantId')||'';
+ const observed={size:'',color:''},required={size:false,color:false},ambiguous={size:false,color:false};const sizes=[];
+ for(const row of list('[data-test-id="variant-row"]')){
+  const name=text(row.querySelector('[data-test-id="variant-name"]')?.textContent).replace(/:$/,'').trim();if(!name)continue;
+  const kind=/^renk$/i.test(name)?'color':'size';required[kind]=true;
+  const selected=Array.from(row.querySelectorAll('button')).filter(visible).filter(b=>/^seçili\s/i.test(text(b.getAttribute('aria-label')))||['aria-selected','aria-checked','aria-pressed'].some(a=>b.getAttribute(a)==='true')).map(b=>text(b.querySelector('[data-test-id="variant-box-name"]')?.textContent||b.getAttribute('aria-label')?.replace(/^seçili\s+/i,'').replace(new RegExp('^'+name+'\\s+','i'),'')));
+  const label=text(row.querySelector('[data-test-id="variant-value"]')?.textContent),values=unique([...selected,label].filter(v=>v&&!/seçiniz|seçin|select|choose/i.test(v)));
+  if(values.length!==1||values[0].length>60){ambiguous[kind]=true;continue;}
+  if(kind==='color'){if(observed.color&&observed.color!==values[0])ambiguous.color=true;observed.color=values[0];}
+  else sizes.push(/^(beden|numara|boyut|kapasite|hacim|dahili hafıza)$/i.test(name)?values[0]:name+': '+values[0]);
+ }
+ observed.size=unique(sizes).join(' / ');if(observed.size.length>60)ambiguous.size=true;
+ for(const kind of ['size','color'])if(ambiguous[kind])observed[kind]='';
+ const samePage=raw=>{if(!raw)return false;try{const u=new URL(raw,location.href);return u.protocol==='https:'&&['hepsiburada.com','www.hepsiburada.com','m.hepsiburada.com'].includes(u.hostname)&&u.pathname.replace(/\/$/,'')===location.pathname.replace(/\/$/,'');}catch{return false;}};
+ const products=[];const walk=node=>{if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(walk);return;}if([].concat(node['@type']||[]).includes('Product')){const offers=[].concat(node.offers||[]);if(!parent&&String(node.sku||node.productID||'').toUpperCase()===productId||parent&&(samePage(node.url||node['@id']||'')||offers.some(o=>samePage(o?.url))))products.push(node);}if(node['@graph'])walk(node['@graph']);};
+ for(const node of document.querySelectorAll('script[type="application/ld+json"]'))try{walk(JSON.parse(node.textContent));}catch{}
+ const product=products.length===1?products[0]:null;
+ const prices=[];
+ for(const selector of ['[data-test-id="price-current-price"]','[data-test-id="current-price"]','#offering-price','[data-test-id="price"]'])for(const e of list(selector)){const raw=text(e.textContent);if(!/(TL|TRY|₺)/i.test(raw))continue;const value=parsePrice(raw);if(value!==null&&!prices.some(p=>p.value===value))prices.push({value,raw});}
+ let price=prices.length===1?prices[0].value:null,priceRaw=prices.length===1?prices[0].raw:'',priceSource=price===null?'':'visible';
+ const seller=text(document.querySelector('[data-test-id="merchant-label"]')?.textContent).replace(/^satıcı\s*:?\s*/i,'').trim();
+ const optionMatch=product&&['size','color'].every(k=>!required[k]||!!observed[k]&&(!product[k]||text(product[k])===observed[k]));
+ if(!prices.length&&product&&optionMatch){const offers=[].concat(product.offers||[]).filter(o=>o&&o['@type']!=='AggregateOffer'&&String(o.priceCurrency).toUpperCase()==='TRY'&&(!o.url||samePage(o.url)||!parent&&String(product.sku).toUpperCase()===productId)&&(!merchant||[o.seller?.name,o.seller?.identifier,o.seller?.['@id']].some(v=>text(v).toLowerCase()===merchant.toLowerCase()))&&(!seller||text(o.seller?.name).toLowerCase()===seller.toLowerCase()));if(offers.length===1){price=parsePrice(offers[0].price);if(price!==null){priceRaw=String(offers[0].price)+' TRY';priceSource='structured';}}}
+ // Repeated/missing variant selections never authorize a metadata price for another variant.
+ if(required.size&&!observed.size||required.color&&!observed.color){price=null;priceSource='';}
+ const images=list('img.hb-HbImage-view__image[src*="productimages.hepsiburada.net"]');let image=images[0]?.currentSrc||images[0]?.src||(!required.size&&!required.color?meta('og:image')||(Array.isArray(product?.image)?product.image[0]:product?.image):'')||'';
+ try{const u=new URL(typeof image==='object'?image.url:image,location.href);image=u.protocol==='https:'&&u.hostname==='productimages.hepsiburada.net'&&!u.username&&!u.password&&(u.port===''||u.port==='443')?u.href:'';}catch{image='';}
+ return JSON.stringify({source:'hepsiburada',sourceName:'Hepsiburada',productId,pageUrl:location.href,title:text(document.querySelector('h1')?.textContent||product?.name||meta('og:title')),image:String(image).slice(0,2000),price,currency:'TRY',priceRaw,priceSource,merchantId:merchant,observedOptions:observed,optionRequirements:required,warning:prices.length>1?'AMBIGUOUS_PRICE':price===null?'PRICE_NOT_FOUND':''});
+})();
