@@ -4,8 +4,9 @@
 -- PREVIEW:
 SELECT id,name,sort_order,is_active FROM public.global_stores ORDER BY sort_order,id;
 -- SEED (run separately only after reviewing PREVIEW and admin sort-order collisions):
--- BEGIN;
--- WITH incoming(name,logo_url,store_url,category,sort_order) AS (VALUES
+/*
+BEGIN;
+WITH incoming(name,logo_url,store_url,category,sort_order) AS (VALUES
   ('Trendyol', 'images/trendyol.png', 'https://www.trendyol.com', 'comprehensive', 1),
   ('Hepsiburada', 'images/hepsiburada.png', 'https://www.hepsiburada.com', 'comprehensive', 2),
   ('N11', 'images/N11.png', 'https://www.n11.com', 'comprehensive', 3),
@@ -56,9 +57,10 @@ SELECT id,name,sort_order,is_active FROM public.global_stores ORDER BY sort_orde
   ('A101', 'images/a101.png', 'https://www.a101.com.tr/', 'home', 48),
   ('BİM', 'images/bim.png', 'https://www.bim.com.tr/', 'home', 49),
   ('Şok Market', 'images/sok.png', 'https://kurumsal.sokmarket.com.tr/', 'home', 50)
--- )
--- INSERT INTO public.global_stores(name,logo_url,store_url,category,sort_order,is_active)
--- SELECT i.name,i.logo_url,i.store_url,i.category,i.sort_order,true FROM incoming i
--- WHERE NOT EXISTS (SELECT 1 FROM public.global_stores g WHERE lower(trim(g.name))=lower(trim(i.name)));
--- COMMIT;
+)
+INSERT INTO public.global_stores(name,logo_url,store_url,category,sort_order,is_active)
+SELECT i.name,i.logo_url,i.store_url,i.category,i.sort_order,true FROM incoming i
+WHERE NOT EXISTS (SELECT 1 FROM public.global_stores g WHERE lower(trim(g.name))=lower(trim(i.name)));
+COMMIT;
+*/
 -- NOTE: Uncomment entire seed statement (including CTE) only after review.
