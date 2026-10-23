@@ -26,7 +26,7 @@
  }
  observed.size=unique(sizes).join(' / ');if(observed.size.length>60)ambiguous.size=true;
  for(const kind of ['size','color'])if(ambiguous[kind])observed[kind]='';
- const samePage=raw=>{if(!raw)return false;try{const u=new URL(raw,location.href);return u.protocol==='https:'&&['hepsiburada.com','www.hepsiburada.com','m.hepsiburada.com'].includes(u.hostname)&&u.pathname.replace(/\/$/,'')===location.pathname.replace(/\/$/,'');}catch{return false;}};
+ const samePage=raw=>{if(!raw)return false;try{const u=new URL(raw,location.href),id=u.pathname.match(/-(p|pm)-([A-Za-z0-9]{3,40})\/?$/i);return u.protocol==='https:'&&['hepsiburada.com','www.hepsiburada.com','m.hepsiburada.com'].includes(u.hostname)&&!!id&&id[1].toLowerCase()===match[1].toLowerCase()&&id[2].toUpperCase()===productId;}catch{return false;}};
  const products=[];const walk=node=>{if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(walk);return;}if([].concat(node['@type']||[]).includes('Product')){const offers=[].concat(node.offers||[]);if(!parent&&String(node.sku||node.productID||'').toUpperCase()===productId||parent&&(samePage(node.url||node['@id']||'')||offers.some(o=>samePage(o?.url))))products.push(node);}if(node['@graph'])walk(node['@graph']);};
  for(const node of document.querySelectorAll('script[type="application/ld+json"]'))try{walk(JSON.parse(node.textContent));}catch{}
  const product=products.length===1?products[0]:null;
@@ -38,21 +38,40 @@
   if(!/(TL|TRY|₺)/i.test(raw)){const parentRaw=text(e.parentElement?.textContent);if(!/(TL|TRY|₺)/i.test(parentRaw)||parsePrice(parentRaw)===null)continue;raw=parentRaw;}
   const value=parsePrice(raw);if(value!==null&&!prices.some(p=>p.value===value))prices.push({value,raw});
  }};
- collect(['[data-test-id="price-current-price"]','[data-test-id="current-price"]','#offering-price']);
+ // Current mobile storefront uses a sticky purchase bar OUTSIDE the title/variant section.
+ // Its default-price is not price-current-price. Read its exact semantic price nodes first,
+ // just as the Trendyol reader distinguishes ordinary, basket and membership price blocks.
+ const bars=Array.from(document.querySelectorAll('[data-test-id="sticky-price"]')).filter(visible);
+ let mobilePriceSource='';
+ const mobileValues=[];
+ const leafAmounts=(block,excludePrevious)=>[block,...block.querySelectorAll('span')].filter(visible).filter(e=>!excludePrevious||!e.closest('[data-test-id="prev-price"]')).map(e=>({value:parsePrice(e.textContent),raw:text(e.textContent)})).filter(p=>p.value!==null&&/(TL|TRY|₺)/i.test(p.raw));
+ for(const bar of bars){
+  const ordinary=Array.from(bar.querySelectorAll('[data-test-id="default-price"]')).filter(visible);
+  if(ordinary.length){for(const block of ordinary)mobileValues.push(...leafAmounts(block,true));mobilePriceSource='visible';}
+  else{
+   // Basket thresholds, coupons and Premium membership are not guaranteed for the client.
+   // Use the visibly stated ordinary price preceding that conditional offer, never the lower offer.
+   const conditional=Array.from(bar.querySelectorAll('[data-test-id="checkout-price"],[data-test-id="premium-price"]')).filter(visible);
+   for(const block of conditional)for(const prior of block.querySelectorAll('[data-test-id="prev-price"]'))if(visible(prior))mobileValues.push(...leafAmounts(prior,false));
+   if(conditional.length)mobilePriceSource='visible-before-conditional-offer';
+  }
+ }
+ for(const p of mobileValues)if(!prices.some(x=>x.value===p.value))prices.push(p);
+ if(!bars.length)collect(['[data-test-id="price-current-price"]','[data-test-id="current-price"]','#offering-price']);
  // Generic price nodes may include the old price; they must not override an explicit current price.
- if(!prices.length)collect(['[data-test-id="price"]']);
- let price=prices.length===1?prices[0].value:null,priceRaw=prices.length===1?prices[0].raw:'',priceSource=price===null?'':'visible';
+ if(!bars.length&&!prices.length)collect(['[data-test-id="price"]']);
+ let price=prices.length===1?prices[0].value:null,priceRaw=prices.length===1?prices[0].raw:'',priceSource=price===null?'':mobilePriceSource||'visible';
  // Mobile merchant-label is a badge (e.g. Resmi Satıcı), not the seller name.
  const mobileSeller=text(document.querySelector('[data-test-id="merchant-name"]')?.textContent);
  const sellerLabel=text(document.querySelector('[data-test-id="merchant-label"]')?.textContent);
  const seller=mobileSeller||(/^(resmi satıcı|yetkili satıcı)$/i.test(sellerLabel)?'':sellerLabel.replace(/^satıcı\s*:?\s*/i,'').trim());
  const optionMatch=product&&['size','color'].every(k=>!required[k]||!!observed[k]&&(!product[k]||text(product[k])===observed[k]));
- if(!prices.length&&product&&optionMatch){const offers=[].concat(product.offers||[]).filter(o=>o&&o['@type']!=='AggregateOffer'&&String(o.priceCurrency).toUpperCase()==='TRY'&&(!o.url||samePage(o.url)||!parent&&String(product.sku).toUpperCase()===productId)&&(!merchant||[o.seller?.name,o.seller?.identifier,o.seller?.['@id']].some(v=>text(v).toLowerCase()===merchant.toLowerCase()))&&(!seller||text(o.seller?.name).toLowerCase()===seller.toLowerCase()));if(offers.length===1){price=parsePrice(offers[0].price);if(price!==null){priceRaw=String(offers[0].price)+' TRY';priceSource='structured';}}}
+ if(!bars.length&&!prices.length&&product&&optionMatch){const offers=[].concat(product.offers||[]).filter(o=>o&&o['@type']!=='AggregateOffer'&&String(o.priceCurrency).toUpperCase()==='TRY'&&(!o.url||samePage(o.url)||!parent&&String(product.sku).toUpperCase()===productId)&&(!merchant||[o.seller?.name,o.seller?.identifier,o.seller?.['@id']].some(v=>text(v).toLowerCase()===merchant.toLowerCase()))&&(!seller||text(o.seller?.name).toLowerCase()===seller.toLowerCase()));if(offers.length===1){price=parsePrice(offers[0].price);if(price!==null){priceRaw=String(offers[0].price)+' TRY';priceSource='structured';}}}
  // Repeated/missing variant selections never authorize a metadata price for another variant.
  const optionsPending=!!(required.size&&!observed.size||required.color&&!observed.color);
- const displayPrice=optionsPending&&priceSource==='visible'?price:null;
+ const displayPrice=optionsPending&&priceSource.startsWith('visible')?price:null;
  if(optionsPending){price=null;priceSource='';}
- const images=list('img.hb-HbImage-view__image[src*="productimages.hepsiburada.net"]');let image=images[0]?.currentSrc||images[0]?.src||(!required.size&&!required.color?meta('og:image')||(Array.isArray(product?.image)?product.image[0]:product?.image):'')||'';
+ const images=Array.from(document.querySelectorAll('img.hb-HbImage-view__image[src*="productimages.hepsiburada.net"]')).filter(visible);let image=images[0]?.currentSrc||images[0]?.src||(!required.size&&!required.color?meta('og:image')||(Array.isArray(product?.image)?product.image[0]:product?.image):'')||'';
  try{const u=new URL(typeof image==='object'?image.url:image,location.href);image=u.protocol==='https:'&&u.hostname==='productimages.hepsiburada.net'&&!u.username&&!u.password&&(u.port===''||u.port==='443')?u.href:'';}catch{image='';}
  return JSON.stringify({source:'hepsiburada',sourceName:'Hepsiburada',productId,pageUrl:location.href,title:text(document.querySelector('h1')?.textContent||product?.name||meta('og:title')),image:String(image).slice(0,2000),price,displayPrice,optionsPending,currency:'TRY',priceRaw,priceSource,merchantId:merchant,observedOptions:observed,optionRequirements:required,warning:prices.length>1?'AMBIGUOUS_PRICE':optionsPending?'OPTIONS_REQUIRED':price===null?'PRICE_NOT_FOUND':''});
 })();

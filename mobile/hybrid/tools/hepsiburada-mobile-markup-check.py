@@ -53,3 +53,22 @@ with tempfile.TemporaryDirectory() as folder:
   assert result['price']==expected and result['displayPrice']==display,(name,result)
   if name=='options-selected-price-changed':assert result['observedOptions']['size']=='L',result
   print('PASS_OFFLINE_MOBILE_PRICE',name)
+
+# Replica of the retailer's current public mobile renderer (storefront-pwa 1.1.7001,
+# chunk 5882): sticky-price/default-price/checkout-price/premium-price. The sticky
+# bar is a sibling OUTSIDE the title/variant section. Earlier fixtures omitted it.
+with tempfile.TemporaryDirectory() as folder:
+ reader=(ROOT/'android/app/src/main/assets/hepsiburada-reader.js').read_text()
+ header='<section><div data-test-id="buybox-area"><h1>TEST mobile</h1></div></section>'
+ prior=lambda value:'<div data-test-id="prev-price"><span>'+value+' TL</span></div>'
+ default=lambda value,old='':'<div data-test-id="default-price">'+(prior(old) if old else '')+'<div><span>'+value+' TL</span></div></div>'
+ conditional=lambda kind,base,offer:'<div data-test-id="'+kind+'">'+prior(base)+'<div><span>' + ('Premium ile' if kind=='premium-price' else 'Sepete özel fiyat')+'</span></div><div>'+offer+' TL</div></div>'
+ cases=[('brush-discount',default('399,00','499,38'),399,'visible'),('fissler-no-discount',default('18.999,00'),18999,'visible'),('agarta-basket',conditional('checkout-price','174','165,30'),174,'visible-before-conditional-offer'),('acar-basket',conditional('checkout-price','1.117,52','949,89'),1117.52,'visible-before-conditional-offer'),('membership',conditional('premium-price','999','899'),999,'visible-before-conditional-offer'),('conditional-no-base','<div data-test-id="checkout-price"><span>Sepete özel fiyat</span><div>165,30 TL</div></div>',None,''),('ambiguous-bars',default('399')+default('499'),None,'')]
+ for name,block,expected,source in cases:
+  markup=header+'<div data-test-id="sticky-price">'+block+'<button data-test-id="sticky-addToCart-button">Sepete ekle</button></div><aside><span data-test-id="price-current-price">55,64 TL</span><p>Ayda 55,64 TL taksitle</p></aside>'
+  scope='(()=>{const location=new URL('+json.dumps(URL)+');const result='+reader+';document.getElementById("kinto-result").textContent=result;})();'
+  page=Path(folder,name+'.html');page.write_text('<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-test\'">'+markup+'<pre id="kinto-result"></pre><script nonce="test">'+scope+'</script>')
+  run=subprocess.run(['google-chrome','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,timeout=30,check=True)
+  parsed=Result();parsed.feed(run.stdout);result=json.loads(''.join(parsed.parts))
+  assert result['price']==expected and result['priceSource']==source,(name,result)
+  print('PASS_OFFLINE_STICKY_PRICE',name)

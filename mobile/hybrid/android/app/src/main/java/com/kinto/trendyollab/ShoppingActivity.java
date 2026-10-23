@@ -101,6 +101,7 @@ public class ShoppingActivity extends Activity {
    ImageView preview=new ImageView(this);preview.setAdjustViewBounds(true);preview.setScaleType(ImageView.ScaleType.FIT_CENTER);details.addView(preview,new LinearLayout.LayoutParams(-1,Math.round(150*getResources().getDisplayMetrics().density)));loadPreview(image,preview);
   }
   details.addView(line(priceLabel(item)));
+  if("hepsiburada".equals(item.optString("source"))&&"visible-before-conditional-offer".equals(item.optString("priceSource")))details.addView(line("اعتمدنا السعر العادي الظاهر قبل عرض السلة أو العضوية؛ استحقاق العرض يُراجع عند الشراء."));
   final Pricing.Snapshot snapshot=quote;
   if(!Double.isFinite(item.optDouble("price",Double.NaN))||item.optDouble("price",0)<=0){new AlertDialog.Builder(this).setMessage("السعر غير مؤكد؛ لم نحسب قيمة أو نضف طلباً.").setPositiveButton("حسناً",null).show();return;}
   if(snapshot==null){new AlertDialog.Builder(this).setMessage("تعذر التحقق من السعر المعتمد. أعد المحاولة بعد قليل.").setPositiveButton("حسناً",null).show();return;}
