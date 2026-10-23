@@ -27,7 +27,10 @@
  const prices=[];
  for(const selector of ['[data-test-id="price-current-price"]','[data-test-id="current-price"]','#offering-price','[data-test-id="price"]'])for(const e of list(selector)){const raw=text(e.textContent);if(!/(TL|TRY|₺)/i.test(raw))continue;const value=parsePrice(raw);if(value!==null&&!prices.some(p=>p.value===value))prices.push({value,raw});}
  let price=prices.length===1?prices[0].value:null,priceRaw=prices.length===1?prices[0].raw:'',priceSource=price===null?'':'visible';
- const seller=text(document.querySelector('[data-test-id="merchant-label"]')?.textContent).replace(/^satıcı\s*:?\s*/i,'').trim();
+ // Mobile merchant-label is a badge (e.g. Resmi Satıcı), not the seller name.
+ const mobileSeller=text(document.querySelector('[data-test-id="merchant-name"]')?.textContent);
+ const sellerLabel=text(document.querySelector('[data-test-id="merchant-label"]')?.textContent);
+ const seller=mobileSeller||(/^(resmi satıcı|yetkili satıcı)$/i.test(sellerLabel)?'':sellerLabel.replace(/^satıcı\s*:?\s*/i,'').trim());
  const optionMatch=product&&['size','color'].every(k=>!required[k]||!!observed[k]&&(!product[k]||text(product[k])===observed[k]));
  if(!prices.length&&product&&optionMatch){const offers=[].concat(product.offers||[]).filter(o=>o&&o['@type']!=='AggregateOffer'&&String(o.priceCurrency).toUpperCase()==='TRY'&&(!o.url||samePage(o.url)||!parent&&String(product.sku).toUpperCase()===productId)&&(!merchant||[o.seller?.name,o.seller?.identifier,o.seller?.['@id']].some(v=>text(v).toLowerCase()===merchant.toLowerCase()))&&(!seller||text(o.seller?.name).toLowerCase()===seller.toLowerCase()));if(offers.length===1){price=parsePrice(offers[0].price);if(price!==null){priceRaw=String(offers[0].price)+' TRY';priceSource='structured';}}}
  // Repeated/missing variant selections never authorize a metadata price for another variant.

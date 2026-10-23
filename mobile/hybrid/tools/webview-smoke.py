@@ -1,6 +1,6 @@
 """Offline regression of app wrapper only; no role login or real invoice data."""
 import subprocess,time,xml.etree.ElementTree as E,re,os
-P='com.kinto.preview.hybrid.v9'
+P='com.kinto.preview.hybrid.v10'
 def adb(*args):
  r=subprocess.run(['adb',*args],capture_output=True,text=True,timeout=60)
  if r.returncode:raise RuntimeError(r.stdout+r.stderr)
