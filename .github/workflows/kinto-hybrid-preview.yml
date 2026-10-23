@@ -1,7 +1,7 @@
 name: KINTO hybrid isolated preview
 on:
   push:
-    branches: [app/kinto-global-orders-independent-20261023, app/kinto-product-confirmation-20261023, app/kinto-hybrid-preview-20261022, app/kinto-android-webview-fixes-20261022, app/kinto-navigation-invoice-20261022, app/kinto-global-pricing-20261022]
+    branches: [fix/world-workflow-integrated-20261023, app/kinto-global-orders-independent-20261023, app/kinto-product-confirmation-20261023, app/kinto-hybrid-preview-20261022, app/kinto-android-webview-fixes-20261022, app/kinto-navigation-invoice-20261022, app/kinto-global-pricing-20261022]
     paths: ['mobile/hybrid/**', 'js/*global-pricing*', 'sql/kinto-global-pricing*', 'admin-dashboard.html', '.github/workflows/kinto-hybrid-preview.yml']
   workflow_dispatch:
 permissions:
@@ -47,7 +47,7 @@ jobs:
       - name: Android 35 synthetic local-order flow
         uses: reactivecircus/android-emulator-runner@v2
         env:
-          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.5.apk
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.6.apk
         with:
           api-level: 35
           arch: x86_64
@@ -63,7 +63,7 @@ jobs:
         with:
           name: KINTO-Hybrid-Preview-APK
           path: |
-            ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.5.apk
+            ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.6.apk
             ${{ runner.temp }}/kinto-preview-output/invoice-test.png
             ${{ runner.temp }}/kinto-preview-output/store-test.png
             ${{ runner.temp }}/kinto-preview-output/navigation-return-test.png
