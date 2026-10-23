@@ -1,11 +1,28 @@
-# Android preview 0.10 — mobile Hepsiburada seller fix
+# Android preview 0.14 — ZARA Turkey adapter (activation pending)
+
+Preview 14 reads visible current-price data in the mobile main/footer as well as the product panel. Exact product ID/TR locale/v1 bind metadata independently of SEO slug. If the responsive color panel is unmounted, a single color bound to the same variant URL may fill it; multiple colors never choose the first. Current TRY price disagreeing with stale SEO requires two identical reads >=1.5s apart; changing URL/color/size/price resets that check. It never retains a disappeared price. Specific local failure codes/counts replace the Zara generic price error; no sessions, cookies, DOM dumps or automatic diagnostics transmission. Native fixture now hydrates after 1.8s and moves the price/hides the color panel before the size/capture checks. These fixes cover identified brittle boundaries; the exact cause on the owner's phone is still not established until tested.
+
+Preview 12 fixes the legacy product-detail-info layout: the parent color paragraph includes both the color name and product reference. Reading both it and its inner name caused false color ambiguity and null prices. Live DOM inspection confirmed this on Zara. Use only the inner name; mandatory browser and emulator fixtures now include the legacy wrapper. No SQL or existing retailer-reader changes in this correction.
+
+Independent `zara-reader.js`: exact HTTPS zara.com/www.zara.com Turkish `/tr/tr/...-p########.html` product URLs only, TRY current-price `<data>` and selected color. `ProductGroup` metadata matches the 8-digit productGroupID and selected color/size plus v1 URL when supplied; metadata from other regions/variants is not used. Images use only static.zara.net/assets/. Discounted current price is accepted; old price, model measurements, promotions and shipping are not prices.
+
+Zara mobile 10.14 opens a separate size sheet. A capture-phase listener observes only the customer's explicit in-stock/low-stock size click, never changes site handlers or clicks anything. Choice is invalidated by color/product changes; unavailable size clicks block capture. If a selected size is not available to read, confirmation requires the customer to enter and confirm the chosen size. No first-size guessing. Live retailer execution on a real phone remains required before acceptance; sanitized markup snapshots are not full-site compatibility proof.
+
+Observed public mobile HTML from two Turkish clothing products fetched HTTP200 on 2026-10-23. Sanitized semantic snapshots and SHA256/source URLs are in android/checks/zara-markup. Browser fixture disables all network and retailer scripts. Native and server fixture data is synthetic; no real production orders/payments used.
+
+SQL review files `sql/kinto-world-zara-v1.sql` and `sql/kinto-world-zara-rollback-v1.sql` change only the world submit URL/image allowlists, guarded by exact source hashes. **Do not activate without explicit owner approval.** No new tables, auth, triggers, local workflows or pricing logic. Activate approved SQL, merge, then owner manually deploys 00-hostinger-release before end-to-end real Zara submission. Preview 11 alone can verify reader/conversion/confirmation locally; live server rejects Zara until activation. Customer/employee HTML cache lines refresh the shared global helper after deployment.
+
+Existing Trendyol and Hepsiburada readers are byte-for-byte unchanged. Separate com.kinto.preview.hybrid.v14 disposable identity; production package, assetlinks and signing untouched.
+
+
+## Earlier Hepsiburada implementation (retained)
 
 Mobile markup uses `merchant-name` for identity and `merchant-label` for the official/authorized seller badge. Preview 9 confused these fields and rejected matching structured prices. The adapter now prefers the actual name; known badges alone are not identities. Existing selected-variant, exact URL, currency and multiple-offer guards remain. Trendyol reader, account sessions, SQL and local workflows are unchanged. Preview 10 uses a separate disposable package and requires device acceptance.
 
 
 Adds an independent Hepsiburada reader for HTTPS product and parent-product URLs.
 Price, chosen size/capacity/other variant values and color are confirmed before a
-single-product draft is handed back to the trusted KINTO account renderer. Both
+single-product draft is handed back to the trusted KINTO account renderer. The
 retailers reuse the current admin TRY exchange/commission settings and existing
 world order/payment/staff/branch/courier lifecycle. Shipping remains staff-reviewed;
 purchase is only after verified payment and availability review.
@@ -17,13 +34,7 @@ are added. Conditional premium/installment prices and conflicting/missing varian
 selections do not authorize an estimated price. Hepsi DOM selectors were checked
 against a public product page; this is not a guarantee for every live layout.
 
-`sql/kinto-world-hepsiburada-v1.sql` is REVIEW ONLY until the owner explicitly
-approves production SQL. It changes only the existing global submission URL/image
-allowlists, with an expected-source hash and transactional verification. No tables,
-triggers, pricing rules, session helpers or local operations are changed. The paired
-rollback restores the previous submission function without deleting any orders.
-Existing Trendyol normalization/idempotency stays byte-compatible. Browser store
-labels/image/link handling is updated separately for Hepsi.
+`sql/kinto-world-hepsiburada-v1.sql` was approved and activated with PR #1057; the mobile seller fix was accepted and merged as PR #1058. These historical SQL files remain for reference and disposable tests. Do not rerun them over the Zara extension: use the reviewed Zara pair and its hash guards.
 
 Tests: unit reader/URL/options/price boundaries; synthetic Android product capture,
 conversion, confirmation and refusal to send fixtures to production; disposable
@@ -32,15 +43,12 @@ mocked customer handoff; existing Trendyol, invoices, video and local-flow check
 An optional public markup snapshot check blocks all retailer scripts/network calls
 in its evaluation and is reported independently from live WebView testing.
 
-Preview identity `com.kinto.preview.hybrid.v10` / KINTO Preview 10 is disposable and
+Preview identity `com.kinto.preview.hybrid.v14` / KINTO Preview 14 is disposable and
 separate from Preview 8 and production `com.kinto.app`. Signing files stay outside
 the repository. Local unsent drafts are not automatically migrated between these
 separate preview identities. No production fingerprint/assetlinks changes.
 
-Activation order: approve reviewed SQL; activate it; merge reviewed web/native
-changes; prepare release branch; owner manually publishes Hostinger; install V9
-and confirm real-site behavior. No production writes, merges, hosting or store
-publication are performed merely by building this preview.
+Current activation order is described at the top for Preview 11. Building this preview does not authorize production SQL, merge, hosting or store publication.
 
 # Android preview 0.3 — store navigation and mobile invoice layout
 

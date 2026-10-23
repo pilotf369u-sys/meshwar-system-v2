@@ -21,7 +21,7 @@
   if(staff)await script('js/kinto-world-dispatch-v1.js',{role:'staff',root:'#kintoWorldEmbedded'});
   window.addEventListener('focus',()=>root.dispatchEvent(new Event('kinto-world-refresh')));
  };
- async function script(src,data={}){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src+'?v=20261023-hepsi-v9';Object.assign(s.dataset,data);s.onload=resolve;s.onerror=reject;document.body.append(s);});}
+ async function script(src,data={}){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src+'?v=20261023-zara-v11';Object.assign(s.dataset,data);s.onload=resolve;s.onerror=reject;document.body.append(s);});}
  async function fetchRpc(name,args){const r=await fetch('https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/rpc/'+name,{method:'POST',credentials:'omit',cache:'no-store',headers:{apikey:'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH','Content-Type':'application/json'},body:JSON.stringify(args)});const data=await r.json();if(!r.ok)throw Error(data.message||'request');return data;}
  if(staff){window.addEventListener('kinto-world-orders-loaded',()=>document.documentElement.classList.remove('employee-auth-pending'),{once:true});window.onload=()=>start().catch(console.error);}else if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>start().catch(console.error),{once:true});else start().catch(console.error);
 })();
