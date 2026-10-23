@@ -452,7 +452,8 @@ async function toggleGlobalStoreVisibility(index){
   if(!confirm(next?'إظهار هذا المتجر للعميل؟':'إخفاء هذا المتجر عن العميل؟'))return;
   try{
     const sb=await ensureCustomerSupabase();
-    const {error}=await sb.rpc('set_global_store_visibility_v1',{p_admin_id:getAdminId(),p_store_id:Number(store.id),p_is_active:next});
+    const admin=await checkAdminRole();const token=window.KintoAdminSessionV147?.read()?.token;if(!token)throw new Error('جلسة المدير غير متاحة');
+    const {error}=await sb.rpc('set_global_store_visibility_v1',{p_admin_id:String(admin.id),p_session_token:token,p_store_id:Number(store.id),p_is_active:next});
     if(error)throw error;
     await loadStoresAdmin();
   }catch(e){alert('لم يتغير ظهور المتجر: '+String(e?.message||e))}
