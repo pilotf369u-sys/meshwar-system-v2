@@ -322,12 +322,12 @@
 
 <footer id="meshwarSocialFooter" class="mx-auto mt-14 max-w-7xl px-4 pb-10"><div class="rounded-3xl border border-amber-400/20 bg-slate-900/60 p-6 text-center shadow-xl backdrop-blur-md"><div class="font-black text-amber-300">KINTO</div><div class="mt-2 text-xs text-slate-300">تسوق وخدمات رقمية — نرحب باستفساراتكم</div><div class="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm"><a href="about-kinto.html" class="text-amber-200 hover:underline">من نحن</a><a href="contact-kinto.html" class="text-amber-200 hover:underline">اتصل بنا</a><span id="kintoShoppingContacts" class="inline-flex flex-wrap items-center justify-center gap-3" aria-label="تواصل مع منصة التسوق"></span><a href="contact-kinto.html" class="text-amber-200 hover:underline">استفسارات المشاريع البرمجية</a></div><div class="mt-4 text-xs text-slate-400">© 2026 KINTO — جميع الحقوق محفوظة | تطوير وإدارة KINTO</div></div></footer><script>
 /* Shopping contact links use the same read-only settings RPC as the CMS. */
-(async function hydrateKintoShoppingContacts(){
+(async function hydrateKintoShoppingContacts(attempt=0){
   const target=document.getElementById('kintoShoppingContacts');
   if(!target)return;
   try{
     const client=window.KintoSupabase;
-    if(!client||typeof client.rpc!=='function'){setTimeout(hydrateKintoShoppingContacts,1200);return;}
+    if(!client||typeof client.rpc!=='function'){if(attempt<8)setTimeout(()=>hydrateKintoShoppingContacts(attempt+1),1200);return;}
     const {data,error}=await client.rpc('get_site_settings');
     if(error)throw error;
     let settings=data;
