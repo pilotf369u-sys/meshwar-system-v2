@@ -5,6 +5,18 @@ android {
  // Candidate identity only. Production identity/version/signing await Play Console verification.
  defaultConfig { applicationId 'com.kinto.preview.hybrid.v15'; minSdk 28; targetSdk 36; versionCode 15; versionName '0.15-candidate' }
  buildTypes { release { debuggable false; minifyEnabled false; signingConfig null } }
- sourceSets { main { assets { exclude 'fixture-*', 'pricing-fixture.json', 'webview-regression.html' } } }
+ sourceSets { main { assets.srcDirs = [layout.buildDirectory.dir('candidate-assets')] } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+
+// Android asset merging does not honor generic source-directory excludes.
+// Build a dedicated allowlisted asset tree and wire it before every asset merge.
+def candidateAssets = tasks.register('prepareCandidateAssets', Sync) {
+ from('src/main/assets') {
+  include 'customer-navigation.html', 'hepsiburada-reader.js', 'product-reader.js', 'order-button.js', 'kinto-webview-compat.js'
+ }
+ into(layout.buildDirectory.dir('candidate-assets'))
+}
+tasks.configureEach {
+ if (name.startsWith('merge') && name.endsWith('Assets')) dependsOn(candidateAssets)
 }

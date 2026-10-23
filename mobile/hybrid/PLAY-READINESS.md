@@ -37,7 +37,8 @@ This is a non-production release candidate, not authorization to publish.
 3. Privacy policy / Data Safety: prepare public accurate policy, developer contact/identity, account/order/chat/photo data inventory, external-store browsing disclosure and retention/deletion details. Do not assert "no data collected". Owner must confirm business details and real support contact.
 4. Real-device candidate acceptance: customer login/logout, cart, local/global orders, invoices, video, chat, return navigation, no-data connectivity; Trendyol/Hepsi price/options on real product pages. CI synthetic tests do not prove all retailer pages work.
 5. Final store images/listing, content rating, reviewer access account and required Play test track. New personal accounts may require 12 opted-in testers for 14 consecutive days; confirm account type/date in Console.
-6. Signed production AAB, Play pre-launch report and owner approval before any upload/rollout. This branch has no Play publishing automation.
+6. Review the external-store WebView/reading feature against Google Play Webviews and Affiliate Spam policy and retailer terms/permission scope. KINTO adds its own order service; that does not by itself establish retailer authorization or guarantee acceptance. No permission evidence has been verified in this checkpoint.
+7. Signed production AAB, Play pre-launch report and owner approval before any upload/rollout. This branch has no Play publishing automation.
 
 ## Official references checked
 
@@ -47,3 +48,5 @@ This is a non-production release candidate, not authorization to publish.
 - https://support.google.com/googleplay/android-developer/answer/13327111
 - https://support.google.com/googleplay/android-developer/answer/10787469
 - https://support.google.com/googleplay/android-developer/answer/14151465
+
+- https://support.google.com/googleplay/android-developer/answer/9899034
