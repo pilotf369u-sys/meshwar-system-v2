@@ -47,7 +47,7 @@
 .world-embedded[data-workspace=staff] .world-orders{align-items:start}.world-embedded .world-server-changed,.world-embedded .world-legacy-batch{background:#fff1d2;padding:8px;border-radius:8px;color:#664c10}
 
 /* Compact global employee summaries; expanded controls occupy one full row. */
-.world-embedded[data-workspace=staff] .world-orders{grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px}
+.world-embedded[data-workspace=staff] .world-orders{grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:10px}
 .world-embedded .world-staff-card{padding:10px;margin:0;min-width:0;border-color:#c8b477;background:#fffdf7}
 .world-embedded .world-staff-card h2{font-size:13px;margin:4px 0}.world-embedded .world-staff-card>.world-kind{font-size:10px}.world-embedded .world-staff-card>.badge{font-size:11px;padding:2px 7px}.world-embedded .world-staff-card>strong{display:block;font-size:12px;margin:5px 0}.world-embedded .world-staff-card>details{margin-top:4px}.world-embedded .world-staff-card summary{font-size:12px;min-height:30px}.world-embedded .world-staff-card:has(details[open]){grid-column:1/-1}
 .world-embedded .world-staff-card>.world-legacy-batch{font-size:10px;padding:4px;margin:4px 0}.world-orders-pager{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center;margin:12px 0}.world-orders-pager small{flex-basis:100%;text-align:center}.world-orders-pager button[aria-current=page]{background:#edce78;color:#0a2f23}.world-orders-pager button{min-width:36px;padding:6px 10px}.world-order-dispatch{border:1px solid #d1b66c;background:#f5edd7;padding:12px;border-radius:12px;margin:12px 0}.world-order-dispatch select{margin:6px 0}
