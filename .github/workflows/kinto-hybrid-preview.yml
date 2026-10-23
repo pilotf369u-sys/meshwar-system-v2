@@ -2,7 +2,7 @@ name: KINTO hybrid isolated preview
 on:
   push:
     branches: [fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-global-orders-independent-20261023, app/kinto-product-confirmation-20261023, app/kinto-hybrid-preview-20261022, app/kinto-android-webview-fixes-20261022, app/kinto-navigation-invoice-20261022, app/kinto-global-pricing-20261022]
-    paths: ['mobile/hybrid/**', 'js/*global-pricing*', 'sql/kinto-global-pricing*', 'admin-dashboard.html', '.github/workflows/kinto-hybrid-preview.yml']
+    paths: ['mobile/hybrid/**', 'mobile/global-orders/customer-integrated-fixture.html', 'js/kinto-world-core-v1.js', 'js/kinto-world-workspace-v1.js', 'js/kinto-world-panels-v1.js', 'css/kinto-world-panels-v1.css', 'js/*global-pricing*', 'sql/kinto-global-pricing*', 'admin-dashboard.html', '.github/workflows/kinto-hybrid-preview.yml']
   workflow_dispatch:
 permissions:
   contents: read
