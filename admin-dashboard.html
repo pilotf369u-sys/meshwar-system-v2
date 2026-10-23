@@ -425,7 +425,7 @@ function mergeAdminGlobalStores(cloud){
   // Once every baseline store has been seeded, Supabase is authoritative.
   // Do not resurrect deleted/hidden entries from the old code fallback.
   const baseline=adminStoreDefaults();
-  if(baseline.length&&baseline.every(d=>rows.some(c=>adminStoreKey(c.name)===adminStoreKey(d.name))))
+  if(rows.length>0)
     return [...rows].sort((a,b)=>(Number(a.sort_order)||999999)-(Number(b.sort_order)||999999)||Number(a.id)-Number(b.id)).map(c=>({...c,_baseline:false,_cloud:true}));
   rows.forEach(store=>byName.set(adminStoreKey(store.name),store));
   const merged=adminStoreDefaults().map(d=>{const c=byName.get(adminStoreKey(d.name));if(c){used.add(String(c.id));return {...d,...c,_baseline:true,_cloud:true}}return {...d,id:null,_baseline:true,_cloud:false,is_active:true}});
