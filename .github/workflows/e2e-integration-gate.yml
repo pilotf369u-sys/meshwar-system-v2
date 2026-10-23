@@ -68,7 +68,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         if: steps.scope.outputs.delivery_css_only != 'true'
-        run: npx playwright install --with-deps chromium
+        # Ubuntu runners already include Chrome system libraries. Avoid an unrelated apt mirror upgrade.
+        run: npx playwright install chromium
       - name: Run MeshWar E2E suite
         if: steps.scope.outputs.delivery_css_only != 'true'
         run: npm run test:e2e
