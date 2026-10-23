@@ -86,7 +86,7 @@ assert 'بيانات الاختبار المصطنعة لا تُرسل' in texts
 print('PASS: synthetic fixture explicitly blocked from server submission')
 
 # Capture a second product; the new confirmation must show ONLY that product.
-click('حسنًا')
+click('حسنًا');time.sleep(2)
 adb('shell','input','keyevent','82');click('تجربة كاملة');time.sleep(5)
 click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
 visible=nodes();assert sum('حذف هذا المنتج من المسودة'==n.get('text','') for n in visible)==1,visible
