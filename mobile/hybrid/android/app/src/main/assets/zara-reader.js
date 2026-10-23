@@ -50,16 +50,19 @@
  // Structured fallback must match current color, country, URL and every matching size price.
  if(!prices.length&&!foreign&&offers.length){const all=offers.map(({o})=>number(o.price)),p=unique(all);if(all.every(n=>n!==null)&&p.length===1){price=p[0];priceRaw=String(price)+' TRY';priceSource='structured';}}
  const variantPriceValues=offers.map(({o})=>number(o.price));
+ const colorPriceValues=(group?.hasVariant||[]).filter(v=>text(v.color)===color).flatMap(v=>[].concat(v.offers||[])).filter(o=>o?.priceCurrency==='TRY'&&samePage(o.url)).map(o=>number(o.price));
+ const flatColorPrice=colorPriceValues.length>0&&colorPriceValues.every(n=>n!==null)&&unique(colorPriceValues).length===1;
  let reason='';
  if(price===null)reason=prices.length>1?'Z_PRICE_AMBIGUOUS':'Z_PRICE_MISSING';
  if(priceSource==='structured'&&(group&&(!variants.length||!offers.length)||!size&&unique(variantPriceValues).length>1)){price=null;reason='Z_VARIANT_MISMATCH';}
  // Visible current-price data is the purchase surface. SEO data can lag after hydration.
  // On disagreement require two reads >=1.5s apart with identical product/color/size/TRY price.
- if(priceSource==='visible'&&group&&(!variants.length||!offers.length||variantPriceValues.some(n=>n===null||n!==price))){
+ if(price!==null&&priceSource==='visible'&&group&&(!variants.length||!offers.length||variantPriceValues.some(n=>n===null||n!==price))){
   const signature=JSON.stringify([key,color,size,price]),now=Date.now(),state=window.__kintoZaraSelection;
   if(state.priceCheck?.signature!==signature)state.priceCheck={signature,since:now};
-  if(now-state.priceCheck.since<1500){price=null;reason='Z_PRICE_SETTLING';}
+  if(!flatColorPrice||now-state.priceCheck.since<1500){price=null;reason=flatColorPrice?'Z_PRICE_SETTLING':'Z_VARIANT_MISMATCH';}
  }else if(window.__kintoZaraSelection)window.__kintoZaraSelection.priceCheck=null;
+ if(!size&&unique(colorPriceValues).length>1){price=null;reason='Z_SIZE_REQUIRED_PRICE';}
  if(activeChoice?.blocked){price=null;reason='Z_SIZE_UNAVAILABLE';}
  if(!color){price=null;reason=colors.length>1?'Z_COLOR_AMBIGUOUS':'Z_COLOR_MISSING';}
  if(sizes.length>1){price=null;reason='Z_SIZE_AMBIGUOUS';}
