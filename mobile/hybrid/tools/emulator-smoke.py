@@ -84,3 +84,13 @@ time.sleep(1)
 texts=' '.join(n.get('text','') for n in nodes())
 assert 'بيانات الاختبار المصطنعة لا تُرسل' in texts,texts
 print('PASS: synthetic fixture explicitly blocked from server submission')
+
+# Load the real bundled review assets without a customer session or any write.
+adb('shell','am','force-stop','com.kinto.preview.hybrid.v6')
+adb('shell','am','start','-n','com.kinto.preview.hybrid.v6/com.kinto.trendyollab.MainActivity','--ez','bundledReviewFixture','true')
+for _ in range(12):
+ texts=' '.join(n.get('text','') for n in nodes())
+ if 'إرسال الطلب لا يعني شراء المنتج' in texts and 'دخول العميل' in texts:break
+ time.sleep(1)
+assert 'إرسال الطلب لا يعني شراء المنتج' in texts and 'دخول العميل' in texts,texts
+print('PASS: bundled customer review HTML, scripts and policy load at the trusted origin without production writes')
