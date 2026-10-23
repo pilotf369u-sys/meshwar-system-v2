@@ -131,7 +131,15 @@ print('PASS: embedded My Orders, saved profile, consent and submission fixture; 
 adb('shell','am','force-stop','com.kinto.preview.hybrid.v9')
 adb('shell','am','start','-n','com.kinto.preview.hybrid.v9/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true');time.sleep(4)
 adb('shell','input','keyevent','82');click('تجربة هبسي بوردا');time.sleep(5)
-labels=' '.join(n.get('text','') for n in nodes());assert '35750 IQD' in labels,labels
+for _ in range(12):
+ labels=' '.join(n.get('text','') for n in nodes())
+ if '35750 IQD' in labels:break
+ time.sleep(1)
+if '35750 IQD' not in labels:
+ print(adb('logcat','-d','-t','200','AndroidRuntime:E','chromium:E','*:S'))
+ print(adb('shell','dumpsys','activity','activities')[-5000:])
+ with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'hepsiburada-review-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
+assert '35750 IQD' in labels,labels
 click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
 hepsi=saved_drafts();assert len(hepsi)==1 and hepsi[0]['source']=='hepsiburada' and hepsi[0]['url'].endswith('-p-HBCV0000TEST'),hepsi
 assert hepsi[0]['fixture'] is True and hepsi[0]['convertedTotalIQD']=='35750' and hepsi[0]['selectedOptions']=={'size':'L','color':'Haki'},hepsi
