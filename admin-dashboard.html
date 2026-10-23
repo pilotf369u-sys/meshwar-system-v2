@@ -421,16 +421,10 @@ let adminGlobalStoresMerged=[];
 function adminStoreDefaults(){return Array.isArray(window.MeshwarGlobalStoreDefaults)?window.MeshwarGlobalStoreDefaults:[]}
 function adminStoreKey(v){return String(v||'').trim().toLocaleLowerCase()}
 function mergeAdminGlobalStores(cloud){
-  const rows=Array.isArray(cloud)?cloud:[],byName=new Map(),used=new Set();
-  // Once every baseline store has been seeded, Supabase is authoritative.
-  // Do not resurrect deleted/hidden entries from the old code fallback.
-  const baseline=adminStoreDefaults();
-  if(rows.length>0)
-    return [...rows].sort((a,b)=>(Number(a.sort_order)||999999)-(Number(b.sort_order)||999999)||Number(a.id)-Number(b.id)).map(c=>({...c,_baseline:false,_cloud:true}));
-  rows.forEach(store=>byName.set(adminStoreKey(store.name),store));
-  const merged=adminStoreDefaults().map(d=>{const c=byName.get(adminStoreKey(d.name));if(c){used.add(String(c.id));return {...d,...c,_baseline:true,_cloud:true}}return {...d,id:null,_baseline:true,_cloud:false,is_active:true}});
-  rows.forEach(c=>{if(!used.has(String(c.id)))merged.push({...c,_baseline:false,_cloud:true})});
-  return merged.sort((a,b)=>(Number(a.sort_order)||999999)-(Number(b.sort_order)||999999)||String(a.name||'').localeCompare(String(b.name||''),'ar'));
+  // Supabase is the sole source of truth. Deleted/hidden rows must never be
+  // reintroduced from the legacy 50-store JavaScript list.
+  return (Array.isArray(cloud)?cloud:[]).map(store=>({...store,_cloud:true,_baseline:false}))
+    .sort((a,b)=>(Number(a.sort_order)??999999)-(Number(b.sort_order)??999999)||Number(a.id)-Number(b.id));
 }
 function populateStoreImageOptions(){const el=document.getElementById('storeImageSelect');if(!el)return;const current=el.value,paths=[...new Set(adminStoreDefaults().map(x=>String(x.logo_url||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));el.innerHTML='<option value="">اختر شعاراً من مجلد images/</option>'+paths.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(paths.includes(current))el.value=current}
 function selectStoreImage(value){if(value)document.getElementById('storeImg').value=value}
@@ -442,7 +436,7 @@ async function loadStoresAdmin(){
   populateStoreImageOptions();
   const sb=await ensureCustomerSupabase(),{data,error}=await sb.from('global_stores').select('*').order('sort_order',{ascending:true}).order('id',{ascending:true}).limit(1000);
   const cloud=error?[]:(data||[]);adminGlobalStoresMerged=mergeAdminGlobalStores(cloud);
-  storesAdminNotice.textContent=error?'تعذر جلب global_stores؛ يتم عرض القائمة الأساسية مؤقتاً: '+String(error.message||error):`يعرض ${adminGlobalStoresMerged.length} متجرًا (${cloud.length} سجل سحابي + القائمة الأساسية عند الحاجة).`;
+  storesAdminNotice.textContent=error?'تعذر جلب المتاجر من Supabase: '+String(error.message||error):`يعرض ${cloud.length} متجرًا من Supabase.`;
   storesTableBody.innerHTML=adminGlobalStoresMerged.map((s,i)=>{const canDelete=s.id!==null&&s.id!==undefined&&String(s.id)!=='';const active=s.is_active!==false;return `<tr><td>${storeLogoPreview(s)}</td><td><b>${esc(s.name||'')}</b>${s._cloud?'':'<div class="mini">أساسي — غير مزروع سحابياً بعد</div>'}</td><td>${esc(s.category||'')}</td><td><a href="${esc(s.store_url||'#')}" target="_blank" rel="noopener" style="color:#f6c85f;word-break:break-all">${esc(s.store_url||'')}</a></td><td><span class="mini">${active?'ظاهر للعميل':'مخفي عن العميل'}</span></td><td><button class="btn-orange" onclick="editStore(${i})">✏️ تعديل</button> <button class="btn-dark" ${canDelete?'':'disabled title="يتطلب نقل المتجر إلى Supabase أولاً"'} onclick="toggleGlobalStoreVisibility(${i})">${active?'إخفاء':'إظهار'}</button> ${canDelete?`<button class="btn-red" onclick="deleteStore('${encodeURIComponent(String(s.id))}')">حذف</button>`:'<button class="btn-dark" disabled title="طبّق Seed أولاً ليصبح للمتجر سجل Supabase قابل للحذف">حذف</button>'}</td></tr>`}).join('')||'<tr><td colspan="6">لا توجد متاجر عالمية.</td></tr>';
 }
 async function toggleGlobalStoreVisibility(index){
