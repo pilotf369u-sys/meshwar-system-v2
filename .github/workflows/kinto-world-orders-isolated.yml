@@ -1,9 +1,9 @@
 name: KINTO independent global orders
 on:
   push:
-    branches: [fix/world-order-cards-compact-20261023, fix/world-employee-entry-cache-20261023, fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-world-staff-specialty-20261023, app/kinto-global-orders-independent-20261023]
+    branches: [fix/world-staff-pricing-stages-20261023, fix/world-order-cards-compact-20261023, fix/world-employee-entry-cache-20261023, fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-world-staff-specialty-20261023, app/kinto-global-orders-independent-20261023]
   pull_request:
-    paths: ['sql/kinto-global-orders-independent-v1.sql', 'sql/kinto-world-staff-accounts-v1.sql', 'sql/kinto-world-workflow-integration-v1.sql', 'js/admin-world-staff-v1.js', 'supabase/functions/kinto-world-staff-security-v1/**', 'mobile/global-orders/**', 'js/kinto-world*', '*world-workspace*', 'global-order-review.html', 'global-staff-workspace.html']
+    paths: ['sql/kinto-world-staff-fulfillment-v2.sql', 'sql/kinto-global-orders-independent-v1.sql', 'sql/kinto-world-staff-accounts-v1.sql', 'sql/kinto-world-workflow-integration-v1.sql', 'js/admin-world-staff-v1.js', 'supabase/functions/kinto-world-staff-security-v1/**', 'mobile/global-orders/**', 'js/kinto-world*', '*world-workspace*', 'global-order-review.html', 'global-staff-workspace.html']
 permissions:
   contents: read
 jobs:
@@ -38,6 +38,10 @@ jobs:
         env:
           PGPASSWORD: isolated-test-only
         run: psql -h localhost -U postgres -d kinto_world_test -v ON_ERROR_STOP=1 -f mobile/global-orders/workflow-integration-check.sql
+      - name: Global staff shipping stages and search
+        env:
+          PGPASSWORD: isolated-test-only
+        run: psql -h localhost -U postgres -d kinto_world_test -v ON_ERROR_STOP=1 -f mobile/global-orders/staff-fulfillment-check.sql
       - name: Two-connection idempotency
         env:
           PGPASSWORD: isolated-test-only
@@ -46,16 +50,17 @@ jobs:
         run: |
           python3 mobile/global-orders/prepare-employee-page-fixture.py
           python3 mobile/global-orders/prepare-customer-cards-fixture.py
-          for fixture in staff customer admin-staff dispatch customer-integrated employee-integrated employee-page; do
+          for fixture in staff-fulfillment staff customer admin-staff dispatch customer-integrated employee-integrated employee-page; do
             google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --dump-dom "file://$PWD/mobile/global-orders/$fixture-fixture.html" > "$RUNNER_TEMP/$fixture-world.html"
           done
           google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --window-size=420,1000 --dump-dom "file://$PWD/.kinto-customer-cards-test.html" > "$RUNNER_TEMP/customer-styled.html"
           google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --window-size=420,1000 --hide-scrollbars --screenshot="$RUNNER_TEMP/customer-cards.png" "file://$PWD/.kinto-customer-cards-test.html"
+          google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --window-size=1280,1800 --hide-scrollbars --screenshot="$RUNNER_TEMP/staff-review.png" "file://$PWD/.kinto-employee-page-test.html?orderScope=world"
           python3 - <<'PYTEST'
           import os,pathlib
           styled=pathlib.Path(os.environ['RUNNER_TEMP'],'customer-styled.html').read_text()
           assert '>PASS_CUSTOMER_INTEGRATED_UI<' in styled,styled
-          for kind in ['staff','customer','admin-staff','dispatch','customer-integrated','employee-integrated','employee-page']:
+          for kind in ['staff-fulfillment','staff','customer','admin-staff','dispatch','customer-integrated','employee-integrated','employee-page']:
             content=pathlib.Path(os.environ['RUNNER_TEMP'],kind+'-world.html').read_text()
             assert '>PASS_'+kind.upper().replace('-','_')+'_UI<' in content,content
           PYTEST
@@ -64,5 +69,7 @@ jobs:
         if: always()
         with:
           name: global-customer-card-visual-check
-          path: ${{ runner.temp }}/customer-cards.png
+          path: |
+            ${{ runner.temp }}/customer-cards.png
+            ${{ runner.temp }}/staff-review.png
           retention-days: 7
