@@ -158,7 +158,8 @@ for _ in range(12):
  if '35750 IQD' in labels:break
  time.sleep(1)
 assert '35750 IQD' in labels,labels
-click('L');time.sleep(2)
+size_node=next(n for n in nodes() if n.get('text')=='L')
+b=list(map(int,re.findall(r'\d+',size_node.get('bounds',''))));adb('shell','input','tap',str((b[0]+b[2])//2),str((b[1]+b[3])//2));time.sleep(2)
 click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
 zara=[p for p in saved_drafts() if p['source']=='zara'];assert len(zara)==1,zara
 assert zara[0]['price']==1000 and zara[0]['priceSource']=='visible',zara
