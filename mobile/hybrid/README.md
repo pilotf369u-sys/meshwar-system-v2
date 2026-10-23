@@ -11,12 +11,14 @@ SQL review files `sql/kinto-world-zara-v1.sql` and `sql/kinto-world-zara-rollbac
 Existing Trendyol and Hepsiburada readers are byte-for-byte unchanged. Separate com.kinto.preview.hybrid.v11 disposable identity; production package, assetlinks and signing untouched.
 
 
+## Earlier Hepsiburada implementation (retained)
+
 Mobile markup uses `merchant-name` for identity and `merchant-label` for the official/authorized seller badge. Preview 9 confused these fields and rejected matching structured prices. The adapter now prefers the actual name; known badges alone are not identities. Existing selected-variant, exact URL, currency and multiple-offer guards remain. Trendyol reader, account sessions, SQL and local workflows are unchanged. Preview 10 uses a separate disposable package and requires device acceptance.
 
 
 Adds an independent Hepsiburada reader for HTTPS product and parent-product URLs.
 Price, chosen size/capacity/other variant values and color are confirmed before a
-single-product draft is handed back to the trusted KINTO account renderer. Both
+single-product draft is handed back to the trusted KINTO account renderer. The
 retailers reuse the current admin TRY exchange/commission settings and existing
 world order/payment/staff/branch/courier lifecycle. Shipping remains staff-reviewed;
 purchase is only after verified payment and availability review.
@@ -28,13 +30,7 @@ are added. Conditional premium/installment prices and conflicting/missing varian
 selections do not authorize an estimated price. Hepsi DOM selectors were checked
 against a public product page; this is not a guarantee for every live layout.
 
-`sql/kinto-world-hepsiburada-v1.sql` is REVIEW ONLY until the owner explicitly
-approves production SQL. It changes only the existing global submission URL/image
-allowlists, with an expected-source hash and transactional verification. No tables,
-triggers, pricing rules, session helpers or local operations are changed. The paired
-rollback restores the previous submission function without deleting any orders.
-Existing Trendyol normalization/idempotency stays byte-compatible. Browser store
-labels/image/link handling is updated separately for Hepsi.
+`sql/kinto-world-hepsiburada-v1.sql` was approved and activated with PR #1057; the mobile seller fix was accepted and merged as PR #1058. These historical SQL files remain for reference and disposable tests. Do not rerun them over the Zara extension: use the reviewed Zara pair and its hash guards.
 
 Tests: unit reader/URL/options/price boundaries; synthetic Android product capture,
 conversion, confirmation and refusal to send fixtures to production; disposable
@@ -48,10 +44,7 @@ separate from Preview 8 and production `com.kinto.app`. Signing files stay outsi
 the repository. Local unsent drafts are not automatically migrated between these
 separate preview identities. No production fingerprint/assetlinks changes.
 
-Activation order: approve reviewed SQL; activate it; merge reviewed web/native
-changes; prepare release branch; owner manually publishes Hostinger; install V9
-and confirm real-site behavior. No production writes, merges, hosting or store
-publication are performed merely by building this preview.
+Current activation order is described at the top for Preview 11. Building this preview does not authorize production SQL, merge, hosting or store publication.
 
 # Android preview 0.3 — store navigation and mobile invoice layout
 

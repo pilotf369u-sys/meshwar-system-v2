@@ -18,10 +18,10 @@ def nodes():
    if attempt==4:raise
    time.sleep(1)
 
-def click(text,attempts=6,scroll=False):
+def click(text,attempts=6,scroll=False,exact=False):
  for _ in range(attempts):
   for n in nodes():
-   if text in n.get('text',''):
+   if (n.get('text','')==text if exact else text in n.get('text','')):
     b=list(map(int,re.findall(r'\d+',n.get('bounds',''))))
     if len(b)==4 and b[2]>b[0] and b[3]>b[1]:
      adb('shell','input','tap',str((b[0]+b[2])//2),str((b[1]+b[3])//2));return
@@ -153,7 +153,7 @@ adb('shell','am','force-stop','com.kinto.preview.hybrid.v11')
 adb('shell','pm','clear','com.kinto.preview.hybrid.v11')
 adb('shell','am','start','-n','com.kinto.preview.hybrid.v11/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true');time.sleep(4)
 adb('shell','input','keyevent','82');click('تجربة زارا');time.sleep(5)
-click('L')
+click('L',exact=True)
 for _ in range(12):
  labels=' '.join(n.get('text','') for n in nodes())
  if '35750 IQD' in labels:break
