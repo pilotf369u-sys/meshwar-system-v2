@@ -1,4 +1,8 @@
 -- DISPOSABLE DATABASE ONLY. Existing world lifecycle/bootstrap checks must run first.
+-- The preceding search test deliberately creates 105 FUTURE-dated empty requests.
+-- Remove only those synthetic fixtures after their own >100-row assertion passed;
+-- otherwise they displace every new request from the normal 100-row listing.
+DELETE FROM private.kinto_world_orders_v1 WHERE request->'items'='[]'::jsonb AND request->'contact'->>'name'='TEST newer';
 CREATE FUNCTION pg_temp.expect_error(stmt text,expected text) RETURNS void LANGUAGE plpgsql AS $$BEGIN BEGIN EXECUTE stmt;EXCEPTION WHEN OTHERS THEN IF SQLERRM=expected THEN RETURN;END IF;RAISE;END;RAISE EXCEPTION 'EXPECTED_ERROR_NOT_RAISED: %',expected;END $$;
 CREATE TEMP TABLE madame_preservation AS SELECT
  (SELECT md5(string_agg(p.oid::text||p.prosrc,',' ORDER BY p.oid)) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN('public','private') AND p.oid<>'public.kinto_world_submit_v1(text,uuid,jsonb)'::regprocedure) AS functions,
