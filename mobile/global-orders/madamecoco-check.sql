@@ -11,8 +11,6 @@ DO $$DECLARE request jsonb; item jsonb; o jsonb; replay jsonb; bad text; n bigin
  request:='{"policy_accepted":true,"contact":{"name":"TEST Madame customer","phone":"00000000","address":"TEST destination address"},"items":[{"url":"https://www.madamecoco.com/test-nt0000000001-101/","image":"https://4d0873.akinoncloudcdn.com/products/test.jpg","title":"TEST Madame product","price":"1000","quantity":1,"size":"L","color":"Haki","options_confirmed":true}]}';
  o:=public.kinto_world_submit_v1('test-customer','00000000-0000-0000-0000-000000009101',request);
  IF o->>'state'<>'review' OR o->'request'->'items'->0->>'image'<>'https://4d0873.akinoncloudcdn.com/products/test.jpg' OR (o->'estimates'->0->>'amount')::numeric<>35750 THEN RAISE EXCEPTION 'MADAME_REVIEW_PRICING';END IF;
- IF NOT EXISTS(SELECT FROM jsonb_array_elements(public.kinto_world_list_v1('employee','test-staff')) x WHERE x->>'id'=o->>'id') THEN RAISE EXCEPTION 'MADAME_STAFF_NOT_VISIBLE';END IF;
- IF EXISTS(SELECT FROM jsonb_array_elements(public.kinto_world_list_v1('customer','other-customer')) x WHERE x->>'id'=o->>'id') THEN RAISE EXCEPTION 'MADAME_CUSTOMER_ISOLATION';END IF;
  replay:=public.kinto_world_submit_v1('test-customer','00000000-0000-0000-0000-000000009101',request);
  IF replay->>'id'<>o->>'id' THEN RAISE EXCEPTION 'MADAME_DUPLICATE';END IF;
  PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_submit_v1(%L,%L,%L)','test-customer','00000000-0000-0000-0000-000000009101',jsonb_set(request,'{items,0,price}','"2000"')),'WORLD_IDEMPOTENCY_CONFLICT');
@@ -26,6 +24,13 @@ DO $$DECLARE request jsonb; item jsonb; o jsonb; replay jsonb; bad text; n bigin
  o:=public.kinto_world_submit_v1('test-customer','00000000-0000-0000-0000-000000009102',request);
  IF o->'request'->'items'->0->>'image'<>'https://cdn.dsmcdn.com/test.jpg' OR o->>'state'<>'review' THEN RAISE EXCEPTION 'TRENDYOL_REGRESSION';END IF;
  replay:=public.kinto_world_submit_v1('test-customer','00000000-0000-0000-0000-000000009102',request);IF replay->>'id'<>o->>'id' THEN RAISE EXCEPTION 'TRENDYOL_REPLAY';END IF;
+END $$;
+-- Listing is a separate API request/statement after submission commits.
+DO $$DECLARE o jsonb;BEGIN
+ SELECT value INTO o FROM jsonb_array_elements(public.kinto_world_list_v1('customer','test-customer')) WHERE value->'request'->'items'->0->>'url'='https://www.madamecoco.com/test-nt0000000001-101/';
+ IF o IS NULL THEN RAISE EXCEPTION 'MADAME_CUSTOMER_NOT_VISIBLE';END IF;
+ IF NOT EXISTS(SELECT FROM jsonb_array_elements(public.kinto_world_list_v1('employee','test-staff')) x WHERE x->>'id'=o->>'id') THEN RAISE EXCEPTION 'MADAME_STAFF_NOT_VISIBLE';END IF;
+ IF EXISTS(SELECT FROM jsonb_array_elements(public.kinto_world_list_v1('customer','other-customer')) x WHERE x->>'id'=o->>'id') THEN RAISE EXCEPTION 'MADAME_CUSTOMER_ISOLATION';END IF;
 END $$;
 RESET ROLE;
 \i sql/kinto-world-madamecoco-rollback-v1.sql
