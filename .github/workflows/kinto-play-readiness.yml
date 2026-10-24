@@ -6,7 +6,11 @@ name: KINTO Play readiness audit
     paths:
     - mobile/hybrid/android/**
     - mobile/hybrid/tools/**
-    - mobile/release/**
+    - mobile/release/audit-package.py
+    - mobile/release/source-scope-check.py
+    - mobile/release/release-inputs.test.py
+    - mobile/release/accepted28-*.json
+    - mobile/release/play-verified-config.example.json
     - .github/workflows/kinto-play-readiness.yml
   workflow_dispatch: null
 permissions:
@@ -46,6 +50,7 @@ jobs:
       run: python3 mobile/hybrid/tools/check-release-artifacts.py
     - name: Audit compiled distribution and read-only policy gates
       run: |
+        python3 mobile/release/source-scope-check.py
         python3 mobile/release/audit-package.py
         python3 mobile/release/release-inputs.test.py
     - uses: actions/upload-artifact@v4

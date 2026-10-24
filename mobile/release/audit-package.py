@@ -35,6 +35,6 @@ for mode in ['cloud-backup','device-transfer']:
 compiled=subprocess.check_output([str(aapt),'dump','xmltree','--file','AndroidManifest.xml',str(out/'apk/release/app-release-unsigned.apk')],text=True)
 assert 'dataExtractionRules' in compiled and 'fullBackupContent' in compiled
 report['checks']['explicit_backup_and_transfer_exclusions']=True
-report['notes']=['Pure Java app has no packaged native .so requiring ELF page realignment; system WebView is maintained outside this APK.','This inspection is not a Play pre-launch report or policy approval.','Final Console identity, signing, deletion fulfillment and declarations remain gates.']
+report['notes']=['DEX equality may differ when generated resource classes/IDs change; accepted Java logic is checked separately.','Pure Java app has no packaged native .so requiring ELF page realignment; system WebView is maintained outside this APK.','This inspection is not a Play pre-launch report or policy approval.','Final Console identity, signing, deletion fulfillment and declarations remain gates.']
 dest=root/'mobile/release/evidence/package-audit.json';dest.parent.mkdir(exist_ok=True);dest.write_text(json.dumps(report,indent=2)+'\n')
 print('PASS_COMPILED_PACKAGE: INTERNET only, target36/min28, not debuggable, no fixtures/secrets/native libraries; unsigned preview identity only')
