@@ -1,0 +1,11 @@
+# MAD mobile price correction — preview23
+
+Owner accepted Mango22 on-device; MAD Dubai discovery set showed 699.99 TRY (retail899.99) but KINTO could not confirm price. Screenshots show both product details and a mobile pinned purchase bar. Exact live runtime rejection was not available; do not claim the screenshots prove the same cause as Zara.
+
+Scope: MAD reader only, bounded MAD failure diagnostic, private23 identity and focused tests. Rollback before-mad-price-v23-20261024 at0aa90975eb03044eea298473ea5dea7669b1553f. Accepted Mango/Trendyol/Hepsi/Zara/Madame readers and Pricing/AdminPricing unchanged and hash-checked. No server admission, production SQL, host settings, merge, deployment or production signing changes.
+
+Decouple current title/price/volume root from potentially portalled add-to-cart control. Same-product purchase-price panels may carry the visible current price while the inline copy is hidden or moved. aria-hidden is not visual hiding. Explicit retail-price/line-through/del/s amounts excluded. Dedupe equivalent same-SKU/TRY-offer/availability/options Product copies; any actual conflict still rejects. Normalize typographic multiplication in current title, cross-check selected native volume and visible header. Exact current URL/canonical, title, SKU, TRY, current visible price matching offer and in-stock guards remain mandatory. Never cache an initial price or select cheapest/first amount.
+
+Fifteen offline cases use sanitized observed owner-product markup: current root, purchase control portal, aria-hidden mobile copy, schema duplication, title typography, crossed-out retail amount, unrelated price, sticky-only price, scroll, true price/schema conflict, currency, stock, volume conflict and URL transition. Native synthetic MAD fixture portals purchase control and duplicates schema after hydration, then checks quote/restoration/confirmation/local TEST draft. New focused workflow avoids unrelated flaky global Chrome/Zara accessibility stages; this is not a claim the previously incomplete comprehensive suite is green.
+
+Failure-only copy report includes productId, rejection codes, current option strings and bounded counts/current price candidates; never cookies, storage, identity/session, account or automatic uploads. Actual owner phone acceptance still required.

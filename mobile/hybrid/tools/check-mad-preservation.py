@@ -1,0 +1,6 @@
+from pathlib import Path
+import hashlib
+expected={'mobile/hybrid/android/app/src/main/assets/mango-reader.js': 'be1e63403543d479b62a40d43e1c38a7c708b1e33572e967e79701897a22ed6a', 'mobile/hybrid/android/app/src/main/assets/product-reader.js': '92b4b7bb3862ce8e0636718a591db7549020d9219131d97cc6841ca4e36f0c7b', 'mobile/hybrid/android/app/src/main/assets/hepsiburada-reader.js': '348de7d9d8c8861cb2ce0a4361e621c07070867fd6a7c4b2dbe6d1e3dcc38460', 'mobile/hybrid/android/app/src/main/assets/zara-reader.js': '61c129b39dfb2469f8920a9c3bfab977626f860e97f0a44ace97073405316c42', 'mobile/hybrid/android/app/src/main/assets/madamecoco-reader.js': '709c0dae167a9b1286cb5af9246d3d28a0c414c6292791d496ce9061fc024512', 'mobile/hybrid/android/app/src/main/java/com/kinto/trendyollab/Pricing.java': '24536f714578215ed2932ac2cbf5542dfd3b4bc4d42b76248a6f6af93dc3a02c', 'mobile/hybrid/android/app/src/main/java/com/kinto/trendyollab/AdminPricing.java': 'f121d448eb2668e9fc3aac688425099ad5153a0fcebb96e23bfc0d8eb4ef4a51'}
+for path,digest in expected.items():
+ assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==digest,path
+print("PASS_MAD_SCOPE: accepted Mango/Trendyol/Hepsi/Zara/Madame readers and pricing byte-identical")

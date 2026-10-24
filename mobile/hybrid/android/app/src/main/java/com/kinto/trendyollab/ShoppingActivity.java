@@ -98,9 +98,13 @@ public class ShoppingActivity extends Activity {
    if(!url.equals(currentProductPage)){status.setText("تغيرت الصفحة؛ اضغط الإضافة من المنتج الجديد");return;}
    try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);rememberZara(item);
     if(item.has("error")||!url.equals(item.optString("pageUrl"))||quote==null||!quote.fromCurrency.equals(item.optString("currency")))throw new JSONException("Page mismatch");
-    item.put("url",url);item.put("savedAt",System.currentTimeMillis());if("zara".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showZaraReport(item);else if("madamecoco".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showMadameReport(item);else confirmProduct(item);
+    item.put("url",url);item.put("savedAt",System.currentTimeMillis());if("zara".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showZaraReport(item);else if("madamecoco".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showMadameReport(item);else if("madparfum".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showMadReport(item);else confirmProduct(item);
    }catch(JSONException e){status.setText("تعذرت قراءة بيانات المنتج؛ لم نحفظ شيئاً. حدّث الصفحة وجرب.");}
   });
+ }
+ private void showMadReport(JSONObject item){
+  JSONObject safe=new JSONObject();try{for(String key:new String[]{"productId","warning","observedOptions","diagnostics"})safe.put(key,item.opt(key));}catch(JSONException ignored){}
+  String report="KINTO MAD 23\n"+safe.toString();new AlertDialog.Builder(this).setTitle("تعذرت قراءة سعر MAD").setMessage("يمكن نسخ تقرير القراءة لمراجعته؛ لم يُرسل طلب.").setPositiveButton("نسخ التقرير",(d,w)->{android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);clipboard.setPrimaryClip(android.content.ClipData.newPlainText("KINTO MAD 23",report));Toast.makeText(this,"نُسخ التقرير؛ ألصقه في المحادثة",Toast.LENGTH_LONG).show();}).setNegativeButton("إغلاق",null).show();
  }
  private void showMadameReport(JSONObject item){
   JSONObject safe=new JSONObject();try{for(String key:new String[]{"productId","warning","observedOptions","diagnostics"})safe.put(key,item.opt(key));}catch(JSONException ignored){}
