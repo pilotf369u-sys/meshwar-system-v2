@@ -13,7 +13,7 @@ public class MainActivity extends Activity {
   ServiceWorkerController.getInstance().setServiceWorkerClient(new ServiceWorkerClient(){@Override public WebResourceResponse shouldInterceptRequest(WebResourceRequest r){return bundledReview(r.getUrl());}});
   web=new WebView(this);root.addView(web,new LinearLayout.LayoutParams(-1,0,1));surface=new FrameLayout(this);surface.addView(root);setContentView(surface);
   if(Build.VERSION.SDK_INT>=31)getSplashScreen().setOnExitAnimationListener(view->{view.remove();if(launch!=null)launch.start();});
-  if(state==null){launch=new LaunchOverlay(surface,()->{launchNavigationFailed=false;web.reload();});if(Build.VERSION.SDK_INT<31)surface.post(()->{if(launch!=null)launch.start();});}
+  if(state==null)launch=new LaunchOverlay(surface,()->{launchNavigationFailed=false;web.reload();});
   WebSettings s=web.getSettings();s.setUserAgentString(s.getUserAgentString()+" KINTOHybrid/0.21");s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(true);s.setJavaScriptCanOpenWindowsAutomatically(true);s.setMediaPlaybackRequiresUserGesture(true);
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
   web.setWebViewClient(new WebViewClient(){

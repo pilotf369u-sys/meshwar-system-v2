@@ -18,7 +18,8 @@ final class LaunchOverlay {
   message=new TextView(c);message.setText("KINTO");message.setTextColor(Color.rgb(239,209,133));message.setTextSize(20);message.setGravity(Gravity.CENTER);message.setPadding(24,10,24,10);stack.addView(message);
   retry=new Button(c);retry.setText("إعادة المحاولة");retry.setAllCaps(false);retry.setVisibility(View.GONE);retry.setOnClickListener(v->{failed=false;ready=false;retry.setVisibility(View.GONE);message.setText("جارٍ الاتصال بـ KINTO…");handler.removeCallbacks(deadline);handler.postDelayed(deadline,12000);reload.run();});stack.addView(retry);
   host.addView(cover,new FrameLayout.LayoutParams(-1,-1));
-  handler.postDelayed(this::start,600);
+  if(Build.VERSION.SDK_INT<31)cover.getViewTreeObserver().addOnDrawListener(new android.view.ViewTreeObserver.OnDrawListener(){boolean drawn;public void onDraw(){if(drawn)return;drawn=true;cover.post(()->{if(cover.getViewTreeObserver().isAlive())cover.getViewTreeObserver().removeOnDrawListener(this);start();});}});
+  handler.postDelayed(()->{if(!started&&!closed){start();fail("تأخر تجهيز الشاشة. أعد المحاولة.");}},12000);
  }
  void start(){
   if(started||closed)return;started=true;
