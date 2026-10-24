@@ -5,7 +5,7 @@ source=Path(__file__).with_name('emulator-smoke.py')
 module=ast.parse(source.read_text())
 helpers=[n for n in module.body if isinstance(n,ast.FunctionDef) and n.name in {'adb','nodes','click','recreate_shop_fixture','saved_drafts'}]
 exec(compile(ast.Module(body=helpers,type_ignores=[]),str(source),'exec'))
-package='com.kinto.preview.hybrid.v20'
+package='com.kinto.preview.hybrid.v21'
 adb('install','--no-streaming','-r',os.environ['KINTO_APK'])
 try:
  adb('shell','am','start','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true');time.sleep(4)
@@ -16,8 +16,7 @@ try:
   time.sleep(1)
  assert '35750 IQD' in labels,labels
  recreate_shop_fixture()
- size_node=next(n for n in nodes() if n.get('text')=='L')
- b=list(map(int,re.findall(r'\d+',size_node.get('bounds',''))));adb('shell','input','tap',str((b[0]+b[2])//2),str((b[1]+b[3])//2));time.sleep(2)
+ click('L',exact=True,scrollUp=True);time.sleep(2)
  click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
  zara=[p for p in saved_drafts() if p['source']=='zara'];assert len(zara)==1,zara
  assert zara[0]['price']==1000 and zara[0]['priceSource']=='visible' and zara[0]['convertedTotalIQD']=='35750' and zara[0]['selectedOptions']=={'size':'L','color':'Haki'},zara

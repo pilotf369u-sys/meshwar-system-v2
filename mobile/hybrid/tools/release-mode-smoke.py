@@ -1,8 +1,8 @@
 """Run the Gradle release APK with disposable signing; no account/order writes."""
 import subprocess,os,time,pathlib,xml.etree.ElementTree as E
-package='com.kinto.preview.hybrid.v20'
+package='com.kinto.preview.hybrid.v21'
 def adb(*args):return subprocess.check_output(['adb',*args],text=True,timeout=40)
-apk=pathlib.Path(os.environ['KINTO_APK']).with_name('KINTO-Candidate-0.20.apk')
+apk=pathlib.Path(os.environ['KINTO_APK']).with_name('KINTO-Candidate-0.21.apk')
 # Fixture-gating checks must not depend on live-site animation/network load.
 # Website login/commerce on the release candidate remains a real-device acceptance step.
 adb('shell','svc','wifi','disable')

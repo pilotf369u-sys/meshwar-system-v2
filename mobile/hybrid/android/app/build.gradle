@@ -3,7 +3,7 @@ android {
  namespace 'com.kinto.trendyollab'
  compileSdk 36
  // Candidate identity only. Production identity/version/signing await Play Console verification.
- defaultConfig { applicationId 'com.kinto.preview.hybrid.v20'; minSdk 28; targetSdk 36; versionCode 20; versionName '0.20-candidate' }
+ defaultConfig { applicationId 'com.kinto.preview.hybrid.v21'; minSdk 28; targetSdk 36; versionCode 21; versionName '0.21-candidate' }
  buildTypes { release { debuggable false; minifyEnabled false; signingConfig null } }
  sourceSets { main { assets.srcDirs = [layout.buildDirectory.dir('candidate-assets')] } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
@@ -13,7 +13,7 @@ android {
 // Build a dedicated allowlisted asset tree and wire it before every asset merge.
 def candidateAssets = tasks.register('prepareCandidateAssets', Sync) {
  from('src/main/assets') {
-  include 'customer-navigation.html', 'hepsiburada-reader.js', 'zara-reader.js', 'product-reader.js', 'order-button.js', 'kinto-webview-compat.js'
+  include 'customer-navigation.html', 'hepsiburada-reader.js', 'zara-reader.js', 'madamecoco-reader.js', 'product-reader.js', 'order-button.js', 'kinto-webview-compat.js'
  }
  into(layout.buildDirectory.dir('candidate-assets'))
 }

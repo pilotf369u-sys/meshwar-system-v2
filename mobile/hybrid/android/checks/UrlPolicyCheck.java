@@ -14,6 +14,8 @@ public class UrlPolicyCheck {
   if(!UrlPolicy.image("https://productimages.hepsiburada.net/s/test.jpg")||UrlPolicy.image("https://productimages.hepsiburada.net.evil.test/a.jpg")||UrlPolicy.image("https://user@productimages.hepsiburada.net/a.jpg")||UrlPolicy.image("https://productimages.hepsiburada.net:444/a.jpg"))throw new AssertionError("Hepsi image boundary");
   if(!UrlPolicy.product("https://www.zara.com/tr/tr/kinto-p00000001.html?v1=123")||!UrlPolicy.image("https://static.zara.net/assets/test.jpg"))throw new AssertionError("Zara boundary");
   for(String u:new String[]{"https://www.zara.com/us/en/kinto-p00000001.html","https://www.zara.com/tr/tr/category-l1.html","https://zara.com.evil.test/tr/tr/kinto-p00000001.html"})if(UrlPolicy.product(u))throw new AssertionError(u);
+  if(!UrlPolicy.product("https://www.madamecoco.com/test-nt0000000001-101/")||!UrlPolicy.image("https://4d0873.akinoncloudcdn.com/products/test.jpg"))throw new AssertionError("Madame product boundary");
+  for(String u:new String[]{"https://www.madamecoco.com/nevresim-takimi/","https://madamecoco.com.evil.test/test-nt0000000001-101/","https://www.madamecoco.com:444/test-nt0000000001-101/","https://www.madamecoco.com/category-123456-101/"})if(UrlPolicy.product(u))throw new AssertionError(u);
   System.out.println("URL policy checks passed");
  }
 }

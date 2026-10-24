@@ -1,7 +1,7 @@
 name: KINTO hybrid isolated preview
 on:
   push:
-    branches: [app/zara-card-scope-v20-20261024, app/zara-scroll-v19-20261024, app/zara-reader-v18-20261024, app/hepsi-buybar-v17-20261024, app/hepsi-price-v16-20261024, app/play-prep-20261023,fix/hepsi-mobile-reader-v10-20261023, app/hepsiburada-preview-v9-20261023, fix/world-single-product-live-staff-20261023, fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-global-orders-independent-20261023, app/kinto-product-confirmation-20261023, app/kinto-hybrid-preview-20261022, app/kinto-android-webview-fixes-20261022, app/kinto-navigation-invoice-20261022, app/kinto-global-pricing-20261022]
+    branches: [app/madame-coco-v21-20261024, app/zara-card-scope-v20-20261024, app/zara-scroll-v19-20261024, app/zara-reader-v18-20261024, app/hepsi-buybar-v17-20261024, app/hepsi-price-v16-20261024, app/play-prep-20261023,fix/hepsi-mobile-reader-v10-20261023, app/hepsiburada-preview-v9-20261023, fix/world-single-product-live-staff-20261023, fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-global-orders-independent-20261023, app/kinto-product-confirmation-20261023, app/kinto-hybrid-preview-20261022, app/kinto-android-webview-fixes-20261022, app/kinto-navigation-invoice-20261022, app/kinto-global-pricing-20261022]
     paths: ['mobile/hybrid/**', 'mobile/global-orders/customer-integrated-fixture.html', 'js/kinto-world-core-v1.js', 'js/kinto-world-workspace-v1.js', 'js/kinto-world-panels-v1.js', 'css/kinto-world-panels-v1.css', 'js/*global-pricing*', 'sql/kinto-global-pricing*', 'admin-dashboard.html', '.github/workflows/kinto-hybrid-preview.yml']
   workflow_dispatch:
 permissions:
@@ -29,6 +29,7 @@ jobs:
           python3 mobile/hybrid/tools/zara-markup-check.py
           python3 mobile/hybrid/tools/zara-scroll-check.py
           python3 mobile/hybrid/tools/zara-card-scope-check.py
+          python3 mobile/hybrid/tools/madame-markup-check.py
       - name: Read-only public Hepsiburada markup (no account or write)
         continue-on-error: true
         run: python3 mobile/hybrid/tools/hepsiburada-public-check.py
@@ -56,7 +57,7 @@ jobs:
           KINTO_PREVIEW_KEYSTORE: ${{ runner.temp }}/kinto-preview.keystore
           KINTO_PREVIEW_PASSWORD_FILE: ${{ runner.temp }}/kinto-preview-password
         run: |
-          java -jar "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$RUNNER_TEMP/kinto-preview-output/KINTO-Candidate-0.20.apk" "$RUNNER_TEMP/kinto-candidate/apk/release/app-release-unsigned.apk"
+          java -jar "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$RUNNER_TEMP/kinto-preview-output/KINTO-Candidate-0.21.apk" "$RUNNER_TEMP/kinto-candidate/apk/release/app-release-unsigned.apk"
       - name: Enable KVM for synthetic UI test
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -65,7 +66,7 @@ jobs:
       - name: Android 36 synthetic local-order flow
         uses: reactivecircus/android-emulator-runner@v2
         env:
-          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.20.apk
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.21.apk
         with:
           api-level: 36
           arch: x86_64
@@ -74,6 +75,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
           script: |
+            python3 mobile/hybrid/tools/madame-native-smoke.py
             python3 mobile/hybrid/tools/zara-native-smoke.py
             python3 mobile/hybrid/tools/emulator-smoke.py
             python3 mobile/hybrid/tools/release-mode-smoke.py
@@ -83,8 +85,8 @@ jobs:
         with:
           name: KINTO-Hybrid-Preview-APK
           path: |
-            ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.20.apk
-            ${{ runner.temp }}/kinto-preview-output/KINTO-Candidate-0.20.apk
+            ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.21.apk
+            ${{ runner.temp }}/kinto-preview-output/KINTO-Candidate-0.21.apk
             ${{ runner.temp }}/kinto-preview-output/invoice-test.png
             ${{ runner.temp }}/kinto-preview-output/store-test.png
             ${{ runner.temp }}/kinto-preview-output/navigation-return-test.png
