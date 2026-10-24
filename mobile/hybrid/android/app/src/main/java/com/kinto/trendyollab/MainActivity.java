@@ -3,6 +3,7 @@ import android.app.*;import android.os.*;import android.content.*;import android
 
 /** KINTO account browser. External retailer documents never load in this process. */
 public class MainActivity extends Activity {
+ private LaunchOverlay launch;private boolean launchNavigationFailed;
  private WebView web;private TextView status;private FrameLayout surface;private final ArrayList<WebView> popupViews=new ArrayList<>();private final ArrayList<View> popupPanels=new ArrayList<>();private View fullVideo;private WebChromeClient.CustomViewCallback fullVideoCallback;private ValueCallback<Uri[]> upload;private boolean expectedFixture;
  private static final int SHOP=21,FILE=22;private static final String HOME="https://shopkinto.com/",DRAFTS="preview_global_orders_v1";
  @Override public void onCreate(Bundle state){super.onCreate(state);expectedFixture=state!=null&&state.getBoolean("expectedFixture",false);
@@ -11,16 +12,18 @@ public class MainActivity extends Activity {
   status=new TextView(this);status.setText("KINTO Preview — الموقع حي؛ الطلب العالمي التجريبي محلي فقط");status.setTextColor(Color.WHITE);status.setTextSize(12);status.setPadding(12,8,12,6);
   ServiceWorkerController.getInstance().setServiceWorkerClient(new ServiceWorkerClient(){@Override public WebResourceResponse shouldInterceptRequest(WebResourceRequest r){return bundledReview(r.getUrl());}});
   web=new WebView(this);root.addView(web,new LinearLayout.LayoutParams(-1,0,1));surface=new FrameLayout(this);surface.addView(root);setContentView(surface);
+  if(Build.VERSION.SDK_INT>=31)getSplashScreen().setOnExitAnimationListener(view->view.remove());
+  if(state==null)launch=new LaunchOverlay(surface,()->{launchNavigationFailed=false;web.reload();});
   WebSettings s=web.getSettings();s.setUserAgentString(s.getUserAgentString()+" KINTOHybrid/0.21");s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(true);s.setJavaScriptCanOpenWindowsAutomatically(true);s.setMediaPlaybackRequiresUserGesture(true);
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
   web.setWebViewClient(new WebViewClient(){
    @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){if(r.isForMainFrame()&&"kinto-app".equals(r.getUrl().getScheme())&&"world-submitted".equals(r.getUrl().getHost())){if(accountUrl(v.getUrl()))acknowledgeWorldSubmission(r.getUrl());return true;}if(r.isForMainFrame()&&"kinto-app://print".equals(r.getUrl().toString())){printView(v);return true;}return r.isForMainFrame()&&!route(r.getUrl().toString());}
-   @Override public void onPageFinished(WebView v,String u){if(accountUrl(u))injectCompat(v);}
+   @Override public void onPageFinished(WebView v,String u){if(accountUrl(u)){injectCompat(v);if(launch!=null&&!launchNavigationFailed)v.postVisualStateCallback(0,new WebView.VisualStateCallback(){@Override public void onComplete(long id){if(launch!=null&&!launchNavigationFailed)launch.ready();}});}}
    @Override public WebResourceResponse shouldInterceptRequest(WebView v,WebResourceRequest r){
     WebResourceResponse bundled=bundledReview(r.getUrl());if(bundled!=null)return bundled;
 if(testExtra("webviewCompatFixture")&&r.getUrl().toString().equals("https://shopkinto.com/__kinto_fixture.mp4")){try{return new WebResourceResponse("video/mp4",null,getAssets().open("fixture-video.mp4"));}catch(Exception e){return null;}}return null;}
    @Override public void onPageStarted(WebView v,String u,android.graphics.Bitmap b){if(!accountUrl(u)){v.stopLoading();status.setText("تم منع صفحة خارجية من فتح جلسة KINTO");}}
-   @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())status.setText("تعذر تحميل KINTO — تحقق من الإنترنت ثم اختر تحديث من القائمة");}
+   @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame()){launchNavigationFailed=true;if(launch!=null)launch.fail("تعذر الاتصال بـ KINTO. تحقق من الإنترنت وأعد المحاولة.");status.setText("تعذر تحميل KINTO — تحقق من الإنترنت ثم اختر تحديث من القائمة");}}
   });
   web.setWebChromeClient(chromeClient());
   web.setDownloadListener((url,ua,disposition,mime,length)->{if(!accountUrl(url)){external(url);return;}try{android.app.DownloadManager.Request req=new android.app.DownloadManager.Request(Uri.parse(url));String cookie=CookieManager.getInstance().getCookie(url);if(cookie!=null)req.addRequestHeader("Cookie",cookie);req.addRequestHeader("User-Agent",ua);req.setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);req.setDestinationInExternalFilesDir(this,Environment.DIRECTORY_DOWNLOADS,URLUtil.guessFileName(url,disposition,mime));((android.app.DownloadManager)getSystemService(DOWNLOAD_SERVICE)).enqueue(req);status.setText("بدأ تنزيل الملف من KINTO");}catch(Exception e){status.setText("تعذر التنزيل؛ استخدم فتح بالمتصفح من القائمة");}});
@@ -120,5 +123,5 @@ if(testExtra("webviewCompatFixture")&&r.getUrl().toString().equals("https://shop
  }
  @Override protected void onSaveInstanceState(Bundle b){b.putBoolean("expectedFixture",expectedFixture);web.saveState(b);super.onSaveInstanceState(b);}
  @Override public void onBackPressed(){if(fullVideo!=null){hideVideo();return;}if(!popupViews.isEmpty()){WebView v=popupViews.get(popupViews.size()-1);if(v.canGoBack())v.goBack();else closePopup(v);return;}if(web.canGoBack())web.goBack();else super.onBackPressed();}
- @Override protected void onDestroy(){if(upload!=null)upload.onReceiveValue(null);super.onDestroy();}
+ @Override protected void onDestroy(){if(launch!=null)launch.dispose();if(upload!=null)upload.onReceiveValue(null);super.onDestroy();}
 }

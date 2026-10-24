@@ -1,10 +1,31 @@
 plugins { id 'com.android.application' }
+def production = providers.gradleProperty('kintoProduction').orNull == 'true'
+def productionId = providers.gradleProperty('kintoProductionApplicationId').orNull
+def productionCode = providers.gradleProperty('kintoProductionVersionCode').orNull
+if (production && (!productionId || !productionCode)) throw new GradleException('Verify Play Console identity/version before production build')
+def secretFile = { String name ->
+ def value = System.getenv(name)
+ if (!value) throw new GradleException('Missing external signing input: ' + name)
+ def f = new File(value).canonicalFile
+ if (!f.isFile() || f.toPath().startsWith(rootProject.projectDir.parentFile.parentFile.parentFile.canonicalFile.toPath())) throw new GradleException('Signing files must exist outside checkout')
+ return f
+}
 android {
  namespace 'com.kinto.trendyollab'
  compileSdk 36
  // Candidate identity only. Production identity/version/signing await Play Console verification.
- defaultConfig { applicationId 'com.kinto.preview.hybrid.v26'; minSdk 28; targetSdk 36; versionCode 26; versionName '0.26-candidate' }
- buildTypes { release { debuggable false; minifyEnabled false; signingConfig null } }
+ defaultConfig { applicationId production ? productionId : 'com.kinto.preview.hybrid.v27'; minSdk 28; targetSdk 36; versionCode production ? Integer.parseInt(productionCode) : 27; versionName production ? '1.0' : '0.27-candidate' }
+ signingConfigs {
+  if (production) {
+   playUpload {
+    storeFile secretFile('KINTO_UPLOAD_KEYSTORE')
+    storePassword secretFile('KINTO_UPLOAD_STORE_PASSWORD_FILE').getText('UTF-8').replaceFirst(/\r?\n$/, '')
+    keyAlias System.getenv('KINTO_UPLOAD_KEY_ALIAS')
+    keyPassword secretFile('KINTO_UPLOAD_KEY_PASSWORD_FILE').getText('UTF-8').replaceFirst(/\r?\n$/, '')
+   }
+  }
+ }
+ buildTypes { release { debuggable false; minifyEnabled false; signingConfig production ? signingConfigs.playUpload : null } }
  sourceSets { main { assets.srcDirs = [layout.buildDirectory.dir('candidate-assets')] } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
