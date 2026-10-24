@@ -1,5 +1,5 @@
 """Read-only inspection of compiled candidates; never changes runtime or signing."""
-import hashlib,json,os,pathlib,subprocess,zipfile,xml.etree.ElementTree as E
+import hashlib,json,os,pathlib,subprocess,zipfile,re,xml.etree.ElementTree as E
 root=pathlib.Path(__file__).resolve().parents[2]
 out=root/'mobile/hybrid/android/app/build/outputs'
 aapt=pathlib.Path(os.environ['ANDROID_HOME'])/'build-tools/35.0.0/aapt2'
@@ -13,7 +13,8 @@ for kind,path in [('apk',out/'apk/release/app-release-unsigned.apk'),('aab',out/
 text=subprocess.check_output([str(aapt),'dump','badging',str(out/'apk/release/app-release-unsigned.apk')],text=True)
 permissions=[line.split("name='")[1].split("'")[0] for line in text.splitlines() if line.startswith('uses-permission:')]
 assert permissions==['android.permission.INTERNET'],permissions
-assert "targetSdkVersion:'36'" in text and "sdkVersion:'28'" in text
+versions=dict(re.findall(r"(?m)^(minSdkVersion|sdkVersion|targetSdkVersion):'([0-9]+)'",text))
+assert versions.get('targetSdkVersion')=='36' and versions.get('minSdkVersion',versions.get('sdkVersion'))=='28',text
 assert 'application-debuggable' not in text
 report['checks']={'compiled_permissions':permissions,'target_sdk':36,'min_sdk':28,'debuggable':False,'no_packaged_native_code':True,'six_store_assets_preserved':True}
 # Frozen accepted28 asset digests avoid dependence on shallow checkout history.
