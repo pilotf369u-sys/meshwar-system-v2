@@ -98,9 +98,26 @@ public class ShoppingActivity extends Activity {
    if(!url.equals(currentProductPage)){status.setText("تغيرت الصفحة؛ اضغط الإضافة من المنتج الجديد");return;}
    try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);rememberZara(item);
     if(item.has("error")||!url.equals(item.optString("pageUrl"))||quote==null||!quote.fromCurrency.equals(item.optString("currency")))throw new JSONException("Page mismatch");
-    item.put("url",url);item.put("savedAt",System.currentTimeMillis());if("zara".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showZaraReport(item);else if("madamecoco".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showMadameReport(item);else if("madparfum".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showMadReport(item);else confirmProduct(item);
+    item.put("url",url);item.put("savedAt",System.currentTimeMillis());if("zara".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showZaraReport(item);else if("madamecoco".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showMadameReport(item);else if("madparfum".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showMadReport(item);else if("mango".equals(item.optString("source"))&&item.optBoolean("optionsPending"))confirmMangoOptions(item);else confirmProduct(item);
    }catch(JSONException e){status.setText("تعذرت قراءة بيانات المنتج؛ لم نحفظ شيئاً. حدّث الصفحة وجرب.");}
   });
+ }
+ private void confirmMangoOptions(JSONObject item){
+  JSONArray values=item.optJSONArray("availableSizes");
+  if(!"MANGO_OPTIONS_REQUIRED".equals(item.optString("warning"))||values==null||values.length()==0||values.length()>40||item.optDouble("displayPrice",0)<=0){new AlertDialog.Builder(this).setMessage("تعذر التحقق من مقاسات المنتج المتاحة. لم نضف شيئاً.").setPositiveButton("حسناً",null).show();return;}
+  String[] labels=new String[values.length()];for(int i=0;i<labels.length;i++)labels[i]=values.optString(i);
+  new AlertDialog.Builder(this).setTitle("اختر مقاس منتج مانجو").setItems(labels,(dialog,index)->{
+   final String chosen=labels[index],page=currentProductPage;
+   if(reading||!page.equals(item.optString("pageUrl")))return;reading=true;
+   web.evaluateJavascript(mangoReaderScript,result->{reading=false;try{
+    Object raw=new JSONTokener(result).nextValue();if(!(raw instanceof String))throw new JSONException("Missing result");JSONObject fresh=new JSONObject((String)raw);
+    if(!page.equals(currentProductPage)||!page.equals(fresh.optString("pageUrl"))||!item.optString("productId").equals(fresh.optString("productId"))||!"mango".equals(fresh.optString("source"))||!"TRY".equals(fresh.optString("currency"))||fresh.optDouble("displayPrice",0)<=0||fresh.optDouble("displayPrice")!=item.optDouble("displayPrice"))throw new JSONException("Product or price changed");
+    String warning=fresh.optString("warning");if(!warning.isEmpty()&&!"MANGO_OPTIONS_REQUIRED".equals(warning))throw new JSONException("Reader rejected product");
+    JSONObject opts=fresh.optJSONObject("observedOptions"),previous=item.optJSONObject("observedOptions");if(opts==null||previous==null||!opts.optString("color").equals(previous.optString("color")))throw new JSONException("Color changed");
+    JSONArray available=fresh.optJSONArray("availableSizes");boolean found=false;if(available!=null)for(int i=0;i<available.length();i++)if(chosen.equals(available.optString(i)))found=true;if(!found)throw new JSONException("Size unavailable");
+    opts.put("size",chosen);fresh.put("price",fresh.get("displayPrice"));fresh.put("priceSource","visible");fresh.put("optionsPending",false);fresh.put("warning","");fresh.put("sizeSelectionSource","customer-current-product-list");fresh.put("url",page);fresh.put("savedAt",System.currentTimeMillis());confirmProduct(fresh);
+   }catch(JSONException e){new AlertDialog.Builder(this).setMessage("تغيّر المنتج أو السعر أو المقاس المتاح. أعد فتح مراجعة المنتج؛ لم نضف شيئاً.").setPositiveButton("حسناً",null).show();}});
+  }).setNegativeButton("إلغاء",null).show();
  }
  private void showMadReport(JSONObject item){
   JSONObject safe=new JSONObject();try{for(String key:new String[]{"productId","warning","observedOptions","diagnostics"})safe.put(key,item.opt(key));}catch(JSONException ignored){}
@@ -152,6 +169,7 @@ public class ShoppingActivity extends Activity {
   EditText size=new EditText(this);size.setSingleLine(true);size.setText(observedSize);size.setHint("المقاس أو الحجم؛ فارغ إذا لا يوجد");size.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(60)});styleField(size);details.addView(size);
   details.addView(line(observedColor.isEmpty()?"اللون — اكتب المختار إن كان مطلوباً":"اللون المقروء من الصفحة — طابقه"));
   EditText color=new EditText(this);color.setSingleLine(true);color.setText(observedColor);color.setHint("اللون؛ فارغ إذا لا يوجد");color.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(60)});styleField(color);details.addView(color);
+  if("customer-current-product-list".equals(item.optString("sizeSelectionSource"))){size.setKeyListener(null);color.setKeyListener(null);details.addView(line("المقاس اخترته من قائمة المنتج المتاحة؛ لتغييره ألغِ المراجعة واختر مجدداً."));}
   details.addView(line("الكمية المطلوبة (1–99)"));
   EditText quantity=new EditText(this);quantity.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);quantity.setSingleLine(true);quantity.setText("1");styleField(quantity);details.addView(quantity);
   TextView total=line("");total.setTextSize(21);total.setTypeface(null,android.graphics.Typeface.BOLD);total.setTextColor(android.graphics.Color.rgb(10,47,35));total.setPadding(20,22,20,22);details.addView(total);
