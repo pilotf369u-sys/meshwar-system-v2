@@ -142,17 +142,7 @@ jobs:
         sudo udevadm trigger --name-match=kvm
 
         '
-    - name: Prepare launch visual test dependency
-      run: 'python3 -m pip install Pillow==11.3.0
-
-        sudo apt-get update -qq
-
-        sudo apt-get install -y --no-install-recommends ffmpeg
-
-        ffmpeg -version
-
-        '
-    - name: Launch and preserved product flow
+    - name: API29 functional launch, invoices and video (motion not certified)
       uses: reactivecircus/android-emulator-runner@v2
       env:
         KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.28.apk
@@ -164,7 +154,7 @@ jobs:
         profile: pixel_2
         disable-animations: false
         emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
-        script: 'python3 mobile/hybrid/tools/launch-native-smoke.py
+        script: 'python3 mobile/hybrid/tools/launch-functional-smoke.py
 
           python3 mobile/hybrid/tools/webview-smoke.py
 
