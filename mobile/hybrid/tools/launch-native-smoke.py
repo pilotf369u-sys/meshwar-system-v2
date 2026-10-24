@@ -10,7 +10,7 @@ adb('install','--no-streaming','-r',os.environ['KINTO_APK']);adb('shell','pm','c
 scale=adb('shell','settings','get','global','animator_duration_scale').strip()
 assert (1.0 if scale in ('null','') else float(scale))>0,'Launch visual proof requires animations enabled at emulator boot'
 adb('logcat','-c')
-adb('shell','am','start','-W','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true')
+adb('shell','am','start','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true')
 for _ in range(30):
  if 'NATIVE_COVER_STARTED' in adb('logcat','-d','-s','KintoLaunch:I','*:S'):break
  time.sleep(.1)
