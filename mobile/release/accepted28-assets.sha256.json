@@ -1,0 +1,22 @@
+{
+  "mobile/hybrid/android/app/src/main/assets/account-deletion.html": "4f80980a9fd4f2ba6a434d0973d48a7ceacec8b0d0c07e6a9eb988740b5cfb21",
+  "mobile/hybrid/android/app/src/main/assets/account-privacy-entry.js": "fee6190fa16b9d9c95b18737463d36a3974397e05b6fff9e65cf605df4d8c646",
+  "mobile/hybrid/android/app/src/main/assets/customer-navigation.html": "c7c53094cdba36b9a8fe873cf1fc7e8d52afde1a279539e561f6e5985722f69b",
+  "mobile/hybrid/android/app/src/main/assets/fixture-hepsiburada.html": "e28d47161cb901697a07b0055ca616e376204d15f12951fd81081d49e0c47184",
+  "mobile/hybrid/android/app/src/main/assets/fixture-madamecoco.html": "41781d9f7bb5810309d23c11ec1b9ce278b8c67c2b7651d80f8d56b3404e5170",
+  "mobile/hybrid/android/app/src/main/assets/fixture-madparfum.html": "aadbaead6261c0a547e3513761cfd3add1289140571b7b37a701d6cb88165615",
+  "mobile/hybrid/android/app/src/main/assets/fixture-mango.html": "e0b36a8f7abb11d2e09cd3e343b6971fa0353a96025670b121c4970d6a093cd2",
+  "mobile/hybrid/android/app/src/main/assets/fixture-product.html": "4af059d7116a17bd8c8cb132d4595a2801bec1c1f78890fd6633978ecac47e2a",
+  "mobile/hybrid/android/app/src/main/assets/fixture-video.mp4": "1b57735eb8bafe387fb5baf9cf3d86ccf58aa7c2c3d8db06596b6088a3b74ed0",
+  "mobile/hybrid/android/app/src/main/assets/fixture-zara.html": "47bd9a474982012eb3caf439451982d9f4e054e720a07c88934514ff39121035",
+  "mobile/hybrid/android/app/src/main/assets/hepsiburada-reader.js": "348de7d9d8c8861cb2ce0a4361e621c07070867fd6a7c4b2dbe6d1e3dcc38460",
+  "mobile/hybrid/android/app/src/main/assets/kinto-webview-compat.js": "784c54ff078c758579e59cedb5886e082670ef7eddec6cb708169514588d1d84",
+  "mobile/hybrid/android/app/src/main/assets/madamecoco-reader.js": "709c0dae167a9b1286cb5af9246d3d28a0c414c6292791d496ce9061fc024512",
+  "mobile/hybrid/android/app/src/main/assets/madparfum-reader.js": "8576bb6bdabcedaa9b777272c954795bb7fade02a1e2f927c110b3dd2ff85d31",
+  "mobile/hybrid/android/app/src/main/assets/mango-reader.js": "dd2c9dcbfa2842d0e12095fa7dc11cc257ff702c44710edba08ddc18ed6c7c78",
+  "mobile/hybrid/android/app/src/main/assets/order-button.js": "cbd10c2f389f9682f5fa7f68c356b5e6536ceacf26848682ba225277ab501b3a",
+  "mobile/hybrid/android/app/src/main/assets/pricing-fixture.json": "0373dad2cfcd02aedd36b25d816b25223d26c33da9939615d1f8ad6024bf2dfe",
+  "mobile/hybrid/android/app/src/main/assets/product-reader.js": "92b4b7bb3862ce8e0636718a591db7549020d9219131d97cc6841ca4e36f0c7b",
+  "mobile/hybrid/android/app/src/main/assets/webview-regression.html": "99a97584cb4284e6e1baf2151c21afd28cd2258a03801c5d9e0cd895e1ce26bb",
+  "mobile/hybrid/android/app/src/main/assets/zara-reader.js": "61c129b39dfb2469f8920a9c3bfab977626f860e97f0a44ace97073405316c42"
+}

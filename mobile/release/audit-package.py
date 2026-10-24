@@ -1,0 +1,24 @@
+"""Read-only inspection of compiled candidates; never changes runtime or signing."""
+import hashlib,json,os,pathlib,subprocess,zipfile
+root=pathlib.Path(__file__).resolve().parents[2]
+out=root/'mobile/hybrid/android/app/build/outputs'
+aapt=pathlib.Path(os.environ['ANDROID_HOME'])/'build-tools/35.0.0/aapt2'
+report={'production_upload_ready':False,'checks':{},'artifacts':{}}
+for kind,path in [('apk',out/'apk/release/app-release-unsigned.apk'),('aab',out/'bundle/release/app-release.aab')]:
+ with zipfile.ZipFile(path) as z:
+  names=z.namelist()
+  assert not any(n.endswith(('.so','.jks','.keystore','.p12')) for n in names)
+  assert not any('fixture-' in n or 'world-review/' in n or 'webview-regression' in n for n in names)
+  report['artifacts'][kind]={'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'size':path.stat().st_size,'native_libraries':0,'fixture_assets':0}
+text=subprocess.check_output([str(aapt),'dump','badging',str(out/'apk/release/app-release-unsigned.apk')],text=True)
+permissions=[line.split("name='")[1].split("'")[0] for line in text.splitlines() if line.startswith('uses-permission:')]
+assert permissions==['android.permission.INTERNET'],permissions
+assert "targetSdkVersion:'36'" in text and "sdkVersion:'28'" in text
+assert 'application-debuggable' not in text
+report['checks']={'compiled_permissions':permissions,'target_sdk':36,'min_sdk':28,'debuggable':False,'no_packaged_native_code':True,'six_store_assets_preserved':True}
+# Frozen accepted28 asset digests avoid dependence on shallow checkout history.
+for relative,digest in json.loads((root/'mobile/release/accepted28-assets.sha256.json').read_text()).items():
+ assert hashlib.sha256((root/relative).read_bytes()).hexdigest()==digest,relative
+report['notes']=['Pure Java app has no packaged native .so requiring ELF page realignment; system WebView is maintained outside this APK.','This inspection is not a Play pre-launch report or policy approval.','Final Console identity, signing, deletion fulfillment and declarations remain gates.']
+dest=root/'mobile/release/evidence/package-audit.json';dest.parent.mkdir(exist_ok=True);dest.write_text(json.dumps(report,indent=2)+'\n')
+print('PASS_COMPILED_PACKAGE: INTERNET only, target36/min28, not debuggable, no fixtures/secrets/native libraries; unsigned preview identity only')
