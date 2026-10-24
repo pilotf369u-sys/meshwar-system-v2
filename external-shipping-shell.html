@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KINTO | منصة التسوق الإلكتروني</title>
-<link rel="icon" type="image/jpeg" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg">
-<link rel="shortcut icon" type="image/jpeg" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg">
+<link rel="icon" type="image/jpeg" href="images/kinto-header-logo-v158.jpeg?v=20261024-world-tab">
+<link rel="shortcut icon" type="image/jpeg" href="images/kinto-header-logo-v158.jpeg?v=20261024-world-tab">
 <script>(function(){const p=new URLSearchParams(location.search);if(p.get('screen')!=='delivery')return;let t='';try{t=localStorage.getItem('meshwar_global_theme')||localStorage.getItem('meshwar-theme')||''}catch(e){}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme:light)').matches?'light':'dark';document.documentElement.dataset.deliveryShellTheme=t})();</script>
 <style>html,body{margin:0!important;padding:0!important;width:100%!important;max-width:100%!important;height:100%!important;overflow:hidden;background:#020617}html[data-delivery-shell-theme="dark"],html[data-delivery-shell-theme="dark"] body{background:#0a2f23!important}html[data-delivery-shell-theme="light"],html[data-delivery-shell-theme="light"] body{background:#eef2f7!important}#app{position:fixed!important;inset:0!important;width:100vw!important;max-width:none!important;height:100vh!important;margin:0!important;padding:0!important;border:0;display:block}</style>
 </head>
@@ -30,7 +30,7 @@
       (async()=>{
         try{
           const w=frame.contentWindow;
-          const sb=w.KintoSupabase||(typeof w.ensureCustomerSupabase==='function'?await w.ensureCustomerSupabase():null)||(typeof w.ensureMainSupabase==='function'?await w.ensureMainSupabase():null);
+          const sb=w.KintoSupabase||(screen==='world_employee'&&typeof w.ensureEmployeeSupabase==='function'?await w.ensureEmployeeSupabase():null)||(typeof w.ensureCustomerSupabase==='function'?await w.ensureCustomerSupabase():null)||(typeof w.ensureMainSupabase==='function'?await w.ensureMainSupabase():null);
           if(!sb||typeof sb.rpc!=='function')return;
           const {data,error}=await sb.rpc('get_site_settings');
           if(error)return;
