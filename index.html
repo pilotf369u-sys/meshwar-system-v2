@@ -369,6 +369,266 @@
 })();
 </script>
 
+    <div id="orderModal" class="fixed inset-0 z-[12000] hidden overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-md" style="display:none;">
+        <div class="mx-auto my-8 w-full max-w-md rounded-3xl border border-amber-400/25 bg-slate-900/90 p-5 text-right text-slate-100 shadow-2xl shadow-amber-400/10 backdrop-blur-xl" dir="rtl">
+            <div class="mb-4 flex items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div><div class="text-xs font-bold text-amber-300">KINTO Order</div><h3 class="mt-1 text-xl font-black text-white">إرسال تفاصيل الطلب</h3></div>
+                <img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="64" height="64" alt="KINTO Logo" class="kinto-boot-logo kinto-boot-logo--modal h-16 w-16 rounded-2xl border border-amber-300/40 bg-slate-950/80 object-contain p-2 shadow-xl shadow-amber-400/20" decoding="async">
+            </div>
+            <div class="space-y-4">
+                <label class="block"><span class="mb-1.5 block text-sm font-bold text-slate-200">رابط المنتج</span><input type="text" id="pUrl" placeholder="الصق الرابط هنا" class="w-full box-border rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/10"></label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="block"><span class="mb-1.5 block text-sm font-bold text-slate-200">اللون</span><input type="text" id="pColor" placeholder="مثلاً: أسود" class="w-full box-border rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-amber-400/60"></label>
+                    <label class="block"><span class="mb-1.5 block text-sm font-bold text-slate-200">المقاس</span><input type="text" id="pSize" placeholder="مثلاً: XL" class="w-full box-border rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-amber-400/60"></label>
+                </div>
+                <label class="block"><span class="mb-1.5 block text-sm font-bold text-slate-200">العدد</span><input type="number" id="pQuantity" value="1" min="1" class="w-full box-border rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-white outline-none transition focus:border-amber-400/60"></label>
+                <button id="mainOrderSubmitBtn" onclick="submitOrder()" class="w-full rounded-xl border border-amber-400/50 bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-3 font-black text-white shadow-lg shadow-amber-400/10 transition-all duration-300 hover:scale-[1.01] hover:border-amber-300 hover:shadow-amber-400/20">إرسال للواتساب</button>
+                <button onclick="if(location.hash==='#orderModal')history.replaceState(null,'',location.pathname+location.search);document.getElementById('orderModal').style.display='none'" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-bold text-slate-300 transition hover:border-amber-400/30 hover:text-white">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MAIN_SUPABASE_URL = 'https://hsmmbloouskqdnptiiad.supabase.co';
+        const MAIN_SUPABASE_KEY = 'sb_publishable_6_IDhNRdtxboDuCfBeAulQ_RRrBqpFH';
+        let currentHomeCustomer = null;
+
+        function ensureMainSupabase() {
+            if (window.KintoSupabase) return Promise.resolve(window.KintoSupabase);
+            if (!window.KintoSupabaseReady) {
+                window.KintoSupabaseReady = import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm')
+                    .then(({ createClient }) => {
+                        if (!window.KintoSupabase) {
+                            window.KintoSupabase = createClient(MAIN_SUPABASE_URL, MAIN_SUPABASE_KEY, {
+                                global: {fetch:window.KintoOrderDataSessionV1.fetch},
+                                auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+                            });
+                        }
+                        return window.KintoSupabase;
+                    })
+                    .catch(error => {
+                        window.KintoSupabaseReady = null;
+                        throw error;
+                    });
+            }
+            return window.KintoSupabaseReady;
+        }
+        window.ensureMainSupabase = ensureMainSupabase;
+        window.KintoSupabaseReady = ensureMainSupabase();
+
+        function getStoredCustomerId() {
+            // V291 SECURITY: browser storage is navigation/cache state only, never identity.
+            // The only trusted customer id on the home page comes from the verified V150 session RPC.
+            return String(currentHomeCustomer?.id || '').trim();
+        }
+
+        // INDEX_AUTH_HEADER_RUNTIME_LOCK_V53 — keep one canonical auth zone and rebuild it from the verified state.
+        function ensureCustomerAuthInHeader(){
+            const host=document.getElementById('meshwarHeaderControls');
+            if(!host)return null;
+            const zones=[...document.querySelectorAll('.user-auth-zone')];
+            let zone=zones.find(item=>item.closest('#kintoHomeHeader'))||zones[0]||document.createElement('div');
+            zone.className='user-auth-zone';
+            zones.forEach(item=>{if(item!==zone)item.remove()});
+            if(zone.parentElement!==host)host.appendChild(zone);
+            zone.style.setProperty('position','static','important');
+            zone.style.setProperty('left','auto','important');
+            zone.style.setProperty('right','auto','important');
+            zone.style.setProperty('top','auto','important');
+            zone.style.setProperty('bottom','auto','important');
+            zone.style.setProperty('display','flex','important');
+            zone.style.setProperty('align-items','center','important');
+            zone.style.setProperty('gap','8px','important');
+            return zone;
+        }
+
+        function renderCustomerAuthState(loggedIn, customer){
+            const zone=ensureCustomerAuthInHeader();
+            if(!zone)return;
+            zone.replaceChildren();
+            const authLink=document.createElement('a');
+            authLink.id='authLink';
+            authLink.className='header-action account-btn'+(loggedIn?'':' primary');
+            authLink.href=loggedIn
+                ? 'dashboard.html?customerId='+encodeURIComponent(String(customer.id))+'&tab=activeOrders'
+                : 'login.html';
+            authLink.setAttribute('aria-label',loggedIn?'طلباتي':'دخول حسابي');
+            authLink.innerHTML=loggedIn
+                ? '<i class="fa-solid fa-box" aria-hidden="true"></i><span id="authText" class="action-label">طلباتي</span>'
+                : '<i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span id="authText" class="action-label">دخول حسابي</span>';
+            zone.appendChild(authLink);
+            if(loggedIn){
+                const logoutBtn=document.createElement('a');
+                logoutBtn.id='logoutBtn';
+                logoutBtn.href='#';
+                logoutBtn.className='header-action header-logout-btn';
+                logoutBtn.textContent='تسجيل خروج';
+                logoutBtn.addEventListener('click',event=>{event.preventDefault();logout()});
+                zone.appendChild(logoutBtn);
+            }
+            document.querySelectorAll('#kintoHomeHeader .kinto-global-favorites,#kintoHomeHeader [id="kintoGlobalFavoritesLink"]').forEach(item=>item.remove());
+        }
+
+        async function restoreCustomerSession() {
+            ensureCustomerAuthInHeader();
+            try {
+                const supabase = await ensureMainSupabase();
+                const customer = await window.KintoCustomerSessionV150?.identity?.(supabase);
+                if (!customer?.id) throw new Error('CUSTOMER_SESSION_INVALID');
+                currentHomeCustomer = customer;
+                // Compatibility mirrors only after server-side session verification.
+                localStorage.setItem('meshwar_customer_id', String(customer.id));
+                localStorage.setItem('viewingCustomerId', String(customer.id));
+                localStorage.setItem('loggedInUser', JSON.stringify({ id: customer.id, name: customer.name || '', code: customer.code || '', country: customer.country || '', secondary_phone: customer.secondary_phone || '' }));
+                document.documentElement.dataset.kintoCustomerLoggedIn = 'true';
+                renderCustomerAuthState(true, customer);
+                window.KintoPublicCustomerNavigationV157?.sync?.();
+                window.KintoMobileAppNavV319?.sync?.();
+                return customer;
+            } catch (e) {
+                currentHomeCustomer = null;
+                document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
+                localStorage.removeItem('meshwar_customer_id');
+                localStorage.removeItem('loggedInUser');
+                localStorage.removeItem('viewingCustomerId');
+                renderCustomerAuthState(false, null);
+                window.KintoPublicCustomerNavigationV157?.sync?.();
+                return null;
+            }
+        }
+        document.addEventListener('DOMContentLoaded',()=>{
+            ensureCustomerAuthInHeader();
+        },{once:true});
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            await restoreCustomerSession();
+           
+        });
+
+        async function logout() {
+            try {
+                const supabase = await ensureMainSupabase();
+                await window.KintoCustomerSessionV150?.logout?.(supabase);
+            } catch (e) {
+                console.warn('Customer session revoke skipped:', e);
+            }
+            currentHomeCustomer = null;
+            document.documentElement.dataset.kintoCustomerLoggedIn = 'false';
+            localStorage.removeItem('meshwar_customer_id');
+            localStorage.removeItem('loggedInUser');
+            localStorage.removeItem('viewingCustomerId');
+            window.location.reload();
+        }
+
+        async function generateMainOrderCode(supabase) {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('order_code')
+                .not('order_code', 'is', null)
+                .order('created_at', { ascending: false })
+                .limit(1000);
+            if (error) throw error;
+            let maxNumber = 1000;
+            (data || []).forEach(row => {
+                const match = String(row.order_code || '').match(/^MW-(\d+)$/i);
+                if (match) maxNumber = Math.max(maxNumber, Number(match[1]));
+            });
+            return 'MW-' + (maxNumber + 1);
+        }
+
+        async function submitOrder() {
+            const supabase = await ensureMainSupabase();
+            const verifiedCustomer = await window.KintoCustomerSessionV150?.identity?.(supabase);
+            const customerId = String(verifiedCustomer?.id || '').trim();
+            if (!customerId) {
+                currentHomeCustomer = null;
+                alert('انتهت جلسة الدخول. الرجاء تسجيل الدخول مجدداً.');
+                window.location.href = 'login.html';
+                return;
+            }
+            currentHomeCustomer = verifiedCustomer;
+
+            const urlField = document.getElementById('pUrl');
+            const colorField = document.getElementById('pColor');
+            const sizeField = document.getElementById('pSize');
+            const quantityField = document.getElementById('pQuantity');
+            const url = urlField ? urlField.value.trim() : '';
+            const color = colorField ? colorField.value.trim() : 'غير محدد';
+            const size = sizeField ? sizeField.value.trim() : 'غير محدد';
+            const quantity = Number(quantityField ? quantityField.value : 1) || 1;
+            if (!url) return alert('الرجاء إدخال رابط المنتج على الأقل.');
+
+            const submitBtn = document.getElementById('mainOrderSubmitBtn');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'جاري حفظ الطلب...'; }
+
+            try {
+                const customer = verifiedCustomer;
+                const orderCode = await generateMainOrderCode(supabase);
+                const payload = {
+                    order_code: orderCode,
+                    customer_id: customer.id,
+                    customer_name: customer.name || '',
+                    customer_phone: customer.phone || '',
+                    details: { color, size, quantity },
+                    order_url: url,
+                    image_url: null,
+                    status: 'انتظار رد الموظف'
+                };
+
+                console.log('Supabase orders insert payload:', payload);
+                const { data: insertData, error: insertError } = await supabase
+                    .from('orders')
+                    .insert([payload]);
+
+                if (insertError) {
+                    console.error('Supabase orders insert failed:', insertError, payload);
+                    throw insertError;
+                }
+
+                console.log('Supabase order insert succeeded:', insertData, payload);
+
+                const emoji = {
+                    cart: '\uD83D\uDED2', person: '\uD83D\uDC64', phone: '\uD83D\uDCF1', id: '\uD83C\uDD94',
+                    link: '\uD83D\uDD17', color: '\uD83C\uDFA8', ruler: '\uD83D\uDCCF', box: '\uD83D\uDCE6', pin: '\uD83D\uDCCC'
+                };
+                const message = [
+                    '*طلب جديد عبر منصة KINTO* ' + emoji.cart,
+                    '',
+                    emoji.person + ' *الاسم:* ' + (customer.name || ''),
+                    emoji.phone + ' *الهاتف:* ' + (customer.phone || ''),
+                    emoji.id + ' *رقم الطلب:* ' + orderCode,
+                    emoji.link + ' *رابط المنتج:* ' + url,
+                    emoji.color + ' *اللون:* ' + color,
+                    emoji.ruler + ' *المقاس:* ' + size,
+                    emoji.box + ' *العدد:* ' + quantity,
+                    emoji.pin + ' *الحالة:* انتظار رد الموظف'
+                ].join('\n');
+
+                const whatsappNumber = '905521855554';
+                const whatsappURL = 'https://wa.me/' + whatsappNumber + '?text=' + encodeURIComponent(message);
+                window.open(whatsappURL, '_blank', 'noopener');
+
+                if (urlField) urlField.value = '';
+                if (colorField) colorField.value = '';
+                if (sizeField) sizeField.value = '';
+                if (quantityField) quantityField.value = '1';
+                const orderModal = document.getElementById('orderModal');
+                if (orderModal) orderModal.style.display = 'none';
+
+                alert('تم حفظ الطلب في Supabase بنجاح. رقم الطلب: ' + orderCode);
+                window.location.href = 'dashboard.html?customerId=' + encodeURIComponent(String(customer.id));
+            } catch (error) {
+                console.error('Supabase order submit aborted before WhatsApp:', error);
+                alert('لم يتم فتح واتساب لأن حفظ الطلب في Supabase فشل: ' + (error.message || error));
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'إرسال للواتساب'; }
+            }
+        }
+
+        window.submitOrder = submitOrder;
+        window.logout = logout;
+    </script>
+
 <script type="module">
 /* LOCAL_STORES_PUBLIC_DATA_V1 */
 const LOCAL_STORES_SUPABASE_URL='https://hsmmbloouskqdnptiiad.supabase.co';
