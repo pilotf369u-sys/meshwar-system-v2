@@ -320,7 +320,54 @@
 
     </section>
 
-<footer id="meshwarSocialFooter" class="mx-auto mt-14 max-w-7xl px-4 pb-10"><div class="flex flex-col items-center justify-between gap-5 rounded-3xl border border-white/10 bg-slate-900/60 p-6 text-center shadow-xl backdrop-blur-md md:flex-row md:text-right"><div><div class="font-black text-white">KINTO</div><div class="mt-1 text-xs text-slate-400">تواصل معنا عبر منصاتنا الاجتماعية</div></div><div class="flex items-center gap-3"><a href="#" aria-label="WhatsApp" class="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-400/10 text-lg text-emerald-300 transition hover:scale-110"><i class="fa-brands fa-whatsapp"></i></a><a href="#" aria-label="Telegram" class="flex h-11 w-11 items-center justify-center rounded-full border border-sky-400/30 bg-sky-400/10 text-lg text-sky-300 transition hover:scale-110"><i class="fa-brands fa-telegram"></i></a><a href="#" aria-label="Instagram" class="flex h-11 w-11 items-center justify-center rounded-full border border-pink-400/30 bg-pink-400/10 text-lg text-pink-300 transition hover:scale-110"><i class="fa-brands fa-instagram"></i></a></div></div></footer>
+<footer id="meshwarSocialFooter" class="mx-auto mt-14 max-w-7xl px-4 pb-10" dir="rtl"><div class="relative rounded-3xl border border-amber-400/20 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md"><div class="grid grid-cols-1 gap-6 md:grid-cols-[minmax(210px,1fr)_minmax(0,2fr)_minmax(210px,1fr)]"><section class="text-right md:col-start-1 md:col-span-2" aria-label="تواصل التسوق"><h2 class="text-base font-bold text-amber-300">تواصل مع KINTO للتسوق</h2><div id="kintoShoppingContacts" class="mt-3 flex flex-row flex-wrap items-center justify-start gap-x-4 gap-y-2 text-sm" aria-label="روابط التواصل الخاصة بالتسوق"></div></section><div class="flex flex-col items-center justify-center text-center md:col-start-3 md:row-start-1"><div class="text-xl font-black tracking-wide text-amber-300">KINTO</div><div class="mt-2 text-xs text-slate-300">منصة تسوق وخدمات رقمية</div><nav aria-label="معلومات المنصة" class="mt-4 flex flex-wrap justify-center gap-4 text-sm"><a href="about-kinto.html" class="text-amber-200 hover:underline">من نحن</a><a href="contact-kinto.html" class="text-amber-200 hover:underline">اتصل بنا</a></nav><nav aria-label="سياسات KINTO" class="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs"><a href="privacy-kinto.html" class="text-slate-300 hover:text-amber-200 hover:underline">الخصوصية</a><a href="terms-kinto.html" class="text-slate-300 hover:text-amber-200 hover:underline">الشروط</a><a href="returns-kinto.html" class="text-slate-300 hover:text-amber-200 hover:underline">الاسترجاع والاستبدال</a></nav></div></div><div class="mt-6 border-t border-white/10 pt-4 text-center"><a href="kinto-digital-services.html" class="text-xs text-slate-400 transition hover:text-amber-200">للاستفسار عن تطوير موقع أو تطبيق أو برنامج — تواصل مع فريق KINTO</a><div class="mt-3 text-xs text-slate-500">© 2026 KINTO — جميع الحقوق محفوظة | تطوير وإدارة KINTO</div></div></div></footer><script>
+/* Shopping contact links use the same read-only settings RPC as the CMS. */
+(async function hydrateKintoShoppingContacts(attempt=0){
+  const target=document.getElementById('kintoShoppingContacts');
+  if(!target)return;
+  try{
+    const client=window.KintoSupabase;
+    if(!client||typeof client.rpc!=='function'){if(attempt<8)setTimeout(()=>hydrateKintoShoppingContacts(attempt+1),1200);return;}
+    const {data,error}=await client.rpc('get_site_settings');
+    if(error)throw error;
+    let settings=data;
+    if(typeof settings==='string')settings=JSON.parse(settings);
+    if(Array.isArray(settings))settings=settings[0]||{};
+    if(settings&&typeof settings==='object'&&settings.settings&&typeof settings.settings==='object')settings=settings.settings;
+    if(!settings||typeof settings!=='object')return;
+    const entries=[
+      ['واتساب','whatsapp','fa-brands fa-whatsapp'],
+      ['فيسبوك','facebook','fa-brands fa-facebook-f'],
+      ['إنستغرام','instagram','fa-brands fa-instagram'],
+      ['تلغرام','telegram','fa-brands fa-telegram'],
+      ['تيك توك','tiktok','fa-brands fa-tiktok'],
+      ['يوتيوب','youtube','fa-brands fa-youtube']
+    ];
+    function add(label,url,iconClass){
+      const el=url?document.createElement('a'):document.createElement('span');
+      if(url){el.href=url;el.target='_blank';el.rel='noopener noreferrer';}
+      el.className='inline-flex items-center gap-2 rounded-lg px-2 py-1 text-emerald-200'+(url?' transition hover:bg-white/10 hover:text-amber-200':'');
+      const icon=document.createElement('i');icon.className=iconClass;icon.setAttribute('aria-hidden','true');el.appendChild(icon);
+      const name=document.createElement('span');name.textContent=label;el.appendChild(name);target.appendChild(el);
+    }
+    target.replaceChildren();
+    for(const [fallback,key,iconClass] of entries){
+      const enabled=settings[key+'_active']===true||String(settings[key+'_active']).toLowerCase()==='true';
+      if(!enabled)continue;
+      let name=String(settings[key+'_name']||'').trim();
+      let raw=String(settings[key+'_url']||'').trim();
+      if(!name&&raw&&!/^https:\/\//i.test(raw)){name=raw;raw='';}
+      let url='';
+      if(/^https:\/\//i.test(raw)){try{const parsed=new URL(raw);if(parsed.protocol==='https:')url=parsed.href}catch(_){}}
+      add(name||fallback,url,iconClass);
+    }
+    const email=String(settings.support_email||'').trim();
+    if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      const a=document.createElement('a');a.href='mailto:'+email;a.className='inline-flex items-center gap-2 rounded-lg px-2 py-1 text-amber-200 transition hover:bg-white/10';const i=document.createElement('i');i.className='fa-solid fa-envelope';i.setAttribute('aria-hidden','true');a.appendChild(i);const span=document.createElement('span');span.textContent='بريد دعم التسوق';a.appendChild(span);target.appendChild(a);
+    }
+  }catch(e){console.warn('KINTO shopping contact settings unavailable',e)}
+})();
+</script>
 
     <div id="orderModal" class="fixed inset-0 z-[12000] hidden overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-md" style="display:none;">
         <div class="mx-auto my-8 w-full max-w-md rounded-3xl border border-amber-400/25 bg-slate-900/90 p-5 text-right text-slate-100 shadow-2xl shadow-amber-400/10 backdrop-blur-xl" dir="rtl">
