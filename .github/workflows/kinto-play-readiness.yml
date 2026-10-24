@@ -30,6 +30,18 @@ jobs:
         gradle-version: 8.11.1
     - name: Build unsigned non-production release candidate
       run: gradle --no-daemon -p mobile/hybrid/android :app:bundleRelease :app:assembleRelease :app:lintRelease
+    - name: Print all release Lint errors for review
+      if: always()
+      run: |
+        python3 - <<'PYCHECK'
+        import pathlib,xml.etree.ElementTree as E
+        p=pathlib.Path('mobile/hybrid/android/app/build/reports/lint-results-release.xml')
+        if p.exists():
+         for e in E.parse(p).getroot().findall('issue'):
+          if e.get('severity') in ('Error','Fatal'):
+           print(e.attrib)
+           for loc in e.findall('location'):print(loc.attrib)
+        PYCHECK
     - name: Verify fixture exclusion and signing separation
       run: python3 mobile/hybrid/tools/check-release-artifacts.py
     - name: Audit compiled distribution and read-only policy gates
@@ -37,6 +49,7 @@ jobs:
         python3 mobile/release/audit-package.py
         python3 mobile/release/release-inputs.test.py
     - uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: KINTO-Unsigned-Candidate-NOT-FOR-UPLOAD
         path: 'mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
@@ -44,6 +57,8 @@ jobs:
           mobile/hybrid/android/app/build/outputs/apk/release/app-release-unsigned.apk
 
           mobile/hybrid/android/app/build/reports/lint-results-release.html
+
+          mobile/hybrid/android/app/build/reports/lint-results-release.xml
 
           mobile/release/evidence/package-audit.json
 
