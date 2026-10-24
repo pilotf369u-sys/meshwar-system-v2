@@ -37,14 +37,26 @@ public class ShoppingActivity extends Activity {
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
   try{injectScript=asset("order-button.js");readerScript=asset("product-reader.js");hepsiReaderScript=asset("hepsiburada-reader.js");zaraReaderScript=asset("zara-reader.js");}catch(IOException e){status.setText("تعذر تحميل زر الصفحة؛ أعد فتح التطبيق");}
   web.setWebViewClient(new WebViewClient(){
-   @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())view.post(()->refreshAndCapture());return true;}if(fixture&&!url.equals(fixtureUrl))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج المتاجر المدعومة؛ لم يتم فتحه");return true;}return false;}
+   @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){if(fixture&&fixturePage(request.getUrl().toString())){try{return new WebResourceResponse("text/html","UTF-8",getAssets().open(zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"));}catch(IOException ignored){}}return null;}
+
+   @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())view.post(()->refreshAndCapture());return true;}if(fixture&&!fixturePage(url))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج المتاجر المدعومة؛ لم يتم فتحه");return true;}return false;}
    @Override public void onPageStarted(WebView v,String url,android.graphics.Bitmap icon){if(!UrlPolicy.allowed(url)){v.stopLoading();status.setText("تم إيقاف رابط غير مسموح");}}
    @Override public void onPageFinished(WebView v,String url){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void doUpdateVisitedHistory(WebView v,String url,boolean reload){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())status.setText("تعذر فتح الصفحة. تحقق من الاتصال أو حدّث مرة واحدة.");}
   });
-  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=fixturePricing();quoteReadAt=System.currentTimeMillis();currentProductPage=fixtureUrl;try{web.loadDataWithBaseURL(fixtureUrl,asset(zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"),"text/html","UTF-8",fixtureUrl);}catch(Exception e){finish();}}
-  else { web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/");refreshConfigInBackground(); }
+  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=fixturePricing();quoteReadAt=System.currentTimeMillis();currentProductPage=fixtureUrl;try{if(!restoreShop(state))web.loadDataWithBaseURL(fixtureUrl,asset(zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"),"text/html","UTF-8",fixtureUrl);}catch(Exception e){finish();}}
+  else { if(!restoreShop(state))web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/");refreshConfigInBackground(); }
+ }
+ private boolean fixturePage(String raw){String page=raw.split("#",2)[0];return page.equals(fixtureUrl)||page.equals(fixtureUrl+"?kintoResume=1");}
+ private boolean restoreShop(Bundle state){
+  if(state==null)return false;String last=state.getString("lastShopUrl","");Bundle history=state.getBundle("shopHistory");
+  if(!UrlPolicy.allowed(last)||fixture&&!fixturePage(last))return false;
+  currentProductPage=last;WebBackForwardList restored=history==null?null:web.restoreState(history);
+  if(restored==null||restored.getCurrentItem()==null||!last.equals(restored.getCurrentItem().getUrl()))web.loadUrl(last);return true;
+ }
+ @Override protected void onSaveInstanceState(Bundle out){
+  if(web!=null){String last=web.getUrl();if(UrlPolicy.allowed(last)){out.putString("lastShopUrl",last);Bundle history=new Bundle();if(web.saveState(history)!=null)out.putBundle("shopHistory",history);}}super.onSaveInstanceState(out);
  }
  private Pricing.Snapshot fixturePricing(){try{
   Pricing.Snapshot parsed=AdminPricing.parse(new JSONObject(asset("pricing-fixture.json")));
@@ -86,7 +98,7 @@ public class ShoppingActivity extends Activity {
    if(!url.equals(currentProductPage)){status.setText("تغيرت الصفحة؛ اضغط الإضافة من المنتج الجديد");return;}
    try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);rememberZara(item);
     if(item.has("error")||!url.equals(item.optString("pageUrl"))||quote==null||!quote.fromCurrency.equals(item.optString("currency")))throw new JSONException("Page mismatch");
-    item.put("url",url);item.put("savedAt",System.currentTimeMillis());if("zara".equals(item.optString("source")))showZaraReport(item);else confirmProduct(item);
+    item.put("url",url);item.put("savedAt",System.currentTimeMillis());if("zara".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showZaraReport(item);else confirmProduct(item);
    }catch(JSONException e){status.setText("تعذرت قراءة بيانات المنتج؛ لم نحفظ شيئاً. حدّث الصفحة وجرب.");}
   });
  }
@@ -96,11 +108,11 @@ public class ShoppingActivity extends Activity {
  }
  private void showZaraReport(JSONObject item){
   JSONArray samples=new JSONArray();for(JSONObject sample:zaraSamples)if(sample.optString("productId").equals(item.optString("productId")))samples.put(sample);
-  String report="KINTO ZARA 19\n"+samples.toString();
+  String report="KINTO ZARA 20\n"+samples.toString();
   StringBuilder brief=new StringBuilder("هذا فحص محلي لسبب اختفاء السعر. انسخ التقرير وأرسله في المحادثة.\n\n");
   for(JSONObject sample:zaraSamples){if(!sample.optString("productId").equals(item.optString("productId")))continue;JSONObject d=sample.optJSONObject("diagnostics");brief.append("السعر: ").append(sample.optString("price")).append(" | ").append(sample.optString("warning","")).append("\n");if(d!=null)brief.append("موضع التمرير: ").append(d.optInt("scrollY")).append(" | أسعار ظاهرة: ").append(d.optInt("visiblePrices")).append(" | ألوان: ").append(d.optInt("colors")).append(" | عروض مطابقة: ").append(d.optInt("offers")).append("\n");}
   TextView body=line(brief.toString());body.setTextIsSelectable(true);ScrollView scroll=new ScrollView(this);scroll.addView(body);
-  AlertDialog.Builder b=new AlertDialog.Builder(this).setTitle("فحص سعر زارا — 19").setView(scroll).setPositiveButton("نسخ التقرير",(dialog,which)->{android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);clipboard.setPrimaryClip(android.content.ClipData.newPlainText("KINTO Zara 19",report));Toast.makeText(this,"نُسخ التقرير؛ ألصقه في المحادثة",Toast.LENGTH_LONG).show();}).setNegativeButton("إغلاق",null);
+  AlertDialog.Builder b=new AlertDialog.Builder(this).setTitle("فحص سعر زارا — 20").setView(scroll).setPositiveButton("نسخ التقرير",(dialog,which)->{android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);clipboard.setPrimaryClip(android.content.ClipData.newPlainText("KINTO Zara 20",report));Toast.makeText(this,"نُسخ التقرير؛ ألصقه في المحادثة",Toast.LENGTH_LONG).show();}).setNegativeButton("إغلاق",null);
   if(item.optDouble("price",0)>0)b.setNeutralButton("متابعة المراجعة",(dialog,which)->confirmProduct(item));b.show();
  }
  private TextView line(String value){TextView t=new TextView(this);t.setText(value);t.setTextSize(14);t.setTextColor(android.graphics.Color.rgb(35,57,47));t.setPadding(18,10,18,10);t.setTextDirection(android.view.View.TEXT_DIRECTION_FIRST_STRONG);return t;}
