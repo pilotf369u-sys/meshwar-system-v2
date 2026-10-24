@@ -1,0 +1,15 @@
+name: MAD anonymous identity probe
+on:
+  push:
+    branches: [app/mad-identity-v24-20261024]
+    paths: ['mobile/hybrid/tools/mad-live-identity-probe.py', '.github/workflows/kinto-mad-identity-probe.yml']
+permissions:
+  contents: read
+jobs:
+  public-read-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fresh anonymous product navigation, never cart or payment
+        run: python3 mobile/hybrid/tools/mad-live-identity-probe.py
