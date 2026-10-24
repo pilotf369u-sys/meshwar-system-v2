@@ -29,6 +29,6 @@ final class LaunchOverlay {
  void ready(){if(closed||failed)return;ready=true;if(minimum)hide();}
  void fail(String text){if(closed)return;failed=true;ready=false;stopMotion();message.setText(text);retry.setVisibility(View.VISIBLE);}
  private void stopMotion(){if(breathing!=null)breathing.cancel();logo.setScaleX(1);logo.setScaleY(1);logo.setAlpha(1);}
- private void hide(){if(closed)return;closed=true;handler.removeCallbacksAndMessages(null);stopMotion();cover.animate().alpha(0).setDuration(ValueAnimator.areAnimatorsEnabled()?180:0).withEndAction(()->host.removeView(cover)).start();}
+ private void hide(){if(closed)return;closed=true;handler.removeCallbacksAndMessages(null);stopMotion();cover.animate().alpha(0).setDuration(ValueAnimator.areAnimatorsEnabled()?180:0).withEndAction(()->{host.removeView(cover);if(host.getChildCount()>0)host.getChildAt(0).requestFocus(View.FOCUS_FORWARD);}).start();}
  void dispose(){closed=true;handler.removeCallbacksAndMessages(null);stopMotion();cover.animate().cancel();host.removeView(cover);}
 }

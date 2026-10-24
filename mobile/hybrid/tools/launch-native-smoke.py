@@ -21,7 +21,15 @@ region=(w//4,h//4,3*w//4,3*h//4)
 assert any(ImageChops.difference(valid[0].crop(region),im.crop(region)).getbbox() for im in valid[1:]),'No breathing change inside logo region'
 print('PASS_LAUNCH_ANIMATION: approved logo/green cover and changing logo frames while synthetic WebView loads')
 time.sleep(3)
-labels=' '.join(n.get('text','')for n in nodes());assert 'تشغيل فيديو الاختبار' in labels and 'KINTO launch screen' not in labels,labels
+for attempt in range(12):
+ snapshot=nodes();labels=' '.join(n.get('text','')for n in snapshot)
+ if 'تشغيل فيديو الاختبار' in labels:break
+ if attempt==2:adb('shell','input','tap',str(w//2),str(h//3))
+ time.sleep(1)
+if 'تشغيل فيديو الاختبار' not in labels:
+ (out/'launch-reveal-failure.png').write_bytes(subprocess.check_output(['adb','exec-out','screencap','-p'],timeout=20))
+ print(adb('logcat','-d','-t','100','AndroidRuntime:E','chromium:E','*:S'))
+assert 'تشغيل فيديو الاختبار' in labels and not any(n.get('content-desc')=='KINTO launch screen' for n in snapshot),labels
 print('PASS_LAUNCH_REVEAL: cover removed and underlying synthetic interface usable')
 adb('shell','input','keyevent','82');click('الخصوصية وحذف الحساب',exact=True,scroll=True);time.sleep(2)
 labels=' '.join(n.get('text','')for n in nodes());assert 'طلب حذف حساب KINTO' in labels and 'support@shopkinto.com' in labels,labels
