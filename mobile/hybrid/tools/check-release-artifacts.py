@@ -9,11 +9,12 @@ for path in [root/'bundle/release/app-release.aab',root/'apk/release/app-release
   assert any(n.endswith('assets/product-reader.js') for n in names)
   assert any(n.endswith('assets/hepsiburada-reader.js') for n in names)
   assert any(n.endswith('assets/zara-reader.js') for n in names)
+  assert any(n.endswith('assets/madamecoco-reader.js') for n in names)
   assert not any(n.endswith('.so') for n in names)
   if path.suffix=='.apk':
    import subprocess,os
    report=subprocess.check_output([os.environ['ANDROID_HOME']+'/build-tools/35.0.0/aapt2','dump','badging',str(path)],text=True)
-   assert "name='com.kinto.preview.hybrid.v20'" in report,report
+   assert "name='com.kinto.preview.hybrid.v21'" in report,report
    assert "targetSdkVersion:'36'" in report,report
    assert 'application-debuggable' not in report,report
    assert "application-label:'KINTO'" in report,report
