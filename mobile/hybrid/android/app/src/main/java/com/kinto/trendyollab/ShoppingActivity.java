@@ -50,12 +50,12 @@ public class ShoppingActivity extends Activity {
  }
  private boolean restoreShop(Bundle state){
   if(state==null)return false;String last=state.getString("lastShopUrl","");Bundle history=state.getBundle("shopHistory");
-  if(history==null||!UrlPolicy.allowed(last)||fixture&&!last.split("#",2)[0].equals(fixtureUrl))return false;
-  WebBackForwardList restored=web.restoreState(history);if(restored==null||restored.getCurrentItem()==null||!last.equals(restored.getCurrentItem().getUrl()))return false;
-  currentProductPage=last;return true;
+  if(!UrlPolicy.allowed(last)||fixture&&!last.split("#",2)[0].equals(fixtureUrl))return false;
+  currentProductPage=last;WebBackForwardList restored=history==null?null:web.restoreState(history);
+  if(restored==null||restored.getCurrentItem()==null||!last.equals(restored.getCurrentItem().getUrl()))web.loadUrl(last);return true;
  }
  @Override protected void onSaveInstanceState(Bundle out){
-  if(web!=null){String last=web.getUrl();if(UrlPolicy.allowed(last)){Bundle history=new Bundle();if(web.saveState(history)!=null){out.putBundle("shopHistory",history);out.putString("lastShopUrl",last);}}}super.onSaveInstanceState(out);
+  if(web!=null){String last=web.getUrl();if(UrlPolicy.allowed(last)){out.putString("lastShopUrl",last);Bundle history=new Bundle();if(web.saveState(history)!=null)out.putBundle("shopHistory",history);}}super.onSaveInstanceState(out);
  }
  private Pricing.Snapshot fixturePricing(){try{
   Pricing.Snapshot parsed=AdminPricing.parse(new JSONObject(asset("pricing-fixture.json")));
