@@ -328,9 +328,20 @@
   try{
     const client=window.KintoSupabase;
     if(!client||typeof client.rpc!=='function'){if(attempt<8)setTimeout(()=>hydrateKintoShoppingContacts(attempt+1),1200);return;}
-    const {data,error}=await client.rpc('get_site_settings');
-    if(error)throw error;
-    let settings=data;
+    // Public contact links only: short-lived per-tab cache reduces repeat refresh RPCs.
+    // Never cache authenticated orders, payment data, notifications or session state.
+    const cacheKey='kinto_public_contacts_settings_v1';
+    let settings;
+    try{
+      const saved=JSON.parse(sessionStorage.getItem(cacheKey)||'null');
+      if(saved&&Date.now()-saved.at<60000&&saved.data&&typeof saved.data==='object')settings=saved.data;
+    }catch(_){}
+    if(!settings){
+      const {data,error}=await client.rpc('get_site_settings');
+      if(error)throw error;
+      settings=data;
+      try{sessionStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),data:settings}))}catch(_){}
+    }
     if(typeof settings==='string')settings=JSON.parse(settings);
     if(Array.isArray(settings))settings=settings[0]||{};
     if(settings&&typeof settings==='object'&&settings.settings&&typeof settings.settings==='object')settings=settings.settings;
