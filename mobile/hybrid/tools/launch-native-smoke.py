@@ -10,6 +10,8 @@ adb('install','--no-streaming','-r',os.environ['KINTO_APK']);adb('shell','pm','c
 scale=adb('shell','settings','get','global','animator_duration_scale').strip()
 assert (1.0 if scale in ('null','') else float(scale))>0,'Launch visual proof requires animations enabled at emulator boot'
 adb('logcat','-c')
+record=subprocess.Popen(['adb','shell','screenrecord','--time-limit','9','/sdcard/kinto-launch.mp4'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+time.sleep(.3)
 adb('shell','am','start','-W','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true')
 for _ in range(30):
  if 'NATIVE_COVER_STARTED' in adb('logcat','-d','-s','KintoLaunch:I','*:S'):break
@@ -28,6 +30,8 @@ region=(w//4,h//4,3*w//4,3*h//4)
 assert any(ImageChops.difference(valid[0].crop(region),im.crop(region)).getbbox() for im in valid[1:]),'No breathing change inside logo region'
 print('PASS_LAUNCH_ANIMATION: approved logo/green cover and changing logo frames while synthetic WebView loads')
 time.sleep(3)
+record.wait(timeout=15)
+adb('pull','/sdcard/kinto-launch.mp4',str(out/'launch-motion.mp4'))
 for attempt in range(12):
  snapshot=nodes();labels=' '.join(n.get('text','')for n in snapshot)
  if 'تشغيل فيديو الاختبار' in labels:break

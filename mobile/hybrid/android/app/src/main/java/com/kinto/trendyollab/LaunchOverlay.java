@@ -9,7 +9,7 @@ import android.widget.*;
 final class LaunchOverlay {
  private final FrameLayout host,cover; private final LinearLayout stack;private final TextView message;private final Button retry;private final ImageView logo;
  private final Handler handler=new Handler(Looper.getMainLooper());
- private boolean ready,failed,closed,minimum,started;private ValueAnimator breathing;
+ private boolean ready,failed,closed,minimum,started;private ValueAnimator breathing,reveal;
  private final Runnable deadline=()->fail("تأخر الاتصال. تحقق من الإنترنت وأعد المحاولة.");
  LaunchOverlay(FrameLayout parent,Runnable reload){
   host=parent;Context c=parent.getContext();cover=new FrameLayout(c);cover.setBackgroundColor(Color.rgb(10,47,35));cover.setClickable(true);cover.setFocusable(true);cover.setContentDescription("KINTO launch screen");
@@ -44,10 +44,12 @@ final class LaunchOverlay {
   boolean motion=ValueAnimator.areAnimatorsEnabled();long duration=motion?560:0;
   if(PreviewMode.enabled(host.getContext()))android.util.Log.i("KintoLaunch","ZOOM_REVEAL_STARTED");
   android.view.animation.PathInterpolator easing=new android.view.animation.PathInterpolator(.4f,0f,.2f,1f);
-  logo.animate().scaleX(motion?2.65f:1f).scaleY(motion?2.65f:1f).alpha(0).setInterpolator(easing).setDuration(duration).start();
-  message.animate().alpha(0).setDuration(motion?220:0).start();
-  cover.animate().alpha(0).setInterpolator(easing).setDuration(duration).withEndAction(()->{host.removeView(cover);if(host.getChildCount()>0)host.getChildAt(0).requestFocus(View.FOCUS_FORWARD);}).start();
+  // A single clock keeps zoom, text and background in sync even on a busy UI thread.
+  reveal=ValueAnimator.ofFloat(0f,1f);reveal.setDuration(duration);reveal.setInterpolator(new android.view.animation.LinearInterpolator());
+  reveal.addUpdateListener(anim->{float t=(Float)anim.getAnimatedValue();float scale=1f+(motion?1.65f:0f)*easing.getInterpolation(t);logo.setScaleX(scale);logo.setScaleY(scale);logo.setAlpha(1);message.setAlpha(1-t);cover.setAlpha(1-t*t*t);});
+  reveal.addListener(new AnimatorListenerAdapter(){@Override public void onAnimationEnd(Animator animation){host.removeView(cover);if(host.getChildCount()>0)host.getChildAt(0).requestFocus(View.FOCUS_FORWARD);}});
+  reveal.start();
  }
 
- void dispose(){closed=true;handler.removeCallbacksAndMessages(null);stopMotion();logo.animate().cancel();message.animate().cancel();cover.animate().cancel();host.removeView(cover);}
+ void dispose(){closed=true;handler.removeCallbacksAndMessages(null);stopMotion();if(reveal!=null){reveal.removeAllListeners();reveal.cancel();}host.removeView(cover);}
 }

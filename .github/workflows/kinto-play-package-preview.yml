@@ -145,6 +145,8 @@ jobs:
 
           ${{ runner.temp }}/kinto-preview-output/launch-*.png
 
+          ${{ runner.temp }}/kinto-preview-output/launch-*.mp4
+
           ${{ runner.temp }}/kinto-preview-output/invoice-test.png
 
           ${{ runner.temp }}/kinto-preview-output/store-test.png
