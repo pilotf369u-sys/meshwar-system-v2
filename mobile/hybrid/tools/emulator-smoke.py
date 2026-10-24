@@ -173,19 +173,6 @@ click('إكمال الطلب للمراجعة');time.sleep(1)
 assert 'بيانات الاختبار المصطنعة لا تُرسل' in ' '.join(n.get('text','') for n in nodes())
 print('PASS: Hepsiburada isolated reader, TRY price/admin-shaped conversion, L/Haki confirmation, one-product draft and synthetic server-submit refusal; no production writes')
 
-# Independent Zara reader; no website/SQL activation in this price-reading trial.
-adb('shell','am','force-stop','com.kinto.preview.hybrid.v22')
-adb('shell','am','start','-n','com.kinto.preview.hybrid.v22/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true');time.sleep(4)
-adb('shell','input','keyevent','82');click('تجربة زارا');time.sleep(5)
-for _ in range(12):
- labels=' '.join(n.get('text','') for n in nodes())
- if '35750 IQD' in labels:break
- time.sleep(1)
-assert '35750 IQD' in labels,labels
-recreate_shop_fixture()
-click('L',exact=True,scrollUp=True);time.sleep(2)
-click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
-zara=[p for p in saved_drafts() if p['source']=='zara'];assert len(zara)==1,zara
-assert zara[0]['price']==1000 and zara[0]['priceSource']=='visible',zara
-assert zara[0]['fixture'] is True and zara[0]['selectedOptions']=={'size':'L','color':'Haki'},zara
-print('PASS: Zara hydrated mobile purchase panel, visible TRY price, conversion and explicit L/Haki confirmation; local synthetic draft only, no production writes')
+# Zara's identical confirmation/recreation assertions run in the mandatory
+# zara-native-smoke.py stage, with a fresh isolated preview state. Avoid a
+# second copy after unrelated WebView lifecycles and stale accessibility trees.
