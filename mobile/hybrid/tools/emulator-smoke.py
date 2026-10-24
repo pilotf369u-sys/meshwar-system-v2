@@ -30,7 +30,7 @@ def click(text,attempts=6,scroll=False):
  raise AssertionError('Missing control: '+text+'; texts='+repr([n.get('text') for n in nodes()]))
 
 print(adb('install','--no-streaming','-r',os.environ['KINTO_APK']))
-print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v18/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true'))
+print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v19/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true'))
 time.sleep(8)
 adb('shell','input','keyevent','82');click('تجربة كاملة');time.sleep(8)
 labels=['الرئيسية','المتاجر','السلة','طلباتي','الدردشة','مفضلاتي','حسابي']
@@ -63,7 +63,7 @@ for _ in range(8):
 assert '35750' in texts, texts
 click('طابقت',scroll=True);click('أؤكد الإضافة')
 time.sleep(2)
-raw=adb('shell','run-as','com.kinto.preview.hybrid.v18','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml')
+raw=adb('shell','run-as','com.kinto.preview.hybrid.v19','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml')
 root=E.fromstring(raw);s=next(x.text for x in root if x.get('name')=='preview_global_orders_v1')
 orders=json.loads(s);assert len(orders)==1,orders
 p=orders[0]
@@ -73,7 +73,7 @@ assert p['selectedOptions']=={'size':'L','color':'Haki'},p
 assert p['sourcePerUsd']=='40' and p['targetPerUsd']=='1300' and p['displayCurrency']=='IQD' and p['pricingRevision']==1,p
 assert p['shipping'] is None and p['testOrderCode'].startswith('TEST-'),p
 # Separate WebView storage directories exist in the shared UID, and no generic bridge.
-dirs=adb('shell','run-as','com.kinto.preview.hybrid.v18','ls')
+dirs=adb('shell','run-as','com.kinto.preview.hybrid.v19','ls')
 assert 'app_webview_kinto-account' in dirs and 'app_webview_external-shopping' in dirs,dirs
 print('PASS: install, launch, product reader, L/Haki, 35750 synthetic quote, explicit confirmation, persisted local TEST order, separate WebView directories')
 print(json.dumps({k:p[k] for k in ['testOrderCode','testOnly','serverSubmitted','selectedOptions','convertedTotalIQD','shipping']},ensure_ascii=False))
@@ -92,21 +92,21 @@ click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد ا�
 visible=nodes();assert sum('حذف هذا المنتج من المسودة'==n.get('text','') for n in visible)==1,visible
 assert any('تأكيد منتج واحد'==n.get('text','') for n in visible),visible
 with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'product-review-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
-raw=adb('shell','run-as','com.kinto.preview.hybrid.v18','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml');prefs=E.fromstring(raw);saved=json.loads(next(x.text for x in prefs if x.get('name')=='preview_global_orders_v1'));assert len(saved)==2 and saved[0]['requestKey']!=saved[1]['requestKey'],saved
+raw=adb('shell','run-as','com.kinto.preview.hybrid.v19','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml');prefs=E.fromstring(raw);saved=json.loads(next(x.text for x in prefs if x.get('name')=='preview_global_orders_v1'));assert len(saved)==2 and saved[0]['requestKey']!=saved[1]['requestKey'],saved
 # A synthetic trusted-page acknowledgement removes exactly its one product, then replay is harmless.
 ack=saved[0]['requestKey'];sent_id=saved[0]['testOrderCode'];remaining_id=saved[1]['testOrderCode']
 for name,value in [('world_batch_key_v1',ack),('world_batch_ids_v1',json.dumps([sent_id]))]:
  node=next((x for x in prefs if x.get('name')==name),None)
  if node is None:node=E.SubElement(prefs,'string',{'name':name})
  node.text=value
-adb('shell','am','force-stop','com.kinto.preview.hybrid.v18')
+adb('shell','am','force-stop','com.kinto.preview.hybrid.v19')
 local=os.path.join(os.path.dirname(os.environ['KINTO_APK']),'synthetic-draft-prefs.xml');E.ElementTree(prefs).write(local,encoding='utf-8',xml_declaration=True)
-adb('push',local,'/data/local/tmp/kinto-synthetic-prefs.xml');adb('shell','chmod','644','/data/local/tmp/kinto-synthetic-prefs.xml');adb('shell','run-as','com.kinto.preview.hybrid.v18','cp','/data/local/tmp/kinto-synthetic-prefs.xml','shared_prefs/com.kinto.trendyollab.MainActivity.xml')
-adb('shell','am','start','-n','com.kinto.preview.hybrid.v18/com.kinto.trendyollab.MainActivity','--ez','acknowledgeReviewFixture','true');time.sleep(4)
+adb('push',local,'/data/local/tmp/kinto-synthetic-prefs.xml');adb('shell','chmod','644','/data/local/tmp/kinto-synthetic-prefs.xml');adb('shell','run-as','com.kinto.preview.hybrid.v19','cp','/data/local/tmp/kinto-synthetic-prefs.xml','shared_prefs/com.kinto.trendyollab.MainActivity.xml')
+adb('shell','am','start','-n','com.kinto.preview.hybrid.v19/com.kinto.trendyollab.MainActivity','--ez','acknowledgeReviewFixture','true');time.sleep(4)
 def saved_drafts():
- xml=E.fromstring(adb('shell','run-as','com.kinto.preview.hybrid.v18','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml'));return json.loads(next(x.text for x in xml if x.get('name')=='preview_global_orders_v1'))
+ xml=E.fromstring(adb('shell','run-as','com.kinto.preview.hybrid.v19','cat','shared_prefs/com.kinto.trendyollab.MainActivity.xml'));return json.loads(next(x.text for x in xml if x.get('name')=='preview_global_orders_v1'))
 assert [x['testOrderCode'] for x in saved_drafts()]==[remaining_id],saved_drafts()
-adb('shell','am','force-stop','com.kinto.preview.hybrid.v18');adb('shell','am','start','-n','com.kinto.preview.hybrid.v18/com.kinto.trendyollab.MainActivity','--ez','acknowledgeReviewFixture','true','--es','acknowledgeKeyFixture',ack);time.sleep(3)
+adb('shell','am','force-stop','com.kinto.preview.hybrid.v19');adb('shell','am','start','-n','com.kinto.preview.hybrid.v19/com.kinto.trendyollab.MainActivity','--ez','acknowledgeReviewFixture','true','--es','acknowledgeKeyFixture',ack);time.sleep(3)
 assert [x['testOrderCode'] for x in saved_drafts()]==[remaining_id]
 # Per-product removal affects only the local unsent draft.
 adb('shell','input','keyevent','82');click('منتجات بانتظار الإرسال');click('حذف هذا المنتج')
@@ -118,8 +118,8 @@ time.sleep(1);assert saved_drafts()==[]
 print('PASS: one-product confirmation, unique stable request keys, trusted acknowledgement removes one draft, replay safe, per-product deletion; no production writes')
 
 # Load the real bundled review assets without a customer session or any write.
-adb('shell','am','force-stop','com.kinto.preview.hybrid.v18')
-adb('shell','am','start','-n','com.kinto.preview.hybrid.v18/com.kinto.trendyollab.MainActivity','--ez','bundledReviewFixture','true')
+adb('shell','am','force-stop','com.kinto.preview.hybrid.v19')
+adb('shell','am','start','-n','com.kinto.preview.hybrid.v19/com.kinto.trendyollab.MainActivity','--ez','bundledReviewFixture','true')
 for _ in range(12):
  texts=' '.join(n.get('text','') for n in nodes())
  if 'PASS_CUSTOMER_INTEGRATED_UI' in texts:break
@@ -128,8 +128,8 @@ assert 'PASS_CUSTOMER_INTEGRATED_UI' in texts,texts
 print('PASS: embedded My Orders, saved profile, consent and submission fixture; no production writes')
 
 # The second supported store reuses the exact confirmation/pricing boundary with a distinct reader.
-adb('shell','am','force-stop','com.kinto.preview.hybrid.v18')
-adb('shell','am','start','-n','com.kinto.preview.hybrid.v18/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true');time.sleep(4)
+adb('shell','am','force-stop','com.kinto.preview.hybrid.v19')
+adb('shell','am','start','-n','com.kinto.preview.hybrid.v19/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true');time.sleep(4)
 adb('shell','input','keyevent','82');click('تجربة هبسي بوردا');time.sleep(5)
 for _ in range(12):
  labels=' '.join(n.get('text','') for n in nodes())
@@ -150,8 +150,8 @@ assert 'بيانات الاختبار المصطنعة لا تُرسل' in ' '.j
 print('PASS: Hepsiburada isolated reader, TRY price/admin-shaped conversion, L/Haki confirmation, one-product draft and synthetic server-submit refusal; no production writes')
 
 # Independent Zara reader; no website/SQL activation in this price-reading trial.
-adb('shell','am','force-stop','com.kinto.preview.hybrid.v18')
-adb('shell','am','start','-n','com.kinto.preview.hybrid.v18/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true');time.sleep(4)
+adb('shell','am','force-stop','com.kinto.preview.hybrid.v19')
+adb('shell','am','start','-n','com.kinto.preview.hybrid.v19/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true');time.sleep(4)
 adb('shell','input','keyevent','82');click('تجربة زارا');time.sleep(5)
 for _ in range(12):
  labels=' '.join(n.get('text','') for n in nodes())
@@ -160,7 +160,7 @@ for _ in range(12):
 assert '35750 IQD' in labels,labels
 size_node=next(n for n in nodes() if n.get('text')=='L')
 b=list(map(int,re.findall(r'\d+',size_node.get('bounds',''))));adb('shell','input','tap',str((b[0]+b[2])//2),str((b[1]+b[3])//2));time.sleep(2)
-click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
+click('أضف إلى KINTO');assert 'فحص سعر زارا' in ' '.join(n.get('text','') for n in nodes());click('نسخ التقرير');click('أضف إلى KINTO');click('متابعة المراجعة');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
 zara=[p for p in saved_drafts() if p['source']=='zara'];assert len(zara)==1,zara
 assert zara[0]['price']==1000 and zara[0]['priceSource']=='visible',zara
 assert zara[0]['fixture'] is True and zara[0]['selectedOptions']=={'size':'L','color':'Haki'},zara

@@ -13,7 +13,7 @@ for path in [root/'bundle/release/app-release.aab',root/'apk/release/app-release
   if path.suffix=='.apk':
    import subprocess,os
    report=subprocess.check_output([os.environ['ANDROID_HOME']+'/build-tools/35.0.0/aapt2','dump','badging',str(path)],text=True)
-   assert "name='com.kinto.preview.hybrid.v18'" in report,report
+   assert "name='com.kinto.preview.hybrid.v19'" in report,report
    assert "targetSdkVersion:'36'" in report,report
    assert 'application-debuggable' not in report,report
    assert "application-label:'KINTO'" in report,report

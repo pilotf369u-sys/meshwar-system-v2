@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 
 public class ShoppingActivity extends Activity {
  private WebView web; private TextView status;  private String injectScript, readerScript, hepsiReaderScript,zaraReaderScript; private boolean reading=false; private String currentProductPage="";
+ private final java.util.ArrayDeque<JSONObject> zaraSamples=new java.util.ArrayDeque<>();
  private boolean fixture; private boolean hepsiFixture; private boolean zaraFixture; private String fixtureUrl; private volatile Pricing.Snapshot quote; private volatile long quoteReadAt,configAttemptAt; private boolean badgeReading=false; private volatile boolean configLoading=false; private final android.os.Handler pricingHandler=new android.os.Handler(android.os.Looper.getMainLooper());
  @Override public void onCreate(Bundle state) {
   super.onCreate(state); fixture=PreviewMode.enabled(this)&&getIntent().getBooleanExtra("fixture",false);hepsiFixture=fixture&&"hepsiburada".equals(getIntent().getStringExtra("fixtureStore"));zaraFixture=fixture&&"zara".equals(getIntent().getStringExtra("fixtureStore"));fixtureUrl=zaraFixture?"https://www.zara.com/tr/tr/kinto-fixture-p00000001.html":hepsiFixture?"https://www.hepsiburada.com/kinto-fixture-p-HBCV0000TEST":"https://www.trendyol.com/fixture-p-123456";
@@ -71,7 +72,7 @@ public class ShoppingActivity extends Activity {
   final String page=currentProductPage;final Pricing.Snapshot snapshot=quote;
   if(snapshot==null||(!fixture&&System.currentTimeMillis()-quoteReadAt>300000)){badge("السعر غير متاح — اضغط للتحقق");return;}
   badgeReading=true;web.evaluateJavascript(storeReader(currentProductPage),result->{badgeReading=false;if(!page.equals(currentProductPage))return;try{
-   Object decoded=new JSONTokener(result).nextValue();JSONObject item=new JSONObject((String)decoded);
+   Object decoded=new JSONTokener(result).nextValue();JSONObject item=new JSONObject((String)decoded);rememberZara(item);
    if(item.has("error")||!page.equals(item.optString("pageUrl"))||!snapshot.fromCurrency.equals(item.optString("currency")))throw new IllegalArgumentException();
    boolean hepsiOptionsPending=("hepsiburada".equals(item.optString("source"))||"zara".equals(item.optString("source")))&&item.optBoolean("optionsPending");
    String amount=hepsiOptionsPending?item.getString("displayPrice"):item.getString("price");
@@ -83,11 +84,24 @@ public class ShoppingActivity extends Activity {
   if(reading||readerScript==null)return;reading=true;
   web.evaluateJavascript(storeReader(currentProductPage),result->{reading=false;
    if(!url.equals(currentProductPage)){status.setText("تغيرت الصفحة؛ اضغط الإضافة من المنتج الجديد");return;}
-   try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);
+   try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);rememberZara(item);
     if(item.has("error")||!url.equals(item.optString("pageUrl"))||quote==null||!quote.fromCurrency.equals(item.optString("currency")))throw new JSONException("Page mismatch");
-    item.put("url",url);item.put("savedAt",System.currentTimeMillis());confirmProduct(item);
+    item.put("url",url);item.put("savedAt",System.currentTimeMillis());if("zara".equals(item.optString("source")))showZaraReport(item);else confirmProduct(item);
    }catch(JSONException e){status.setText("تعذرت قراءة بيانات المنتج؛ لم نحفظ شيئاً. حدّث الصفحة وجرب.");}
   });
+ }
+ private void rememberZara(JSONObject item){
+  if(!"zara".equals(item.optString("source")))return;
+  try{JSONObject sample=new JSONObject();for(String key:new String[]{"productId","price","priceSource","warning","observedOptions","diagnostics"})sample.put(key,item.opt(key));sample.put("elapsedSeconds",android.os.SystemClock.elapsedRealtime()/1000);if(zaraSamples.size()>=6)zaraSamples.removeFirst();zaraSamples.addLast(sample);}catch(JSONException ignored){}
+ }
+ private void showZaraReport(JSONObject item){
+  JSONArray samples=new JSONArray();for(JSONObject sample:zaraSamples)if(sample.optString("productId").equals(item.optString("productId")))samples.put(sample);
+  String report="KINTO ZARA 19\n"+samples.toString();
+  StringBuilder brief=new StringBuilder("هذا فحص محلي لسبب اختفاء السعر. انسخ التقرير وأرسله في المحادثة.\n\n");
+  for(JSONObject sample:zaraSamples){if(!sample.optString("productId").equals(item.optString("productId")))continue;JSONObject d=sample.optJSONObject("diagnostics");brief.append("السعر: ").append(sample.optString("price")).append(" | ").append(sample.optString("warning","")).append("\n");if(d!=null)brief.append("موضع التمرير: ").append(d.optInt("scrollY")).append(" | أسعار ظاهرة: ").append(d.optInt("visiblePrices")).append(" | ألوان: ").append(d.optInt("colors")).append(" | عروض مطابقة: ").append(d.optInt("offers")).append("\n");}
+  TextView body=line(brief.toString());body.setTextIsSelectable(true);ScrollView scroll=new ScrollView(this);scroll.addView(body);
+  AlertDialog.Builder b=new AlertDialog.Builder(this).setTitle("فحص سعر زارا — 19").setView(scroll).setPositiveButton("نسخ التقرير",(dialog,which)->{android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);clipboard.setPrimaryClip(android.content.ClipData.newPlainText("KINTO Zara 19",report));Toast.makeText(this,"نُسخ التقرير؛ ألصقه في المحادثة",Toast.LENGTH_LONG).show();}).setNegativeButton("إغلاق",null);
+  if(item.optDouble("price",0)>0)b.setNeutralButton("متابعة المراجعة",(dialog,which)->confirmProduct(item));b.show();
  }
  private TextView line(String value){TextView t=new TextView(this);t.setText(value);t.setTextSize(14);t.setTextColor(android.graphics.Color.rgb(35,57,47));t.setPadding(18,10,18,10);t.setTextDirection(android.view.View.TEXT_DIRECTION_FIRST_STRONG);return t;}
  private void styleField(EditText field){
