@@ -1,8 +1,8 @@
-name: KINTO MAD focused preview23
+name: KINTO MAD focused preview24
 'on':
   push:
     branches:
-    - app/mad-price-v23-20261024
+    - app/mad-identity-v24-20261024
   workflow_dispatch: null
 permissions:
   contents: read
@@ -57,6 +57,8 @@ jobs:
 
         python3 mobile/hybrid/tools/mad-price-check.py
 
+        python3 mobile/hybrid/tools/mad-identity-check.py
+
         python3 mobile/hybrid/tools/check-mad-preservation.py'
     - name: Pure Java boundary and pricing tests
       run: 'mkdir -p "$RUNNER_TEMP/kinto-checks"
@@ -92,7 +94,7 @@ jobs:
         KINTO_PREVIEW_KEYSTORE: ${{ runner.temp }}/kinto-preview.keystore
         KINTO_PREVIEW_PASSWORD_FILE: ${{ runner.temp }}/kinto-preview-password
       run: 'java -jar "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias
-        kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$RUNNER_TEMP/kinto-preview-output/KINTO-Candidate-0.23.apk"
+        kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$RUNNER_TEMP/kinto-preview-output/KINTO-Candidate-0.24.apk"
         "$RUNNER_TEMP/kinto-candidate/apk/release/app-release-unsigned.apk"
 
         '
@@ -107,7 +109,7 @@ jobs:
     - name: MAD portalled mobile price and confirmation
       uses: reactivecircus/android-emulator-runner@v2
       env:
-        KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.23.apk
+        KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.24.apk
         KINTO_ONLY_STORE: madparfum
       with:
         api-level: 36
@@ -123,9 +125,9 @@ jobs:
       if: always()
       with:
         name: KINTO-Hybrid-Preview-APK
-        path: '${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.23.apk
+        path: '${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.24.apk
 
-          ${{ runner.temp }}/kinto-preview-output/KINTO-Candidate-0.23.apk
+          ${{ runner.temp }}/kinto-preview-output/KINTO-Candidate-0.24.apk
 
           ${{ runner.temp }}/kinto-preview-output/invoice-test.png
 

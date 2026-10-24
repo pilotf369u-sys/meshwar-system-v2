@@ -104,7 +104,7 @@ public class ShoppingActivity extends Activity {
  }
  private void showMadReport(JSONObject item){
   JSONObject safe=new JSONObject();try{for(String key:new String[]{"productId","warning","observedOptions","diagnostics"})safe.put(key,item.opt(key));}catch(JSONException ignored){}
-  String report="KINTO MAD 23\n"+safe.toString();new AlertDialog.Builder(this).setTitle("تعذرت قراءة سعر MAD").setMessage("يمكن نسخ تقرير القراءة لمراجعته؛ لم يُرسل طلب.").setPositiveButton("نسخ التقرير",(d,w)->{android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);clipboard.setPrimaryClip(android.content.ClipData.newPlainText("KINTO MAD 23",report));Toast.makeText(this,"نُسخ التقرير؛ ألصقه في المحادثة",Toast.LENGTH_LONG).show();}).setNegativeButton("إغلاق",null).show();
+  String report="KINTO MAD 24\n"+safe.toString();new AlertDialog.Builder(this).setTitle("تعذرت قراءة سعر MAD").setMessage("يمكن نسخ تقرير القراءة لمراجعته؛ لم يُرسل طلب.").setPositiveButton("نسخ التقرير",(d,w)->{android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);clipboard.setPrimaryClip(android.content.ClipData.newPlainText("KINTO MAD 24",report));Toast.makeText(this,"نُسخ التقرير؛ ألصقه في المحادثة",Toast.LENGTH_LONG).show();}).setNegativeButton("إغلاق",null).show();
  }
  private void showMadameReport(JSONObject item){
   JSONObject safe=new JSONObject();try{for(String key:new String[]{"productId","warning","observedOptions","diagnostics"})safe.put(key,item.opt(key));}catch(JSONException ignored){}

@@ -5,7 +5,7 @@ source=Path(__file__).with_name('emulator-smoke.py');module=ast.parse(source.rea
 helpers=[n for n in module.body if isinstance(n,ast.FunctionDef) and n.name in {'adb','nodes','click','recreate_shop_fixture','saved_drafts'}]
 import subprocess,re,xml.etree.ElementTree as E
 exec(compile(ast.Module(body=helpers,type_ignores=[]),str(source),'exec'))
-package='com.kinto.preview.hybrid.v23'
+package='com.kinto.preview.hybrid.v24'
 adb('install','--no-streaming','-r',os.environ['KINTO_APK'])
 for store,label,sku in [('mango','تجربة Mango','00000001-99'),('madparfum','تجربة MAD','TEST-MAD-0001')]:
  if os.environ.get('KINTO_ONLY_STORE') and os.environ['KINTO_ONLY_STORE']!=store:continue

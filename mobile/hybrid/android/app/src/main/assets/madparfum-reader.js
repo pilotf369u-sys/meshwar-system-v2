@@ -16,7 +16,11 @@
  let root=h;while(root&&root!==document.body&&(!root.querySelector('[data-testid="price"]')||needsOptions&&!root.querySelector('[data-testid^="product-variant-"]')))root=root.parentElement;
  if(root===document.body)root=null;
  const issues=[],canonicals=Array.from(document.querySelectorAll('link[rel="canonical"]'));
- if(!p||!h||!root||!canonicals.length||canonicals.some(x=>!same(x.href))||norm(p?.name)!==norm(h?.textContent)||!text(p?.sku))issues.push('MAD_IDENTITY');
+ // Observed live MAD hydration appends href="undefined/urun/<same-slug>/".
+ // Ignore only that exact same-product duplicate, and still require a correct canonical.
+ const brokenDuplicate=raw=>{try{const x=new URL(raw,u),path=u.pathname.replace(/\/+$/,'');return x.protocol==='https:'&&hosts.includes(x.hostname)&&!x.username&&!x.password&&(!x.port||x.port==='443')&&x.pathname.replace(/\/+$/,'')===path+'/undefined'+path;}catch{return false;}};
+ const identityChecks={schema:!!p,title:!!h,root:!!root,canonical:canonicals.some(x=>same(x.href))&&canonicals.every(x=>same(x.href)||brokenDuplicate(x.href)),name:norm(p?.name)===norm(h?.textContent),sku:!!text(p?.sku)};
+ if(Object.values(identityChecks).some(x=>!x))issues.push('MAD_IDENTITY');
  const controls=Array.from(document.querySelectorAll('[data-testid="product-add-to-cart"]')),panels=root?[root]:[];
  // Admit only purchase-price ancestors, never the body/recommendation/list price regions.
  for(const b of controls){let q=b.parentElement;while(q&&q!==document.body&&!q.querySelector('[data-testid="price"]'))q=q.parentElement;if(q&&q!==document.body&&!q.querySelector('[data-testid="product-card"],h2')&&!Array.from(q.querySelectorAll('[data-testid="product-name"]')).some(t=>t!==h))panels.push(q);}
@@ -30,5 +34,5 @@
  if(!controls.length||controls.every(x=>x.disabled||x.getAttribute('aria-disabled')==='true'))issues.push('MAD_UNAVAILABLE');
  let image='';try{const x=new URL([].concat(p?.image||[])[0]);if(x.protocol==='https:'&&x.hostname==='ba62e8.cdn.akinoncloud.com'&&x.pathname.startsWith('/products/')&&!x.username&&!x.password&&(!x.port||x.port==='443'))image=x.href;}catch{}
  const price=issues.length?null:prices[0];
- return JSON.stringify({source:'madparfum',sourceName:'MAD Parfumeur',productId:text(p?.sku),pageUrl:u.href,title:text(h?.textContent),image,price,currency:'TRY',priceSource:price===null?'':'visible',observedOptions:{size,color:''},optionRequirements:{size:groups.length>0,color:false},warning:issues[0]||'',diagnostics:{issues,products:products.length,identities:identities.size,titles:titles.length,root:!!root,panels:unique(panels).length,visiblePrices:nodes.length,prices,groups:groups.length,canonicalMatches:canonicals.filter(x=>same(x.href)).length}});
+ return JSON.stringify({source:'madparfum',sourceName:'MAD Parfumeur',productId:text(p?.sku),pageUrl:u.href,title:text(h?.textContent),image,price,currency:'TRY',priceSource:price===null?'':'visible',observedOptions:{size,color:''},optionRequirements:{size:groups.length>0,color:false},warning:issues[0]||'',diagnostics:{issues,products:products.length,identities:identities.size,titles:titles.length,root:!!root,panels:unique(panels).length,visiblePrices:nodes.length,prices,groups:groups.length,canonicalMatches:canonicals.filter(x=>same(x.href)).length,canonicalTotal:canonicals.length,ignoredBrokenDuplicates:canonicals.filter(x=>brokenDuplicate(x.href)).length,identityChecks,schemaName:text(p?.name),visibleTitle:text(h?.textContent)}});
 })();
