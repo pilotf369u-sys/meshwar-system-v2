@@ -10,7 +10,7 @@ jobs:
   preview:
     needs: candidate-bundle
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -65,7 +65,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Android 36 synthetic local-order flow
+      - name: Mango and MAD native confirmation (fresh emulator)
         uses: reactivecircus/android-emulator-runner@v2
         env:
           KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.22.apk
@@ -75,11 +75,47 @@ jobs:
           target: google_apis
           profile: pixel_2
           disable-animations: true
-          emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
           script: |
             python3 mobile/hybrid/tools/new-store-native-smoke.py
+      - name: Madame native confirmation (fresh emulator)
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.22.apk
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          script: |
             python3 mobile/hybrid/tools/madame-native-smoke.py
+      - name: Zara native confirmation (fresh emulator)
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.22.apk
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          script: |
             python3 mobile/hybrid/tools/zara-native-smoke.py
+      - name: Classic commerce invoices video and release guards (fresh emulator)
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.22.apk
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          script: |
             python3 mobile/hybrid/tools/emulator-smoke.py
             python3 mobile/hybrid/tools/release-mode-smoke.py
             python3 mobile/hybrid/tools/webview-smoke.py
