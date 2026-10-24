@@ -619,6 +619,12 @@ loadLocalPublicStores();
     });
 
     if (v) {
+        // Expose playback failure rather than leaving an unexplained blank panel.
+        v.addEventListener('error', () => {
+            if (pb) { pb.textContent='تعذر تشغيل الفيديو — إعادة المحاولة'; pb.setAttribute('aria-label','إعادة محاولة تشغيل الفيديو'); }
+            console.warn('KINTO_PROMO_MEDIA_ERROR', { code:v.error?.code||0, networkState:v.networkState, readyState:v.readyState });
+        });
+        v.addEventListener('stalled', () => console.warn('KINTO_PROMO_MEDIA_STALLED'));
         v.disablePictureInPicture = true;
         v.setAttribute('playsinline', '');
         v.setAttribute('webkit-playsinline', '');
@@ -637,7 +643,7 @@ loadLocalPublicStores();
     });
 })();
 </script>
-<script src="js/local-store-pricing.js?v=20260927-video-pause-v277"></script>
+<script src="js/local-store-pricing.js?v=20261024-promo-visible-v1083"></script>
 <script type="module" src="js/local-store-card-v3.js?v=20261017-store-control-v1"></script>
 <script src="js/local-store-product-details-v4.js?v=20261017-store-control-v1" data-mw-product-details-v4></script>
 <link rel="stylesheet" href="css/hero-v193-modern.css?v=20261012-v193">
