@@ -33,11 +33,12 @@ with tempfile.TemporaryDirectory() as tmp:
   for _ in range(100):
    if active.exists():break
    time.sleep(.1)
-  port=int(active.read_text().splitlines()[0]);pages=json.load(urllib.request.urlopen(f'http://127.0.0.1:{port}/json'));c=CDP(pages[0]['webSocketDebuggerUrl'])
+  port=int(active.read_text().splitlines()[0]);pages=json.load(urllib.request.urlopen(f'http://127.0.0.1:{port}/json'));page=next(p for p in pages if p.get('type')=='page' and p.get('url')=='about:blank');c=CDP(page['webSocketDebuggerUrl'])
   c.call('Network.setUserAgentOverride',{'userAgent':'Mozilla/5.0 (Linux; Android 10; K; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0.0.0 Mobile Safari/537.36'})
   c.call('Emulation.setDeviceMetricsOverride',{'width':393,'height':780,'deviceScaleFactor':2.75,'mobile':True})
   def sample(label):
    safe=c.evaluate("JSON.stringify({url:location.href,titles:Array.from(document.querySelectorAll('h1[data-testid=product-name]')).map(x=>x.textContent),canonicals:Array.from(document.querySelectorAll('link[rel=canonical]')).map(x=>x.href),schemas:Array.from(document.querySelectorAll('script[type=\"application/ld+json\"]')).flatMap(x=>{try{const p=JSON.parse(x.textContent);return p['@type']==='Product'?[{name:p.name,sku:p.sku,url:p.offers?.url}]:[];}catch{return [];}})})")
+   assert safe and 'chrome-extension:' not in safe,safe
    result=c.evaluate(reader)
    print(label,safe,result,flush=True)
   c.call('Page.navigate',{'url':product});time.sleep(8);sample('DIRECT')
