@@ -59,6 +59,8 @@ jobs:
       run: 'node --test mobile/hybrid/android/checks/product-reader.test.cjs mobile/hybrid/android/checks/hepsiburada-reader.test.cjs
         mobile/hybrid/android/checks/zara-reader.test.cjs
 
+        node --test mobile/release/account-deletion.test.cjs
+
         python3 mobile/hybrid/tools/new-store-markup-check.py
 
         python3 mobile/hybrid/tools/mad-price-check.py

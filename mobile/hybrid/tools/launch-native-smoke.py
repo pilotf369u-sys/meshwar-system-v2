@@ -23,6 +23,10 @@ print('PASS_LAUNCH_ANIMATION: approved logo/green cover and changing logo frames
 time.sleep(3)
 labels=' '.join(n.get('text','')for n in nodes());assert 'تشغيل فيديو الاختبار' in labels and 'KINTO launch screen' not in labels,labels
 print('PASS_LAUNCH_REVEAL: cover removed and underlying synthetic interface usable')
+adb('shell','input','keyevent','82');click('الخصوصية وحذف الحساب',exact=True,scroll=True);time.sleep(2)
+labels=' '.join(n.get('text','')for n in nodes());assert 'طلب حذف حساب KINTO' in labels and 'support@shopkinto.com' in labels,labels
+print('PASS_ACCOUNT_DELETION_RESOURCE: native path renders bundled public request instructions; nothing sent')
+adb('shell','input','keyevent','4');time.sleep(1)
 adb('shell','am','start','-W','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true')
 assert 'KINTO launch screen' not in ' '.join(n.get('content-desc','')for n in nodes())
 print('PASS_LAUNCH_WARM: existing activity remains usable without another cover')

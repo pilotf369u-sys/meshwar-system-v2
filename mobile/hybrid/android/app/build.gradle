@@ -34,7 +34,7 @@ android {
 // Build a dedicated allowlisted asset tree and wire it before every asset merge.
 def candidateAssets = tasks.register('prepareCandidateAssets', Sync) {
  from('src/main/assets') {
-  include 'customer-navigation.html', 'hepsiburada-reader.js', 'zara-reader.js', 'madamecoco-reader.js', 'mango-reader.js', 'madparfum-reader.js', 'product-reader.js', 'order-button.js', 'kinto-webview-compat.js'
+  include 'account-privacy-entry.js', 'account-deletion.html', 'customer-navigation.html', 'hepsiburada-reader.js', 'zara-reader.js', 'madamecoco-reader.js', 'mango-reader.js', 'madparfum-reader.js', 'product-reader.js', 'order-button.js', 'kinto-webview-compat.js'
  }
  into(layout.buildDirectory.dir('candidate-assets'))
 }
