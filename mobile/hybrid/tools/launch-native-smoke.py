@@ -5,7 +5,7 @@ from PIL import Image,ImageChops
 source=Path(__file__).with_name('emulator-smoke.py');tree=ast.parse(source.read_text())
 import re,xml.etree.ElementTree as E
 exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in {'adb','nodes','click'}],type_ignores=[]),str(source),'exec'))
-package='com.kinto.preview.hybrid.v27';out=Path(os.environ['KINTO_APK']).parent
+package='com.kinto.preview.hybrid.v28';out=Path(os.environ['KINTO_APK']).parent
 adb('install','--no-streaming','-r',os.environ['KINTO_APK']);adb('shell','pm','clear',package)
 scale=adb('shell','settings','get','global','animator_duration_scale').strip()
 assert (1.0 if scale in ('null','') else float(scale))>0,'Launch visual proof requires animations enabled at emulator boot'
@@ -17,8 +17,8 @@ for _ in range(30):
 else:raise AssertionError('Native launch never started')
 time.sleep(.1)
 frames=[]
-for i in range(4):
- b=subprocess.check_output(['adb','exec-out','screencap','-p'],timeout=20);im=Image.open(io.BytesIO(b)).convert('RGB');im.save(out/f'launch-{i}.png');frames.append(im);time.sleep(.20)
+for i in range(9):
+ b=subprocess.check_output(['adb','exec-out','screencap','-p'],timeout=20);im=Image.open(io.BytesIO(b)).convert('RGB');im.save(out/f'launch-{i}.png');frames.append(im);time.sleep(.12)
 w,h=frames[0].size
 # Ignore system clock/status bar; both samples must still be on the branded cover.
 green=(10,47,35)
@@ -37,7 +37,9 @@ if 'تشغيل فيديو الاختبار' not in labels:
  (out/'launch-reveal-failure.png').write_bytes(subprocess.check_output(['adb','exec-out','screencap','-p'],timeout=20))
  print(adb('logcat','-d','-t','100','AndroidRuntime:E','chromium:E','*:S'))
 assert 'تشغيل فيديو الاختبار' in labels and not any(n.get('content-desc')=='KINTO launch screen' for n in snapshot),labels
-print('PASS_LAUNCH_REVEAL: cover removed and underlying synthetic interface usable')
+assert 'جارٍ تجهيز' not in labels,labels
+assert 'ZOOM_REVEAL_STARTED' in adb('logcat','-d','-s','KintoLaunch:I','*:S')
+print('PASS_LAUNCH_REVEAL: zoom transition completed, no preparation text, underlying synthetic interface usable')
 adb('shell','input','keyevent','82');click('الخصوصية وحذف الحساب',exact=True,scroll=True);time.sleep(2)
 labels=' '.join(n.get('text','')for n in nodes());assert 'طلب حذف حساب KINTO' in labels and 'support@shopkinto.com' in labels,labels
 print('PASS_ACCOUNT_DELETION_RESOURCE: native path renders bundled public request instructions; nothing sent')

@@ -14,7 +14,7 @@ android {
  namespace 'com.kinto.trendyollab'
  compileSdk 36
  // Candidate identity only. Production identity/version/signing await Play Console verification.
- defaultConfig { applicationId production ? productionId : 'com.kinto.preview.hybrid.v27'; minSdk 28; targetSdk 36; versionCode production ? Integer.parseInt(productionCode) : 27; versionName production ? '1.0' : '0.27-candidate' }
+ defaultConfig { applicationId production ? productionId : 'com.kinto.preview.hybrid.v28'; minSdk 28; targetSdk 36; versionCode production ? Integer.parseInt(productionCode) : 28; versionName production ? '1.0' : '0.28-candidate' }
  signingConfigs {
   if (production) {
    playUpload {
