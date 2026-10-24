@@ -28,7 +28,7 @@ END $$;
 -- Listing is a separate API request/statement after submission commits.
 DO $$DECLARE o jsonb;BEGIN
  SELECT value INTO o FROM jsonb_array_elements(public.kinto_world_list_v1('customer','test-customer')) WHERE value->'request'->'items'->0->>'url'='https://www.madamecoco.com/test-nt0000000001-101/';
- IF o IS NULL THEN RAISE EXCEPTION 'MADAME_CUSTOMER_NOT_VISIBLE';END IF;
+ IF o IS NULL THEN RAISE EXCEPTION 'MADAME_CUSTOMER_NOT_VISIBLE: %',public.kinto_world_list_v1('customer','test-customer');END IF;
  IF NOT EXISTS(SELECT FROM jsonb_array_elements(public.kinto_world_list_v1('employee','test-staff')) x WHERE x->>'id'=o->>'id') THEN RAISE EXCEPTION 'MADAME_STAFF_NOT_VISIBLE';END IF;
  IF EXISTS(SELECT FROM jsonb_array_elements(public.kinto_world_list_v1('customer','other-customer')) x WHERE x->>'id'=o->>'id') THEN RAISE EXCEPTION 'MADAME_CUSTOMER_ISOLATION';END IF;
 END $$;
