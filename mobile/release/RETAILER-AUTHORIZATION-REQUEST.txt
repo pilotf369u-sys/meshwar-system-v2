@@ -1,0 +1,20 @@
+DRAFT — NOT SENT. Recipient, sender authority and any proposed agreement must be verified before use.
+
+Subject: Permission or approved integration for KINTO product-request service
+
+Hello,
+
+KINTO is an independent shopping and order-management service. We would like to confirm whether you permit the following proposed integration, or can offer an approved API, product feed or partnership route:
+
+- A customer voluntarily opens your website in a separate in-app browser.
+- The customer selects a product and options. KINTO reads the product name, public URL, image, current displayed price and selected options to prepare a customer-confirmed request.
+- KINTO displays its own currency conversion/service price and clearly identifies itself as independent. Staff review availability and shipping before purchase. The customer request does not automatically place an order on your website.
+- This request does not seek permission for bulk crawling, automated account login or automatic checkout.
+
+Please confirm in writing the permitted scope, including embedded website display, product-data/image use, commercial use, attribution, supported territories and any technical/rate-limit requirements. If the described use is not permitted, please advise whether an approved alternative integration is available.
+
+We will not describe KINTO as your official app or partner without a separate written authorization.
+
+KINTO
+support@shopkinto.com
+https://shopkinto.com

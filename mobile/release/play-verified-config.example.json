@@ -8,5 +8,6 @@
   "account_deletion_verified": false,
   "privacy_data_safety_verified": false,
   "retailer_policy_reviewed": false,
-  "release_device_checks_passed": false
+  "release_device_checks_passed": false,
+  "ugc_controls_verified": false
 }

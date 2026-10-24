@@ -3,7 +3,7 @@ import argparse,json,os,pathlib,re,subprocess,hashlib,base64,sys
 p=argparse.ArgumentParser();p.add_argument('--verified-config',required=True);args=p.parse_args()
 root=pathlib.Path(__file__).resolve().parents[3]
 c=json.loads(pathlib.Path(args.verified_config).read_text())
-for flag in ['console_verified','signing_ownership_verified','account_deletion_verified','privacy_data_safety_verified','retailer_policy_reviewed','release_device_checks_passed']:
+for flag in ['console_verified','signing_ownership_verified','account_deletion_verified','privacy_data_safety_verified','retailer_policy_reviewed','release_device_checks_passed','ugc_controls_verified']:
  if c.get(flag) is not True:sys.exit('NOT READY: '+flag)
 app=c.get('application_id','');code=c.get('version_code');highest=c.get('highest_play_version_code')
 if not re.fullmatch(r'[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*){2,}',app) or '.preview.' in app:sys.exit('Invalid production identity')

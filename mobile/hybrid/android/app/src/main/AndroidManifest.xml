@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
  <uses-permission android:name="android.permission.INTERNET" />
- <application android:name=".KintoApplication" android:label="KINTO" android:icon="@mipmap/ic_launcher" android:hardwareAccelerated="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:allowBackup="false" android:enableOnBackInvokedCallback="false" android:usesCleartextTraffic="false" android:supportsRtl="true">
+ <application android:name=".KintoApplication" android:label="KINTO" android:icon="@mipmap/ic_launcher" android:hardwareAccelerated="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml/kinto_data_extraction_rules" android:enableOnBackInvokedCallback="false" android:usesCleartextTraffic="false" android:supportsRtl="true">
   <activity android:name=".ShoppingActivity" android:exported="false" android:process=":shopping" />
   <activity android:name=".MainActivity" android:exported="true" android:theme="@style/KintoLaunchTheme">
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
