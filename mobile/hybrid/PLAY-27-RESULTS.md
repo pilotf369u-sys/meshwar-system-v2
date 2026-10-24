@@ -1,0 +1,13 @@
+# Play preparation27 — results
+
+Branch app/play-package-v27-20261024. Rollback rollback/before-play-package-v27-20261024 at5d56ffb4f8bad50b64dde78587c05062d2a53c51. Owner accepted26 remains unchanged.
+
+Green run40123078258 on6e19d39d5d6f2e034e9b6731f741c8a3a16f4bd8; candidate120958637975, preview120958929977. API36 native proof: visible native breathing frames, cover reveal with usable synthetic content, warm return without another cover, offline retry, bundled deletion resource with no message sent, preserved Mango confirmation/restoration and four-store offline single-product handoff.54 reader cases,15 MAD price cases,9 MAD identity cases, markup, Java and preservation checks passed. Two deletion-form/entry checks passed; five negative production-input gate checks passed locally. No physical-device acceptance of27 yet; pre31 compatibility guarded but not emulated in this run.
+
+Visual review caught system splash masking the original frame; the approved PNG is unchanged and a14% wrapper keeps its visible pixels inside the platform mask. Motion starts on platform splash exit or first pre31 draw, with a bounded fallback; first-launch data load begins underneath. The visual test boots with animations enabled and verifies native frames, rather than counting a platform-to-app image change as a pulse. Earlier failed visual/accessibility runs are superseded by the green corrected run, not treated as proof.
+
+Verified signed CI test candidate198331bytes, SHA25606e7ff94e7ca44e3c234e51587af744fb73e4ac903b99da7382bcb160894075e. Its six reader assets, price button, deletion page and entry bytes match source; fixture assets excluded. Disposable signing only, no production key generated or assetlinks changed.
+
+Release pack: mobile/release/READY-FOR-UPLOAD.md and associated listing/data inventory/privacy draft/deletion runbook. Current support address read from public settings:support@shopkinto.com; reception and actual deletion fulfillment unverified. Catalog-only read found8 direct customer references and24 tables with selected identity-column names; no customer rows were read and no schema/data were modified. This review is not comprehensive erasure implementation.
+
+Remaining blockers are explicit: Console/package/version/key ownership, policy and retention approval, tested deletion fulfillment and public resource deployment, retailer policy review, final device/prelaunch checks, listing assets/declarations/reviewer access, and any applicable closed-test/production-access requirement. No main merge, Hostinger/Supabase deployment, account deletion, mail sending, purchase/payment or Play upload occurred.
