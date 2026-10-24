@@ -18,7 +18,7 @@ def nodes():
    if attempt==4:raise
    time.sleep(1)
 
-def click(text,attempts=6,scroll=False,exact=False):
+def click(text,attempts=6,scroll=False,exact=False,scrollUp=False):
  for _ in range(attempts):
   for n in nodes():
    if (n.get('text','')==text if exact else text in n.get('text','')):
@@ -26,6 +26,7 @@ def click(text,attempts=6,scroll=False,exact=False):
     if len(b)==4 and b[2]>b[0] and b[3]>b[1]:
      adb('shell','input','tap',str((b[0]+b[2])//2),str((b[1]+b[3])//2));return
   if scroll:adb('shell','input','swipe','500','1400','500','500','400')
+  if scrollUp:adb('shell','input','swipe','500','500','500','1400','400')
   time.sleep(2)
  print('CONTROL_MATCHES',[(n.get('text'),n.get('bounds'),n.get('class'),n.get('clickable')) for n in nodes() if text in n.get('text','')])
  with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'zara-native-failure.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
@@ -182,8 +183,7 @@ for _ in range(12):
  time.sleep(1)
 assert '35750 IQD' in labels,labels
 recreate_shop_fixture()
-size_node=next(n for n in nodes() if n.get('text')=='L')
-b=list(map(int,re.findall(r'\d+',size_node.get('bounds',''))));adb('shell','input','tap',str((b[0]+b[2])//2),str((b[1]+b[3])//2));time.sleep(2)
+click('L',exact=True,scrollUp=True);time.sleep(2)
 click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
 zara=[p for p in saved_drafts() if p['source']=='zara'];assert len(zara)==1,zara
 assert zara[0]['price']==1000 and zara[0]['priceSource']=='visible',zara
