@@ -7,7 +7,8 @@ import re,xml.etree.ElementTree as E
 exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in {'adb','nodes','click'}],type_ignores=[]),str(source),'exec'))
 package='com.kinto.preview.hybrid.v27';out=Path(os.environ['KINTO_APK']).parent
 adb('install','--no-streaming','-r',os.environ['KINTO_APK']);adb('shell','pm','clear',package)
-for key in ['window_animation_scale','transition_animation_scale','animator_duration_scale']:adb('shell','settings','put','global',key,'1')
+scale=adb('shell','settings','get','global','animator_duration_scale').strip()
+assert float(scale)>0,'Launch visual proof requires animations enabled at emulator boot'
 adb('logcat','-c')
 adb('shell','am','start','-W','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true')
 for _ in range(30):
