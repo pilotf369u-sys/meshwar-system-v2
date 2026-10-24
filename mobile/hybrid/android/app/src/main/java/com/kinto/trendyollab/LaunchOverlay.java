@@ -36,7 +36,7 @@ final class LaunchOverlay {
  }
  void ready(){if(closed||failed)return;ready=true;if(minimum)hide();}
  void fail(String text){if(closed)return;failed=true;ready=false;stopMotion();message.setText(text);retry.setVisibility(View.VISIBLE);}
- private void stopMotion(){if(breathing!=null)breathing.cancel();logo.setScaleX(1);logo.setScaleY(1);logo.setAlpha(1);}
+ private void stopMotion(){if(breathing!=null)breathing.cancel();logo.setScaleX(1);logo.setScaleY(1);logo.setAlpha(1f);}
  private void hide(){
   if(closed)return;closed=true;handler.removeCallbacksAndMessages(null);
   // Cancel without resetting the current transform: no snap between breathing and reveal.
@@ -46,7 +46,7 @@ final class LaunchOverlay {
   android.view.animation.PathInterpolator easing=new android.view.animation.PathInterpolator(.4f,0f,.2f,1f);
   // A single clock keeps zoom, text and background in sync even on a busy UI thread.
   reveal=ValueAnimator.ofFloat(0f,1f);reveal.setDuration(duration);reveal.setInterpolator(new android.view.animation.LinearInterpolator());
-  reveal.addUpdateListener(anim->{float t=(Float)anim.getAnimatedValue();float scale=1f+(motion?1.65f:0f)*easing.getInterpolation(t);logo.setScaleX(scale);logo.setScaleY(scale);logo.setAlpha(1);message.setAlpha(1-t);cover.setAlpha(1-t*t*t);});
+  reveal.addUpdateListener(anim->{float t=(Float)anim.getAnimatedValue();float scale=1f+(motion?1.65f:0f)*easing.getInterpolation(t);logo.setScaleX(scale);logo.setScaleY(scale);logo.setAlpha(1f);message.setAlpha(1-t);cover.setAlpha(1-t*t*t);});
   reveal.addListener(new AnimatorListenerAdapter(){@Override public void onAnimationEnd(Animator animation){host.removeView(cover);if(host.getChildCount()>0)host.getChildAt(0).requestFocus(View.FOCUS_FORWARD);}});
   reveal.start();
  }

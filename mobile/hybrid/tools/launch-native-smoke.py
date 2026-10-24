@@ -10,13 +10,12 @@ adb('install','--no-streaming','-r',os.environ['KINTO_APK']);adb('shell','pm','c
 scale=adb('shell','settings','get','global','animator_duration_scale').strip()
 assert (1.0 if scale in ('null','') else float(scale))>0,'Launch visual proof requires animations enabled at emulator boot'
 adb('logcat','-c')
-record=subprocess.Popen(['adb','shell','screenrecord','--time-limit','9','/sdcard/kinto-launch.mp4'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-time.sleep(.3)
 adb('shell','am','start','-W','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true')
 for _ in range(30):
  if 'NATIVE_COVER_STARTED' in adb('logcat','-d','-s','KintoLaunch:I','*:S'):break
  time.sleep(.1)
 else:raise AssertionError('Native launch never started')
+record=subprocess.Popen(['adb','shell','screenrecord','--time-limit','7','/sdcard/kinto-launch.mp4'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 time.sleep(.1)
 frames=[]
 for i in range(9):
@@ -27,6 +26,11 @@ green=(10,47,35)
 valid=[im for im in frames if sum(abs(v-t)for v,t in zip(im.getpixel((w//8,h//2)),green))<12]
 assert len(valid)>=3,'No three native green launch frames captured'
 region=(w//4,h//4,3*w//4,3*h//4)
+# ImageView.setAlpha(int) must never make the breathing/holding logo transparent.
+def gold_count(im):
+ return sum(1 for r,g,b in im.crop((w//8,h//4,7*w//8,int(h*.58))).getdata() if r>110 and g>65 and b<105 and r>g*1.05)
+assert all(gold_count(im)>500 for im in valid[:3]),'Logo disappears during breathing/hold'
+print('PASS_LOGO_OPACITY: three native frames retain visible gold logo')
 assert any(ImageChops.difference(valid[0].crop(region),im.crop(region)).getbbox() for im in valid[1:]),'No breathing change inside logo region'
 print('PASS_LAUNCH_ANIMATION: approved logo/green cover and changing logo frames while synthetic WebView loads')
 time.sleep(3)
