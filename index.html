@@ -336,23 +336,30 @@
     if(settings&&typeof settings==='object'&&settings.settings&&typeof settings.settings==='object')settings=settings.settings;
     if(!settings||typeof settings!=='object')return;
     const entries=[
-      ['واتساب','whatsapp_url','whatsapp_active','fa-brands fa-whatsapp'],
-      ['فيسبوك','facebook_url','facebook_active','fa-brands fa-facebook-f'],
-      ['إنستغرام','instagram_url','instagram_active','fa-brands fa-instagram'],
-      ['تلغرام','telegram_url','telegram_active','fa-brands fa-telegram'],
-      ['تيك توك','tiktok_url','tiktok_active','fa-brands fa-tiktok'],
-      ['يوتيوب','youtube_url','youtube_active','fa-brands fa-youtube']
+      ['واتساب','whatsapp','fa-brands fa-whatsapp'],
+      ['فيسبوك','facebook','fa-brands fa-facebook-f'],
+      ['إنستغرام','instagram','fa-brands fa-instagram'],
+      ['تلغرام','telegram','fa-brands fa-telegram'],
+      ['تيك توك','tiktok','fa-brands fa-tiktok'],
+      ['يوتيوب','youtube','fa-brands fa-youtube']
     ];
     function add(label,url,iconClass){
-      const a=document.createElement('a');a.href=url;a.className='inline-flex items-center gap-2 rounded-lg px-2 py-1 text-emerald-200 transition hover:bg-white/10 hover:text-amber-200';a.target='_blank';a.rel='noopener noreferrer';
-      if(iconClass){const i=document.createElement('i');i.className=iconClass;i.setAttribute('aria-hidden','true');a.appendChild(i)}
-      const span=document.createElement('span');span.textContent=label;a.appendChild(span);target.appendChild(a);
+      const el=url?document.createElement('a'):document.createElement('span');
+      if(url){el.href=url;el.target='_blank';el.rel='noopener noreferrer';}
+      el.className='inline-flex items-center gap-2 rounded-lg px-2 py-1 text-emerald-200'+(url?' transition hover:bg-white/10 hover:text-amber-200':'');
+      const icon=document.createElement('i');icon.className=iconClass;icon.setAttribute('aria-hidden','true');el.appendChild(icon);
+      const name=document.createElement('span');name.textContent=label;el.appendChild(name);target.appendChild(el);
     }
-    for(const [label,urlKey,activeKey,iconClass] of entries){
-      const enabled=settings[activeKey]===true||String(settings[activeKey]).toLowerCase()==='true';
-      const url=String(settings[urlKey]||'').trim();
-      if(!enabled||!/^https:\/\//i.test(url))continue;
-      try{const u=new URL(url);if(u.protocol!=='https:')continue;add(label,u.href,iconClass)}catch(_){}
+    target.replaceChildren();
+    for(const [fallback,key,iconClass] of entries){
+      const enabled=settings[key+'_active']===true||String(settings[key+'_active']).toLowerCase()==='true';
+      if(!enabled)continue;
+      let name=String(settings[key+'_name']||'').trim();
+      let raw=String(settings[key+'_url']||'').trim();
+      if(!name&&raw&&!/^https:\/\//i.test(raw)){name=raw;raw='';}
+      let url='';
+      if(/^https:\/\//i.test(raw)){try{const parsed=new URL(raw);if(parsed.protocol==='https:')url=parsed.href}catch(_){}}
+      add(name||fallback,url,iconClass);
     }
     const email=String(settings.support_email||'').trim();
     if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
