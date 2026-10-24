@@ -1,9 +1,9 @@
 name: KINTO independent global orders
 on:
   push:
-    branches: [fix/world-single-product-live-staff-20261023, fix/world-whatsapp-payment-privacy-20261023, fix/world-staff-pricing-stages-20261023, fix/world-order-cards-compact-20261023, fix/world-employee-entry-cache-20261023, fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-world-staff-specialty-20261023, app/kinto-global-orders-independent-20261023]
+    branches: [app/world-madame-link-20261024, fix/world-single-product-live-staff-20261023, fix/world-whatsapp-payment-privacy-20261023, fix/world-staff-pricing-stages-20261023, fix/world-order-cards-compact-20261023, fix/world-employee-entry-cache-20261023, fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-world-staff-specialty-20261023, app/kinto-global-orders-independent-20261023]
   pull_request:
-    paths: ['sql/kinto-world-payment-privacy-v3.sql', 'sql/kinto-world-staff-fulfillment-v2.sql', 'sql/kinto-global-orders-independent-v1.sql', 'sql/kinto-world-staff-accounts-v1.sql', 'sql/kinto-world-workflow-integration-v1.sql', 'js/admin-world-staff-v1.js', 'supabase/functions/kinto-world-staff-security-v1/**', 'mobile/global-orders/**', 'js/kinto-world*', '*world-workspace*', 'global-order-review.html', 'global-staff-workspace.html']
+    paths: ['sql/kinto-world-madamecoco*', 'sql/kinto-world-payment-privacy-v3.sql', 'sql/kinto-world-staff-fulfillment-v2.sql', 'sql/kinto-global-orders-independent-v1.sql', 'sql/kinto-world-staff-accounts-v1.sql', 'sql/kinto-world-workflow-integration-v1.sql', 'js/admin-world-staff-v1.js', 'supabase/functions/kinto-world-staff-security-v1/**', 'mobile/global-orders/**', 'js/kinto-world*', '*world-workspace*', 'global-order-review.html', 'global-staff-workspace.html']
 permissions:
   contents: read
 jobs:
@@ -50,6 +50,10 @@ jobs:
         env:
           PGPASSWORD: isolated-test-only
         run: psql -h localhost -U postgres -d kinto_world_test -v ON_ERROR_STOP=1 -f mobile/global-orders/hepsiburada-check.sql
+      - name: Madame Coco admission and rollback in disposable database
+        env:
+          PGPASSWORD: isolated-test-only
+        run: psql -h localhost -U postgres -d kinto_world_test -v ON_ERROR_STOP=1 -f mobile/global-orders/madamecoco-check.sql
       - name: Two-connection idempotency
         env:
           PGPASSWORD: isolated-test-only
@@ -58,7 +62,7 @@ jobs:
         run: |
           python3 mobile/global-orders/prepare-employee-page-fixture.py
           python3 mobile/global-orders/prepare-customer-cards-fixture.py
-          for fixture in hepsiburada compact-staff customer-live single-product staff-live payment-privacy staff-fulfillment staff customer admin-staff dispatch customer-integrated employee-integrated employee-page; do
+          for fixture in madamecoco hepsiburada compact-staff customer-live single-product staff-live payment-privacy staff-fulfillment staff customer admin-staff dispatch customer-integrated employee-integrated employee-page; do
             google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --dump-dom "file://$PWD/mobile/global-orders/$fixture-fixture.html" > "$RUNNER_TEMP/$fixture-world.html"
           done
           google-chrome --headless --no-sandbox --disable-gpu --allow-file-access-from-files --virtual-time-budget=10000 --window-size=420,1000 --dump-dom "file://$PWD/.kinto-customer-cards-test.html" > "$RUNNER_TEMP/customer-styled.html"
@@ -68,7 +72,7 @@ jobs:
           import os,pathlib
           styled=pathlib.Path(os.environ['RUNNER_TEMP'],'customer-styled.html').read_text()
           assert '>PASS_CUSTOMER_INTEGRATED_UI<' in styled,styled
-          for kind in ['hepsiburada','compact-staff','customer-live','single-product','staff-live','payment-privacy','staff-fulfillment','staff','customer','admin-staff','dispatch','customer-integrated','employee-integrated','employee-page']:
+          for kind in ['madamecoco','hepsiburada','compact-staff','customer-live','single-product','staff-live','payment-privacy','staff-fulfillment','staff','customer','admin-staff','dispatch','customer-integrated','employee-integrated','employee-page']:
             content=pathlib.Path(os.environ['RUNNER_TEMP'],kind+'-world.html').read_text()
             assert '>PASS_'+kind.upper().replace('-','_')+'_UI<' in content,content
           PYTEST
