@@ -1,0 +1,20 @@
+{
+  "application_runtime_reference": "accepted-preview28",
+  "production_upload_ready": false,
+  "support_mailbox_owner_confirmed": true,
+  "console_identity_verified": false,
+  "production_signing_selected": false,
+  "account_deletion_fulfillment_tested": false,
+  "public_privacy_policy_final": false,
+  "public_deletion_resource_live": false,
+  "ugc_report_block_verified": false,
+  "retailer_use_authorized": false,
+  "reviewer_account_available": false,
+  "final_store_screenshots_available": false,
+  "final_play_candidate_device_test_passed": false,
+  "android29_motion_certified": false,
+  "android29_functional_result": "partial: launch/privacy/warm/offline passed; customer invoice layout failed on WebView74; staff/vendor/video not reached",
+  "lint_errors": 0,
+  "lint_warnings": 21,
+  "legacy_webview_compatibility_closed": false
+}
