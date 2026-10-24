@@ -120,6 +120,8 @@ jobs:
         emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
         script: 'python3 mobile/hybrid/tools/new-store-native-smoke.py
 
+          python3 mobile/hybrid/tools/stores-handoff-native-smoke.py
+
           '
     - uses: actions/upload-artifact@v4
       if: always()
