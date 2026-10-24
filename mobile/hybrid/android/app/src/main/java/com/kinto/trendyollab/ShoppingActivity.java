@@ -37,9 +37,9 @@ public class ShoppingActivity extends Activity {
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
   try{injectScript=asset("order-button.js");readerScript=asset("product-reader.js");hepsiReaderScript=asset("hepsiburada-reader.js");zaraReaderScript=asset("zara-reader.js");}catch(IOException e){status.setText("تعذر تحميل زر الصفحة؛ أعد فتح التطبيق");}
   web.setWebViewClient(new WebViewClient(){
-   @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){if(fixture&&request.getUrl().toString().split("#",2)[0].equals(fixtureUrl)){try{return new WebResourceResponse("text/html","UTF-8",getAssets().open(zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"));}catch(IOException ignored){}}return null;}
+   @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){if(fixture&&fixturePage(request.getUrl().toString())){try{return new WebResourceResponse("text/html","UTF-8",getAssets().open(zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"));}catch(IOException ignored){}}return null;}
 
-   @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())view.post(()->refreshAndCapture());return true;}if(fixture&&!url.split("#",2)[0].equals(fixtureUrl))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج المتاجر المدعومة؛ لم يتم فتحه");return true;}return false;}
+   @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())view.post(()->refreshAndCapture());return true;}if(fixture&&!fixturePage(url))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج المتاجر المدعومة؛ لم يتم فتحه");return true;}return false;}
    @Override public void onPageStarted(WebView v,String url,android.graphics.Bitmap icon){if(!UrlPolicy.allowed(url)){v.stopLoading();status.setText("تم إيقاف رابط غير مسموح");}}
    @Override public void onPageFinished(WebView v,String url){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void doUpdateVisitedHistory(WebView v,String url,boolean reload){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
@@ -48,9 +48,10 @@ public class ShoppingActivity extends Activity {
   if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=fixturePricing();quoteReadAt=System.currentTimeMillis();currentProductPage=fixtureUrl;try{if(!restoreShop(state))web.loadDataWithBaseURL(fixtureUrl,asset(zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"),"text/html","UTF-8",fixtureUrl);}catch(Exception e){finish();}}
   else { if(!restoreShop(state))web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/");refreshConfigInBackground(); }
  }
+ private boolean fixturePage(String raw){String page=raw.split("#",2)[0];return page.equals(fixtureUrl)||page.equals(fixtureUrl+"?kintoResume=1");}
  private boolean restoreShop(Bundle state){
   if(state==null)return false;String last=state.getString("lastShopUrl","");Bundle history=state.getBundle("shopHistory");
-  if(!UrlPolicy.allowed(last)||fixture&&!last.split("#",2)[0].equals(fixtureUrl))return false;
+  if(!UrlPolicy.allowed(last)||fixture&&!fixturePage(last))return false;
   currentProductPage=last;WebBackForwardList restored=history==null?null:web.restoreState(history);
   if(restored==null||restored.getCurrentItem()==null||!last.equals(restored.getCurrentItem().getUrl()))web.loadUrl(last);return true;
  }

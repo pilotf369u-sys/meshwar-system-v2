@@ -30,14 +30,15 @@ def click(text,attempts=6,scroll=False,exact=False):
  raise AssertionError('Missing control: '+text+'; texts='+repr([n.get('text') for n in nodes()]))
 
 def recreate_shop_fixture():
- # Rotation recreates the Activity; the hash marker differentiates restore from reopening the initial page.
- click('فحص الرجوع',scroll=True);time.sleep(1)
+ # Rotation recreates the Activity; a distinct intercepted HTTPS URL differentiates restore from reopening the initial page.
+ click('فحص الرجوع',scroll=True,exact=True);time.sleep(2)
+ assert 'تمت استعادة صفحة المنتج' in ' '.join(n.get('text','') for n in nodes()),'Fixture did not navigate to distinct product URL'
  rotation=adb('shell','settings','get','system','user_rotation').strip()
  automatic=adb('shell','settings','get','system','accelerometer_rotation').strip()
  try:
   adb('shell','settings','put','system','accelerometer_rotation','0')
-  adb('shell','settings','put','system','user_rotation','1');time.sleep(4)
-  adb('shell','settings','put','system','user_rotation','0');time.sleep(4)
+  adb('shell','wm','user-rotation','lock','1');time.sleep(4)
+  adb('shell','wm','user-rotation','lock','0');time.sleep(4)
  finally:
   adb('shell','settings','put','system','user_rotation',rotation if rotation.isdigit() else '0')
   adb('shell','settings','put','system','accelerometer_rotation',automatic if automatic.isdigit() else '0')
@@ -161,7 +162,7 @@ if '35750 IQD' not in labels:
 assert '35750 IQD' in labels,labels
 recreate_shop_fixture()
 click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
-hepsi=saved_drafts();assert len(hepsi)==1 and hepsi[0]['source']=='hepsiburada' and hepsi[0]['url'].split('#')[0].endswith('-p-HBCV0000TEST'),hepsi
+hepsi=saved_drafts();assert len(hepsi)==1 and hepsi[0]['source']=='hepsiburada' and hepsi[0]['url'].split('?')[0].endswith('-p-HBCV0000TEST'),hepsi
 assert hepsi[0]['price']==1000 and hepsi[0]['priceSource']=='visible',hepsi
 assert hepsi[0]['fixture'] is True and hepsi[0]['convertedTotalIQD']=='35750' and hepsi[0]['selectedOptions']=={'size':'L','color':'Haki'},hepsi
 with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'hepsiburada-review-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
