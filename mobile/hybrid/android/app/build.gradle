@@ -3,7 +3,7 @@ android {
  namespace 'com.kinto.trendyollab'
  compileSdk 36
  // Candidate identity only. Production identity/version/signing await Play Console verification.
- defaultConfig { applicationId 'com.kinto.preview.hybrid.v24'; minSdk 28; targetSdk 36; versionCode 24; versionName '0.24-candidate' }
+ defaultConfig { applicationId 'com.kinto.preview.hybrid.v25'; minSdk 28; targetSdk 36; versionCode 25; versionName '0.25-candidate' }
  buildTypes { release { debuggable false; minifyEnabled false; signingConfig null } }
  sourceSets { main { assets.srcDirs = [layout.buildDirectory.dir('candidate-assets')] } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
