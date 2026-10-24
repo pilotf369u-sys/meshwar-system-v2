@@ -29,6 +29,25 @@ def click(text,attempts=6,scroll=False,exact=False):
   time.sleep(2)
  raise AssertionError('Missing control: '+text+'; texts='+repr([n.get('text') for n in nodes()]))
 
+def recreate_shop_fixture():
+ # Rotation recreates the Activity; the hash marker differentiates restore from reopening the initial page.
+ click('فحص الرجوع',scroll=True);time.sleep(1)
+ rotation=adb('shell','settings','get','system','user_rotation').strip()
+ automatic=adb('shell','settings','get','system','accelerometer_rotation').strip()
+ try:
+  adb('shell','settings','put','system','accelerometer_rotation','0')
+  adb('shell','settings','put','system','user_rotation','1');time.sleep(4)
+  adb('shell','settings','put','system','user_rotation','0');time.sleep(4)
+ finally:
+  adb('shell','settings','put','system','user_rotation',rotation if rotation.isdigit() else '0')
+  adb('shell','settings','put','system','accelerometer_rotation',automatic if automatic.isdigit() else '0')
+ for _ in range(12):
+  labels=' '.join(n.get('text','') for n in nodes())
+  if 'تمت استعادة صفحة المنتج' in labels and '35750 IQD' in labels:break
+  time.sleep(1)
+ assert 'تمت استعادة صفحة المنتج' in labels and '35750 IQD' in labels,labels
+ print('PASS_SHOP_RECREATE: saved product page restored and synthetic conversion remains 35750 IQD')
+
 print(adb('install','--no-streaming','-r',os.environ['KINTO_APK']))
 print(adb('shell','am','start','-n','com.kinto.preview.hybrid.v20/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true'))
 time.sleep(8)
@@ -140,8 +159,9 @@ if '35750 IQD' not in labels:
  print(adb('shell','dumpsys','activity','activities')[-5000:])
  with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'hepsiburada-review-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
 assert '35750 IQD' in labels,labels
+recreate_shop_fixture()
 click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
-hepsi=saved_drafts();assert len(hepsi)==1 and hepsi[0]['source']=='hepsiburada' and hepsi[0]['url'].endswith('-p-HBCV0000TEST'),hepsi
+hepsi=saved_drafts();assert len(hepsi)==1 and hepsi[0]['source']=='hepsiburada' and hepsi[0]['url'].split('#')[0].endswith('-p-HBCV0000TEST'),hepsi
 assert hepsi[0]['price']==1000 and hepsi[0]['priceSource']=='visible',hepsi
 assert hepsi[0]['fixture'] is True and hepsi[0]['convertedTotalIQD']=='35750' and hepsi[0]['selectedOptions']=={'size':'L','color':'Haki'},hepsi
 with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'hepsiburada-review-test.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
@@ -158,6 +178,7 @@ for _ in range(12):
  if '35750 IQD' in labels:break
  time.sleep(1)
 assert '35750 IQD' in labels,labels
+recreate_shop_fixture()
 size_node=next(n for n in nodes() if n.get('text')=='L')
 b=list(map(int,re.findall(r'\d+',size_node.get('bounds',''))));adb('shell','input','tap',str((b[0]+b[2])//2),str((b[1]+b[3])//2));time.sleep(2)
 click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)

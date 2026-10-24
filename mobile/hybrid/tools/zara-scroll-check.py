@@ -4,7 +4,7 @@ from html.parser import HTMLParser
 import json,subprocess,tempfile
 root=Path(__file__).resolve().parents[1]
 reader=(root/'android/app/src/main/assets/zara-reader.js').read_text()
-fixture=(root/'android/app/src/main/assets/fixture-zara.html').read_text().split('<script>')[0]
+fixture=(root/'android/app/src/main/assets/fixture-zara.html').read_text().split('<script>setTimeout')[0]
 script='''(()=>{const location=new URL('https://www.zara.com/tr/tr/kinto-fixture-p00000001.html');const read=()=>READER;
 const results=[];const record=label=>results.push({label,value:JSON.parse(read())});record('header');
 const card=document.getElementById('kinto-zara-current'),panel=card.querySelector('.product-detail-card-info__fixed-info-panel'),price=panel.querySelector('.price-current');
