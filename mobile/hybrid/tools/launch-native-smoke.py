@@ -8,7 +8,7 @@ exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionD
 package='com.kinto.preview.hybrid.v27';out=Path(os.environ['KINTO_APK']).parent
 adb('install','--no-streaming','-r',os.environ['KINTO_APK']);adb('shell','pm','clear',package)
 scale=adb('shell','settings','get','global','animator_duration_scale').strip()
-assert float(scale)>0,'Launch visual proof requires animations enabled at emulator boot'
+assert (1.0 if scale in ('null','') else float(scale))>0,'Launch visual proof requires animations enabled at emulator boot'
 adb('logcat','-c')
 adb('shell','am','start','-W','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true')
 for _ in range(30):
