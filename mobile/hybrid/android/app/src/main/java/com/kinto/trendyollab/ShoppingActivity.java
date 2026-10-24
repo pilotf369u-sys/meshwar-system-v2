@@ -11,11 +11,11 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public class ShoppingActivity extends Activity {
- private WebView web; private TextView status;  private String injectScript, readerScript, hepsiReaderScript,zaraReaderScript,madameReaderScript; private boolean reading=false; private String currentProductPage="";
+ private WebView web; private TextView status;  private String injectScript, readerScript, hepsiReaderScript,zaraReaderScript,madameReaderScript,mangoReaderScript,madReaderScript; private boolean reading=false; private String currentProductPage="";
  private final java.util.ArrayDeque<JSONObject> zaraSamples=new java.util.ArrayDeque<>();
- private boolean fixture; private boolean hepsiFixture; private boolean zaraFixture; private boolean madameFixture; private String fixtureUrl; private volatile Pricing.Snapshot quote; private volatile long quoteReadAt,configAttemptAt; private boolean badgeReading=false; private volatile boolean configLoading=false; private final android.os.Handler pricingHandler=new android.os.Handler(android.os.Looper.getMainLooper());
+ private boolean fixture; private boolean hepsiFixture; private boolean zaraFixture; private boolean madameFixture; private boolean mangoFixture; private boolean madFixture; private String fixtureUrl; private volatile Pricing.Snapshot quote; private volatile long quoteReadAt,configAttemptAt; private boolean badgeReading=false; private volatile boolean configLoading=false; private final android.os.Handler pricingHandler=new android.os.Handler(android.os.Looper.getMainLooper());
  @Override public void onCreate(Bundle state) {
-  super.onCreate(state); fixture=PreviewMode.enabled(this)&&getIntent().getBooleanExtra("fixture",false);hepsiFixture=fixture&&"hepsiburada".equals(getIntent().getStringExtra("fixtureStore"));zaraFixture=fixture&&"zara".equals(getIntent().getStringExtra("fixtureStore"));madameFixture=fixture&&"madamecoco".equals(getIntent().getStringExtra("fixtureStore"));fixtureUrl=madameFixture?"https://www.madamecoco.com/kinto-test-nt0000000001-101/":zaraFixture?"https://www.zara.com/tr/tr/kinto-fixture-p00000001.html":hepsiFixture?"https://www.hepsiburada.com/kinto-fixture-p-HBCV0000TEST":"https://www.trendyol.com/fixture-p-123456";
+  super.onCreate(state); fixture=PreviewMode.enabled(this)&&getIntent().getBooleanExtra("fixture",false);hepsiFixture=fixture&&"hepsiburada".equals(getIntent().getStringExtra("fixtureStore"));zaraFixture=fixture&&"zara".equals(getIntent().getStringExtra("fixtureStore"));madameFixture=fixture&&"madamecoco".equals(getIntent().getStringExtra("fixtureStore"));mangoFixture=fixture&&"mango".equals(getIntent().getStringExtra("fixtureStore"));madFixture=fixture&&"madparfum".equals(getIntent().getStringExtra("fixtureStore"));fixtureUrl=mangoFixture?"https://shop.mango.com/tr/tr/p/kadin/test/00000001/99/00":madFixture?"https://www.madparfum.com/urun/kinto-test/":madameFixture?"https://www.madamecoco.com/kinto-test-nt0000000001-101/":zaraFixture?"https://www.zara.com/tr/tr/kinto-fixture-p00000001.html":hepsiFixture?"https://www.hepsiburada.com/kinto-fixture-p-HBCV0000TEST":"https://www.trendyol.com/fixture-p-123456";
   getWindow().setStatusBarColor(Color.rgb(10,47,35));
   LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(Color.rgb(10,47,35));
   // Keep controls away from system status/navigation bars, including edge-to-edge Android 15.
@@ -35,9 +35,9 @@ public class ShoppingActivity extends Activity {
   setContentView(root);
   WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setSupportMultipleWindows(false);settings.setJavaScriptCanOpenWindowsAutomatically(false);
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
-  try{injectScript=asset("order-button.js");readerScript=asset("product-reader.js");hepsiReaderScript=asset("hepsiburada-reader.js");zaraReaderScript=asset("zara-reader.js");madameReaderScript=asset("madamecoco-reader.js");}catch(IOException e){status.setText("تعذر تحميل زر الصفحة؛ أعد فتح التطبيق");}
+  try{injectScript=asset("order-button.js");readerScript=asset("product-reader.js");hepsiReaderScript=asset("hepsiburada-reader.js");zaraReaderScript=asset("zara-reader.js");madameReaderScript=asset("madamecoco-reader.js");mangoReaderScript=asset("mango-reader.js");madReaderScript=asset("madparfum-reader.js");}catch(IOException e){status.setText("تعذر تحميل زر الصفحة؛ أعد فتح التطبيق");}
   web.setWebViewClient(new WebViewClient(){
-   @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){if(fixture&&fixturePage(request.getUrl().toString())){try{return new WebResourceResponse("text/html","UTF-8",getAssets().open(madameFixture?"fixture-madamecoco.html":zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"));}catch(IOException ignored){}}return null;}
+   @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){if(fixture&&fixturePage(request.getUrl().toString())){try{return new WebResourceResponse("text/html","UTF-8",getAssets().open(mangoFixture?"fixture-mango.html":madFixture?"fixture-madparfum.html":madameFixture?"fixture-madamecoco.html":zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"));}catch(IOException ignored){}}return null;}
 
    @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())view.post(()->refreshAndCapture());return true;}if(fixture&&!fixturePage(url))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج المتاجر المدعومة؛ لم يتم فتحه");return true;}return false;}
    @Override public void onPageStarted(WebView v,String url,android.graphics.Bitmap icon){if(!UrlPolicy.allowed(url)){v.stopLoading();status.setText("تم إيقاف رابط غير مسموح");}}
@@ -45,7 +45,7 @@ public class ShoppingActivity extends Activity {
    @Override public void doUpdateVisitedHistory(WebView v,String url,boolean reload){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())status.setText("تعذر فتح الصفحة. تحقق من الاتصال أو حدّث مرة واحدة.");}
   });
-  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=fixturePricing();quoteReadAt=System.currentTimeMillis();currentProductPage=fixtureUrl;try{if(!restoreShop(state))web.loadDataWithBaseURL(fixtureUrl,asset(madameFixture?"fixture-madamecoco.html":zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"),"text/html","UTF-8",fixtureUrl);}catch(Exception e){finish();}}
+  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=fixturePricing();quoteReadAt=System.currentTimeMillis();currentProductPage=fixtureUrl;try{if(!restoreShop(state))web.loadDataWithBaseURL(fixtureUrl,asset(mangoFixture?"fixture-mango.html":madFixture?"fixture-madparfum.html":madameFixture?"fixture-madamecoco.html":zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"),"text/html","UTF-8",fixtureUrl);}catch(Exception e){finish();}}
   else { if(!restoreShop(state))web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/");refreshConfigInBackground(); }
  }
  private boolean fixturePage(String raw){String page=raw.split("#",2)[0];return page.equals(fixtureUrl)||page.equals(fixtureUrl+"?kintoResume=1");}
@@ -77,7 +77,7 @@ public class ShoppingActivity extends Activity {
   if(fixture||configLoading||System.currentTimeMillis()-configAttemptAt<30000)return;
   configLoading=true;configAttemptAt=System.currentTimeMillis();new Thread(()->{try{Pricing.Snapshot fresh=AdminPricing.load();quote=fresh;quoteReadAt=System.currentTimeMillis();}catch(Exception ignored){}finally{configLoading=false;}},"kinto-pricing-read").start();
  }
- private String storeReader(String page){String source=UrlPolicy.source(page);return source.equals("madamecoco")?madameReaderScript:source.equals("zara")?zaraReaderScript:source.equals("hepsiburada")?hepsiReaderScript:readerScript;}
+ private String storeReader(String page){String source=UrlPolicy.source(page);return source.equals("mango")?mangoReaderScript:source.equals("madparfum")?madReaderScript:source.equals("madamecoco")?madameReaderScript:source.equals("zara")?zaraReaderScript:source.equals("hepsiburada")?hepsiReaderScript:readerScript;}
  private void updatePriceBadge(){
   refreshConfigInBackground();
   if(web==null||isFinishing()||reading||badgeReading||readerScript==null||!UrlPolicy.product(currentProductPage))return;
@@ -86,7 +86,7 @@ public class ShoppingActivity extends Activity {
   badgeReading=true;web.evaluateJavascript(storeReader(currentProductPage),result->{badgeReading=false;if(!page.equals(currentProductPage))return;try{
    Object decoded=new JSONTokener(result).nextValue();JSONObject item=new JSONObject((String)decoded);rememberZara(item);
    if(item.has("error")||!page.equals(item.optString("pageUrl"))||!snapshot.fromCurrency.equals(item.optString("currency")))throw new IllegalArgumentException();
-   boolean hepsiOptionsPending=("hepsiburada".equals(item.optString("source"))||"zara".equals(item.optString("source")))&&item.optBoolean("optionsPending");
+   boolean hepsiOptionsPending=("hepsiburada".equals(item.optString("source"))||"zara".equals(item.optString("source"))||"mango".equals(item.optString("source")))&&item.optBoolean("optionsPending");
    String amount=hepsiOptionsPending?item.getString("displayPrice"):item.getString("price");
    badge("تقديري: "+Pricing.total(amount,1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن"+(hepsiOptionsPending?"\nاختر خيارات المنتج أولاً":""));
   }catch(Exception e){badge("السعر غير مؤكد — راجع المنتج");}});
