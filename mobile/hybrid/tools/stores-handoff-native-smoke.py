@@ -5,7 +5,7 @@ import ast,json,os,time,subprocess,re,uuid,xml.etree.ElementTree as E
 from pathlib import Path
 source=Path(__file__).with_name('emulator-smoke.py');module=ast.parse(source.read_text())
 exec(compile(ast.Module(body=[n for n in module.body if isinstance(n,ast.FunctionDef) and n.name in {'adb','nodes','click','saved_drafts'}],type_ignores=[]),str(source),'exec'))
-package='com.kinto.preview.hybrid.v26'
+package='com.kinto.preview.hybrid.v27'
 adb('shell','svc','wifi','disable');adb('shell','svc','data','disable')
 profiles=[('zara','https://www.zara.com/tr/tr/test-p03548255.html'),('madamecoco','https://www.madamecoco.com/test-nt0000000001-101/'),('mango','https://shop.mango.com/tr/tr/p/kadin/test/17084040/99/01'),('madparfum','https://www.madparfum.com/urun/test-caramel-grace/')]
 try:

@@ -23,12 +23,12 @@ python3 - "$KINTO_ROOT" "$KINTO_OUT" <<'PY'
 from pathlib import Path
 import sys,zipfile,xml.etree.ElementTree as E
 root,out=map(Path,sys.argv[1:])
-t=E.parse(root/'android/app/src/main/AndroidManifest.xml');m=t.getroot();m.set('package','com.kinto.preview.hybrid.v26')
+t=E.parse(root/'android/app/src/main/AndroidManifest.xml');m=t.getroot();m.set('package','com.kinto.preview.hybrid.v27')
 a='{http://schemas.android.com/apk/res/android}'
 for e in m.iter():
  if e.get(a+'name','').startswith('.'):e.set(a+'name','com.kinto.trendyollab'+e.get(a+'name'))
 app=m.find('application');app.set(a+'debuggable','true')
-m.set(a+'versionCode','26');m.set(a+'versionName','0.26-preview')
+m.set(a+'versionCode','27');m.set(a+'versionName','0.27-preview')
 t.write(out/'AndroidManifest.xml',encoding='utf-8',xml_declaration=True)
 with zipfile.ZipFile(out/'classes.jar','w') as z:
  for p in (out/'classes').rglob('*.class'):z.write(p,p.relative_to(out/'classes'))
@@ -57,6 +57,6 @@ with zipfile.ZipFile(out/'unsigned.apk','a',compression=zipfile.ZIP_DEFLATED) as
  for f in files:z.write(repo/f,'assets/world-review/'+f)
 PYWORLD
 "$KINTO_TOOLS/zipalign" -f 4 "$KINTO_OUT/unsigned.apk" "$KINTO_OUT/aligned.apk"
-"$JAVA_HOME/bin/java" -jar "$KINTO_TOOLS/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$KINTO_OUT/KINTO-Preview-0.26.apk" "$KINTO_OUT/aligned.apk"
-"$JAVA_HOME/bin/java" -jar "$KINTO_TOOLS/lib/apksigner.jar" verify --verbose --print-certs "$KINTO_OUT/KINTO-Preview-0.26.apk"
-"$KINTO_TOOLS/aapt2" dump badging "$KINTO_OUT/KINTO-Preview-0.26.apk"
+"$JAVA_HOME/bin/java" -jar "$KINTO_TOOLS/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$KINTO_OUT/KINTO-Preview-0.27.apk" "$KINTO_OUT/aligned.apk"
+"$JAVA_HOME/bin/java" -jar "$KINTO_TOOLS/lib/apksigner.jar" verify --verbose --print-certs "$KINTO_OUT/KINTO-Preview-0.27.apk"
+"$KINTO_TOOLS/aapt2" dump badging "$KINTO_OUT/KINTO-Preview-0.27.apk"

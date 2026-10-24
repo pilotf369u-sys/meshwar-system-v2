@@ -1,3 +1,5 @@
+> Historical checkpoint: the current preparation pack is in `mobile/release/READY-FOR-UPLOAD.md`; owner-accepted runtime baseline is26. Preview27 launch and policy preparation does not mean Play publication readiness.
+
 # KINTO Android — preparation checkpoint, 2026-10-23
 
 This is a non-production release candidate, not authorization to publish.
