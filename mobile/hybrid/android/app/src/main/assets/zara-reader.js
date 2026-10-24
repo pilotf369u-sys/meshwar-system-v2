@@ -4,7 +4,8 @@
  if(u.protocol!=='https:'||!['zara.com','www.zara.com'].includes(u.hostname)||u.username||u.password||(u.port&&u.port!=='443')||!match)return JSON.stringify({error:'NOT_PRODUCT'});
  const text=v=>String(v||'').replace(/\s+/g,' ').trim().slice(0,500);
  const visible=e=>!!e&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('[hidden],[aria-hidden="true"],del,s,[class*="recommend"],[class*="similar"]');
- const list=s=>Array.from(document.querySelectorAll(s)).filter(visible),unique=a=>[...new Set(a.filter(Boolean))];
+ let scope=document;
+ const list=s=>Array.from(scope.querySelectorAll(s)).filter(visible),unique=a=>[...new Set(a.filter(Boolean))];
  const productId=match[1],key=u.pathname+'?v1='+(u.searchParams.get('v1')||'');
  const number=v=>{const s=text(v);return /^\d{1,7}(\.\d{1,2})?$/.test(s)&&Number(s)>0&&Number(s)<10000000?Number(s):null;};
  const displayNumber=v=>{const s=text(v);if(!/^[\d.,\s]+(?:TL|TRY|₺)$/i.test(s))return null;let n=s.replace(/TL|TRY|₺|\s/gi,'');if(n.includes(','))n=n.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(n))n=n.replace(/\./g,'');return number(n);};
@@ -12,7 +13,18 @@
  for(const e of document.querySelectorAll('script[type="application/ld+json"]'))try{walk(JSON.parse(e.textContent));}catch{}
  const group=groups.length===1?groups[0]:null;
  const samePage=raw=>{try{const x=new URL(raw,u.href);return x.protocol==='https:'&&['zara.com','www.zara.com'].includes(x.hostname)&&!x.username&&!x.password&&(!x.port||x.port==='443')&&x.pathname.match(/^\/tr\/tr\/[^/]+-p(\d{8})\.html$/)?.[1]===productId&&(!u.searchParams.get('v1')||x.searchParams.get('v1')===u.searchParams.get('v1'));}catch{return false;}};
- const root=document.querySelector('.product-detail-card-info__fixed-info-panel')||document.querySelector('.product-detail-card-info')||document.querySelector('.product-detail-info');
+ // Zara keeps neighbouring carousel cards mounted, including layout-visible prices.
+ // Bind by the retailer's explicit article reference, never first card/lowest price/viewport.
+ const cardIdentity=card=>{const ids=[...new Set(Array.from(card.querySelectorAll('.product-color-extended-name__reference,[data-qa-action="product-detail-info-color-copy"]')).map(e=>{const m=text(e.textContent).match(/^(\d{4})\s*\/\s*(\d{3})\s*\/\s*\d{3}$/);return m?(m[1]+m[2]).padStart(8,'0'):'';}).filter(Boolean))];return ids.length===1?ids[0]:'';};
+ const cards=Array.from(document.querySelectorAll('.product-detail-card__article'));
+ const matchingCards=cards.filter(card=>cardIdentity(card)===productId);
+ const horizontalActive=card=>{if(!visible(card))return false;const r=card.getBoundingClientRect(),width=window.innerWidth||document.documentElement.clientWidth;return r.width>0&&width>0&&Math.max(0,Math.min(r.right,width)-Math.max(r.left,0))>=Math.min(r.width,width)*0.75;};
+ const activeCards=matchingCards.filter(horizontalActive);
+ if(cards.length){
+  if(activeCards.length!==1)return JSON.stringify({source:'zara',sourceName:'ZARA',productId,pageUrl:u.href,price:null,currency:'TRY',warning:activeCards.length?'Z_PRODUCT_SCOPE_AMBIGUOUS':matchingCards.length?'Z_PRODUCT_NOT_ACTIVE':'Z_PRODUCT_SCOPE_MISSING',diagnostics:{cards:cards.length,matchingCards:matchingCards.length,activeCards:activeCards.length,references:cards.slice(0,8).map(cardIdentity)}});
+  scope=activeCards[0];
+ }
+ const root=scope.querySelector('.product-detail-card-info__fixed-info-panel')||scope.querySelector('.product-detail-card-info')||scope.querySelector('.product-detail-info');
  const colors=unique(list('[data-qa-action="select-color"][aria-current="true"],.product-detail-color-selector [aria-checked="true"]').map(e=>text(e.querySelector('.screen-reader-text')?.textContent||e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent)));
  // Legacy detail-info wraps the color name AND product reference. Never compare that wrapper with its child.
  if(!colors.length){const names=list('.product-color-extended-name__name');colors.push(...unique(names.map(e=>text(e.textContent))));}
@@ -27,8 +39,11 @@
   const action=target.getAttribute('data-qa-action');
   if(action==='select-color'){window.__kintoZaraSelection.choice=null;return;}
   if(!['size-in-stock','size-low-on-stock','size-out-of-stock','size-back-soon'].includes(action))return;
-  const current=new URL(location.href),selected=Array.from(document.querySelectorAll('[data-qa-action="select-color"][aria-current="true"]')).filter(visible);
-  const currentColor=selected.length===1?text(selected[0].querySelector('.screen-reader-text')?.textContent||selected[0].getAttribute('aria-label')||selected[0].textContent):text(document.querySelector('.product-color-extended-name__name')?.textContent);
+  const current=new URL(location.href),card=target.closest('.product-detail-card__article');
+  const currentId=current.pathname.match(/-p(\d{8})\.html$/)?.[1];
+  if(card&&cardIdentity(card)!==currentId||!card&&document.querySelectorAll('.product-detail-card__article').length)return;
+  const targetScope=card||document,selected=Array.from(targetScope.querySelectorAll('[data-qa-action="select-color"][aria-current="true"]')).filter(visible);
+  const currentColor=selected.length===1?text(selected[0].querySelector('.screen-reader-text')?.textContent||selected[0].getAttribute('aria-label')||selected[0].textContent):text(targetScope.querySelector('.product-color-extended-name__name')?.textContent);
   const label=text(target.querySelector('[data-qa-qualifier="size-selector-sizes-size-label"]')?.textContent);
   window.__kintoZaraSelection.choice={key:current.pathname+'?v1='+(current.searchParams.get('v1')||''),color:currentColor,size:label,blocked:target.disabled||target.getAttribute('aria-disabled')==='true'||!['size-in-stock','size-low-on-stock'].includes(action)};
  },true);}
@@ -43,7 +58,7 @@
  const priceSelector='[data-qa-id="price-container-current"] data[data-currency],.price-current data[data-currency]';
  // Scope prices to Zara's product purchase panels. A main element can also contain
  // cart lines and other products, each with a valid price-container-current.
- const purchasePanels=Array.from(document.querySelectorAll('.product-detail-card-info,.product-detail-info,.product-detail-card-info__main-buttons,.product-detail-card-info__fixed-info-panel'));
+ const purchasePanels=Array.from(scope.querySelectorAll('.product-detail-card-info,.product-detail-info,.product-detail-card-info__main-buttons,.product-detail-card-info__fixed-info-panel'));
  const currentPriceNodes=Array.from(new Set(purchasePanels.flatMap(panel=>Array.from(panel.querySelectorAll(priceSelector)).filter(visible))));
  for(const e of currentPriceNodes){
   if(e.getAttribute('data-currency')!=='TRY'){foreign=true;continue;}
@@ -77,5 +92,5 @@
  let image='';const live=list('.product-detail-card__main-image img,.product-detail-image img,.product-detail-images img');
  image=variants[0]?.image?.[0]||live[0]?.currentSrc||live[0]?.src||'';
  try{const x=new URL(typeof image==='object'?image.url:image,u.href);image=x.protocol==='https:'&&x.hostname==='static.zara.net'&&!x.username&&!x.password&&(!x.port||x.port==='443')&&x.pathname.startsWith('/assets/')?x.href:'';}catch{image='';}
- return JSON.stringify({source:'zara',sourceName:'ZARA',productId,pageUrl:u.href,displayPrice:optionsPending?displayPrice:price,optionsPending,title:text(root?.querySelector('h1')?.textContent||document.querySelector('h1')?.textContent||group?.name),image,price,currency:'TRY',priceRaw,priceSource,merchantId:'',observedOptions:{size,color},optionRequirements:{size:list('[data-qa-action="size-in-stock"],[data-qa-action="size-low-on-stock"],[data-qa-action="size-out-of-stock"],[data-qa-action="size-back-soon"]').length>0||(group?.hasVariant||[]).some(v=>text(v.size))||sizes.length>0,color:hasColorOptions},selectionKey:key,warning:reason,diagnostics:{roots:root?1:0,visiblePrices:currentPriceNodes.length,prices:prices.length,colors:colors.length,metadataColors:metadataColors.length,groups:groups.length,variants:variants.length,offers:offers.length,scrollY:Math.round(window.scrollY||0),colorNames:colors,metadataColorNames:metadataColors,sizeNames:sizes,matchingOfferPrices:unique(offers.map(({o})=>text(o.price))),purchasePriceNodes:currentPriceNodes.slice(0,6).map(e=>({amount:text(e.textContent),value:text(e.getAttribute('value')),currency:text(e.getAttribute('data-currency'))})),currentContainers:Array.from(document.querySelectorAll('[data-qa-id="price-container-current"],.price-current')).slice(0,8).map(e=>({amount:text(e.textContent),visible:visible(e),parent:text(e.parentElement?.className),ancestors:(()=>{const a=[];for(let p=e.parentElement;p&&a.length<7;p=p.parentElement)a.push(text(p.className));return a;})(),data:Array.from(e.querySelectorAll('data')).slice(0,3).map(n=>({value:text(n.getAttribute('value')),currency:text(n.getAttribute('data-currency')),amount:text(n.textContent)})),display:getComputedStyle(e).display,visibility:getComputedStyle(e).visibility}))}});
+ return JSON.stringify({source:'zara',sourceName:'ZARA',productId,pageUrl:u.href,displayPrice:optionsPending?displayPrice:price,optionsPending,title:text(root?.querySelector('h1')?.textContent||scope.querySelector('h1')?.textContent||group?.name),image,price,currency:'TRY',priceRaw,priceSource,merchantId:'',observedOptions:{size,color},optionRequirements:{size:list('[data-qa-action="size-in-stock"],[data-qa-action="size-low-on-stock"],[data-qa-action="size-out-of-stock"],[data-qa-action="size-back-soon"]').length>0||(group?.hasVariant||[]).some(v=>text(v.size))||sizes.length>0,color:hasColorOptions},selectionKey:key,warning:reason,diagnostics:{cards:cards.length,matchingCards:matchingCards.length,activeCards:activeCards.length,scope:cards.length?'reference-card':'legacy-single-page',roots:root?1:0,visiblePrices:currentPriceNodes.length,prices:prices.length,colors:colors.length,metadataColors:metadataColors.length,groups:groups.length,variants:variants.length,offers:offers.length,scrollY:Math.round(window.scrollY||0),colorNames:colors,metadataColorNames:metadataColors,sizeNames:sizes,matchingOfferPrices:unique(offers.map(({o})=>text(o.price))),purchasePriceNodes:currentPriceNodes.slice(0,6).map(e=>({amount:text(e.textContent),value:text(e.getAttribute('value')),currency:text(e.getAttribute('data-currency'))})),currentContainers:Array.from(document.querySelectorAll('[data-qa-id="price-container-current"],.price-current')).slice(0,8).map(e=>({amount:text(e.textContent),visible:visible(e),parent:text(e.parentElement?.className),ancestors:(()=>{const a=[];for(let p=e.parentElement;p&&a.length<7;p=p.parentElement)a.push(text(p.className));return a;})(),data:Array.from(e.querySelectorAll('data')).slice(0,3).map(n=>({value:text(n.getAttribute('value')),currency:text(n.getAttribute('data-currency')),amount:text(n.textContent)})),display:getComputedStyle(e).display,visibility:getComputedStyle(e).visibility}))}});
 })();

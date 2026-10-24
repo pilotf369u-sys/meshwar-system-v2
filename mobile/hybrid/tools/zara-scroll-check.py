@@ -7,11 +7,11 @@ reader=(root/'android/app/src/main/assets/zara-reader.js').read_text()
 fixture=(root/'android/app/src/main/assets/fixture-zara.html').read_text().split('<script>')[0]
 script='''(()=>{const location=new URL('https://www.zara.com/tr/tr/kinto-fixture-p00000001.html');const read=()=>READER;
 const results=[];const record=label=>results.push({label,value:JSON.parse(read())});record('header');
-const panel=document.querySelector('.product-detail-card-info__fixed-info-panel'),price=panel.querySelector('.price-current');
-const footer=document.createElement('div');footer.className='product-detail-card-info__main-buttons';footer.style='position:fixed;bottom:0';footer.append(price);document.body.append(footer);document.body.style.height='3000px';window.scrollTo(0,700);record('footer');
+const card=document.getElementById('kinto-zara-current'),panel=card.querySelector('.product-detail-card-info__fixed-info-panel'),price=panel.querySelector('.price-current');
+const footer=document.createElement('div');footer.className='product-detail-card-info__main-buttons';footer.style='position:fixed;bottom:0';footer.append(price);card.append(footer);document.body.style.height='3000px';window.scrollTo(0,700);record('footer');
 panel.append(price.cloneNode(true));record('identical-copies');
-for(const data of document.querySelectorAll('.price-current data')){data.setAttribute('value','2000.00');data.textContent='2.000,00 TL';}record('changed-current-price');
-for(const data of document.querySelectorAll('.price-current data'))data.remove();document.querySelector('script[type="application/ld+json"]').remove();record('missing-price');
+for(const data of card.querySelectorAll('.price-current data')){data.setAttribute('value','2000.00');data.textContent='2.000,00 TL';}record('changed-current-price');
+for(const data of card.querySelectorAll('.price-current data'))data.remove();document.querySelector('script[type="application/ld+json"]').remove();record('missing-price');
 document.getElementById('kinto-result').textContent=JSON.stringify(results);})();'''.replace('READER',reader)
 class Result(HTMLParser):
  def __init__(self):super().__init__();self.on=False;self.parts=[]

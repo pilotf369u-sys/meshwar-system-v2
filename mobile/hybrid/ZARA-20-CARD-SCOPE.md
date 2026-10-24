@@ -1,0 +1,11 @@
+# Zara 20 — bind all reads to current product card
+
+Rollback: rollback/before-zara-v20-20261024 at 8ec10d6bb38d1836b9595517c7717f5c861a233b (validated diagnostic 19).
+
+The user's two on-device reports show the exact regression: product 03548255 first reads 4890/Bej then collects six prices (6990 and 4890) and Antrasit grisi while metadata remains Bej. Product 02678247 first reads 4290/Siyah then collects six prices (4890 and 4290), also with unrelated Antrasit grisi. Layout visibility alone admitted neighbour carousel cards and global color lookup contaminated options.
+
+Bind modern Zara cards by their own explicit article reference (e.g. 3548/255/800 maps exactly to 03548255). Require exactly one matching, horizontally active card. Scope title, price panels, colors, sizes and images to that article; guard size clicks by the target card's reference. Keep vertical scrolling valid and movable purchase footer inside the same card. No first-card, cheapest-price, metadata-selected-card or cached first-price heuristic. Missing/duplicate/inactive references fail closed. Legacy single-page parsing remains only when no modern cards exist.
+
+Replay both reports with three mounted cards and six prices. Assert correct current price/color/title through vertical scrolling and footer movement, reject offscreen URL mismatch, duplicate matching cards, missing identity and actual conflicts inside current card. Native Zara fixture also has neighbouring cards with conflicting prices/colors. Prior 19 fails a local DOM replay; 20 reads the intended card correctly. Chrome/native CI and live-device acceptance remain separately documented.
+
+Valid Zara capture returns directly to normal confirmation; bounded local diagnostic report is retained on failure. Zara server submission still blocked pending separate frontend/backend admission review. No website, SQL, Supabase, Hostinger, production signing or certificate changes. Trendyol and Hepsiburada readers/shared button byte-identical. Identity: com.kinto.preview.hybrid.v20. Do not merge or publish.
