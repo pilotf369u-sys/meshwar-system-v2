@@ -36,23 +36,19 @@ jobs:
       run: gradle --no-daemon -p mobile/hybrid/android :app:bundleRelease :app:assembleRelease :app:lintRelease
     - name: Print all release Lint errors for review
       if: always()
-      run: |
-        python3 - <<'PYCHECK'
-        import pathlib,xml.etree.ElementTree as E
-        p=pathlib.Path('mobile/hybrid/android/app/build/reports/lint-results-release.xml')
-        if p.exists():
-         for e in E.parse(p).getroot().findall('issue'):
-          if e.get('severity') in ('Error','Fatal'):
-           print(e.attrib)
-           for loc in e.findall('location'):print(loc.attrib)
-        PYCHECK
+      run: "python3 - <<'PYCHECK'\nimport pathlib,xml.etree.ElementTree as E\np=pathlib.Path('mobile/hybrid/android/app/build/reports/lint-results-release.xml')\n\
+        if p.exists():\n for e in E.parse(p).getroot().findall('issue'):\n  if e.get('severity') in ('Error','Fatal'):\n \
+        \  print(e.attrib)\n   for loc in e.findall('location'):print(loc.attrib)\nPYCHECK\n"
     - name: Verify fixture exclusion and signing separation
       run: python3 mobile/hybrid/tools/check-release-artifacts.py
     - name: Audit compiled distribution and read-only policy gates
-      run: |
-        python3 mobile/release/source-scope-check.py
+      run: 'python3 mobile/release/source-scope-check.py
+
         python3 mobile/release/audit-package.py
+
         python3 mobile/release/release-inputs.test.py
+
+        '
     - uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -130,9 +126,12 @@ jobs:
       env:
         KINTO_PREVIEW_KEYSTORE: ${{ runner.temp }}/kinto-preview.keystore
         KINTO_PREVIEW_PASSWORD_FILE: ${{ runner.temp }}/kinto-preview-password
-      run: 'java -jar "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias
+      run: 'kinto_candidate_apk="$(python3 -c ''import pathlib,sys; hits=list(pathlib.Path(sys.argv[1]).rglob("app-release-unsigned.apk"));
+        assert len(hits)==1; print(hits[0])'' "$RUNNER_TEMP/kinto-candidate")"
+
+        java -jar "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias
         kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$RUNNER_TEMP/kinto-preview-output/KINTO-Candidate-0.28.apk"
-        "$RUNNER_TEMP/kinto-candidate/apk/release/app-release-unsigned.apk"
+        "$kinto_candidate_apk"
 
         '
     - name: Enable KVM for synthetic UI test
