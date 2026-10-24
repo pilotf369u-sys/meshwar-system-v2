@@ -7,12 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#063b32">
     <meta name="color-scheme" content="dark">
-    <link rel="icon" type="image/jpeg" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg">
-    <link rel="shortcut icon" type="image/jpeg" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg">
+    <link rel="icon" type="image/jpeg" href="images/kinto-header-logo-v158.jpeg">
+    <link rel="shortcut icon" type="image/jpeg" href="images/kinto-header-logo-v158.jpeg">
     <style id="kintoFirstPaintV26">:root{color-scheme:dark;background-color:#063b32!important}html,body{min-height:100%;background-color:#063b32!important}#meshwarStoreTabs,.meshwar-store-tabs,[id*="StoreTabs"],[class*="store-tabs"],.nav-container{display:none!important;visibility:hidden!important}html:not(.kinto-ready) *,html:not(.kinto-ready) *::before,html:not(.kinto-ready) *::after{transition:none!important;animation:none!important}html.kinto-ready body>*{transition:none!important}.kinto-boot-logo{opacity:1!important;visibility:visible!important;object-fit:contain!important}.kinto-boot-logo--nav{width:48px;height:48px}.kinto-boot-logo--featured{width:96px;height:96px}.kinto-boot-logo--modal{width:64px;height:64px}html.kinto-logo-ready .kinto-boot-logo{opacity:1!important;visibility:visible!important}</style>
     <style id="kintoFeaturedStoreFirstPaintV106">#kintoFeaturedStoreSlot{box-sizing:border-box;width:min(1180px,calc(100% - 32px));min-height:176px;margin:24px auto;padding:22px 26px;display:grid;grid-template-columns:146px minmax(0,1fr);align-items:center;gap:26px;border-radius:24px;visibility:hidden;opacity:0}#kintoFeaturedStoreSlot .kinto-featured-logo-wrap{width:146px;height:120px}#kintoFeaturedStoreSlot .kinto-featured-copy{min-height:120px}@media(max-width:700px){#kintoFeaturedStoreSlot{width:calc(100% - 20px);grid-template-columns:1fr;gap:13px;padding:18px;text-align:center;min-height:300px}#kintoFeaturedStoreSlot .kinto-featured-logo-wrap{width:118px;height:94px;margin:auto}#kintoFeaturedStoreSlot .kinto-featured-copy{min-height:145px}}</style>
     <style id="kintoVideoFirstPaintV29">#meshwarVideoFrame{position:relative;box-sizing:border-box;width:100%;height:clamp(180px,31.25vw,260px);min-height:0;max-height:260px;background-color:#063b32!important;overflow:hidden;contain:layout paint}#meshwarPromoVideo{position:absolute;inset:0;display:block;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;background-color:#063b32!important;object-fit:cover}@media (orientation:landscape) and (max-height:600px) and (pointer:coarse){#meshwarVideoFrame{height:min(42dvh,180px)!important;min-height:0!important;max-height:180px!important}.mw-home-hero-grid{grid-template-columns:minmax(0,1fr)!important;padding:16px!important;gap:12px!important}.kinto-hero-copy-shell{min-height:0!important}#kintoHomeHeader .top-inner{padding:6px 9px!important}#kintoHomeHeader .brand-copy{display:none!important}#kintoHomeHeader .main-nav{display:none!important}}</style>
-    <link rel="preload" href="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" as="image" fetchpriority="high">
+    <link rel="preload" href="images/kinto-header-logo-v158.jpeg" as="image" fetchpriority="high">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>منصة KINTO - دليل المتاجر والشحن الدولي</title>
     <style id="kintoCriticalPaintV23">
@@ -188,7 +188,7 @@
 </head>
 <body style="background-color:#063b32!important">
 
-<header id="kintoHomeHeader" class="top"><div class="top-inner"><a class="brand" href="index.html" aria-label="KINTO الرئيسية"><img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="52" height="52" class="kinto-boot-logo kinto-boot-logo--nav" alt="KINTO Logo" decoding="async" fetchpriority="high"><span class="brand-copy"><strong>KINTO</strong><small>SHOP • SHIP • ENJOY</small></span></a><div id="meshwarHeaderControls" class="header-actions"><div class="user-auth-zone"></div></div></div></header>
+<header id="kintoHomeHeader" class="top"><div class="top-inner"><a class="brand" href="index.html" aria-label="KINTO الرئيسية"><img src="images/kinto-header-logo-v158.jpeg" width="52" height="52" class="kinto-boot-logo kinto-boot-logo--nav" alt="KINTO Logo" decoding="async" fetchpriority="high"><span class="brand-copy"><strong>KINTO</strong><small>SHOP • SHIP • ENJOY</small></span></a><div id="meshwarHeaderControls" class="header-actions"><div class="user-auth-zone"></div></div></div></header>
 <section class="mx-auto max-w-7xl px-4 pt-8">
 
   <div class="mw-home-hero-grid kinto-v193-hero grid gap-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-2xl backdrop-blur-md md:grid-cols-[1.15fr_.85fr] md:p-10 dark:border-white/10 dark:bg-slate-900/60">
@@ -335,6 +335,24 @@
     if(Array.isArray(settings))settings=settings[0]||{};
     if(settings&&typeof settings==='object'&&settings.settings&&typeof settings.settings==='object')settings=settings.settings;
     if(!settings||typeof settings!=='object')return;
+    // Reuse this existing CMS read to synchronize homepage tab and visible KINTO logos.
+    try{
+      const brand=String(settings.brand_logo_url||'').trim();
+      if(brand){
+        const u=new URL(brand,location.href);
+        if(u.protocol==='https:'||u.protocol==='http:'){
+          const probe=new Image();
+          probe.onload=()=>{
+            const ext=u.pathname.toLowerCase();
+            const type=ext.endsWith('.png')?'image/png':ext.endsWith('.webp')?'image/webp':ext.endsWith('.svg')?'image/svg+xml':'image/jpeg';
+            document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"]').forEach(link=>{link.href=u.href;link.type=type;});
+            document.querySelectorAll('img.kinto-boot-logo[alt="KINTO Logo"]').forEach(img=>{img.src=u.href;});
+          };
+          probe.src=u.href;
+        }
+      }
+    }catch(e){console.warn('KINTO homepage logo fallback retained',e)}
+
     const entries=[
       ['واتساب','whatsapp','fa-brands fa-whatsapp'],
       ['فيسبوك','facebook','fa-brands fa-facebook-f'],
@@ -373,7 +391,7 @@
         <div class="mx-auto my-8 w-full max-w-md rounded-3xl border border-amber-400/25 bg-slate-900/90 p-5 text-right text-slate-100 shadow-2xl shadow-amber-400/10 backdrop-blur-xl" dir="rtl">
             <div class="mb-4 flex items-center justify-between gap-3 border-b border-white/10 pb-4">
                 <div><div class="text-xs font-bold text-amber-300">KINTO Order</div><h3 class="mt-1 text-xl font-black text-white">إرسال تفاصيل الطلب</h3></div>
-                <img src="https://hsmmbloouskqdnptiiad.supabase.co/storage/v1/object/public/site-hero-media/hero/21d10e8c-4d05-4e21-bb4f-883188259e97.jpg" width="64" height="64" alt="KINTO Logo" class="kinto-boot-logo kinto-boot-logo--modal h-16 w-16 rounded-2xl border border-amber-300/40 bg-slate-950/80 object-contain p-2 shadow-xl shadow-amber-400/20" decoding="async">
+                <img src="images/kinto-header-logo-v158.jpeg" width="64" height="64" alt="KINTO Logo" class="kinto-boot-logo kinto-boot-logo--modal h-16 w-16 rounded-2xl border border-amber-300/40 bg-slate-950/80 object-contain p-2 shadow-xl shadow-amber-400/20" decoding="async">
             </div>
             <div class="space-y-4">
                 <label class="block"><span class="mb-1.5 block text-sm font-bold text-slate-200">رابط المنتج</span><input type="text" id="pUrl" placeholder="الصق الرابط هنا" class="w-full box-border rounded-xl border border-white/10 bg-slate-800 px-3 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/10"></label>
