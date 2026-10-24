@@ -19,7 +19,7 @@ DO $$DECLARE request jsonb; item jsonb; o jsonb; replay jsonb; bad text; n bigin
  IF replay->>'id'<>o->>'id' THEN RAISE EXCEPTION 'ZARA_DUPLICATE';END IF;
  PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_submit_v1(%L,%L,%L)','test-customer','00000000-0000-0000-0000-000000009201',jsonb_set(request,'{items,0,price}','"2000"')),'WORLD_IDEMPOTENCY_CONFLICT');
  PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_submit_v1(%L,%L,%L)','bad-session','00000000-0000-0000-0000-000000009202',request),'CUSTOMER_SESSION_INVALID');
- FOREACH bad IN ARRAY ARRAY['https://madamecoco.com.evil.test/test-nt0000000001-101/','http://www.madamecoco.com/test-nt0000000001-101/','https://user@www.madamecoco.com/test-nt0000000001-101/','https://www.madamecoco.com:444/test-nt0000000001-101/','https://www.madamecoco.com/nevresim-takimi/','https://www.madamecoco.com/test-123456-101/','https://www.madamecoco.com/test-abcdef-101/','https://evil.test/test-nt0000000001-101/'] LOOP
+ FOREACH bad IN ARRAY ARRAY['http://www.zara.com/tr/tr/test-p03548255.html','https://www.zara.com.evil.test/tr/tr/test-p03548255.html','https://user@www.zara.com/tr/tr/test-p03548255.html','https://www.zara.com:444/tr/tr/test-p03548255.html','https://www.zara.com/','https://www.zara.com/category/test'] LOOP
   PERFORM pg_temp.expect_error(format('SELECT public.kinto_world_submit_v1(%L,%L,%L)','test-customer','00000000-0000-0000-0000-000000009202',jsonb_set(request,'{items,0,url}',to_jsonb(bad))),'WORLD_ITEM_INVALID');
  END LOOP;
  item:=request->'items'->0;

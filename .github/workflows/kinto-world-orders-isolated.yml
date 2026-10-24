@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: node --test mobile/global-orders/staff-edge.test.cjs mobile/global-orders/integrated-login.test.cjs mobile/global-orders/panel-defaults.test.cjs
+      - run: node --test mobile/global-orders/stores-admission.test.cjs mobile/global-orders/staff-edge.test.cjs mobile/global-orders/integrated-login.test.cjs mobile/global-orders/panel-defaults.test.cjs
       - run: node tests/pwa-hosting-contract.cjs
       - name: Independent lifecycle and authorization
         env:
