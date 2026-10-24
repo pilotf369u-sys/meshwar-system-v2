@@ -18,7 +18,7 @@ for fixture in sorted((root/'android/checks/zara-markup').glob('*.html')):
  csp='<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-test\'">'
  with tempfile.TemporaryDirectory() as folder:
   page=Path(folder,'page.html');page.write_text(csp+fixture.read_text()+'<pre id="kinto-result"></pre><script nonce="test">'+scope+'</script>')
-  r=subprocess.run(['google-chrome','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,check=True,timeout=30)
+  r=subprocess.run(['google-chrome','--disable-background-networking','--host-resolver-rules=MAP * ~NOTFOUND','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,check=True,timeout=30)
   p=Result();p.feed(r.stdout);value=''.join(p.parts)
   assert value,'No reader result: '+r.stdout[-3000:]
   actual=json.loads(value)

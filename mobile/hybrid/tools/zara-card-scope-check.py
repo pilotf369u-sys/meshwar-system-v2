@@ -28,7 +28,7 @@ for pid,price,color,other in [('03548255',4890,'Bej',6990),('02678247',4290,'Siy
  document.getElementById('kinto-result').textContent=JSON.stringify(results);})();'''.replace('URL_HERE',json.dumps('https://www.zara.com/tr/tr/test-p'+pid+'.html')).replace('PID',json.dumps(pid)).replace('PRICE',str(price)).replace('READER',reader)
  with tempfile.TemporaryDirectory() as folder:
   page=Path(folder,'carousel.html');page.write_text(html+'<pre id="kinto-result"></pre><script>'+script+'</script>')
-  r=subprocess.run(['google-chrome','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,check=True,timeout=45)
+  r=subprocess.run(['google-chrome','--disable-background-networking','--host-resolver-rules=MAP * ~NOTFOUND','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,check=True,timeout=45)
   p=Result();p.feed(r.stdout);results=json.loads(''.join(p.parts))
   for test in results:
    label,v=test['label'],test['value']

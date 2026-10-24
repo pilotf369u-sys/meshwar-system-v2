@@ -24,7 +24,7 @@ for store,url in urls.items():
  document.getElementById('kinto-result').textContent=JSON.stringify(results);})();'''.replace('URL_VALUE',json.dumps(url)).replace('READER',json.dumps(reader)).replace('STORE',json.dumps(store))
  with tempfile.TemporaryDirectory() as folder:
   page=Path(folder,'test.html');page.write_text((root/f'android/checks/new-store-markup/{store}.html').read_text()+'<pre id="kinto-result"></pre><script>'+script+'</script>')
-  r=subprocess.run(['google-chrome','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,check=True,timeout=45)
+  r=subprocess.run(['google-chrome','--disable-background-networking','--host-resolver-rules=MAP * ~NOTFOUND','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,check=True,timeout=45)
   p=Result();p.feed(r.stdout);results=json.loads(''.join(p.parts))
  for case in results:
   name,v=case['name'],case['value'];expected=3299.99 if store=='mango' else 2299.99
