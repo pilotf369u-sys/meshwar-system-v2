@@ -8,7 +8,13 @@ exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionD
 package='com.kinto.preview.hybrid.v27';out=Path(os.environ['KINTO_APK']).parent
 adb('install','--no-streaming','-r',os.environ['KINTO_APK']);adb('shell','pm','clear',package)
 for key in ['window_animation_scale','transition_animation_scale','animator_duration_scale']:adb('shell','settings','put','global',key,'1')
+adb('logcat','-c')
 adb('shell','am','start','-W','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true')
+for _ in range(30):
+ if 'NATIVE_COVER_STARTED' in adb('logcat','-d','-s','KintoLaunch:I','*:S'):break
+ time.sleep(.1)
+else:raise AssertionError('Native launch never started')
+time.sleep(.1)
 frames=[]
 for i in range(4):
  b=subprocess.check_output(['adb','exec-out','screencap','-p'],timeout=20);im=Image.open(io.BytesIO(b)).convert('RGB');im.save(out/f'launch-{i}.png');frames.append(im);time.sleep(.20)
@@ -16,7 +22,7 @@ w,h=frames[0].size
 # Ignore system clock/status bar; both samples must still be on the branded cover.
 green=(10,47,35)
 valid=[im for im in frames if sum(abs(v-t)for v,t in zip(im.getpixel((w//8,h//2)),green))<12]
-assert len(valid)>=2,'No two green launch frames captured'
+assert len(valid)>=3,'No three native green launch frames captured'
 region=(w//4,h//4,3*w//4,3*h//4)
 assert any(ImageChops.difference(valid[0].crop(region),im.crop(region)).getbbox() for im in valid[1:]),'No breathing change inside logo region'
 print('PASS_LAUNCH_ANIMATION: approved logo/green cover and changing logo frames while synthetic WebView loads')
