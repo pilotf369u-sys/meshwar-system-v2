@@ -16,7 +16,8 @@ try:
   time.sleep(1)
  assert '35750 IQD' in labels,labels
  recreate_shop_fixture()
- click('L',exact=True,scrollUp=True);time.sleep(2)
+ import runpy
+ runpy.run_path(str(Path(__file__).with_name('fixture-touch.py')))['zara_size_touch'](adb,nodes);time.sleep(2)
  click('أضف إلى KINTO');click('طابقت',scroll=True);click('أؤكد الإضافة');time.sleep(2)
  zara=[p for p in saved_drafts() if p['source']=='zara'];assert len(zara)==1,zara
  assert zara[0]['fixture'] is True,zara
