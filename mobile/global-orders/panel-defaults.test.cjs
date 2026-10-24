@@ -11,3 +11,10 @@ test('global staff session rejects malformed and expired expiry timestamps',()=>
 test('single-product policy preserves item quantity and refuses legacy bundles before writes',()=>{const item={quantity:2,title:'TEST'};assert.equal(core.requireSingleProduct({key:'stable',items:[item]}),item);assert.throws(()=>core.requireSingleProduct({items:[item,item]}),/النسخة القديمة/);assert.throws(()=>core.requireSingleProduct({items:[]}),/النسخة القديمة/);});
 
  test('global store labels and image rules recognize Hepsi without trusting lookalikes',()=>{const c=require('../../js/kinto-world-core-v1.js');assert.equal(c.productStore('https://www.hepsiburada.com/test-pm-HBC000001'),'Hepsiburada');assert.equal(c.productStore('https://www.trendyol.com/test-p-123'),'Trendyol');assert.equal(c.productStore('https://hepsiburada.com.evil.test/test-p-HBCV001'),null);assert.equal(c.productStore('https://www.hepsiburada.com/ara'),null);assert.equal(c.productImage('https://productimages.hepsiburada.net/s/test.jpg'),true);assert.equal(c.productImage('https://productimages.hepsiburada.net.evil.test/test.jpg'),false);});
+
+test('Madame Coco exact product and tenant image boundaries',()=>{
+ assert.equal(core.productStore('https://www.madamecoco.com/test-nt0000000001-101/'),'Madame Coco');
+ for(const url of ['https://www.madamecoco.com/nevresim-takimi/','https://madamecoco.com.evil.test/test-nt0000000001-101/','https://user@www.madamecoco.com/test-nt0000000001-101/','http://www.madamecoco.com/test-nt0000000001-101/','https://www.madamecoco.com:444/test-nt0000000001-101/','https://www.madamecoco.com/test-123456-101/','https://www.madamecoco.com/test-abcdef-101/'])assert.equal(core.productStore(url),null,url);
+ assert(core.productImage('https://4d0873.akinoncloudcdn.com/products/test.jpg'));
+ for(const url of ['https://other.akinoncloudcdn.com/products/test.jpg','https://4d0873.akinoncloudcdn.com.evil.test/products/test.jpg','https://4d0873.akinoncloudcdn.com/account/test.jpg'])assert.equal(core.productImage(url),false,url);
+});
