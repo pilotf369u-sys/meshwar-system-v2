@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory() as folder:
  page=Path(folder,'mobile.html')
  scope='(()=>{const location=new URL('+json.dumps(URL)+');const result='+reader+';document.getElementById("kinto-result").textContent=result;})();'
  page.write_text('<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-test\'">'+markup+'<pre id="kinto-result"></pre><script nonce="test">'+scope+'</script>')
- run=subprocess.run(['google-chrome','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,timeout=30,check=True)
+ run=subprocess.run(['google-chrome','--disable-background-networking','--host-resolver-rules=MAP * ~NOTFOUND','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,timeout=30,check=True)
  parsed=Result();parsed.feed(run.stdout)
  if not ''.join(parsed.parts):raise AssertionError('Missing browser result: '+run.stdout[-8000:]+' stderr: '+run.stderr[-2000:])
  result=json.loads(''.join(parsed.parts))
@@ -48,7 +48,7 @@ with tempfile.TemporaryDirectory() as folder:
   scope='(()=>{const location=new URL('+json.dumps(URL)+');const result='+reader+';document.getElementById("kinto-result").textContent=result;})();'
   page=Path(folder,name+'.html')
   page.write_text('<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-test\'">'+markup+'<pre id="kinto-result"></pre><script nonce="test">'+scope+'</script>')
-  run=subprocess.run(['google-chrome','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,timeout=30,check=True)
+  run=subprocess.run(['google-chrome','--disable-background-networking','--host-resolver-rules=MAP * ~NOTFOUND','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,timeout=30,check=True)
   parsed=Result();parsed.feed(run.stdout);result=json.loads(''.join(parsed.parts))
   assert result['price']==expected and result['displayPrice']==display,(name,result)
   if name=='options-selected-price-changed':assert result['observedOptions']['size']=='L',result
@@ -68,7 +68,7 @@ with tempfile.TemporaryDirectory() as folder:
   markup=header+'<div data-test-id="sticky-price">'+block+'<button data-test-id="sticky-addToCart-button">Sepete ekle</button></div><aside><span data-test-id="price-current-price">55,64 TL</span><p>Ayda 55,64 TL taksitle</p></aside>'
   scope='(()=>{const location=new URL('+json.dumps(URL)+');const result='+reader+';document.getElementById("kinto-result").textContent=result;})();'
   page=Path(folder,name+'.html');page.write_text('<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-test\'">'+markup+'<pre id="kinto-result"></pre><script nonce="test">'+scope+'</script>')
-  run=subprocess.run(['google-chrome','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,timeout=30,check=True)
+  run=subprocess.run(['google-chrome','--disable-background-networking','--host-resolver-rules=MAP * ~NOTFOUND','--headless','--no-sandbox','--disable-gpu','--dump-dom',page.as_uri()],capture_output=True,text=True,timeout=30,check=True)
   parsed=Result();parsed.feed(run.stdout);result=json.loads(''.join(parsed.parts))
   assert result['price']==expected and result['priceSource']==source,(name,result)
   print('PASS_OFFLINE_STICKY_PRICE',name)

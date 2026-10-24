@@ -1,5 +1,6 @@
 import com.kinto.trendyollab.UrlPolicy;
 public class UrlPolicyCheck {
+ private static void ok(boolean value,String label){if(!value)throw new AssertionError(label);}
  public static void main(String[] args){
   String[] good={"https://www.trendyol.com/","https://trendyol.com/a-p-123","https://m.trendyol.com/a-p-456?x=1"};
   String[] bad={"http://www.trendyol.com/a-p-1","https://trendyol.com.evil.test/a-p-1","https://eviltrendyol.com/a-p-1","https://user@trendyol.com/a-p-1","javascript:alert(1)","file:///a-p-1","https://trendyol.com:444/a-p-1"};
@@ -16,6 +17,11 @@ public class UrlPolicyCheck {
   for(String u:new String[]{"https://www.zara.com/us/en/kinto-p00000001.html","https://www.zara.com/tr/tr/category-l1.html","https://zara.com.evil.test/tr/tr/kinto-p00000001.html"})if(UrlPolicy.product(u))throw new AssertionError(u);
   if(!UrlPolicy.product("https://www.madamecoco.com/test-nt0000000001-101/")||!UrlPolicy.image("https://4d0873.akinoncloudcdn.com/products/test.jpg"))throw new AssertionError("Madame product boundary");
   for(String u:new String[]{"https://www.madamecoco.com/nevresim-takimi/","https://madamecoco.com.evil.test/test-nt0000000001-101/","https://www.madamecoco.com:444/test-nt0000000001-101/","https://www.madamecoco.com/category-123456-101/"})if(UrlPolicy.product(u))throw new AssertionError(u);
+  ok(UrlPolicy.product("https://shop.mango.com/tr/tr/p/kadin/dress/test/37007788/99/00"),"Mango product");
+  ok(UrlPolicy.product("https://www.madparfum.com/urun/test-perfume/"),"MAD product");
+  ok(!UrlPolicy.allowed("https://shop.mango.com.evil.test/tr/tr/p/test/37007788/99/00"),"Mango lookalike");
+  ok(!UrlPolicy.product("https://www.madparfum.com/parfum/"),"MAD category");
+  ok(!UrlPolicy.image("https://other.cdn.akinoncloud.com/products/test.jpg"),"MAD tenant");
   System.out.println("URL policy checks passed");
  }
 }
