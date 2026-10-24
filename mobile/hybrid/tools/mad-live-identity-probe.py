@@ -41,6 +41,8 @@ with tempfile.TemporaryDirectory() as tmp:
    assert safe and 'chrome-extension:' not in safe,safe
    result=c.evaluate(reader)
    print(label,safe,result,flush=True)
+   v=json.loads(result);assert v.get('price')==999.99 and v.get('productId')=='CARAMEL GRACE' and v.get('observedOptions',{}).get('size')=='50 ml',v
+   print('PASS_LIVE_MAD',label,'999.99 TRY, CARAMEL GRACE, 50 ml',flush=True)
   c.call('Page.navigate',{'url':product});time.sleep(8);sample('DIRECT')
   c.call('Page.navigate',{'url':'https://www.madparfum.com/'});time.sleep(8)
   clicked=c.evaluate("(()=>{const a=Array.from(document.querySelectorAll('a')).find(x=>x.pathname==='/kategori/kadin-3/');if(a){a.click();return true;}return false;})()")

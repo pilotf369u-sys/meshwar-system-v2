@@ -2,7 +2,7 @@ name: MAD anonymous identity probe
 on:
   push:
     branches: [app/mad-identity-v24-20261024]
-    paths: ['mobile/hybrid/tools/mad-live-identity-probe.py', '.github/workflows/kinto-mad-identity-probe.yml']
+    paths: ['mobile/hybrid/android/app/src/main/assets/madparfum-reader.js', 'mobile/hybrid/tools/mad-live-identity-probe.py', '.github/workflows/kinto-mad-identity-probe.yml']
 permissions:
   contents: read
 jobs:
