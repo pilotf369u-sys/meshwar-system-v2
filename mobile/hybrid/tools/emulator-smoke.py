@@ -27,6 +27,8 @@ def click(text,attempts=6,scroll=False,exact=False):
      adb('shell','input','tap',str((b[0]+b[2])//2),str((b[1]+b[3])//2));return
   if scroll:adb('shell','input','swipe','500','1400','500','500','400')
   time.sleep(2)
+ print('CONTROL_MATCHES',[(n.get('text'),n.get('bounds'),n.get('class'),n.get('clickable')) for n in nodes() if text in n.get('text','')])
+ with open(os.path.join(os.path.dirname(os.environ['KINTO_APK']),'zara-native-failure.png'),'wb') as shot:subprocess.run(['adb','exec-out','screencap','-p'],stdout=shot,check=True,timeout=20)
  raise AssertionError('Missing control: '+text+'; texts='+repr([n.get('text') for n in nodes()]))
 
 def recreate_shop_fixture():
