@@ -5,7 +5,7 @@ source=Path(__file__).with_name('emulator-smoke.py')
 module=ast.parse(source.read_text())
 helpers=[n for n in module.body if isinstance(n,ast.FunctionDef) and n.name in {'adb','nodes','click','recreate_shop_fixture','saved_drafts'}]
 exec(compile(ast.Module(body=helpers,type_ignores=[]),str(source),'exec'))
-package='com.kinto.preview.hybrid.v27'
+package='com.kinto.preview.hybrid.v28'
 adb('install','--no-streaming','-r',os.environ['KINTO_APK'])
 try:
  adb('shell','am','start','-n',package+'/com.kinto.trendyollab.MainActivity','--ez','webviewCompatFixture','true');time.sleep(4)

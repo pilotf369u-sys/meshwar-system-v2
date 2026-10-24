@@ -1,8 +1,8 @@
-name: KINTO Play package and launch preview27
+name: KINTO Play package and launch preview28
 'on':
   push:
     branches:
-    - app/play-package-v27-20261024
+    - app/launch-smooth-v28-20261024
     paths:
     - mobile/hybrid/android/**
     - mobile/hybrid/tools/**
@@ -102,7 +102,7 @@ jobs:
         KINTO_PREVIEW_KEYSTORE: ${{ runner.temp }}/kinto-preview.keystore
         KINTO_PREVIEW_PASSWORD_FILE: ${{ runner.temp }}/kinto-preview-password
       run: 'java -jar "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias
-        kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$RUNNER_TEMP/kinto-preview-output/KINTO-Candidate-0.27.apk"
+        kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$RUNNER_TEMP/kinto-preview-output/KINTO-Candidate-0.28.apk"
         "$RUNNER_TEMP/kinto-candidate/apk/release/app-release-unsigned.apk"
 
         '
@@ -119,7 +119,7 @@ jobs:
     - name: Launch and preserved product flow
       uses: reactivecircus/android-emulator-runner@v2
       env:
-        KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.27.apk
+        KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.28.apk
         KINTO_ONLY_STORE: mango
       with:
         api-level: 36
@@ -130,20 +130,18 @@ jobs:
         emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
         script: 'python3 mobile/hybrid/tools/launch-native-smoke.py
 
-          python3 mobile/hybrid/tools/new-store-native-smoke.py
-
-          python3 mobile/hybrid/tools/stores-handoff-native-smoke.py
-
           '
     - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: KINTO-Hybrid-Preview-APK
-        path: '${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.27.apk
+        path: '${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.28.apk
 
-          ${{ runner.temp }}/kinto-preview-output/KINTO-Candidate-0.27.apk
+          ${{ runner.temp }}/kinto-preview-output/KINTO-Candidate-0.28.apk
 
           ${{ runner.temp }}/kinto-preview-output/launch-*.png
+
+          ${{ runner.temp }}/kinto-preview-output/launch-*.mp4
 
           ${{ runner.temp }}/kinto-preview-output/invoice-test.png
 
