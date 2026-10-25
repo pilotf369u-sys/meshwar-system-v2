@@ -45,6 +45,15 @@ SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM public.customers WHERE code='
 SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM public.customer_review_sessions WHERE token_hash=digest('test-TEST-FRESH','sha256')),'actual session removed');
 SELECT public.test_assert((SELECT status='deleted'AND customer_id IS NULL FROM private.kinto_deletion_requests_v1),'receipt anonymized, actual deletion only');
 SELECT public.test_denied($q$SELECT public.kinto_deletion_request_v1('test-TEST-FRESH','status')$q$,'SESSION_INVALID');
+-- Expired/revoked sessions and schema drift must fail before writes.
+UPDATE public.customer_review_sessions SET expires_at=now()-interval '1 second'WHERE token_hash=digest('test-TEST-A','sha256');
+SELECT public.test_denied($q$SELECT public.kinto_review_safety_v1('test-TEST-A','list_blocks')$q$,'SESSION_INVALID');
+UPDATE public.customer_review_sessions SET expires_at=now()+interval '1 hour',revoked_at=now()WHERE token_hash=digest('test-TEST-A','sha256');
+SELECT public.test_denied($q$SELECT public.kinto_deletion_request_v1('test-TEST-A','request',true)$q$,'SESSION_INVALID');
+UPDATE public.customer_review_sessions SET revoked_at=NULL WHERE token_hash=digest('test-TEST-A','sha256');
+CREATE TABLE public.test_schema_drift(id uuid);
+SELECT public.test_denied(format('SELECT public.kinto_deletion_execute_v1(%L,%L,%L)','test-admin',(SELECT id FROM private.kinto_deletion_requests_v1),(SELECT id FROM private.kinto_deletion_requests_v1)),'POLICY_OR_INVENTORY_NOT_VERIFIED');
+DROP TABLE public.test_schema_drift;
 -- Existing financial/order profile cannot be auto-erased even with policy enabled.
 SELECT public.kinto_deletion_request_v1('test-TEST-B','request',true);
 SELECT public.kinto_privacy_admin_v1('test-admin','deletions',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002'),'verify','TEST ownership verified, orders must be retained');

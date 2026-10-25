@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: {node-version: 24}
+        with: {node-version: 22}
       - name: Actual shipped session and review functions with isolated privacy migration
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/bootstrap.sql
@@ -49,3 +49,5 @@ jobs:
           "$RUNNER_TEMP/kinto-privacy-ui/node_modules/.bin/playwright" install --with-deps chromium
           python3 mobile/privacy/test-server.py > "$RUNNER_TEMP/privacy-server.log" 2>&1 &
           NODE_PATH="$RUNNER_TEMP/kinto-privacy-ui/node_modules" node mobile/privacy/browser-check.cjs
+      - name: Rollback preserves requests and existing operations
+        run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/rollback-check.sql

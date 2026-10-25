@@ -65,7 +65,7 @@ END $$;
 CREATE FUNCTION public.kinto_privacy_admin_v1(p_session_token text,p_kind text,p_id uuid DEFAULT NULL,p_action text DEFAULT 'list',p_note text DEFAULT '',p_offset integer DEFAULT 0) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,extensions,pg_temp AS $$
 DECLARE aid uuid:=private.require_admin_session_v147(p_session_token)::uuid;rep private.kinto_review_reports_v1;req private.kinto_deletion_requests_v1;BEGIN
  IF p_action='list' THEN
-  IF p_kind='reports' THEN RETURN coalesce((SELECT jsonb_agg(to_jsonb(q))FROM(SELECT id,review_id,kind,reason,status,created_at,note FROM private.kinto_review_reports_v1 ORDER BY created_at DESC,id DESC LIMIT 20 OFFSET greatest(coalesce(p_offset,0),0))q),'[]'::jsonb);END IF;
+  IF p_kind='reports' THEN RETURN coalesce((SELECT jsonb_agg(to_jsonb(q))FROM(SELECT t.id,t.review_id,t.kind,t.reason,t.status,t.created_at,t.note,r.comment,r.rating,r.product_name_snapshot FROM private.kinto_review_reports_v1 t LEFT JOIN public.product_reviews r ON r.id=t.review_id ORDER BY t.created_at DESC,t.id DESC LIMIT 20 OFFSET greatest(coalesce(p_offset,0),0))q),'[]'::jsonb);END IF;
   IF p_kind='deletions'THEN RETURN coalesce((SELECT jsonb_agg(to_jsonb(q))FROM(SELECT r.id,r.customer_id,r.status,r.created_at,r.updated_at,to_jsonb(c)->>'name' customer_name,to_jsonb(c)->>'phone' customer_phone FROM private.kinto_deletion_requests_v1 r LEFT JOIN public.customers c ON c.id=r.customer_id ORDER BY r.created_at DESC,r.id DESC LIMIT 20 OFFSET greatest(coalesce(p_offset,0),0))q),'[]'::jsonb);END IF;
   RAISE EXCEPTION 'INVALID_PRIVACY_QUEUE';
  END IF;
