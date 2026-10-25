@@ -94,6 +94,27 @@ jobs:
           "$RUNNER_TEMP/kinto-privacy-ui/node_modules/.bin/playwright" install --with-deps chromium
           python3 mobile/privacy/test-server.py > "$RUNNER_TEMP/privacy-server.log" 2>&1 &
           NODE_PATH="$RUNNER_TEMP/kinto-privacy-ui/node_modules" node mobile/privacy/browser-check.cjs
+      - name: Render review-only commerce policy drafts
+        run: |
+          NODE_PATH="$RUNNER_TEMP/kinto-privacy-ui/node_modules" node - <<'JS'
+          const {chromium}=require('@playwright/test');
+          const path=require('node:path'),fs=require('node:fs');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            try {
+              const context=await browser.newContext({viewport:{width:390,height:844}});
+              await context.route(/^https?:/,route=>route.abort());
+              const page=await context.newPage();
+              const folder=path.join(process.env.RUNNER_TEMP,'kinto-privacy-shots');
+              fs.mkdirSync(folder,{recursive:true});
+              for(const name of ['terms-kinto','returns-kinto','prohibited-kinto']){
+                await page.goto('file://'+path.join(process.cwd(),'mobile/release/site-drafts',name+'.html'));
+                await page.screenshot({path:path.join(folder,'policy-'+name+'.png'),fullPage:true});
+                console.log('RENDERED_REVIEW_POLICY',name);
+              }
+            } finally { await browser.close(); }
+          })().catch(error=>{console.error(error);process.exitCode=1});
+          JS
       - name: Observed schema types and secondary-session deletion safety
         run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/observed-schema-check.sql
       - name: Rollback preserves requests and existing operations
