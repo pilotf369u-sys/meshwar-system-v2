@@ -1,0 +1,35 @@
+{
+  "source": "owner-executed READ ONLY query, supplied 2026-10-25",
+  "transaction_read_only": "on",
+  "versioning_column_present": true,
+  "buckets": [
+    {
+      "id": "chat-attachments",
+      "bucket_present": true,
+      "versioning_status": "DISABLED"
+    },
+    {
+      "id": "product-review-images",
+      "bucket_present": true,
+      "versioning_status": "DISABLED"
+    }
+  ],
+  "version_related_columns": [
+    {
+      "table": "buckets",
+      "column": "versioning_status"
+    },
+    {
+      "table": "objects",
+      "column": "is_versioned"
+    },
+    {
+      "table": "objects",
+      "column": "version"
+    }
+  ],
+  "storage_service_build_identified": false,
+  "upload_quiescence_verified": false,
+  "physical_removal_verified": false,
+  "production_enable_authorized": false
+}

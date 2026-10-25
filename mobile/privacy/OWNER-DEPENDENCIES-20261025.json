@@ -1,0 +1,1055 @@
+{
+  "source": "owner-run read-only metadata export received 2026-10-25",
+  "transaction_read_only": "on",
+  "foreign_key_count": 104,
+  "scoped_trigger_count": 43,
+  "foreign_keys": [
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_deals_v1_campaigns(id)",
+      "table_name": "kinto_deals_v1_checkout_requests_g5d",
+      "schema_name": "private",
+      "constraint_name": "kinto_deals_v1_checkout_requests_g5d_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id)",
+      "table_name": "kinto_deals_v1_checkout_requests_g5d",
+      "schema_name": "private",
+      "constraint_name": "kinto_deals_v1_checkout_requests_g5d_customer_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (attempt_id) REFERENCES private.kinto_payments_p5(attempt_id) ON DELETE RESTRICT",
+      "table_name": "kinto_payment_campaign_holds_p5",
+      "schema_name": "private",
+      "constraint_name": "kinto_payment_campaign_holds_p5_attempt_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_deals_v1_campaigns(id) ON DELETE RESTRICT",
+      "table_name": "kinto_payment_campaign_holds_p5",
+      "schema_name": "private",
+      "constraint_name": "kinto_payment_campaign_holds_p5_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (attempt_id) REFERENCES private.kinto_payments_p5(attempt_id) ON DELETE RESTRICT",
+      "table_name": "kinto_payment_coupon_holds_p5",
+      "schema_name": "private",
+      "constraint_name": "kinto_payment_coupon_holds_p5_attempt_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (coupon_id) REFERENCES kinto_loyalty_coupons(id) ON DELETE RESTRICT",
+      "table_name": "kinto_payment_coupon_holds_p5",
+      "schema_name": "private",
+      "constraint_name": "kinto_payment_coupon_holds_p5_coupon_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (attempt_id) REFERENCES private.kinto_payment_attempts_p4(id) ON DELETE RESTRICT",
+      "table_name": "kinto_payment_events_p4",
+      "schema_name": "private",
+      "constraint_name": "kinto_payment_events_p4_attempt_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (attempt_id) REFERENCES private.kinto_payments_p5(attempt_id) ON DELETE RESTRICT",
+      "table_name": "kinto_payment_finalize_permits_p5",
+      "schema_name": "private",
+      "constraint_name": "kinto_payment_finalize_permits_p5_attempt_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (attempt_id) REFERENCES private.kinto_payment_attempts_p4(id) ON DELETE RESTRICT",
+      "table_name": "kinto_payment_reconciliation_audit_p4",
+      "schema_name": "private",
+      "constraint_name": "kinto_payment_reconciliation_audit_p4_attempt_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (attempt_id) REFERENCES private.kinto_payment_attempts_p4(id) ON DELETE RESTRICT",
+      "table_name": "kinto_payments_p5",
+      "schema_name": "private",
+      "constraint_name": "kinto_payments_p5_attempt_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (hold_id) REFERENCES private.kinto_stock_holds_p4(id) ON DELETE RESTRICT",
+      "table_name": "kinto_stock_hold_lines_p4",
+      "schema_name": "private",
+      "constraint_name": "kinto_stock_hold_lines_p4_hold_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (product_id) REFERENCES local_products(id) ON DELETE RESTRICT",
+      "table_name": "kinto_stock_hold_lines_p4",
+      "schema_name": "private",
+      "constraint_name": "kinto_stock_hold_lines_p4_product_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (attempt_id) REFERENCES private.kinto_payment_attempts_p4(id) ON DELETE RESTRICT",
+      "table_name": "kinto_stock_holds_p4",
+      "schema_name": "private",
+      "constraint_name": "kinto_stock_holds_p4_attempt_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "kinto_store_visit_dedupe_v171",
+      "schema_name": "private",
+      "constraint_name": "kinto_store_visit_dedupe_v171_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES private.kinto_world_orders_v1(id)",
+      "table_name": "kinto_world_events_v1",
+      "schema_name": "private",
+      "constraint_name": "kinto_world_events_v1_order_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES private.kinto_world_orders_v1(id)",
+      "table_name": "kinto_world_fulfillment_events_v1",
+      "schema_name": "private",
+      "constraint_name": "kinto_world_fulfillment_events_v1_order_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES private.kinto_world_orders_v1(id)",
+      "table_name": "kinto_world_fulfillment_v1",
+      "schema_name": "private",
+      "constraint_name": "kinto_world_fulfillment_v1_order_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES private.kinto_world_orders_v1(id)",
+      "table_name": "kinto_world_receipts_v1",
+      "schema_name": "private",
+      "constraint_name": "kinto_world_receipts_v1_order_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (account_id) REFERENCES private.kinto_world_accounts_v1(id)",
+      "table_name": "kinto_world_sessions_v1",
+      "schema_name": "private",
+      "constraint_name": "kinto_world_sessions_v1_account_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE",
+      "table_name": "product_review_upload_tickets_v150",
+      "schema_name": "private",
+      "constraint_name": "product_review_upload_tickets_v150_customer_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (review_id) REFERENCES product_reviews(id) ON DELETE CASCADE",
+      "table_name": "product_review_upload_tickets_v150",
+      "schema_name": "private",
+      "constraint_name": "product_review_upload_tickets_v150_review_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (segment_id) REFERENCES order_store_segments(id)",
+      "table_name": "vendor_profit_costs_v164",
+      "schema_name": "private",
+      "constraint_name": "vendor_profit_costs_v164_segment_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id)",
+      "table_name": "vendor_profit_costs_v164",
+      "schema_name": "private",
+      "constraint_name": "vendor_profit_costs_v164_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (segment_id) REFERENCES order_store_segments(id)",
+      "table_name": "vendor_profit_expenses_v164",
+      "schema_name": "private",
+      "constraint_name": "vendor_profit_expenses_v164_segment_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id)",
+      "table_name": "vendor_profit_expenses_v164",
+      "schema_name": "private",
+      "constraint_name": "vendor_profit_expenses_v164_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES orders(id)",
+      "table_name": "vendor_profit_units_v165",
+      "schema_name": "private",
+      "constraint_name": "vendor_profit_units_v165_order_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id)",
+      "table_name": "vendor_profit_units_v165",
+      "schema_name": "private",
+      "constraint_name": "vendor_profit_units_v165_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE",
+      "table_name": "cart_items",
+      "schema_name": "public",
+      "constraint_name": "cart_items_cart_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT",
+      "table_name": "cart_items",
+      "schema_name": "public",
+      "constraint_name": "cart_items_product_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "table_name": "carts",
+      "schema_name": "public",
+      "constraint_name": "carts_user_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (collector_segment_id) REFERENCES order_store_segments(id) ON DELETE SET NULL",
+      "table_name": "checkout_group_finance",
+      "schema_name": "public",
+      "constraint_name": "checkout_group_finance_collector_segment_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (list_id, customer_id) REFERENCES customer_favorite_lists(id, customer_id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "customer_favorite_items",
+      "schema_name": "public",
+      "constraint_name": "customer_favorite_items_owner"
+    },
+    {
+      "definition": "FOREIGN KEY (product_id) REFERENCES local_products(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "customer_favorite_items",
+      "schema_name": "public",
+      "constraint_name": "customer_favorite_items_product_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "customer_favorite_items",
+      "schema_name": "public",
+      "constraint_name": "customer_favorite_items_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "customer_favorite_lists",
+      "schema_name": "public",
+      "constraint_name": "customer_favorite_lists_customer_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE",
+      "table_name": "customer_local_carts",
+      "schema_name": "public",
+      "constraint_name": "customer_local_carts_customer_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "customer_notification_reads_v155",
+      "schema_name": "public",
+      "constraint_name": "customer_notification_reads_v155_customer_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "customer_review_sessions",
+      "schema_name": "public",
+      "constraint_name": "customer_review_sessions_customer_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (notification_id) REFERENCES kinto_admin_notifications(id) ON DELETE CASCADE",
+      "table_name": "kinto_admin_notification_recipients",
+      "schema_name": "public",
+      "constraint_name": "kinto_admin_notification_recipients_notification_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_campaigns(id) ON DELETE SET NULL",
+      "table_name": "kinto_admin_notifications",
+      "schema_name": "public",
+      "constraint_name": "kinto_admin_notifications_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_campaigns(id) ON DELETE RESTRICT",
+      "table_name": "kinto_campaign_awards",
+      "schema_name": "public",
+      "constraint_name": "kinto_campaign_awards_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_campaigns(id) ON DELETE CASCADE",
+      "table_name": "kinto_campaign_stores",
+      "schema_name": "public",
+      "constraint_name": "kinto_campaign_stores_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (notice_id) REFERENCES kinto_customer_admin_notices(id) ON DELETE CASCADE",
+      "table_name": "kinto_customer_admin_notice_recipients",
+      "schema_name": "public",
+      "constraint_name": "kinto_customer_admin_notice_recipients_notice_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (notice_id) REFERENCES kinto_customer_admin_notices(id) ON DELETE RESTRICT",
+      "table_name": "kinto_customer_notice_assets_v418",
+      "schema_name": "public",
+      "constraint_name": "kinto_customer_notice_assets_v418_notice_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (notice_id) REFERENCES kinto_customer_admin_notices(id) ON DELETE CASCADE",
+      "table_name": "kinto_customer_notice_stores_v420",
+      "schema_name": "public",
+      "constraint_name": "kinto_customer_notice_stores_v420_notice_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_deals_v1_campaigns(id) ON DELETE CASCADE",
+      "table_name": "kinto_deals_v1_ad_assets_g13",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_ad_assets_g13_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (gift_product_id) REFERENCES local_products(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_campaigns",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_campaigns_gift_product_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_campaigns",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_campaigns_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_deals_v1_campaigns(id) ON DELETE CASCADE",
+      "table_name": "kinto_deals_v1_products",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_products_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (product_id) REFERENCES local_products(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_products",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_products_product_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_deals_v1_campaigns(id) ON DELETE CASCADE",
+      "table_name": "kinto_deals_v1_publications_g7",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_publications_g7_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_deals_v1_campaigns(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_redemptions",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_redemptions_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_redemptions",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_redemptions_customer_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (gift_product_id) REFERENCES local_products(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_redemptions",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_redemptions_gift_product_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_redemptions",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_redemptions_order_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_redemptions",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_redemptions_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_deals_v1_campaigns(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_review_events",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_review_events_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_review_events",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_review_events_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (submission_id) REFERENCES kinto_deals_v1_submissions(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_review_events",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_review_events_submission_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_deals_v1_campaigns(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_submissions",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_submissions_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE RESTRICT",
+      "table_name": "kinto_deals_v1_submissions",
+      "schema_name": "public",
+      "constraint_name": "kinto_deals_v1_submissions_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "kinto_local_store_display_order_v188",
+      "schema_name": "public",
+      "constraint_name": "kinto_local_store_display_order_v188_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES kinto_campaigns(id) ON DELETE SET NULL",
+      "table_name": "kinto_loyalty_coupons",
+      "schema_name": "public",
+      "constraint_name": "kinto_loyalty_coupons_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (method_id) REFERENCES kinto_payment_methods_g16(id)",
+      "table_name": "kinto_payment_email_challenges_g16",
+      "schema_name": "public",
+      "constraint_name": "kinto_payment_email_challenges_g16_method_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (selected_provider_key) REFERENCES kinto_payment_providers_p2(provider_key)",
+      "table_name": "kinto_payment_runtime_p2",
+      "schema_name": "public",
+      "constraint_name": "kinto_payment_runtime_p2_selected_provider_key_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "kinto_store_visits_daily_v171",
+      "schema_name": "public",
+      "constraint_name": "kinto_store_visits_daily_v171_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (product_id) REFERENCES local_products(id) ON UPDATE CASCADE ON DELETE SET NULL",
+      "table_name": "local_orders",
+      "schema_name": "public",
+      "constraint_name": "local_orders_product_fk"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+      "table_name": "local_orders",
+      "schema_name": "public",
+      "constraint_name": "local_orders_store_fk"
+    },
+    {
+      "definition": "FOREIGN KEY (category_id) REFERENCES store_categories(id) ON DELETE SET NULL",
+      "table_name": "local_products",
+      "schema_name": "public",
+      "constraint_name": "local_products_category_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "local_products",
+      "schema_name": "public",
+      "constraint_name": "local_products_store_fk"
+    },
+    {
+      "definition": "FOREIGN KEY (subcategory_id) REFERENCES store_categories(id) ON DELETE SET NULL",
+      "table_name": "local_products",
+      "schema_name": "public",
+      "constraint_name": "local_products_subcategory_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES local_orders(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "local_returns",
+      "schema_name": "public",
+      "constraint_name": "local_returns_order_fk"
+    },
+    {
+      "definition": "FOREIGN KEY (product_id) REFERENCES local_products(id) ON UPDATE CASCADE ON DELETE SET NULL",
+      "table_name": "local_returns",
+      "schema_name": "public",
+      "constraint_name": "local_returns_product_fk"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+      "table_name": "local_returns",
+      "schema_name": "public",
+      "constraint_name": "local_returns_store_fk"
+    },
+    {
+      "definition": "FOREIGN KEY (approved_slot_id) REFERENCES merchant_featured_slots(id) ON DELETE SET NULL",
+      "table_name": "merchant_featured_requests",
+      "schema_name": "public",
+      "constraint_name": "merchant_featured_requests_approved_slot_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (merchant_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "table_name": "merchant_featured_requests",
+      "schema_name": "public",
+      "constraint_name": "merchant_featured_requests_merchant_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "merchant_featured_requests",
+      "schema_name": "public",
+      "constraint_name": "merchant_featured_requests_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (merchant_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "table_name": "merchant_featured_slots",
+      "schema_name": "public",
+      "constraint_name": "merchant_featured_slots_merchant_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "merchant_featured_slots",
+      "schema_name": "public",
+      "constraint_name": "merchant_featured_slots_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE",
+      "table_name": "order_customer_receipts_v60",
+      "schema_name": "public",
+      "constraint_name": "order_customer_receipts_v60_order_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE",
+      "table_name": "order_store_segments",
+      "schema_name": "public",
+      "constraint_name": "order_store_segments_order_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE RESTRICT",
+      "table_name": "order_store_segments",
+      "schema_name": "public",
+      "constraint_name": "order_store_segments_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (vendor_settlement_archive_id) REFERENCES vendor_settlement_archives_v163(id)",
+      "table_name": "order_store_segments",
+      "schema_name": "public",
+      "constraint_name": "order_store_segments_vendor_settlement_archive_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (kinto_campaign_id) REFERENCES kinto_campaigns(id) ON DELETE SET NULL",
+      "table_name": "orders",
+      "schema_name": "public",
+      "constraint_name": "orders_kinto_campaign_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (review_id) REFERENCES product_reviews(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "product_review_helpful_votes",
+      "schema_name": "public",
+      "constraint_name": "product_review_helpful_votes_review_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (image_id) REFERENCES product_review_images(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "product_review_image_payloads",
+      "schema_name": "public",
+      "constraint_name": "product_review_image_payloads_image_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (review_id) REFERENCES product_reviews(id) ON UPDATE CASCADE ON DELETE CASCADE",
+      "table_name": "product_review_images",
+      "schema_name": "public",
+      "constraint_name": "product_review_images_review_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+      "table_name": "product_reviews",
+      "schema_name": "public",
+      "constraint_name": "product_reviews_customer_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_id) REFERENCES orders(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+      "table_name": "product_reviews",
+      "schema_name": "public",
+      "constraint_name": "product_reviews_order_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (order_store_segment_id) REFERENCES order_store_segments(id) ON UPDATE CASCADE ON DELETE SET NULL",
+      "table_name": "product_reviews",
+      "schema_name": "public",
+      "constraint_name": "product_reviews_order_store_segment_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (product_id) REFERENCES local_products(id) ON UPDATE CASCADE ON DELETE SET NULL",
+      "table_name": "product_reviews",
+      "schema_name": "public",
+      "constraint_name": "product_reviews_product_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+      "table_name": "product_reviews",
+      "schema_name": "public",
+      "constraint_name": "product_reviews_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "table_name": "profiles",
+      "schema_name": "public",
+      "constraint_name": "profiles_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (auth_user_id) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "table_name": "staff",
+      "schema_name": "public",
+      "constraint_name": "staff_auth_user_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (parent_id) REFERENCES store_categories(id) ON DELETE CASCADE",
+      "table_name": "store_categories",
+      "schema_name": "public",
+      "constraint_name": "store_categories_parent_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "store_categories",
+      "schema_name": "public",
+      "constraint_name": "store_categories_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (category_id) REFERENCES store_categories(id) ON DELETE CASCADE",
+      "table_name": "store_category_media",
+      "schema_name": "public",
+      "constraint_name": "store_category_media_category_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "store_category_media",
+      "schema_name": "public",
+      "constraint_name": "store_category_media_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "vendor_sessions",
+      "schema_name": "public",
+      "constraint_name": "vendor_sessions_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id)",
+      "table_name": "vendor_settlement_archives_v163",
+      "schema_name": "public",
+      "constraint_name": "vendor_settlement_archives_v163_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "vendor_shipping_companies",
+      "schema_name": "public",
+      "constraint_name": "vendor_shipping_companies_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "vendor_shipping_profiles",
+      "schema_name": "public",
+      "constraint_name": "vendor_shipping_profiles_store_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (company_id) REFERENCES vendor_shipping_companies(id) ON DELETE CASCADE",
+      "table_name": "vendor_shipping_rates",
+      "schema_name": "public",
+      "constraint_name": "vendor_shipping_rates_company_id_fkey"
+    },
+    {
+      "definition": "FOREIGN KEY (store_id) REFERENCES local_stores(id) ON DELETE CASCADE",
+      "table_name": "vendor_shipping_rates",
+      "schema_name": "public",
+      "constraint_name": "vendor_shipping_rates_store_id_fkey"
+    }
+  ],
+  "storage_buckets": [
+    {
+      "id": "chat-attachments",
+      "public": false,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    },
+    {
+      "id": "kinto-customer-notice-media",
+      "public": false,
+      "file_size_limit": 5242880,
+      "allowed_mime_types": [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif"
+      ]
+    },
+    {
+      "id": "product-review-images",
+      "public": true,
+      "file_size_limit": 51200,
+      "allowed_mime_types": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "enabled": "O",
+      "table_name": "kinto_payment_attempts_p4",
+      "schema_name": "private",
+      "trigger_name": "trg_kinto_payment_coupon_hold_cleanup_p5",
+      "function_signature": "private.kinto_payment_coupon_hold_cleanup_p5()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_payment_coupon_hold_cleanup_p5 AFTER UPDATE OF status ON private.kinto_payment_attempts_p4 FOR EACH ROW EXECUTE FUNCTION private.kinto_payment_coupon_hold_cleanup_p5()",
+      "function_definition_sha256": "491c7e914df041e85a4038fdb8f3636151ac764b6b9478f3e0731a797034fec6"
+    },
+    {
+      "enabled": "O",
+      "table_name": "kinto_payment_attempts_p4",
+      "schema_name": "private",
+      "trigger_name": "trg_kinto_payment_p5_resolution_sync_campaign",
+      "function_signature": "private.kinto_payment_p5_resolution_sync_campaign()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_payment_p5_resolution_sync_campaign AFTER UPDATE OF status ON private.kinto_payment_attempts_p4 FOR EACH ROW EXECUTE FUNCTION private.kinto_payment_p5_resolution_sync_campaign()",
+      "function_definition_sha256": "9257ae42034fae3fa0abee5d4278f073a9ce2f267185563f468cd7d8a1860933"
+    },
+    {
+      "enabled": "O",
+      "table_name": "customer_local_carts",
+      "schema_name": "public",
+      "trigger_name": "kinto_cart_revision_legacy_guard_v189",
+      "function_signature": "kinto_cart_revision_legacy_guard_v189()",
+      "trigger_definition": "CREATE TRIGGER kinto_cart_revision_legacy_guard_v189 BEFORE UPDATE ON public.customer_local_carts FOR EACH ROW EXECUTE FUNCTION kinto_cart_revision_legacy_guard_v189()",
+      "function_definition_sha256": "1885c47b378e9471f205104b86c67d4bebf7784afb7579872ba304267a929cd8"
+    },
+    {
+      "enabled": "O",
+      "table_name": "kinto_deals_v1_redemptions",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_deals_v1_redemption_store",
+      "function_signature": "kinto_deals_v1_validate_related_store()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_deals_v1_redemption_store BEFORE INSERT OR UPDATE OF campaign_id, store_id, customer_id, order_id, gift_product_id ON public.kinto_deals_v1_redemptions FOR EACH ROW EXECUTE FUNCTION kinto_deals_v1_validate_related_store()",
+      "function_definition_sha256": "4c31d60fb4363602982994e1b332e418683d383507f377fa9b3101c034dcd2c3"
+    },
+    {
+      "enabled": "O",
+      "table_name": "local_orders",
+      "schema_name": "public",
+      "trigger_name": "trg_calculate_local_order_financials",
+      "function_signature": "calculate_local_order_financials()",
+      "trigger_definition": "CREATE TRIGGER trg_calculate_local_order_financials BEFORE INSERT OR UPDATE OF quantity, unit_price, commission_rate ON public.local_orders FOR EACH ROW EXECUTE FUNCTION calculate_local_order_financials()",
+      "function_definition_sha256": "7b6c0613a7711cb8d68d3c69383df9a9ec923ca047cf8a8482096f94ab909a2b"
+    },
+    {
+      "enabled": "O",
+      "table_name": "local_orders",
+      "schema_name": "public",
+      "trigger_name": "trg_validate_local_order_product",
+      "function_signature": "validate_local_order_product()",
+      "trigger_definition": "CREATE TRIGGER trg_validate_local_order_product BEFORE INSERT OR UPDATE OF store_id, product_id ON public.local_orders FOR EACH ROW EXECUTE FUNCTION validate_local_order_product()",
+      "function_definition_sha256": "0addc0d65cd4ae223473b32b274b896692effd150bba4bf60170c4e23324f13a"
+    },
+    {
+      "enabled": "O",
+      "table_name": "order_store_segments",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_coupon_segment_finance_v1",
+      "function_signature": "private.kinto_coupon_segment_finance_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_coupon_segment_finance_v1 BEFORE INSERT OR UPDATE OF commission_snapshot, subtotal_local ON public.order_store_segments FOR EACH ROW EXECUTE FUNCTION private.kinto_coupon_segment_finance_v1()",
+      "function_definition_sha256": "c504e05ffdf46913e5c3a37305643ae9b7228c27263fc5f782a012e7274f3a6f"
+    },
+    {
+      "enabled": "O",
+      "table_name": "order_store_segments",
+      "schema_name": "public",
+      "trigger_name": "trg_v165_freeze_delivered_cost",
+      "function_signature": "private.v165_freeze_delivered_cost()",
+      "trigger_definition": "CREATE TRIGGER trg_v165_freeze_delivered_cost AFTER INSERT OR UPDATE OF items_snapshot, store_status, payment_confirmed, commission_snapshot ON public.order_store_segments FOR EACH ROW EXECUTE FUNCTION private.v165_freeze_delivered_cost()",
+      "function_definition_sha256": "ec9d52b3734579cf72b5f273a04e02367045f1f93c577e714bfffd11a8708eb5"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_00_kinto_order_session_write_guard_v1",
+      "function_signature": "private.kinto_order_session_write_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_00_kinto_order_session_write_guard_v1 BEFORE INSERT OR UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_order_session_write_guard_v1()",
+      "function_definition_sha256": "318b878ebf591311be414d9c4e0afea2c629e1dff61488180f12cbc6470c19ab"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_00_kinto_payment_p5_goods_paid_collection",
+      "function_signature": "private.kinto_payment_p5_stamp_goods_paid_collection_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_00_kinto_payment_p5_goods_paid_collection BEFORE INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_payment_p5_stamp_goods_paid_collection_v1()",
+      "function_definition_sha256": "3e0d6fc8729085a72d26f54463be25b7c274d0864760cf3a71555e08aca82da7"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_campaign_order_discount_v411",
+      "function_signature": "kinto_campaign_order_discount_v411()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_campaign_order_discount_v411 BEFORE INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION kinto_campaign_order_discount_v411()",
+      "function_definition_sha256": "9da15f2141bf576f783fd64ad73d59acf840f888318fdf7af25103d5c1d01127"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_coupon_sync_finance_v1",
+      "function_signature": "private.kinto_coupon_sync_finance_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_coupon_sync_finance_v1 AFTER UPDATE OF reward_discount_amount, reward_discount_currency, reward_discount_snapshot ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_coupon_sync_finance_v1()",
+      "function_definition_sha256": "f3579dd784ea334cb7bddb543c5d3c88bd1a40d6221a9cef7a271dec64dfa176"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_deals_v1_gift_insert_g5f",
+      "function_signature": "private.kinto_deals_v1_inject_gift_g5f()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_deals_v1_gift_insert_g5f BEFORE INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_deals_v1_inject_gift_g5f()",
+      "function_definition_sha256": "91ae718cbd39bb0fa4ef881c60357acfd842f4a004043f944fe8ac65ead37723"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_deals_v1_redemption_lifecycle_g5i",
+      "function_signature": "private.kinto_deals_v1_redemption_lifecycle_g5i()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_deals_v1_redemption_lifecycle_g5i AFTER UPDATE OF status ON public.orders FOR EACH ROW WHEN ((old.status IS DISTINCT FROM new.status)) EXECUTE FUNCTION private.kinto_deals_v1_redemption_lifecycle_g5i()",
+      "function_definition_sha256": "f013bcb4f65f7fb09f4ceabcd9e64b13a7f03f7c534e0d6cd80b44b077f87fbb"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_external_shipping_guard_v1",
+      "function_signature": "private.kinto_external_shipping_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_external_shipping_guard_v1 BEFORE UPDATE OF external_shipping_fee, external_shipping_currency ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_external_shipping_guard_v1()",
+      "function_definition_sha256": "95863ebd3a7314b0cb67d0c614de347c4a7a23dfd633e55bacaee3d5bdb0223e"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_global_link_no_local_promotion_v1",
+      "function_signature": "private.kinto_global_link_no_local_promotion_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_global_link_no_local_promotion_v1 BEFORE UPDATE OF order_code, order_url, details, items, kinto_campaign_id ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_global_link_no_local_promotion_v1()",
+      "function_definition_sha256": "c200f266611344512a2e61d0d240811b9502affbf6206994323fe69236467c45"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_local_independent_amount_guard_v1",
+      "function_signature": "private.kinto_local_independent_amount_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_local_independent_amount_guard_v1 BEFORE UPDATE OF total_price, currency ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_local_independent_amount_guard_v1()",
+      "function_definition_sha256": "529ce33499a26d0a3b7c18ce6e940a2c8b6bd7615676ae44e3c192f42f8525e1"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_local_order_insert_gate_v1",
+      "function_signature": "private.kinto_local_order_insert_gate_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_local_order_insert_gate_v1 BEFORE INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_local_order_insert_gate_v1()",
+      "function_definition_sha256": "825d5a02b494fc8a5558c1baf8c8f70a80cace50d35e3e6009ac3bce4f9a0b8f"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_loyalty_order_v310",
+      "function_signature": "kinto_loyalty_order_v310()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_loyalty_order_v310 BEFORE UPDATE OF status ON public.orders FOR EACH ROW EXECUTE FUNCTION kinto_loyalty_order_v310()",
+      "function_definition_sha256": "8cac664bb7d10ca823a952b0c1956a553f7f20d19e9f798f997a3179863269c3"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_order_assignment_api_guard_v1",
+      "function_signature": "private.kinto_order_assignment_api_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_order_assignment_api_guard_v1 BEFORE UPDATE OF branch_id, courier_id, delivery_agent_id, branch_name, courier_name ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_order_assignment_api_guard_v1()",
+      "function_definition_sha256": "448930ccd8902d3e47f7c386d6f6ab083b6bf67dbc41700a165c432fa15a3941"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_order_price_api_guard_v1",
+      "function_signature": "private.kinto_order_price_api_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_order_price_api_guard_v1 BEFORE UPDATE OF total_price, currency ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_order_price_api_guard_v1()",
+      "function_definition_sha256": "b97b3706858b9bcc11e3850b5093f0dedcc063ef8ff9cc0ee507dc9dfa171b9c"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_order_settlement_guard_v1",
+      "function_signature": "private.kinto_order_settlement_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_order_settlement_guard_v1 BEFORE INSERT OR DELETE OR UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_order_settlement_guard_v1()",
+      "function_definition_sha256": "c1352419ef80018fbd61752a78f2edc51d4a3d876142de1458564df4a417246f"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_paid_insert_guard_v1",
+      "function_signature": "private.kinto_paid_transition_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_paid_insert_guard_v1 AFTER INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1()",
+      "function_definition_sha256": "be923f69cca6a9cc3c8353658c1cdf68bb37d7bf6ab315da7bbcd53cbf856608"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_paid_marker_guard_v1",
+      "function_signature": "private.kinto_paid_marker_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_paid_marker_guard_v1 BEFORE UPDATE OF details, status ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_marker_guard_v1()",
+      "function_definition_sha256": "de21290b8e34bc8c093d953d2fc1c05e0f231bf17e8c038ab29b01b5bc717bdf"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_paid_transition_guard_v1",
+      "function_signature": "private.kinto_paid_transition_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_paid_transition_guard_v1 AFTER UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_paid_transition_guard_v1()",
+      "function_definition_sha256": "be923f69cca6a9cc3c8353658c1cdf68bb37d7bf6ab315da7bbcd53cbf856608"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_payment_p4_order_insert_gate",
+      "function_signature": "private.kinto_payment_hold_gate_p4()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_payment_p4_order_insert_gate BEFORE INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_payment_hold_gate_p4()",
+      "function_definition_sha256": "55fd08f8b6d93ecc78643bdf07a1d7dea02f18c2635cfae58f57ff1cb74a22a7"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_payment_p4_paid_mode_gate",
+      "function_signature": "private.kinto_payment_paid_mode_gate_p4()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_payment_p4_paid_mode_gate BEFORE UPDATE OF status ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_payment_paid_mode_gate_p4()",
+      "function_definition_sha256": "731de2b25cd01a616dc7b394217c79cf988a9fc96808b3a680d089d6b06f44f5"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_kinto_payment_type_guard_v1",
+      "function_signature": "private.kinto_payment_type_guard_v1()",
+      "trigger_definition": "CREATE TRIGGER trg_kinto_payment_type_guard_v1 BEFORE UPDATE OF delivery_payment_type ON public.orders FOR EACH ROW EXECUTE FUNCTION private.kinto_payment_type_guard_v1()",
+      "function_definition_sha256": "8051dea9bd5ed5a9bc867cb511397eace59d9ca68fdd0879f244cbbd1af7bbae"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_meshwar_assign_local_cart_order_code",
+      "function_signature": "meshwar_assign_local_cart_order_code()",
+      "trigger_definition": "CREATE TRIGGER trg_meshwar_assign_local_cart_order_code BEFORE INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION meshwar_assign_local_cart_order_code()",
+      "function_definition_sha256": "1c9d9b4af339e5c45a3d2b464b2230d98d7942384eecfa1bd001f1626bec1b1c"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_meshwar_independent_vendor_order_guard",
+      "function_signature": "meshwar_independent_vendor_order_guard()",
+      "trigger_definition": "CREATE TRIGGER trg_meshwar_independent_vendor_order_guard BEFORE UPDATE OF status, details, total_price ON public.orders FOR EACH ROW WHEN ((COALESCE((private.v94_jsonb_object(to_jsonb(old.details)) ->> 'checkout_contract'::text), ''::text) = 'independent_vendor_orders'::text)) EXECUTE FUNCTION meshwar_independent_vendor_order_guard()",
+      "function_definition_sha256": "e16bc4b19da96f10100b17b44b8aa7a4b66ea00561e3460562dbacded6b2ffde"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_meshwar_legacy_bundle_guard",
+      "function_signature": "meshwar_local_cart_bundle_guard_v94_legacy()",
+      "trigger_definition": "CREATE TRIGGER trg_meshwar_legacy_bundle_guard BEFORE UPDATE OF status, details ON public.orders FOR EACH ROW WHEN ((COALESCE((private.v94_jsonb_object(to_jsonb(old.details)) ->> 'checkout_contract'::text), ''::text) IS DISTINCT FROM 'independent_vendor_orders'::text)) EXECUTE FUNCTION meshwar_local_cart_bundle_guard_v94_legacy()",
+      "function_definition_sha256": "55cfd13b88ec41374f9ad05565cee5dd3f620bc0ab226d53558fe91c6c172460"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_meshwar_local_cart_bundle_stock_lifecycle",
+      "function_signature": "kinto_bundle_stock_link_v47()",
+      "trigger_definition": "CREATE TRIGGER trg_meshwar_local_cart_bundle_stock_lifecycle BEFORE UPDATE OF status ON public.orders FOR EACH ROW WHEN ((old.status IS DISTINCT FROM new.status)) EXECUTE FUNCTION kinto_bundle_stock_link_v47()",
+      "function_definition_sha256": "b67162674f46a90648eceab2242512296ae996deebde02ff2465546cea15cbee"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_meshwar_local_stock_status_lifecycle",
+      "function_signature": "meshwar_local_stock_status_lifecycle()",
+      "trigger_definition": "CREATE TRIGGER trg_meshwar_local_stock_status_lifecycle BEFORE UPDATE OF status ON public.orders FOR EACH ROW WHEN ((old.status IS DISTINCT FROM new.status)) EXECUTE FUNCTION meshwar_local_stock_status_lifecycle()",
+      "function_definition_sha256": "97fef454ec753170c36a564433f7c687df17c79514e7a8375f56217f928a72d9"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_meshwar_lock_order_cost_snapshot",
+      "function_signature": "meshwar_lock_order_cost_snapshot()",
+      "trigger_definition": "CREATE TRIGGER trg_meshwar_lock_order_cost_snapshot BEFORE INSERT OR UPDATE OF status, cost_price, snapshot_cost_price, details ON public.orders FOR EACH ROW EXECUTE FUNCTION meshwar_lock_order_cost_snapshot()",
+      "function_definition_sha256": "c92c34f20adf551fef538303f5b34be6327e7055b3287db5d81ec26fadead261"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_meshwar_normalize_local_order_details",
+      "function_signature": "meshwar_normalize_local_order_details()",
+      "trigger_definition": "CREATE TRIGGER trg_meshwar_normalize_local_order_details BEFORE INSERT OR UPDATE OF details ON public.orders FOR EACH ROW EXECUTE FUNCTION meshwar_normalize_local_order_details()",
+      "function_definition_sha256": "c72d974b08b68c26361487047a76019c29b5fa07a6df90147ad5b0aec4a2a6e1"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_meshwar_release_local_stock_after_insert",
+      "function_signature": "meshwar_release_local_stock_after_insert()",
+      "trigger_definition": "CREATE TRIGGER trg_meshwar_release_local_stock_after_insert AFTER INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION meshwar_release_local_stock_after_insert()",
+      "function_definition_sha256": "9e7fb060676afd6be7707de49453087d1ba1fa390e2d123433ba5c205743114b"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_v161_stamp_new_vendor_finance",
+      "function_signature": "private.v161_stamp_new_vendor_finance()",
+      "trigger_definition": "CREATE TRIGGER trg_v161_stamp_new_vendor_finance BEFORE INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION private.v161_stamp_new_vendor_finance()",
+      "function_definition_sha256": "4a3ce9621af8fea58955786f38cad5d3a0c9d8fb87b8228683b2d0039db00fdc"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_v161_sync_new_vendor_finance_segment",
+      "function_signature": "private.v161_sync_new_vendor_finance_segment()",
+      "trigger_definition": "CREATE TRIGGER trg_v161_sync_new_vendor_finance_segment AFTER INSERT OR UPDATE OF details ON public.orders FOR EACH ROW EXECUTE FUNCTION private.v161_sync_new_vendor_finance_segment()",
+      "function_definition_sha256": "3e755d10df905fe89c6446ba6a0157f7ca2ca62f0d40ed60f573cba18bd2f749"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_v165_stamp_unit_cost",
+      "function_signature": "private.v165_stamp_unit_cost()",
+      "trigger_definition": "CREATE TRIGGER trg_v165_stamp_unit_cost AFTER INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION private.v165_stamp_unit_cost()",
+      "function_definition_sha256": "aadfdf34b8ccccaa5014ba6ee86ddf2e0f35a05aaab6ef584d0aecf4c242e08f"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_v94_sync_order_store_segments_insert",
+      "function_signature": "private.v94_orders_segment_trigger()",
+      "trigger_definition": "CREATE TRIGGER trg_v94_sync_order_store_segments_insert AFTER INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION private.v94_orders_segment_trigger()",
+      "function_definition_sha256": "3117d615e1e4804c40dcbbd544ca79b2b80580aa61280acdb560a194d79505a3"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_v94_sync_order_store_segments_update",
+      "function_signature": "private.v94_orders_segment_trigger()",
+      "trigger_definition": "CREATE TRIGGER trg_v94_sync_order_store_segments_update AFTER UPDATE OF details, status, reference_order_no ON public.orders FOR EACH ROW EXECUTE FUNCTION private.v94_orders_segment_trigger()",
+      "function_definition_sha256": "3117d615e1e4804c40dcbbd544ca79b2b80580aa61280acdb560a194d79505a3"
+    },
+    {
+      "enabled": "O",
+      "table_name": "orders",
+      "schema_name": "public",
+      "trigger_name": "trg_v98_apply_vendor_shipping",
+      "function_signature": "private.v98_apply_vendor_shipping()",
+      "trigger_definition": "CREATE TRIGGER trg_v98_apply_vendor_shipping BEFORE INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION private.v98_apply_vendor_shipping()",
+      "function_definition_sha256": "69a5626e8653b50d42fb4adc99307d9284ba2423327bd05baf35d014bab61034"
+    },
+    {
+      "enabled": "O",
+      "table_name": "profiles",
+      "schema_name": "public",
+      "trigger_name": "profiles_updated_at",
+      "function_signature": "set_updated_at()",
+      "trigger_definition": "CREATE TRIGGER profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+      "function_definition_sha256": "b810f97a5c4a50521342d2c2e70cc69c6a8a578f58eb8fc43ef72210b571b46d"
+    }
+  ],
+  "limitations": [
+    "No customer rows, object inventory, storage access policies or backup configuration supplied.",
+    "Trigger bodies reviewed locally, not executed or copied into this evidence. Function hashes describe decoded export text, not catalog prosrc.",
+    "No complete live clone, production erasure or permission audit is established."
+  ]
+}

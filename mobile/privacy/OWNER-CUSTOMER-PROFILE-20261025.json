@@ -1,0 +1,169 @@
+{
+  "source": "owner-run READ ONLY catalog export received 2026-10-25",
+  "transaction_read_only": "on",
+  "columns": [
+    {
+      "not_null": true,
+      "position": 1,
+      "data_type": "uuid",
+      "table_name": "customers",
+      "column_name": "id",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": true,
+      "position": 2,
+      "data_type": "timestamp with time zone",
+      "table_name": "customers",
+      "column_name": "created_at",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": true,
+      "position": 3,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "name",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": true,
+      "position": 4,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "phone",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 5,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "email",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 6,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "country",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 7,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "address",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 8,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "code",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 9,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "password",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 10,
+      "data_type": "jsonb",
+      "table_name": "customers",
+      "column_name": "cart_items",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 11,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "state",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 12,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "secondary_phone",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 13,
+      "data_type": "jsonb",
+      "table_name": "customers",
+      "column_name": "rewards_log",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 14,
+      "data_type": "numeric",
+      "table_name": "customers",
+      "column_name": "wallet_balance",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 15,
+      "data_type": "text",
+      "table_name": "customers",
+      "column_name": "wallet_currency",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 16,
+      "data_type": "integer",
+      "table_name": "customers",
+      "column_name": "rewards_count",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": false,
+      "position": 17,
+      "data_type": "integer",
+      "table_name": "customers",
+      "column_name": "current_cycle_delivered",
+      "rls_enabled": true,
+      "schema_name": "public"
+    },
+    {
+      "not_null": true,
+      "position": 18,
+      "data_type": "jsonb",
+      "table_name": "customers",
+      "column_name": "reward_balances",
+      "rls_enabled": true,
+      "schema_name": "public"
+    }
+  ],
+  "customer_rows_supplied": false
+}
