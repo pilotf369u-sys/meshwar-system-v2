@@ -13,8 +13,12 @@
   "final_store_screenshots_available": false,
   "final_play_candidate_device_test_passed": false,
   "android29_motion_certified": false,
-  "android29_functional_result": "partial: launch/privacy/warm/offline passed; customer invoice layout failed on WebView74; staff/vendor/video not reached",
+  "android29_functional_result": "WebView74 now gets explicit update guidance; no account content loaded. Updated WebView on API29 still needs final device rehearsal.",
   "lint_errors": 0,
   "lint_warnings": 21,
-  "legacy_webview_compatibility_closed": false
+  "legacy_webview_compatibility_closed": false,
+  "isolated_privacy_database_browser_rollback_passed": true,
+  "isolated_ugc_report_block_passed": true,
+  "old_webview_update_guard_test_passed": true,
+  "api36_webview133_synthetic_invoice_video_passed": true
 }

@@ -135,7 +135,7 @@
           </div>
           <p class="review-media-note">اختر الصورة بأي حجم مناسب؛ سيقوم النظام بضغطها وتحسينها تلقائياً قبل الحفظ.</p>
           <div id="reviewPreviews" class="review-previews"></div>
-          <label class="review-label"><input id="reviewPolicyAcceptedV1" type="checkbox"> أوافق على <a href="review-policy.html" target="_blank" rel="noopener">قواعد التقييم والصور</a> ومنع الإساءة وانتهاك الخصوصية والحقوق.</label>
+          <label class="review-label"><input id="reviewPolicyAcceptedV1" type="checkbox"> أوافق على <a href="review-policy.html" style="color:#efd185;text-decoration:underline" target="_blank" rel="noopener">قواعد التقييم والصور</a> ومنع الإساءة وانتهاك الخصوصية والحقوق.</label>
           <div id="reviewFormMessage" class="review-form-message" role="status" aria-live="polite"></div>
           <div class="review-dialog-actions">
             <button id="reviewCancelBtn" class="review-secondary-btn" type="button">إلغاء</button>

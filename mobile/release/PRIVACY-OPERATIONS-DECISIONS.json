@@ -9,7 +9,9 @@
   "retained_transaction_fields": [],
   "retention_reason_and_period": null,
   "storage_backup_expiry_policy": null,
-  "synthetic_deletion_rehearsal_passed": false,
-  "ugc_report_and_block_rehearsal_passed": false,
-  "public_policy_deployed": false
+  "synthetic_deletion_rehearsal_passed": true,
+  "ugc_report_and_block_rehearsal_passed": true,
+  "public_policy_deployed": false,
+  "synthetic_deletion_rehearsal_scope": "Fresh profile only, minimal disposable PostgreSQL17 schema. Production transactional accounts not covered; executor disabled.",
+  "production_privacy_controls_deployed": false
 }
