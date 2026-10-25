@@ -21,6 +21,8 @@ review_paths = [
  'sql/kinto-privacy-controls-rollback-v1.sql',
  'sql/kinto-privacy-media-v1.sql',
  'sql/kinto-privacy-media-rollback-v1.sql',
+ 'sql/kinto-privacy-chat-v1.sql',
+ 'sql/kinto-privacy-chat-rollback-v1.sql',
  'supabase/functions/kinto-privacy-media-v1/index.ts',
  'supabase/functions/kinto-privacy-media-v1/worker.mjs',
  'sql/kinto-privacy-inventory-readonly-v1.sql',

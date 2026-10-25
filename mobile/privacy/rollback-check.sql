@@ -1,5 +1,6 @@
 \set ON_ERROR_STOP on
 CREATE TEMP TABLE privacy_rollback_counts AS SELECT (SELECT count(*)FROM private.kinto_deletion_requests_v1)requests,(SELECT count(*)FROM private.kinto_review_reports_v1)reports,(SELECT count(*)FROM private.kinto_erasure_ledger_v1)ledger,(SELECT count(*)FROM private.kinto_privacy_media_ledger_v1)media_ledger;
+\ir ../../sql/kinto-privacy-chat-rollback-v1.sql
 \ir ../../sql/kinto-privacy-media-rollback-v1.sql
 \ir ../../sql/kinto-privacy-controls-rollback-v1.sql
 SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgname IN('kinto_review_terms_v1','kinto_review_image_terms_v1')),'only added consent triggers removed');
@@ -12,4 +13,5 @@ SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM jsonb_each_text((SELECT paylo
 SELECT public.test_assert(NOT has_function_privilege('service_role','public.kinto_privacy_media_claim_v1(text,uuid)','EXECUTE'),'media service worker disabled');
 SELECT public.test_assert((SELECT ledger FROM privacy_rollback_counts)=(SELECT count(*)FROM private.kinto_erasure_ledger_v1),'restore tombstones preserved by rollback');
 SELECT public.test_assert((SELECT media_ledger FROM privacy_rollback_counts)=(SELECT count(*)FROM private.kinto_privacy_media_ledger_v1),'media restore tombstones preserved by rollback');
+SELECT public.test_assert(NOT has_function_privilege('service_role','public.kinto_privacy_chat_erase_text_v1(text,uuid,bigint,bigint)','EXECUTE'),'chat service worker disabled');
 SELECT 'PASS_PRIVACY_ROLLBACK: added entry points disabled; queues, original functions and orders preserved';

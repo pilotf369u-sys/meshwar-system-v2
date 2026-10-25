@@ -2,7 +2,7 @@
 import http.server,json,os,pathlib,re,subprocess
 if os.environ.get('KINTO_DISPOSABLE_TEST')!='1' or os.environ.get('PGHOST')!='127.0.0.1' or os.environ.get('PGDATABASE')!='kinto_privacy_test':raise SystemExit('DISPOSABLE_DATABASE_REQUIRED')
 ROOT=pathlib.Path(__file__).resolve().parents[2]
-ALLOWED={'kinto_review_consent_v1','kinto_review_submit_v1','kinto_review_safety_v1','kinto_reviews_visible_v1','kinto_deletion_request_v1','kinto_privacy_admin_v1','kinto_deletion_preflight_v1','product_reviews_public_v141','product_review_summaries_v140'}
+ALLOWED={'kinto_review_consent_v1','kinto_review_submit_v1','kinto_review_safety_v1','kinto_reviews_visible_v1','kinto_deletion_request_v1','kinto_privacy_admin_v1','kinto_deletion_preflight_v1','product_reviews_public_v141','product_review_summaries_v140','kinto_privacy_chat_review_v1'}
 def literal(x):
  if x is None:return 'NULL'
  if isinstance(x,bool):return 'true'if x else 'false'
@@ -21,6 +21,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
    args=json.loads(self.rfile.read(int(self.headers.get('Content-Length','0'))))
    if self.path=='/__seed':
     subprocess.run(['psql','-v','ON_ERROR_STOP=1','-f',str(ROOT/'mobile/privacy/browser-seed.sql')],check=True,capture_output=True);result={'ok':True}
+   elif self.path=='/functions/v1/kinto-privacy-media-v1':
+    # CI-only stand-in for the fixed Edge service call. No client-selected SQL/RPC or key.
+    if set(args)!={'operation','session_token','request_id','confirm_request_id','message_id','confirm_message_id'} or args['operation']!='erase_chat_text' or args['request_id']!=args['confirm_request_id'] or args['message_id']!=args['confirm_message_id']:raise ValueError('INVALID_CHAT_CONFIRMATION')
+    if not isinstance(args['message_id'],str)or not re.fullmatch(r'-?(0|[1-9][0-9]{0,18})',args['message_id']):raise ValueError('INVALID_MESSAGE_ID')
+    result=json.loads(query('SET ROLE service_role;SELECT public.kinto_privacy_chat_erase_text_v1('+','.join(literal(args[k])for k in ['session_token','request_id','message_id','confirm_message_id'])+')'))
+    if result.get('erased')is not True:raise ValueError('CHAT_NOT_ERASED')
+    result={'state':'erased','account_deleted':False}
    elif self.path=='/__publish':query("UPDATE public.product_reviews SET moderation_status='published';SELECT '{}'::jsonb");result={'ok':True}
    else:
     name=self.path.rsplit('/',1)[-1]

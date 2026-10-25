@@ -7,7 +7,7 @@ ALTER TABLE public.orders ALTER COLUMN customer_id TYPE text USING customer_id::
 ALTER TABLE public.orders ALTER COLUMN details TYPE text USING details::text;
 ALTER TABLE public.order_store_segments ADD COLUMN customer_snapshot jsonb;
 CREATE TABLE public.customer_portal_sessions(token_hash text PRIMARY KEY,customer_id uuid,expires_at timestamptz,created_at timestamptz);
-CREATE TABLE public.messages(id bigint PRIMARY KEY,created_at timestamptz,customer_id uuid,employee_id uuid,sender_type text,message text,file_url text,read_by_employee boolean,read_by_customer boolean);
+CREATE TABLE IF NOT EXISTS public.messages(id bigint PRIMARY KEY,created_at timestamptz,customer_id uuid,employee_id uuid,sender_type text,message text,file_url text,read_by_employee boolean,read_by_customer boolean);
 CREATE TABLE private.kinto_world_orders_v1(id uuid PRIMARY KEY,order_no bigint,customer_id uuid NOT NULL,request_key uuid,request jsonb,estimates jsonb,state text,revision bigint,quote jsonb,payment jsonb,purchase jsonb,created_at timestamptz,updated_at timestamptz);
 INSERT INTO public.customer_portal_sessions VALUES('synthetic-portal-A','00000000-0000-4000-8000-000000000001',now()+interval '1 hour',now());
 INSERT INTO public.messages VALUES(1,now(),'00000000-0000-4000-8000-000000000001',NULL,'customer','TEST private support message',NULL,false,true);
@@ -22,7 +22,7 @@ SELECT public.test_assert(public.kinto_review_submit_v1('test-TEST-B','00000000-
 SELECT public.kinto_review_consent_v1('test-TEST-A','2026-10-25',true);
 SELECT public.test_denied($q$SELECT public.kinto_review_submit_v1('test-TEST-A','00000000-0000-4000-8000-000000000030','00000000-0000-4000-8000-000000000020',5::smallint,'TEST cannot own B order','2026-10-25')$q$,'DELIVERED_ORDER_NOT_FOUND');
 SELECT public.kinto_deletion_request_v1('test-TEST-A','request',true);
-SELECT public.kinto_privacy_admin_v1('test-admin','deletions',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000001'AND status='pending'),'verify','TEST ownership verified; observed schema must hold');
+SELECT public.kinto_privacy_admin_v1('test-admin','deletions',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000001'AND status IN('pending','verified','manual_review')),'verify','TEST ownership verified; observed schema must hold');
 -- Fixture-only policy approval demonstrates that even approval cannot bypass unknown links.
 UPDATE private.kinto_erasure_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
 SELECT public.test_assert(EXISTS(SELECT 1 FROM jsonb_array_elements(public.kinto_deletion_preflight_v1('test-admin',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000001'AND status='verified'))->'holds')h WHERE h->>'relation'='public.customer_portal_sessions'),'second real-observed session path detected');

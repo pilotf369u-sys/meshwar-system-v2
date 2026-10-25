@@ -134,11 +134,11 @@ DECLARE name text;rel oid;owned integer;fk_ok boolean;managed oid[]:='{}';BEGIN
   SELECT count(*)INTO owned FROM pg_attribute WHERE attrelid=rel AND attname='customer_id'AND atttypid='uuid'::regtype AND NOT attisdropped;
   IF owned<>1 THEN RETURN false;END IF;
   IF name='public.customer_favorite_items'THEN
-   SELECT EXISTS(SELECT 1 FROM pg_constraint f WHERE f.conrelid=rel AND f.contype='f'AND f.confrelid=to_regclass('public.customer_favorite_lists')AND
+   SELECT EXISTS(SELECT 1 FROM pg_constraint f WHERE f.conrelid=rel AND f.contype='f'AND f.confdeltype='c'AND f.confrelid=to_regclass('public.customer_favorite_lists')AND
     (SELECT array_agg(a.attname::text ORDER BY k.ord)FROM unnest(f.conkey)WITH ORDINALITY k(num,ord)JOIN pg_attribute a ON a.attrelid=f.conrelid AND a.attnum=k.num)=ARRAY['list_id','customer_id']AND
     (SELECT array_agg(a.attname::text ORDER BY k.ord)FROM unnest(f.confkey)WITH ORDINALITY k(num,ord)JOIN pg_attribute a ON a.attrelid=f.confrelid AND a.attnum=k.num)=ARRAY['id','customer_id'])INTO fk_ok;
   ELSE
-   SELECT EXISTS(SELECT 1 FROM pg_constraint f JOIN pg_attribute a ON a.attrelid=f.conrelid AND a.attnum=f.conkey[1]WHERE f.contype='f'AND f.conrelid=rel AND f.confrelid='public.customers'::regclass AND cardinality(f.conkey)=1 AND a.attname='customer_id'AND f.confkey[1]=(SELECT attnum FROM pg_attribute WHERE attrelid='public.customers'::regclass AND attname='id'))INTO fk_ok;
+   SELECT EXISTS(SELECT 1 FROM pg_constraint f JOIN pg_attribute a ON a.attrelid=f.conrelid AND a.attnum=f.conkey[1]WHERE f.contype='f'AND f.confdeltype='c'AND f.conrelid=rel AND f.confrelid='public.customers'::regclass AND cardinality(f.conkey)=1 AND a.attname='customer_id'AND f.confkey[1]=(SELECT attnum FROM pg_attribute WHERE attrelid='public.customers'::regclass AND attname='id'))INTO fk_ok;
   END IF;
   IF NOT fk_ok THEN RETURN false;END IF;
   IF name='private.kinto_review_blocks_v1'AND NOT EXISTS(SELECT 1 FROM pg_attribute a JOIN pg_constraint f ON f.conrelid=a.attrelid AND f.conkey=ARRAY[a.attnum]::smallint[]WHERE a.attrelid=rel AND a.attname='blocked_customer_id'AND a.atttypid='uuid'::regtype AND NOT a.attisdropped AND f.contype='f'AND f.confrelid='public.customers'::regclass AND f.confkey[1]=(SELECT attnum FROM pg_attribute WHERE attrelid='public.customers'::regclass AND attname='id'))THEN RETURN false;END IF;
