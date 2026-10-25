@@ -6,9 +6,32 @@
   "privacy_operator": "إدارة KINTO",
   "acknowledgement_target_days": 7,
   "deletion_completion_target_days": 30,
-  "retained_transaction_fields": [],
-  "retention_reason_and_period": null,
-  "storage_backup_expiry_policy": null,
+  "retained_transaction_fields": [
+    "order_or_invoice_reference",
+    "transaction_date",
+    "items_and_quantities",
+    "currency_and_amounts",
+    "discount_tax_shipping_components_if_applicable",
+    "payment_refund_settlement_references_and_status",
+    "counterparty_identity_only_if_required_for_the_specific_record"
+  ],
+  "retention_reason_and_period": {
+    "status": "internal_policy_selected_not_deployed",
+    "financial_record_years": 7,
+    "reason": "Commercial record keeping, accounting evidence and resolving financial rights; preserve only necessary records",
+    "source_law": "Iraq Commerce Law 30/1984, Article 18",
+    "financial_record_anchor": "Statutory relevant book completion annotation or cessation of trading as applicable; correspondence has issue/receipt anchor. Do not substitute order date.",
+    "automatic_financial_expiry_enabled": false,
+    "legal_applicability_verified": false,
+    "legal_hold": "Specific documented dispute, authority requirement or other verified duty; limited scope, reason, review date and release condition. No blanket indefinite hold."
+  },
+  "storage_backup_expiry_policy": {
+    "status": "operational_requirements_selected_actual_configuration_unverified",
+    "storage_objects_separate_from_database_backup": true,
+    "actual_expiry_days": null,
+    "restore_rule": "Before restored data becomes accessible, reapply completed deletions using restricted minimal deletion ledger; validate and erase restored media separately.",
+    "completion_rule": "Do not claim backup expiry or full erasure until applicable actual provider/manual-copy retention and scoped file deletion are verified."
+  },
   "synthetic_deletion_rehearsal_passed": true,
   "ugc_report_and_block_rehearsal_passed": true,
   "public_policy_deployed": false,
@@ -26,5 +49,9 @@
   "google_play_public_legal_name_authorized": true,
   "identity_authorization_source": "owner affirmative reply after explicit Google Play public-name question, 2026-10-25",
   "operations_targets_owner_confirmed": true,
-  "operations_confirmation_source": "owner affirmative reply to admin/support and 7-day response / 30-day processing target proposal, 2026-10-25"
+  "operations_confirmation_source": "owner affirmative reply to admin/support and 7-day response / 30-day processing target proposal, 2026-10-25",
+  "operator_capacity": "individual",
+  "operator_capacity_owner_confirmed": true,
+  "operator_capacity_confirmation_source": "owner personal-capacity response and delegated retention decision, 2026-10-25",
+  "nonessential_account_data_policy": "After identity verification, erase nonessential account data and owned media within the approved 30-day service target. Retain only specific necessary evidence, not whole accounts/chat archives. Erasure completion must reflect actual execution."
 }
