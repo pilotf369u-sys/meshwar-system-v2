@@ -23,6 +23,8 @@ review_paths = [
  'sql/kinto-privacy-media-rollback-v1.sql',
  'sql/kinto-privacy-chat-v1.sql',
  'sql/kinto-privacy-checkpoint-v1.sql',
+ 'sql/kinto-privacy-review-erasure-v1.sql',
+ 'sql/kinto-privacy-review-erasure-rollback-v1.sql',
  'mobile/privacy/checkpoint.py',
  'sql/kinto-privacy-chat-rollback-v1.sql',
  'supabase/config.toml',

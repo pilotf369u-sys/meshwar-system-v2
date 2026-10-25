@@ -33,4 +33,6 @@ INSERT INTO public.test_preservation_snapshot VALUES('functions',(SELECT jsonb_o
 
 \ir ../../sql/kinto-privacy-chat-v1.sql
 
+\ir ../../sql/kinto-privacy-review-erasure-v1.sql
+
 \ir ../../sql/kinto-privacy-checkpoint-v1.sql

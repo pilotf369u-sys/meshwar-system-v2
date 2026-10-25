@@ -54,7 +54,8 @@
     "checkpoint_coverage_required": [
       "account erasures",
       "media key erasures",
-      "reviewed chat text erasures"
+      "reviewed chat text erasures",
+      "reviewed product review erasures"
     ],
     "external_checkpoint_export_and_offline_validator_source_implemented": true
   },

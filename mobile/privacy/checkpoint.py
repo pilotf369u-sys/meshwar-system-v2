@@ -4,7 +4,7 @@ hash is a corruption check, not a signature or proof of export freshness/complet
 """
 import argparse, datetime, hashlib, hmac, json, os, pathlib, re, sys
 MAX_BYTES = 8 * 1024 * 1024
-GROUPS = ('accounts', 'review_media', 'chat_text')
+GROUPS = ('accounts', 'review_media', 'chat_text', 'review_records')
 PROJECT = 'hsmmbloouskqdnptiiad'
 
 class CheckpointError(ValueError):
@@ -49,7 +49,7 @@ def validate(raw, expected_sha256):
     data = parse(envelope['payload_text'])
     if not exact_keys(data, ('format', 'source_project', 'snapshot_at', 'database_snapshot', 'counts', 'ledgers', 'snapshot_coherent', 'coverage_verified', 'restore_authorized')):
         raise CheckpointError('INVALID_CHECKPOINT_FIELDS')
-    if data['format'] != 'kinto-erasure-checkpoint-v1' or data['source_project'] != PROJECT:
+    if data['format'] != 'kinto-erasure-checkpoint-v2' or data['source_project'] != PROJECT:
         raise CheckpointError('WRONG_CHECKPOINT_SOURCE')
     if data['snapshot_coherent'] is not True or data['coverage_verified'] is not False or data['restore_authorized'] is not False:
         raise CheckpointError('CHECKPOINT_CANNOT_AUTHORIZE_RESTORE')

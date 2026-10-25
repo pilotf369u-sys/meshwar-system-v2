@@ -5,7 +5,7 @@ spec=importlib.util.spec_from_file_location('checkpoint',pathlib.Path(__file__).
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 
 def fixture():
-    return {'format':'kinto-erasure-checkpoint-v1','source_project':m.PROJECT,'snapshot_at':'2026-10-25T17:00:00+00:00','database_snapshot':'100:120:105,110','counts':{g:1 for g in m.GROUPS},'ledgers':{g:[{'key_hash':str(i)*64,'erased_at':'2026-10-25T16:00:00+00:00'}]for i,g in enumerate(m.GROUPS,1)},'snapshot_coherent':True,'coverage_verified':False,'restore_authorized':False}
+    return {'format':'kinto-erasure-checkpoint-v2','source_project':m.PROJECT,'snapshot_at':'2026-10-25T17:00:00+00:00','database_snapshot':'100:120:105,110','counts':{g:1 for g in m.GROUPS},'ledgers':{g:[{'key_hash':str(i)*64,'erased_at':'2026-10-25T16:00:00+00:00'}]for i,g in enumerate(m.GROUPS,1)},'snapshot_coherent':True,'coverage_verified':False,'restore_authorized':False}
 
 def envelope(data):
     text=json.dumps(data,ensure_ascii=False);digest=hashlib.sha256(text.encode()).hexdigest()
@@ -59,7 +59,7 @@ class Checkpoints(unittest.TestCase):
     @unittest.skipUnless(os.environ.get('KINTO_DISPOSABLE_TEST')=='1','SQL export only in disposable CI')
     def test_actual_postgresql_payload_matches_offline_validator(self):
         raw=pathlib.Path('/tmp/kinto-erasure-checkpoint-fixture.json').read_bytes();digest=json.loads(raw)['sha256']
-        data=m.validate(raw,digest);self.assertGreaterEqual(data['counts']['accounts'],1);self.assertGreaterEqual(data['counts']['review_media'],1);self.assertEqual(data['counts']['chat_text'],1)
+        data=m.validate(raw,digest);self.assertGreaterEqual(data['counts']['accounts'],1);self.assertGreaterEqual(data['counts']['review_media'],1);self.assertEqual(data['counts']['chat_text'],1);self.assertEqual(data['counts']['review_records'],0)
         # Test-only self-read digest is contract coverage, not a trusted real operator anchor.
         with tempfile.TemporaryDirectory()as tmp:self.assertFalse(m.save_verified(raw,digest,pathlib.Path(tmp)/'synthetic.json')['restore_authorized'])
 
