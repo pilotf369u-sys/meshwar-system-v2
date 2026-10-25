@@ -1,5 +1,7 @@
 \set ON_ERROR_STOP on
 CREATE TEMP TABLE privacy_rollback_counts AS SELECT (SELECT count(*)FROM private.kinto_deletion_requests_v1)requests,(SELECT count(*)FROM private.kinto_review_reports_v1)reports,(SELECT count(*)FROM private.kinto_erasure_ledger_v1)ledger,(SELECT count(*)FROM private.kinto_privacy_media_ledger_v1)media_ledger;
+\ir ../../sql/kinto-privacy-transaction-preview-rollback-v1.sql
+SELECT public.test_assert(NOT has_function_privilege('anon','public.kinto_privacy_transaction_preview_admin_v1(text,uuid)','EXECUTE'),'transaction assessment disabled without deleting evidence');
 \ir ../../sql/kinto-privacy-progress-rollback-v1.sql
 SELECT public.test_assert(NOT has_function_privilege('anon','public.kinto_deletion_request_v1(text,text,boolean)','EXECUTE'),'privacy mutation disabled before dropping the remaining cancellation guards');
 \ir ../../sql/kinto-privacy-review-erasure-rollback-v1.sql

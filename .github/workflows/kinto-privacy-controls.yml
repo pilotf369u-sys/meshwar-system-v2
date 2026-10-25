@@ -2,7 +2,7 @@ name: KINTO isolated privacy controls
 'on':
   push:
     branches: [app/privacy-controls-20261025]
-    paths: ['sql/kinto-privacy-controls*','sql/kinto-privacy-media*','sql/kinto-privacy-chat*','sql/kinto-privacy-storage-config*','sql/kinto-privacy-progress*','sql/kinto-privacy-review-erasure*','sql/kinto-privacy-checkpoint*','supabase/functions/kinto-privacy-media-v1/**','supabase/config.toml','mobile/privacy/**','js/*privacy*','js/*product-reviews*','.github/workflows/kinto-privacy-controls.yml']
+    paths: ['sql/kinto-privacy-controls*','sql/kinto-privacy-media*','sql/kinto-privacy-chat*','sql/kinto-privacy-storage-config*','sql/kinto-privacy-progress*','sql/kinto-privacy-review-erasure*','sql/kinto-privacy-checkpoint*','sql/kinto-privacy-transaction-preview*','supabase/functions/kinto-privacy-media-v1/**','supabase/config.toml','mobile/privacy/**','js/*privacy*','js/*product-reviews*','.github/workflows/kinto-privacy-controls.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,6 +45,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/media-restore-check.sql
           node --test mobile/privacy/media-worker.test.mjs
           node --test mobile/privacy/chat-attachment-inventory.test.mjs
+          node --test mobile/privacy/transactional-preview.test.mjs
           python3 mobile/privacy/media-concurrency-check.py
           npm install --prefix "$RUNNER_TEMP/kinto-privacy-sdk" --no-audit --no-fund @supabase/supabase-js@2.57.4
           NODE_PATH="$RUNNER_TEMP/kinto-privacy-sdk/node_modules" node --test mobile/privacy/media-sdk-contract.test.cjs
@@ -58,6 +59,8 @@ jobs:
           python3 mobile/privacy/review-erasure-concurrency-check.py
       - name: Honest deletion progress and uncertain Storage cancellation guard
         run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/progress-check.sql
+      - name: Bounded verified-admin transactional privacy assessment
+        run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/transaction-preview-check.sql
       - name: Coherent minimal external erasure checkpoint
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/checkpoint-check.sql

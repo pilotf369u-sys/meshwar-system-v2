@@ -24,6 +24,8 @@ review_paths = [
  'sql/kinto-privacy-chat-v1.sql',
  'sql/kinto-privacy-checkpoint-v1.sql',
  'sql/kinto-privacy-progress-v1.sql',
+ 'sql/kinto-privacy-transaction-preview-v1.sql',
+ 'sql/kinto-privacy-transaction-preview-rollback-v1.sql',
  'sql/kinto-privacy-progress-rollback-v1.sql',
  'sql/kinto-privacy-review-erasure-v1.sql',
  'sql/kinto-privacy-review-erasure-rollback-v1.sql',
@@ -50,6 +52,7 @@ review_paths = [
  'account-deletion.html',
  'mobile/privacy/README.md',
  'mobile/privacy/chat-attachment-inventory.mjs',
+ 'mobile/privacy/transactional-preview.mjs',
 ]
 for name in review_paths:files['review-source-NOT-DEPLOY/'+name]=(root/name).read_bytes()
 # A safe, explicit record of compiled/native and isolated-test results, not arbitrary raw logs.
