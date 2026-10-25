@@ -379,5 +379,25 @@
     "production_sql_executed": false,
     "native_application_rebuilt": false,
     "full_account_and_chat_attachment_erasure_complete": false
+  },
+  "storage_config_owner_query": {
+    "run_id": 40225993494,
+    "job_id": 121267359247,
+    "tested_commit": "ed4370131b3395e230822466574f6d3cbb0259b6",
+    "targeted_metadata_step_result": "success",
+    "full_pipeline_status_at_checkpoint": "in_progress_at_browser_step",
+    "full_pipeline_conclusion_at_checkpoint": null,
+    "query": "sql/kinto-privacy-storage-config-readonly-v1.sql",
+    "read_only_transaction_checked": true,
+    "allowlisted_bucket_configs": 2,
+    "missing_versioning_column_is_unknown_not_disabled": true,
+    "enabled_and_disabled_schema_variants_checked": true,
+    "unrelated_bucket_and_canary_not_returned": true,
+    "no_customer_or_storage_object_rows_read_by_owner_query": true,
+    "fixture_data_functions_and_config_unchanged": true,
+    "owner_execution_pending": true,
+    "actual_storage_service_build_identified": false,
+    "actual_upload_quiescence_or_physical_removal_verified": false,
+    "production_enable_authorized": false
   }
 }
