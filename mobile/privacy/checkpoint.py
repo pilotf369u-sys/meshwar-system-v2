@@ -39,9 +39,12 @@ def validate(raw, expected_sha256):
         raise CheckpointError('INVALID_CHECKPOINT_ENCODING') from exc
     if not exact_keys(envelope, ('payload_text', 'sha256')) or not isinstance(envelope['payload_text'], str):
         raise CheckpointError('INVALID_CHECKPOINT_ENVELOPE')
-    payload = envelope['payload_text'].encode('utf-8')
+    try:
+        payload = envelope['payload_text'].encode('utf-8')
+    except UnicodeError as exc:
+        raise CheckpointError('INVALID_CHECKPOINT_ENCODING') from exc
     actual = hashlib.sha256(payload).hexdigest()
-    if not isinstance(envelope['sha256'], str) or not hmac.compare_digest(actual, expected_sha256) or not hmac.compare_digest(actual, envelope['sha256']):
+    if not isinstance(envelope['sha256'], str) or not re.fullmatch('[0-9a-f]{64}', envelope['sha256']) or not hmac.compare_digest(actual, expected_sha256) or not hmac.compare_digest(actual, envelope['sha256']):
         raise CheckpointError('CHECKPOINT_DIGEST_MISMATCH')
     data = parse(envelope['payload_text'])
     if not exact_keys(data, ('format', 'source_project', 'snapshot_at', 'database_snapshot', 'counts', 'ledgers', 'snapshot_coherent', 'coverage_verified', 'restore_authorized')):

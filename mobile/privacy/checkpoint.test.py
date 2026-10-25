@@ -35,6 +35,11 @@ class Checkpoints(unittest.TestCase):
         for edit in edits:
             data=fixture();edit(data);raw,digest=envelope(data)
             with self.subTest(edit=edit),self.assertRaises(m.CheckpointError):m.validate(raw,digest)
+    def test_invalid_unicode_hash_and_payload_fail_with_safe_errors(self):
+        raw,digest=envelope(fixture());item=json.loads(raw);item['sha256']='ع'*64
+        with self.assertRaisesRegex(m.CheckpointError,'DIGEST_MISMATCH'):m.validate(json.dumps(item).encode(),digest)
+        item={'payload_text':'\ud800','sha256':'0'*64}
+        with self.assertRaisesRegex(m.CheckpointError,'ENCODING'):m.validate(json.dumps(item).encode(),'0'*64)
     def test_empty_complete_snapshot_still_cannot_certify_freshness_or_restore(self):
         data=fixture();data['counts']={g:0 for g in m.GROUPS};data['ledgers']={g:[]for g in m.GROUPS}
         raw,digest=envelope(data);self.assertFalse(m.validate(raw,digest)['restore_authorized'])
