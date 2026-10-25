@@ -144,5 +144,13 @@
     "production_sql_executed": false,
     "actual_storage_api_calls": false,
     "account_erasure_complete": false
+  },
+  "session_media_contract_inspection": {
+    "run_id": 40206225502,
+    "job_id": 121207626925,
+    "result": "success",
+    "scope": "eight named function definitions/missing markers, Storage policies, profile FK metadata; fixture read-only and unchanged",
+    "owner_execution_received": false,
+    "production_query_executed_by_agent": false
   }
 }
