@@ -1,0 +1,13 @@
+{
+  "console_verified": false,
+  "application_id": "VERIFY_IN_PLAY_CONSOLE",
+  "highest_play_version_code": 0,
+  "version_code": 1,
+  "upload_certificate_sha256": "VERIFY_IN_PLAY_CONSOLE",
+  "signing_ownership_verified": false,
+  "account_deletion_verified": false,
+  "privacy_data_safety_verified": false,
+  "retailer_policy_reviewed": false,
+  "release_device_checks_passed": false,
+  "ugc_controls_verified": false
+}

@@ -1,0 +1,11 @@
+# MAD canonical hydration correction — preview24
+
+Owner23 report: CARAMEL GRACE, MAD_IDENTITY only; one product/SKU/title/root,999.99TRY,50ml and one correct canonical. Exact condition was not yet distinguished by the23 report.
+
+A fresh anonymous mobile Chrome probe reproduced the identical rejection on the actual retailer after hydration, both direct navigation and home/category/product internal navigation. Current correct canonical coexisted with a second link resolving to /urun/<current-slug>/undefined/urun/<current-slug>/. Name/SKU/offer/volume were correct. Probe40103863670 at4a763e86f20d10863bdaafb3d164f16a5b99b8f0 records this evidence. Initial probe selected a bundled extension target and supplied no usable retailer evidence; fixed page targeting before reproducing.
+
+Correction ignores ONLY this observed malformed same-product duplicate. Require at least one correct secure current canonical, one matching current Product identity/title/SKU, TRY/current visible price matching its offer, stock and selected volume. An unrelated product/external canonical or malformed-only metadata still rejects. No general canonical bypass, guessed price, cached initial price, or reduced options/payment protections. Expanded bounded failure diagnostics identify canonical/name checks without cookies, storage or account data.
+
+Nine observed Caramel identity cases complement prior15 Dubai layout/currency/stock/options cases and54 existing reader cases. Native MAD fixture recreates the exact malformed relative link after hydration alongside portalled controls/schema copies, then tests conversion/restoration/physical confirmation/local TEST draft. Read-only live probe separately verifies actual Caramel999.99TRY/50ml after hydration and internal navigation; never account/cart/purchase/payment actions.
+
+Private com.kinto.preview.hybrid.v24. Rollback before-mad-identity-v24-20261024 at5be8c71fbeae4e8e360425100c880933aa81dac7. Accepted Mango/Trendyol/Hepsi/Zara/Madame readers and Pricing/AdminPricing unchanged and hash-checked. No production SQL/hosting/signing changes, server admission, merge, publication or real orders/payments. Phone acceptance still required; targeted checks do not claim the older comprehensive22 workflow is fixed.

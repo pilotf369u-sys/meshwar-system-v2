@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-26",
+  "scope": "review-only static commerce policy drafts; no runtime or database changes",
+  "pages": [
+    "terms-kinto.html",
+    "returns-kinto.html",
+    "prohibited-kinto.html"
+  ],
+  "arabic_rtl_and_draft_markers_checked": true,
+  "no_scripts_in_new_pages": true,
+  "relative_policy_links_and_fragments_checked": true,
+  "support_contact_present": true,
+  "review_package_test_passed": true,
+  "six_release_input_tests_passed": true,
+  "accepted_java_scope_check_passed": true,
+  "browser_visual_rendering_tested": false,
+  "browser_visual_limit": "No installed local browser; Playwright browser download returned an invalid archive. No screenshot or visual-pixel qualification claimed.",
+  "main_cms_pages_preserved": true,
+  "main_or_hostinger_or_supabase_changed": false,
+  "readers_pricing_orders_payments_or_apk_changed": false,
+  "prohibited_product_server_enforcement_qualified": false,
+  "external_retailer_catalog_content_qualified": false,
+  "returns_operational_deadlines_final": false,
+  "public_policy_published_or_approved": false,
+  "production_upload_ready": false,
+  "console_identity_verification_pending_owner_screenshot": "2026-10-26",
+  "console_screenshot_requested_again": false
+}
