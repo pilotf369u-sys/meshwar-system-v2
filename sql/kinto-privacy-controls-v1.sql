@@ -122,7 +122,7 @@ CREATE FUNCTION private.kinto_erasure_signature_v1()RETURNS text LANGUAGE sql ST
   UNION ALL SELECT 'policy:'||r.nspname||'.'||r.relname||'.'||p.polname,
    p.polcmd::text||':'||p.polpermissive::text||':'||p.polroles::text||':'||coalesce(pg_get_expr(p.polqual,p.polrelid),'')||':'||coalesce(pg_get_expr(p.polwithcheck,p.polrelid),'')
    FROM relations r JOIN pg_policy p ON p.polrelid=r.oid
-  UNION ALL SELECT 'bucket:'||b.id,jsonb_build_object('public',b.public,'file_size_limit',b.file_size_limit,'allowed_mime_types',b.allowed_mime_types)::text
+  UNION ALL SELECT 'bucket:'||b.id,jsonb_build_object('public',b.public,'file_size_limit',b.file_size_limit,'allowed_mime_types',b.allowed_mime_types,'versioning_status',to_jsonb(b)->>'versioning_status')::text
    FROM storage.buckets b WHERE b.id IN('product-review-images','chat-attachments','kinto-customer-notice-media')
  )SELECT md5(coalesce(jsonb_agg(jsonb_build_array(key,value)ORDER BY key)::text,''))FROM parts;
 $$;

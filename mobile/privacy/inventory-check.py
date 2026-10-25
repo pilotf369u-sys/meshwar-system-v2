@@ -45,16 +45,16 @@ before=psql('-c',snapshot)
 storage_before=psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")
 config=json.loads(psql('-f',str(query_path)))
 assert config['transaction_read_only']=='on'
-assert config['versioning_column_present']is False
+assert config['versioning_column_present']is True
 assert {x['id']for x in config['buckets']}=={'chat-attachments','product-review-images'}
-assert all(x['versioning_status']is None for x in config['buckets'])
+assert all(x['versioning_status']=='DISABLED'for x in config['buckets'])
 assert config['storage_service_build_identified']is False and config['upload_quiescence_verified']is False
 assert config['physical_removal_verified']is False and config['production_enable_authorized']is False
 assert psql('-c',snapshot)==before
 assert psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")==storage_before
 try:
  # Synthetic schema variants only; the inspected owner query itself contains no DDL.
- psql('-c',"ALTER TABLE storage.buckets ADD COLUMN versioning_status text;ALTER TABLE storage.buckets ADD COLUMN test_private_canary text DEFAULT 'SYNTHETIC_BUCKET_CANARY';UPDATE storage.buckets SET versioning_status=CASE WHEN id='chat-attachments'THEN 'ENABLED'ELSE 'DISABLED'END;")
+ psql('-c',"ALTER TABLE storage.buckets ADD COLUMN test_private_canary text DEFAULT 'SYNTHETIC_BUCKET_CANARY';UPDATE storage.buckets SET versioning_status=CASE WHEN id='chat-attachments'THEN 'ENABLED'ELSE 'DISABLED'END;")
  variant_before=psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")
  enabled=json.loads(psql('-f',str(query_path)))
  assert enabled['versioning_column_present']is True
@@ -63,7 +63,14 @@ try:
  assert enabled['storage_service_build_identified']is False and enabled['physical_removal_verified']is False
  assert psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")==variant_before
 finally:
- psql('-c','ALTER TABLE storage.buckets DROP COLUMN test_private_canary;ALTER TABLE storage.buckets DROP COLUMN versioning_status;')
+ psql('-c',"ALTER TABLE storage.buckets DROP COLUMN test_private_canary;UPDATE storage.buckets SET versioning_status='DISABLED';")
+try:
+ psql('-c','ALTER TABLE storage.buckets DROP COLUMN versioning_status;')
+ legacy=json.loads(psql('-f',str(query_path)))
+ assert legacy['versioning_column_present']is False and all(x['versioning_status']is None for x in legacy['buckets'])
+ assert legacy['physical_removal_verified']is False
+finally:
+ psql('-c',"ALTER TABLE storage.buckets ADD COLUMN versioning_status text DEFAULT 'DISABLED';")
 assert psql('-c',snapshot)==before
 assert psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")==storage_before
 print('PASS_STORAGE_CONFIG_INSPECTION: read-only, two bucket configurations only, absent/available versioning field handled without inference, no object rows/private canary and no changes')

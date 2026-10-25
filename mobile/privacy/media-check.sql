@@ -13,6 +13,16 @@ CREATE TEMP TABLE media_preserved AS SELECT (SELECT jsonb_agg(to_jsonb(o)ORDER B
 SELECT public.kinto_privacy_admin_v1('test-admin','deletions',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002'),'verify','TEST media ownership verified');
 SELECT public.test_denied(format('SELECT public.kinto_privacy_media_prepare_v1(%L,%L,%L)','test-admin',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002'),(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002')),'PRIVACY_MEDIA_POLICY_REQUIRED');
 INSERT INTO private.kinto_privacy_media_policy_v1 VALUES(true,true,private.kinto_erasure_signature_v1());
+SAVEPOINT unsupported_versioning;
+UPDATE storage.buckets SET versioning_status='ENABLED'WHERE id='product-review-images';
+UPDATE private.kinto_erasure_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
+UPDATE private.kinto_privacy_media_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
+SELECT public.test_denied(format('SELECT public.kinto_privacy_media_claim_v1(%L,%L)','test-admin',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002')),'PRIVACY_MEDIA_STORAGE_CONFIG_UNVERIFIED');
+UPDATE storage.buckets SET versioning_status=NULL WHERE id='product-review-images';
+UPDATE private.kinto_erasure_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
+UPDATE private.kinto_privacy_media_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
+SELECT public.test_denied(format('SELECT public.kinto_privacy_media_claim_v1(%L,%L)','test-admin',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002')),'PRIVACY_MEDIA_STORAGE_CONFIG_UNVERIFIED');
+ROLLBACK TO unsupported_versioning;
 SAVEPOINT base_disabled;
 UPDATE private.kinto_erasure_policy_v1 SET enabled=false;
 SELECT public.test_denied(format('SELECT public.kinto_privacy_media_claim_v1(%L,%L)','test-admin',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002')),'PRIVACY_MEDIA_POLICY_REQUIRED');

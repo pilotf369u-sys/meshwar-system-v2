@@ -40,6 +40,7 @@ review_paths = [
  'mobile/privacy/OBSERVED-SCHEMA-20261025.md',
  'mobile/privacy/OWNER-DEPENDENCIES-20261025.json',
  'mobile/privacy/OWNER-SESSION-MEDIA-20261025.json',
+ 'mobile/privacy/OWNER-STORAGE-CONFIG-20261025.json',
  'js/kinto-privacy-client-v1.js',
  'js/kinto-privacy-page-v1.js',
  'js/kinto-privacy-admin-v1.js',
