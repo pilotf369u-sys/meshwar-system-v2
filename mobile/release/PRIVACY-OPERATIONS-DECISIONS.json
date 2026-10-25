@@ -13,5 +13,11 @@
   "ugc_report_and_block_rehearsal_passed": true,
   "public_policy_deployed": false,
   "synthetic_deletion_rehearsal_scope": "Fresh profile only, minimal disposable PostgreSQL17 schema. Production transactional accounts not covered; executor disabled.",
-  "production_privacy_controls_deployed": false
+  "production_privacy_controls_deployed": false,
+  "public_brand_name": "KINTO",
+  "current_customer_market": "Iraq",
+  "future_market_expansion_possible": true,
+  "personal_name_publication_authorized": false,
+  "legal_identity_use": "Google verification only, conditional on confirmed non-public field; value intentionally not stored in repository",
+  "operator_legal_jurisdiction_confirmed": false
 }
