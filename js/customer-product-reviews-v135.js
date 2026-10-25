@@ -393,6 +393,7 @@
     $('productReviewModalTitle').textContent = item.product_name || 'قيّم المنتج';
     $('reviewModalOrder').textContent = `رقم الطلب: ${item.order_id || '—'}`;
     $('reviewModalImage').src = item.product_image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64"%3E%3Crect width="100%25" height="100%25" fill="%230b3027"/%3E%3C/svg%3E';
+    $('reviewPolicyAcceptedV1').checked = false;
     $('reviewComment').value = ''; $('reviewCommentCounter').textContent = '0 / 2000';
     $('reviewCameraInput').value = ''; $('reviewFilesInput').value = '';
     renderPreviews(); message('reviewFormMessage', '');
