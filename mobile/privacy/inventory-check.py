@@ -38,3 +38,32 @@ assert any(x['signature']=='public.customer_portal_data_v2(text)'and not x['exis
 assert psql('-c',snapshot)==before
 assert 'test-TEST-A'not in json.dumps(contracts)
 print('PASS_SESSION_MEDIA_CONTRACT_INSPECTION: eight named definitions/missing markers, policy and profile-FK metadata, read-only and fixture state unchanged')
+
+# Two allowlisted bucket configurations, never object names or a guessed server version.
+query_path=root/'sql/kinto-privacy-storage-config-readonly-v1.sql'
+before=psql('-c',snapshot)
+storage_before=psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")
+config=json.loads(psql('-f',str(query_path)))
+assert config['transaction_read_only']=='on'
+assert config['versioning_column_present']is False
+assert {x['id']for x in config['buckets']}=={'chat-attachments','product-review-images'}
+assert all(x['versioning_status']is None for x in config['buckets'])
+assert config['storage_service_build_identified']is False and config['upload_quiescence_verified']is False
+assert config['physical_removal_verified']is False and config['production_enable_authorized']is False
+assert psql('-c',snapshot)==before
+assert psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")==storage_before
+try:
+ # Synthetic schema variants only; the inspected owner query itself contains no DDL.
+ psql('-c',"ALTER TABLE storage.buckets ADD COLUMN versioning_status text;ALTER TABLE storage.buckets ADD COLUMN test_private_canary text DEFAULT 'SYNTHETIC_BUCKET_CANARY';UPDATE storage.buckets SET versioning_status=CASE WHEN id='chat-attachments'THEN 'ENABLED'ELSE 'DISABLED'END;")
+ variant_before=psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")
+ enabled=json.loads(psql('-f',str(query_path)))
+ assert enabled['versioning_column_present']is True
+ assert {x['id']:x['versioning_status']for x in enabled['buckets']}=={'chat-attachments':'ENABLED','product-review-images':'DISABLED'}
+ assert 'SYNTHETIC_BUCKET_CANARY'not in json.dumps(enabled)and 'private-unrelated-test'not in json.dumps(enabled)
+ assert enabled['storage_service_build_identified']is False and enabled['physical_removal_verified']is False
+ assert psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")==variant_before
+finally:
+ psql('-c','ALTER TABLE storage.buckets DROP COLUMN test_private_canary;ALTER TABLE storage.buckets DROP COLUMN versioning_status;')
+assert psql('-c',snapshot)==before
+assert psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")==storage_before
+print('PASS_STORAGE_CONFIG_INSPECTION: read-only, two bucket configurations only, absent/available versioning field handled without inference, no object rows/private canary and no changes')
