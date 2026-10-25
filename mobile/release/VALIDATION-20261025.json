@@ -424,5 +424,43 @@
     "upload_quiescence_verified": false,
     "physical_removal_verified": false,
     "full_account_and_chat_attachment_erasure_complete": false
+  },
+  "transactional_account_assessment": {
+    "tested_commit": "fe938a48892beea0c37e8266641a8081c9a61f09",
+    "run_id": 40230849671,
+    "job_id": 121282050611,
+    "result": "success",
+    "source_modules": [
+      "sql/kinto-privacy-transaction-preview-v1.sql",
+      "mobile/privacy/transactional-preview.mjs"
+    ],
+    "custom_admin_and_verified_request_required": true,
+    "customer_id_not_accepted_from_browser": true,
+    "assessed_groups": [
+      "orders",
+      "segments via owned order_id",
+      "world_orders",
+      "payment_attempts"
+    ],
+    "bounded_sample_per_group": 200,
+    "overflow_explicit": true,
+    "missing_or_unqualified_relation_not_reported_as_zero": true,
+    "rls_visibility_checked_under_actual_scanning_role": true,
+    "observed_text_customer_id_and_details_tested": true,
+    "expired_pending_payment_stays_unresolved": true,
+    "nonempty_snapshot_not_proof_of_invoice_completeness": true,
+    "synthetic_transaction_rows_unchanged_before_rollback": true,
+    "offline_tests_passed": 7,
+    "browser_verified_only_action_and_four_section_summary_passed": true,
+    "no_raw_customer_or_row_ids_contacts_amounts_or_free_text_in_summary": true,
+    "rollback_endpoint_revocation_and_existing_privacy_regressions_passed": true,
+    "artifact_id": 12613305393,
+    "artifact_sha256": "c645ad15c5371691e132902aecd36baab698b25eebb4b959f12e66980a06b792",
+    "synthetic_390px_admin_summary_visually_reviewed": true,
+    "session_validation_normal_last_seen_write": true,
+    "full_149_table_inventory_or_transactional_erasure_qualified": false,
+    "upload_quiescence_or_physical_storage_removal_qualified": false,
+    "production_deployed": false,
+    "erasure_enable_authorized": false
   }
 }
