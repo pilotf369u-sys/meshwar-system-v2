@@ -18,5 +18,5 @@ CREATE TABLE public.product_review_image_payloads(image_id uuid PRIMARY KEY REFE
 CREATE TABLE public.admin_sessions_v147(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),admin_id text,token_hash bytea,expires_at timestamptz,revoked_at timestamptz,last_seen_at timestamptz DEFAULT now());
 \ir admin-validator.sql
 CREATE TABLE public.test_preservation_snapshot(kind text PRIMARY KEY,payload text);
-INSERT INTO public.test_preservation_snapshot VALUES('functions',(SELECT jsonb_object_agg(p.oid::regprocedure::text,md5(pg_get_functiondef(p.oid)))::textFROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN('public','private')));
+INSERT INTO public.test_preservation_snapshot VALUES('functions',(SELECT jsonb_object_agg(p.oid::regprocedure::text,md5(pg_get_functiondef(p.oid)))::text FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN('public','private')));
 \ir ../../sql/kinto-privacy-controls-v1.sql
