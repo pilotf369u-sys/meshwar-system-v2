@@ -108,5 +108,9 @@
     "support_acknowledgement_received": true,
     "support_technical_response_received": false,
     "support_acknowledgement_counts_as_deletion_behavior_qualification": false
-  }
+  },
+  "turkish_business_affiliation": false,
+  "turkish_business_independence_owner_confirmed": true,
+  "turkish_business_independence_confirmation_source": "owner explicit reply 2026-10-26: KINTO has no relation to Turkey",
+  "operator_jurisdiction_evidence_note": "Independence from Turkish business confirmed; current customer market Iraq already confirmed. This answer alone does not establish legal jurisdiction or statutory retention applicability."
 }

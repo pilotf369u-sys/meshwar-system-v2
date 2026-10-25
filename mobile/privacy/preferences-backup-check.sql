@@ -60,6 +60,12 @@ SELECT public.test_assert(jsonb_array_length(private.kinto_privacy_erasure_ledge
 -- A DB rollback/old backup alone loses later tombstones. Operator must preserve an external copy.
 -- Simulate restored identity row; detection is read-only and never authorizes opening the database.
 INSERT INTO public.customers VALUES('00000000-0000-4000-8000-000000000070','TEST restored copy','00070','restore@example.invalid','TEST-RESTORED','TEST-PASSWORD');
+SELECT public.test_denied(format('SELECT public.kinto_deletion_execute_v1(%L,%L,%L)','test-admin',:'pref_request',:'pref_request'),'ERASED_ACCOUNT_REAPPEARED');
+SELECT public.test_assert(EXISTS(SELECT 1 FROM public.customers WHERE id='00000000-0000-4000-8000-000000000070'),'restored profile is not silently erased by an old request retry');
+SAVEPOINT missing_receipt;
+DELETE FROM private.kinto_erasure_ledger_v1 WHERE request_id=:'pref_request';
+SELECT public.test_denied(format('SELECT public.kinto_deletion_execute_v1(%L,%L,%L)','test-admin',:'pref_request',:'pref_request'),'ACCOUNT_ERASURE_EVIDENCE_REQUIRED');
+ROLLBACK TO missing_receipt;
 SELECT public.test_assert(jsonb_array_length(private.kinto_privacy_restore_matches_v1((SELECT jsonb_build_array(customer_hash)FROM private.kinto_erasure_ledger_v1 WHERE request_id=:'pref_request'))->'matched_hashes')=1,'external deletion hash detects resurrected row');
 SELECT public.test_assert(private.kinto_privacy_restore_matches_v1((SELECT jsonb_build_array(customer_hash)FROM private.kinto_erasure_ledger_v1 WHERE request_id=:'pref_request'))->>'restore_authorized'='false','partial ledger scan cannot approve restore');
 SELECT public.test_denied($q$SELECT private.kinto_privacy_restore_matches_v1('[]')$q$,'EXTERNAL_ERASURE_LEDGER_REQUIRED');

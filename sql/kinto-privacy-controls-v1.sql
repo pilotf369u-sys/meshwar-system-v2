@@ -248,7 +248,11 @@ DECLARE aid uuid:=private.require_admin_session_v147(p_session_token)::uuid;req 
  SELECT *INTO cfg FROM private.kinto_erasure_policy_v1 WHERE singleton AND enabled;
  IF cfg.singleton IS NULL OR cfg.inventory_signature IS DISTINCT FROM private.kinto_erasure_signature_v1()THEN RAISE EXCEPTION 'ERASURE_POLICY_OR_INVENTORY_NOT_VERIFIED';END IF;
  SELECT *INTO req FROM private.kinto_deletion_requests_v1 WHERE id=p_request_id FOR UPDATE;
- IF req.status='deleted'AND req.customer_id IS NULL THEN RETURN jsonb_build_object('ok',true,'status','deleted','duplicate',true);END IF;
+ IF req.status='deleted'AND req.customer_id IS NULL THEN
+  IF NOT EXISTS(SELECT 1 FROM private.kinto_erasure_ledger_v1 WHERE request_id=req.id)THEN RAISE EXCEPTION 'ACCOUNT_ERASURE_EVIDENCE_REQUIRED';END IF;
+  IF EXISTS(SELECT 1 FROM private.kinto_erasure_ledger_v1 l JOIN public.customers c ON encode(digest(c.id::text,'sha256'),'hex')=l.customer_hash WHERE l.request_id=req.id)THEN RAISE EXCEPTION 'ERASED_ACCOUNT_REAPPEARED';END IF;
+  RETURN jsonb_build_object('ok',true,'status','deleted','duplicate',true);
+ END IF;
  IF req.status IS DISTINCT FROM 'verified'OR req.customer_id IS NULL OR req.verified_by IS NULL THEN RAISE EXCEPTION 'VERIFIED_REQUEST_REQUIRED';END IF;
  -- Block new session validations while finishing in-flight session transactions.
  -- Bound lock wait; this endpoint remains disabled on the real unreviewed schema.

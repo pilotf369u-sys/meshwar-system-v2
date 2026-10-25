@@ -32,6 +32,13 @@ SELECT public.test_assert(public.kinto_deletion_progress_v1('test-TEST-A',:'prog
 INSERT INTO private.kinto_deletion_requests_v1(id,status)VALUES('00000000-0000-4000-8000-000000000078','deleted');
 SELECT public.test_assert(private.kinto_privacy_progress_v1('00000000-0000-4000-8000-000000000078')->>'account_deleted'='false','status label without ledger evidence is not completion');
 SELECT public.test_assert((SELECT private.kinto_privacy_progress_v1(id)->>'account_deleted'FROM private.kinto_deletion_requests_v1 r WHERE status='deleted'AND EXISTS(SELECT 1 FROM private.kinto_erasure_ledger_v1 l WHERE l.request_id=r.id)LIMIT 1)='true','earlier actual fresh-profile finalization has its distinct completion receipt');
+SAVEPOINT restored_profile_progress;
+SELECT request_id AS completed_request FROM private.kinto_erasure_ledger_v1 l JOIN private.kinto_deletion_requests_v1 r ON r.id=l.request_id WHERE r.status='deleted'AND l.customer_hash=encode(digest('00000000-0000-4000-8000-000000000003','sha256'),'hex')LIMIT 1 \gset
+-- The disposable bootstrap's erased TEST-FRESH profile has this known synthetic ID.
+INSERT INTO public.customers(id,name,phone,code)VALUES('00000000-0000-4000-8000-000000000003','TEST restored profile','TEST restored phone','TEST-RESTORED');
+SELECT public.test_assert(private.kinto_privacy_progress_v1(:'completed_request')->>'account_deleted'='false','past receipt cannot claim a restored profile remains absent');
+SELECT public.test_assert(private.kinto_privacy_progress_v1(:'completed_request')->>'stage'='review_required','restored account requires reconciliation rather than completed label');
+ROLLBACK TO restored_profile_progress;
 SELECT public.test_assert((SELECT customers FROM progress_preserved)=(SELECT jsonb_agg(to_jsonb(c)ORDER BY id)FROM public.customers c),'all customer profiles unchanged');
 SELECT public.test_assert((SELECT orders FROM progress_preserved)=(SELECT jsonb_agg(to_jsonb(o)ORDER BY id)FROM public.orders o),'all orders unchanged');
 ROLLBACK;

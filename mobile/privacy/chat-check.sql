@@ -64,6 +64,9 @@ SELECT public.test_assert(EXISTS(SELECT 1 FROM public.messages WHERE id=103),'re
 SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM jsonb_array_elements(private.kinto_privacy_chat_ledger_export_v1())x WHERE x?'message'OR x?'customer_id'OR x?'note'),'private export has no raw content or customer identifier');
 -- An older *different version* of the same erased message is still detected by its identity key.
 INSERT INTO public.messages(id,customer_id,sender_type,message)VALUES(101,'00000000-0000-4000-8000-000000000001','customer','TEST older backup version');
+SELECT public.test_denied(format('SELECT public.kinto_privacy_chat_erase_text_v1(%L,%L,101,101)','test-admin',:'chat_request'),'ERASED_CHAT_MESSAGE_REAPPEARED');
+SELECT public.test_assert((SELECT message FROM public.messages WHERE id=101)='TEST older backup version','restored message requires separate reconciliation, never silently re-erased');
+SELECT public.test_assert((SELECT count(*)FROM private.kinto_privacy_chat_decisions_v1 WHERE message_id=101 AND state='erased')=1,'old minimal receipt remains intact after rejected retry');
 SELECT public.test_assert(jsonb_array_length(private.kinto_privacy_restore_chat_matches_v1((SELECT jsonb_build_array(erased_key_hash)FROM private.kinto_privacy_chat_decisions_v1 WHERE message_id=101))->'matched_hashes')=1,'restored earlier text version detected');
 SELECT public.test_assert(private.kinto_privacy_restore_chat_matches_v1((SELECT jsonb_build_array(erased_key_hash)FROM private.kinto_privacy_chat_decisions_v1 WHERE message_id=101))->>'restore_authorized'='false','no automatic restore permission');
 SELECT public.test_assert((SELECT status FROM private.kinto_deletion_requests_v1 WHERE id=:'chat_request')='verified','one text erasure never claims account deleted');

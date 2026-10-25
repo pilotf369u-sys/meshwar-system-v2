@@ -60,7 +60,12 @@ DECLARE cid uuid;aid uuid;m jsonb;decision private.kinto_privacy_chat_decisions_
  PERFORM private.kinto_privacy_chat_context_v1(p_session_token,p_request_id);
  IF NOT private.kinto_privacy_chat_schema_v1()THEN RAISE EXCEPTION 'CHAT_SCHEMA_REVIEW_REQUIRED';END IF;
  SELECT *INTO decision FROM private.kinto_privacy_chat_decisions_v1 WHERE request_id=p_request_id AND message_id=p_message_id FOR UPDATE;
- IF decision.state='erased'THEN RETURN jsonb_build_object('erased',true,'duplicate',true,'account_deleted',false);END IF;
+ IF decision.state='erased'THEN
+  -- A receipt proves a past erasure, not continued absence after a restore.
+  -- Never silently remove a reappeared row or report it as already absent.
+  IF EXISTS(SELECT 1 FROM public.messages WHERE id=p_message_id)THEN RAISE EXCEPTION 'ERASED_CHAT_MESSAGE_REAPPEARED';END IF;
+  RETURN jsonb_build_object('erased',true,'duplicate',true,'account_deleted',false);
+ END IF;
  IF decision.state IS DISTINCT FROM 'approved'THEN RAISE EXCEPTION 'CHAT_ERASURE_REVIEW_REQUIRED';END IF;
  SELECT to_jsonb(x)INTO m FROM public.messages x WHERE x.id=p_message_id AND x.customer_id=cid FOR UPDATE;
  IF m IS NULL OR private.kinto_privacy_chat_hash_v1(m)IS DISTINCT FROM decision.content_hash THEN RAISE EXCEPTION 'CHAT_MESSAGE_CHANGED';END IF;
