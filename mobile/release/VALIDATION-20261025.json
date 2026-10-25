@@ -109,5 +109,25 @@
     "complete_production_clone": false,
     "full_erasure_verified": false,
     "evidence": "mobile/privacy/OWNER-DEPENDENCIES-20261025.json"
+  },
+  "dependency_driven_deletion_hardening": {
+    "run_id": 40199669940,
+    "job_id": 121187963889,
+    "result": "success",
+    "tested_commit": "9bec9981282dcb7e796a4fd7330f0ea5c3c5094c",
+    "catalog_drift_cases": [
+      "constraint-only",
+      "trigger-enabled-state",
+      "function-body-only",
+      "RLS-flag-only",
+      "RLS-policy-only"
+    ],
+    "stale_approval_denied_before_writes": true,
+    "admin_preflight_details_browser_checked": true,
+    "browser_executor_calls": 0,
+    "observed_text_schema_and_secondary_sessions_preserved": true,
+    "rollback_passed": true,
+    "production_write": false,
+    "transactional_account_and_media_erasure_complete": false
   }
 }

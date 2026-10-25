@@ -48,3 +48,9 @@
 https://github.com/pilotf369u-sys/meshwar-system-v2/actions/runs/40186204067
 
 نقطة رجوع هذه المتابعة: `rollback/before-privacy-inventory-20261025` عند `57d33d5ca5d443a0cad6d56a5f46d0069308fa41`. بقي المنفذ والجاهزية الإنتاجية مقفلين؛ طلب المالك مواصلة التطوير لا يثبت اسم الجهة أو بلد النشاط أو مدة الاحتفاظ أو تفويض المتاجر.
+
+## Dependency-driven safety completion — 25 October
+
+Run40199669940/job121187963889 passed on disposable PostgreSQL17 and Chromium. Approval now detects constraint-only changes, disabled triggers, replaced function bodies, RLS flags and policy-only changes, in addition to columns. Each change was rolled back and stale approval was rejected before data writes. Browser verification confirmed admin-visible preflight details, one explicit preflight call and zero erasure calls. Observed text order identity/details types and secondary sessions still hold unsafe erasure; local/global orders, messages and sessions remained unchanged. Rollback and original function preservation passed. Java source scope and review-pack tests also passed locally.
+
+This is not full account deletion on the production schema. No production SQL, storage deletion, merge, Hostinger deployment, APK rebuild or signing change occurred. Existing six readers/pricing and accepted28 launch are untouched. Financial retention, legal operator jurisdiction, storage object ownership/cleanup and actual backup expiry/restore handling remain unresolved. A service goal of7/30 days does not establish a financial retention period. No production gate is raised.
