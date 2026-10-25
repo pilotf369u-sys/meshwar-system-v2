@@ -19,5 +19,8 @@
   "future_market_expansion_possible": true,
   "personal_name_publication_authorized": false,
   "legal_identity_use": "Google verification only, conditional on confirmed non-public field; value intentionally not stored in repository",
-  "operator_legal_jurisdiction_confirmed": false
+  "operator_legal_jurisdiction_confirmed": false,
+  "personal_google_account_legal_name_display": "Google states legal name is displayed publicly on Play for personal accounts; brand name does not suppress it",
+  "google_identity_publication_condition_unresolved": true,
+  "identity_policy_source": "https://support.google.com/googleplay/android-developer/answer/13628312?hl=en-EN"
 }
