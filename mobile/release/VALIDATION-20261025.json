@@ -58,5 +58,13 @@
       "This inspection is not a Play pre-launch report or policy approval.",
       "Final Console identity, signing, deletion fulfillment and declarations remain gates."
     ]
+  },
+  "readonly_inventory_followup": {
+    "run_id": 40186204067,
+    "job_id": 121147405362,
+    "result": "success",
+    "scope": "metadata inspection in disposable PostgreSQL17; no production schema connection",
+    "customer_order_functions_schema_unchanged": true,
+    "browser_and_rollback_rechecked": true
   }
 }
