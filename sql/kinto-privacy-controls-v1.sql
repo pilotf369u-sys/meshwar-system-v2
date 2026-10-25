@@ -95,7 +95,30 @@ CREATE TRIGGER kinto_review_terms_v1 BEFORE INSERT ON public.product_reviews FOR
 CREATE TRIGGER kinto_review_image_terms_v1 BEFORE INSERT ON public.product_review_images FOR EACH ROW EXECUTE FUNCTION private.kinto_review_terms_guard_v1();
 -- Conservative executor: reviewed schema only, fresh profiles only; operational data always holds.
 CREATE FUNCTION private.kinto_erasure_signature_v1()RETURNS text LANGUAGE sql STABLE SET search_path=pg_catalog,pg_temp AS $$
- SELECT md5(coalesce(string_agg(n.nspname||'.'||c.relname||'.'||a.attname||':'||a.atttypid::text,','ORDER BY n.nspname,c.relname,a.attnum),''))FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE n.nspname IN('public','private')AND c.relkind IN('r','p');
+ -- Approval is invalidated by constraints, triggers, function code and policies as well as columns.
+ -- Definitions only; no customer rows or secrets are included in the returned hash.
+ WITH relations AS (
+  SELECT c.oid,n.nspname,c.relname,c.relrowsecurity,c.relforcerowsecurity
+  FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+  WHERE n.nspname IN('public','private')AND c.relkind IN('r','p')
+ ), parts AS (
+  SELECT 'relation:'||r.nspname||'.'||r.relname AS key,
+   r.relrowsecurity::text||':'||r.relforcerowsecurity::text AS value FROM relations r
+  UNION ALL SELECT 'column:'||r.nspname||'.'||r.relname||'.'||a.attname,
+   a.atttypid::text||':'||a.atttypmod::text||':'||a.attnotnull::text||':'||coalesce(pg_get_expr(d.adbin,d.adrelid),'')
+   FROM relations r JOIN pg_attribute a ON a.attrelid=r.oid AND a.attnum>0 AND NOT a.attisdropped
+   LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+  UNION ALL SELECT 'constraint:'||r.nspname||'.'||r.relname||'.'||f.conname,
+   pg_get_constraintdef(f.oid)||':'||f.convalidated::text FROM relations r JOIN pg_constraint f ON f.conrelid=r.oid
+  UNION ALL SELECT 'trigger:'||r.nspname||'.'||r.relname||'.'||t.tgname,
+   pg_get_triggerdef(t.oid)||':'||t.tgenabled::text FROM relations r JOIN pg_trigger t ON t.tgrelid=r.oid WHERE NOT t.tgisinternal
+  UNION ALL SELECT 'function:'||n.nspname||'.'||p.proname||'('||pg_get_function_identity_arguments(p.oid)||')',
+   pg_get_functiondef(p.oid) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+   WHERE n.nspname IN('public','private')AND p.prokind IN('f','p')
+  UNION ALL SELECT 'policy:'||r.nspname||'.'||r.relname||'.'||p.polname,
+   p.polcmd::text||':'||p.polpermissive::text||':'||p.polroles::text||':'||coalesce(pg_get_expr(p.polqual,p.polrelid),'')||':'||coalesce(pg_get_expr(p.polwithcheck,p.polrelid),'')
+   FROM relations r JOIN pg_policy p ON p.polrelid=r.oid
+ )SELECT md5(coalesce(jsonb_agg(jsonb_build_array(key,value)ORDER BY key)::text,''))FROM parts;
 $$;
 CREATE FUNCTION private.kinto_erasure_inventory_v1(cid uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp AS $$
 DECLARE r record;cnt bigint;holds jsonb:='[]';BEGIN

@@ -32,6 +32,8 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/bootstrap.sql
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/database-check.sql
+      - name: Deletion approval detects catalog and trigger drift
+        run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/catalog-drift-check.sql
       - name: Read-only metadata inventory leaves fixture unchanged
         run: python3 mobile/privacy/inventory-check.py
       - name: JavaScript syntax and preserved review contracts

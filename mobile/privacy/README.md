@@ -35,3 +35,9 @@ Workflow: `.github/workflows/kinto-privacy-controls.yml`. Never deploy `test-ser
 ## Dependency inspection after the owner exports
 
 The first owner report supplied direct customer FKs only. `sql/kinto-privacy-dependencies-readonly-v1.sql` additionally reports all public/private FKs, user trigger definitions/functions scoped to customer data and FK descendants, and configuration of three known media buckets. It reads no customer/session/payment/object rows and calls no application RPCs. This is one-shot READ ONLY inspection with an 8-second statement limit, not installed polling. Owner runs it manually; no Supabase connection is used by the agent. The query and its no-change checks passed on disposable PostgreSQL17 (run40194620545). The fixture uses synthetic bucket settings; actual settings/triggers are not inferred from that result.
+
+## Dependency findings applied to safety (25 October)
+
+The approval fingerprint now includes column nullability/default/type modifiers, relation RLS flags, constraints, enabled trigger definitions, public/private function definitions and RLS policies. A column-only fingerprint would miss a changed deletion cascade or trigger implementation. `catalog-drift-check.sql` changes each category inside savepoints and confirms rejection/restoration without surviving modifications. This remains a drift gate, not approval of the full production schema, grant audit or concurrent-DDL protection.
+
+Admin preflight now shows reason/count details inside its existing request card, with textContent rendering and no executor button. The UI distinguishes absence of detected links from verified full erasure. Browser tests assert one explicit preflight call and no executor call. Production remains disabled; financial retention and ownership-aware media/backup handling are still required.
