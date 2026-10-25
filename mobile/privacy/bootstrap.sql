@@ -18,6 +18,8 @@ CREATE TABLE public.order_store_segments(id uuid PRIMARY KEY,order_id uuid REFER
 CREATE TABLE public.product_review_image_payloads(image_id uuid PRIMARY KEY REFERENCES public.product_review_images(id)ON DELETE CASCADE,image_bytes bytea);
 \ir ../../supabase/migrations/20260912_v140_storefront_published_reviews.sql
 \ir ../../supabase/migrations/20260912_v141_review_lightbox_helpful.sql
+-- Observed v150 upload-ticket ownership; synthetic fixture only, no Storage objects.
+CREATE TABLE private.product_review_upload_tickets_v150(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),review_id uuid NOT NULL REFERENCES public.product_reviews(id)ON DELETE CASCADE,customer_id uuid NOT NULL REFERENCES public.customers(id)ON DELETE CASCADE,storage_path text NOT NULL UNIQUE,mime_type text NOT NULL,byte_size integer NOT NULL,expires_at timestamptz NOT NULL DEFAULT now()+interval '10 minutes',used_at timestamptz,created_at timestamptz NOT NULL DEFAULT now());
 -- Match the shipped admin-session storage/validator without unrelated admin login setup.
 CREATE TABLE public.admin_sessions_v147(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),admin_id text,token_hash bytea,expires_at timestamptz,revoked_at timestamptz,last_seen_at timestamptz DEFAULT now());
 \ir admin-validator.sql

@@ -26,7 +26,7 @@
     "legal_hold": "Specific documented dispute, authority requirement or other verified duty; limited scope, reason, review date and release condition. No blanket indefinite hold."
   },
   "storage_backup_expiry_policy": {
-    "status": "operational_requirements_selected_actual_configuration_unverified",
+    "status": "owner_screenshots_reviewed_current_free_plan_and_manual_archive_expiry_unverified",
     "storage_objects_separate_from_database_backup": true,
     "actual_expiry_days": null,
     "restore_rule": "Before restored data becomes accessible, reapply completed deletions using restricted minimal deletion ledger; validate and erase restored media separately.",
@@ -34,7 +34,20 @@
     "private_minimal_ledger_source_implemented": true,
     "external_ledger_checkpoint_verified": false,
     "ledger_retention_criterion": "Keep only minimal pseudonymous deletion evidence until all known backups/copies capable of restoring the erased data have expired or been reconciled; no fixed expiry is claimed without verified copy inventory.",
-    "restore_test_scope": "Synthetic restored row detection only; actual backup restoration and full erasure reapplication not yet verified."
+    "restore_test_scope": "Synthetic restored row detection only; actual backup restoration and full erasure reapplication not yet verified.",
+    "owner_scheduled_backup_page": "Free Plan does not include project backups",
+    "configured_scheduled_backups_visible": false,
+    "scheduled_backup_retention_days": null,
+    "manual_backup_owner_confirmed": true,
+    "manual_backup_label_date": "2026-10-18",
+    "manual_backup_includes_visible_database_backup_and_media_folders": true,
+    "manual_backup_location_class": "OneDrive Desktop archive as shown by owner; additional extracted/local/version copies unverified",
+    "manual_backup_integrity_and_restorability_verified": false,
+    "manual_copy_inventory_complete": false,
+    "manual_copy_expiry_verified": false,
+    "provider_internal_recovery_retention_verified": false,
+    "assume_seven_day_backup_expiry": false,
+    "source": "owner screenshots 2026-10-25; no provider connection or backup-file access performed"
   },
   "synthetic_deletion_rehearsal_passed": true,
   "ugc_report_and_block_rehearsal_passed": true,
