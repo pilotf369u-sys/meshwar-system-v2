@@ -1,0 +1,51 @@
+name: KINTO isolated privacy controls
+'on':
+  push:
+    branches: [app/privacy-controls-20261025]
+    paths: ['sql/kinto-privacy-controls*','mobile/privacy/**','js/*privacy*','js/*product-reviews*','.github/workflows/kinto-privacy-controls.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  database-and-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: kinto_privacy_test
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGUSER: postgres
+      PGDATABASE: kinto_privacy_test
+      PGPASSWORD: isolated-test-only
+      KINTO_DISPOSABLE_TEST: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 24}
+      - name: Actual shipped session and review functions with isolated privacy migration
+        run: |
+          psql -v ON_ERROR_STOP=1 -f mobile/privacy/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f mobile/privacy/database-check.sql
+      - name: JavaScript syntax and preserved review contracts
+        run: |
+          node --check js/kinto-privacy-client-v1.js
+          node --check js/kinto-privacy-admin-v1.js
+          node --check js/kinto-privacy-page-v1.js
+          node --check js/customer-product-reviews-v135.js
+          node --check js/store-product-reviews-v140.js
+          node ci/product-reviews-phase2-contract.test.mjs
+          node ci/product-reviews-storefront-contract.test.mjs
+          python3 mobile/release/source-scope-check.py
+          python3 mobile/release/release-inputs.test.py
+      - name: Browser tests against disposable database RPC bridge
+        run: |
+          npm install --prefix "$RUNNER_TEMP/kinto-privacy-ui" --no-audit --no-fund @playwright/test@1.55.0
+          "$RUNNER_TEMP/kinto-privacy-ui/node_modules/.bin/playwright" install --with-deps chromium
+          python3 mobile/privacy/test-server.py > "$RUNNER_TEMP/privacy-server.log" 2>&1 &
+          NODE_PATH="$RUNNER_TEMP/kinto-privacy-ui/node_modules" node mobile/privacy/browser-check.cjs

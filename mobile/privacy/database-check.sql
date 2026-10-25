@@ -1,0 +1,55 @@
+\set ON_ERROR_STOP on
+CREATE FUNCTION public.test_assert(ok boolean,msg text)RETURNS void LANGUAGE plpgsql AS $$BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: %',msg;END IF;END$$;
+CREATE FUNCTION public.test_denied(q text,expected text)RETURNS void LANGUAGE plpgsql AS $$BEGIN BEGIN EXECUTE q;EXCEPTION WHEN OTHERS THEN IF position(expected IN SQLERRM)>0 THEN RETURN;END IF;RAISE;END;RAISE EXCEPTION 'FAIL: expected %',expected;END$$;
+INSERT INTO public.customers VALUES('00000000-0000-4000-8000-000000000001','TEST A','00001','a@example.invalid','TEST-A','TEST-PASSWORD'),('00000000-0000-4000-8000-000000000002','TEST B','00002','b@example.invalid','TEST-B','TEST-PASSWORD'),('00000000-0000-4000-8000-000000000003','TEST fresh','00003','fresh@example.invalid','TEST-FRESH','TEST-PASSWORD');
+INSERT INTO public.customer_review_sessions(customer_id,token_hash,expires_at)SELECT id,digest('test-'||code,'sha256'),now()+interval '1 hour'FROM public.customers;
+INSERT INTO public.admin_sessions_v147(admin_id,token_hash,expires_at)VALUES('00000000-0000-4000-8000-000000000099',digest('test-admin','sha256'),now()+interval '1 hour');
+INSERT INTO public.local_stores VALUES('00000000-0000-4000-8000-000000000010');
+INSERT INTO public.local_products VALUES('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000010','TEST product',NULL);
+INSERT INTO public.orders SELECT '00000000-0000-4000-8000-000000000030',id,'تم التسليم','{"product_id":"00000000-0000-4000-8000-000000000020","product_name":"TEST snapshot"}'FROM public.customers WHERE code='TEST-B';
+INSERT INTO public.test_preservation_snapshot VALUES('orders',(SELECT md5(jsonb_agg(to_jsonb(o)ORDER BY id)::text)FROM public.orders o));
+SELECT public.test_denied($q$SELECT public.kinto_review_consent_v1('not-valid','2026-10-25',true)$q$,'SESSION_INVALID');
+SET ROLE anon;
+SELECT public.kinto_review_consent_v1('test-TEST-B','2026-10-25',true);
+SELECT public.kinto_review_submit_v1('test-TEST-B','00000000-0000-4000-8000-000000000030','00000000-0000-4000-8000-000000000020',5::smallint,'TEST review','2026-10-25');
+RESET ROLE;
+UPDATE public.product_reviews SET moderation_status='published';
+-- Session ownership and delivered-order proof remain enforced by the original implementation.
+SELECT public.test_denied($q$SELECT public.kinto_review_submit_v1('test-TEST-A','00000000-0000-4000-8000-000000000030','00000000-0000-4000-8000-000000000020',5::smallint,'TEST','2026-10-25')$q$,'POLICY_ACCEPTANCE_REQUIRED');
+SELECT public.kinto_review_consent_v1('test-TEST-A','2026-10-25',true);
+SELECT public.test_denied($q$SELECT public.kinto_review_submit_v1('test-TEST-A','00000000-0000-4000-8000-000000000030','00000000-0000-4000-8000-000000000020',5::smallint,'TEST','2026-10-25')$q$,'DELIVERED_ORDER_NOT_FOUND');
+SET ROLE anon;
+SELECT public.kinto_review_safety_v1('test-TEST-A','report_content',(SELECT (public.product_reviews_public_v141('00000000-0000-4000-8000-000000000020')->'items'->0->>'id')::uuid),'abuse');
+SELECT public.kinto_review_safety_v1('test-TEST-A','report_content',(SELECT (public.product_reviews_public_v141('00000000-0000-4000-8000-000000000020')->'items'->0->>'id')::uuid),'abuse');
+SELECT public.kinto_review_safety_v1('test-TEST-A','block',(SELECT (public.product_reviews_public_v141('00000000-0000-4000-8000-000000000020')->'items'->0->>'id')::uuid));
+SELECT public.test_assert((public.kinto_reviews_visible_v1('test-TEST-A','00000000-0000-4000-8000-000000000020')->>'count')::int=0,'blocked author invisible to A');
+SELECT public.test_assert((public.kinto_reviews_visible_v1('test-TEST-B','00000000-0000-4000-8000-000000000020')->>'count')::int=1,'B unaffected by A block');
+SELECT public.test_assert((public.product_reviews_public_v141('00000000-0000-4000-8000-000000000020')->>'count')::int=1,'public ratings not deleted by block');
+RESET ROLE;
+SELECT public.test_assert((SELECT count(*)FROM private.kinto_review_reports_v1)=1,'duplicate report idempotent');
+SELECT public.test_denied($q$SELECT public.kinto_privacy_admin_v1('test-TEST-A','reports')$q$,'ADMIN_SESSION_INVALID');
+SELECT public.test_denied($q$SET ROLE anon; SELECT *FROM private.kinto_review_reports_v1$q$,'permission denied');RESET ROLE;
+SELECT public.kinto_privacy_admin_v1('test-admin','reports',(SELECT id FROM private.kinto_review_reports_v1),'hide_review','TEST verified abusive review');
+SELECT public.test_assert((SELECT count(*)FROM public.product_reviews WHERE moderation_status='hidden')=1,'report admin hides review only');
+-- Fresh-account request, duplicate/cancel, policy lock and actual erasure in this fixture.
+SELECT public.test_denied($q$SELECT public.kinto_deletion_request_v1('test-TEST-FRESH','request',false)$q$,'CONFIRMATION_REQUIRED');
+SELECT public.kinto_deletion_request_v1('test-TEST-FRESH','request',true);
+SELECT public.kinto_deletion_request_v1('test-TEST-FRESH','request',true);
+SELECT public.test_assert((SELECT count(*)FROM private.kinto_deletion_requests_v1)=1,'one active deletion request');
+SELECT public.test_assert(jsonb_array_length(public.kinto_deletion_request_v1('test-TEST-A','status'))=0,'no cross-account request leakage');
+SELECT public.kinto_privacy_admin_v1('test-admin','deletions',(SELECT id FROM private.kinto_deletion_requests_v1),'verify','TEST ownership verified in fixture');
+SELECT public.test_denied(format('SELECT public.kinto_deletion_execute_v1(%L,%L,%L)','test-admin',(SELECT id FROM private.kinto_deletion_requests_v1),(SELECT id FROM private.kinto_deletion_requests_v1)),'POLICY_OR_INVENTORY_NOT_VERIFIED');
+INSERT INTO private.kinto_erasure_policy_v1 VALUES(true,true,private.kinto_erasure_signature_v1(),'https://shopkinto.com/privacy-kinto.html','TEST fixture inventory approved, no operational data retained');
+SELECT public.kinto_deletion_execute_v1('test-admin',(SELECT id FROM private.kinto_deletion_requests_v1),(SELECT id FROM private.kinto_deletion_requests_v1));
+SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM public.customers WHERE code='TEST-FRESH'),'actual fresh profile removed');
+SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM public.customer_review_sessions WHERE token_hash=digest('test-TEST-FRESH','sha256')),'actual session removed');
+SELECT public.test_assert((SELECT status='deleted'AND customer_id IS NULL FROM private.kinto_deletion_requests_v1),'receipt anonymized, actual deletion only');
+SELECT public.test_denied($q$SELECT public.kinto_deletion_request_v1('test-TEST-FRESH','status')$q$,'SESSION_INVALID');
+-- Existing financial/order profile cannot be auto-erased even with policy enabled.
+SELECT public.kinto_deletion_request_v1('test-TEST-B','request',true);
+SELECT public.kinto_privacy_admin_v1('test-admin','deletions',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002'),'verify','TEST ownership verified, orders must be retained');
+SELECT public.test_assert(NOT(public.kinto_deletion_execute_v1('test-admin',(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002'),(SELECT id FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000002'))->>'ok')::boolean,'operational data holds erasure');
+SELECT public.test_assert((SELECT count(*)FROM public.customers)=2,'other profiles preserved');
+SELECT public.test_assert((SELECT payload FROM public.test_preservation_snapshot WHERE kind='orders')=(SELECT md5(jsonb_agg(to_jsonb(o)ORDER BY id)::text)FROM public.orders o),'orders byte-value unchanged');
+SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM jsonb_each_text((SELECT payload::jsonb FROM public.test_preservation_snapshot WHERE kind='functions'))b WHERE md5(pg_get_functiondef(b.key::regprocedure))<>b.value),'existing function bodies unchanged');
+SELECT 'PASS_PRIVACY_DATABASE: real session/review RPCs, ownership, consent, reports, blocks, admin moderation, actual fixture erasure, retained operational data';

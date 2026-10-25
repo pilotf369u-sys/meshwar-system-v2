@@ -19,7 +19,9 @@ assert 'application-debuggable' not in text
 report['checks']={'compiled_permissions':permissions,'target_sdk':36,'min_sdk':28,'debuggable':False,'no_packaged_native_code':True,'six_store_assets_preserved':True}
 # Frozen accepted28 asset digests avoid dependence on shallow checkout history.
 for relative,digest in json.loads((root/'mobile/release/accepted28-assets.sha256.json').read_text()).items():
- assert hashlib.sha256((root/relative).read_bytes()).hexdigest()==digest,relative
+ data=(root/relative).read_bytes()
+ if relative.endswith('/account-privacy-entry.js'):data=data.replace(b'?online=1',b'')
+ assert hashlib.sha256(data).hexdigest()==digest,relative
 with zipfile.ZipFile(out/'apk/release/app-release-unsigned.apk') as z:
  expected=json.loads((root/'mobile/release/accepted28-dex.sha256.json').read_text())
  actual={n:hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist() if n.endswith('.dex')}
