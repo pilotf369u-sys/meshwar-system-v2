@@ -80,5 +80,14 @@
   "operator_capacity": "individual",
   "operator_capacity_owner_confirmed": true,
   "operator_capacity_confirmation_source": "owner personal-capacity response and delegated retention decision, 2026-10-25",
-  "nonessential_account_data_policy": "After identity verification, erase nonessential account data and owned media within the approved 30-day service target. Retain only specific necessary evidence, not whole accounts/chat archives. Erasure completion must reflect actual execution."
+  "nonessential_account_data_policy": "After identity verification, erase nonessential account data and owned media within the approved 30-day service target. Retain only specific necessary evidence, not whole accounts/chat archives. Erasure completion must reflect actual execution.",
+  "observed_storage_versioning": {
+    "source": "owner-run READ ONLY report, 2026-10-25",
+    "chat_attachments": "DISABLED",
+    "product_review_images": "DISABLED",
+    "historical_object_version_inventory_verified": false,
+    "deployed_storage_build_identified": false,
+    "upload_quiescence_or_physical_removal_verified": false,
+    "production_configuration_changed": false
+  }
 }

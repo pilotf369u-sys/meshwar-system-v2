@@ -395,9 +395,34 @@
     "unrelated_bucket_and_canary_not_returned": true,
     "no_customer_or_storage_object_rows_read_by_owner_query": true,
     "fixture_data_functions_and_config_unchanged": true,
-    "owner_execution_pending": true,
+    "owner_execution_pending": false,
     "actual_storage_service_build_identified": false,
     "actual_upload_quiescence_or_physical_removal_verified": false,
-    "production_enable_authorized": false
+    "production_enable_authorized": false,
+    "full_pipeline_final_result": "success",
+    "owner_report_received": "2026-10-25"
+  },
+  "observed_storage_versioning_guard": {
+    "run_id": 40227795503,
+    "job_id": 121272807183,
+    "tested_commit": "a9ae2d65a9fa0993e888631813ff91d63cb18488",
+    "result": "success",
+    "owner_observed_bucket_states": {
+      "chat-attachments": "DISABLED",
+      "product-review-images": "DISABLED"
+    },
+    "metadata_only_evidence": "mobile/privacy/OWNER-STORAGE-CONFIG-20261025.json",
+    "approval_signature_includes_versioning_status": true,
+    "configuration_only_change_invalidates_approval": true,
+    "media_eraser_requires_disabled_review_bucket_even_after_reapproval": true,
+    "enabled_and_null_config_rejected_before_source_or_storage_writes": true,
+    "legacy_missing_config_metadata_does_not_infer_disabled": true,
+    "prior_sql_browser_and_rollback_passed": true,
+    "production_configuration_changed": false,
+    "storage_object_versions_enumerated": false,
+    "storage_service_build_identified": false,
+    "upload_quiescence_verified": false,
+    "physical_removal_verified": false,
+    "full_account_and_chat_attachment_erasure_complete": false
   }
 }
