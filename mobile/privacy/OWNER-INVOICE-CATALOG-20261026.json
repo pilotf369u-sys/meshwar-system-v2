@@ -1,0 +1,27 @@
+{
+  "source": "owner-run READ ONLY inventory received 2026-10-25; comparison performed 2026-10-26",
+  "signature": "public.vendor_get_order_segment_details(text,uuid)",
+  "observed_body_md5": "b5eb5e172d612ab1bb11a5cabc455ddc",
+  "source_candidates": [
+    {
+      "path": "supabase/migrations/20260903_v94_order_store_segments.sql",
+      "body_md5": "e5c566f270c3d4b0fd9e55cedd21cd3c",
+      "exact_match_to_observed": false
+    },
+    {
+      "path": "supabase/migrations/20260904_v95_vendor_invoice_customer_snapshot_repair.sql",
+      "body_md5": "61670150d7eeb15d851e77b99e142b78",
+      "exact_match_to_observed": false
+    },
+    {
+      "path": "supabase/migrations/20260904_v96_vendor_segment_details_rpc_restore.sql",
+      "body_md5": "e47e25ecf187803926aad3d0965013e7",
+      "exact_match_to_observed": false
+    }
+  ],
+  "hash_difference_alone_proves_behavior_difference": false,
+  "owner_definition_export_required_for_live_contract_qualification": true,
+  "legacy_invoice_rpc_invoked": false,
+  "customer_rows_read": false,
+  "production_modified": false
+}

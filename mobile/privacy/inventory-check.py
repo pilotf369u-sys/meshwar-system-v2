@@ -74,3 +74,35 @@ finally:
 assert psql('-c',snapshot)==before
 assert psql('-c',"SELECT jsonb_agg(to_jsonb(b)ORDER BY id)FROM storage.buckets b")==storage_before
 print('PASS_STORAGE_CONFIG_INSPECTION: read-only, two bucket configurations only, absent/available versioning field handled without inference, no object rows/private canary and no changes')
+
+# Exact invoice catalog contracts only. Never call a legacy invoice reader to inspect it.
+invoice_query=root/'sql/kinto-privacy-invoice-contract-readonly-v1.sql'
+before=psql('-c',snapshot)
+missing=json.loads(psql('-f',str(invoice_query)))
+assert missing['transaction_read_only']=='on'
+assert len(missing['functions'])==2
+assert all(not r['present']and r['definition']is None for r in missing['functions'])
+assert psql('-c',snapshot)==before
+try:
+ # Deliberately raise if invoked; a successful report proves catalog inspection only.
+ psql('-c',"CREATE FUNCTION public.vendor_get_order_segment_details(p_session_token text,p_segment_id uuid)RETURNS jsonb LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'INVOICE_MUST_NOT_RUN';END$$;CREATE FUNCTION private.v94_jsonb_object(p_value jsonb)RETURNS jsonb LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'HELPER_MUST_NOT_RUN';END$$;CREATE FUNCTION public.vendor_get_order_segment_details(p_session_token text,p_segment_id text)RETURNS text LANGUAGE sql AS $$SELECT 'UNRELATED_OVERLOAD_CANARY'::text$$;")
+ invoice_before=psql('-c',snapshot)
+ invoice=json.loads(psql('-f',str(invoice_query)))
+ assert invoice['transaction_read_only']=='on'and len(invoice['functions'])==2
+ assert {r['signature']for r in invoice['functions']}=={'public.vendor_get_order_segment_details(text,uuid)','private.v94_jsonb_object(jsonb)'}
+ assert all(r['present']and r['kind']=='f'and len(r['body_hash'])==32 and r['definition']and not r['definition_too_large']for r in invoice['functions'])
+ assert 'UNRELATED_OVERLOAD_CANARY'not in json.dumps(invoice)
+ assert invoice['application_functions_invoked']is False and invoice['customer_or_order_rows_read']is False
+ assert invoice['production_changes_authorized']is False
+ assert psql('-c',snapshot)==invoice_before
+ # Report a whole-definition overflow explicitly instead of returning a misleading prefix.
+ psql('-c',"DO $test$BEGIN EXECUTE 'CREATE OR REPLACE FUNCTION private.v94_jsonb_object(p_value jsonb)RETURNS jsonb LANGUAGE plpgsql AS '||quote_literal('BEGIN /*'||repeat('X',132000)||'*/ RAISE EXCEPTION ''HELPER_MUST_NOT_RUN'';END');END$test$;")
+ large_before=psql('-c',snapshot)
+ large=json.loads(psql('-f',str(invoice_query)))
+ helper=next(r for r in large['functions']if r['signature']=='private.v94_jsonb_object(jsonb)')
+ assert helper['present']and helper['definition_too_large']and helper['definition']is None and len(helper['body_hash'])==32
+ assert psql('-c',snapshot)==large_before
+finally:
+ psql('-c',"DROP FUNCTION IF EXISTS public.vendor_get_order_segment_details(text,uuid);DROP FUNCTION IF EXISTS private.v94_jsonb_object(jsonb);DROP FUNCTION IF EXISTS public.vendor_get_order_segment_details(text,text);")
+assert psql('-c',snapshot)==before
+print('PASS_INVOICE_CATALOG_CONTRACT: two exact signatures, absent/oversized markers, read-only, no legacy RPC invocation, no overload or customer-row data and fixture data/code unchanged')
