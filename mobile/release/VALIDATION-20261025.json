@@ -279,5 +279,29 @@
     "actual_storage_call": false,
     "attachment_erasure_implemented": false,
     "full_account_erasure_complete": false
+  },
+  "coherent_external_erasure_checkpoint": {
+    "run_id": 40218897121,
+    "job_id": 121245955294,
+    "tested_commit": "59d16a80127c12f18c168b696daea4aa4fe7f3a4",
+    "result": "success",
+    "scope": "private read-only PostgreSQL snapshot export and offline synthetic checkpoint preservation only",
+    "offline_and_actual_sql_contract_cases": 10,
+    "all_three_ledgers_one_statement_snapshot": true,
+    "actual_read_only_transaction_passed": true,
+    "bounded_export_rejects_partial_results": true,
+    "utf8_payload_digest_and_offline_validation_matched": true,
+    "duplicate_json_unknown_fields_unicode_corruption_counts_and_source_checked": true,
+    "trusted_separate_digest_required": true,
+    "private_new_file_and_existing_file_symlink_preservation_checked": true,
+    "no_raw_customer_message_request_identifiers_or_contacts_in_export": true,
+    "accounts_orders_and_existing_functions_preserved": true,
+    "prior_sql_browser_and_rollback_passed": true,
+    "production_export_or_external_copy_verified": false,
+    "production_sql_executed": false,
+    "live_backup_restored_or_modified": false,
+    "actual_backup_inventory_or_expiry_verified": false,
+    "full_account_or_attachment_erasure_complete": false,
+    "restore_authorized": false
   }
 }
