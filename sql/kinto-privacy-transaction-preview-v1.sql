@@ -6,7 +6,7 @@ DECLARE result jsonb;BEGIN
  IF p_text IS NULL OR length(p_text)>65536 THEN RETURN NULL;END IF;
  result:=p_text::jsonb;IF jsonb_typeof(result)IS DISTINCT FROM 'object'THEN RETURN NULL;END IF;RETURN result;
 EXCEPTION WHEN invalid_text_representation THEN RETURN NULL;END$$;
-CREATE FUNCTION private.kinto_privacy_preview_relation_v1(p_relation text,p_columns jsonb)RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $$
+CREATE FUNCTION private.kinto_privacy_preview_relation_v1(p_relation text,p_columns jsonb)RETURNS boolean LANGUAGE sql STABLE SET search_path=pg_catalog,pg_temp AS $$
  SELECT coalesce((SELECT c.relkind='r'
  AND has_table_privilege(current_user,c.oid,'SELECT')
  AND(NOT c.relrowsecurity OR EXISTS(SELECT 1 FROM pg_roles WHERE rolname=current_user AND(rolsuper OR rolbypassrls))OR(NOT c.relforcerowsecurity AND pg_has_role(current_user,c.relowner,'USAGE')))

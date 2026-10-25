@@ -37,12 +37,13 @@ SELECT public.test_assert(public.kinto_privacy_transaction_preview_admin_v1('tes
 ROLLBACK TO schema_drift;
 CREATE ROLE preview_limited;
 GRANT USAGE ON SCHEMA public TO preview_limited;
-GRANT USAGE,CREATE ON SCHEMA private TO preview_limited;
+GRANT USAGE ON SCHEMA private TO preview_limited;
 GRANT SELECT ON private.kinto_world_orders_v1 TO preview_limited;
 ALTER TABLE private.kinto_world_orders_v1 ENABLE ROW LEVEL SECURITY;
-ALTER FUNCTION private.kinto_privacy_preview_relation_v1(text,jsonb)OWNER TO preview_limited;
+GRANT EXECUTE ON FUNCTION private.kinto_privacy_preview_relation_v1(text,jsonb)TO preview_limited;
+SET ROLE preview_limited;
 SELECT public.test_assert(NOT private.kinto_privacy_preview_relation_v1('private.kinto_world_orders_v1','{"id":["uuid"]}'),'hidden RLS rows cannot be represented as zero');
-ALTER FUNCTION private.kinto_privacy_preview_relation_v1(text,jsonb)OWNER TO postgres;
+RESET ROLE;
 UPDATE private.kinto_deletion_requests_v1 SET status='manual_review'WHERE id='00000000-0000-4000-8000-000000000091';
 SELECT public.test_denied($q$SELECT public.kinto_privacy_transaction_preview_admin_v1('test-admin','00000000-0000-4000-8000-000000000091')$q$,'VERIFIED_REQUEST_REQUIRED');
 ROLLBACK TO preview_fixture;
