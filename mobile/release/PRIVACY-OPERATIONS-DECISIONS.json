@@ -34,7 +34,7 @@
     "private_minimal_ledger_source_implemented": true,
     "external_ledger_checkpoint_verified": false,
     "ledger_retention_criterion": "Keep only minimal pseudonymous deletion evidence until all known backups/copies capable of restoring the erased data have expired or been reconciled; no fixed expiry is claimed without verified copy inventory.",
-    "restore_test_scope": "Synthetic restored row detection only; actual backup restoration and full erasure reapplication not yet verified.",
+    "restore_test_scope": "Actual pg_dump/pg_restore of a minimal disposable PostgreSQL17 fixture, external checkpoint detection and explicit fresh-profile reconciliation passed. Owner archive, OneDrive copies, full transactional restoration and Storage file bytes remain unqualified.",
     "owner_scheduled_backup_page": "Free Plan does not include project backups",
     "configured_scheduled_backups_visible": false,
     "scheduled_backup_retention_days": null,
@@ -112,5 +112,6 @@
   "turkish_business_affiliation": false,
   "turkish_business_independence_owner_confirmed": true,
   "turkish_business_independence_confirmation_source": "owner explicit reply 2026-10-26: KINTO has no relation to Turkey",
-  "operator_jurisdiction_evidence_note": "Independence from Turkish business confirmed; current customer market Iraq already confirmed. This answer alone does not establish legal jurisdiction or statutory retention applicability."
+  "operator_jurisdiction_evidence_note": "Independence from Turkish business confirmed; current customer market Iraq already confirmed. This answer alone does not establish legal jurisdiction or statutory retention applicability.",
+  "future_customer_markets_restricted_by_turkey_independence_confirmation": false
 }

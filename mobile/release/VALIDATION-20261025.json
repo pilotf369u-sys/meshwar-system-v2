@@ -575,5 +575,26 @@
     "electronic_invoice_paths_and_all_invoice_variants_qualified_for_account_erasure": false,
     "all_149_tables_transactional_erasure_complete": false,
     "production_deployed_or_erasure_enabled": false
+  },
+  "restored_completion_and_preference_boundaries": {
+    "source_date": "2026-10-26",
+    "result": "success",
+    "run_id": 40240326984,
+    "job_id": 121310539291,
+    "tested_source_head": "3a2a688b2d5cc726a978357bef10f8f918b9f73d",
+    "run_url": "https://github.com/pilotf369u-sys/meshwar-system-v2/actions/runs/40240326984",
+    "chat_retry_refuses_reappeared_message": true,
+    "account_retry_requires_ledger_and_absent_profile": true,
+    "account_progress_refuses_restored_profile_completion": true,
+    "no_automatic_reerasure_on_old_receipt": true,
+    "preference_unknown_fields_and_types_hold_even_after_reapproval": true,
+    "preference_inheritance_and_unknown_internal_external_cascades_hold": true,
+    "preference_plain_relation_visibility_delete_permission_and_rewrite_checks": true,
+    "fresh_finalizer_pgcrypto_public_and_extensions_schemas_passed": true,
+    "full_existing_privacy_database_browser_backup_and_rollback_workflow_passed": true,
+    "production_schema_or_archive_restore_qualified": false,
+    "production_deployed": false,
+    "full_transactional_account_erasure_complete": false,
+    "accepted_application_28_or_existing_commerce_functions_changed": false
   }
 }
