@@ -174,8 +174,42 @@ DECLARE matches jsonb;BEGIN
  RETURN jsonb_build_object('matched_hashes',matches,'coverage_verified',false,'restore_authorized',false);
 END$$;
 REVOKE ALL ON FUNCTION private.kinto_privacy_preferences_ready_v1(),private.kinto_privacy_preferences_purge_v1(uuid),private.kinto_privacy_erasure_ledger_export_v1(bigint,integer),private.kinto_privacy_restore_matches_v1(jsonb)FROM PUBLIC,anon,authenticated;
+-- Embedded balances/history are financial data even when no related table row exists.
+-- No balance reset, currency conversion, financial adjustment or hidden field purge.
+CREATE FUNCTION private.kinto_privacy_profile_holds_v1(cid uuid)RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp AS $$
+DECLARE profile jsonb;holds jsonb:='[]';key text;financial_columns integer;
+ expected jsonb:='{"id":"uuid","created_at":"timestamptz","name":"text","phone":"text","email":"text","country":"text","address":"text","code":"text","password":"text","cart_items":"jsonb","state":"text","secondary_phone":"text","rewards_log":"jsonb","wallet_balance":"numeric","wallet_currency":"text","rewards_count":"int4","current_cycle_delivered":"int4","reward_balances":"jsonb"}';BEGIN
+ IF NOT EXISTS(SELECT 1 FROM pg_class c WHERE c.oid='public.customers'::regclass AND c.relkind='r'AND(NOT c.relrowsecurity OR EXISTS(SELECT 1 FROM pg_roles WHERE rolname=current_user AND(rolsuper OR rolbypassrls))OR(NOT c.relforcerowsecurity AND pg_has_role(current_user,c.relowner,'USAGE'))))OR EXISTS(SELECT 1 FROM pg_inherits WHERE inhparent='public.customers'::regclass OR inhrelid='public.customers'::regclass)THEN
+  RETURN jsonb_build_array(jsonb_build_object('relation','public.customers','reason','profile_visibility_or_shape_unverified'));
+ END IF;
+ IF EXISTS(SELECT 1 FROM pg_attribute a WHERE a.attrelid='public.customers'::regclass AND a.attnum>0 AND NOT a.attisdropped AND(NOT(expected?(a.attname::text)) OR a.atttypid IS DISTINCT FROM to_regtype(expected->>(a.attname::text))))THEN
+  RETURN jsonb_build_array(jsonb_build_object('relation','public.customers','reason','profile_fields_require_review'));
+ END IF;
+ SELECT to_jsonb(c)INTO profile FROM public.customers c WHERE id=cid;
+ IF profile IS NULL THEN RETURN jsonb_build_array(jsonb_build_object('relation','public.customers','reason','profile_not_found'));END IF;
+ SELECT count(*)INTO financial_columns FROM jsonb_object_keys(profile)k WHERE k IN('wallet_balance','wallet_currency','rewards_count','current_cycle_delivered','reward_balances','rewards_log');
+ IF financial_columns NOT IN(0,6)THEN RETURN jsonb_build_array(jsonb_build_object('relation','public.customers','reason','profile_financial_shape_unverified'));END IF;
+ IF financial_columns=6 THEN
+  FOREACH key IN ARRAY ARRAY['wallet_balance','rewards_count','current_cycle_delivered']LOOP
+   IF jsonb_typeof(profile->key)IS DISTINCT FROM 'number'THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation','public.customers','column',key,'reason','profile_financial_value_unverified'));
+   ELSIF(profile->>key)::numeric<>0 THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation','public.customers','column',key,'reason','profile_financial_value_requires_review'));END IF;
+  END LOOP;
+  IF jsonb_typeof(profile->'reward_balances')IS DISTINCT FROM 'object'THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation','public.customers','column','reward_balances','reason','profile_financial_value_unverified'));
+  ELSE
+   FOR key IN SELECT jsonb_object_keys(profile->'reward_balances')LOOP
+    IF jsonb_typeof(profile->'reward_balances'->key)IS DISTINCT FROM 'number'THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation','public.customers','column','reward_balances','reason','profile_financial_value_unverified'));EXIT;
+    ELSIF(profile->'reward_balances'->>key)::numeric<>0 THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation','public.customers','column','reward_balances','reason','profile_financial_value_requires_review'));EXIT;END IF;
+   END LOOP;
+  END IF;
+  IF profile->'rewards_log'IS DISTINCT FROM '[]'::jsonb THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation','public.customers','column','rewards_log','reason','profile_financial_history_requires_review'));END IF;
+ END IF;
+ IF profile?'cart_items'AND profile->'cart_items'<>'null'::jsonb AND jsonb_typeof(profile->'cart_items')IS DISTINCT FROM 'array'THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation','public.customers','column','cart_items','reason','profile_fields_require_review'));END IF;
+ RETURN holds;
+END$$;
+REVOKE ALL ON FUNCTION private.kinto_privacy_profile_holds_v1(uuid)FROM PUBLIC,anon,authenticated,service_role;
 CREATE FUNCTION private.kinto_erasure_inventory_v1(cid uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp AS $$
 DECLARE r record;cnt bigint;holds jsonb:='[]';preferences_ready boolean:=private.kinto_privacy_preferences_ready_v1();BEGIN
+ holds:=private.kinto_privacy_profile_holds_v1(cid);
  FOR r IN SELECT DISTINCT n.nspname,c.relname,a.attname,
  EXISTS(SELECT 1 FROM pg_constraint fk WHERE fk.contype='f' AND fk.conrelid=c.oid AND a.attnum=ANY(fk.conkey)AND fk.confrelid='public.customers'::regclass)has_fk
  FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped
