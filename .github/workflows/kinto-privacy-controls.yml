@@ -44,11 +44,14 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/upload-ticket-check.sql
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/media-restore-check.sql
           node --test mobile/privacy/media-worker.test.mjs
+          node --test mobile/privacy/chat-attachment-inventory.test.mjs
           python3 mobile/privacy/media-concurrency-check.py
           npm install --prefix "$RUNNER_TEMP/kinto-privacy-sdk" --no-audit --no-fund @supabase/supabase-js@2.57.4
           NODE_PATH="$RUNNER_TEMP/kinto-privacy-sdk/node_modules" node --test mobile/privacy/media-sdk-contract.test.cjs
       - name: Reviewed text-only chat deletion and retention
-        run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/chat-check.sql
+        run: |
+          psql -v ON_ERROR_STOP=1 -f mobile/privacy/chat-check.sql
+          psql -v ON_ERROR_STOP=1 -f mobile/privacy/chat-attachment-check.sql
       - name: Read-only metadata inventory leaves fixture unchanged
         run: python3 mobile/privacy/inventory-check.py
       - name: JavaScript syntax and preserved review contracts

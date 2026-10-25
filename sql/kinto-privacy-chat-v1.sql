@@ -89,4 +89,58 @@ REVOKE ALL ON FUNCTION private.kinto_privacy_chat_hash_v1(jsonb),private.kinto_p
 REVOKE ALL ON FUNCTION public.kinto_privacy_chat_review_v1(text,uuid,text,bigint,text,text,timestamptz,bigint),public.kinto_privacy_chat_erase_text_v1(text,uuid,bigint,bigint)FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.kinto_privacy_chat_review_v1(text,uuid,text,bigint,text,text,timestamptz,bigint)TO anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.kinto_privacy_chat_erase_text_v1(text,uuid,bigint,bigint)TO service_role;
+-- Strict recognition of the current stored attachment contract only. Legacy/encoded
+-- paths stay unresolved. No caller-selected host, bucket, object path or Storage call.
+CREATE FUNCTION private.kinto_privacy_chat_file_key_v1(p_url text)RETURNS text LANGUAGE sql IMMUTABLE SET search_path=pg_catalog,pg_temp AS $$
+ SELECT (regexp_match(p_url,'^https://hsmmbloouskqdnptiiad[.]supabase[.]co/storage/v1/object/(?:public|sign|authenticated)/chat-attachments/((?:customer|admin|employee|courier)/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.][a-z0-9]{1,10})(?:[?][^#[:space:]]*)?$'))[1];
+$$;
+CREATE FUNCTION private.kinto_privacy_chat_details_v1(p_details jsonb)RETURNS jsonb LANGUAGE plpgsql IMMUTABLE SET search_path=pg_catalog,pg_temp AS $$
+BEGIN
+ IF jsonb_typeof(p_details)='object' THEN RETURN p_details;END IF;
+ IF jsonb_typeof(p_details)='string' THEN RETURN (p_details#>>'{}')::jsonb;END IF;
+ RETURN NULL;
+EXCEPTION WHEN invalid_text_representation THEN RETURN NULL;
+END$$;
+-- Assessment never grants erasure, even if all known reference checks are clear.
+CREATE FUNCTION public.kinto_privacy_chat_attachment_v1(p_session_token text,p_request_id uuid,p_message_id bigint,p_expected_hash text)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp SET lock_timeout='500ms' SET statement_timeout='5s' AS $$
+DECLARE cid uuid;m jsonb;k text;t jsonb;ticket_count integer;shared boolean;operational boolean;unresolved boolean;holds jsonb:='["COVERAGE_NOT_VERIFIED","HUMAN_RETENTION_REVIEW_REQUIRED","UPLOAD_QUIESCENCE_NOT_VERIFIED"]';
+BEGIN
+ cid:=private.kinto_privacy_chat_context_v1(p_session_token,p_request_id,false);
+ IF NOT private.kinto_privacy_chat_schema_v1()THEN RAISE EXCEPTION 'CHAT_SCHEMA_REVIEW_REQUIRED';END IF;
+ SELECT to_jsonb(x)INTO m FROM public.messages x WHERE x.id=p_message_id AND x.customer_id=cid;
+ IF m IS NULL THEN RAISE EXCEPTION 'OWNED_CHAT_MESSAGE_REQUIRED';END IF;
+ IF p_expected_hash IS DISTINCT FROM private.kinto_privacy_chat_hash_v1(m)THEN RAISE EXCEPTION 'CHAT_MESSAGE_CHANGED';END IF;
+ IF length(trim(coalesce(m->>'file_url','')))=0 THEN RAISE EXCEPTION 'CHAT_ATTACHMENT_REQUIRED';END IF;
+ k:=private.kinto_privacy_chat_file_key_v1(m->>'file_url');
+ IF k IS NULL THEN holds:=holds||'"UNRESOLVED_REFERENCE"'::jsonb;
+ ELSE
+  SELECT EXISTS(SELECT 1 FROM public.messages x WHERE x.id<>p_message_id AND private.kinto_privacy_chat_file_key_v1(x.file_url)=k),
+   EXISTS(SELECT 1 FROM public.messages x WHERE length(trim(coalesce(x.file_url,'')))>0 AND private.kinto_privacy_chat_file_key_v1(x.file_url)IS NULL)
+  INTO shared,unresolved;
+  IF shared THEN holds:=holds||'"SHARED_MESSAGE_REFERENCE"'::jsonb;END IF;
+  IF unresolved THEN holds:=holds||'"UNRESOLVED_OTHER_REFERENCE"'::jsonb;END IF;
+  IF to_regclass('public.orders')IS NULL THEN holds:=holds||'"OPERATIONAL_REFERENCE_CHECK_UNAVAILABLE"'::jsonb;
+  ELSE
+   -- Include frozen fields and both JSONB and JSON-encoded TEXT details. This is
+   -- known orders scope only, not a claim to have discovered all 149 relations.
+   SELECT EXISTS(SELECT 1 FROM public.orders o CROSS JOIN LATERAL jsonb_path_query(jsonb_build_array(to_jsonb(o),private.kinto_privacy_chat_details_v1(to_jsonb(o)->'details')),'$.** ? (@.type() == "string")')v WHERE private.kinto_privacy_chat_file_key_v1(v#>>'{}')=k)INTO operational;
+   IF operational THEN holds:=holds||'"PROTECTED_OPERATIONAL_REFERENCE"'::jsonb;END IF;
+  END IF;
+  IF to_regclass('private.kinto_attachment_tickets_v1')IS NULL THEN holds:=holds||'"UPLOAD_TICKET_CHECK_UNAVAILABLE"'::jsonb;
+  ELSE
+   EXECUTE 'SELECT count(*),min(to_jsonb(x)::text)::jsonb FROM private.kinto_attachment_tickets_v1 x WHERE to_jsonb(x)->>''path''=$1'INTO ticket_count,t USING k;
+   IF ticket_count<>1 OR t->>'purpose'IS DISTINCT FROM 'chat' OR t->>'target_id'IS DISTINCT FROM cid::text OR coalesce(t->>'actor_role','')NOT IN('customer','admin','employee')OR(t->>'actor_role'='customer'AND t->>'actor_id'IS DISTINCT FROM cid::text)THEN holds:=holds||'"UPLOAD_TICKET_OWNERSHIP_NOT_VERIFIED"'::jsonb;
+   ELSE
+    BEGIN
+     IF (t->>'expires_at')::timestamptz IS NULL THEN holds:=holds||'"UPLOAD_TICKET_STATE_NOT_VERIFIED"'::jsonb;
+     ELSIF(t->>'expires_at')::timestamptz>now()THEN holds:=holds||'"UPLOAD_AUTHORIZATION_ACTIVE"'::jsonb;END IF;
+    EXCEPTION WHEN invalid_datetime_format OR datetime_field_overflow THEN holds:=holds||'"UPLOAD_TICKET_STATE_NOT_VERIFIED"'::jsonb;END;
+   END IF;
+  END IF;
+ END IF;
+ RETURN jsonb_build_object('message_id',p_message_id::text,'holds',holds,'coverage_verified',false,'deletion_authorized',false,'account_deleted',false);
+END$$;
+REVOKE ALL ON FUNCTION private.kinto_privacy_chat_file_key_v1(text),private.kinto_privacy_chat_details_v1(jsonb),public.kinto_privacy_chat_attachment_v1(text,uuid,bigint,text)FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.kinto_privacy_chat_attachment_v1(text,uuid,bigint,text)TO anon,authenticated,service_role;
+
 COMMIT;
