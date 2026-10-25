@@ -150,7 +150,26 @@
     "job_id": 121207626925,
     "result": "success",
     "scope": "eight named function definitions/missing markers, Storage policies, profile FK metadata; fixture read-only and unchanged",
-    "owner_execution_received": false,
-    "production_query_executed_by_agent": false
+    "owner_execution_received": true,
+    "production_query_executed_by_agent": false,
+    "owner_transaction_read_only": "on",
+    "owner_contracts_present": 8,
+    "owner_storage_policies": 27,
+    "owner_profile_links": 1,
+    "source_six_sql_bodies_match": true,
+    "owner_evidence": "mobile/privacy/OWNER-SESSION-MEDIA-20261025.json"
+  },
+  "dual_session_cleanup": {
+    "run_id": 40207097014,
+    "job_id": 121210264752,
+    "result": "success",
+    "scope": "private helper in gated fresh-profile finalizer; exact-owner primary and observed portal token rows only",
+    "both_paths_revoked_in_disposable_fixture": true,
+    "old_primary_token_rejected": true,
+    "unknown_portal_shape_fails_before_any_token_deletion": true,
+    "other_customer_tokens_profiles_and_orders_preserved": true,
+    "public_cleanup_endpoint_added": false,
+    "production_tokens_changed": false,
+    "full_transactional_account_erasure_complete": false
   }
 }
