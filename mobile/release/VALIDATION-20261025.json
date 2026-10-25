@@ -171,5 +171,22 @@
     "public_cleanup_endpoint_added": false,
     "production_tokens_changed": false,
     "full_transactional_account_erasure_complete": false
+  },
+  "preferences_and_restore_ledger": {
+    "run_id": 40208367842,
+    "job_id": 121214091139,
+    "result": "success",
+    "scope": "disposable PostgreSQL ownership-key projection; fresh account and known non-financial preferences only; simulated restored row detection, not provider backup restoration",
+    "actual_synthetic_profile_and_preferences_removed": true,
+    "forced_final_failure_rolls_back_sessions_preferences_and_tombstone": true,
+    "unknown_incoming_cascade_or_delete_trigger_holds": true,
+    "other_customer_orders_products_preferences_preserved": true,
+    "ledger_export_private_and_paged": true,
+    "raw_customer_identity_stored_in_ledger": false,
+    "external_ledger_copy_operationally_verified": false,
+    "actual_backup_expiry_verified": false,
+    "restore_automatically_authorized": false,
+    "production_write": false,
+    "transactional_account_chat_and_backup_erasure_complete": false
   }
 }

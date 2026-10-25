@@ -30,7 +30,11 @@
     "storage_objects_separate_from_database_backup": true,
     "actual_expiry_days": null,
     "restore_rule": "Before restored data becomes accessible, reapply completed deletions using restricted minimal deletion ledger; validate and erase restored media separately.",
-    "completion_rule": "Do not claim backup expiry or full erasure until applicable actual provider/manual-copy retention and scoped file deletion are verified."
+    "completion_rule": "Do not claim backup expiry or full erasure until applicable actual provider/manual-copy retention and scoped file deletion are verified.",
+    "private_minimal_ledger_source_implemented": true,
+    "external_ledger_checkpoint_verified": false,
+    "ledger_retention_criterion": "Keep only minimal pseudonymous deletion evidence until all known backups/copies capable of restoring the erased data have expired or been reconciled; no fixed expiry is claimed without verified copy inventory.",
+    "restore_test_scope": "Synthetic restored row detection only; actual backup restoration and full erasure reapplication not yet verified."
   },
   "synthetic_deletion_rehearsal_passed": true,
   "ugc_report_and_block_rehearsal_passed": true,
