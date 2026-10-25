@@ -89,5 +89,17 @@
     "deployed_storage_build_identified": false,
     "upload_quiescence_or_physical_removal_verified": false,
     "production_configuration_changed": false
+  },
+  "storage_deletion_qualification": {
+    "api_contract": "Supabase Delete Objects documentation describes Storage API deletion as permanent; do not use SQL deletion of object metadata",
+    "source": "https://supabase.com/docs/guides/storage/management/delete-objects",
+    "documented_per_path_inflight_upload_reconciliation_verified": false,
+    "provider_recovery_scope_and_retention_verified": false,
+    "support_question_drafted": "mobile/release/STORAGE-SUPPORT-QUESTION.txt",
+    "support_question_sent": false,
+    "support_question_requests_project_changes": false,
+    "support_question_requires_private_keys_or_customer_files": false,
+    "private_build_number_is_only_acceptable_evidence": false,
+    "actual_provider_or_storage_test_completed": false
   }
 }

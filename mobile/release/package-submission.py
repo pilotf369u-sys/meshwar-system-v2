@@ -11,7 +11,7 @@ for name,size in [('KINTO-Play-Icon-512.png',(512,512)),('KINTO-Feature-Graphic-
  with Image.open(assets/name) as im:assert im.size==size and im.format=='PNG'
 files={}
 for f in source.glob('*.md'):files['guide/'+f.name]=f.read_bytes()
-for name in ['VALIDATION-20261025.json','PRIVACY-OPERATIONS-DECISIONS.json','play-verified-config.example.json','CLOSED-TEST-LOG.csv','RETAILER-AUTHORIZATION-REQUEST.txt','store-listing.ar.json','release-notes.ar.txt','submission-state.json']:
+for name in ['VALIDATION-20261025.json','PRIVACY-OPERATIONS-DECISIONS.json','play-verified-config.example.json','CLOSED-TEST-LOG.csv','RETAILER-AUTHORIZATION-REQUEST.txt','STORAGE-SUPPORT-QUESTION.txt','store-listing.ar.json','release-notes.ar.txt','submission-state.json']:
  files['guide/'+name]=(source/name).read_bytes()
 for f in (source/'site-drafts').glob('*.html'):files['site-drafts-NOT-APPROVED/'+f.name]=f.read_bytes()
 for name in ['KINTO-Play-Icon-512.png','KINTO-Feature-Graphic-1024x500.png']:files['store-assets/'+name]=(assets/name).read_bytes()

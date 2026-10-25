@@ -1,0 +1,23 @@
+Subject: Per-object erasure with an in-flight standard upload on hosted Storage
+
+Hello Supabase Support,
+
+We are preparing account-deletion handling for KINTO. This is a request for information only: please do not change our project, billing, buckets, policies, objects or backups.
+
+Project ref: hsmmbloouskqdnptiiad
+Current plan shown to the owner: Free.
+An owner-run READ ONLY catalog report on 25 October 2026 reports versioning_status=DISABLED for chat-attachments and product-review-images. Our clients use standard supabase-js uploads with upsert:false and custom short-lived upload authorizations checked by Storage policies. Some upload requests may have started before their authorization expires or is revoked.
+
+We have read the Standard Uploads, Delete Objects and Database Backups documentation. We understand that deletion must use the Storage API rather than DELETE on storage.objects, and that database backups do not contain Storage object bytes.
+
+Please clarify the supported behavior for our hosted project:
+
+1. If a particular path's upload authorization is revoked after a standard upload starts but before it finishes, is permission checked again before the object is committed? What supported per-object procedure prevents such an upload from recreating a path after deletion, without interrupting other customers' uploads? Please identify any relevant version-dependent behavior or documented completion/reconciliation signal.
+2. With versioning_status=DISABLED, what does a successful remove([exact_path]) guarantee about that path's current content and any older/unreferenced versions? Is cleanup deferred, and if so what supported signal or retention boundary can an operator rely on? Please distinguish API-visible deletion from any provider-managed recovery copies or cached public content.
+3. For this Free project, are any provider-managed recovery copies relevant to deleted objects/customer database rows? If applicable, what documented retention/access restrictions and restore-time deletion reapplication procedure should our privacy notice describe? We are not assuming a seven-day backup period.
+
+A project-specific answer or a supported documented procedure is sufficient; we do not require private infrastructure details or an impossible guarantee about arbitrary copies outside your control. We will separately manage our own manual backups and shared/financial attachments.
+
+Please do not request customer files or signing/service keys for this information request. We are not authorizing any destructive operation or subscription upgrade.
+
+Thank you.
