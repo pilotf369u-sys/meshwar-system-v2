@@ -38,6 +38,7 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/media-check.sql
           node --test mobile/privacy/media-worker.test.mjs
+          python3 mobile/privacy/media-concurrency-check.py
       - name: Read-only metadata inventory leaves fixture unchanged
         run: python3 mobile/privacy/inventory-check.py
       - name: JavaScript syntax and preserved review contracts

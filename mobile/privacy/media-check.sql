@@ -30,6 +30,16 @@ SELECT public.test_assert((SELECT public.kinto_privacy_media_claim_v1('test-admi
 ROLLBACK TO changed_source;
 CREATE TEMP TABLE claimed AS SELECT public.kinto_privacy_media_claim_v1('test-admin',request_id)job FROM private.kinto_privacy_media_jobs_v1 LIMIT 1;
 SELECT public.test_assert((SELECT job->>'kind'FROM claimed)='storage','storage item claimed');
+SAVEPOINT expired_lease;
+UPDATE private.kinto_privacy_media_jobs_v1 SET lease_until=now()-interval '1 second'WHERE id=(SELECT(job->>'id')::uuid FROM claimed);
+SELECT public.test_denied(format('SELECT public.kinto_privacy_media_finish_v1(%L,%L,%L,%L,true)','test-admin',(SELECT request_id FROM private.kinto_privacy_media_jobs_v1 LIMIT 1),(SELECT job->>'id'FROM claimed),(SELECT job->>'lease'FROM claimed)),'PRIVACY_MEDIA_LEASE_INVALID');
+SELECT public.test_assert((SELECT public.kinto_privacy_media_claim_v1('test-admin',request_id)->>'lease'FROM private.kinto_privacy_media_jobs_v1 WHERE id=(SELECT(job->>'id')::uuid FROM claimed))<>(SELECT job->>'lease'FROM claimed),'expired lease reclaimed with a new secret');
+ROLLBACK TO expired_lease;
+SAVEPOINT attempt_limit;
+UPDATE private.kinto_privacy_media_jobs_v1 SET state='pending',attempts=3 WHERE id=(SELECT(job->>'id')::uuid FROM claimed);
+SELECT public.test_assert((SELECT public.kinto_privacy_media_claim_v1('test-admin',request_id)->>'held'FROM private.kinto_privacy_media_jobs_v1 WHERE id=(SELECT(job->>'id')::uuid FROM claimed))='true','retries bounded before more Storage calls');
+ROLLBACK TO attempt_limit;
+
 SELECT public.test_denied($q$DELETE FROM public.product_review_images WHERE id='00000000-0000-4000-8000-000000000061'$q$,'PRIVACY_MEDIA_IN_PROGRESS');
 SELECT public.test_denied($q$UPDATE public.product_review_images SET storage_path='changed.png'WHERE id='00000000-0000-4000-8000-000000000061'$q$,'PRIVACY_MEDIA_IN_PROGRESS');
 SELECT public.test_denied($q$SELECT public.kinto_deletion_request_v1('test-TEST-B','cancel')$q$,'PRIVACY_DELETION_ALREADY_STARTED');
