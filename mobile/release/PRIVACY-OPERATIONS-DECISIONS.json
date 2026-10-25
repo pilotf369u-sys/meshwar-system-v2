@@ -3,9 +3,9 @@
   "support_receives_mail_owner_confirmed": true,
   "confirmation_source": "owner_message_2026-10-24",
   "test_email_sent_by_agent": false,
-  "privacy_operator": null,
-  "acknowledgement_target_days": null,
-  "deletion_completion_target_days": null,
+  "privacy_operator": "إدارة KINTO",
+  "acknowledgement_target_days": 7,
+  "deletion_completion_target_days": 30,
   "retained_transaction_fields": [],
   "retention_reason_and_period": null,
   "storage_backup_expiry_policy": null,
@@ -24,5 +24,7 @@
   "google_identity_publication_condition_unresolved": false,
   "identity_policy_source": "https://support.google.com/googleplay/android-developer/answer/13628312?hl=en-EN",
   "google_play_public_legal_name_authorized": true,
-  "identity_authorization_source": "owner affirmative reply after explicit Google Play public-name question, 2026-10-25"
+  "identity_authorization_source": "owner affirmative reply after explicit Google Play public-name question, 2026-10-25",
+  "operations_targets_owner_confirmed": true,
+  "operations_confirmation_source": "owner affirmative reply to admin/support and 7-day response / 30-day processing target proposal, 2026-10-25"
 }
