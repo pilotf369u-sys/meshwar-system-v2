@@ -513,6 +513,30 @@
     "response_received": false,
     "requires_secrets_customer_files_or_project_configuration_changes": false,
     "scope": "Supported per-object inflight upload reconciliation and deletion/recovery contract; not general rewriting of existing application workflows",
-    "response_alone_closes_full_account_erasure": false
+    "response_alone_closes_full_account_erasure": false,
+    "sent_by_owner_confirmed": true,
+    "owner_confirmation_date": "2026-10-26",
+    "ticket_number_supplied": false
+  },
+  "invoice_catalog_contract_query": {
+    "run_id": 40235751744,
+    "job_id": 121296856131,
+    "tested_commit": "9f1bbb9862ecfd5e3dae535552d033ee3c41ac8f",
+    "result": "success",
+    "query": "sql/kinto-privacy-invoice-contract-readonly-v1.sql",
+    "target_signatures": [
+      "public.vendor_get_order_segment_details(text,uuid)",
+      "private.v94_jsonb_object(jsonb)"
+    ],
+    "read_only_transaction_verified": true,
+    "missing_definitions_marked_explicitly": true,
+    "oversized_definition_held_not_truncated": true,
+    "unrelated_overload_excluded": true,
+    "legacy_reader_and_helper_that_raise_if_called_not_invoked": true,
+    "synthetic_customer_order_function_schema_snapshot_unchanged": true,
+    "full_privacy_browser_and_rollback_pipeline_passed": true,
+    "owner_execution_pending": true,
+    "hash_mismatch_alone_proves_functional_drift": false,
+    "invoice_behavior_changed_or_live_data_accessed_by_agent": false
   }
 }
