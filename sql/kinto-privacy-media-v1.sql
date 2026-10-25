@@ -31,7 +31,7 @@ CREATE TRIGGER kinto_privacy_media_review_v1 BEFORE DELETE OR UPDATE OF customer
 CREATE TRIGGER kinto_privacy_media_cancel_v1 BEFORE UPDATE OF status ON private.kinto_deletion_requests_v1 FOR EACH ROW EXECUTE FUNCTION private.kinto_privacy_media_guard_v1();
 CREATE FUNCTION private.kinto_privacy_media_check_v1(p_session_token text,p_request_id uuid)RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp AS $$
 DECLARE aid uuid:=private.require_admin_session_v147(p_session_token)::uuid;cid uuid;BEGIN
- IF NOT EXISTS(SELECT 1 FROM private.kinto_privacy_media_policy_v1 WHERE singleton AND enabled AND inventory_signature=private.kinto_erasure_signature_v1())THEN RAISE EXCEPTION 'PRIVACY_MEDIA_POLICY_REQUIRED';END IF;
+ IF NOT EXISTS(SELECT 1 FROM private.kinto_privacy_media_policy_v1 WHERE singleton AND enabled AND inventory_signature=private.kinto_erasure_signature_v1()) OR NOT EXISTS(SELECT 1 FROM private.kinto_erasure_policy_v1 WHERE singleton AND enabled AND inventory_signature=private.kinto_erasure_signature_v1())THEN RAISE EXCEPTION 'PRIVACY_MEDIA_POLICY_REQUIRED';END IF;
  SELECT customer_id INTO cid FROM private.kinto_deletion_requests_v1 WHERE id=p_request_id AND status='verified'AND verified_by IS NOT NULL FOR UPDATE;
  IF cid IS NULL THEN RAISE EXCEPTION 'VERIFIED_REQUEST_REQUIRED';END IF;RETURN cid;
 END$$;
