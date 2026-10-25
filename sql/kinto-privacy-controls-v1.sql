@@ -159,7 +159,11 @@ DECLARE name text;rel oid;owned integer;fk_ok boolean;allowed jsonb;managed oid[
 
   IF EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid=rel AND NOT tgisinternal AND tgenabled<>'D'AND(tgtype::integer&8)<>0)THEN RETURN false;END IF;
  END LOOP;
- IF EXISTS(SELECT 1 FROM pg_constraint WHERE contype='f'AND confrelid=ANY(managed)AND NOT(conrelid=ANY(managed)))THEN RETURN false;END IF;
+ IF EXISTS(SELECT 1 FROM pg_constraint f WHERE f.contype='f'AND f.confrelid=ANY(managed)AND NOT(
+  f.conrelid=coalesce(to_regclass('public.customer_favorite_items'),0::oid)AND f.confrelid=coalesce(to_regclass('public.customer_favorite_lists'),0::oid)AND f.confdeltype='c'AND
+  (SELECT array_agg(a.attname::text ORDER BY k.ord)FROM unnest(f.conkey)WITH ORDINALITY k(num,ord)JOIN pg_attribute a ON a.attrelid=f.conrelid AND a.attnum=k.num)=ARRAY['list_id','customer_id']AND
+  (SELECT array_agg(a.attname::text ORDER BY k.ord)FROM unnest(f.confkey)WITH ORDINALITY k(num,ord)JOIN pg_attribute a ON a.attrelid=f.confrelid AND a.attnum=k.num)=ARRAY['id','customer_id']
+ ))THEN RETURN false;END IF;
  RETURN true;
 END$$;
 CREATE FUNCTION private.kinto_privacy_preferences_purge_v1(cid uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp SET lock_timeout='500ms' AS $$
