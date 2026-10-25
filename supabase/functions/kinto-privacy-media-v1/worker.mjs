@@ -33,8 +33,13 @@ export async function processChatText(client,token,requestId,messageId){
  return {state:'erased',account_deleted:false};
 }
 export async function handle(req,clientFactory,env) {
- const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Type':'application/json'};
+ const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Type':'application/json','Vary':'Origin'};
+ const origin=req.headers.get('Origin');
+ const allowedOrigin=!origin||['https://shopkinto.com','https://www.shopkinto.com'].includes(origin);
+ if(origin&&allowedOrigin)headers['Access-Control-Allow-Origin']=origin;
  const reply=(body,status)=>new Response(JSON.stringify(body),{status,headers});
+ if(!allowedOrigin)return reply({error:'ORIGIN_NOT_ALLOWED'},403);
+ if(req.method==='OPTIONS')return new Response(null,{status:204,headers:{...headers,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'authorization, apikey, content-type, x-client-info'}});
  if(req.method!=='POST')return reply({error:'METHOD_NOT_ALLOWED'},405);
  // Both this switch and the reviewed database policy are absent/disabled by default.
  if(env('KINTO_PRIVACY_MEDIA_ENABLED')!=='true'&&env('KINTO_PRIVACY_CHAT_ENABLED')!=='true')return reply({error:'PRIVACY_MEDIA_DISABLED'},503);
