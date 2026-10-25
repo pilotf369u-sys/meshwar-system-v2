@@ -2,7 +2,7 @@
 import http.server,json,os,pathlib,re,subprocess
 if os.environ.get('KINTO_DISPOSABLE_TEST')!='1' or os.environ.get('PGHOST')!='127.0.0.1' or os.environ.get('PGDATABASE')!='kinto_privacy_test':raise SystemExit('DISPOSABLE_DATABASE_REQUIRED')
 ROOT=pathlib.Path(__file__).resolve().parents[2]
-ALLOWED={'kinto_review_consent_v1','kinto_review_submit_v1','kinto_review_safety_v1','kinto_reviews_visible_v1','kinto_deletion_request_v1','kinto_privacy_admin_v1','kinto_deletion_preflight_v1','product_reviews_public_v141','product_review_summaries_v140','kinto_privacy_chat_review_v1','kinto_privacy_chat_attachment_v1','kinto_privacy_review_record_v1'}
+ALLOWED={'kinto_review_consent_v1','kinto_review_submit_v1','kinto_review_safety_v1','kinto_reviews_visible_v1','kinto_deletion_request_v1','kinto_privacy_admin_v1','kinto_deletion_preflight_v1','product_reviews_public_v141','product_review_summaries_v140','kinto_privacy_chat_review_v1','kinto_privacy_chat_attachment_v1','kinto_privacy_review_record_v1','kinto_deletion_progress_v1','kinto_deletion_progress_admin_v1'}
 def literal(x):
  if x is None:return 'NULL'
  if isinstance(x,bool):return 'true'if x else 'false'
