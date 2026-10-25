@@ -41,6 +41,7 @@ review_paths = [
  'review-policy.html',
  'account-deletion.html',
  'mobile/privacy/README.md',
+ 'mobile/privacy/chat-attachment-inventory.mjs',
 ]
 for name in review_paths:files['review-source-NOT-DEPLOY/'+name]=(root/name).read_bytes()
 # A safe, explicit record of compiled/native and isolated-test results, not arbitrary raw logs.

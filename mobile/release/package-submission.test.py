@@ -21,6 +21,7 @@ class ReviewPackage(unittest.TestCase):
     self.assertIn('review-source-NOT-DEPLOY/sql/kinto-privacy-controls-v1.sql',names)
     self.assertIn('review-source-NOT-DEPLOY/sql/kinto-privacy-inventory-readonly-v1.sql',names)
     self.assertIn('evidence/VALIDATION-20261025.json',names)
+    self.assertIn('review-source-NOT-DEPLOY/mobile/privacy/chat-attachment-inventory.mjs',names)
     self.assertIn('review-source-NOT-DEPLOY/sql/kinto-privacy-dependencies-readonly-v1.sql',names)
     evidence=json.loads(z.read('review-source-NOT-DEPLOY/mobile/privacy/OWNER-DEPENDENCIES-20261025.json'))
     self.assertEqual(evidence['transaction_read_only'],'on')

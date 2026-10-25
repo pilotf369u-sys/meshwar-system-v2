@@ -250,5 +250,34 @@
     "edge_function_deployed": false,
     "live_supabase_configuration_changed": false,
     "full_account_and_chat_attachment_erasure_complete": false
+  },
+  "chat_attachment_reference_assessment": {
+    "run_id": 40216909434,
+    "job_id": 121239906977,
+    "tested_commit": "d3d28c16a21955153dd1a54f2862b81bf8ef6c3b",
+    "result": "success",
+    "scope": "read-only admin assessment of one owned current-hash message; actual disposable PostgreSQL and browser bridge, no live provider access",
+    "offline_reference_test_cases": 4,
+    "worker_unit_cases": 19,
+    "pinned_sdk_transport_cases": 4,
+    "shared_public_and_signed_references_checked": true,
+    "jsonb_and_json_encoded_text_order_evidence_protected": true,
+    "active_expired_missing_and_wrong_purpose_upload_tickets_checked": true,
+    "custom_admin_verified_request_exact_owner_and_hash_checked": true,
+    "other_conversation_details_and_signed_urls_not_returned": true,
+    "messages_orders_and_upload_permissions_unchanged": true,
+    "browser_assessment_button_checked": true,
+    "visual_check": {
+      "artifact_id": 12607617715,
+      "file": "admin-chat-review.png",
+      "viewport_width": 390,
+      "inspected": true,
+      "sha256": "b47c7062745fd590bf99810bebd08537013b17872a901a62f5ec4ef945fc5815"
+    },
+    "rollback_disables_assessment_endpoint": true,
+    "production_write": false,
+    "actual_storage_call": false,
+    "attachment_erasure_implemented": false,
+    "full_account_erasure_complete": false
   }
 }
