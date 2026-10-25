@@ -40,3 +40,17 @@ Parsed the complete owner-supplied Markdown JSON cell after undoing Markdown bac
 - The report contains no customer DELETE trigger in its scoped trigger list. This is not evidence that all logical customer references are covered by foreign keys, nor that a generic customer DELETE is safe.
 
 No new live SQL, customer data access, storage configuration changes or production writes were performed by the agent. Production erasure remains disabled. Next engineering work is explicit ownership-aware media/session/account handling and a reviewed financial/backup retention policy, not another rebuild of the accepted app.
+
+## Fourth owner export: session/media contracts and Storage policies
+
+Received all8 requested definitions,27 storage.objects policies and1 profiles FK. transaction_read_only=on. The curated OWNER-SESSION-MEDIA-20261025.json retains metadata and hashes, not raw function bodies/upload. No application RPCs or file operations were invoked.
+
+Both customer_portal_data variants select customer_portal_sessions by a hashed token and join customers. They reference legacy customer.status and other legacy expressions; the prior exported customer schema has no status column and orders.customer_id is text. Their actual successful execution and grants are not proven by existence. They are not installed or repaired by this app change. Regardless of activity, final session cleanup must include their UUID customer_id ownership link, without depending on execution of either legacy reader.
+
+profiles.id references auth.users.id ON DELETE CASCADE. This does not establish customers.id=auth.users.id. Do not cascade a customer privacy request into deleting staff/vendor/other auth identities.
+
+Attachment tickets bind actor_role/actor_id, session hash, target_id, purpose, MIME/size and expiry. A ticket grants access, not exclusive ownership across all references: the read function also recognizes chat messages and order shipping/delivery evidence. A customer attachment purge must preserve/hold financial/delivery evidence and other references. It cannot delete a whole bucket or every path accessible to that customer.
+
+The policy export includes broad permissive rules and restrictive guards. For the relevant roles, restrictive rules include blocking direct chat listing/deletion/update and conditional upload tickets, and review-image cleanup checks. Broad permissive rule names alone are not a demonstrated bypass; effective access requires the full applicable combination, grants and bucket behavior. No storage policy is changed here. The service-only media worker remains gated and disabled, and real Storage permissions have not been exercised.
+
+The new internal session helper drains both known token tables, verifies the portal UUID ownership column, and deletes only the selected customer's rows. It is called by the existing fresh-profile finalizer only after its policy/inventory checks. It has no browser grant or new public endpoint. It does not erase credentials, prevent later login on a still-existing account, or claim full account deletion. Transactional/full production erasure remains held.

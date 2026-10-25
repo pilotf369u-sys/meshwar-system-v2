@@ -32,6 +32,8 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/bootstrap.sql
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/database-check.sql
+      - name: Exact-owner session cleanup on both observed paths
+        run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/session-cleanup-check.sql
       - name: Deletion approval detects catalog and trigger drift
         run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/catalog-drift-check.sql
       - name: Isolated media erasure ownership and service worker

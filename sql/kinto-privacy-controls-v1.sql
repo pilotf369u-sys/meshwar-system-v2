@@ -138,6 +138,20 @@ DECLARE r record;cnt bigint;holds jsonb:='[]';BEGIN
 END $$;
 CREATE FUNCTION public.kinto_deletion_preflight_v1(p_session_token text,p_request_id uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp AS $$
 DECLARE aid uuid:=private.require_admin_session_v147(p_session_token)::uuid;cid uuid;BEGIN SELECT customer_id INTO cid FROM private.kinto_deletion_requests_v1 WHERE id=p_request_id AND status NOT IN('cancelled','deleted');IF cid IS NULL THEN RAISE EXCEPTION 'OPEN_REQUEST_REQUIRED';END IF;RETURN private.kinto_erasure_inventory_v1(cid);END $$;
+-- Internal finalizer helper only. Revoking current tokens alone is NOT account deletion.
+CREATE FUNCTION private.kinto_privacy_revoke_sessions_v1(cid uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp SET lock_timeout='500ms' AS $$
+DECLARE primary_count integer;portal_count integer:=0;has_portal boolean:=to_regclass('public.customer_portal_sessions')IS NOT NULL;BEGIN
+ IF cid IS NULL THEN RAISE EXCEPTION 'CUSTOMER_ID_REQUIRED';END IF;
+ -- Validate the observed UUID ownership link before taking any destructive action.
+ IF has_portal AND NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid=to_regclass('public.customer_portal_sessions') AND attname='customer_id'AND atttypid='uuid'::regtype AND NOT attisdropped)THEN RAISE EXCEPTION 'PORTAL_SESSION_SCHEMA_NOT_VERIFIED';END IF;
+ LOCK TABLE public.customer_review_sessions IN ACCESS EXCLUSIVE MODE;
+ IF has_portal THEN EXECUTE 'LOCK TABLE public.customer_portal_sessions IN ACCESS EXCLUSIVE MODE';END IF;
+ -- Both paths are drained before deleting either set of tokens. No identity/phone matching.
+ DELETE FROM public.customer_review_sessions WHERE customer_id=cid;GET DIAGNOSTICS primary_count=ROW_COUNT;
+ IF has_portal THEN EXECUTE 'DELETE FROM public.customer_portal_sessions WHERE customer_id=$1' USING cid;GET DIAGNOSTICS portal_count=ROW_COUNT;END IF;
+ RETURN jsonb_build_object('review_sessions_removed',primary_count,'portal_sessions_removed',portal_count,'account_deleted',false);
+END$$;
+REVOKE ALL ON FUNCTION private.kinto_privacy_revoke_sessions_v1(uuid)FROM PUBLIC,anon,authenticated;
 CREATE FUNCTION public.kinto_deletion_execute_v1(p_session_token text,p_request_id uuid,p_confirm_request_id uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp SET lock_timeout='500ms' AS $$
 DECLARE aid uuid:=private.require_admin_session_v147(p_session_token)::uuid;req private.kinto_deletion_requests_v1;cfg private.kinto_erasure_policy_v1;plan jsonb;BEGIN
  IF p_request_id IS DISTINCT FROM p_confirm_request_id THEN RAISE EXCEPTION 'EXACT_REQUEST_CONFIRMATION_REQUIRED';END IF;
@@ -156,7 +170,7 @@ DECLARE aid uuid:=private.require_admin_session_v147(p_session_token)::uuid;req 
   INSERT INTO private.kinto_privacy_events_v1(request_id,event,admin_id)VALUES(req.id,'manual_review_required',aid);
   RETURN jsonb_build_object('ok',false,'status','manual_review','plan',plan);
  END IF;
- DELETE FROM public.customer_review_sessions WHERE customer_id=req.customer_id;
+ PERFORM private.kinto_privacy_revoke_sessions_v1(req.customer_id);
  DELETE FROM private.kinto_review_consents_v1 WHERE customer_id=req.customer_id;
  DELETE FROM public.customer_review_login_attempts WHERE identity_hash IN(SELECT digest(lower(trim(v.value)),'sha256')FROM public.customers c CROSS JOIN LATERAL jsonb_each_text(to_jsonb(c))v WHERE c.id=req.customer_id AND v.key IN('phone','email','code','customer_code')AND coalesce(trim(v.value),'')<>'');
  DELETE FROM public.customers WHERE id=req.customer_id;
