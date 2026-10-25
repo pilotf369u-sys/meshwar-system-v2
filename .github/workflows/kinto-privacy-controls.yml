@@ -53,7 +53,9 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/chat-check.sql
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/chat-attachment-check.sql
       - name: Reviewed product record erasure after verified media cleanup
-        run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/review-erasure-check.sql
+        run: |
+          psql -v ON_ERROR_STOP=1 -f mobile/privacy/review-erasure-check.sql
+          python3 mobile/privacy/review-erasure-concurrency-check.py
       - name: Coherent minimal external erasure checkpoint
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/checkpoint-check.sql

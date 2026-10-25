@@ -10,6 +10,17 @@ CREATE TABLE private.kinto_privacy_review_decisions_v1(
 );
 ALTER TABLE private.kinto_privacy_review_decisions_v1 ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON private.kinto_privacy_review_decisions_v1 FROM PUBLIC,anon,authenticated;
+-- Reports have a deliberately non-FK historical review identifier. Protect only
+-- open targets: resolved moderation evidence can remain after review erasure.
+CREATE FUNCTION private.kinto_privacy_open_report_target_v1()RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$
+BEGIN
+ IF NEW.status='open'THEN
+  PERFORM 1 FROM public.product_reviews WHERE id=NEW.review_id FOR KEY SHARE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'REVIEW_REPORT_TARGET_CHANGED';END IF;
+ END IF;
+ RETURN NEW;
+END$$;
+CREATE TRIGGER kinto_privacy_open_report_target_v1 BEFORE INSERT OR UPDATE OF review_id,status ON private.kinto_review_reports_v1 FOR EACH ROW EXECUTE FUNCTION private.kinto_privacy_open_report_target_v1();
 CREATE FUNCTION private.kinto_privacy_review_hash_v1(p_review jsonb)RETURNS text LANGUAGE sql IMMUTABLE SET search_path=pg_catalog,public,extensions,pg_temp AS $$SELECT encode(digest(p_review::text,'sha256'),'hex')$$;
 CREATE FUNCTION private.kinto_privacy_review_schema_v1()RETURNS boolean LANGUAGE sql STABLE SET search_path=pg_catalog,pg_temp AS $$
  SELECT NOT EXISTS(SELECT 1 FROM pg_class c WHERE c.oid=ANY(ARRAY[to_regclass('public.product_reviews'),to_regclass('public.product_review_images'),to_regclass('private.product_review_upload_tickets_v150'),to_regclass('public.product_review_helpful_votes')])AND(c.relkind<>'r'OR c.relforcerowsecurity OR EXISTS(SELECT 1 FROM pg_inherits WHERE inhparent=c.oid OR inhrelid=c.oid)OR EXISTS(SELECT 1 FROM pg_rewrite WHERE ev_class=c.oid)))
@@ -22,6 +33,7 @@ CREATE FUNCTION private.kinto_privacy_review_schema_v1()RETURNS boolean LANGUAGE
  AND NOT EXISTS(SELECT 1 FROM pg_trigger t WHERE t.tgrelid=ANY(ARRAY[to_regclass('public.product_reviews'),to_regclass('public.product_review_images'),to_regclass('private.product_review_upload_tickets_v150'),to_regclass('public.product_review_helpful_votes')])AND NOT t.tgisinternal AND t.tgenabled<>'D'AND(t.tgtype::integer&8)<>0 AND NOT(t.tgfoid=to_regprocedure('private.kinto_privacy_media_guard_v1()')AND((t.tgrelid=to_regclass('public.product_reviews')AND t.tgname='kinto_privacy_media_review_v1')OR(t.tgrelid=to_regclass('public.product_review_images')AND t.tgname='kinto_privacy_media_image_v1')OR(t.tgrelid=to_regclass('private.product_review_upload_tickets_v150')AND t.tgname='kinto_privacy_media_ticket_v1'))))
  -- Unknown logical links must not silently outlive an erased review.
  AND NOT EXISTS(SELECT 1 FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN('public','private')AND c.relkind IN('r','p')AND a.attname='review_id'AND NOT a.attisdropped AND(c.oid<>ALL(ARRAY[to_regclass('public.product_review_images'),to_regclass('private.product_review_upload_tickets_v150'),to_regclass('public.product_review_helpful_votes'),to_regclass('private.kinto_privacy_media_jobs_v1'),to_regclass('private.kinto_review_reports_v1'),to_regclass('private.kinto_privacy_review_decisions_v1')])))
+ AND EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid=to_regclass('private.kinto_review_reports_v1')AND tgname='kinto_privacy_open_report_target_v1'AND tgfoid=to_regprocedure('private.kinto_privacy_open_report_target_v1()')AND tgenabled IN('O','A')AND(tgtype::integer&1)=1 AND(tgtype::integer&2)=2 AND(tgtype::integer&4)=4 AND(tgtype::integer&16)=16)
  AND NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid=to_regclass('public.product_reviews')AND attnum>0 AND NOT attisdropped AND attname NOT IN('id','customer_id','order_id','order_store_segment_id','store_id','product_id','product_reference','product_name_snapshot','product_image_snapshot','rating','comment','verified_purchase','moderation_status','moderation_note','moderated_at','moderated_by','created_at','updated_at'))
  AND NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid=to_regclass('public.product_review_helpful_votes')AND attnum>0 AND NOT attisdropped AND attname NOT IN('id','review_id','visitor_hash','created_at'));
 $$;
@@ -77,7 +89,7 @@ DECLARE matches jsonb;BEGIN
  SELECT coalesce(jsonb_agg(DISTINCT encode(digest(id::text,'sha256'),'hex')),'[]')INTO matches FROM public.product_reviews WHERE encode(digest(id::text,'sha256'),'hex')IN(SELECT jsonb_array_elements_text(p_hashes));
  RETURN jsonb_build_object('matched_hashes',matches,'coverage_verified',false,'restore_authorized',false);
 END$$;
-REVOKE ALL ON FUNCTION private.kinto_privacy_review_hash_v1(jsonb),private.kinto_privacy_review_schema_v1(),private.kinto_privacy_review_cancel_v1(),private.kinto_privacy_restore_review_matches_v1(jsonb),public.kinto_privacy_review_record_v1(text,uuid,text,uuid,text,text,timestamptz,uuid),public.kinto_privacy_review_erase_v1(text,uuid,uuid,uuid)FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION private.kinto_privacy_open_report_target_v1(),private.kinto_privacy_review_hash_v1(jsonb),private.kinto_privacy_review_schema_v1(),private.kinto_privacy_review_cancel_v1(),private.kinto_privacy_restore_review_matches_v1(jsonb),public.kinto_privacy_review_record_v1(text,uuid,text,uuid,text,text,timestamptz,uuid),public.kinto_privacy_review_erase_v1(text,uuid,uuid,uuid)FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.kinto_privacy_review_record_v1(text,uuid,text,uuid,text,text,timestamptz,uuid)TO anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.kinto_privacy_review_erase_v1(text,uuid,uuid,uuid)TO service_role;
 COMMIT;
