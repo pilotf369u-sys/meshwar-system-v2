@@ -1,0 +1,31 @@
+{
+  "source": "owner-run READ ONLY invoice catalog export received 2026-10-26",
+  "report_version": "kinto-invoice-contract-readonly-v1",
+  "transaction_read_only": "on",
+  "contracts": [
+    {
+      "signature": "private.v94_jsonb_object(jsonb)",
+      "observed_body_md5": "ad78f4e7059c78adc039b4d720f10e73",
+      "decoded_body_md5_verified": true,
+      "body_sha256": "c4bce22133de2127f1bffd9f425ebb15d8560255e1187c408856b5c7a6cfaf63",
+      "definition_sha256": "f4ad9849b6c6578d471d9a66afcdbb10bd117db9f78830c7d8f053edd18e52ea",
+      "matched_source": "supabase/migrations/20260903_v94_order_store_segments.sql",
+      "body_tokens_match_source_ignoring_only_comments_formatting_and_unquoted_case": true,
+      "body_token_sha256": "53b751d82ac4b6445245920fd958cbb6464a5375c622905774f0ffac5845299f"
+    },
+    {
+      "signature": "public.vendor_get_order_segment_details(text,uuid)",
+      "observed_body_md5": "b5eb5e172d612ab1bb11a5cabc455ddc",
+      "decoded_body_md5_verified": true,
+      "body_sha256": "09d727e44d7ed2148114a7c454adef0820c84cc87527658db8f8026dd1226a15",
+      "definition_sha256": "06d314f053e9dc2205faf2e42bfad690ef2345a9fb3ec11796c36ddd080b1447",
+      "matched_source": "supabase/migrations/20260904_v96_vendor_segment_details_rpc_restore.sql",
+      "body_tokens_match_source_ignoring_only_comments_formatting_and_unquoted_case": true,
+      "body_token_sha256": "b92ec8c38b49a707d00a2fc83d66aa7a8a21d408632eeb8b92cda6401b5d7311"
+    }
+  ],
+  "customer_or_order_rows_supplied": false,
+  "application_functions_invoked": false,
+  "source_function_replacement_required": false,
+  "full_transactional_erasure_qualified": false
+}
