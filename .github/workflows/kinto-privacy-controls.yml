@@ -51,3 +51,10 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/kinto-privacy-ui/node_modules" node mobile/privacy/browser-check.cjs
       - name: Rollback preserves requests and existing operations
         run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/rollback-check.sql
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: KINTO-Privacy-Synthetic-UI
+          path: ${{ runner.temp }}/kinto-privacy-shots/*.png
+          if-no-files-found: warn
+          retention-days: 7
