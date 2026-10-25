@@ -4,7 +4,7 @@
  const update=document.createElement('button');update.type='button';update.textContent='تحديث حالة طلب الحذف';update.setAttribute('data-refresh-deletion','');list.before(update);
  const labels={pending:'بانتظار التحقق',verified:'تم التحقق — بانتظار المعالجة',manual_review:'تحتاج مراجعة البيانات المرتبطة',cancelled:'أُلغي الطلب',deleted:'تحتاج مراجعة تأكيد اكتمال الحذف'};
  let loading=false,active=false;
- function buttons(){send.disabled=loading||active;check.disabled=loading||active;send.hidden=active;const label=check.closest('label');if(label)label.hidden=active;update.disabled=loading;}
+ function buttons(){send.disabled=loading||active;check.disabled=loading||active;send.hidden=active;const label=check.closest('label');if(label){label.hidden=active;label.style.display=active?'none':''}update.disabled=loading;}
  function describe(x){if(x.account_deleted===true&&x.stage==='completed')return'اكتمل حذف الحساب';if(x.processing_started===true)return'بدأت معالجة طلب الحذف — لم يكتمل حذف الحساب بعد';return labels[x.status]||'قيد المراجعة';}
  async function refresh(){if(loading)return;loading=true;buttons();try{
   const rows=await client.rpc('kinto_deletion_progress_v1',{});active=rows.some(x=>['pending','verified','manual_review'].includes(x.status));list.replaceChildren();
