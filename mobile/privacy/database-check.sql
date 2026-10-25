@@ -46,7 +46,7 @@ SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM public.customer_review_sessio
 SELECT public.test_assert((SELECT status='deleted'AND customer_id IS NULL FROM private.kinto_deletion_requests_v1),'receipt anonymized, actual deletion only');
 SELECT public.test_denied($q$SELECT public.kinto_deletion_request_v1('test-TEST-FRESH','status')$q$,'SESSION_INVALID');
 -- Expired/revoked sessions and schema drift must fail before writes.
-UPDATE public.customer_review_sessions SET expires_at=now()-interval '1 second'WHERE token_hash=digest('test-TEST-A','sha256');
+UPDATE public.customer_review_sessions SET created_at=now()-interval '1 hour',expires_at=now()-interval '1 second'WHERE token_hash=digest('test-TEST-A','sha256');
 SELECT public.test_denied($q$SELECT public.kinto_review_safety_v1('test-TEST-A','list_blocks')$q$,'SESSION_INVALID');
 UPDATE public.customer_review_sessions SET expires_at=now()+interval '1 hour',revoked_at=now()WHERE token_hash=digest('test-TEST-A','sha256');
 SELECT public.test_denied($q$SELECT public.kinto_deletion_request_v1('test-TEST-A','request',true)$q$,'SESSION_INVALID');

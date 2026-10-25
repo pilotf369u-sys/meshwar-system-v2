@@ -157,8 +157,7 @@ jobs:
         profile: pixel_2
         disable-animations: false
         emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
-        script: "if [ \"${{ matrix.api }}\" = \"29\" ]; then\n  python3 mobile/hybrid/tools/webview-update-smoke.py\nelse\n\
-          \  python3 mobile/hybrid/tools/launch-functional-smoke.py\n  python3 mobile/hybrid/tools/webview-smoke.py\nfi\n"
+        script: bash mobile/hybrid/tools/native-compatibility-check.sh ${{ matrix.api }}
     - uses: actions/upload-artifact@v4
       if: always()
       with:
