@@ -91,5 +91,13 @@
     "result": "success",
     "scope": "exact exported four definitions in disposable fixture; not complete live grants/triggers/helper definitions",
     "production_unchanged": true
+  },
+  "dependency_inspection_query_check": {
+    "run_id": 40194620545,
+    "job_id": 121172680090,
+    "result": "success",
+    "scope": "read-only indirect foreign keys, scoped trigger source and three allowlisted bucket settings on disposable PostgreSQL17",
+    "fixture_data_functions_schema_unchanged": true,
+    "executed_on_production": false
   }
 }

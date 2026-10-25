@@ -31,3 +31,7 @@ Workflow: `.github/workflows/kinto-privacy-controls.yml`. Never deploy `test-ser
 3. Verify real test customer/admin navigation and read-only staff impersonation; no genuine customer writes.
 4. To roll back: restore the old frontend, then run the rollback SQL. It removes only the new insert guards, disables new RPCs/erasure and retains audit/queues. It cannot restore erased profiles. The only executed erasure in this task is synthetic.
 5. Publish accurate policy/deletion resources only after retention, support operations and completion commitments are approved. Test their real HTTPS availability and native online link afterwards.
+
+## Dependency inspection after the owner exports
+
+The first owner report supplied direct customer FKs only. `sql/kinto-privacy-dependencies-readonly-v1.sql` additionally reports all public/private FKs, user trigger definitions/functions scoped to customer data and FK descendants, and configuration of three known media buckets. It reads no customer/session/payment/object rows and calls no application RPCs. This is one-shot READ ONLY inspection with an 8-second statement limit, not installed polling. Owner runs it manually; no Supabase connection is used by the agent. The query and its no-change checks passed on disposable PostgreSQL17 (run40194620545). The fixture uses synthetic bucket settings; actual settings/triggers are not inferred from that result.
