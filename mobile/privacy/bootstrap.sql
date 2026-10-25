@@ -1,5 +1,5 @@
 \set ON_ERROR_STOP on
-CREATE ROLE anon;CREATE ROLE authenticated;CREATE SCHEMA extensions;CREATE SCHEMA private;
+CREATE ROLE service_role;CREATE ROLE anon;CREATE ROLE authenticated;CREATE SCHEMA extensions;CREATE SCHEMA private;
 CREATE EXTENSION pgcrypto;
 -- Synthetic storage configuration only: no storage objects or customer files.
 CREATE SCHEMA storage;
@@ -26,3 +26,5 @@ CREATE TABLE public.admin_sessions_v147(id uuid PRIMARY KEY DEFAULT gen_random_u
 CREATE TABLE public.test_preservation_snapshot(kind text PRIMARY KEY,payload text);
 INSERT INTO public.test_preservation_snapshot VALUES('functions',(SELECT jsonb_object_agg(p.oid::regprocedure::text,md5(pg_get_functiondef(p.oid)))::text FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN('public','private')));
 \ir ../../sql/kinto-privacy-controls-v1.sql
+
+\ir ../../sql/kinto-privacy-media-v1.sql

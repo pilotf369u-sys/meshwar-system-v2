@@ -2,7 +2,7 @@ name: KINTO isolated privacy controls
 'on':
   push:
     branches: [app/privacy-controls-20261025]
-    paths: ['sql/kinto-privacy-controls*','mobile/privacy/**','js/*privacy*','js/*product-reviews*','.github/workflows/kinto-privacy-controls.yml']
+    paths: ['sql/kinto-privacy-controls*','sql/kinto-privacy-media*','supabase/functions/kinto-privacy-media-v1/**','mobile/privacy/**','js/*privacy*','js/*product-reviews*','.github/workflows/kinto-privacy-controls.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -34,6 +34,10 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/database-check.sql
       - name: Deletion approval detects catalog and trigger drift
         run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/catalog-drift-check.sql
+      - name: Isolated media erasure ownership and service worker
+        run: |
+          psql -v ON_ERROR_STOP=1 -f mobile/privacy/media-check.sql
+          node --test mobile/privacy/media-worker.test.mjs
       - name: Read-only metadata inventory leaves fixture unchanged
         run: python3 mobile/privacy/inventory-check.py
       - name: JavaScript syntax and preserved review contracts

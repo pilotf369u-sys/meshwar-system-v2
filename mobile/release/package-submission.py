@@ -19,6 +19,10 @@ for name in ['KINTO-Play-Icon-512.png','KINTO-Feature-Graphic-1024x500.png']:fil
 review_paths = [
  'sql/kinto-privacy-controls-v1.sql',
  'sql/kinto-privacy-controls-rollback-v1.sql',
+ 'sql/kinto-privacy-media-v1.sql',
+ 'sql/kinto-privacy-media-rollback-v1.sql',
+ 'supabase/functions/kinto-privacy-media-v1/index.ts',
+ 'supabase/functions/kinto-privacy-media-v1/worker.mjs',
  'sql/kinto-privacy-inventory-readonly-v1.sql',
  'sql/kinto-privacy-session-contract-readonly-v1.sql',
  'sql/kinto-privacy-dependencies-readonly-v1.sql',
