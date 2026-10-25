@@ -221,5 +221,34 @@
     "provider_internal_retention_verified": false,
     "backup_settings_changed": false,
     "evidence": "mobile/release/BACKUP-INVENTORY-20261025.md"
+  },
+  "reviewed_chat_text_erasure": {
+    "run_id": 40214308264,
+    "job_id": 121232032606,
+    "result": "success",
+    "scope": "per-message reviewed text only, disposable PostgreSQL and actual admin dialog against loopback RPC/service stand-in; no live Edge qualification",
+    "worker_unit_cases": 19,
+    "pinned_sdk_transport_cases": 4,
+    "custom_admin_and_verified_request_required": true,
+    "disabled_default_and_exact_confirmation_checked": true,
+    "service_only_sql_execution": true,
+    "stale_content_attachment_and_unknown_cascade_holds_checked": true,
+    "forced_receipt_failure_rolls_back_deletion": true,
+    "retained_message_attachment_other_conversation_and_orders_preserved": true,
+    "restored_earlier_text_version_detected_without_content_export": true,
+    "browser_safe_rendering_and_review_retain_execute_checked": true,
+    "cors_preflight_and_separate_runtime_switch_checked": true,
+    "visual_check": {
+      "run_id": 40213481441,
+      "artifact_id": 12606821316,
+      "file": "admin-chat-review.png",
+      "viewport_width": 390,
+      "inspected": true,
+      "ui_unchanged_by_later_cors_only_update": true
+    },
+    "actual_production_chat_changed": false,
+    "edge_function_deployed": false,
+    "live_supabase_configuration_changed": false,
+    "full_account_and_chat_attachment_erasure_complete": false
   }
 }

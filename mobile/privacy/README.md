@@ -5,7 +5,7 @@ Branch: `app/privacy-controls-20261025`; rollback branch: `rollback/before-priva
 ## Behavior
 
 - A signed-in customer explicitly requests deletion, reads only their own request status and may cancel. This does not erase, disable or log out the account, or alter orders/payments.
-- Existing verified admin sessions access a paged queue. Admin can record verification, hold a request and inspect relation counts. No delete button or automatic executor is provided.
+- Existing verified admin sessions access a paged queue. Admin can record verification, hold a request and inspect relation counts. No account-delete button or automatic account erasure is provided. Reviewed per-message text erasure is described separately below.
 - Before review submission/photos, an unchecked content-policy agreement is required and saved with a version. The new submit wrapper calls the existing delivered-order validation. Insert guards also protect older submit/image endpoints; deploy the new frontend with the additive SQL as one reviewed change, not the SQL alone.
 - Customers can report content or its author, block their reviews and undo a block. A report never hides a review automatically. Admin sees reported content and can dismiss or hide it; orders and prices are not changed. Blocking affects authenticated review details, not global rating summaries.
 - New tables have RLS and no direct anon/authenticated grants. All public RPCs validate the existing custom server session. No customer ID is accepted as proof of ownership, and session tokens remain in POST bodies.
