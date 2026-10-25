@@ -13,8 +13,7 @@
   "review_package_test_passed": true,
   "six_release_input_tests_passed": true,
   "accepted_java_scope_check_passed": true,
-  "browser_visual_rendering_tested": false,
-  "browser_visual_limit": "No installed local browser; Playwright browser download returned an invalid archive. No screenshot or visual-pixel qualification claimed.",
+  "browser_visual_rendering_tested": true,
   "main_cms_pages_preserved": true,
   "main_or_hostinger_or_supabase_changed": false,
   "readers_pricing_orders_payments_or_apk_changed": false,
@@ -24,5 +23,10 @@
   "public_policy_published_or_approved": false,
   "production_upload_ready": false,
   "console_identity_verification_pending_owner_screenshot": "2026-10-26",
-  "console_screenshot_requested_again": false
+  "console_screenshot_requested_again": false,
+  "browser_visual_scope": "Three unchanged review-only static policies rendered at 390x844 in Chromium; full-page images visually inspected, no live customer or external requests.",
+  "browser_render_run_id": 40244459371,
+  "browser_render_source_head": "7cba6e24fe2457eb41388cf8a7d90e39f046314c",
+  "browser_artifact_id": 12618181999,
+  "browser_artifact_sha256": "54ddd5ad4afba3b052f6ba7bc7b8e491e82f6878fd8a03edcb24267d8ecfee4d"
 }
