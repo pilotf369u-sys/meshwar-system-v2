@@ -188,5 +188,38 @@
     "restore_automatically_authorized": false,
     "production_write": false,
     "transactional_account_chat_and_backup_erasure_complete": false
+  },
+  "upload_ticket_and_media_restore_followup": {
+    "run_id": 40211108851,
+    "job_id": 121222325861,
+    "result": "success",
+    "completed_upload_ticket_cleanup_tested": true,
+    "unused_uploads_held_even_if_expired": true,
+    "new_image_reference_during_ticket_lease_blocked": true,
+    "new_shared_reference_after_preparation_holds_deletion": true,
+    "failed_acknowledgement_preserves_source_and_emits_no_completed_media_ledger": true,
+    "same_image_ticket_key_deduplicated_in_private_ledger": true,
+    "media_ledger_export_hashed_private_and_paged": true,
+    "restored_storage_metadata_detected_without_source_review_row": true,
+    "storage_policy_and_bucket_configuration_drift_invalidates_approval": true,
+    "worker_unit_cases": 16,
+    "pinned_sdk_transport_cases": 3,
+    "other_customer_and_orders_unchanged_in_fixture": true,
+    "actual_storage_calls": false,
+    "actual_backup_restore_performed": false,
+    "scope": "disposable PostgreSQL + mocked/intercepted SDK; source remains disabled; not complete transactional-account/chat deletion"
+  },
+  "owner_backup_screenshots_review": {
+    "observed_date": "2026-10-25",
+    "free_scheduled_backup_page_observed": true,
+    "manual_archive_owner_confirmed": true,
+    "archive_label_date": "2026-10-18",
+    "visible_database_backup_and_media_folders": true,
+    "onedrive_path_observed": true,
+    "raw_screenshots_or_backup_content_committed": false,
+    "copy_inventory_or_expiry_verified": false,
+    "provider_internal_retention_verified": false,
+    "backup_settings_changed": false,
+    "evidence": "mobile/release/BACKUP-INVENTORY-20261025.md"
   }
 }
