@@ -20,8 +20,11 @@
     }
   ],
   "hash_difference_alone_proves_behavior_difference": false,
-  "owner_definition_export_required_for_live_contract_qualification": true,
+  "owner_definition_export_required_for_live_contract_qualification": false,
   "legacy_invoice_rpc_invoked": false,
   "customer_rows_read": false,
-  "production_modified": false
+  "production_modified": false,
+  "owner_export_received": "2026-10-26",
+  "owner_export_reference": "OWNER-INVOICE-CONTRACT-20261026.json",
+  "body_difference_resolved_as_formatting_only": true
 }

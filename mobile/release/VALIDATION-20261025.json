@@ -516,7 +516,10 @@
     "response_alone_closes_full_account_erasure": false,
     "sent_by_owner_confirmed": true,
     "owner_confirmation_date": "2026-10-26",
-    "ticket_number_supplied": false
+    "ticket_number_supplied": true,
+    "ticket_id": "SU-524673",
+    "acknowledgement_received": true,
+    "technical_response_received": false
   },
   "invoice_catalog_contract_query": {
     "run_id": 40235751744,
@@ -535,8 +538,42 @@
     "legacy_reader_and_helper_that_raise_if_called_not_invoked": true,
     "synthetic_customer_order_function_schema_snapshot_unchanged": true,
     "full_privacy_browser_and_rollback_pipeline_passed": true,
-    "owner_execution_pending": true,
+    "owner_execution_pending": false,
     "hash_mismatch_alone_proves_functional_drift": false,
-    "invoice_behavior_changed_or_live_data_accessed_by_agent": false
+    "invoice_behavior_changed_or_live_data_accessed_by_agent": false,
+    "owner_report_received": "2026-10-26",
+    "owner_definition_bodies_decoded_and_hash_verified": true
+  },
+  "verified_invoice_profile_dependency": {
+    "run_id": 40237598463,
+    "job_id": 121302384833,
+    "tested_commit": "74763fd03c1cf170ab4141f998348a32eefe3f4c",
+    "result": "success",
+    "owner_report_received": "2026-10-26",
+    "observed_contracts": "mobile/privacy/OWNER-INVOICE-CONTRACT-20261026.json",
+    "both_decoded_body_hashes_verified": true,
+    "quoted_literals_preserved_during_source_token_comparison": true,
+    "reader_body_matches_v96_and_helper_matches_v94": true,
+    "earlier_hash_difference_resolved_as_formatting_only": true,
+    "existing_invoice_or_json_function_replacement_required": false,
+    "runtime_body_sha256_and_relevant_header_gate": true,
+    "unknown_or_changed_contract_returns_null_not_zero_dependencies": true,
+    "actual_owner_invoice_functions_tested_in_disposable_fixture_only": true,
+    "vendor_validator_is_synthetic_not_vendor_auth_qualification": true,
+    "full_partial_and_text_detail_fallback_cases_verified": true,
+    "malformed_details_and_bounded_context_remain_unqualified": true,
+    "predicted_field_loss_matches_actual_reader_after_synthetic_profile_removal": true,
+    "legacy_read_repair_demonstrated_only_inside_rollback_fixture": true,
+    "new_admin_assessment_does_not_invoke_legacy_reader": true,
+    "new_assessment_preserves_synthetic_orders_segments_and_customers": true,
+    "browser_uses_actual_sql_summary_and_displays_dependency_warning": true,
+    "summary_copies_no_contacts_or_snapshot_values": true,
+    "artifact_id": 12614878919,
+    "artifact_sha256": "d71a29e29f027714d56b8d294d64b1362760676ab352f93151efd801878fe147",
+    "390px_synthetic_admin_screenshot_visually_reviewed": true,
+    "previous_privacy_wallet_backup_browser_and_rollback_checks_passed": true,
+    "electronic_invoice_paths_and_all_invoice_variants_qualified_for_account_erasure": false,
+    "all_149_tables_transactional_erasure_complete": false,
+    "production_deployed_or_erasure_enabled": false
   }
 }

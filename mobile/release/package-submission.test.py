@@ -34,6 +34,8 @@ class ReviewPackage(unittest.TestCase):
     self.assertIn('guide/OWNER-NEXT-ACTION-AR.md',names)
     self.assertIn('review-source-NOT-DEPLOY/sql/kinto-privacy-invoice-contract-readonly-v1.sql',names)
     self.assertIn('review-source-NOT-DEPLOY/mobile/privacy/OWNER-INVOICE-CATALOG-20261026.json',names)
+    self.assertIn('review-source-NOT-DEPLOY/mobile/privacy/OWNER-INVOICE-CONTRACT-20261026.json',names)
+    self.assertNotIn('review-source-NOT-DEPLOY/mobile/privacy/owner-invoice-contract-fixture.sql',names)
     self.assertIn('review-source-NOT-DEPLOY/mobile/privacy/OWNER-CUSTOMER-PROFILE-20261025.json',names)
     self.assertNotIn('review-source-NOT-DEPLOY/mobile/privacy/backup-restore-check.py',names)
     self.assertFalse(any(x.endswith(('.apk','.aab','.jks','.keystore'))for x in names))

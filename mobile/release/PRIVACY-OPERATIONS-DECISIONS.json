@@ -103,6 +103,10 @@
     "actual_provider_or_storage_test_completed": false,
     "support_question_sent_by_owner_confirmed": true,
     "owner_sent_confirmation_source": "owner screenshot: Support request sent, received 2026-10-26 Istanbul",
-    "support_response_received": false
+    "support_response_received": false,
+    "support_ticket_id": "SU-524673",
+    "support_acknowledgement_received": true,
+    "support_technical_response_received": false,
+    "support_acknowledgement_counts_as_deletion_behavior_qualification": false
   }
 }
