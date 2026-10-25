@@ -51,6 +51,8 @@ jobs:
           "$RUNNER_TEMP/kinto-privacy-ui/node_modules/.bin/playwright" install --with-deps chromium
           python3 mobile/privacy/test-server.py > "$RUNNER_TEMP/privacy-server.log" 2>&1 &
           NODE_PATH="$RUNNER_TEMP/kinto-privacy-ui/node_modules" node mobile/privacy/browser-check.cjs
+      - name: Observed schema types and secondary-session deletion safety
+        run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/observed-schema-check.sql
       - name: Rollback preserves requests and existing operations
         run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/rollback-check.sql
       - uses: actions/upload-artifact@v4
