@@ -342,5 +342,42 @@
     "actual_storage_call": false,
     "native_application_rebuilt": false,
     "full_transactional_account_and_chat_attachment_erasure_complete": false
+  },
+  "deletion_progress_and_cancellation": {
+    "run_id": 40224571331,
+    "job_id": 121263100866,
+    "tested_commit": "f57c14c30071bdb9d81b700a4a2f25123fde1b67",
+    "result": "success",
+    "source_rollback_parent": "ef3f49dbfba37d91a0c97fde1e8af21db2acae14",
+    "scope": "owner/admin request progress and safe cancellation coordination only, not a new eraser",
+    "customer_scope_other_owner_denied": true,
+    "request_or_partial_work_cannot_claim_account_deletion": true,
+    "fresh_profile_completion_requires_existing_final_receipt_and_ledger": true,
+    "prepared_zero_attempt_work_remains_cancellable": true,
+    "pending_retry_and_held_work_with_attempts_block_cancellation": true,
+    "unconfirmed_attempt_is_not_reported_as_confirmed_data_removal": true,
+    "private_notes_and_content_hashes_not_returned": true,
+    "normal_session_last_seen_update_retained": true,
+    "business_profiles_orders_and_files_not_mutated": true,
+    "explicit_refresh_no_polling": true,
+    "active_duplicate_form_and_unsafe_cancel_hidden": true,
+    "admin_and_customer_progress_agree": true,
+    "rollback_disables_request_mutation_before_removing_guards": true,
+    "worker_unit_cases": 21,
+    "pinned_sdk_transport_cases": 5,
+    "checkpoint_cases": 10,
+    "previous_sql_browser_and_preservation_checks_passed": true,
+    "visual_check": {
+      "run_id": 40224246303,
+      "artifact_id": 12611010179,
+      "file": "customer-deletion-progress.png",
+      "viewport_width": 390,
+      "digest": "sha256:026168580885fc2a41efa097b391abd5e27858b5048047beff4ede9b07c0fdde",
+      "inspected": true,
+      "ui_unchanged_by_later_rollback_only_change": true
+    },
+    "production_sql_executed": false,
+    "native_application_rebuilt": false,
+    "full_account_and_chat_attachment_erasure_complete": false
   }
 }
