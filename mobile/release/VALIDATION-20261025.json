@@ -1,0 +1,62 @@
+{
+  "production_deployed": false,
+  "merged": false,
+  "privacy_run": 40185233968,
+  "privacy_job": 121144517917,
+  "privacy_result": "success",
+  "privacy_test_head": "01e93d0c8116bc26d9b50d02c60f7445aa8ffc94",
+  "native_run": 40184699677,
+  "native_head": "91009cd139de0353ea6b561e683892260e939979",
+  "native_jobs": {
+    "candidate": 121142904416,
+    "api29": 121143171879,
+    "api36": 121143171836
+  },
+  "native_result": "success",
+  "api29_provider": "74.0.3729.185",
+  "api29_result": "explicit update guard; no web account content opened",
+  "api36_provider": "133.0.6943.137",
+  "api36_result": "functional opening, privacy fallback, warm return, offline retry, synthetic customer/staff/vendor invoice layout, actual H264 playback",
+  "lint_errors": 0,
+  "lint_warnings": 21,
+  "ugc_deployed": false,
+  "full_production_erasure_tested": false,
+  "existing_orders_unchanged_in_isolated_checks": true,
+  "existing_function_bodies_unchanged_in_isolated_checks": true,
+  "no_real_payment_order_or_production_write": true,
+  "compiled_candidate_audit": {
+    "production_upload_ready": false,
+    "checks": {
+      "compiled_permissions": [
+        "android.permission.INTERNET"
+      ],
+      "target_sdk": 36,
+      "min_sdk": 28,
+      "debuggable": false,
+      "no_packaged_native_code": true,
+      "six_store_assets_preserved": true,
+      "dex_identical_to_delivered_accepted28": false,
+      "explicit_backup_and_transfer_exclusions": true
+    },
+    "artifacts": {
+      "apk": {
+        "sha256": "504a151db8754e7c9e7b26527355044aff1162e32f6b91e579aab9d0a73acc04",
+        "size": 194820,
+        "native_libraries": 0,
+        "fixture_assets": 0
+      },
+      "aab": {
+        "sha256": "9e40419aa315437ffae6deda210553632f78df8749faaddd5f41ee3e7471cf25",
+        "size": 142555,
+        "native_libraries": 0,
+        "fixture_assets": 0
+      }
+    },
+    "notes": [
+      "DEX equality may differ when generated resource classes/IDs change; accepted Java logic is checked separately.",
+      "Pure Java app has no packaged native .so requiring ELF page realignment; system WebView is maintained outside this APK.",
+      "This inspection is not a Play pre-launch report or policy approval.",
+      "Final Console identity, signing, deletion fulfillment and declarations remain gates."
+    ]
+  }
+}
