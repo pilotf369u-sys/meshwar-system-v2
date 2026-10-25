@@ -67,6 +67,10 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/checkpoint-check.sql
           python3 mobile/privacy/checkpoint.test.py
+      - name: Actual isolated dump restore and external-checkpoint reconciliation
+        env:
+          KINTO_PRIVACY_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: python3 mobile/privacy/backup-restore-check.py
       - name: Read-only metadata inventory leaves fixture unchanged
         run: python3 mobile/privacy/inventory-check.py
       - name: JavaScript syntax and preserved review contracts
