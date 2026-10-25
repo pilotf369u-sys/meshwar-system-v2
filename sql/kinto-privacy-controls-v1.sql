@@ -7,6 +7,10 @@ CREATE TABLE private.kinto_review_reports_v1(id uuid PRIMARY KEY DEFAULT gen_ran
 CREATE TABLE private.kinto_deletion_requests_v1(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),customer_id uuid REFERENCES public.customers(id) ON DELETE SET NULL,status text NOT NULL DEFAULT 'pending' CHECK(status IN('pending','verified','manual_review','cancelled','deleted')),created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now(),verified_by uuid,verification_note text,CHECK(status<>'deleted' OR customer_id IS NULL));
 CREATE UNIQUE INDEX kinto_one_open_deletion_v1 ON private.kinto_deletion_requests_v1(customer_id) WHERE status IN('pending','verified','manual_review');
 CREATE TABLE private.kinto_privacy_events_v1(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,request_id uuid NOT NULL REFERENCES private.kinto_deletion_requests_v1(id),event text NOT NULL,admin_id uuid,created_at timestamptz NOT NULL DEFAULT now());
+-- Minimal, private restore ledger. No phone/email/session tokens or account UUIDs are stored here.
+CREATE TABLE private.kinto_erasure_ledger_v1(sequence_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,customer_hash text UNIQUE NOT NULL CHECK(customer_hash~'^[0-9a-f]{64}$'),request_id uuid NOT NULL REFERENCES private.kinto_deletion_requests_v1(id),erased_at timestamptz NOT NULL DEFAULT now());
+ALTER TABLE private.kinto_erasure_ledger_v1 ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON private.kinto_erasure_ledger_v1 FROM PUBLIC,anon,authenticated;
 -- Only a DB owner may configure this after a complete inventory/retention review.
 -- Empty by default: the executor cannot run on production merely by installing SQL.
 CREATE TABLE private.kinto_erasure_policy_v1(singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton),enabled boolean NOT NULL DEFAULT false,inventory_signature text NOT NULL,policy_url text NOT NULL,retention_notice text NOT NULL,CHECK(policy_url LIKE 'https://shopkinto.com/%'),CHECK(length(retention_notice)>=20));
@@ -120,8 +124,56 @@ CREATE FUNCTION private.kinto_erasure_signature_v1()RETURNS text LANGUAGE sql ST
    FROM relations r JOIN pg_policy p ON p.polrelid=r.oid
  )SELECT md5(coalesce(jsonb_agg(jsonb_build_array(key,value)ORDER BY key)::text,''))FROM parts;
 $$;
+-- Only these non-financial preference relations are managed. Unknown cascades/triggers hold erasure.
+CREATE FUNCTION private.kinto_privacy_preferences_ready_v1()RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp AS $$
+DECLARE name text;rel oid;owned integer;fk_ok boolean;managed oid[]:='{}';BEGIN
+ FOREACH name IN ARRAY ARRAY['public.customer_local_carts','public.customer_favorite_lists','public.customer_favorite_items','public.customer_notification_reads_v155','private.kinto_review_blocks_v1']LOOP
+  rel:=to_regclass(name);IF rel IS NULL THEN CONTINUE;END IF;managed:=array_append(managed,rel);
+  SELECT count(*)INTO owned FROM pg_attribute WHERE attrelid=rel AND attname='customer_id'AND atttypid='uuid'::regtype AND NOT attisdropped;
+  IF owned<>1 THEN RETURN false;END IF;
+  IF name='public.customer_favorite_items'THEN
+   SELECT EXISTS(SELECT 1 FROM pg_constraint f WHERE f.conrelid=rel AND f.contype='f'AND f.confrelid=to_regclass('public.customer_favorite_lists')AND
+    (SELECT array_agg(a.attname::text ORDER BY k.ord)FROM unnest(f.conkey)WITH ORDINALITY k(num,ord)JOIN pg_attribute a ON a.attrelid=f.conrelid AND a.attnum=k.num)=ARRAY['list_id','customer_id']AND
+    (SELECT array_agg(a.attname::text ORDER BY k.ord)FROM unnest(f.confkey)WITH ORDINALITY k(num,ord)JOIN pg_attribute a ON a.attrelid=f.confrelid AND a.attnum=k.num)=ARRAY['id','customer_id'])INTO fk_ok;
+  ELSE
+   SELECT EXISTS(SELECT 1 FROM pg_constraint f JOIN pg_attribute a ON a.attrelid=f.conrelid AND a.attnum=f.conkey[1]WHERE f.contype='f'AND f.conrelid=rel AND f.confrelid='public.customers'::regclass AND cardinality(f.conkey)=1 AND a.attname='customer_id'AND f.confkey[1]=(SELECT attnum FROM pg_attribute WHERE attrelid='public.customers'::regclass AND attname='id'))INTO fk_ok;
+  END IF;
+  IF NOT fk_ok THEN RETURN false;END IF;
+  IF name='private.kinto_review_blocks_v1'AND NOT EXISTS(SELECT 1 FROM pg_attribute a JOIN pg_constraint f ON f.conrelid=a.attrelid AND f.conkey=ARRAY[a.attnum]::smallint[]WHERE a.attrelid=rel AND a.attname='blocked_customer_id'AND a.atttypid='uuid'::regtype AND NOT a.attisdropped AND f.contype='f'AND f.confrelid='public.customers'::regclass AND f.confkey[1]=(SELECT attnum FROM pg_attribute WHERE attrelid='public.customers'::regclass AND attname='id'))THEN RETURN false;END IF;
+
+  IF EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid=rel AND NOT tgisinternal AND tgenabled<>'D'AND(tgtype::integer&8)<>0)THEN RETURN false;END IF;
+ END LOOP;
+ IF EXISTS(SELECT 1 FROM pg_constraint WHERE contype='f'AND confrelid=ANY(managed)AND NOT(conrelid=ANY(managed)))THEN RETURN false;END IF;
+ RETURN true;
+END$$;
+CREATE FUNCTION private.kinto_privacy_preferences_purge_v1(cid uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp SET lock_timeout='500ms' AS $$
+DECLARE name text;rel oid;cnt integer;counts jsonb:='{}';BEGIN
+ IF cid IS NULL OR NOT private.kinto_privacy_preferences_ready_v1()THEN RAISE EXCEPTION 'PREFERENCE_SCHEMA_NOT_VERIFIED';END IF;
+ -- Drain preference writers too. Lock every managed relation before the first DELETE.
+ FOREACH name IN ARRAY ARRAY['public.customer_local_carts','public.customer_favorite_lists','public.customer_favorite_items','public.customer_notification_reads_v155','private.kinto_review_blocks_v1']LOOP
+  rel:=to_regclass(name);IF rel IS NOT NULL THEN EXECUTE format('LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE',rel::regclass);END IF;
+ END LOOP;
+ FOREACH name IN ARRAY ARRAY['public.customer_favorite_items','public.customer_favorite_lists','public.customer_local_carts','public.customer_notification_reads_v155','private.kinto_review_blocks_v1']LOOP
+  rel:=to_regclass(name);IF rel IS NULL THEN CONTINUE;END IF;
+  IF name='private.kinto_review_blocks_v1'THEN EXECUTE format('DELETE FROM %s WHERE customer_id=$1 OR blocked_customer_id=$1',rel::regclass)USING cid;
+  ELSE EXECUTE format('DELETE FROM %s WHERE customer_id=$1',rel::regclass)USING cid;END IF;
+  GET DIAGNOSTICS cnt=ROW_COUNT;counts:=counts||jsonb_build_object(name,cnt);
+ END LOOP;RETURN counts;
+END$$;
+-- Read-only operator helpers; no public RPC, auto-restore or approval from partial input.
+CREATE FUNCTION private.kinto_privacy_erasure_ledger_export_v1(p_after_sequence bigint DEFAULT 0,p_limit integer DEFAULT 200)RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,private,pg_temp AS $$
+ SELECT coalesce(jsonb_agg(to_jsonb(l)ORDER BY sequence_id),'[]'::jsonb)FROM(SELECT *FROM private.kinto_erasure_ledger_v1 WHERE sequence_id>greatest(coalesce(p_after_sequence,0),0)ORDER BY sequence_id LIMIT least(greatest(coalesce(p_limit,200),1),500))l;
+$$;
+CREATE FUNCTION private.kinto_privacy_restore_matches_v1(p_external_hashes jsonb)RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,private,public,extensions,pg_temp AS $$
+DECLARE matches jsonb;BEGIN
+ IF jsonb_typeof(p_external_hashes)IS DISTINCT FROM 'array'THEN RAISE EXCEPTION 'EXTERNAL_ERASURE_LEDGER_REQUIRED';END IF;
+ IF jsonb_array_length(p_external_hashes)NOT BETWEEN 1 AND 10000 OR EXISTS(SELECT 1 FROM jsonb_array_elements(p_external_hashes)x WHERE jsonb_typeof(x)<>'string'OR(x#>>'{}')!~'^[0-9a-f]{64}$')THEN RAISE EXCEPTION 'EXTERNAL_ERASURE_LEDGER_REQUIRED';END IF;
+ SELECT coalesce(jsonb_agg(DISTINCT encode(digest(c.id::text,'sha256'),'hex')),'[]'::jsonb)INTO matches FROM public.customers c WHERE encode(digest(c.id::text,'sha256'),'hex')IN(SELECT jsonb_array_elements_text(p_external_hashes));
+ RETURN jsonb_build_object('matched_hashes',matches,'coverage_verified',false,'restore_authorized',false);
+END$$;
+REVOKE ALL ON FUNCTION private.kinto_privacy_preferences_ready_v1(),private.kinto_privacy_preferences_purge_v1(uuid),private.kinto_privacy_erasure_ledger_export_v1(bigint,integer),private.kinto_privacy_restore_matches_v1(jsonb)FROM PUBLIC,anon,authenticated;
 CREATE FUNCTION private.kinto_erasure_inventory_v1(cid uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp AS $$
-DECLARE r record;cnt bigint;holds jsonb:='[]';BEGIN
+DECLARE r record;cnt bigint;holds jsonb:='[]';preferences_ready boolean:=private.kinto_privacy_preferences_ready_v1();BEGIN
  FOR r IN SELECT DISTINCT n.nspname,c.relname,a.attname,
  EXISTS(SELECT 1 FROM pg_constraint fk WHERE fk.contype='f' AND fk.conrelid=c.oid AND a.attnum=ANY(fk.conkey)AND fk.confrelid='public.customers'::regclass)has_fk
  FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped
@@ -129,9 +181,11 @@ DECLARE r record;cnt bigint;holds jsonb:='[]';BEGIN
  LOOP
   IF r.nspname='private'AND r.relname IN('kinto_deletion_requests_v1','kinto_review_consents_v1')THEN CONTINUE;END IF;
   IF r.nspname='public'AND r.relname='customer_review_sessions'THEN CONTINUE;END IF;
+  IF preferences_ready AND(r.nspname||'.'||r.relname)=ANY(ARRAY['public.customer_local_carts','public.customer_favorite_lists','public.customer_favorite_items','public.customer_notification_reads_v155','private.kinto_review_blocks_v1'])THEN CONTINUE;END IF;
   EXECUTE format('SELECT count(*)FROM %I.%I WHERE %I::text=$1',r.nspname,r.relname,r.attname)INTO cnt USING cid::text;
   IF cnt>0 OR NOT r.has_fk THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation',r.nspname||'.'||r.relname,'column',r.attname,'rows',cnt,'reason',CASE WHEN NOT r.has_fk THEN 'unverified_write_relationship'ELSE 'associated_data_requires_review'END));END IF;
  END LOOP;
+ IF NOT preferences_ready THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation','preferences','reason','preference_schema_not_verified'));END IF;
  -- Identity snapshots without a customer key cannot be safely matched by name.
  IF to_regclass('public.local_orders')IS NOT NULL THEN holds:=holds||jsonb_build_array(jsonb_build_object('relation','public.local_orders','reason','legacy_identity_mapping_required'));END IF;
  RETURN jsonb_build_object('holds',holds,'fresh_profile_eligible',jsonb_array_length(holds)=0,'inventory_signature',private.kinto_erasure_signature_v1());
@@ -171,11 +225,13 @@ DECLARE aid uuid:=private.require_admin_session_v147(p_session_token)::uuid;req 
   RETURN jsonb_build_object('ok',false,'status','manual_review','plan',plan);
  END IF;
  PERFORM private.kinto_privacy_revoke_sessions_v1(req.customer_id);
+ PERFORM private.kinto_privacy_preferences_purge_v1(req.customer_id);
+ INSERT INTO private.kinto_erasure_ledger_v1(customer_hash,request_id)VALUES(encode(digest(req.customer_id::text,'sha256'),'hex'),req.id);
  DELETE FROM private.kinto_review_consents_v1 WHERE customer_id=req.customer_id;
  DELETE FROM public.customer_review_login_attempts WHERE identity_hash IN(SELECT digest(lower(trim(v.value)),'sha256')FROM public.customers c CROSS JOIN LATERAL jsonb_each_text(to_jsonb(c))v WHERE c.id=req.customer_id AND v.key IN('phone','email','code','customer_code')AND coalesce(trim(v.value),'')<>'');
  DELETE FROM public.customers WHERE id=req.customer_id;
  IF NOT FOUND THEN RAISE EXCEPTION 'CUSTOMER_MISSING';END IF;
- UPDATE private.kinto_deletion_requests_v1 SET status='deleted',updated_at=now()WHERE id=req.id;
+ UPDATE private.kinto_deletion_requests_v1 SET status='deleted',verification_note=NULL,updated_at=now()WHERE id=req.id;
  INSERT INTO private.kinto_privacy_events_v1(request_id,event,admin_id)VALUES(req.id,'fresh_account_deleted',aid);
  RETURN jsonb_build_object('ok',true,'status','deleted');
 END $$;
