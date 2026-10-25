@@ -128,9 +128,23 @@ CREATE FUNCTION private.kinto_erasure_signature_v1()RETURNS text LANGUAGE sql ST
 $$;
 -- Only these non-financial preference relations are managed. Unknown cascades/triggers hold erasure.
 CREATE FUNCTION private.kinto_privacy_preferences_ready_v1()RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp AS $$
-DECLARE name text;rel oid;owned integer;fk_ok boolean;managed oid[]:='{}';BEGIN
+DECLARE name text;rel oid;owned integer;fk_ok boolean;allowed jsonb;managed oid[]:='{}';BEGIN
  FOREACH name IN ARRAY ARRAY['public.customer_local_carts','public.customer_favorite_lists','public.customer_favorite_items','public.customer_notification_reads_v155','private.kinto_review_blocks_v1']LOOP
   rel:=to_regclass(name);IF rel IS NULL THEN CONTINUE;END IF;managed:=array_append(managed,rel);
+  -- A recognized ownership key does not qualify new financial/opaque columns.
+  -- Reapproving a catalog signature cannot waive this explicit data boundary.
+  allowed:=CASE name
+   WHEN 'public.customer_local_carts'THEN '{"customer_id":"uuid","items":"jsonb","updated_at":"timestamptz","revision_v189":"int8"}'::jsonb
+   WHEN 'public.customer_favorite_lists'THEN '{"id":"uuid","customer_id":"uuid","name":"text","is_default":"bool","created_at":"timestamptz","updated_at":"timestamptz"}'::jsonb
+   WHEN 'public.customer_favorite_items'THEN '{"id":"uuid","list_id":"uuid","customer_id":"uuid","store_id":"uuid","product_id":"uuid","created_at":"timestamptz"}'::jsonb
+   WHEN 'public.customer_notification_reads_v155'THEN '{"customer_id":"uuid","notification_key":"text","read_at":"timestamptz"}'::jsonb
+   WHEN 'private.kinto_review_blocks_v1' THEN '{"id":"uuid","customer_id":"uuid","blocked_customer_id":"uuid","created_at":"timestamptz"}'::jsonb
+  END;
+  IF allowed IS NULL OR EXISTS(SELECT 1 FROM pg_attribute a WHERE a.attrelid=rel AND a.attnum>0 AND NOT a.attisdropped AND(NOT(allowed?a.attname::text)OR a.atttypid IS DISTINCT FROM to_regtype(allowed->>a.attname::text)))THEN RETURN false;END IF;
+  IF NOT EXISTS(SELECT 1 FROM pg_class c WHERE c.oid=rel AND c.relkind='r'AND(NOT c.relrowsecurity OR(NOT c.relforcerowsecurity AND c.relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user))OR EXISTS(SELECT 1 FROM pg_roles WHERE rolname=current_user AND(rolsuper OR rolbypassrls))))
+   OR NOT has_table_privilege(current_user,rel,'DELETE')
+   OR EXISTS(SELECT 1 FROM pg_inherits WHERE inhparent=rel OR inhrelid=rel)
+   OR EXISTS(SELECT 1 FROM pg_rewrite WHERE ev_class=rel)THEN RETURN false;END IF;
   SELECT count(*)INTO owned FROM pg_attribute WHERE attrelid=rel AND attname='customer_id'AND atttypid='uuid'::regtype AND NOT attisdropped;
   IF owned<>1 THEN RETURN false;END IF;
   IF name='public.customer_favorite_items'THEN

@@ -24,6 +24,22 @@ SELECT public.kinto_privacy_admin_v1('test-admin','deletions',(SELECT id FROM pr
 SELECT id AS pref_request FROM private.kinto_deletion_requests_v1 WHERE customer_id='00000000-0000-4000-8000-000000000070' \gset
 UPDATE private.kinto_erasure_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
 SELECT public.test_assert(private.kinto_privacy_preferences_ready_v1(),'observed UUID/composite preference ownership accepted');
+SAVEPOINT unknown_financial_column;
+ALTER TABLE public.customer_local_carts ADD COLUMN held_payment_amount numeric DEFAULT 123;
+UPDATE private.kinto_erasure_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
+SELECT public.test_assert(NOT private.kinto_privacy_preferences_ready_v1(),'reapproved schema with unknown financial preference column is not eligible');
+SELECT public.test_denied($q$SELECT private.kinto_privacy_preferences_purge_v1('00000000-0000-4000-8000-000000000070')$q$,'PREFERENCE_SCHEMA_NOT_VERIFIED');
+SELECT public.test_assert((SELECT held_payment_amount FROM public.customer_local_carts WHERE customer_id='00000000-0000-4000-8000-000000000070')=123,'unknown amount remains untouched');
+ROLLBACK TO unknown_financial_column;
+SAVEPOINT changed_preference_type;
+ALTER TABLE public.customer_local_carts ALTER COLUMN items TYPE text USING items::text;
+UPDATE private.kinto_erasure_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
+SELECT public.test_assert(NOT private.kinto_privacy_preferences_ready_v1(),'known preference column with changed type remains unqualified');
+ROLLBACK TO changed_preference_type;
+SAVEPOINT inherited_preference;
+CREATE TABLE public.test_inherited_cart()INHERITS(public.customer_local_carts);
+SELECT public.test_assert(NOT private.kinto_privacy_preferences_ready_v1(),'inherited preference table cannot widen exact-owner erasure');
+ROLLBACK TO inherited_preference;
 SAVEPOINT unknown_cascade;
 CREATE TABLE public.test_preference_financial_child(list_id uuid REFERENCES public.customer_favorite_lists(id)ON DELETE CASCADE,amount numeric);
 INSERT INTO public.test_preference_financial_child VALUES('00000000-0000-4000-8000-000000000071',123);
