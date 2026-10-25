@@ -604,11 +604,11 @@
     "base_main": "5e717436fed47d665ac36690293bf1ad43b4e3f4",
     "first_candidate_has_one_main_parent": true,
     "old_stacked_branch_merged": false,
-    "qualified_code_head": "3f4cdcf9397a289b11657f7c2f164f8e76f82840",
-    "run_id": 40244609885,
-    "job_id": 121323420929,
+    "qualified_code_head": "450b92d51efc3a08d7112cee4aea2e874d7c74f3",
+    "run_id": 40245189143,
+    "job_id": 121325154693,
     "result": "success",
-    "run_url": "https://github.com/pilotf369u-sys/meshwar-system-v2/actions/runs/40244609885",
+    "run_url": "https://github.com/pilotf369u-sys/meshwar-system-v2/actions/runs/40245189143",
     "protected_current_main_files": 587,
     "qualified_mobile_source_files_pinned": 110,
     "dashboard_only_adds_one_privacy_dependency": true,
@@ -627,6 +627,8 @@
     "production_sql_edge_hostinger_or_store_deployed": false,
     "full_transactional_account_deletion_or_real_backup_restore_qualified": false,
     "merge_authorized": false,
-    "production_upload_ready": false
+    "production_upload_ready": false,
+    "earlier_trigger_coverage_run_id": 40244609885,
+    "post_disclosure_source_full_workflow_result": "success"
   }
 }
