@@ -63,7 +63,10 @@ DECLARE cid uuid;r jsonb;d private.kinto_privacy_review_decisions_v1;aid uuid;af
  PERFORM private.kinto_privacy_chat_context_v1(p_session_token,p_request_id);
  IF NOT private.kinto_privacy_review_schema_v1()THEN RAISE EXCEPTION 'REVIEW_ERASURE_SCHEMA_NOT_VERIFIED';END IF;
  SELECT *INTO d FROM private.kinto_privacy_review_decisions_v1 WHERE request_id=p_request_id AND review_id=p_review_id FOR UPDATE;
- IF d.state='erased'THEN RETURN jsonb_build_object('erased',true,'duplicate',true,'account_deleted',false);END IF;
+ IF d.state='erased'THEN
+  IF EXISTS(SELECT 1 FROM public.product_reviews WHERE id=p_review_id)THEN RAISE EXCEPTION 'ERASED_REVIEW_REAPPEARED';END IF;
+  RETURN jsonb_build_object('erased',true,'duplicate',true,'account_deleted',false);
+ END IF;
  IF d.state IS DISTINCT FROM 'approved'THEN RAISE EXCEPTION 'REVIEW_ERASURE_APPROVAL_REQUIRED';END IF;
  -- Match the existing media worker's job-before-review lock order.
  PERFORM 1 FROM private.kinto_privacy_media_jobs_v1 WHERE review_id=p_review_id ORDER BY id FOR UPDATE;
