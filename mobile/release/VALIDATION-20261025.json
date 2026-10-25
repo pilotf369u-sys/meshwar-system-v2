@@ -99,5 +99,15 @@
     "scope": "read-only indirect foreign keys, scoped trigger source and three allowlisted bucket settings on disposable PostgreSQL17",
     "fixture_data_functions_schema_unchanged": true,
     "executed_on_production": false
+  },
+  "owner_dependency_export_review": {
+    "transaction_read_only": "on",
+    "foreign_keys": 104,
+    "scoped_triggers": 43,
+    "known_buckets": 3,
+    "agent_production_write": false,
+    "complete_production_clone": false,
+    "full_erasure_verified": false,
+    "evidence": "mobile/privacy/OWNER-DEPENDENCIES-20261025.json"
   }
 }
