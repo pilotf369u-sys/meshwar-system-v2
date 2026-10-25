@@ -4,6 +4,16 @@ CREATE FUNCTION public.test_denied(q text,expected text)RETURNS void LANGUAGE pl
 INSERT INTO public.customers VALUES('00000000-0000-4000-8000-000000000001','TEST A','00001','a@example.invalid','TEST-A','TEST-PASSWORD'),('00000000-0000-4000-8000-000000000002','TEST B','00002','b@example.invalid','TEST-B','TEST-PASSWORD'),('00000000-0000-4000-8000-000000000003','TEST fresh','00003','fresh@example.invalid','TEST-FRESH','TEST-PASSWORD');
 INSERT INTO public.customer_review_sessions(customer_id,token_hash,expires_at)SELECT id,digest('test-'||code,'sha256'),now()+interval '1 hour'FROM public.customers;
 INSERT INTO public.admin_sessions_v147(admin_id,token_hash,expires_at)VALUES('00000000-0000-4000-8000-000000000099',digest('test-admin','sha256'),now()+interval '1 hour');
+-- Actual owner-exported identity/admin validation, no account password in identity output.
+SET ROLE anon;
+SELECT public.test_assert(public.customer_session_identity_v150('test-TEST-A')->'customer'->>'id'='00000000-0000-4000-8000-000000000001','exported identity stays scoped to session owner');
+SELECT public.test_assert(NOT(public.customer_session_identity_v150('test-TEST-A')->'customer'?'password'),'exported identity omits password');
+RESET ROLE;
+UPDATE public.admin_sessions_v147 SET expires_at=now()-interval '1 second';
+SELECT public.test_denied($q$SELECT public.kinto_privacy_admin_v1('test-admin','deletions')$q$,'ADMIN_SESSION_INVALID');
+UPDATE public.admin_sessions_v147 SET expires_at=now()+interval '1 hour',revoked_at=now();
+SELECT public.test_denied($q$SELECT public.kinto_privacy_admin_v1('test-admin','reports')$q$,'ADMIN_SESSION_INVALID');
+UPDATE public.admin_sessions_v147 SET revoked_at=NULL;
 INSERT INTO public.local_stores VALUES('00000000-0000-4000-8000-000000000010');
 INSERT INTO public.local_products VALUES('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000010','TEST product',NULL);
 INSERT INTO public.orders SELECT '00000000-0000-4000-8000-000000000030',id,'تم التسليم','{"product_id":"00000000-0000-4000-8000-000000000020","product_name":"TEST snapshot"}'FROM public.customers WHERE code='TEST-B';

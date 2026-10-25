@@ -19,3 +19,9 @@ The supplied body hashes for private.require_customer_review_session, public.cus
 Production deletion remains disabled. No account/order/payment/customer data or configuration was read or changed by the agent. The owner-supplied metadata advances schema alignment only; full identity/media/retention closure is still required.
 
 Validation passed: https://github.com/pilotf369u-sys/meshwar-system-v2/actions/runs/40192455263 . The observed-type ownership and held-erasure checks, existing browser flows and rollback all passed. Next narrowly scoped owner query: sql/kinto-privacy-session-contract-readonly-v1.sql (four function definitions only, no execution of application RPCs).
+
+## Owner-exported session contracts received
+
+A second owner-run READ ONLY query supplied all four requested definitions: customer session validator, admin session validator, customer identity and review submit. All four exist. Comparing SQL body tokens while preserving quoted literals and ignoring only comments/formatting found a match to shipped source. Customer validator search_path also includes extensions as required by the deployed pgcrypto setup. No production function replacement is needed or proposed.
+
+`owner-session-contract-fixture.sql` contains those definitions for disposable tests only. Bootstrap now installs them before capturing the original-function preservation snapshot. Additional checks exercise identity scoping/password omission and expired/revoked admin tokens. The helper review_delivered_product remains the shipped fixture implementation; it was not one of the four exported definitions, and full live grants/RLS/triggers were not supplied. Do not claim this is a full production clone or general authentication audit.
