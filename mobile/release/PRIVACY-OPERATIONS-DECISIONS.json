@@ -55,7 +55,8 @@
       "account erasures",
       "media key erasures",
       "reviewed chat text erasures"
-    ]
+    ],
+    "external_checkpoint_export_and_offline_validator_source_implemented": true
   },
   "synthetic_deletion_rehearsal_passed": true,
   "ugc_report_and_block_rehearsal_passed": true,

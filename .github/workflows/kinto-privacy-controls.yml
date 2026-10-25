@@ -2,7 +2,7 @@ name: KINTO isolated privacy controls
 'on':
   push:
     branches: [app/privacy-controls-20261025]
-    paths: ['sql/kinto-privacy-controls*','sql/kinto-privacy-media*','sql/kinto-privacy-chat*','supabase/functions/kinto-privacy-media-v1/**','supabase/config.toml','mobile/privacy/**','js/*privacy*','js/*product-reviews*','.github/workflows/kinto-privacy-controls.yml']
+    paths: ['sql/kinto-privacy-controls*','sql/kinto-privacy-media*','sql/kinto-privacy-chat*','sql/kinto-privacy-checkpoint*','supabase/functions/kinto-privacy-media-v1/**','supabase/config.toml','mobile/privacy/**','js/*privacy*','js/*product-reviews*','.github/workflows/kinto-privacy-controls.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -52,6 +52,10 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/chat-check.sql
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/chat-attachment-check.sql
+      - name: Coherent minimal external erasure checkpoint
+        run: |
+          psql -v ON_ERROR_STOP=1 -f mobile/privacy/checkpoint-check.sql
+          python3 mobile/privacy/checkpoint.test.py
       - name: Read-only metadata inventory leaves fixture unchanged
         run: python3 mobile/privacy/inventory-check.py
       - name: JavaScript syntax and preserved review contracts

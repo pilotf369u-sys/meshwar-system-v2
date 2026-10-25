@@ -30,7 +30,8 @@ class ReviewPackage(unittest.TestCase):
     self.assertFalse(any('function_definition' in t for t in evidence['triggers']))
     self.assertTrue(all(len(t['function_definition_sha256'])==64 for t in evidence['triggers']))
     self.assertIn('guide/PLAY-POLICY-RECHECK-20261025.md',names)
-    self.assertFalse(any(x.endswith(('.apk','.aab','.jks','.keystore','.py'))for x in names))
+    self.assertFalse(any(x.endswith(('.apk','.aab','.jks','.keystore'))for x in names))
+    self.assertEqual({x for x in names if x.endswith('.py')},{'review-source-NOT-DEPLOY/mobile/privacy/checkpoint.py'})
     self.assertFalse(any('browser-fixture'in x or 'test-server'in x or 'password'in x for x in names))
     for line in z.read('SHA256SUMS.txt').decode().splitlines():
      digest,name=line.split('  ',1);self.assertEqual(hashlib.sha256(z.read(name)).hexdigest(),digest,name)
