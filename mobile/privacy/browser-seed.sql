@@ -8,4 +8,8 @@ INSERT INTO public.messages(id,customer_id,sender_type,message,file_url)VALUES
  (101,'00000000-0000-4000-8000-000000000001','customer','TEST chat <img src=x onerror=window.chatInjected=1>',NULL),
  (102,'00000000-0000-4000-8000-000000000001','customer','TEST file evidence','https://example.invalid/receipt.png'),
  (201,'00000000-0000-4000-8000-000000000002','customer','TEST other conversation',NULL);
+-- Synthetic invoice fixture for the actual admin assessment UI. Existing order unchanged.
+ALTER TABLE public.order_store_segments ADD COLUMN customer_snapshot jsonb;
+INSERT INTO public.order_store_segments(id,order_id,store_id,items_snapshot,customer_snapshot)VALUES('00000000-0000-4000-8000-000000000081','00000000-0000-4000-8000-000000000030','00000000-0000-4000-8000-000000000010','[]','{"name":"TEST frozen invoice name"}');
+\ir owner-invoice-contract-fixture.sql
 UPDATE private.kinto_erasure_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
