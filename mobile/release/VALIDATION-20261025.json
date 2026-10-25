@@ -66,5 +66,19 @@
     "scope": "metadata inspection in disposable PostgreSQL17; no production schema connection",
     "customer_order_functions_schema_unchanged": true,
     "browser_and_rollback_rechecked": true
+  },
+  "owner_observed_schema_followup": {
+    "owner_catalog_only": true,
+    "transaction_read_only": "on",
+    "tables": 149,
+    "columns": 1195,
+    "candidate_functions": 163,
+    "customer_foreign_keys": 8,
+    "synthetic_projection_run": 40192455263,
+    "synthetic_projection_job": 121166160428,
+    "synthetic_projection_result": "success",
+    "scope": "observed order text types and secondary session table; not a full production clone",
+    "production_unchanged": true,
+    "deployed_function_bodies_verified": false
   }
 }
