@@ -7,8 +7,8 @@ SELECT public.test_denied($q$SELECT public.kinto_privacy_transaction_preview_adm
 SELECT public.test_denied($q$SELECT public.kinto_privacy_transaction_preview_admin_v1('test-admin','00000000-0000-4000-8000-000000000092')$q$,'VERIFIED_REQUEST_REQUIRED');
 SET ROLE anon;
 SELECT public.test_assert(public.kinto_privacy_transaction_preview_admin_v1('test-admin','00000000-0000-4000-8000-000000000091')->'sections'->'orders'->>'sample_count'='0','customer B order excluded from A preview');
-SELECT public.test_assert(NOT has_function_privilege('anon','private.kinto_privacy_transaction_preview_v1(uuid)','EXECUTE'),'no direct private helper access');
 RESET ROLE;
+SELECT public.test_assert(NOT has_function_privilege('anon','private.kinto_privacy_transaction_preview_v1(uuid)','EXECUTE'),'no direct private helper access');
 SELECT public.test_assert(public.kinto_privacy_transaction_preview_admin_v1('test-admin','00000000-0000-4000-8000-000000000091')->'sections'->'world_orders'->>'available'='false','missing observed tables are unavailable not empty');
 SAVEPOINT preview_fixture;
 ALTER TABLE public.orders DROP CONSTRAINT orders_customer_id_fkey;
@@ -21,12 +21,14 @@ CREATE TABLE private.kinto_payment_attempts_p4(id uuid PRIMARY KEY,customer_id t
 INSERT INTO private.kinto_payment_attempts_p4 VALUES('00000000-0000-4000-8000-000000000095','00000000-0000-4000-8000-000000000001','pending',now()-interval '10 days');
 CREATE TABLE private.kinto_world_orders_v1(id uuid PRIMARY KEY,customer_id uuid,request jsonb);
 INSERT INTO private.kinto_world_orders_v1 VALUES('00000000-0000-4000-8000-000000000096','00000000-0000-4000-8000-000000000001','{"contact":{"phone":"PRIVATE_PHONE"}}');
+CREATE TEMP TABLE preview_fixture_preserved AS SELECT(SELECT jsonb_agg(to_jsonb(x)ORDER BY id)FROM public.orders x)orders,(SELECT jsonb_agg(to_jsonb(x)ORDER BY id)FROM public.order_store_segments x)segments,(SELECT jsonb_agg(to_jsonb(x)ORDER BY id)FROM private.kinto_world_orders_v1 x)world_orders,(SELECT jsonb_agg(to_jsonb(x)ORDER BY id)FROM private.kinto_payment_attempts_p4 x)payments;
 CREATE TEMP TABLE preview_result AS SELECT public.kinto_privacy_transaction_preview_admin_v1('test-admin','00000000-0000-4000-8000-000000000091')r;
 SELECT public.test_assert((SELECT r->'sections'->'orders'->>'sample_count'='1'AND r->'sections'->'orders'->>'unreadable_objects'='1'FROM preview_result),'observed TEXT ownership and malformed details detected');
 SELECT public.test_assert((SELECT r->'sections'->'segments'->>'sample_count'='1'AND r->'sections'->'segments'->>'invoice_dependency_review_required'='true'FROM preview_result),'segment linked by order only; nonempty snapshot never proves complete');
 SELECT public.test_assert((SELECT r->'sections'->'payment_attempts'->>'outcome_unresolved'='1'FROM preview_result),'pending beyond expiry stays unresolved');
 SELECT public.test_assert((SELECT r->>'deletion_authorized'='false'AND r->>'coverage_complete'='false'AND r->>'production_ready'='false'FROM preview_result),'preview has no erasure or coverage authority');
 SELECT public.test_assert((SELECT r::text NOT LIKE '%PRIVATE_%'AND r::text NOT LIKE '%00000000-%'FROM preview_result),'no contact, row/customer IDs or raw details in report');
+SELECT public.test_assert((SELECT orders FROM preview_fixture_preserved)=(SELECT jsonb_agg(to_jsonb(x)ORDER BY id)FROM public.orders x)AND(SELECT segments FROM preview_fixture_preserved)=(SELECT jsonb_agg(to_jsonb(x)ORDER BY id)FROM public.order_store_segments x)AND(SELECT world_orders FROM preview_fixture_preserved)=(SELECT jsonb_agg(to_jsonb(x)ORDER BY id)FROM private.kinto_world_orders_v1 x)AND(SELECT payments FROM preview_fixture_preserved)=(SELECT jsonb_agg(to_jsonb(x)ORDER BY id)FROM private.kinto_payment_attempts_p4 x),'preview preserves every synthetic transactional row before rollback');
 INSERT INTO private.kinto_world_orders_v1 SELECT md5(g::text)::uuid,'00000000-0000-4000-8000-000000000001','{}'FROM generate_series(1,205)g;
 SELECT public.test_assert(public.kinto_privacy_transaction_preview_admin_v1('test-admin','00000000-0000-4000-8000-000000000091')->'sections'->'world_orders'->>'sample_count'='200'AND public.kinto_privacy_transaction_preview_admin_v1('test-admin','00000000-0000-4000-8000-000000000091')->'sections'->'world_orders'->>'truncated'='true','sample capped and overflow explicit');
 SAVEPOINT schema_drift;
