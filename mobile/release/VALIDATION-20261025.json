@@ -80,5 +80,16 @@
     "scope": "observed order text types and secondary session table; not a full production clone",
     "production_unchanged": true,
     "deployed_function_bodies_verified": false
+  },
+  "owner_exported_contracts_followup": {
+    "all_four_exist": true,
+    "sql_body_tokens_match_source": true,
+    "comparison_ignores": "comments and formatting only; quoted literal content preserved",
+    "read_only_owner_exports": true,
+    "run_id": 40193909952,
+    "job_id": 121170546456,
+    "result": "success",
+    "scope": "exact exported four definitions in disposable fixture; not complete live grants/triggers/helper definitions",
+    "production_unchanged": true
   }
 }
