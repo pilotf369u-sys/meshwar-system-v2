@@ -68,6 +68,15 @@ SELECT public.test_assert(EXISTS(SELECT 1 FROM public.customer_local_carts WHERE
 SELECT public.test_assert(EXISTS(SELECT 1 FROM public.customer_review_sessions WHERE token_hash=digest('test-TEST-PREF','sha256')),'failed final deletion restores live session');
 SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM private.kinto_erasure_ledger_v1 WHERE request_id=:'pref_request'),'failed deletion never emits a completed restore tombstone');
 ROLLBACK TO failure_after_cleanup;
+-- Supabase can install pgcrypto under extensions rather than public.
+-- Qualify the actual finalizer there, not only with the bootstrap's public install.
+SAVEPOINT extension_namespace;
+ALTER EXTENSION pgcrypto SET SCHEMA extensions;
+SET LOCAL search_path=public,extensions;
+UPDATE private.kinto_erasure_policy_v1 SET inventory_signature=private.kinto_erasure_signature_v1();
+SELECT public.test_assert(public.kinto_deletion_execute_v1('test-admin',:'pref_request',:'pref_request')->>'status'='deleted','fresh finalizer resolves pgcrypto in extensions schema');
+SELECT public.test_assert(public.kinto_deletion_execute_v1('test-admin',:'pref_request',:'pref_request')->>'duplicate'='true','repeat receipt validation resolves pgcrypto in extensions schema');
+ROLLBACK TO extension_namespace;
 SELECT public.test_assert(public.kinto_deletion_execute_v1('test-admin',:'pref_request',:'pref_request')->>'status'='deleted','actual fresh profile and preferences removed');
 SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM public.customers WHERE code='TEST-PREF'),'account row removed');
 SELECT public.test_assert((SELECT verification_note IS NULL AND customer_id IS NULL FROM private.kinto_deletion_requests_v1 WHERE id=:'pref_request'),'completed receipt sheds verification note and customer link');

@@ -260,7 +260,7 @@ DECLARE primary_count integer;portal_count integer:=0;has_portal boolean:=to_reg
  RETURN jsonb_build_object('review_sessions_removed',primary_count,'portal_sessions_removed',portal_count,'account_deleted',false);
 END$$;
 REVOKE ALL ON FUNCTION private.kinto_privacy_revoke_sessions_v1(uuid)FROM PUBLIC,anon,authenticated;
-CREATE FUNCTION public.kinto_deletion_execute_v1(p_session_token text,p_request_id uuid,p_confirm_request_id uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,pg_temp SET lock_timeout='500ms' AS $$
+CREATE FUNCTION public.kinto_deletion_execute_v1(p_session_token text,p_request_id uuid,p_confirm_request_id uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,private,public,extensions,pg_temp SET lock_timeout='500ms' AS $$
 DECLARE aid uuid:=private.require_admin_session_v147(p_session_token)::uuid;req private.kinto_deletion_requests_v1;cfg private.kinto_erasure_policy_v1;plan jsonb;BEGIN
  IF p_request_id IS DISTINCT FROM p_confirm_request_id THEN RAISE EXCEPTION 'EXACT_REQUEST_CONFIRMATION_REQUIRED';END IF;
  SELECT *INTO cfg FROM private.kinto_erasure_policy_v1 WHERE singleton AND enabled;
