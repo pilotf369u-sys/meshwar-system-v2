@@ -42,6 +42,7 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/media-check.sql
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/upload-ticket-check.sql
+          psql -v ON_ERROR_STOP=1 -f mobile/privacy/media-restore-check.sql
           node --test mobile/privacy/media-worker.test.mjs
           python3 mobile/privacy/media-concurrency-check.py
           npm install --prefix "$RUNNER_TEMP/kinto-privacy-sdk" --no-audit --no-fund @supabase/supabase-js@2.57.4

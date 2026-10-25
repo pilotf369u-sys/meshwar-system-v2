@@ -79,3 +79,11 @@ The media queue now distinguishes image and upload_ticket sources. A used ticket
 Ticket metadata in bootstrap is an isolated projection of the observed v150 schema; no existing production ticket table/RPC or Storage policy is replaced. The new guards are inactive for normal records without an approved leased erasure job. `upload-ticket-check.sql` checks target-owner used-ticket cleanup, failure/retry, inserted references after preparation, leased source changes, unused-authorization holds and other-owner/order preservation. SQL acknowledgements are synthetic; SDK requests remain intercepted.
 
 Owner backup evidence is now recorded in release/BACKUP-INVENTORY-20261025.md. The Free scheduled-backup page and the manual archive/OneDrive view do not establish provider-internal retention, complete copy inventory, integrity or any automatic expiry. No files or configuration were changed.
+
+## Media restore evidence and Storage drift
+
+Successful Storage acknowledgement now records a private bucket/key hash in the same SQL transaction that removes the image or completed ticket metadata. The image and its follow-up ticket share one entry per request/key. Failed acknowledgement creates no completed evidence. The private paged export contains no raw object path or customer/session identity and, like the account ledger, must be preserved as an external coherent checkpoint before restoring older database/media copies.
+
+A private read-only detector compares externally preserved media hashes to restored review/ticket paths and Storage metadata for the same bucket. It can detect a reappearing key even when no source review row remains. It does not inspect physical blobs, prove full checkpoint coverage, delete anything or authorize reopening a restored project. `media-restore-check.sql` uses a synthetic Storage metadata table only; no provider restoration or real Storage API call occurs.
+
+The erasure approval fingerprint now also includes Storage objects/buckets relation policies and the configuration of the three relevant buckets. Storage-policy and bucket-public-setting changes invalidate approval; their tests roll back. This does not verify provider internals, all privileges or actual file behavior. Production enablement and backup completion remain false.

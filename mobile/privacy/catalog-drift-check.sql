@@ -25,6 +25,15 @@ CREATE POLICY privacy_test_policy ON public.customers USING(true);
 SELECT public.test_assert(private.kinto_erasure_signature_v1()<>(SELECT sig FROM signature_before),'policy-only drift invalidates approval');
 ROLLBACK TO policy_drift;
 SELECT public.test_assert(private.kinto_erasure_signature_v1()=(SELECT sig FROM signature_before),'all drift tests restored');
+SAVEPOINT storage_policy_drift;
+CREATE POLICY privacy_test_storage_policy ON storage.buckets FOR SELECT TO anon USING(true);
+SELECT public.test_assert(private.kinto_erasure_signature_v1()<>(SELECT sig FROM signature_before),'Storage-policy-only change invalidates approval');
+ROLLBACK TO storage_policy_drift;
+SAVEPOINT bucket_configuration_drift;
+UPDATE storage.buckets SET public=NOT public WHERE id='product-review-images';
+SELECT public.test_assert(private.kinto_erasure_signature_v1()<>(SELECT sig FROM signature_before),'relevant bucket configuration change invalidates approval');
+ROLLBACK TO bucket_configuration_drift;
+SELECT public.test_assert(private.kinto_erasure_signature_v1()=(SELECT sig FROM signature_before),'Storage drift tests restore signature');
 -- The executor must reject stale approval before reaching any data mutation.
 SAVEPOINT stale_approval;
 ALTER TABLE public.product_reviews DISABLE TRIGGER kinto_review_terms_v1;

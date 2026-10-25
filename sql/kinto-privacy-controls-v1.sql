@@ -104,7 +104,7 @@ CREATE FUNCTION private.kinto_erasure_signature_v1()RETURNS text LANGUAGE sql ST
  WITH relations AS (
   SELECT c.oid,n.nspname,c.relname,c.relrowsecurity,c.relforcerowsecurity
   FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-  WHERE n.nspname IN('public','private')AND c.relkind IN('r','p')
+  WHERE(n.nspname IN('public','private')OR(n.nspname='storage'AND c.relname IN('objects','buckets')))AND c.relkind IN('r','p')
  ), parts AS (
   SELECT 'relation:'||r.nspname||'.'||r.relname AS key,
    r.relrowsecurity::text||':'||r.relforcerowsecurity::text AS value FROM relations r
@@ -122,6 +122,8 @@ CREATE FUNCTION private.kinto_erasure_signature_v1()RETURNS text LANGUAGE sql ST
   UNION ALL SELECT 'policy:'||r.nspname||'.'||r.relname||'.'||p.polname,
    p.polcmd::text||':'||p.polpermissive::text||':'||p.polroles::text||':'||coalesce(pg_get_expr(p.polqual,p.polrelid),'')||':'||coalesce(pg_get_expr(p.polwithcheck,p.polrelid),'')
    FROM relations r JOIN pg_policy p ON p.polrelid=r.oid
+  UNION ALL SELECT 'bucket:'||b.id,jsonb_build_object('public',b.public,'file_size_limit',b.file_size_limit,'allowed_mime_types',b.allowed_mime_types)::text
+   FROM storage.buckets b WHERE b.id IN('product-review-images','chat-attachments','kinto-customer-notice-media')
  )SELECT md5(coalesce(jsonb_agg(jsonb_build_array(key,value)ORDER BY key)::text,''))FROM parts;
 $$;
 -- Only these non-financial preference relations are managed. Unknown cascades/triggers hold erasure.

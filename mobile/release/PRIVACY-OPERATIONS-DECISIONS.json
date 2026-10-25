@@ -47,7 +47,9 @@
     "manual_copy_expiry_verified": false,
     "provider_internal_recovery_retention_verified": false,
     "assume_seven_day_backup_expiry": false,
-    "source": "owner screenshots 2026-10-25; no provider connection or backup-file access performed"
+    "source": "owner screenshots 2026-10-25; no provider connection or backup-file access performed",
+    "private_media_hash_ledger_source_implemented": true,
+    "media_restore_test_scope": "Synthetic Storage metadata restoration detected by external bucket/key hash, not physical file inspection or actual provider restore."
   },
   "synthetic_deletion_rehearsal_passed": true,
   "ugc_report_and_block_rehearsal_passed": true,
