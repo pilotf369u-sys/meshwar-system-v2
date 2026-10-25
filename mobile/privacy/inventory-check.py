@@ -16,3 +16,14 @@ assert any(x['table_name']=='orders'for x in report['customer_foreign_keys'])
 assert psql('-c',snapshot)==before,'metadata inspection changed data or installed code'
 assert 'TEST A'not in json.dumps(report)and 'test-TEST-A'not in json.dumps(report),'row identity leaked'
 print('PASS_METADATA_INVENTORY: read-only transaction, expected JSON/FK evidence, no row identity, customer/order/function/schema state unchanged')
+
+# The second query must expose indirect relationships and insert guards, not customer rows.
+before=psql('-c',snapshot)
+deps=json.loads(psql('-f',str(root/'sql/kinto-privacy-dependencies-readonly-v1.sql')))
+assert deps['transaction_read_only']=='on'
+assert any(x['table_name']=='product_review_images'and 'review_id'in x['definition']for x in deps['foreign_keys'])
+assert any(x['trigger_name']=='kinto_review_terms_v1'and 'kinto_review_terms_guard_v1'in x['function_definition']for x in deps['triggers'])
+assert {x['id']for x in deps['storage_buckets']}=={'chat-attachments','product-review-images'}
+assert psql('-c',snapshot)==before
+assert 'TEST A'not in json.dumps(deps)and 'test-TEST-A'not in json.dumps(deps)
+print('PASS_DEPENDENCY_INVENTORY: indirect FK and trigger definitions reported, buckets allowlisted, read-only and fixture state unchanged')

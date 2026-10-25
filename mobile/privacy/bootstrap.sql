@@ -1,6 +1,10 @@
 \set ON_ERROR_STOP on
 CREATE ROLE anon;CREATE ROLE authenticated;CREATE SCHEMA extensions;CREATE SCHEMA private;
 CREATE EXTENSION pgcrypto;
+-- Synthetic storage configuration only: no storage objects or customer files.
+CREATE SCHEMA storage;
+CREATE TABLE storage.buckets(id text PRIMARY KEY,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+INSERT INTO storage.buckets VALUES('chat-attachments',true,5242880,ARRAY['image/jpeg']),('product-review-images',true,51200,ARRAY['image/jpeg','image/png','image/webp']),('private-unrelated-test',false,NULL,NULL);
 CREATE TABLE public.customers(id uuid PRIMARY KEY,name text,phone text,email text,code text,password text);
 CREATE TABLE public.orders(id uuid PRIMARY KEY,customer_id uuid REFERENCES public.customers(id),status text,details jsonb);
 CREATE TABLE public.local_stores(id uuid PRIMARY KEY);
