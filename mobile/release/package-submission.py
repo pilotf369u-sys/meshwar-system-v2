@@ -26,6 +26,7 @@ review_paths = [
  'sql/kinto-privacy-inventory-readonly-v1.sql',
  'sql/kinto-privacy-session-contract-readonly-v1.sql',
  'sql/kinto-privacy-dependencies-readonly-v1.sql',
+ 'sql/kinto-privacy-session-media-contract-readonly-v1.sql',
  'mobile/privacy/OBSERVED-SCHEMA-20261025.md',
  'mobile/privacy/OWNER-DEPENDENCIES-20261025.json',
  'js/kinto-privacy-client-v1.js',

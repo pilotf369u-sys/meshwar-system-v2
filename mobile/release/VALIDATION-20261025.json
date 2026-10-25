@@ -129,5 +129,20 @@
     "rollback_passed": true,
     "production_write": false,
     "transactional_account_and_media_erasure_complete": false
+  },
+  "review_media_erasure_source": {
+    "run_id": 40205957447,
+    "job_id": 121206817125,
+    "result": "success",
+    "scope": "disabled review-image erasure; actual disposable PostgreSQL deletion of synthetic legacy image bytes, other owner/order preservation; concurrent claims and source locks; SDK2.57.4 with intercepted fetch only",
+    "worker_unit_cases": 15,
+    "pinned_sdk_contract_cases": 3,
+    "concurrent_postgresql_claim_test": true,
+    "expired_lease_and_retry_cap_checked": true,
+    "requires_base_and_media_policy": true,
+    "server_runtime_enabled": false,
+    "production_sql_executed": false,
+    "actual_storage_api_calls": false,
+    "account_erasure_complete": false
   }
 }

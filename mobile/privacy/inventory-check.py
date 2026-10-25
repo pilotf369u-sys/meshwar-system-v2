@@ -27,3 +27,14 @@ assert {x['id']for x in deps['storage_buckets']}=={'chat-attachments','product-r
 assert psql('-c',snapshot)==before
 assert 'TEST A'not in json.dumps(deps)and 'test-TEST-A'not in json.dumps(deps)
 print('PASS_DEPENDENCY_INVENTORY: indirect FK and trigger definitions reported, buckets allowlisted, read-only and fixture state unchanged')
+
+# Close the specific observed portal-session and attachment-policy gaps, not a row inventory.
+before=psql('-c',snapshot)
+contracts=json.loads(psql('-f',str(root/'sql/kinto-privacy-session-media-contract-readonly-v1.sql')))
+assert contracts['transaction_read_only']=='on'
+assert len(contracts['contracts'])==8
+assert any(x['signature']=='private.require_customer_review_session(text)'and x['exists']and 'CREATE OR REPLACE FUNCTION'in x['definition']for x in contracts['contracts'])
+assert any(x['signature']=='public.customer_portal_data_v2(text)'and not x['exists']and x['definition']is None for x in contracts['contracts'])
+assert psql('-c',snapshot)==before
+assert 'test-TEST-A'not in json.dumps(contracts)
+print('PASS_SESSION_MEDIA_CONTRACT_INSPECTION: eight named definitions/missing markers, policy and profile-FK metadata, read-only and fixture state unchanged')
