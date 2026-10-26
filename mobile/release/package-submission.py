@@ -37,6 +37,7 @@ review_paths = [
  'supabase/functions/kinto-privacy-media-v1/index.ts',
  'supabase/functions/kinto-privacy-media-v1/worker.mjs',
  'sql/kinto-privacy-inventory-readonly-v1.sql',
+ 'sql/kinto-privacy-notice-contract-readonly-v1.sql',
  'sql/kinto-privacy-invoice-contract-readonly-v1.sql',
  'sql/kinto-privacy-storage-config-readonly-v1.sql',
  'sql/kinto-privacy-session-contract-readonly-v1.sql',

@@ -106,3 +106,38 @@ finally:
  psql('-c',"DROP FUNCTION IF EXISTS public.vendor_get_order_segment_details(text,uuid);DROP FUNCTION IF EXISTS private.v94_jsonb_object(jsonb);DROP FUNCTION IF EXISTS public.vendor_get_order_segment_details(text,text);")
 assert psql('-c',snapshot)==before
 print('PASS_INVOICE_CATALOG_CONTRACT: two exact signatures, absent/oversized markers, read-only, no legacy RPC invocation, no overload or customer-row data and fixture data/code unchanged')
+
+# Exactly three notice contracts whose observed fingerprints did not match source.
+# Missing/oversized definitions stay explicit; even raise-if-called stubs are never run.
+notice_query=root/'sql/kinto-privacy-notice-contract-readonly-v1.sql'
+notice_original=psql('-c',snapshot)
+notice_signatures=[
+ 'public.admin_send_customer_notice_v414(text,uuid,text,text,text,text[],boolean)',
+ 'public.admin_send_customer_notice_v420(text,uuid,text,text,text,text[],boolean,text[])',
+ 'public.customer_read_admin_notice_v414(text,uuid)']
+missing=json.loads(psql('-f',str(notice_query)))
+assert missing['transaction_read_only']=='on' and len(missing['functions'])==3
+assert all(not f['present']and f['definition']is None for f in missing['functions'])
+try:
+ for signature in notice_signatures:
+  psql('-c',f"CREATE FUNCTION {signature}RETURNS jsonb LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'NOTICE_WRITER_MUST_NOT_BE_CALLED';END$$;")
+ before=psql('-c',snapshot)
+ notice=json.loads(psql('-f',str(notice_query)))
+ assert {f['signature']for f in notice['functions']}==set(notice_signatures)
+ assert all(f['present']and not f['definition_too_large']and 'NOTICE_WRITER_MUST_NOT_BE_CALLED'in f['definition']for f in notice['functions'])
+ assert notice['application_functions_invoked']is False and notice['customer_or_order_rows_read']is False and notice['production_changes_authorized']is False
+ assert psql('-c',snapshot)==before
+ import tempfile
+ with tempfile.TemporaryDirectory()as folder:
+  large_sql=pathlib.Path(folder)/'oversized-notice-fixture.sql'
+  large_sql.write_text(f"CREATE OR REPLACE FUNCTION {notice_signatures[0]}RETURNS jsonb LANGUAGE plpgsql AS $$BEGIN /*"+'x'*131100+"*/ RAISE EXCEPTION 'NOTICE_WRITER_MUST_NOT_BE_CALLED';END$$;")
+  psql('-f',str(large_sql))
+ before=psql('-c',snapshot)
+ large=json.loads(psql('-f',str(notice_query)))
+ oversized=next(f for f in large['functions']if f['signature']==notice_signatures[0])
+ assert oversized['present']and oversized['definition_too_large']and oversized['definition']is None,'never return a truncated body as a complete contract'
+ assert psql('-c',snapshot)==before
+finally:
+ for signature in notice_signatures:psql('-c','DROP FUNCTION IF EXISTS '+signature)
+assert psql('-c',snapshot)==notice_original
+print('PASS_NOTICE_CONTRACT_INSPECTION: three exact signatures, explicit missing/oversized flags, no writer execution or business reads, original fixture data/code unchanged')
