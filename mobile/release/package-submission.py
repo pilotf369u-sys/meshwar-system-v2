@@ -50,6 +50,7 @@ review_paths = [
  'mobile/privacy/OWNER-CUSTOMER-PROFILE-20261025.json',
  'mobile/privacy/OWNER-INVOICE-CATALOG-20261026.json',
  'mobile/privacy/OWNER-INVOICE-CONTRACT-20261026.json',
+ 'mobile/privacy/OWNER-TRANSACTION-CONTRACT-COMPARISON-20261026.json',
  'js/kinto-privacy-client-v1.js',
  'js/kinto-privacy-page-v1.js',
  'js/kinto-privacy-admin-v1.js',
