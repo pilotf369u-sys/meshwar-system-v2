@@ -668,8 +668,13 @@
     "missing_and_oversized_definitions_are_explicit": true,
     "raise_if_called_fixture_definitions_never_invoked": true,
     "original_fixture_code_and_data_preserved": true,
-    "owner_result_received": false,
+    "owner_result_received": true,
     "notice_writer_behavior_qualified": false,
-    "prior_invoice_export_step_repeated": false
+    "prior_invoice_export_step_repeated": false,
+    "owner_result_qualified": true,
+    "evidence": "mobile/privacy/OWNER-NOTICE-CONTRACT-20261026.json",
+    "all_three_deployed_body_hashes_verified": true,
+    "all_three_source_body_tokens_match": true,
+    "production_functions_replaced": false
   }
 }

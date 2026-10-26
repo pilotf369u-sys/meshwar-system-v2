@@ -72,11 +72,12 @@
       ]
     }
   ],
-  "notice_definition_export_required": true,
+  "notice_definition_export_required": false,
   "notice_export_query": "sql/kinto-privacy-notice-contract-readonly-v1.sql",
   "mismatch_proves_behavioral_difference": false,
   "application_functions_invoked": false,
   "customer_or_order_rows_read": false,
   "electronic_invoice_renderers_and_all_identity_dependencies_qualified": false,
-  "production_changes_authorized": false
+  "production_changes_authorized": false,
+  "notice_definition_result": "OWNER-NOTICE-CONTRACT-20261026.json"
 }

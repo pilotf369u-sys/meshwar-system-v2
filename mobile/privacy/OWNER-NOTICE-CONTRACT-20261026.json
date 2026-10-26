@@ -1,0 +1,41 @@
+{
+  "report_version": "kinto-owner-notice-contract-qualified-v1",
+  "received_on": "2026-10-26",
+  "transaction_read_only": "on",
+  "functions": [
+    {
+      "signature": "public.admin_send_customer_notice_v414(text,uuid,text,text,text,text[],boolean)",
+      "body_md5_verified": "c436fa09e2d072fe23d339f003d42413",
+      "source_body_token_matches": [
+        "supabase/migrations/20261001_v414_admin_customer_notification_rpc.sql"
+      ]
+    },
+    {
+      "signature": "public.admin_send_customer_notice_v420(text,uuid,text,text,text,text[],boolean,text[])",
+      "body_md5_verified": "49b934465383395d4513874c68a47d96",
+      "source_body_token_matches": [
+        "supabase/migrations/20261001_v421_customer_notice_store_name_fix.sql"
+      ]
+    },
+    {
+      "signature": "public.customer_read_admin_notice_v414(text,uuid)",
+      "body_md5_verified": "558e727ec8ee629bef27a7b5a101192a",
+      "source_body_token_matches": [
+        "supabase/migrations/20261001_v426_customer_notice_pending_visibility.sql"
+      ]
+    }
+  ],
+  "application_functions_invoked": false,
+  "customer_or_order_rows_read": false,
+  "production_changes_authorized": false,
+  "recipient_cleanup_implemented": true,
+  "shared_notice_or_asset_deletion_authorized": false,
+  "findings": [
+    "v420 delegates recipient creation to v414; store links belong to shared notice, not customer.",
+    "v414 selects existing customers without explicit row locking; late concurrent recipient insertion must be addressed before erasure qualification.",
+    "customer read updates only own recipient read_at and requires parent media_delete_pending_at IS NULL.",
+    "Source body comparison ignores formatting/comments while preserving quoted literals; verified deployed body MD5 is independent."
+  ],
+  "recipient_cleanup_scope": "Private source-only helper; no public grant, no production activation, not connected to account finalizer. Embedded PostgreSQL synthetic test only.",
+  "concurrent_writer_coordination_verified": false
+}
