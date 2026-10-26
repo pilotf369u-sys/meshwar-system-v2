@@ -2,7 +2,7 @@ name: KINTO isolated privacy controls
 'on':
   push:
     branches: [app/privacy-controls-20261025, app/play-integration-review-20261026]
-    paths: ['sql/kinto-privacy-controls*','sql/kinto-privacy-media*','sql/kinto-privacy-chat*','sql/kinto-privacy-storage-config*','sql/kinto-privacy-invoice-contract*','sql/kinto-privacy-progress*','sql/kinto-privacy-review-erasure*','sql/kinto-privacy-checkpoint*','sql/kinto-privacy-transaction-preview*','supabase/functions/kinto-privacy-media-v1/**','supabase/config.toml','mobile/privacy/**','js/*privacy*','js/*product-reviews*','account-deletion.html','review-policy.html','admin-dashboard.html','dashboard.html','store.html','mobile/hybrid/**','mobile/release/integration-scope-check.py','mobile/release/INTEGRATION-SCOPE-20261026.json','mobile/release/source-scope-check.py','mobile/release/accepted28-*.json','mobile/release/site-drafts/**','.github/workflows/kinto-privacy-controls.yml']
+    paths: ['sql/kinto-privacy-controls*','sql/kinto-privacy-media*','sql/kinto-privacy-chat*','sql/kinto-privacy-storage-config*','sql/kinto-privacy-invoice-contract*','sql/kinto-privacy-progress*','sql/kinto-privacy-review-erasure*','sql/kinto-privacy-checkpoint*','sql/kinto-privacy-transaction-preview*','sql/kinto-privacy-retention-review*','supabase/functions/kinto-privacy-media-v1/**','supabase/config.toml','mobile/privacy/**','js/*privacy*','js/*product-reviews*','account-deletion.html','review-policy.html','admin-dashboard.html','dashboard.html','store.html','mobile/hybrid/**','mobile/release/integration-scope-check.py','mobile/release/INTEGRATION-SCOPE-20261026.json','mobile/release/source-scope-check.py','mobile/release/accepted28-*.json','mobile/release/site-drafts/**','.github/workflows/kinto-privacy-controls.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -67,6 +67,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/transaction-preview-check.sql
       - name: Actual exported invoice fallback and non-mutating privacy assessment
         run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/invoice-profile-dependency-check.sql
+      - name: Per-record transaction retention decisions preserve business data
+        run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/retention-review-check.sql
       - name: Coherent minimal external erasure checkpoint
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/checkpoint-check.sql

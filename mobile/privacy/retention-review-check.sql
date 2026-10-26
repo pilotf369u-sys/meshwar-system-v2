@@ -1,0 +1,52 @@
+-- Synthetic review decisions; no production connection and no business eraser.
+\set ON_ERROR_STOP on
+BEGIN;
+INSERT INTO private.kinto_deletion_requests_v1(id,customer_id,status,verified_by)VALUES('00000000-0000-4000-8000-000000000081','00000000-0000-4000-8000-000000000001','verified','00000000-0000-4000-8000-000000000099');
+ALTER TABLE public.orders ADD COLUMN total_price numeric;
+INSERT INTO public.orders(id,customer_id,status,details,total_price)VALUES('00000000-0000-4000-8000-000000000082','00000000-0000-4000-8000-000000000001','TEST active','{"contact":{"phone":"PRIVATE_TEST_PHONE"},"amount":123}',123);
+CREATE TEMP TABLE retention_preserved AS SELECT(SELECT jsonb_agg(to_jsonb(c)ORDER BY id)FROM public.customers c)customers,(SELECT jsonb_agg(to_jsonb(o)ORDER BY id)FROM public.orders o)orders;
+SELECT public.test_denied($q$SELECT public.kinto_privacy_retention_review_v1('test-TEST-A','00000000-0000-4000-8000-000000000081')$q$,'ADMIN_SESSION_INVALID');
+SELECT public.test_denied($q$SELECT public.kinto_privacy_retention_review_v1('invalid','00000000-0000-4000-8000-000000000081')$q$,'ADMIN_SESSION_INVALID');
+SELECT public.test_denied($q$SELECT public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000080')$q$,'VERIFIED_REQUEST_REQUIRED');
+SELECT public.test_denied($q$SELECT public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081','orders;DELETE FROM orders')$q$,'INVALID_RETENTION_GROUP');
+SELECT public.test_assert(NOT has_table_privilege('anon','private.kinto_privacy_retention_decisions_v1','SELECT'),'private review decisions not readable by public role');
+SELECT public.test_assert(NOT has_function_privilege('anon','private.kinto_privacy_retention_row_v1(uuid,text,uuid,boolean)','EXECUTE'),'raw business row helper has no public execute');
+-- Review is useful while all production erasure switches are disabled.
+UPDATE private.kinto_erasure_policy_v1 SET enabled=false;
+SET ROLE anon;
+SELECT public.test_assert(jsonb_array_length(public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')->'items')=1,'custom admin scopes an existing customer-owned record without enabling erasure');
+RESET ROLE;
+SELECT public.test_assert(public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')::text NOT LIKE '%PRIVATE_TEST_PHONE%','list never returns contact or full record values');
+SELECT public.test_assert(public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')->>'deletion_authorized'='false','retention review grants no deletion permission');
+SELECT public.test_denied($q$SELECT public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081','orders','retain','00000000-0000-4000-8000-000000000030')$q$,'OWNED_RETENTION_RECORD_REQUIRED');
+CREATE TEMP TABLE retention_view AS SELECT public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')->'items'->0 r;
+SELECT r->>'content_hash'AS r_hash,r->>'inventory_signature'AS r_signature FROM retention_view \gset
+SELECT public.test_denied(format('SELECT public.kinto_privacy_retention_review_v1(%L,%L,%L,%L,%L,NULL,%L,%L,0,%L,ARRAY[%L],now()+interval ''7 days'')','test-admin','00000000-0000-4000-8000-000000000081','orders','retain','00000000-0000-4000-8000-000000000082',repeat('0',64),:'r_signature','active_order','reference'),'RETENTION_CONTEXT_CHANGED');
+SELECT public.test_denied(format('SELECT public.kinto_privacy_retention_review_v1(%L,%L,%L,%L,%L,NULL,%L,%L,0,%L,ARRAY[%L],now()+interval ''7 days'')','test-admin','00000000-0000-4000-8000-000000000081','orders','retain','00000000-0000-4000-8000-000000000082',:'r_hash',:'r_signature','active_order','password'),'RETENTION_FIELDS_REQUIRED');
+SELECT public.test_denied(format('SELECT public.kinto_privacy_retention_review_v1(%L,%L,%L,%L,%L,NULL,%L,%L,0,%L,ARRAY[%L],now()-interval ''1 day'')','test-admin','00000000-0000-4000-8000-000000000081','orders','retain','00000000-0000-4000-8000-000000000082',:'r_hash',:'r_signature','active_order','reference'),'RETENTION_REVIEW_DATE_REQUIRED');
+SELECT public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081','orders','retain','00000000-0000-4000-8000-000000000082',NULL,:'r_hash',:'r_signature',0,'active_order',ARRAY['reference','contact_phone'],now()+interval '7 days');
+SELECT public.test_assert(public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')->'items'->0->>'decision_current'='true','current record/schema/review date qualifies only the recorded decision');
+SELECT public.test_assert(private.kinto_privacy_progress_v1('00000000-0000-4000-8000-000000000081')->>'retention_review_required'='true'AND private.kinto_privacy_progress_v1('00000000-0000-4000-8000-000000000081')->>'account_deleted'='false','owner progress reflects review date without deletion claim');
+SELECT public.test_denied(format('SELECT public.kinto_privacy_retention_review_v1(%L,%L,%L,%L,%L,NULL,%L,%L,0,%L,ARRAY[%L],now()+interval ''7 days'')','test-admin','00000000-0000-4000-8000-000000000081','orders','retain','00000000-0000-4000-8000-000000000082',:'r_hash',:'r_signature','accounting','reference'),'RETENTION_DECISION_CHANGED');
+SAVEPOINT changed_order;
+UPDATE public.orders SET total_price=456 WHERE id='00000000-0000-4000-8000-000000000082';
+SELECT public.test_assert(public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')->'items'->0->>'decision_current'='false','financial record changes invalidate decision, never silently carry approval');
+SELECT public.test_denied(format('SELECT public.kinto_privacy_retention_review_v1(%L,%L,%L,%L,%L,NULL,%L,%L,1,%L,ARRAY[%L],now()+interval ''7 days'')','test-admin','00000000-0000-4000-8000-000000000081','orders','retain','00000000-0000-4000-8000-000000000082',:'r_hash',:'r_signature','accounting','reference'),'RETENTION_CONTEXT_CHANGED');
+ROLLBACK TO changed_order;
+SAVEPOINT changed_catalog;
+ALTER TABLE public.orders ADD COLUMN test_extra_private_info text;
+SELECT public.test_assert(public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')->'items'->0->>'decision_current'='false','schema changes invalidate decision');
+ROLLBACK TO changed_catalog;
+SAVEPOINT expired_review;
+UPDATE private.kinto_privacy_retention_decisions_v1 SET review_on=now()-interval '1 second';
+SELECT public.test_assert(public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')->'items'->0->>'decision_current'='false','review date expiry requires new review without erasing any record');
+ROLLBACK TO expired_review;
+SAVEPOINT paging;
+INSERT INTO public.orders(id,customer_id,status,details,total_price)SELECT md5('retention-'||g)::uuid,'00000000-0000-4000-8000-000000000001','TEST','{}',g FROM generate_series(1,25)g;
+SELECT public.test_assert(jsonb_array_length(public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')->'items')=20 AND public.kinto_privacy_retention_review_v1('test-admin','00000000-0000-4000-8000-000000000081')->>'has_more'='true','bounded pagination prevents a whole-account record dump');
+ROLLBACK TO paging;
+SELECT public.test_assert((SELECT customers FROM retention_preserved)=(SELECT jsonb_agg(to_jsonb(c)ORDER BY id)FROM public.customers c)AND(SELECT orders FROM retention_preserved)=(SELECT jsonb_agg(to_jsonb(o)ORDER BY id)FROM public.orders o),'review leaves every customer/order/status/financial value unchanged');
+SELECT public.test_assert((SELECT to_jsonb(d)::text FROM private.kinto_privacy_retention_decisions_v1 d WHERE record_id='00000000-0000-4000-8000-000000000082')NOT LIKE '%PRIVATE_TEST_PHONE%','decision stores field categories, not copied contact values');
+SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM private.kinto_erasure_policy_v1 WHERE enabled),'record review never enables account erasure');
+ROLLBACK;
+SELECT 'PASS_TRANSACTION_RETENTION_REVIEW: exact ownership/admin, disabled erasure policy, minimal field categories, bounded pages, stale content/schema/revision/date handling, unchanged customer/order/money and no deletion authority';

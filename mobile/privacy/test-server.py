@@ -2,7 +2,7 @@
 import http.server,json,os,pathlib,re,subprocess
 if os.environ.get('KINTO_DISPOSABLE_TEST')!='1' or os.environ.get('PGHOST')!='127.0.0.1' or os.environ.get('PGDATABASE')!='kinto_privacy_test':raise SystemExit('DISPOSABLE_DATABASE_REQUIRED')
 ROOT=pathlib.Path(__file__).resolve().parents[2]
-ALLOWED={'kinto_review_consent_v1','kinto_review_submit_v1','kinto_review_safety_v1','kinto_reviews_visible_v1','kinto_deletion_request_v1','kinto_privacy_admin_v1','kinto_deletion_preflight_v1','product_reviews_public_v141','product_review_summaries_v140','kinto_privacy_chat_review_v1','kinto_privacy_chat_attachment_v1','kinto_privacy_review_record_v1','kinto_deletion_progress_v1','kinto_deletion_progress_admin_v1','kinto_privacy_transaction_preview_admin_v1'}
+ALLOWED={'kinto_privacy_retention_review_v1','kinto_review_consent_v1','kinto_review_submit_v1','kinto_review_safety_v1','kinto_reviews_visible_v1','kinto_deletion_request_v1','kinto_privacy_admin_v1','kinto_deletion_preflight_v1','product_reviews_public_v141','product_review_summaries_v140','kinto_privacy_chat_review_v1','kinto_privacy_chat_attachment_v1','kinto_privacy_review_record_v1','kinto_deletion_progress_v1','kinto_deletion_progress_admin_v1','kinto_privacy_transaction_preview_admin_v1'}
 def literal(x):
  if x is None:return 'NULL'
  if isinstance(x,bool):return 'true'if x else 'false'
@@ -41,7 +41,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     elif name in ['customer_review_display_context_v154','customer_review_moderation_notices_v155','customer_review_rejection_notices_v153','customer_notification_read_state_v155']:result={'items':[]}
     else:
      if name not in ALLOWED or any(not re.fullmatch('p_[a-z_]+',k)for k in args):raise ValueError('RPC_NOT_ALLOWED')
-     named=','.join('"'+k+'"=>'+(literal(v)+'::smallint'if k=='p_rating'else literal(v))for k,v in args.items())
+     named=','.join('"'+k+'"=>'+(literal(v)+'::smallint'if k=='p_rating'else 'ARRAY['+','.join(literal(y)for y in v)+']::text[]'if k=='p_needed_fields'and isinstance(v,list)else literal(v))for k,v in args.items())
      result=json.loads(query('SET ROLE anon;SELECT public."'+name+'"('+named+')'))
    self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(json.dumps(result).encode())
   except Exception as e:

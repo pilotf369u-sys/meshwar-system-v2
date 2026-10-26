@@ -10,7 +10,7 @@ CREATE FUNCTION private.kinto_privacy_progress_v1(p_request_id uuid)RETURNS json
   EXISTS(SELECT 1 FROM private.kinto_privacy_review_decisions_v1 WHERE request_id=r.id AND state='erased')review_completed,
   EXISTS(SELECT 1 FROM private.kinto_erasure_ledger_v1 WHERE request_id=r.id)
    AND NOT EXISTS(SELECT 1 FROM private.kinto_erasure_ledger_v1 l JOIN public.customers c ON encode(digest(c.id::text,'sha256'),'hex')=l.customer_hash WHERE l.request_id=r.id)account_evidence,
-  (SELECT min(review_on)FROM(SELECT review_on FROM private.kinto_privacy_chat_decisions_v1 WHERE request_id=r.id AND state='retained'UNION ALL SELECT review_on FROM private.kinto_privacy_review_decisions_v1 WHERE request_id=r.id AND state='retained')dates)review_at
+  (SELECT min(review_on)FROM(SELECT review_on FROM private.kinto_privacy_chat_decisions_v1 WHERE request_id=r.id AND state='retained'UNION ALL SELECT review_on FROM private.kinto_privacy_review_decisions_v1 WHERE request_id=r.id AND state='retained'UNION ALL SELECT review_on FROM private.kinto_privacy_retention_decisions_v1 WHERE request_id=r.id)dates)review_at
  FROM private.kinto_deletion_requests_v1 r WHERE r.id=p_request_id
  ), derived AS(SELECT *,media_started OR chat_completed OR review_completed processing_started,status='deleted'AND customer_id IS NULL AND account_evidence account_completed FROM facts)
  SELECT jsonb_build_object('id',id,'status',status,'created_at',created_at,'updated_at',updated_at,

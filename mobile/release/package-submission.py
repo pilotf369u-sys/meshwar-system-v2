@@ -24,6 +24,8 @@ review_paths = [
  'sql/kinto-privacy-chat-v1.sql',
  'sql/kinto-privacy-checkpoint-v1.sql',
  'sql/kinto-privacy-progress-v1.sql',
+ 'sql/kinto-privacy-retention-review-v1.sql',
+ 'sql/kinto-privacy-retention-review-rollback-v1.sql',
  'sql/kinto-privacy-transaction-preview-v1.sql',
  'sql/kinto-privacy-transaction-preview-rollback-v1.sql',
  'sql/kinto-privacy-progress-rollback-v1.sql',
