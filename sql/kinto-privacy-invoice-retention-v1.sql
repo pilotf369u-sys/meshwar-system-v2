@@ -2,7 +2,7 @@
 -- This does NOT delete/disable an account or enable the account eraser.
 BEGIN;
 CREATE TABLE private.kinto_privacy_invoice_identity_v1(
- order_id uuid PRIMARY KEY REFERENCES public.orders(id),
+ order_id uuid PRIMARY KEY,
  customer_id uuid NOT NULL,request_id uuid NOT NULL REFERENCES private.kinto_deletion_requests_v1(id),
  identity jsonb NOT NULL CHECK(jsonb_typeof(identity)='object'),
  order_hash text NOT NULL,

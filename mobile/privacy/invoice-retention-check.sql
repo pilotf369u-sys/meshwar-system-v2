@@ -60,3 +60,10 @@ DO $$BEGIN
  BEGIN PERFORM public.kinto_privacy_invoice_read_v1('admin','TEST-admin','00000000-0000-4000-8000-000000000203');RAISE EXCEPTION 'expected stale archive denial';EXCEPTION WHEN raise_exception OR insufficient_privilege THEN IF SQLERRM<>'PRESERVED_INVOICE_CONTEXT_CHANGED'THEN RAISE;END IF;END;
 END$$;
 SELECT 'PASS_INVOICE_RETENTION_READ: existing order-visibility helper; assigned branch allowed, other branch/vendor/wrong session denied, changed record held. Role validators are explicit fixture doubles, not production-auth certification.';
+
+-- Retention must not add a new foreign-key restriction to existing business deletion.
+DELETE FROM public.order_store_segments WHERE order_id='00000000-0000-4000-8000-000000000203';
+DELETE FROM public.orders WHERE id='00000000-0000-4000-8000-000000000203';
+SELECT public.test_assert((SELECT count(*)FROM private.kinto_privacy_invoice_identity_v1)=1,'reviewed identity evidence retained without restricting original order deletion');
+SELECT public.test_denied($q$SELECT public.kinto_privacy_invoice_read_v1('admin','TEST-admin','00000000-0000-4000-8000-000000000203')$q$,'INVOICE_SCOPE_DENIED');
+SELECT 'PASS_INVOICE_RETENTION_NO_BUSINESS_FK: existing order deletion is not blocked by a new retention FK; missing-order identity cannot be read';
