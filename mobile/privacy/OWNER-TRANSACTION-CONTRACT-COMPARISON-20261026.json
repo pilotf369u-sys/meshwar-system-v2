@@ -1,0 +1,83 @@
+{
+  "source": "owner-run metadata report received 2026-10-25; definitions not exported for these signatures",
+  "compared_on": "2026-10-26",
+  "entries": [
+    {
+      "schema": "public",
+      "function": "admin_send_customer_notice_v414",
+      "arguments": "p_session_token text, p_request_key uuid, p_title text, p_body text, p_kind text, p_customer_ids text[], p_all_customers boolean",
+      "observed_body_md5": "c436fa09e2d072fe23d339f003d42413",
+      "exact_source_body_matches": []
+    },
+    {
+      "schema": "public",
+      "function": "admin_send_customer_notice_v420",
+      "arguments": "p_session_token text, p_request_key uuid, p_title text, p_body text, p_kind text, p_customer_ids text[], p_all_customers boolean, p_store_ids text[]",
+      "observed_body_md5": "49b934465383395d4513874c68a47d96",
+      "exact_source_body_matches": []
+    },
+    {
+      "schema": "public",
+      "function": "customer_read_admin_notice_v414",
+      "arguments": "p_session_token text, p_notice_id uuid",
+      "observed_body_md5": "558e727ec8ee629bef27a7b5a101192a",
+      "exact_source_body_matches": []
+    },
+    {
+      "schema": "public",
+      "function": "vendor_paid_electronic_invoice_orders_v1",
+      "arguments": "p_session_token text, p_order_ids uuid[]",
+      "observed_body_md5": "6d49ef2b9710c03390e9f01db591ad39",
+      "exact_source_body_matches": [
+        {
+          "source_path": "supabase/migrations/20261020210000_kinto_vendor_paid_electronic_invoice_v1.sql",
+          "line_endings": "LF"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "function": "employee_paid_electronic_invoice_orders_v1",
+      "arguments": "p_session_token text, p_order_ids uuid[]",
+      "observed_body_md5": "efdb45a544bf5368f456a128990e038b",
+      "exact_source_body_matches": [
+        {
+          "source_path": "supabase/migrations/20261020220000_kinto_employee_paid_invoice_proof_v1.sql",
+          "line_endings": "LF"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "function": "admin_paid_electronic_invoice_orders_v1",
+      "arguments": "p_session_token text, p_order_ids uuid[]",
+      "observed_body_md5": "1bf2852ef1d1d4f1a2e0c432d6e2e009",
+      "exact_source_body_matches": [
+        {
+          "source_path": "supabase/migrations/20261020230000_kinto_admin_paid_invoice_proof_v1.sql",
+          "line_endings": "LF"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "function": "courier_paid_electronic_invoice_orders_v1",
+      "arguments": "p_session_token text, p_order_ids uuid[]",
+      "observed_body_md5": "dd2e610fd2319623c4cf0ca1adc0a7f4",
+      "exact_source_body_matches": [
+        {
+          "source_path": "sql/courier-paid-invoice-proof-v1.sql",
+          "line_endings": "LF"
+        }
+      ]
+    }
+  ],
+  "notice_definition_export_required": false,
+  "notice_export_query": "sql/kinto-privacy-notice-contract-readonly-v1.sql",
+  "mismatch_proves_behavioral_difference": false,
+  "application_functions_invoked": false,
+  "customer_or_order_rows_read": false,
+  "electronic_invoice_renderers_and_all_identity_dependencies_qualified": false,
+  "production_changes_authorized": false,
+  "notice_definition_result": "OWNER-NOTICE-CONTRACT-20261026.json"
+}

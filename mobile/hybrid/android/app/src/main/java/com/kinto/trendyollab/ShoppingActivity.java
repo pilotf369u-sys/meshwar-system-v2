@@ -11,10 +11,11 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public class ShoppingActivity extends Activity {
- private WebView web; private TextView status;  private String injectScript, readerScript, hepsiReaderScript; private boolean reading=false; private String currentProductPage="";
- private boolean fixture; private boolean hepsiFixture; private String fixtureUrl; private volatile Pricing.Snapshot quote; private volatile long quoteReadAt,configAttemptAt; private boolean badgeReading=false; private volatile boolean configLoading=false; private final android.os.Handler pricingHandler=new android.os.Handler(android.os.Looper.getMainLooper());
+ private WebView web; private TextView status;  private String injectScript, readerScript, hepsiReaderScript,zaraReaderScript,madameReaderScript,mangoReaderScript,madReaderScript; private boolean reading=false; private String currentProductPage="";
+ private final java.util.ArrayDeque<JSONObject> zaraSamples=new java.util.ArrayDeque<>();
+ private boolean fixture; private boolean hepsiFixture; private boolean zaraFixture; private boolean madameFixture; private boolean mangoFixture; private boolean madFixture; private String fixtureUrl; private volatile Pricing.Snapshot quote; private volatile long quoteReadAt,configAttemptAt; private boolean badgeReading=false; private volatile boolean configLoading=false; private final android.os.Handler pricingHandler=new android.os.Handler(android.os.Looper.getMainLooper());
  @Override public void onCreate(Bundle state) {
-  super.onCreate(state); fixture=getIntent().getBooleanExtra("fixture",false);hepsiFixture=fixture&&"hepsiburada".equals(getIntent().getStringExtra("fixtureStore"));fixtureUrl=hepsiFixture?"https://www.hepsiburada.com/kinto-fixture-p-HBCV0000TEST":"https://www.trendyol.com/fixture-p-123456";
+  super.onCreate(state); fixture=PreviewMode.enabled(this)&&getIntent().getBooleanExtra("fixture",false);hepsiFixture=fixture&&"hepsiburada".equals(getIntent().getStringExtra("fixtureStore"));zaraFixture=fixture&&"zara".equals(getIntent().getStringExtra("fixtureStore"));madameFixture=fixture&&"madamecoco".equals(getIntent().getStringExtra("fixtureStore"));mangoFixture=fixture&&"mango".equals(getIntent().getStringExtra("fixtureStore"));madFixture=fixture&&"madparfum".equals(getIntent().getStringExtra("fixtureStore"));fixtureUrl=mangoFixture?"https://shop.mango.com/tr/tr/p/kadin/test/00000001/99/00":madFixture?"https://www.madparfum.com/urun/kinto-test/":madameFixture?"https://www.madamecoco.com/kinto-test-nt0000000001-101/":zaraFixture?"https://www.zara.com/tr/tr/kinto-fixture-p00000001.html":hepsiFixture?"https://www.hepsiburada.com/kinto-fixture-p-HBCV0000TEST":"https://www.trendyol.com/fixture-p-123456";
   getWindow().setStatusBarColor(Color.rgb(10,47,35));
   LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(Color.rgb(10,47,35));
   // Keep controls away from system status/navigation bars, including edge-to-edge Android 15.
@@ -34,16 +35,28 @@ public class ShoppingActivity extends Activity {
   setContentView(root);
   WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setSupportMultipleWindows(false);settings.setJavaScriptCanOpenWindowsAutomatically(false);
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
-  try{injectScript=asset("order-button.js");readerScript=asset("product-reader.js");hepsiReaderScript=asset("hepsiburada-reader.js");}catch(IOException e){status.setText("تعذر تحميل زر الصفحة؛ أعد فتح التطبيق");}
+  try{injectScript=asset("order-button.js");readerScript=asset("product-reader.js");hepsiReaderScript=asset("hepsiburada-reader.js");zaraReaderScript=asset("zara-reader.js");madameReaderScript=asset("madamecoco-reader.js");mangoReaderScript=asset("mango-reader.js");madReaderScript=asset("madparfum-reader.js");}catch(IOException e){status.setText("تعذر تحميل زر الصفحة؛ أعد فتح التطبيق");}
   web.setWebViewClient(new WebViewClient(){
-   @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())view.post(()->refreshAndCapture());return true;}if(fixture&&!url.equals(fixtureUrl))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج المتاجر المدعومة؛ لم يتم فتحه");return true;}return false;}
+   @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){if(fixture&&fixturePage(request.getUrl().toString())){try{return new WebResourceResponse("text/html","UTF-8",getAssets().open(mangoFixture?"fixture-mango.html":madFixture?"fixture-madparfum.html":madameFixture?"fixture-madamecoco.html":zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"));}catch(IOException ignored){}}return null;}
+
+   @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())view.post(()->refreshAndCapture());return true;}if(fixture&&!fixturePage(url))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج المتاجر المدعومة؛ لم يتم فتحه");return true;}return false;}
    @Override public void onPageStarted(WebView v,String url,android.graphics.Bitmap icon){if(!UrlPolicy.allowed(url)){v.stopLoading();status.setText("تم إيقاف رابط غير مسموح");}}
-   @Override public void onPageFinished(WebView v,String url){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;status.setText("اختر منتجاً — نقرأ البيانات لتأكيدها قبل الحفظ");if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
+   @Override public void onPageFinished(WebView v,String url){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void doUpdateVisitedHistory(WebView v,String url,boolean reload){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())status.setText("تعذر فتح الصفحة. تحقق من الاتصال أو حدّث مرة واحدة.");}
   });
-  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=fixturePricing();quoteReadAt=System.currentTimeMillis();currentProductPage=fixtureUrl;try{web.loadDataWithBaseURL(fixtureUrl,asset(hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"),"text/html","UTF-8",fixtureUrl);}catch(Exception e){finish();}}
-  else { web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/");refreshConfigInBackground(); }
+  if(fixture){status.setText("بيانات اختبار مصطنعة — ليست أسعار الأدمن");quote=fixturePricing();quoteReadAt=System.currentTimeMillis();currentProductPage=fixtureUrl;try{if(!restoreShop(state))web.loadDataWithBaseURL(fixtureUrl,asset(mangoFixture?"fixture-mango.html":madFixture?"fixture-madparfum.html":madameFixture?"fixture-madamecoco.html":zaraFixture?"fixture-zara.html":hepsiFixture?"fixture-hepsiburada.html":"fixture-product.html"),"text/html","UTF-8",fixtureUrl);}catch(Exception e){finish();}}
+  else { if(!restoreShop(state))web.loadUrl(UrlPolicy.allowed(getIntent().getStringExtra("url"))?getIntent().getStringExtra("url"):"https://www.trendyol.com/");refreshConfigInBackground(); }
+ }
+ private boolean fixturePage(String raw){String page=raw.split("#",2)[0];return page.equals(fixtureUrl)||page.equals(fixtureUrl+"?kintoResume=1");}
+ private boolean restoreShop(Bundle state){
+  if(state==null)return false;String last=state.getString("lastShopUrl","");Bundle history=state.getBundle("shopHistory");
+  if(!UrlPolicy.allowed(last)||fixture&&!fixturePage(last))return false;
+  currentProductPage=last;WebBackForwardList restored=history==null?null:web.restoreState(history);
+  if(restored==null||restored.getCurrentItem()==null||!last.equals(restored.getCurrentItem().getUrl()))web.loadUrl(last);return true;
+ }
+ @Override protected void onSaveInstanceState(Bundle out){
+  if(web!=null){String last=web.getUrl();if(UrlPolicy.allowed(last)){out.putString("lastShopUrl",last);Bundle history=new Bundle();if(web.saveState(history)!=null)out.putBundle("shopHistory",history);}}super.onSaveInstanceState(out);
  }
  private Pricing.Snapshot fixturePricing(){try{
   Pricing.Snapshot parsed=AdminPricing.parse(new JSONObject(asset("pricing-fixture.json")));
@@ -64,27 +77,68 @@ public class ShoppingActivity extends Activity {
   if(fixture||configLoading||System.currentTimeMillis()-configAttemptAt<30000)return;
   configLoading=true;configAttemptAt=System.currentTimeMillis();new Thread(()->{try{Pricing.Snapshot fresh=AdminPricing.load();quote=fresh;quoteReadAt=System.currentTimeMillis();}catch(Exception ignored){}finally{configLoading=false;}},"kinto-pricing-read").start();
  }
+ private String storeReader(String page){String source=UrlPolicy.source(page);return source.equals("mango")?mangoReaderScript:source.equals("madparfum")?madReaderScript:source.equals("madamecoco")?madameReaderScript:source.equals("zara")?zaraReaderScript:source.equals("hepsiburada")?hepsiReaderScript:readerScript;}
  private void updatePriceBadge(){
   refreshConfigInBackground();
   if(web==null||isFinishing()||reading||badgeReading||readerScript==null||!UrlPolicy.product(currentProductPage))return;
   final String page=currentProductPage;final Pricing.Snapshot snapshot=quote;
   if(snapshot==null||(!fixture&&System.currentTimeMillis()-quoteReadAt>300000)){badge("السعر غير متاح — اضغط للتحقق");return;}
-  badgeReading=true;web.evaluateJavascript(UrlPolicy.source(currentProductPage).equals("hepsiburada")?hepsiReaderScript:readerScript,result->{badgeReading=false;if(!page.equals(currentProductPage))return;try{
-   Object decoded=new JSONTokener(result).nextValue();JSONObject item=new JSONObject((String)decoded);
+  badgeReading=true;web.evaluateJavascript(storeReader(currentProductPage),result->{badgeReading=false;if(!page.equals(currentProductPage))return;try{
+   Object decoded=new JSONTokener(result).nextValue();JSONObject item=new JSONObject((String)decoded);rememberZara(item);
    if(item.has("error")||!page.equals(item.optString("pageUrl"))||!snapshot.fromCurrency.equals(item.optString("currency")))throw new IllegalArgumentException();
-   badge("تقديري: "+Pricing.total(item.getString("price"),1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");
+   boolean hepsiOptionsPending=("hepsiburada".equals(item.optString("source"))||"zara".equals(item.optString("source"))||"mango".equals(item.optString("source")))&&item.optBoolean("optionsPending");
+   String amount=hepsiOptionsPending?item.getString("displayPrice"):item.getString("price");
+   badge("تقديري: "+Pricing.total(amount,1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن"+(hepsiOptionsPending?"\nاختر خيارات المنتج أولاً":""));
   }catch(Exception e){badge("السعر غير مؤكد — راجع المنتج");}});
  }
  private void capture(){
   final String url=currentProductPage;if(!UrlPolicy.product(url)){new AlertDialog.Builder(this).setMessage("افتح صفحة منتج أولاً. لم نحفظ شيئاً.").setPositiveButton("حسناً",null).show();return;}
-  if(reading||readerScript==null)return;reading=true;status.setText("جاري قراءة بيانات المنتج...");
-  web.evaluateJavascript(UrlPolicy.source(currentProductPage).equals("hepsiburada")?hepsiReaderScript:readerScript,result->{reading=false;
+  if(reading||readerScript==null)return;reading=true;
+  web.evaluateJavascript(storeReader(currentProductPage),result->{reading=false;
    if(!url.equals(currentProductPage)){status.setText("تغيرت الصفحة؛ اضغط الإضافة من المنتج الجديد");return;}
-   try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);
+   try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);rememberZara(item);
     if(item.has("error")||!url.equals(item.optString("pageUrl"))||quote==null||!quote.fromCurrency.equals(item.optString("currency")))throw new JSONException("Page mismatch");
-    item.put("url",url);item.put("savedAt",System.currentTimeMillis());status.setText("راجع السعر والصورة قبل الحفظ — سلة تجريبية فقط");confirmProduct(item);
+    item.put("url",url);item.put("savedAt",System.currentTimeMillis());if("zara".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showZaraReport(item);else if("madamecoco".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showMadameReport(item);else if("madparfum".equals(item.optString("source"))&&item.optDouble("price",0)<=0)showMadReport(item);else if("mango".equals(item.optString("source"))&&item.optBoolean("optionsPending"))confirmMangoOptions(item);else confirmProduct(item);
    }catch(JSONException e){status.setText("تعذرت قراءة بيانات المنتج؛ لم نحفظ شيئاً. حدّث الصفحة وجرب.");}
   });
+ }
+ private void confirmMangoOptions(JSONObject item){
+  JSONArray values=item.optJSONArray("availableSizes");
+  if(!"MANGO_OPTIONS_REQUIRED".equals(item.optString("warning"))||values==null||values.length()==0||values.length()>40||item.optDouble("displayPrice",0)<=0){new AlertDialog.Builder(this).setMessage("تعذر التحقق من مقاسات المنتج المتاحة. لم نضف شيئاً.").setPositiveButton("حسناً",null).show();return;}
+  String[] labels=new String[values.length()];for(int i=0;i<labels.length;i++)labels[i]=values.optString(i);
+  new AlertDialog.Builder(this).setTitle("اختر مقاس منتج مانجو").setItems(labels,(dialog,index)->{
+   final String chosen=labels[index],page=currentProductPage;
+   if(reading||!page.equals(item.optString("pageUrl")))return;reading=true;
+   web.evaluateJavascript(mangoReaderScript,result->{reading=false;try{
+    Object raw=new JSONTokener(result).nextValue();if(!(raw instanceof String))throw new JSONException("Missing result");JSONObject fresh=new JSONObject((String)raw);
+    if(!page.equals(currentProductPage)||!page.equals(fresh.optString("pageUrl"))||!item.optString("productId").equals(fresh.optString("productId"))||!"mango".equals(fresh.optString("source"))||!"TRY".equals(fresh.optString("currency"))||fresh.optDouble("displayPrice",0)<=0||fresh.optDouble("displayPrice")!=item.optDouble("displayPrice"))throw new JSONException("Product or price changed");
+    String warning=fresh.optString("warning");if(!warning.isEmpty()&&!"MANGO_OPTIONS_REQUIRED".equals(warning))throw new JSONException("Reader rejected product");
+    JSONObject opts=fresh.optJSONObject("observedOptions"),previous=item.optJSONObject("observedOptions");if(opts==null||previous==null||!opts.optString("color").equals(previous.optString("color")))throw new JSONException("Color changed");
+    JSONArray available=fresh.optJSONArray("availableSizes");boolean found=false;if(available!=null)for(int i=0;i<available.length();i++)if(chosen.equals(available.optString(i)))found=true;if(!found)throw new JSONException("Size unavailable");
+    opts.put("size",chosen);fresh.put("price",fresh.get("displayPrice"));fresh.put("priceSource","visible");fresh.put("optionsPending",false);fresh.put("warning","");fresh.put("sizeSelectionSource","customer-current-product-list");fresh.put("url",page);fresh.put("savedAt",System.currentTimeMillis());confirmProduct(fresh);
+   }catch(JSONException e){new AlertDialog.Builder(this).setMessage("تغيّر المنتج أو السعر أو المقاس المتاح. أعد فتح مراجعة المنتج؛ لم نضف شيئاً.").setPositiveButton("حسناً",null).show();}});
+  }).setNegativeButton("إلغاء",null).show();
+ }
+ private void showMadReport(JSONObject item){
+  JSONObject safe=new JSONObject();try{for(String key:new String[]{"productId","warning","observedOptions","diagnostics"})safe.put(key,item.opt(key));}catch(JSONException ignored){}
+  String report="KINTO MAD 24\n"+safe.toString();new AlertDialog.Builder(this).setTitle("تعذرت قراءة سعر MAD").setMessage("يمكن نسخ تقرير القراءة لمراجعته؛ لم يُرسل طلب.").setPositiveButton("نسخ التقرير",(d,w)->{android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);clipboard.setPrimaryClip(android.content.ClipData.newPlainText("KINTO MAD 24",report));Toast.makeText(this,"نُسخ التقرير؛ ألصقه في المحادثة",Toast.LENGTH_LONG).show();}).setNegativeButton("إغلاق",null).show();
+ }
+ private void showMadameReport(JSONObject item){
+  JSONObject safe=new JSONObject();try{for(String key:new String[]{"productId","warning","observedOptions","diagnostics"})safe.put(key,item.opt(key));}catch(JSONException ignored){}
+  String report="KINTO MADAME 21\n"+safe.toString();new AlertDialog.Builder(this).setTitle("تعذرت قراءة سعر Madame Coco").setMessage("يمكن نسخ تقرير القراءة لمراجعته؛ لم يُرسل طلب.").setPositiveButton("نسخ التقرير",(d,w)->{android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);clipboard.setPrimaryClip(android.content.ClipData.newPlainText("KINTO Madame Coco 21",report));Toast.makeText(this,"نُسخ التقرير؛ ألصقه في المحادثة",Toast.LENGTH_LONG).show();}).setNegativeButton("إغلاق",null).show();
+ }
+ private void rememberZara(JSONObject item){
+  if(!"zara".equals(item.optString("source")))return;
+  try{JSONObject sample=new JSONObject();for(String key:new String[]{"productId","price","priceSource","warning","observedOptions","diagnostics"})sample.put(key,item.opt(key));sample.put("elapsedSeconds",android.os.SystemClock.elapsedRealtime()/1000);if(zaraSamples.size()>=6)zaraSamples.removeFirst();zaraSamples.addLast(sample);}catch(JSONException ignored){}
+ }
+ private void showZaraReport(JSONObject item){
+  JSONArray samples=new JSONArray();for(JSONObject sample:zaraSamples)if(sample.optString("productId").equals(item.optString("productId")))samples.put(sample);
+  String report="KINTO ZARA 21\n"+samples.toString();
+  StringBuilder brief=new StringBuilder("هذا فحص محلي لسبب اختفاء السعر. انسخ التقرير وأرسله في المحادثة.\n\n");
+  for(JSONObject sample:zaraSamples){if(!sample.optString("productId").equals(item.optString("productId")))continue;JSONObject d=sample.optJSONObject("diagnostics");brief.append("السعر: ").append(sample.optString("price")).append(" | ").append(sample.optString("warning","")).append("\n");if(d!=null)brief.append("موضع التمرير: ").append(d.optInt("scrollY")).append(" | أسعار ظاهرة: ").append(d.optInt("visiblePrices")).append(" | ألوان: ").append(d.optInt("colors")).append(" | عروض مطابقة: ").append(d.optInt("offers")).append("\n");}
+  TextView body=line(brief.toString());body.setTextIsSelectable(true);ScrollView scroll=new ScrollView(this);scroll.addView(body);
+  AlertDialog.Builder b=new AlertDialog.Builder(this).setTitle("فحص سعر زارا — 21").setView(scroll).setPositiveButton("نسخ التقرير",(dialog,which)->{android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);clipboard.setPrimaryClip(android.content.ClipData.newPlainText("KINTO Zara 21",report));Toast.makeText(this,"نُسخ التقرير؛ ألصقه في المحادثة",Toast.LENGTH_LONG).show();}).setNegativeButton("إغلاق",null);
+  if(item.optDouble("price",0)>0)b.setNeutralButton("متابعة المراجعة",(dialog,which)->confirmProduct(item));b.show();
  }
  private TextView line(String value){TextView t=new TextView(this);t.setText(value);t.setTextSize(14);t.setTextColor(android.graphics.Color.rgb(35,57,47));t.setPadding(18,10,18,10);t.setTextDirection(android.view.View.TEXT_DIRECTION_FIRST_STRONG);return t;}
  private void styleField(EditText field){
@@ -99,9 +153,10 @@ public class ShoppingActivity extends Activity {
    ImageView preview=new ImageView(this);preview.setAdjustViewBounds(true);preview.setScaleType(ImageView.ScaleType.FIT_CENTER);details.addView(preview,new LinearLayout.LayoutParams(-1,Math.round(150*getResources().getDisplayMetrics().density)));loadPreview(image,preview);
   }
   details.addView(line(priceLabel(item)));
+  if("hepsiburada".equals(item.optString("source"))&&"visible-before-conditional-offer".equals(item.optString("priceSource")))details.addView(line("اعتمدنا السعر العادي الظاهر قبل عرض السلة أو العضوية؛ استحقاق العرض يُراجع عند الشراء."));
   final Pricing.Snapshot snapshot=quote;
   if(!Double.isFinite(item.optDouble("price",Double.NaN))||item.optDouble("price",0)<=0){new AlertDialog.Builder(this).setMessage("السعر غير مؤكد؛ لم نحسب قيمة أو نضف طلباً.").setPositiveButton("حسناً",null).show();return;}
-  if(snapshot==null){new AlertDialog.Builder(this).setMessage("لا توجد إعدادات صرف وعمولة متاحة للقراءة. لم نضع أسعاراً افتراضية. استخدم تجربة البيانات المصطنعة من KINTO لاختبار المسار فقط.").setPositiveButton("حسناً",null).show();return;}
+  if(snapshot==null){new AlertDialog.Builder(this).setMessage("تعذر التحقق من السعر المعتمد. أعد المحاولة بعد قليل.").setPositiveButton("حسناً",null).show();return;}
   if(snapshot.source.equals("synthetic-fixture"))details.addView(line("بيانات اختبار مصطنعة — ليست أسعاراً معتمدة للشراء"));
   details.addView(line("السعر للمنتج فقط، ولا يشمل الشحن. تُحدد تكلفة الشحن بعد مراجعة الموظف للطلب."));
   if("visible-basket-offer".equals(item.optString("priceSource"))){details.addView(line("عرض يُطبق داخل سلة ترنديول؛ يلزم تأكيد استحقاقه والسعر النهائي عند الشراء."));double before=item.optDouble("priceBeforeBasketDiscount",Double.NaN);if(Double.isFinite(before))details.addView(line("قبل خصم السلة: "+String.format(java.util.Locale.US,"%.2f",before)+" ليرة تركية"));}
@@ -114,13 +169,14 @@ public class ShoppingActivity extends Activity {
   EditText size=new EditText(this);size.setSingleLine(true);size.setText(observedSize);size.setHint("المقاس أو الحجم؛ فارغ إذا لا يوجد");size.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(60)});styleField(size);details.addView(size);
   details.addView(line(observedColor.isEmpty()?"اللون — اكتب المختار إن كان مطلوباً":"اللون المقروء من الصفحة — طابقه"));
   EditText color=new EditText(this);color.setSingleLine(true);color.setText(observedColor);color.setHint("اللون؛ فارغ إذا لا يوجد");color.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(60)});styleField(color);details.addView(color);
+  if("customer-current-product-list".equals(item.optString("sizeSelectionSource"))){size.setKeyListener(null);color.setKeyListener(null);details.addView(line("المقاس اخترته من قائمة المنتج المتاحة؛ لتغييره ألغِ المراجعة واختر مجدداً."));}
   details.addView(line("الكمية المطلوبة (1–99)"));
   EditText quantity=new EditText(this);quantity.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);quantity.setSingleLine(true);quantity.setText("1");styleField(quantity);details.addView(quantity);
   TextView total=line("");total.setTextSize(21);total.setTypeface(null,android.graphics.Typeface.BOLD);total.setTextColor(android.graphics.Color.rgb(10,47,35));total.setPadding(20,22,20,22);details.addView(total);
   quantity.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence t,int a,int c,int f){}public void onTextChanged(CharSequence t,int a,int before,int count){try{total.setText("إجمالي المنتجات: "+Pricing.total(item.optString("price"),CartRules.quantity(t.toString()),snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");}catch(IllegalArgumentException e){total.setText("المجموع غير متاح: تحقق من الكمية أو السعر");}}public void afterTextChanged(android.text.Editable e){}});
   try{total.setText("إجمالي المنتجات: "+Pricing.total(item.optString("price"),1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");}catch(IllegalArgumentException e){total.setText("المجموع غير متاح؛ السعر غير مقروء");}
   CheckBox confirmed=new CheckBox(this);confirmed.setText("طابقت المقاس أو الحجم واللون مع المتجر، أو المنتج بلا هذه الخيارات");details.addView(confirmed);
-  details.addView(line("يُحفظ على جهازك فقط في هذه النسخة. لم يُرسل إلى الموظف؛ لا حجز للمخزون ولا دفع."));
+  details.addView(line("تُضاف مسودة المنتج أولاً؛ أكمل إرسالها للمراجعة من KINTO. الشراء بعد تأكيد التسديد وحسب التوفر."));
   ScrollView scroll=new ScrollView(this);scroll.addView(details);
   AlertDialog dialog=new AlertDialog.Builder(this).setTitle("مراجعة المنتج").setView(scroll).setPositiveButton("أؤكد الإضافة",null).setNegativeButton("إلغاء",null).create();
   dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
@@ -128,7 +184,7 @@ public class ShoppingActivity extends Activity {
    if(required!=null&&required.optBoolean("size")&&chosenSize.isEmpty()){size.setError("اختر المقاس أو الحجم في المتجر وأكده هنا");return;}
    if(required!=null&&required.optBoolean("color")&&chosenColor.isEmpty()){color.setError("اختر اللون في المتجر وأكده هنا");return;}
    if(!confirmed.isChecked()){Toast.makeText(this,"أكد مطابقة الخيارات أولاً",Toast.LENGTH_SHORT).show();return;}
-   try{int count=CartRules.quantity(quantity.getText().toString());JSONObject options=new JSONObject();options.put("size",chosenSize);options.put("color",chosenColor);item.put("selectedOptions",options);item.put("quantity",count);item.put("optionsConfirmed",true);item.put("sizeOrigin",!chosenSize.isEmpty()&&chosenSize.equals(observedSize)?"page-confirmed":"user-confirmed");item.put("colorOrigin",!chosenColor.isEmpty()&&chosenColor.equals(observedColor)?"page-confirmed":"user-confirmed");double unit=item.optDouble("price",Double.NaN);item.put("lineTotal",Double.isFinite(unit)&&unit>0?CartRules.total(unit,count):JSONObject.NULL);item.put("cartKey",CartRules.key(item.optString("source"),item.optString("productId"),item.optString("merchantId"),chosenSize,chosenColor));if(snapshot.toCurrency.equals("IQD"))item.put("convertedTotalIQD",Pricing.total(item.optString("price"),count,snapshot));item.put("exchangeRate",snapshot.rate.toPlainString());item.put("sourcePerUsd",snapshot.sourcePerUsd.toPlainString());item.put("targetPerUsd",snapshot.targetPerUsd.toPlainString());item.put("sourceCurrency",snapshot.fromCurrency);item.put("displayCurrency",snapshot.toCurrency);item.put("pricingRevision",snapshot.revision);item.put("convertedTotal",Pricing.total(item.optString("price"),count,snapshot));item.put("commissionPercent",snapshot.commission.toPlainString());item.put("pricingSource",snapshot.source);item.put("testOnly",true);item.put("fixture",fixture);item.put("shipping",JSONObject.NULL);setResult(RESULT_OK,new android.content.Intent().putExtra("product",item.toString()));dialog.dismiss();finish();}catch(IllegalArgumentException e){quantity.setError("أدخل عدداً صحيحاً من 1 إلى 99");}catch(JSONException e){Toast.makeText(this,"تعذر تجهيز التجربة",Toast.LENGTH_SHORT).show();}
+   try{int count=CartRules.quantity(quantity.getText().toString());JSONObject options=new JSONObject();options.put("size",chosenSize);options.put("color",chosenColor);item.put("selectedOptions",options);item.put("quantity",count);item.put("optionsConfirmed",true);item.put("sizeOrigin",!chosenSize.isEmpty()&&chosenSize.equals(observedSize)?"page-confirmed":"user-confirmed");item.put("colorOrigin",!chosenColor.isEmpty()&&chosenColor.equals(observedColor)?"page-confirmed":"user-confirmed");double unit=item.optDouble("price",Double.NaN);item.put("lineTotal",Double.isFinite(unit)&&unit>0?CartRules.total(unit,count):JSONObject.NULL);item.put("cartKey",CartRules.key(item.optString("source"),item.optString("productId"),item.optString("merchantId"),chosenSize,chosenColor));if(snapshot.toCurrency.equals("IQD"))item.put("convertedTotalIQD",Pricing.total(item.optString("price"),count,snapshot));item.put("exchangeRate",snapshot.rate.toPlainString());item.put("sourcePerUsd",snapshot.sourcePerUsd.toPlainString());item.put("targetPerUsd",snapshot.targetPerUsd.toPlainString());item.put("sourceCurrency",snapshot.fromCurrency);item.put("displayCurrency",snapshot.toCurrency);item.put("pricingRevision",snapshot.revision);item.put("convertedTotal",Pricing.total(item.optString("price"),count,snapshot));item.put("commissionPercent",snapshot.commission.toPlainString());item.put("pricingSource",snapshot.source);item.put("testOnly",true);item.put("fixture",fixture);item.put("shipping",JSONObject.NULL);setResult(RESULT_OK,new android.content.Intent().putExtra("product",item.toString()));dialog.dismiss();finish();}catch(IllegalArgumentException e){quantity.setError("أدخل عدداً صحيحاً من 1 إلى 99");}catch(JSONException e){Toast.makeText(this,"تعذر إضافة المنتج؛ أعد المحاولة",Toast.LENGTH_SHORT).show();}
   }));dialog.show();
   dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.rgb(250,250,246)));
   dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(android.graphics.Color.rgb(10,47,35));

@@ -1,9 +1,13 @@
 (() => {
+ const mango=location.hostname==='shop.mango.com',mad=['madparfum.com','www.madparfum.com'].includes(location.hostname);
+ const coco=['madamecoco.com','www.madamecoco.com'].includes(location.hostname);
+ const cocoProduct=()=>{const m=location.pathname.match(/-([a-z0-9]{5,30})-\d{1,5}\/?$/i);return !!m&&/[a-z]/i.test(m[1])&&/\d/.test(m[1]);};
+ const zara=['zara.com','www.zara.com'].includes(location.hostname);
  const hepsi=['hepsiburada.com','www.hepsiburada.com','m.hepsiburada.com'].includes(location.hostname);
- if (location.protocol !== 'https:' || !(hepsi || location.hostname === 'trendyol.com' || location.hostname.endsWith('.trendyol.com'))) return;
+ if (location.protocol !== 'https:' || !(mango || mad || coco || zara || hepsi || location.hostname === 'trendyol.com' || location.hostname.endsWith('.trendyol.com'))) return;
  if (window.__kintoLabV2) { window.__kintoLabV2.sync(); return; }
  const sync = () => {
-  const product = hepsi ? /-(?:p|pm)-[A-Za-z0-9]{3,40}\/?$/.test(location.pathname) : /-p-\d+(?:\/.*)?$/.test(location.pathname);
+  const product = mango ? /^\/tr\/tr\/p\/.+\/\d{8}\/\d{2}\/\d{2}\/?$/.test(location.pathname) : mad ? /^\/urun\/[a-z0-9-]+\/$/i.test(location.pathname) : coco ? cocoProduct() : zara ? /^\/tr\/tr\/[^/]+-p\d{8}\.html$/.test(location.pathname) : hepsi ? /-(?:p|pm)-[A-Za-z0-9]{3,40}\/?$/.test(location.pathname) : /-p-\d+(?:\/.*)?$/.test(location.pathname);
   let button = document.getElementById('kinto-lab-order');
   if (!product) { button?.remove(); return; }
   if (button) return;

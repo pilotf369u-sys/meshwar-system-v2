@@ -135,6 +135,7 @@
           </div>
           <p class="review-media-note">اختر الصورة بأي حجم مناسب؛ سيقوم النظام بضغطها وتحسينها تلقائياً قبل الحفظ.</p>
           <div id="reviewPreviews" class="review-previews"></div>
+          <label class="review-label"><input id="reviewPolicyAcceptedV1" type="checkbox"> أوافق على <a href="review-policy.html" style="color:#efd185;text-decoration:underline" target="_blank" rel="noopener">قواعد التقييم والصور</a> ومنع الإساءة وانتهاك الخصوصية والحقوق.</label>
           <div id="reviewFormMessage" class="review-form-message" role="status" aria-live="polite"></div>
           <div class="review-dialog-actions">
             <button id="reviewCancelBtn" class="review-secondary-btn" type="button">إلغاء</button>
@@ -392,6 +393,7 @@
     $('productReviewModalTitle').textContent = item.product_name || 'قيّم المنتج';
     $('reviewModalOrder').textContent = `رقم الطلب: ${item.order_id || '—'}`;
     $('reviewModalImage').src = item.product_image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64"%3E%3Crect width="100%25" height="100%25" fill="%230b3027"/%3E%3C/svg%3E';
+    $('reviewPolicyAcceptedV1').checked = false;
     $('reviewComment').value = ''; $('reviewCommentCounter').textContent = '0 / 2000';
     $('reviewCameraInput').value = ''; $('reviewFilesInput').value = '';
     renderPreviews(); message('reviewFormMessage', '');
@@ -473,11 +475,14 @@
     const comment = $('reviewComment').value.trim();
     if (!comment) return message('reviewFormMessage', 'اكتب تعليقك عن المنتج قبل إرسال التقييم.', 'error');
     if (comment.length > 2000) return message('reviewFormMessage', 'التعليق أطول من 2000 حرف.', 'error');
+    if (!$('reviewPolicyAcceptedV1').checked) return message('reviewFormMessage','وافق على قواعد التقييم والصور قبل الإرسال.','error');
     state.busy = true; $('reviewSubmitBtn').disabled = true;
     message('reviewFormMessage', 'جاري حفظ التقييم الآمن...');
     try {
       const sb = await client();
-      const { data, error } = await sb.rpc('customer_submit_product_review_v132', {
+      await window.KintoPrivacyV1.rpc('kinto_review_consent_v1',{p_version:window.KintoPrivacyV1.VERSION,p_accept:true});
+      const { data, error } = await sb.rpc('kinto_review_submit_v1', {
+        p_policy_version: window.KintoPrivacyV1.VERSION,
         p_session_token: state.token,
         p_order_id: state.selectedItem.order_id,
         p_product_id: state.selectedItem.product_id,

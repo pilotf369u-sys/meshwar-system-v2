@@ -1,15 +1,16 @@
 name: KINTO hybrid isolated preview
 on:
   push:
-    branches: [fix/hepsi-mobile-reader-v10-20261023, app/hepsiburada-preview-v9-20261023, fix/world-single-product-live-staff-20261023, fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-global-orders-independent-20261023, app/kinto-product-confirmation-20261023, app/kinto-hybrid-preview-20261022, app/kinto-android-webview-fixes-20261022, app/kinto-navigation-invoice-20261022, app/kinto-global-pricing-20261022]
+    branches: [app/mango-mad-v22-20261024, app/madame-coco-v21-20261024, app/zara-card-scope-v20-20261024, app/zara-scroll-v19-20261024, app/zara-reader-v18-20261024, app/hepsi-buybar-v17-20261024, app/hepsi-price-v16-20261024, app/play-prep-20261023,fix/hepsi-mobile-reader-v10-20261023, app/hepsiburada-preview-v9-20261023, fix/world-single-product-live-staff-20261023, fix/world-orders-in-normal-panels-20261023, fix/world-workflow-integrated-20261023, app/kinto-global-orders-independent-20261023, app/kinto-product-confirmation-20261023, app/kinto-hybrid-preview-20261022, app/kinto-android-webview-fixes-20261022, app/kinto-navigation-invoice-20261022, app/kinto-global-pricing-20261022]
     paths: ['mobile/hybrid/**', 'mobile/global-orders/customer-integrated-fixture.html', 'js/kinto-world-core-v1.js', 'js/kinto-world-workspace-v1.js', 'js/kinto-world-panels-v1.js', 'css/kinto-world-panels-v1.css', 'js/*global-pricing*', 'sql/kinto-global-pricing*', 'admin-dashboard.html', '.github/workflows/kinto-hybrid-preview.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   preview:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    needs: candidate-bundle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -18,16 +19,22 @@ jobs:
           java-version: '17'
       - uses: android-actions/setup-android@v3
         with:
-          packages: platform-tools platforms;android-35 build-tools;35.0.0
+          packages: platform-tools platforms;android-36 build-tools;35.0.0
           log-accepted-android-sdk-licenses: false
       - name: Reader and existing PWA tests
         run: |
-          node --test mobile/hybrid/android/checks/product-reader.test.cjs mobile/hybrid/android/checks/hepsiburada-reader.test.cjs
+          node --test mobile/hybrid/android/checks/product-reader.test.cjs mobile/hybrid/android/checks/hepsiburada-reader.test.cjs mobile/hybrid/android/checks/zara-reader.test.cjs
           node tests/pwa-hosting-contract.cjs
           python3 mobile/hybrid/tools/hepsiburada-mobile-markup-check.py
+          python3 mobile/hybrid/tools/zara-markup-check.py
+          python3 mobile/hybrid/tools/zara-scroll-check.py
+          python3 mobile/hybrid/tools/zara-card-scope-check.py
+          python3 mobile/hybrid/tools/madame-markup-check.py
       - name: Read-only public Hepsiburada markup (no account or write)
         continue-on-error: true
         run: python3 mobile/hybrid/tools/hepsiburada-public-check.py
+      - name: Mango and MAD observed markup and adversarial checks
+        run: python3 mobile/hybrid/tools/new-store-markup-check.py
       - name: Pure Java boundary and pricing tests
         run: |
           mkdir -p "$RUNNER_TEMP/kinto-checks"
@@ -43,43 +50,96 @@ jobs:
           openssl rand -base64 32 > "$KINTO_PREVIEW_PASSWORD_FILE"
           keytool -genkeypair -keystore "$KINTO_PREVIEW_KEYSTORE" -storepass:file "$KINTO_PREVIEW_PASSWORD_FILE" -keypass:file "$KINTO_PREVIEW_PASSWORD_FILE" -alias kinto-preview -dname 'CN=KINTO Disposable CI Preview' -keyalg RSA -keysize 2048 -validity 3650
           bash mobile/hybrid/tools/build-preview.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: KINTO-Unsigned-Candidate-NOT-FOR-UPLOAD
+          path: ${{ runner.temp }}/kinto-candidate
+      - name: Sign candidate APK with disposable test key only
+        env:
+          KINTO_PREVIEW_KEYSTORE: ${{ runner.temp }}/kinto-preview.keystore
+          KINTO_PREVIEW_PASSWORD_FILE: ${{ runner.temp }}/kinto-preview-password
+        run: |
+          java -jar "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" sign --ks "$KINTO_PREVIEW_KEYSTORE" --ks-key-alias kinto-preview --ks-pass "file:$KINTO_PREVIEW_PASSWORD_FILE" --out "$RUNNER_TEMP/kinto-preview-output/KINTO-Candidate-0.22.apk" "$RUNNER_TEMP/kinto-candidate/apk/release/app-release-unsigned.apk"
       - name: Enable KVM for synthetic UI test
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Android 35 synthetic local-order flow
+      - name: Mango and MAD native confirmation (fresh emulator)
         uses: reactivecircus/android-emulator-runner@v2
         env:
-          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.10.apk
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.22.apk
         with:
-          api-level: 35
+          api-level: 36
           arch: x86_64
           target: google_apis
           profile: pixel_2
           disable-animations: true
-          emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
           script: |
-            python3 mobile/hybrid/tools/webview-smoke.py
+            python3 mobile/hybrid/tools/new-store-native-smoke.py
+      - name: Madame native confirmation (fresh emulator)
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.22.apk
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          script: |
+            python3 mobile/hybrid/tools/madame-native-smoke.py
+      - name: Zara native confirmation (fresh emulator)
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.22.apk
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          script: |
+            python3 mobile/hybrid/tools/zara-native-smoke.py
+      - name: Classic commerce invoices video and release guards (fresh emulator)
+        if: ${{ !cancelled() }}
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          KINTO_APK: ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.22.apk
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -wipe-data -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          script: |
             python3 mobile/hybrid/tools/emulator-smoke.py
+            python3 mobile/hybrid/tools/release-mode-smoke.py
+            python3 mobile/hybrid/tools/webview-smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: KINTO-Hybrid-Preview-APK
           path: |
-            ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.10.apk
+            ${{ runner.temp }}/kinto-preview-output/KINTO-Preview-0.22.apk
+            ${{ runner.temp }}/kinto-preview-output/KINTO-Candidate-0.22.apk
             ${{ runner.temp }}/kinto-preview-output/invoice-test.png
             ${{ runner.temp }}/kinto-preview-output/store-test.png
             ${{ runner.temp }}/kinto-preview-output/navigation-return-test.png
             ${{ runner.temp }}/kinto-preview-output/product-review-test.png
             ${{ runner.temp }}/kinto-preview-output/hepsiburada-review-test.png
+            ${{ runner.temp }}/kinto-preview-output/zara-native-failure.png
           retention-days: 14
           if-no-files-found: error
 # Disposable CI signing can require uninstall between downloads. Not production signing.
 # No publishing, Supabase mutation, website deployment, or signing-secret upload.
 
   pricing-database:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:17
@@ -99,3 +159,32 @@ jobs:
         env:
           PGPASSWORD: isolated-test-only
         run: psql -h localhost -U postgres -d kinto_pricing_test -v ON_ERROR_STOP=1 -f mobile/hybrid/pricing/database-check.sql
+
+  candidate-bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-36 build-tools;35.0.0
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Build unsigned non-production release candidate
+        run: gradle --no-daemon -p mobile/hybrid/android :app:bundleRelease :app:assembleRelease
+      - name: Verify fixture exclusion and signing separation
+        run: python3 mobile/hybrid/tools/check-release-artifacts.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KINTO-Unsigned-Candidate-NOT-FOR-UPLOAD
+          path: |
+            mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+            mobile/hybrid/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          retention-days: 14
+          if-no-files-found: error

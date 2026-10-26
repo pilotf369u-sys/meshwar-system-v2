@@ -1,0 +1,388 @@
+{
+  "source": "owner-run READ ONLY export received 2026-10-25",
+  "transaction_read_only": "on",
+  "contracts": [
+    {
+      "signature": "private.kinto_attachment_actor_v1(text,text)",
+      "exists": true,
+      "definition_sha256": "7da7e546bb774f0c5957b9c25b35a3df33170093435dd35a1bb73396b8e4e85f"
+    },
+    {
+      "signature": "private.kinto_attachment_upload_allowed_v1(text,text,jsonb)",
+      "exists": true,
+      "definition_sha256": "6de5b04c11facba9e33deeb1fa52628ad999b0dd543ce9b7da3288504b09718f"
+    },
+    {
+      "signature": "private.require_customer_review_session(text)",
+      "exists": true,
+      "definition_sha256": "7c1be6cb9dd24dad32888a4933dbbc409cd57b227098760655e8a381556e8f0a"
+    },
+    {
+      "signature": "private.review_storage_delete_allowed_v150(text,text)",
+      "exists": true,
+      "definition_sha256": "f13474da85af13bf0a8a2639a4f3cce176290e3ff22221618fc2d7aef3cd0b81"
+    },
+    {
+      "signature": "public.customer_portal_data_v2(text)",
+      "exists": true,
+      "definition_sha256": "c7a9ff2ed2c759188596e425a318388cdf4f21605a74f389fbd81fa655ba1dbd"
+    },
+    {
+      "signature": "public.customer_portal_data(text)",
+      "exists": true,
+      "definition_sha256": "6a77b3d4af9c52fb3f19323f923fde0a3aa5ee6b5c6c8a80f3f26a18a2906e97"
+    },
+    {
+      "signature": "public.kinto_attachment_read_session_v1(text,text,jsonb)",
+      "exists": true,
+      "definition_sha256": "8473535afe0ec373c242bd98e068c1b9e16329beb655310f741af5803707b444"
+    },
+    {
+      "signature": "public.kinto_attachment_ticket_session_v1(text,text,text,text,text,integer)",
+      "exists": true,
+      "definition_sha256": "907334487bdba20a21a5c0ab37a7c6c32519c972f1a513a4f10f9602ba051f64"
+    }
+  ],
+  "profile_links": [
+    {
+      "to_table": "auth.users",
+      "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "from_table": "profiles"
+    }
+  ],
+  "storage_policies": [
+    {
+      "roles": [
+        "anon"
+      ],
+      "command": "r",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "Allow anon uploads 16wiy3a_0",
+      "check_expression": null,
+      "using_expression": "(bucket_id = 'product-images'::text)"
+    },
+    {
+      "roles": [
+        "anon"
+      ],
+      "command": "a",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "Allow anon uploads 16wiy3a_1",
+      "check_expression": "(bucket_id = 'product-images'::text)",
+      "using_expression": null
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "r",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "allow_all 14tobej_0",
+      "check_expression": null,
+      "using_expression": "true"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "a",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "allow_all 14tobej_1",
+      "check_expression": "true",
+      "using_expression": null
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "d",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "allow_all 14tobej_2",
+      "check_expression": null,
+      "using_expression": "true"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "w",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "allow_all 14tobej_3",
+      "check_expression": null,
+      "using_expression": "true"
+    },
+    {
+      "roles": [
+        "PUBLIC"
+      ],
+      "command": "d",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "category images public delete",
+      "check_expression": null,
+      "using_expression": "(bucket_id = 'category-images'::text)"
+    },
+    {
+      "roles": [
+        "PUBLIC"
+      ],
+      "command": "a",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "category images public insert",
+      "check_expression": "(bucket_id = 'category-images'::text)",
+      "using_expression": null
+    },
+    {
+      "roles": [
+        "PUBLIC"
+      ],
+      "command": "w",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "category images public update",
+      "check_expression": "(bucket_id = 'category-images'::text)",
+      "using_expression": "(bucket_id = 'category-images'::text)"
+    },
+    {
+      "roles": [
+        "PUBLIC"
+      ],
+      "command": "r",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "category_images_public_read",
+      "check_expression": null,
+      "using_expression": "(bucket_id = 'category-images'::text)"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "r",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_attachment_listing_v1",
+      "check_expression": null,
+      "using_expression": "(bucket_id <> 'chat-attachments'::text)"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "d",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_private_media_delete_guard_v1",
+      "check_expression": null,
+      "using_expression": "(bucket_id <> ALL (ARRAY['kinto-customer-notice-media'::text, 'kinto-merchant-campaign-ads'::text]))"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "a",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_private_media_insert_guard_v1",
+      "check_expression": "(bucket_id <> ALL (ARRAY['kinto-customer-notice-media'::text, 'kinto-merchant-campaign-ads'::text]))",
+      "using_expression": null
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "r",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_private_media_select_guard_v1",
+      "check_expression": null,
+      "using_expression": "(bucket_id <> ALL (ARRAY['kinto-customer-notice-media'::text, 'kinto-merchant-campaign-ads'::text]))"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "w",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_private_media_update_guard_v1",
+      "check_expression": "(bucket_id <> ALL (ARRAY['kinto-customer-notice-media'::text, 'kinto-merchant-campaign-ads'::text]))",
+      "using_expression": "(bucket_id <> ALL (ARRAY['kinto-customer-notice-media'::text, 'kinto-merchant-campaign-ads'::text]))"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "d",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_product_media_delete_guard_v1",
+      "check_expression": null,
+      "using_expression": "(bucket_id <> 'product-images'::text)"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "a",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_product_media_insert_guard_v1",
+      "check_expression": "((bucket_id <> 'product-images'::text) OR private.vendor_media_upload_allowed_v1(bucket_id, name, metadata))",
+      "using_expression": null
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "w",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_product_media_update_guard_v1",
+      "check_expression": "(bucket_id <> 'product-images'::text)",
+      "using_expression": "(bucket_id <> 'product-images'::text)"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "d",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_remaining_asset_delete_v1",
+      "check_expression": null,
+      "using_expression": "\nCASE\n    WHEN (bucket_id = 'product-review-images'::text) THEN private.review_storage_delete_allowed_v150(bucket_id, name)\n    WHEN (bucket_id = ANY (ARRAY['chat-attachments'::text, 'category-images'::text, 'cms-media'::text])) THEN false\n    ELSE true\nEND"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "a",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_remaining_asset_insert_v1",
+      "check_expression": "\nCASE\n    WHEN (bucket_id = 'chat-attachments'::text) THEN private.kinto_attachment_upload_allowed_v1(bucket_id, name, metadata)\n    WHEN (bucket_id = 'product-review-images'::text) THEN private.review_storage_upload_allowed_v150(bucket_id, name, metadata)\n    WHEN (bucket_id = ANY (ARRAY['category-images'::text, 'cms-media'::text])) THEN false\n    ELSE true\nEND",
+      "using_expression": null
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "w",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_remaining_asset_update_v1",
+      "check_expression": "(bucket_id <> ALL (ARRAY['chat-attachments'::text, 'product-review-images'::text, 'category-images'::text, 'cms-media'::text]))",
+      "using_expression": "(bucket_id <> ALL (ARRAY['chat-attachments'::text, 'product-review-images'::text, 'category-images'::text, 'cms-media'::text]))"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "d",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_site_hero_delete_guard_v1",
+      "check_expression": null,
+      "using_expression": "(bucket_id <> 'site-hero-media'::text)"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "a",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_site_hero_insert_guard_v1",
+      "check_expression": "((bucket_id <> 'site-hero-media'::text) OR meshwar_can_upload_hero_object(name))",
+      "using_expression": null
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "w",
+      "permissive": false,
+      "table_name": "objects",
+      "policy_name": "kinto_site_hero_update_guard_v1",
+      "check_expression": "(bucket_id <> 'site-hero-media'::text)",
+      "using_expression": "(bucket_id <> 'site-hero-media'::text)"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "a",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "meshwar hero ticket upload",
+      "check_expression": "((bucket_id = 'site-hero-media'::text) AND meshwar_can_upload_hero_object(name))",
+      "using_expression": null
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "d",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "review image ticket cleanup v150",
+      "check_expression": null,
+      "using_expression": "private.review_storage_delete_allowed_v150(bucket_id, name)"
+    },
+    {
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "command": "a",
+      "permissive": true,
+      "table_name": "objects",
+      "policy_name": "review image ticket upload v150",
+      "check_expression": "private.review_storage_upload_allowed_v150(bucket_id, name, metadata)",
+      "using_expression": null
+    }
+  ],
+  "limitations": [
+    "No application RPCs executed; current function execution rights were not exported.",
+    "Policies may combine permissive and restrictive rules; names/allow-all policies alone do not establish a bypass.",
+    "Portal definitions reference legacy columns not present in the earlier observed customer schema; successful live execution is not established.",
+    "No auth.users identity equivalence to customers is established; no auth identity deletion is authorized."
+  ],
+  "sql_body_token_comparison": {
+    "private.kinto_attachment_actor_v1": true,
+    "private.kinto_attachment_upload_allowed_v1": true,
+    "private.require_customer_review_session": true,
+    "private.review_storage_delete_allowed_v150": true,
+    "public.kinto_attachment_read_session_v1": true,
+    "public.kinto_attachment_ticket_session_v1": true
+  },
+  "comparison_scope": "Comments/formatting and keyword case ignored, quoted string literals preserved; not a grant audit or full helper clone."
+}

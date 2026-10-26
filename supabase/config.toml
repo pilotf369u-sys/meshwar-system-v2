@@ -12,3 +12,8 @@ verify_jwt = false
 
 [functions.kinto-world-staff-security-v1]
 verify_jwt = false
+
+# Source configuration only: KINTO custom admin sessions are verified in each service RPC.
+# Runtime media/chat switches and reviewed DB policies remain disabled until authorized deployment.
+[functions.kinto-privacy-media-v1]
+verify_jwt = false
