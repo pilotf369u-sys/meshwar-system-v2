@@ -42,6 +42,13 @@
    const card=document.createElement('article');card.dataset.retentionRecord=row.record_id;card.style.cssText='padding:12px;margin:10px 0;border:1px solid #817342;border-radius:12px;overflow-wrap:anywhere';
    const heading=document.createElement('h4');heading.textContent='السجل: ';const reference=document.createElement('bdi');reference.dir='ltr';reference.textContent=row.reference;heading.append(reference);
    const current=document.createElement('p');current.textContent=row.decision_revision===0?'لم يُراجع بعد.':row.decision_current?'قرار مسجل؛ لا يعني اعتماد حذف الحساب.':'القرار يحتاج مراجعة: تغيّر السياق أو حلّ موعد المراجعة.';card.append(heading,current);
+   if(group==='orders'&&row.decision_current===true&&['accounting','invoice_dependency'].includes(row.reason)&&Array.isArray(row.needed_fields)&&row.needed_fields.includes('invoice_identity')){
+    card.append(action('حفظ بيانات الفاتورة اللازمة',async()=>{
+     const result=await window.KintoPrivacyV1.rpc('kinto_privacy_invoice_preserve_v1',{p_request_id:requestId,p_order_id:row.record_id},'admin');
+     if(result?.preserved!==true||result.account_deleted!==false)throw Error('تعذر تأكيد حفظ بيانات الفاتورة.');
+     state.textContent='حُفظت بيانات هوية هذه الفاتورة وفق قرار الاحتفاظ، دون تغيير الطلب أو حذف الحساب.';
+    }));
+   }
    if(!row.reviewable){const p=document.createElement('p');p.textContent='السياق غير مؤهل لهذه المراجعة المحدودة.';card.append(p);items.append(card);continue;}
    const reason=document.createElement('select');reason.setAttribute('aria-label','سبب الاحتفاظ');const empty=document.createElement('option');empty.value='';empty.textContent='اختر سبب الاحتفاظ';reason.append(empty);
    for(const [value,label]of Object.entries(reasons)){const o=document.createElement('option');o.value=value;o.textContent=label;reason.append(o)}reason.value=row.reason||'';

@@ -18,6 +18,7 @@ INSERT INTO public.local_stores(id)VALUES('00000000-0000-4000-8000-000000000208'
 INSERT INTO public.order_store_segments(id,order_id,store_id,items_snapshot)VALUES('00000000-0000-4000-8000-000000000206','00000000-0000-4000-8000-000000000203','00000000-0000-4000-8000-000000000208','[]');
 INSERT INTO public.couriers VALUES('00000000-0000-4000-8000-000000000209','00000000-0000-4000-8000-000000000209','00000000-0000-4000-8000-000000000210');
 UPDATE public.orders SET courier_id='00000000-0000-4000-8000-000000000209' WHERE id='00000000-0000-4000-8000-000000000203';
+INSERT INTO public.customer_review_sessions(customer_id,token_hash,expires_at)VALUES('00000000-0000-4000-8000-000000000201',digest('TEST-ARCHIVE-OWNER','sha256'),now()+interval '1 hour'),('00000000-0000-4000-8000-000000000202',digest('TEST-ARCHIVE-OTHER','sha256'),now()+interval '1 hour');
 CREATE TEMP TABLE preserved_orders_before AS SELECT id,to_jsonb(o)payload FROM public.orders o;
 DO $$DECLARE row jsonb;result jsonb;BEGIN
  BEGIN PERFORM public.kinto_privacy_invoice_preserve_v1('test-admin','00000000-0000-4000-8000-000000000205','00000000-0000-4000-8000-000000000203');RAISE EXCEPTION 'expected missing decision failure';EXCEPTION WHEN raise_exception OR insufficient_privilege THEN IF SQLERRM<>'CURRENT_INVOICE_RETENTION_REVIEW_REQUIRED'THEN RAISE;END IF;END;
@@ -35,6 +36,10 @@ SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM public.orders o JOIN preserve
 SELECT public.test_assert((SELECT count(*)FROM private.kinto_privacy_invoice_identity_v1)=1,'only one reviewed owned invoice copied');
 SELECT 'PASS_INVOICE_RETENTION_CAPTURE: verified request and current per-record decision, exact owner, idempotency, no direct grants, original orders unchanged; no account erasure claim';
 
+SET LOCAL ROLE anon;
+SELECT public.test_assert(public.kinto_privacy_invoice_read_v1('customer','TEST-ARCHIVE-OWNER','00000000-0000-4000-8000-000000000203')->>'name'='TEST LEGACY NAME','actual customer session reads only owned invoice through public RPC');
+RESET ROLE;
+SELECT public.test_denied($q$SELECT public.kinto_privacy_invoice_read_v1('customer','TEST-ARCHIVE-OTHER','00000000-0000-4000-8000-000000000203')$q$,'INVOICE_SCOPE_DENIED');
 SELECT public.test_assert(public.kinto_privacy_invoice_read_v1('admin','TEST-admin','00000000-0000-4000-8000-000000000203')->>'name'='TEST LEGACY NAME','admin reads retained invoice through session scope');
 SELECT public.test_assert(public.kinto_privacy_invoice_read_v1('branch','TEST-branch','00000000-0000-4000-8000-000000000203')->>'name'='TEST LEGACY NAME','assigned branch scope retained');
 DO $$BEGIN
@@ -45,6 +50,7 @@ END$$;
 SELECT public.test_assert(public.kinto_privacy_invoice_read_v1('vendor','TEST-vendor','00000000-0000-4000-8000-000000000203')->>'name'='TEST LEGACY NAME','only owning vendor reads retained customer identity');
 SELECT public.test_assert(public.kinto_privacy_invoice_read_v1('courier','TEST-courier','00000000-0000-4000-8000-000000000203')->>'name'='TEST LEGACY NAME','only assigned courier reads retained customer identity');
 DELETE FROM public.customers WHERE id='00000000-0000-4000-8000-000000000201';
+SELECT public.test_denied($q$SELECT public.kinto_privacy_invoice_read_v1('customer','TEST-ARCHIVE-OWNER','00000000-0000-4000-8000-000000000203')$q$,'REVIEW_SESSION_INVALID');
 SELECT public.test_assert(public.kinto_privacy_invoice_read_v1('admin','TEST-admin','00000000-0000-4000-8000-000000000203')->>'phone'='TEST PHONE','retained invoice survives actual synthetic profile deletion');
 SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM public.orders o JOIN preserved_orders_before b USING(id)WHERE to_jsonb(o)IS DISTINCT FROM b.payload),'synthetic profile deletion leaves all orders unchanged');
 SELECT public.test_assert((SELECT name='TEST OTHER'FROM public.customers WHERE id='00000000-0000-4000-8000-000000000202'),'other customer preserved');
