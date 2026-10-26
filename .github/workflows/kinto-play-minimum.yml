@@ -1,0 +1,33 @@
+name: KINTO minimal privacy pages
+'on':
+  push:
+    branches: [app/play-privacy-minimum-20261026]
+    paths: ['privacy-app-kinto.html','account-deletion.html','js/customer-navigation-drawer-v156.js','mobile/release-minimum/**','.github/workflows/kinto-play-minimum.yml']
+permissions:
+  contents: read
+jobs:
+  static-pages-and-links:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Preserve existing commerce and drawer actions
+        run: |
+          python3 mobile/release-minimum/check-scope.py
+          node --check js/customer-navigation-drawer-v156.js
+      - name: Install pinned browser
+        timeout-minutes: 4
+        run: |
+          npm install --prefix "$RUNNER_TEMP/kinto-minimum-ui" --no-audit --no-fund @playwright/test@1.55.0
+          "$RUNNER_TEMP/kinto-minimum-ui/node_modules/.bin/playwright" install chromium
+      - name: Static pages and existing customer menu
+        timeout-minutes: 2
+        run: NODE_PATH="$RUNNER_TEMP/kinto-minimum-ui/node_modules" node mobile/release-minimum/browser-check.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KINTO-Minimal-Privacy-Preview
+          path: ${{ runner.temp }}/kinto-minimum-shots
+          retention-days: 7
