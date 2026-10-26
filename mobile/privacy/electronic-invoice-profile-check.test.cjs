@@ -43,3 +43,5 @@ test('own strings required; inherited fields, non-string fields and missing opti
   const a=api(),order={customer_id:'TEST',customer_snapshot:candidate,details:'{}'};await a.hydrate(order);assert.equal(a.calls(),1);
  }
 });
+
+test('null JSON details cannot break cached customer identity',()=>{const a=api();assert.equal(a.read({details:'null',_kintoCustomer:profile}).name,profile.name)});
