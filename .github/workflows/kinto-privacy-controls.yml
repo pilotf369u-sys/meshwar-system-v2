@@ -98,10 +98,14 @@ jobs:
           node --test mobile/privacy/electronic-invoice-profile-check.test.cjs
           python3 mobile/release/source-scope-check.py
           python3 mobile/release/release-inputs.test.py
-      - name: Browser tests against disposable database RPC bridge
+      - name: Install pinned browser runtime
+        timeout-minutes: 4
         run: |
           npm install --prefix "$RUNNER_TEMP/kinto-privacy-ui" --no-audit --no-fund @playwright/test@1.55.0
-          "$RUNNER_TEMP/kinto-privacy-ui/node_modules/.bin/playwright" install --with-deps chromium
+          "$RUNNER_TEMP/kinto-privacy-ui/node_modules/.bin/playwright" install chromium
+      - name: Browser tests against disposable database RPC bridge
+        timeout-minutes: 3
+        run: |
           python3 mobile/privacy/test-server.py > "$RUNNER_TEMP/privacy-server.log" 2>&1 &
           NODE_PATH="$RUNNER_TEMP/kinto-privacy-ui/node_modules" node mobile/privacy/browser-check.cjs
       - name: Printed invoice identity survives profile removal
