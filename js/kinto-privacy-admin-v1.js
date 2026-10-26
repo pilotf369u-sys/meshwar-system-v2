@@ -40,7 +40,7 @@
   items.replaceChildren();more=result.has_more===true;last=result.items.at(-1)?.record_id||null;
   for(const row of result.items){
    const card=document.createElement('article');card.dataset.retentionRecord=row.record_id;card.style.cssText='padding:12px;margin:10px 0;border:1px solid #817342;border-radius:12px;overflow-wrap:anywhere';
-   const heading=document.createElement('h4');heading.textContent='السجل: '+row.reference;
+   const heading=document.createElement('h4');heading.textContent='السجل: ';const reference=document.createElement('bdi');reference.dir='ltr';reference.textContent=row.reference;heading.append(reference);
    const current=document.createElement('p');current.textContent=row.decision_revision===0?'لم يُراجع بعد.':row.decision_current?'قرار مسجل؛ لا يعني اعتماد حذف الحساب.':'القرار يحتاج مراجعة: تغيّر السياق أو حلّ موعد المراجعة.';card.append(heading,current);
    if(!row.reviewable){const p=document.createElement('p');p.textContent='السياق غير مؤهل لهذه المراجعة المحدودة.';card.append(p);items.append(card);continue;}
    const reason=document.createElement('select');reason.setAttribute('aria-label','سبب الاحتفاظ');const empty=document.createElement('option');empty.value='';empty.textContent='اختر سبب الاحتفاظ';reason.append(empty);
@@ -48,12 +48,12 @@
    const needed=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent='البيانات الضرورية لهذا السجل فقط';needed.append(legend);
    for(const [value,label]of Object.entries(fields)){const l=document.createElement('label');l.style.cssText='display:block;margin:8px 0';const c=document.createElement('input');c.type='checkbox';c.value=value;c.checked=Array.isArray(row.needed_fields)&&row.needed_fields.includes(value);c.style.cssText='width:auto;margin-inline-end:8px';l.append(c,document.createTextNode(label));needed.append(l)}
    const dateLabel=document.createElement('label');dateLabel.textContent='موعد مراجعة القرار — ليس موعد حذف تلقائي';dateLabel.style.display='block';const date=document.createElement('input');date.type='date';date.setAttribute('aria-label','موعد مراجعة القرار');date.value=row.review_on?String(row.review_on).slice(0,10):new Date(Date.now()+30*86400000).toISOString().slice(0,10);dateLabel.append(date);
-   card.append(reason,needed,dateLabel,action('حفظ قرار الاحتفاظ',async()=>{
+   const form=document.createElement('details'),summary=document.createElement('summary');summary.textContent='مراجعة سبب الاحتفاظ وبياناته';summary.style.cssText='color:#efd185;cursor:pointer;margin:10px 0';form.append(summary);form.addEventListener('toggle',()=>{if(form.open)items.querySelectorAll('details[open]').forEach(other=>{if(other!==form)other.open=false})});form.append(reason,needed,dateLabel,action('حفظ قرار الاحتفاظ',async()=>{
     const selected=[...needed.querySelectorAll('input:checked')].map(c=>c.value);
     if(!reason.value||!selected.length||!date.value)throw Error('اختر السبب والبيانات اللازمة وموعد المراجعة.');
     await call({p_group:group,p_action:'retain',p_record_id:row.record_id,p_expected_hash:row.content_hash,p_expected_signature:row.inventory_signature,p_expected_revision:row.decision_revision,p_reason:reason.value,p_needed_fields:selected,p_review_on:date.value+'T12:00:00Z'});
     if(box.isConnected){await loadRows();state.textContent='حُفظ قرار الاحتفاظ المحدد. لم تتغير بيانات الطلب أو مبالغه.';}
-   }));items.append(card);
+   }));card.append(form);items.append(card);
   }
   previous.disabled=cursors.length===1;next.disabled=!more;state.textContent=result.items.length?'تُعرض حتى 20 سجلاً؛ راجع كل سجل على حدة.':'لا توجد سجلات في هذا القسم. لا يعني ذلك اكتمال جرد الحساب.';
  }

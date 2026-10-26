@@ -23,6 +23,7 @@ await ad.locator('#privacyControlsV1 select').selectOption('reports');await ad.g
  const retained=retention.locator('[data-retention-record]').first();
  const retentionWrites=()=>calls.filter(x=>x.name==='kinto_privacy_retention_review_v1'&&x.body.p_action==='retain').length;
  const beforeRetention=retentionWrites();
+ await retained.locator('summary').click();
  await retained.getByRole('button',{name:'حفظ قرار الاحتفاظ',exact:true}).click();
  await retention.getByText('اختر السبب والبيانات اللازمة وموعد المراجعة.',{exact:true}).waitFor();assert.equal(retentionWrites(),beforeRetention);
  await retained.getByLabel('سبب الاحتفاظ',{exact:true}).selectOption('accounting');

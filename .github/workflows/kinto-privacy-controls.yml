@@ -68,7 +68,9 @@ jobs:
       - name: Actual exported invoice fallback and non-mutating privacy assessment
         run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/invoice-profile-dependency-check.sql
       - name: Per-record transaction retention decisions preserve business data
-        run: psql -v ON_ERROR_STOP=1 -f mobile/privacy/retention-review-check.sql
+        run: |
+          psql -v ON_ERROR_STOP=1 -f mobile/privacy/retention-review-check.sql
+          python3 mobile/privacy/retention-review-concurrency-check.py
       - name: Coherent minimal external erasure checkpoint
         run: |
           psql -v ON_ERROR_STOP=1 -f mobile/privacy/checkpoint-check.sql
