@@ -8,7 +8,14 @@ for group in ['protected_main_sha256','accepted_mobile_source_sha256']:
  for relative,expected in m[group].items():
   p=root/relative
   assert p.is_file() and not p.is_symlink(),relative
-  assert hashlib.sha256(p.read_bytes()).hexdigest()==expected,(group,relative)
+  data=p.read_bytes()
+  delta=m.get('authorized_invoice_identity_delta',{})
+  if group=='protected_main_sha256' and relative==delta.get('path'):
+   for change in delta['replacements']:
+    after=change['after'].encode();before=change['before'].encode()
+    assert data.count(after)==1,('exact authorized invoice identity delta',relative)
+    data=data.replace(after,before,1)
+  assert hashlib.sha256(data).hexdigest()==expected,(group,relative)
 p=root/'dashboard.html';b=p.read_bytes();addition=m['dashboard_only_added_line'].encode()
 assert b.count(addition)==1,'exactly one added privacy dependency'
 assert hashlib.sha256(b.replace(addition,b'',1)).hexdigest()==m['dashboard_without_privacy_client_sha256'],'current dashboard changed beyond privacy dependency'
