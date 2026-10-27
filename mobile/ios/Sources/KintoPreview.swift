@@ -79,6 +79,21 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         present(panel, animated: true)
     }
 
+    private func openExternal(_ url: URL) {
+        guard presentedViewController == nil else { return }
+        let alert = UIAlertController(title: "فتح رابط خارج KINTO", message: "سيُفتح الرابط في التطبيق أو المتصفح المناسب.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "إلغاء", style: .cancel))
+        alert.addAction(UIAlertAction(title: "فتح", style: .default) { [weak self] _ in
+            UIApplication.shared.open(url, options: [:]) { [weak self] opened in
+                guard !opened, let self = self else { return }
+                let failure = UIAlertController(title: "تعذر فتح الرابط", message: "لا يوجد تطبيق متاح لفتح هذا الرابط.", preferredStyle: .alert)
+                failure.addAction(UIAlertAction(title: "حسنًا", style: .cancel))
+                self.present(failure, animated: true)
+            }
+        })
+        present(alert, animated: true)
+    }
+
     @objc private func close() { productReview = nil; dismiss(animated: true) }
 
     @objc private func reviewProduct() {
@@ -125,6 +140,14 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
                     openRetailer(url)
                     return
                 }
+                if KintoURLPolicy.canOpenExternal(scheme: origin.protocol, host: origin.host, port: origin.port,
+                                                  mainFrame: action.sourceFrame.isMainFrame,
+                                                  activated: action.navigationType == .linkActivated,
+                                                  destination: url.absoluteString) {
+                    decisionHandler(.cancel)
+                    openExternal(url)
+                    return
+                }
                 if trusted && (isBlank || destination == .account) { decisionHandler(.allow); return }
             case .retailer: break
             }
@@ -145,7 +168,13 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
                                                     activated: action.navigationType == .linkActivated,
                                                     destination: url.absoluteString) else { return }
                 openRetailer(url)
-            case .blocked: decisionHandler(.cancel)
+            case .blocked:
+                decisionHandler(.cancel)
+                let origin = action.sourceFrame.securityOrigin
+                if KintoURLPolicy.canOpenExternal(scheme: origin.protocol, host: origin.host, port: origin.port,
+                                                   mainFrame: action.sourceFrame.isMainFrame,
+                                                   activated: action.navigationType == .linkActivated,
+                                                   destination: url.absoluteString) { openExternal(url) }
             }
         case .retailer:
             if case .retailer = destination, action.targetFrame != nil {
@@ -167,6 +196,14 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
                                            activated: navigationAction.navigationType == .linkActivated,
                                            destination: url.absoluteString) {
             openRetailer(url)
+            return nil
+        }
+        if let url = navigationAction.request.url,
+           KintoURLPolicy.canOpenExternal(scheme: origin.protocol, host: origin.host, port: origin.port,
+                                          mainFrame: navigationAction.sourceFrame.isMainFrame,
+                                          activated: navigationAction.navigationType == .linkActivated,
+                                          destination: url.absoluteString) {
+            openExternal(url)
             return nil
         }
         if case .invoiceFixture = mode { invoiceTestState = "popup: " + origin.protocol + "://" + origin.host + ":" + String(origin.port) + " main=" + String(navigationAction.sourceFrame.isMainFrame) + " modal=" + String(presentedViewController != nil) + " url=" + (navigationAction.request.url?.absoluteString ?? "<nil>") }
