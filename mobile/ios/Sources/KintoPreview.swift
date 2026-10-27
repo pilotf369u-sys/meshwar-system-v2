@@ -86,7 +86,7 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 if case .invoiceFixture = mode { invoiceTestState = "action: " + origin.protocol + "://" + origin.host + ":" + String(origin.port) + " " + url.absoluteString }
                 let trusted = action.sourceFrame.isMainFrame && origin.protocol.lowercased() == "https" &&
                     origin.host.lowercased() == "shopkinto.com" && (origin.port == 0 || origin.port == 443)
-                let isBlank = url.absoluteString == "about:blank"
+                let isBlank = url.absoluteString.isEmpty || url.absoluteString == "about:blank"
                 if trusted && (isBlank || destination == .account) { decisionHandler(.allow); return }
             case .retailer: break
             }
@@ -125,7 +125,7 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
               origin.protocol.lowercased() == "https", origin.host.lowercased() == "shopkinto.com",
               origin.port == 0 || origin.port == 443 else { return nil }
         let address = navigationAction.request.url?.absoluteString ?? "about:blank"
-        guard address == "about:blank" || KintoURLPolicy.classify(address) == .account else { return nil }
+        guard address.isEmpty || address == "about:blank" || KintoURLPolicy.classify(address) == .account else { return nil }
         let document = InvoiceDocumentController(configuration: configuration)
         let nav = UINavigationController(rootViewController: document)
         present(nav, animated: true)
