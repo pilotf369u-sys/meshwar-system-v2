@@ -42,7 +42,9 @@ final class ReaderTestController: UIViewController, WKNavigationDelegate {
         Sample(source: "mango", page: "https://shop.mango.com/tr/tr/p/kadin/test/00000001/99/00", file: "fixture-mango", reader: "mango-reader")
     ]
     private var index = 0
+    private var pricingPhase = false
     private var browser: WKWebView!
+    private var pricingWeb: WKWebView!
     override func viewDidLoad() {
         super.viewDidLoad()
         let config = WKWebViewConfiguration()
@@ -60,6 +62,7 @@ final class ReaderTestController: UIViewController, WKNavigationDelegate {
         browser.loadHTMLString(csp + html, baseURL: URL(string: sample.page))
     }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        if pricingPhase && webView === pricingWeb { testPricing(webView); return }
         let sample = samples[index]
         guard let path = Bundle.main.path(forResource: sample.reader, ofType: "js"),
               let script = try? String(contentsOfFile: path, encoding: .utf8) else { finish("FAIL: missing reader " + sample.source); return }
@@ -112,7 +115,43 @@ final class ReaderTestController: UIViewController, WKNavigationDelegate {
     }
     private func advance() {
         index += 1
-        if index == samples.count { finish("PASS") } else { loadFixture() }
+        if index == samples.count {
+            pricingPhase = true
+            let config = WKWebViewConfiguration()
+            config.websiteDataStore = .nonPersistent()
+            pricingWeb = WKWebView(frame: .zero, configuration: config)
+            pricingWeb.navigationDelegate = self
+            pricingWeb.loadHTMLString("<html><body>local pricing fixture</body></html>", baseURL: nil)
+        } else { loadFixture() }
+    }
+    private func testPricing(_ webView: WKWebView) {
+        guard let corePath = Bundle.main.path(forResource: "kinto-global-pricing-core-v1", ofType: "js"),
+              let core = try? String(contentsOfFile: corePath, encoding: .utf8),
+              let fixturePath = Bundle.main.path(forResource: "pricing-fixture", ofType: "json"),
+              let fixture = try? String(contentsOfFile: fixturePath, encoding: .utf8),
+              let parsed = try? JSONSerialization.jsonObject(with: Data(fixture.utf8)) as? [String: Any],
+              parsed["schema_version"] as? Int == 1,
+              parsed["enabled"] as? Bool == true,
+              parsed["formula"] as? String == "usd_cross_markup_v1",
+              parsed["shipping_included"] as? Bool == false
+        else { finish("FAIL: synthetic pricing contract"); return }
+        // The exact KINTO core runs in a local, separate WebKit view; no network.
+        let script = core + """
+        ;(() => {
+          const c = \(fixture);
+          const a = KintoGlobalPricingV1.estimate('1000', 'TRY', 1, c);
+          const b = KintoGlobalPricingV1.estimate('0.01', 'TRY', 1, c);
+          const usd = {...c, display_currency:'USD'};
+          const d = KintoGlobalPricingV1.estimate('1', 'TRY', 1, usd);
+          let rejected = false;
+          try { KintoGlobalPricingV1.estimate('1000','TRY',1,{...c,enabled:false}); } catch(e) { rejected = true; }
+          return a.amount === '35750' && a.currency === 'IQD' && a.shipping === null &&
+                 b.amount === '1' && d.amount === '0.03' && rejected;
+        })()
+        """
+        webView.evaluateJavaScript(script) { result, error in
+            self.finish(error == nil && (result as? Bool) == true ? "PASS" : "FAIL: synthetic pricing calculation")
+        }
     }
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { finish("FAIL: navigation") }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { finish("FAIL: provisional navigation") }

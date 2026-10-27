@@ -6,6 +6,8 @@ SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
 mkdir -p "$OUT"
 cp "$ROOT/mobile/ios/Preview-Info.plist" "$OUT/Info.plist"
 cp "$ROOT"/mobile/ios/Resources/*-reader.js "$OUT/"
+cp "$ROOT/mobile/ios/Resources/kinto-global-pricing-core-v1.js" "$OUT/"
+cp "$ROOT/mobile/ios/Resources/pricing-fixture.json" "$OUT/"
 cp "$ROOT"/mobile/ios/Resources/fixture-*.html "$OUT/"
 cp "$ROOT/mobile/ios/Resources/invoice-mobile.css" "$OUT/"
 xcrun swiftc -parse-as-library -sdk "$SDK" -target arm64-apple-ios15.0-simulator \
