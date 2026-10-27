@@ -1,0 +1,27 @@
+name: iOS build environment probe
+on:
+  push:
+    branches: [app/kinto-ios-preview-20261027]
+    paths: [.github/workflows/ios-environment-probe.yml]
+permissions:
+  contents: read
+jobs:
+  simulator-build:
+    runs-on: macos-15
+    timeout-minutes: 12
+    steps:
+      - name: Verify Xcode and iOS simulator SDK
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphonesimulator --show-sdk-version
+      - name: Compile a minimal UIKit iOS simulator executable
+        run: |
+          cat > /tmp/kinto-ios-probe.swift <<'SWIFT'
+          import UIKit
+          @main class AppDelegate: UIResponder, UIApplicationDelegate {
+              func application(_ application: UIApplication, didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool { true }
+          }
+          SWIFT
+          SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          xcrun swiftc -sdk "$SDK" -target arm64-apple-ios15.0-simulator /tmp/kinto-ios-probe.swift -o /tmp/kinto-ios-probe
+          file /tmp/kinto-ios-probe
