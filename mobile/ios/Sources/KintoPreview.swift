@@ -29,6 +29,7 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private let mode: Mode
     private var browser: WKWebView!
     private var store: WKWebsiteDataStore?
+    private var invoiceTestState = "initial"
     init(mode: Mode) { self.mode = mode; super.init(nibName: nil, bundle: nil) }
     required init?(coder: NSCoder) { fatalError("init(coder:) is unsupported") }
 
@@ -74,7 +75,7 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        guard let url = action.request.url else { decisionHandler(.cancel); return }
+        guard let url = action.request.url ?? (action.targetFrame == nil ? URL(string: "about:blank") : nil) else { decisionHandler(.cancel); return }
         // Child frames follow WebKit origin rules; no native script handler is installed.
         if let frame = action.targetFrame, !frame.isMainFrame { decisionHandler(.allow); return }
         let destination = KintoURLPolicy.classify(url.absoluteString)
@@ -82,6 +83,7 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
             switch mode {
             case .account, .invoiceFixture:
                 let origin = action.sourceFrame.securityOrigin
+                if case .invoiceFixture = mode { invoiceTestState = "action: " + origin.protocol + "://" + origin.host + ":" + String(origin.port) + " " + url.absoluteString }
                 let trusted = action.sourceFrame.isMainFrame && origin.protocol.lowercased() == "https" &&
                     origin.host.lowercased() == "shopkinto.com" && (origin.port == 0 || origin.port == 443)
                 let isBlank = url.absoluteString == "about:blank"
@@ -118,10 +120,11 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         case .account, .invoiceFixture: break
         }
         let origin = navigationAction.sourceFrame.securityOrigin
+        if case .invoiceFixture = mode { invoiceTestState = "popup: " + origin.protocol + "://" + origin.host + ":" + String(origin.port) }
         guard webView === browser, presentedViewController == nil, navigationAction.sourceFrame.isMainFrame,
               origin.protocol.lowercased() == "https", origin.host.lowercased() == "shopkinto.com",
               origin.port == 0 || origin.port == 443 else { return nil }
-        let address = navigationAction.request.url?.absoluteString ?? ""
+        let address = navigationAction.request.url?.absoluteString ?? "about:blank"
         guard address == "about:blank" || KintoURLPolicy.classify(address) == .account else { return nil }
         let document = InvoiceDocumentController(configuration: configuration)
         let nav = UINavigationController(rootViewController: document)
@@ -138,7 +141,18 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         if case .invoiceFixture = mode {
+            invoiceTestState = "fixture loaded"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 15) { self.recordInvoiceTimeout() }
             webView.evaluateJavaScript("const p=window.open('', '_blank'); if(p){p.document.open();p.document.write('<html><body>KINTO SYNTHETIC INVOICE</body></html>');p.document.close();}")
+        }
+    }
+
+    private func recordInvoiceTimeout() {
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let path = directory.appendingPathComponent("invoice-result.txt")
+        if !FileManager.default.fileExists(atPath: path.path) {
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try? ("FAIL: " + invoiceTestState).write(to: path, atomically: true, encoding: .utf8)
         }
     }
 
