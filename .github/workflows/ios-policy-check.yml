@@ -1,0 +1,24 @@
+name: iOS URL policy checks
+on:
+  push:
+    branches: [app/kinto-ios-preview-20261027]
+    paths:
+      - mobile/ios/Sources/**
+      - mobile/ios/Tests/**
+      - .github/workflows/ios-policy-check.yml
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run URL classification checks on macOS
+        run: |
+          xcrun swiftc mobile/ios/Sources/KintoURLPolicy.swift mobile/ios/Tests/main.swift -o /tmp/kinto-url-check
+          /tmp/kinto-url-check
+      - name: Typecheck for iOS simulator
+        run: |
+          SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          xcrun swiftc -typecheck -sdk "$SDK" -target arm64-apple-ios15.0-simulator mobile/ios/Sources/KintoURLPolicy.swift
