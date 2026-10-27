@@ -120,7 +120,7 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         case .account, .invoiceFixture: break
         }
         let origin = navigationAction.sourceFrame.securityOrigin
-        if case .invoiceFixture = mode { invoiceTestState = "popup: " + origin.protocol + "://" + origin.host + ":" + String(origin.port) }
+        if case .invoiceFixture = mode { invoiceTestState = "popup: " + origin.protocol + "://" + origin.host + ":" + String(origin.port) + " main=" + String(navigationAction.sourceFrame.isMainFrame) + " modal=" + String(presentedViewController != nil) + " url=" + (navigationAction.request.url?.absoluteString ?? "<nil>") }
         guard webView === browser, presentedViewController == nil, navigationAction.sourceFrame.isMainFrame,
               origin.protocol.lowercased() == "https", origin.host.lowercased() == "shopkinto.com",
               origin.port == 0 || origin.port == 443 else { return nil }
