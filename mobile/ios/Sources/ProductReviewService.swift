@@ -14,6 +14,8 @@ final class ProductReviewService: NSObject, WKNavigationDelegate, URLSessionTask
     private var page = "", source = "", reader = "", first = ""
     private var snapshot: [String: Any]?
     private var completed = false
+    private let pricingLoader: ((@escaping (Data?) -> Void) -> Void)?
+    init(pricingLoader: ((@escaping (Data?) -> Void) -> Void)? = nil) { self.pricingLoader = pricingLoader; super.init() }
     private enum Failure: Error { case unavailable }
     private let endpoint = "https://hsmmbloouskqdnptiiad.supabase.co/rest/v1/rpc/kinto_global_pricing_read_v1"
     // Public publishable key, already present in KINTO's Android application.
@@ -40,6 +42,12 @@ final class ProductReviewService: NSObject, WKNavigationDelegate, URLSessionTask
     }
 
     private func loadPricing() {
+        if let loader = pricingLoader {
+            loader { [weak self] data in
+                DispatchQueue.main.async { self?.acceptPricing(data) }
+            }
+            return
+        }
         guard let url = URL(string: endpoint) else { fail(); return }
         let cfg = URLSessionConfiguration.ephemeral
         cfg.httpShouldSetCookies = false
@@ -55,18 +63,20 @@ final class ProductReviewService: NSObject, WKNavigationDelegate, URLSessionTask
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         session.dataTask(with: req) { [weak self] data, response, error in
             DispatchQueue.main.async {
-                guard let self = self, error == nil, let http = response as? HTTPURLResponse, http.statusCode == 200,
-                      let data = data, data.count <= 65536,
-                      let doc = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      doc["schema_version"] as? Int == 1,
-                      doc["enabled"] as? Bool == true,
-                      doc["formula"] as? String == "usd_cross_markup_v1",
-                      doc["shipping_included"] as? Bool == false,
-                      let revision = doc["revision"] as? Int, revision >= 0 else { self?.fail(); return }
-                self.snapshot = doc
-                self.recheck()
+                guard let self = self, error == nil, let http = response as? HTTPURLResponse, http.statusCode == 200 else { self?.fail(); return }
+                self.acceptPricing(data)
             }
         }.resume()
+    }
+
+    private func acceptPricing(_ data: Data?) {
+        guard let data = data, data.count <= 65536,
+              let doc = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              doc["schema_version"] as? Int == 1, doc["enabled"] as? Bool == true,
+              doc["formula"] as? String == "usd_cross_markup_v1", doc["shipping_included"] as? Bool == false,
+              let revision = doc["revision"] as? Int, revision >= 0 else { fail(); return }
+        snapshot = doc
+        recheck()
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,

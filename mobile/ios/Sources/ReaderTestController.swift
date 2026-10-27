@@ -45,6 +45,7 @@ final class ReaderTestController: UIViewController, WKNavigationDelegate {
     private var pricingPhase = false
     private var browser: WKWebView!
     private var pricingWeb: WKWebView!
+    private var reviewService: ProductReviewService?
     override func viewDidLoad() {
         super.viewDidLoad()
         let config = WKWebViewConfiguration()
@@ -103,6 +104,20 @@ final class ReaderTestController: UIViewController, WKNavigationDelegate {
               CapturedProduct.validate(text, expectedURL: sample.page, currentURL: sample.page + "?changed=1", source: sample.source) == nil,
               CapturedProduct.validate("{\"error\":\"NOT_PRODUCT\"}", expectedURL: sample.page, currentURL: sample.page, source: sample.source) == nil
         else { finish("FAIL: " + sample.source + " reader or validation: " + String(text.prefix(1200))); return }
+        if sample.source == "trendyol" {
+            guard let path = Bundle.main.path(forResource: "pricing-fixture", ofType: "json"),
+                  let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else { finish("FAIL: pricing fixture"); return }
+            let service = ProductReviewService(pricingLoader: { completion in completion(data) })
+            reviewService = service
+            service.review(webView) { [weak self] result in
+                guard let self = self else { return }
+                self.reviewService = nil
+                guard case .success(let quote) = result, quote.amount == "35750", quote.currency == "IQD",
+                      quote.title.contains("KINTO TEST") else { self.finish("FAIL: product review integration"); return }
+                self.advance()
+            }
+            return
+        }
         if sample.source == "hepsiburada" {
             guard let opts = item["observedOptions"] as? [String: Any], opts["size"] as? String == "L", opts["color"] as? String == "Haki" else { finish("FAIL: hepsi options"); return }
             var altered = item
