@@ -52,3 +52,16 @@ jobs:
           done
           cat "$CONTAINER/Documents/reader-result.txt"
           test "$(cat "$CONTAINER/Documents/reader-result.txt")" = PASS
+
+      - name: Test trusted invoice popup on simulator
+        run: |
+          DEVICE="$(xcrun simctl list devices booted -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for items in d["devices"].values() for x in items))')"
+          xcrun simctl terminate "$DEVICE" com.kinto.ios.simulator.preview || true
+          xcrun simctl launch "$DEVICE" com.kinto.ios.simulator.preview --invoice-test
+          CONTAINER="$(xcrun simctl get_app_container "$DEVICE" com.kinto.ios.simulator.preview data)"
+          for i in {1..90}; do
+            [ -f "$CONTAINER/Documents/invoice-result.txt" ] && break
+            sleep 1
+          done
+          cat "$CONTAINER/Documents/invoice-result.txt"
+          test "$(cat "$CONTAINER/Documents/invoice-result.txt")" = PASS
