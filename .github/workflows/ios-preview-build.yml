@@ -1,0 +1,26 @@
+name: iOS simulator foundation
+on:
+  push:
+    branches: [app/kinto-ios-preview-20261027]
+    paths: [mobile/ios/**, .github/workflows/ios-preview-build.yml]
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check URL policy
+        run: |
+          xcrun swiftc mobile/ios/Sources/KintoURLPolicy.swift mobile/ios/Tests/main.swift -o /tmp/kinto-url-check
+          /tmp/kinto-url-check
+      - name: Build simulator app
+        run: bash mobile/ios/build-simulator.sh
+      - name: Install and launch on simulator
+        run: |
+          DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for runtime,items in d["devices"].items() if "iOS" in runtime for x in items if x["name"].startswith("iPhone")))')"
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" "$RUNNER_TEMP/KintoPreview.app"
+          xcrun simctl launch "$DEVICE" com.kinto.ios.simulator.preview
