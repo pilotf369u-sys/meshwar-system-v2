@@ -28,11 +28,21 @@ enum CapturedProduct {
     }
 }
 
-// Simulator-only test: no order, account, live retailer or server writes.
+// Simulator-only: Android fixtures and readers, no real retailer or server requests.
 final class ReaderTestController: UIViewController, WKNavigationDelegate {
+    struct Sample {
+        let source: String, page: String, file: String, reader: String
+    }
+    private let samples: [Sample] = [
+        Sample(source: "trendyol", page: "https://www.trendyol.com/fixture-p-123456", file: "fixture-product", reader: "product-reader"),
+        Sample(source: "hepsiburada", page: "https://www.hepsiburada.com/kinto-fixture-p-HBCV0000TEST", file: "fixture-hepsiburada", reader: "hepsiburada-reader"),
+        Sample(source: "zara", page: "https://www.zara.com/tr/tr/kinto-fixture-p00000001.html", file: "fixture-zara", reader: "zara-reader"),
+        Sample(source: "madamecoco", page: "https://www.madamecoco.com/kinto-test-nt0000000001-101/", file: "fixture-madamecoco", reader: "madamecoco-reader"),
+        Sample(source: "madparfum", page: "https://www.madparfum.com/urun/kinto-test/", file: "fixture-madparfum", reader: "madparfum-reader"),
+        Sample(source: "mango", page: "https://shop.mango.com/tr/tr/p/kadin/test/00000001/99/00", file: "fixture-mango", reader: "mango-reader")
+    ]
+    private var index = 0
     private var browser: WKWebView!
-    private var page = "https://www.trendyol.com/fixture-p-123456"
-    private var stage = 0
     override func viewDidLoad() {
         super.viewDidLoad()
         let config = WKWebViewConfiguration()
@@ -40,44 +50,53 @@ final class ReaderTestController: UIViewController, WKNavigationDelegate {
         browser = WKWebView(frame: CGRect(x: 0, y: 0, width: 390, height: 844), configuration: config)
         view.addSubview(browser)
         browser.navigationDelegate = self
-        let html = """
-        <!doctype html><html><head><title>Test</title>
-        <script type="application/ld+json">{"@type":"Product","name":"KINTO TEST shirt","productID":"123456","offers":{"@type":"Offer","price":"1000","priceCurrency":"TRY","url":"https://www.trendyol.com/fixture-p-123456"}}</script>
-        </head><body><h1>KINTO TEST</h1></body></html>
-        """
-        browser.loadHTMLString(html, baseURL: URL(string: page))
+        loadFixture()
+    }
+    private func loadFixture() {
+        let sample = samples[index]
+        guard let path = Bundle.main.path(forResource: sample.file, ofType: "html"),
+              let html = try? String(contentsOfFile: path, encoding: .utf8) else { finish("FAIL: missing " + sample.file); return }
+        let csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'\">"
+        browser.loadHTMLString(csp + html, baseURL: URL(string: sample.page))
     }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        let source = stage == 0 ? "trendyol" : "hepsiburada"
-        let resource = stage == 0 ? "product-reader" : "hepsiburada-reader"
-        guard let path = Bundle.main.path(forResource: resource, ofType: "js"),
-              let script = try? String(contentsOfFile: path, encoding: .utf8) else { finish("FAIL: missing reader"); return }
+        let sample = samples[index]
+        guard let path = Bundle.main.path(forResource: sample.reader, ofType: "js"),
+              let script = try? String(contentsOfFile: path, encoding: .utf8) else { finish("FAIL: missing reader " + sample.source); return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.3) { self.read(webView, sample: sample, script: script) }
+    }
+    private func read(_ webView: WKWebView, sample: Sample, script: String) {
         webView.evaluateJavaScript(script) { result, error in
-            guard error == nil, let text = result as? String,
-                  let item = CapturedProduct.validate(text, expectedURL: self.page, currentURL: webView.url?.absoluteString ?? "", source: source),
-                  (item["price"] as? NSNumber)?.doubleValue == 1000,
-                  CapturedProduct.validate(text, expectedURL: self.page, currentURL: self.page + "?changed=1", source: source) == nil,
-                  CapturedProduct.validate(text, expectedURL: self.page, currentURL: self.page, source: "zara") == nil,
-                  CapturedProduct.validate("{\"error\":\"NOT_PRODUCT\"}", expectedURL: self.page, currentURL: self.page, source: source) == nil
-            else { self.finish("FAIL: reader or validation"); return }
-            if self.stage == 0 {
-                self.stage = 1
-                self.page = "https://www.hepsiburada.com/kinto-fixture-p-HBCV0000TEST"
-                guard let path = Bundle.main.path(forResource: "fixture-hepsiburada", ofType: "html"),
-                      let html = try? String(contentsOfFile: path, encoding: .utf8) else { self.finish("FAIL: fixture missing"); return }
-                let csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'\">"
-                self.browser.loadHTMLString(csp + html, baseURL: URL(string: self.page))
-            } else {
-                guard let opts = item["observedOptions"] as? [String: Any],
-                      opts["size"] as? String == "L", opts["color"] as? String == "Haki" else { self.finish("FAIL: hepsi options"); return }
-                var altered = item
-                altered["observedOptions"] = ["size": "", "color": "Haki"]
-                guard let d = try? JSONSerialization.data(withJSONObject: altered), let modified = String(data: d, encoding: .utf8),
-                      CapturedProduct.validate(modified, expectedURL: self.page, currentURL: self.page, source: source) == nil
-                else { self.finish("FAIL: missing option accepted"); return }
-                self.finish("PASS")
-            }
+            guard error == nil, let text = result as? String else { self.finish("FAIL: JavaScript " + sample.source); return }
+            if sample.source == "mango" {
+                guard CapturedProduct.validate(text, expectedURL: sample.page, currentURL: sample.page, source: sample.source) == nil else { self.finish("FAIL: missing mango size accepted"); return }
+                // The Android reader records an actual selection only after its listener is installed.
+                webView.evaluateJavaScript("document.getElementById('product.sizeSelector.available.22').click()") { _, clickError in
+                    guard clickError == nil else { self.finish("FAIL: mango choice"); return }
+                    webView.evaluateJavaScript(script) { second, secondError in
+                        guard secondError == nil, let updated = second as? String else { self.finish("FAIL: mango reread"); return }
+                        self.verify(updated, webView: webView, sample: sample)
+                    }
+                }
+            } else { self.verify(text, webView: webView, sample: sample) }
         }
+    }
+    private func verify(_ text: String, webView: WKWebView, sample: Sample) {
+        guard let item = CapturedProduct.validate(text, expectedURL: sample.page, currentURL: webView.url?.absoluteString ?? "", source: sample.source),
+              (item["price"] as? NSNumber)?.doubleValue == 1000,
+              CapturedProduct.validate(text, expectedURL: sample.page, currentURL: sample.page + "?changed=1", source: sample.source) == nil,
+              CapturedProduct.validate("{\"error\":\"NOT_PRODUCT\"}", expectedURL: sample.page, currentURL: sample.page, source: sample.source) == nil
+        else { finish("FAIL: " + sample.source + " reader or validation: " + String(text.prefix(1200))); return }
+        if sample.source == "hepsiburada" {
+            guard let opts = item["observedOptions"] as? [String: Any], opts["size"] as? String == "L", opts["color"] as? String == "Haki" else { finish("FAIL: hepsi options"); return }
+            var altered = item
+            altered["observedOptions"] = ["size": "", "color": "Haki"]
+            guard let d = try? JSONSerialization.data(withJSONObject: altered), let modified = String(data: d, encoding: .utf8),
+                  CapturedProduct.validate(modified, expectedURL: sample.page, currentURL: sample.page, source: sample.source) == nil
+            else { finish("FAIL: missing option accepted"); return }
+        }
+        index += 1
+        if index == samples.count { finish("PASS") } else { loadFixture() }
     }
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { finish("FAIL: navigation") }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { finish("FAIL: provisional navigation") }
