@@ -11,7 +11,7 @@ cp "$ROOT/mobile/ios/Resources/pricing-fixture.json" "$OUT/"
 cp "$ROOT"/mobile/ios/Resources/fixture-*.html "$OUT/"
 cp "$ROOT/mobile/ios/Resources/invoice-mobile.css" "$OUT/"
 xcrun swiftc -parse-as-library -sdk "$SDK" -target arm64-apple-ios15.0-simulator \
-  "$ROOT/mobile/ios/Sources/KintoURLPolicy.swift" "$ROOT/mobile/ios/Sources/InvoiceDocumentController.swift" "$ROOT/mobile/ios/Sources/IsolationTestController.swift" "$ROOT/mobile/ios/Sources/ReaderTestController.swift" "$ROOT/mobile/ios/Sources/KintoPreview.swift" \
+  "$ROOT/mobile/ios/Sources/KintoURLPolicy.swift" "$ROOT/mobile/ios/Sources/ProductReviewService.swift" "$ROOT/mobile/ios/Sources/InvoiceDocumentController.swift" "$ROOT/mobile/ios/Sources/IsolationTestController.swift" "$ROOT/mobile/ios/Sources/ReaderTestController.swift" "$ROOT/mobile/ios/Sources/KintoPreview.swift" \
   -o "$OUT/KintoPreview"
 codesign --force --sign - "$OUT"
 echo "$OUT"

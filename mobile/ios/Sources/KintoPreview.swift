@@ -30,6 +30,7 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private var browser: WKWebView!
     private var store: WKWebsiteDataStore?
     private var invoiceTestState = "initial"
+    private var productReview: ProductReviewService?
     init(mode: Mode) { self.mode = mode; super.init(nibName: nil, bundle: nil) }
     required init?(coder: NSCoder) { fatalError("init(coder:) is unsupported") }
 
@@ -67,11 +68,34 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
             browser.loadHTMLString(html, baseURL: URL(string: "https://shopkinto.com/__invoice_fixture"))
         case .retailer(let url):
             navigationItem.leftBarButtonItem = UIBarButtonItem(title: "العودة إلى KINTO", style: .plain, target: self, action: #selector(close))
+            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "مراجعة المنتج", style: .plain, target: self, action: #selector(reviewProduct))
             browser.load(URLRequest(url: url))
         }
     }
 
-    @objc private func close() { dismiss(animated: true) }
+    @objc private func close() { productReview = nil; dismiss(animated: true) }
+
+    @objc private func reviewProduct() {
+        guard productReview == nil else { return }
+        navigationItem.rightBarButtonItem?.isEnabled = false
+        let task = ProductReviewService()
+        productReview = task
+        task.review(browser) { [weak self] result in
+            guard let self = self else { return }
+            self.productReview = nil
+            self.navigationItem.rightBarButtonItem?.isEnabled = true
+            let message: String
+            switch result {
+            case .success(let quote):
+                message = quote.title + "\n" + quote.options + "\nالسعر: " + quote.amount + " " + quote.currency + "\nالشحن يحدده الموظف بعد المراجعة.\nلا يُطلب المنتج إلا بعد الدفع وحسب توفره.\nإرسال الطلب غير متاح في هذه النسخة الأولية."
+            case .failure:
+                message = "تعذر التحقق من المنتج أو سعره. اختر منتجًا وخياراته وأعد المحاولة."
+            }
+            let alert = UIAlertController(title: "مراجعة المنتج", message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "حسنًا", style: .cancel))
+            self.present(alert, animated: true)
+        }
+    }
 
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
