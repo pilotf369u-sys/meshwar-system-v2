@@ -15,6 +15,8 @@ jobs:
         run: |
           xcrun swiftc mobile/ios/Sources/KintoURLPolicy.swift mobile/ios/Tests/main.swift -o /tmp/kinto-url-check
           /tmp/kinto-url-check
+      - name: Test unchanged Android readers against fixtures
+        run: bash mobile/ios/test-android-readers.sh
       - name: Build simulator app
         run: bash mobile/ios/build-simulator.sh
       - name: Install and launch on simulator
