@@ -9,7 +9,9 @@ final class KintoAppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         let window = UIWindow(frame: UIScreen.main.bounds)
-        window.rootViewController = UINavigationController(rootViewController: BrowserController(mode: .account))
+        window.rootViewController = ProcessInfo.processInfo.arguments.contains("--isolation-test")
+            ? IsolationTestController()
+            : UINavigationController(rootViewController: BrowserController(mode: .account))
         window.makeKeyAndVisible()
         self.window = window
         return true

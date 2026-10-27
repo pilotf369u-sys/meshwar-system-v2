@@ -26,3 +26,16 @@ jobs:
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" "$RUNNER_TEMP/KintoPreview.app"
           xcrun simctl launch "$DEVICE" com.kinto.ios.simulator.preview
+
+      - name: Verify website data isolation on simulator
+        run: |
+          DEVICE="$(xcrun simctl list devices booted -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for items in d["devices"].values() for x in items))')"
+          xcrun simctl terminate "$DEVICE" com.kinto.ios.simulator.preview || true
+          xcrun simctl launch "$DEVICE" com.kinto.ios.simulator.preview --isolation-test
+          CONTAINER="$(xcrun simctl get_app_container "$DEVICE" com.kinto.ios.simulator.preview data)"
+          for i in {1..90}; do
+            [ -f "$CONTAINER/Documents/isolation-result.txt" ] && break
+            sleep 1
+          done
+          cat "$CONTAINER/Documents/isolation-result.txt"
+          test "$(cat "$CONTAINER/Documents/isolation-result.txt")" = PASS
