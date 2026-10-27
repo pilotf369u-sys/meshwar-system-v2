@@ -23,3 +23,18 @@ for (url, expected) in cases {
     precondition(KintoURLPolicy.classify(url) == expected, "Unexpected classification: \(url)")
 }
 print("URL policy checks passed: \(cases.count)")
+
+func retail(_ scheme: String, _ host: String, _ port: Int, _ main: Bool, _ tap: Bool, _ dest: String) -> Bool {
+    KintoURLPolicy.canOpenRetailer(scheme: scheme, host: host, port: port, mainFrame: main, activated: tap, destination: dest)
+}
+let store = "https://www.trendyol.com/"
+precondition(retail("https", "shopkinto.com", 443, true, true, store))
+precondition(retail("https", "shopkinto.com", 0, true, true, store))
+precondition(!retail("http", "shopkinto.com", 443, true, true, store))
+precondition(!retail("https", "shopkinto.com.evil.test", 443, true, true, store))
+precondition(!retail("https", "shopkinto.com", 444, true, true, store))
+precondition(!retail("https", "shopkinto.com", 443, false, true, store))
+precondition(!retail("https", "shopkinto.com", 443, true, false, store))
+precondition(!retail("https", "shopkinto.com", 443, true, true, "https://trendyol.com.evil.test/"))
+precondition(!retail("https", "shopkinto.com", 443, true, true, "https://shopkinto.com/"))
+print("Retailer handoff security checks passed")

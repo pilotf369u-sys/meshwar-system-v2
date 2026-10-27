@@ -4,6 +4,14 @@ import Foundation
 enum KintoURLPolicy {
     enum Destination: Equatable { case account, retailer(String), blocked }
 
+    static func canOpenRetailer(scheme: String, host: String, port: Int,
+                                mainFrame: Bool, activated: Bool, destination: String) -> Bool {
+        guard mainFrame, activated, scheme.lowercased() == "https",
+              host.lowercased() == "shopkinto.com", port == 0 || port == 443 else { return false }
+        if case .retailer = classify(destination) { return true }
+        return false
+    }
+
     static func classify(_ raw: String) -> Destination {
         guard let url = URLComponents(string: raw),
               url.scheme?.lowercased() == "https",

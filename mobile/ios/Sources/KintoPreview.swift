@@ -73,6 +73,12 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
     }
 
+    private func openRetailer(_ url: URL) {
+        guard presentedViewController == nil else { return }
+        let panel = UINavigationController(rootViewController: BrowserController(mode: .retailer(url)))
+        present(panel, animated: true)
+    }
+
     @objc private func close() { productReview = nil; dismiss(animated: true) }
 
     @objc private func reviewProduct() {
@@ -111,6 +117,14 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 let trusted = action.sourceFrame.isMainFrame && origin.protocol.lowercased() == "https" &&
                     origin.host.lowercased() == "shopkinto.com" && (origin.port == 0 || origin.port == 443)
                 let isBlank = url.absoluteString.isEmpty || url.absoluteString == "about:blank"
+                if KintoURLPolicy.canOpenRetailer(scheme: origin.protocol, host: origin.host, port: origin.port,
+                                                   mainFrame: action.sourceFrame.isMainFrame,
+                                                   activated: action.navigationType == .linkActivated,
+                                                   destination: url.absoluteString) {
+                    decisionHandler(.cancel)
+                    openRetailer(url)
+                    return
+                }
                 if trusted && (isBlank || destination == .account) { decisionHandler(.allow); return }
             case .retailer: break
             }
@@ -125,9 +139,12 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 decisionHandler(.allow)
             case .retailer:
                 decisionHandler(.cancel)
-                guard action.navigationType == .linkActivated else { return }
-                let panel = UINavigationController(rootViewController: BrowserController(mode: .retailer(url)))
-                present(panel, animated: true)
+                let origin = action.sourceFrame.securityOrigin
+                guard KintoURLPolicy.canOpenRetailer(scheme: origin.protocol, host: origin.host, port: origin.port,
+                                                    mainFrame: action.sourceFrame.isMainFrame,
+                                                    activated: action.navigationType == .linkActivated,
+                                                    destination: url.absoluteString) else { return }
+                openRetailer(url)
             case .blocked: decisionHandler(.cancel)
             }
         case .retailer:
@@ -144,6 +161,14 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         case .account, .invoiceFixture: break
         }
         let origin = navigationAction.sourceFrame.securityOrigin
+        if let url = navigationAction.request.url,
+           KintoURLPolicy.canOpenRetailer(scheme: origin.protocol, host: origin.host, port: origin.port,
+                                           mainFrame: navigationAction.sourceFrame.isMainFrame,
+                                           activated: navigationAction.navigationType == .linkActivated,
+                                           destination: url.absoluteString) {
+            openRetailer(url)
+            return nil
+        }
         if case .invoiceFixture = mode { invoiceTestState = "popup: " + origin.protocol + "://" + origin.host + ":" + String(origin.port) + " main=" + String(navigationAction.sourceFrame.isMainFrame) + " modal=" + String(presentedViewController != nil) + " url=" + (navigationAction.request.url?.absoluteString ?? "<nil>") }
         guard webView === browser, presentedViewController == nil, navigationAction.sourceFrame.isMainFrame,
               origin.protocol.lowercased() == "https", origin.host.lowercased() == "shopkinto.com",
