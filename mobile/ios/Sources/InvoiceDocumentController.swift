@@ -50,7 +50,7 @@ final class InvoiceDocumentController: UIViewController, WKNavigationDelegate, W
         })()
         """
         web.evaluateJavaScript(script) { [weak self] result, _ in
-            guard let self = self, (result as? Bool) != true, self.presentingViewController != nil else { return }
+            guard let self = self, (result as? Bool) != true else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.applyMobileInvoiceStyle(attempts: attempts - 1) }
         }
     }
