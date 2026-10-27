@@ -82,6 +82,19 @@ final class ReaderTestController: UIViewController, WKNavigationDelegate {
         }
     }
     private func verify(_ text: String, webView: WKWebView, sample: Sample) {
+        // Android's Zara flow asks the customer for an absent size; never guess one.
+        if sample.source == "zara" {
+            guard let data = text.data(using: .utf8),
+                  let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  raw["pageUrl"] as? String == sample.page,
+                  (raw["price"] as? NSNumber)?.doubleValue == 1000,
+                  let needs = raw["optionRequirements"] as? [String: Any], needs["size"] as? Bool == true,
+                  let opts = raw["observedOptions"] as? [String: Any], opts["size"] as? String == "",
+                  CapturedProduct.validate(text, expectedURL: sample.page, currentURL: webView.url?.absoluteString ?? "", source: sample.source) == nil
+            else { finish("FAIL: Zara missing-size guard"); return }
+            advance()
+            return
+        }
         guard let item = CapturedProduct.validate(text, expectedURL: sample.page, currentURL: webView.url?.absoluteString ?? "", source: sample.source),
               (item["price"] as? NSNumber)?.doubleValue == 1000,
               CapturedProduct.validate(text, expectedURL: sample.page, currentURL: sample.page + "?changed=1", source: sample.source) == nil,
@@ -95,6 +108,9 @@ final class ReaderTestController: UIViewController, WKNavigationDelegate {
                   CapturedProduct.validate(modified, expectedURL: sample.page, currentURL: sample.page, source: sample.source) == nil
             else { finish("FAIL: missing option accepted"); return }
         }
+        advance()
+    }
+    private func advance() {
         index += 1
         if index == samples.count { finish("PASS") } else { loadFixture() }
     }
