@@ -131,8 +131,8 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         present(nav, animated: true)
         if case .invoiceFixture = mode {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                document.web.evaluateJavaScript("document.body && document.body.innerText") { result, error in
-                    self.recordInvoiceTest(error == nil && (result as? String)?.contains("KINTO SYNTHETIC INVOICE") == true)
+                document.web.evaluateJavaScript("Boolean(document.body && document.body.innerText.includes('KINTO SYNTHETIC INVOICE') && document.getElementById('kinto-app-invoice-layout'))") { result, error in
+                    self.recordInvoiceTest(error == nil && (result as? Bool) == true)
                 }
             }
         }
@@ -143,7 +143,7 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         if case .invoiceFixture = mode {
             invoiceTestState = "fixture loaded"
             DispatchQueue.main.asyncAfter(deadline: .now() + 15) { self.recordInvoiceTimeout() }
-            webView.evaluateJavaScript("const p=window.open('', '_blank'); if(p){p.document.open();p.document.write('<html><body>KINTO SYNTHETIC INVOICE</body></html>');p.document.close();}")
+            webView.evaluateJavaScript("const p=window.open('', '_blank'); if(p){p.document.open();p.document.write('<html><head></head><body><div class=invoice><div class=invoice-head>KINTO SYNTHETIC INVOICE</div></div></body></html>');p.document.close();}")
         }
     }
 
