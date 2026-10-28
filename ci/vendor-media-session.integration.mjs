@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
-import {randomBytes} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 let db;const native=Boolean(process.env.KINTO_TEST_DATABASE_URL);
 if(native){const url=new URL(process.env.KINTO_TEST_DATABASE_URL);assert(['localhost','127.0.0.1'].includes(url.hostname)&&url.pathname==='/kinto_test','ISOLATED_LOCAL_TEST_DATABASE_REQUIRED');const pg=await import(process.env.KINTO_PG_MODULE||'pg'),Client=pg.Client||pg.default.Client;const bootstrap=new Client({connectionString:url.href});await bootstrap.connect();await bootstrap.query('CREATE DATABASE kinto_vendor_media_test');await bootstrap.end();url.pathname='/kinto_vendor_media_test';const c=new Client({connectionString:url.href});await c.connect();db={exec:s=>c.query(s),query:(s,a)=>c.query(s,a),close:()=>c.end()};await db.exec('CREATE EXTENSION pgcrypto');}
@@ -29,8 +28,6 @@ CREATE POLICY old_open ON storage.objects FOR ALL TO anon,authenticated USING(tr
 INSERT INTO local_stores(id,store_name,username,phone,status,password_hash) VALUES('${id(1)}','Synthetic A','vendor-a','123','active',extensions.crypt('synthetic-password',extensions.gen_salt('bf'))),('${id(2)}','Synthetic B','vendor-b','456','active','hidden');`);
 for(const x of read('./fixtures/vendor-media-definitions-20261016.json'))await db.exec(x.definition);
 await db.exec(fs.readFileSync('sql/kinto-vendor-media-session-v1.sql','utf8'));
-// Exercise the deployable, function-only repair SQL in the isolated database.
-await db.exec(fs.readFileSync('sql/kinto-vendor-media-contentlength-fix-20261028.sql','utf8'));
 let apiRole='anon',count=0;
 async function asRole(sql,args=[]){await db.exec('SET ROLE '+apiRole);try{return await db.query(sql,args)}finally{await db.exec('RESET ROLE')}}
 async function call(fn,args){return asRole(`SELECT * FROM public.${fn}(${args.map((_,i)=>'$'+(i+1)).join(',')})`,args)}
@@ -42,9 +39,35 @@ await deny([token,id(2),'product','image/png',10]);
 for(const [purpose,mime,size]of [['invalid','image/png',10],['product','image/svg+xml',10],['product','video/mp4',10],['product','image/png',0],['product','image/png',15728641]])await deny([token,id(1),purpose,mime,size]);
 assert.equal((await db.query('SELECT count(*)::int AS n FROM private.vendor_media_tickets_v1')).rows[0].n,0);count++;
 await db.exec(fs.readFileSync('sql/kinto-vendor-media-lockdown-v1.sql','utf8'));
+// Start with the exact predicate from e7d9abcc (before PR #1113). Installing the
+// already-fixed full schema first would otherwise hide a broken/no-op repair.
+const repair=fs.readFileSync('sql/kinto-vendor-media-contentlength-fix-20261028.sql','utf8');
+const original=fs.readFileSync('ci/fixtures/vendor-media-upload-predicate-before-1113.sql','utf8');
+for(apiRole of ['anon','authenticated']){
+ await db.exec(original);
+ const t=(await call(fn,[token,id(1),'product','image/png',10])).rows[0][fn];
+ for(const metadata of [{mimetype:'image/png'},{mimetype:'image/png',contentLength:300}]){
+  await assert.rejects(()=>asRole('INSERT INTO storage.objects VALUES($1,$2,$3)',['product-images',t.path,metadata]),/row-level security/);count++;
+ }
+ // Exact final metadata was already accepted before the repair.
+ await asRole('BEGIN');
+ try{await asRole('INSERT INTO storage.objects VALUES($1,$2,$3)',['product-images',t.path,{mimetype:'image/png',size:10}]);count++;}
+ finally{await asRole('ROLLBACK');}
+ await db.exec(repair);
+ await db.exec(repair); // repeatability of the standalone SQL
+ for(const metadata of [{mimetype:'image/png'},{mimetype:'image/png',contentLength:300}]){
+  await asRole('BEGIN');
+  try{await asRole('INSERT INTO storage.objects VALUES($1,$2,$3)',['product-images',t.path,metadata]);count++;}
+  finally{await asRole('ROLLBACK');}
+ }
+}
 for(apiRole of ['anon','authenticated']){
  const ticket=(await call(fn,[token,id(1),'product','image/png',10])).rows[0][fn];assert(ticket.path.startsWith(id(1)+'/'));count++;
  const insert=(path,meta)=>asRole('INSERT INTO storage.objects VALUES($1,$2,$3)',['product-images',path,meta]);
+ for(const meta of [null,{}, {size:10},{mimetype:'image/jpeg'}, {mimetype:'image/png',size:0}, {mimetype:'image/png',size:'invalid'}, {mimetype:'image/png',size:11,contentLength:10}]){
+  await assert.rejects(()=>insert(ticket.path,meta),/row-level security/);count++;
+ }
+ await assert.rejects(()=>insert(id(2)+'/'+ticket.path.split('/').at(-1),{mimetype:'image/png'}),/row-level security/);count++;
  await assert.rejects(()=>insert('arbitrary.png',{mimetype:'image/png',size:10}),/row-level security/);count++;
  await assert.rejects(()=>insert(ticket.path,{mimetype:'image/jpeg',size:10}),/row-level security/);count++;
  await assert.rejects(()=>insert(ticket.path,{mimetype:'image/png',size:11}),/row-level security/);count++;
