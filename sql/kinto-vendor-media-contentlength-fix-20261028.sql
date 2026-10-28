@@ -12,7 +12,12 @@ SET search_path=pg_catalog,public,private,pg_temp AS $$
  AND s.expires_at>now() AND s.revoked_at IS NULL
  AND lower(trim(coalesce(ls.status,'')))='active' AND coalesce(ls.is_active,true)
  AND t.mime_type=lower(coalesce(p_metadata->>'mimetype',''))
- AND coalesce(p_metadata->>'contentLength',p_metadata->>'size','') ~ '^[0-9]{1,8}$'
- AND coalesce(p_metadata->>'contentLength',p_metadata->>'size')::numeric=t.byte_size);
+ -- Multipart contentLength includes boundary overhead and must not equal the file byte count.
+ -- The Storage service enforces file-size limits; compare the final size only when supplied.
+ AND (p_metadata->>'size' IS NULL OR
+      (p_metadata->>'size' ~ '^[0-9]{1,8}
+ $$;
+COMMIT;
+ AND (p_metadata->>'size')::numeric=t.byte_size)));
  $$;
 COMMIT;
