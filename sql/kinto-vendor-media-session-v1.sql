@@ -44,9 +44,3 @@ SET search_path=pg_catalog,public,private,pg_temp AS $$
 REVOKE ALL ON FUNCTION private.vendor_media_upload_allowed_v1(text,text,jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION private.vendor_media_upload_allowed_v1(text,text,jsonb) TO anon,authenticated;
 COMMIT;
-
- AND coalesce(p_metadata->>'contentLength',p_metadata->>'size')::numeric=t.byte_size);
-$$;
-REVOKE ALL ON FUNCTION private.vendor_media_upload_allowed_v1(text,text,jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION private.vendor_media_upload_allowed_v1(text,text,jsonb) TO anon,authenticated;
-COMMIT;
