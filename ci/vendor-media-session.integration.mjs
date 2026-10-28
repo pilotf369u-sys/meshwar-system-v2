@@ -29,6 +29,8 @@ CREATE POLICY old_open ON storage.objects FOR ALL TO anon,authenticated USING(tr
 INSERT INTO local_stores(id,store_name,username,phone,status,password_hash) VALUES('${id(1)}','Synthetic A','vendor-a','123','active',extensions.crypt('synthetic-password',extensions.gen_salt('bf'))),('${id(2)}','Synthetic B','vendor-b','456','active','hidden');`);
 for(const x of read('./fixtures/vendor-media-definitions-20261016.json'))await db.exec(x.definition);
 await db.exec(fs.readFileSync('sql/kinto-vendor-media-session-v1.sql','utf8'));
+// Exercise the deployable, function-only repair SQL in the isolated database.
+await db.exec(fs.readFileSync('sql/kinto-vendor-media-contentlength-fix-20261028.sql','utf8'));
 let apiRole='anon',count=0;
 async function asRole(sql,args=[]){await db.exec('SET ROLE '+apiRole);try{return await db.query(sql,args)}finally{await db.exec('RESET ROLE')}}
 async function call(fn,args){return asRole(`SELECT * FROM public.${fn}(${args.map((_,i)=>'$'+(i+1)).join(',')})`,args)}
