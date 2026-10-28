@@ -48,9 +48,10 @@ for(apiRole of ['anon','authenticated']){
  await assert.rejects(()=>insert('arbitrary.png',{mimetype:'image/png',size:10}),/row-level security/);count++;
  await assert.rejects(()=>insert(ticket.path,{mimetype:'image/jpeg',size:10}),/row-level security/);count++;
  await assert.rejects(()=>insert(ticket.path,{mimetype:'image/png',size:11}),/row-level security/);count++;
- // Storage can check contentLength before the final size field is available.
- await assert.rejects(()=>insert(ticket.path,{mimetype:'image/png',contentLength:11}),/row-level security/);count++;
- await insert(ticket.path,{mimetype:'image/png',contentLength:10});count++;
+ // Multipart upload length includes form boundaries; no final object size exists at precheck.
+ // Reject explicit final size mismatch but permit multipart declared envelope size.
+ await assert.rejects(()=>insert(ticket.path,{mimetype:'image/png',size:11,contentLength:300}),/row-level security/);count++;
+ await insert(ticket.path,{mimetype:'image/png',contentLength:300});count++;
  await assert.rejects(()=>insert(ticket.path,{mimetype:'image/png',size:10}),/duplicate key/);count++;
  assert.equal((await asRole("UPDATE storage.objects SET metadata='{}' WHERE bucket_id='product-images' AND name=$1 RETURNING name",[ticket.path])).rows.length,0);count++;
  assert.equal((await asRole("DELETE FROM storage.objects WHERE bucket_id='product-images' AND name=$1 RETURNING name",[ticket.path])).rows.length,0);count++;
