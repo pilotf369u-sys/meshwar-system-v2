@@ -11,6 +11,7 @@ if(window.top===window.self){document.documentElement.style.visibility='hidden';
   <script src="js/kinto-vendor-products-v1.js?v=20261017-store-control-v1"></script>
 <script src="js/kinto-customer-directory-v1.js?v=20261016-v1" data-role="vendor"></script>
   <script src="js/kinto-vendor-media-v1.js?v=20261016-v1"></script>
+<script src="js/kinto-vendor-product-image-prepare-v1.js?v=20261028-v1"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>لوحة صاحب المتجر - MeshWar</title>
@@ -430,8 +431,9 @@ const PRODUCT_IMAGES_BUCKET='product-images';
 async function uploadProductImage(file){
   if(!file||!vendorStore?.id)return null;
   if(!window.KintoVendorMediaV1)throw new Error('تعذر تحميل خدمة رفع الصور. حدّث الصفحة.');
-  const info=await window.KintoVendorMediaV1.ticket(vendorStore.id,file,'product'),path=info.path;
-  const{error}=await sb.storage.from(PRODUCT_IMAGES_BUCKET).upload(path,file,{cacheControl:'31536000',upsert:false,contentType:info.mime_type});
+  const prepared=await (window.KintoVendorProductImagePrepareV1?.prepare(file)??file);
+  const info=await window.KintoVendorMediaV1.ticket(vendorStore.id,prepared,'product'),path=info.path;
+  const{error}=await sb.storage.from(PRODUCT_IMAGES_BUCKET).upload(path,prepared,{cacheControl:'31536000',upsert:false,contentType:info.mime_type});
   if(error)throw error;
   const{data}=sb.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path);
   if(!data?.publicUrl)throw new Error('تعذر الحصول على رابط الصورة بعد الرفع.');
