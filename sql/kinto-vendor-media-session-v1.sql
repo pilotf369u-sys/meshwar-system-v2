@@ -38,9 +38,9 @@ SET search_path=pg_catalog,public,private,pg_temp AS $$
  AND s.expires_at>now() AND s.revoked_at IS NULL
  AND lower(trim(coalesce(ls.status,'')))='active' AND coalesce(ls.is_active,true)
  AND t.mime_type=lower(coalesce(p_metadata->>'mimetype',''))
- -- Storage may pass the declared content length before final size metadata is populated.
- AND coalesce(p_metadata->>'contentLength',p_metadata->>'size','') ~ '^[0-9]{1,8}
-$$;
+ AND coalesce(p_metadata->>'contentLength',p_metadata->>'size','') ~ '^[0-9]{1,8}$'
+ AND coalesce(p_metadata->>'contentLength',p_metadata->>'size')::numeric=t.byte_size);
+ $$;
 REVOKE ALL ON FUNCTION private.vendor_media_upload_allowed_v1(text,text,jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION private.vendor_media_upload_allowed_v1(text,text,jsonb) TO anon,authenticated;
 COMMIT;
