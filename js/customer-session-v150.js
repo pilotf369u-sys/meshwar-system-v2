@@ -3,6 +3,8 @@
   const STORAGE_KEY='kinto_customer_review_session_v132';
   const LOGGED_OUT_KEY='kinto_customer_logged_out_v150';
   const PERSIST_KEY='kinto_customer_session_v150';
+  const RESTORE_KEY='kinto_customer_login_restore_attempted_v150';
+  let revision=0;
   function read(){
     try{
       if(localStorage.getItem(LOGGED_OUT_KEY)==='1'){sessionStorage.removeItem(STORAGE_KEY);localStorage.removeItem(PERSIST_KEY);return null}
@@ -14,14 +16,23 @@
       return value;
     }catch{sessionStorage.removeItem(STORAGE_KEY);return null}
   }
-  function save(token,expiresAt){localStorage.removeItem(LOGGED_OUT_KEY);const value={token:String(token),expiresAt:expiresAt||new Date(Date.now()+30*86400000).toISOString()};sessionStorage.setItem(STORAGE_KEY,JSON.stringify(value));localStorage.setItem(PERSIST_KEY,JSON.stringify(value))}
+  function save(token,expiresAt){revision++;sessionStorage.removeItem(RESTORE_KEY);localStorage.removeItem(LOGGED_OUT_KEY);const value={token:String(token),expiresAt:expiresAt||new Date(Date.now()+30*86400000).toISOString()};sessionStorage.setItem(STORAGE_KEY,JSON.stringify(value));localStorage.setItem(PERSIST_KEY,JSON.stringify(value))}
   async function identity(supabase){
     const session=read();
     if(!session)return null;
+    const startedAtRevision=revision;
+    function isCurrent(){
+      if(revision!==startedAtRevision)return false;
+      const current=read();
+      if(current?.token!==session.token||current.expiresAt!==session.expiresAt)return false;
+      try{const persisted=JSON.parse(localStorage.getItem(PERSIST_KEY)||'null');return !persisted||persisted.token===session.token}catch{return false}
+    }
     let lastError=null;
     for(let attempt=0;attempt<2;attempt++){
+      if(!isCurrent())return null;
       const {data,error}=await supabase.rpc('customer_session_identity_v150',{p_session_token:session.token});
-      if(!error&&data?.ok&&data?.customer)return data.customer;
+      if(!isCurrent())return null;
+      if(!error&&data?.ok&&data?.customer){sessionStorage.removeItem(RESTORE_KEY);return data.customer;}
       lastError=error||new Error('CUSTOMER_SESSION_IDENTITY_EMPTY');
       if(attempt===0)await new Promise(resolve=>setTimeout(resolve,180));
     }
@@ -32,6 +43,8 @@
   }
   async function logout(supabase){
     const session=read();
+    revision++;
+    sessionStorage.removeItem(RESTORE_KEY);
     localStorage.setItem(LOGGED_OUT_KEY,'1');
     sessionStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(PERSIST_KEY);

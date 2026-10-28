@@ -1,0 +1,26 @@
+name: Customer session restoration
+on:
+  push:
+    branches: ['fix/customer-session-restore-20261028']
+  pull_request:
+    paths:
+      - 'login.html'
+      - 'js/customer-session-v150.js'
+      - 'tests/customer-session-restore.test.cjs'
+      - 'tests/e2e/customer-session-restore.spec.mjs'
+      - '.github/workflows/customer-session-restore.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  session-regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/customer-session-restore.test.cjs tests/vendor-entry-switch.test.cjs tests/vendor-session-recovery.test.cjs mobile/global-orders/integrated-login.test.cjs ci/customer-directory-client.test.mjs ci/customer-profile-ui.test.mjs ci/order-save-client.test.mjs
+      - run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test tests/e2e/customer-session-restore.spec.mjs --workers=1
