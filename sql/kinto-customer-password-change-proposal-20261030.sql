@@ -24,7 +24,7 @@ BEGIN
   IF v_stored IS NULL THEN
     RETURN jsonb_build_object('ok',false,'error','PASSWORD_INVALID');
   END IF;
-  IF v_stored ~ '^\\$2[aby]\\$' THEN
+  IF left(v_stored,4) IN ('$2a$','$2b$','$2y$') THEN
     v_match := extensions.crypt(p_current_password,v_stored) = v_stored;
   ELSE
     -- Existing login still supports legacy plaintext records; upgrade only this account on success.
