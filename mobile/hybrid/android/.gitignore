@@ -1,5 +1,8 @@
 .gradle/
 **/build/
 local.properties
-*.jks
 *.keystore
+*.jks
+*.p12
+*.pem
+*.key

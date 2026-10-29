@@ -14,7 +14,7 @@ public class ShoppingActivity extends Activity {
  private WebView web; private TextView status;  private String injectScript, readerScript, hepsiReaderScript; private boolean reading=false; private String currentProductPage="";
  private boolean fixture; private boolean hepsiFixture; private String fixtureUrl; private volatile Pricing.Snapshot quote; private volatile long quoteReadAt,configAttemptAt; private boolean badgeReading=false; private volatile boolean configLoading=false; private final android.os.Handler pricingHandler=new android.os.Handler(android.os.Looper.getMainLooper());
  @Override public void onCreate(Bundle state) {
-  super.onCreate(state); fixture=getIntent().getBooleanExtra("fixture",false);hepsiFixture=fixture&&"hepsiburada".equals(getIntent().getStringExtra("fixtureStore"));fixtureUrl=hepsiFixture?"https://www.hepsiburada.com/kinto-fixture-p-HBCV0000TEST":"https://www.trendyol.com/fixture-p-123456";
+  super.onCreate(state); fixture=PreviewMode.enabled(this)&&getIntent().getBooleanExtra("fixture",false);hepsiFixture=fixture&&"hepsiburada".equals(getIntent().getStringExtra("fixtureStore"));fixtureUrl=hepsiFixture?"https://www.hepsiburada.com/kinto-fixture-p-HBCV0000TEST":"https://www.trendyol.com/fixture-p-123456";
   getWindow().setStatusBarColor(Color.rgb(10,47,35));
   LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(Color.rgb(10,47,35));
   // Keep controls away from system status/navigation bars, including edge-to-edge Android 15.
@@ -38,7 +38,7 @@ public class ShoppingActivity extends Activity {
   web.setWebViewClient(new WebViewClient(){
    @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest r){String url=r.getUrl().toString();if(url.equals("kinto-lab://capture")){if(r.isForMainFrame())view.post(()->refreshAndCapture());return true;}if(fixture&&!url.equals(fixtureUrl))return true;if(!UrlPolicy.allowed(url)){if(r.isForMainFrame())status.setText("الرابط خارج المتاجر المدعومة؛ لم يتم فتحه");return true;}return false;}
    @Override public void onPageStarted(WebView v,String url,android.graphics.Bitmap icon){if(!UrlPolicy.allowed(url)){v.stopLoading();status.setText("تم إيقاف رابط غير مسموح");}}
-   @Override public void onPageFinished(WebView v,String url){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;status.setText("اختر منتجاً — نقرأ البيانات لتأكيدها قبل الحفظ");if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
+   @Override public void onPageFinished(WebView v,String url){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void doUpdateVisitedHistory(WebView v,String url,boolean reload){if(UrlPolicy.allowed(url)){if(!url.equals(currentProductPage))badge("جارٍ التحقق من السعر");currentProductPage=url;if(injectScript!=null)v.evaluateJavascript(injectScript,null);}}
    @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())status.setText("تعذر فتح الصفحة. تحقق من الاتصال أو حدّث مرة واحدة.");}
   });
@@ -77,12 +77,12 @@ public class ShoppingActivity extends Activity {
  }
  private void capture(){
   final String url=currentProductPage;if(!UrlPolicy.product(url)){new AlertDialog.Builder(this).setMessage("افتح صفحة منتج أولاً. لم نحفظ شيئاً.").setPositiveButton("حسناً",null).show();return;}
-  if(reading||readerScript==null)return;reading=true;status.setText("جاري قراءة بيانات المنتج...");
+  if(reading||readerScript==null)return;reading=true;
   web.evaluateJavascript(UrlPolicy.source(currentProductPage).equals("hepsiburada")?hepsiReaderScript:readerScript,result->{reading=false;
    if(!url.equals(currentProductPage)){status.setText("تغيرت الصفحة؛ اضغط الإضافة من المنتج الجديد");return;}
    try{Object decoded=new JSONTokener(result).nextValue();if(!(decoded instanceof String))throw new JSONException("Missing result");JSONObject item=new JSONObject((String)decoded);
     if(item.has("error")||!url.equals(item.optString("pageUrl"))||quote==null||!quote.fromCurrency.equals(item.optString("currency")))throw new JSONException("Page mismatch");
-    item.put("url",url);item.put("savedAt",System.currentTimeMillis());status.setText("راجع السعر والصورة قبل الحفظ — سلة تجريبية فقط");confirmProduct(item);
+    item.put("url",url);item.put("savedAt",System.currentTimeMillis());confirmProduct(item);
    }catch(JSONException e){status.setText("تعذرت قراءة بيانات المنتج؛ لم نحفظ شيئاً. حدّث الصفحة وجرب.");}
   });
  }
@@ -101,7 +101,7 @@ public class ShoppingActivity extends Activity {
   details.addView(line(priceLabel(item)));
   final Pricing.Snapshot snapshot=quote;
   if(!Double.isFinite(item.optDouble("price",Double.NaN))||item.optDouble("price",0)<=0){new AlertDialog.Builder(this).setMessage("السعر غير مؤكد؛ لم نحسب قيمة أو نضف طلباً.").setPositiveButton("حسناً",null).show();return;}
-  if(snapshot==null){new AlertDialog.Builder(this).setMessage("لا توجد إعدادات صرف وعمولة متاحة للقراءة. لم نضع أسعاراً افتراضية. استخدم تجربة البيانات المصطنعة من KINTO لاختبار المسار فقط.").setPositiveButton("حسناً",null).show();return;}
+  if(snapshot==null){new AlertDialog.Builder(this).setMessage("تعذر التحقق من السعر المعتمد. أعد المحاولة بعد قليل.").setPositiveButton("حسناً",null).show();return;}
   if(snapshot.source.equals("synthetic-fixture"))details.addView(line("بيانات اختبار مصطنعة — ليست أسعاراً معتمدة للشراء"));
   details.addView(line("السعر للمنتج فقط، ولا يشمل الشحن. تُحدد تكلفة الشحن بعد مراجعة الموظف للطلب."));
   if("visible-basket-offer".equals(item.optString("priceSource"))){details.addView(line("عرض يُطبق داخل سلة ترنديول؛ يلزم تأكيد استحقاقه والسعر النهائي عند الشراء."));double before=item.optDouble("priceBeforeBasketDiscount",Double.NaN);if(Double.isFinite(before))details.addView(line("قبل خصم السلة: "+String.format(java.util.Locale.US,"%.2f",before)+" ليرة تركية"));}
@@ -120,7 +120,7 @@ public class ShoppingActivity extends Activity {
   quantity.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence t,int a,int c,int f){}public void onTextChanged(CharSequence t,int a,int before,int count){try{total.setText("إجمالي المنتجات: "+Pricing.total(item.optString("price"),CartRules.quantity(t.toString()),snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");}catch(IllegalArgumentException e){total.setText("المجموع غير متاح: تحقق من الكمية أو السعر");}}public void afterTextChanged(android.text.Editable e){}});
   try{total.setText("إجمالي المنتجات: "+Pricing.total(item.optString("price"),1,snapshot)+" "+snapshot.toCurrency+" — بدون الشحن");}catch(IllegalArgumentException e){total.setText("المجموع غير متاح؛ السعر غير مقروء");}
   CheckBox confirmed=new CheckBox(this);confirmed.setText("طابقت المقاس أو الحجم واللون مع المتجر، أو المنتج بلا هذه الخيارات");details.addView(confirmed);
-  details.addView(line("يُحفظ على جهازك فقط في هذه النسخة. لم يُرسل إلى الموظف؛ لا حجز للمخزون ولا دفع."));
+  details.addView(line("تُضاف مسودة المنتج أولاً؛ أكمل إرسالها للمراجعة من KINTO. الشراء بعد تأكيد التسديد وحسب التوفر."));
   ScrollView scroll=new ScrollView(this);scroll.addView(details);
   AlertDialog dialog=new AlertDialog.Builder(this).setTitle("مراجعة المنتج").setView(scroll).setPositiveButton("أؤكد الإضافة",null).setNegativeButton("إلغاء",null).create();
   dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
@@ -128,7 +128,7 @@ public class ShoppingActivity extends Activity {
    if(required!=null&&required.optBoolean("size")&&chosenSize.isEmpty()){size.setError("اختر المقاس أو الحجم في المتجر وأكده هنا");return;}
    if(required!=null&&required.optBoolean("color")&&chosenColor.isEmpty()){color.setError("اختر اللون في المتجر وأكده هنا");return;}
    if(!confirmed.isChecked()){Toast.makeText(this,"أكد مطابقة الخيارات أولاً",Toast.LENGTH_SHORT).show();return;}
-   try{int count=CartRules.quantity(quantity.getText().toString());JSONObject options=new JSONObject();options.put("size",chosenSize);options.put("color",chosenColor);item.put("selectedOptions",options);item.put("quantity",count);item.put("optionsConfirmed",true);item.put("sizeOrigin",!chosenSize.isEmpty()&&chosenSize.equals(observedSize)?"page-confirmed":"user-confirmed");item.put("colorOrigin",!chosenColor.isEmpty()&&chosenColor.equals(observedColor)?"page-confirmed":"user-confirmed");double unit=item.optDouble("price",Double.NaN);item.put("lineTotal",Double.isFinite(unit)&&unit>0?CartRules.total(unit,count):JSONObject.NULL);item.put("cartKey",CartRules.key(item.optString("source"),item.optString("productId"),item.optString("merchantId"),chosenSize,chosenColor));if(snapshot.toCurrency.equals("IQD"))item.put("convertedTotalIQD",Pricing.total(item.optString("price"),count,snapshot));item.put("exchangeRate",snapshot.rate.toPlainString());item.put("sourcePerUsd",snapshot.sourcePerUsd.toPlainString());item.put("targetPerUsd",snapshot.targetPerUsd.toPlainString());item.put("sourceCurrency",snapshot.fromCurrency);item.put("displayCurrency",snapshot.toCurrency);item.put("pricingRevision",snapshot.revision);item.put("convertedTotal",Pricing.total(item.optString("price"),count,snapshot));item.put("commissionPercent",snapshot.commission.toPlainString());item.put("pricingSource",snapshot.source);item.put("testOnly",true);item.put("fixture",fixture);item.put("shipping",JSONObject.NULL);setResult(RESULT_OK,new android.content.Intent().putExtra("product",item.toString()));dialog.dismiss();finish();}catch(IllegalArgumentException e){quantity.setError("أدخل عدداً صحيحاً من 1 إلى 99");}catch(JSONException e){Toast.makeText(this,"تعذر تجهيز التجربة",Toast.LENGTH_SHORT).show();}
+   try{int count=CartRules.quantity(quantity.getText().toString());JSONObject options=new JSONObject();options.put("size",chosenSize);options.put("color",chosenColor);item.put("selectedOptions",options);item.put("quantity",count);item.put("optionsConfirmed",true);item.put("sizeOrigin",!chosenSize.isEmpty()&&chosenSize.equals(observedSize)?"page-confirmed":"user-confirmed");item.put("colorOrigin",!chosenColor.isEmpty()&&chosenColor.equals(observedColor)?"page-confirmed":"user-confirmed");double unit=item.optDouble("price",Double.NaN);item.put("lineTotal",Double.isFinite(unit)&&unit>0?CartRules.total(unit,count):JSONObject.NULL);item.put("cartKey",CartRules.key(item.optString("source"),item.optString("productId"),item.optString("merchantId"),chosenSize,chosenColor));if(snapshot.toCurrency.equals("IQD"))item.put("convertedTotalIQD",Pricing.total(item.optString("price"),count,snapshot));item.put("exchangeRate",snapshot.rate.toPlainString());item.put("sourcePerUsd",snapshot.sourcePerUsd.toPlainString());item.put("targetPerUsd",snapshot.targetPerUsd.toPlainString());item.put("sourceCurrency",snapshot.fromCurrency);item.put("displayCurrency",snapshot.toCurrency);item.put("pricingRevision",snapshot.revision);item.put("convertedTotal",Pricing.total(item.optString("price"),count,snapshot));item.put("commissionPercent",snapshot.commission.toPlainString());item.put("pricingSource",snapshot.source);item.put("testOnly",true);item.put("fixture",fixture);item.put("shipping",JSONObject.NULL);setResult(RESULT_OK,new android.content.Intent().putExtra("product",item.toString()));dialog.dismiss();finish();}catch(IllegalArgumentException e){quantity.setError("أدخل عدداً صحيحاً من 1 إلى 99");}catch(JSONException e){Toast.makeText(this,"تعذر إضافة المنتج؛ أعد المحاولة",Toast.LENGTH_SHORT).show();}
   }));dialog.show();
   dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.rgb(250,250,246)));
   dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(android.graphics.Color.rgb(10,47,35));
