@@ -45,6 +45,14 @@ try{
  assert.equal((await change(token,'legacy-old-password','another-strong-new-password')).ok,false);checks++;
  for(const value of [null,'','short']){const invalid=await change(token,'strong-new-password-1',value);assert.equal(invalid.error,'PASSWORD_INPUT_INVALID');checks++;}
  const missingCurrent=await change(token,null,'another-strong-new-password');assert.equal(missingCurrent.error,'PASSWORD_INPUT_INVALID');checks++;
+ const second=await change(token,'strong-new-password-1','second-strong-password-2');assert.equal(second.ok,true);checks++;
+ assert.equal((await login('user-one','second-strong-password-2')).ok,true);checks++;
+ assert.equal((await login('user-one','strong-new-password-1')).ok,false);checks++;
+ const otherLogin=await login('user-two','other-old-password');assert.equal(otherLogin.ok,true);checks++;
+ const cross=await change(otherLogin.session_token,'second-strong-password-2','evil-password-123');assert.equal(cross.ok,false);checks++;
+ assert.equal((await db.query('SELECT password FROM public.customers WHERE id=$1',[id2])).rows[0].password,'other-old-password');checks++;
+ await db.query("UPDATE public.customer_review_sessions SET expires_at=now()-interval '1 second' WHERE token_hash=extensions.digest($1,'sha256')",[token]);
+ await assert.rejects(()=>change(token,'second-strong-password-2','third-strong-password-3'),/SESSION_INVALID/);checks++;
  const same=await change(token,'strong-new-password-1','strong-new-password-1');
  assert.equal(same.error,'PASSWORD_INPUT_INVALID');checks++;
  console.log('Customer password isolated PostgreSQL checks passed:',checks);
