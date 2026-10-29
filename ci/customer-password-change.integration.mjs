@@ -43,6 +43,8 @@ try{
  const other=(await db.query('SELECT password FROM public.customers WHERE id=$1',[id2])).rows[0].password;
  assert.equal(other,'other-old-password');checks++;
  assert.equal((await change(token,'legacy-old-password','another-strong-new-password')).ok,false);checks++;
+ for(const value of [null,'','short']){const invalid=await change(token,'strong-new-password-1',value);assert.equal(invalid.error,'PASSWORD_INPUT_INVALID');checks++;}
+ const missingCurrent=await change(token,null,'another-strong-new-password');assert.equal(missingCurrent.error,'PASSWORD_INPUT_INVALID');checks++;
  const same=await change(token,'strong-new-password-1','strong-new-password-1');
  assert.equal(same.error,'PASSWORD_INPUT_INVALID');checks++;
  console.log('Customer password isolated PostgreSQL checks passed:',checks);
