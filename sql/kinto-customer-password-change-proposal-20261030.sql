@@ -1,5 +1,6 @@
 -- KINTO customer password change: PROPOSAL ONLY. Do not apply to production until isolated SQL and UI tests pass.
 -- Separate from profile changes, login, checkout, order/stock and WhatsApp OTP.
+-- BLOCKER: do not deploy until failed-password rate limiting and isolated PostgreSQL tests are proven.
 BEGIN;
 CREATE OR REPLACE FUNCTION public.customer_change_password_session_v1(
   p_session_token text, p_current_password text, p_new_password text
@@ -24,7 +25,7 @@ BEGIN
     RETURN jsonb_build_object('ok',false,'error','PASSWORD_INVALID');
   END IF;
   IF v_stored ~ '^\\$2[aby]\\$' THEN
-    v_match := crypt(p_current_password,v_stored) = v_stored;
+    v_match := extensions.crypt(p_current_password,v_stored) = v_stored;
   ELSE
     -- Existing login still supports legacy plaintext records; upgrade only this account on success.
     v_match := v_stored = p_current_password;
@@ -33,13 +34,13 @@ BEGIN
     RETURN jsonb_build_object('ok',false,'error','PASSWORD_INVALID');
   END IF;
   UPDATE public.customers
-    SET password=crypt(p_new_password,gen_salt('bf'))
+    SET password=extensions.crypt(p_new_password,extensions.gen_salt('bf'))
     WHERE id=v_customer;
   -- Revoke other sessions; keep the current verified session to avoid disrupting active checkout.
   UPDATE public.customer_review_sessions
     SET revoked_at=now()
     WHERE customer_id=v_customer
-      AND token_hash <> digest(p_session_token,'sha256')
+      AND token_hash <> extensions.digest(p_session_token,'sha256')
       AND revoked_at IS NULL;
   RETURN jsonb_build_object('ok',true);
 END;
