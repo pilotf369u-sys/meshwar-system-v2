@@ -28,7 +28,8 @@ DECLARE
   v_now timestamptz := clock_timestamp();
 BEGIN
   -- Fail closed before touching the account row; never echo passwords.
-  IF length(coalesce(p_current_password,'')) = 0
+  IF p_current_password IS NULL OR p_new_password IS NULL
+     OR length(coalesce(p_current_password,'')) = 0
      OR octet_length(coalesce(p_new_password,'')) < 8
      OR octet_length(p_new_password) > 72
      OR p_current_password = p_new_password THEN
