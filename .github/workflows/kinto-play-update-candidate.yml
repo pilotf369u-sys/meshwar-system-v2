@@ -43,8 +43,10 @@ jobs:
           disable-animations: true
           script: |
             adb install -r mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
             adb shell am start -W -n com.kinto.preview.hybrid.v28/com.kinto.trendyollab.MainActivity
-            sleep 6
+            sleep 8
+            adb shell pidof com.kinto.preview.hybrid.v28
             adb shell dumpsys activity activities | grep -F 'com.kinto.preview.hybrid.v28'
-            if adb logcat -d -v brief | grep -E 'FATAL EXCEPTION|Process: com.kinto.preview.hybrid.v28'; then exit 1; fi
+            adb logcat -d -v brief | grep -A 7 'FATAL EXCEPTION' | grep -F 'Process: com.kinto.preview.hybrid.v28' && exit 1 || true
 # No Play submission, no production signing, no database or website actions.
