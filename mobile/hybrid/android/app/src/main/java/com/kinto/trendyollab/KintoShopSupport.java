@@ -2,7 +2,10 @@ package com.kinto.trendyollab;
 import android.app.*;
 import android.content.*;
 import android.graphics.Color;
-import android.graphics.Typeface;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.*;
@@ -21,6 +24,35 @@ public final class KintoShopSupport {
  private KintoShopSupport(){}
  private static int dp(Activity a,int value){return Math.round(value*a.getResources().getDisplayMetrics().density);}
  private static GradientDrawable round(int color,int stroke,float radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(radius);if(stroke!=0)d.setStroke(1,stroke);return d;}
+ /** White WhatsApp-style speech bubble with a handset, scalable without a font glyph. */
+ private static final class WhatsAppMark extends android.graphics.drawable.Drawable {
+  private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final Path shape=new Path();
+  @Override public void draw(Canvas canvas){
+   Rect bounds=getBounds();canvas.save();
+   canvas.translate(bounds.left,bounds.top);canvas.scale(bounds.width()/48f,bounds.height()/48f);
+   p.setColor(Color.WHITE);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2.7f);
+   p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeJoin(Paint.Join.ROUND);
+   shape.reset();
+   shape.moveTo(12,35);shape.lineTo(9,41);shape.lineTo(17,39);
+   shape.cubicTo(22,42,33,41,38,34);
+   shape.cubicTo(47,21,37,7,24,7);
+   shape.cubicTo(10,7,3,22,12,35);
+   canvas.drawPath(shape,p);
+   p.setStyle(Paint.Style.FILL);
+   shape.reset();shape.moveTo(17.7f,16.8f);
+   shape.cubicTo(16.4f,15,14.5f,17.2f,14.4f,19.1f);
+   shape.cubicTo(14.2f,26,22.5f,34,29.6f,34);
+   shape.cubicTo(32.4f,34,34.8f,31.5f,32.5f,29.8f);
+   shape.lineTo(28,27.5f);shape.lineTo(25.3f,30.3f);
+   shape.cubicTo(22.1f,28.9f,19.3f,26,17.8f,22.8f);
+   shape.lineTo(20.4f,20.3f);shape.close();
+   canvas.drawPath(shape,p);canvas.restore();
+  }
+  @Override public void setAlpha(int alpha){p.setAlpha(alpha);invalidateSelf();}
+  @Override public void setColorFilter(android.graphics.ColorFilter filter){p.setColorFilter(filter);invalidateSelf();}
+  @Override public int getOpacity(){return android.graphics.PixelFormat.TRANSLUCENT;}
+ };
  private static JSONObject settings(Object data)throws JSONException {
   if(data instanceof JSONArray){JSONArray a=(JSONArray)data;return a.length()==0?new JSONObject():settings(a.get(0));}
   if(data instanceof JSONObject){JSONObject o=(JSONObject)data;return o.has("value")?settings(o.get("value")):o;}
@@ -52,7 +84,7 @@ public final class KintoShopSupport {
  }
  public static void install(Activity a,LinearLayout content){
   FrameLayout outer=new FrameLayout(a);outer.addView(content,new FrameLayout.LayoutParams(-1,-1));a.setContentView(outer);
-  TextView fab=new TextView(a);fab.setText("WA");fab.setTextSize(17);fab.setTypeface(null,Typeface.BOLD);fab.setTextColor(Color.WHITE);fab.setGravity(Gravity.CENTER);
+  ImageView fab=new ImageView(a);fab.setImageDrawable(new WhatsAppMark());fab.setPadding(dp(a,7),dp(a,7),dp(a,7),dp(a,7));fab.setScaleType(ImageView.ScaleType.FIT_CENTER);
   fab.setContentDescription("مساعدة KINTO عبر واتساب");
   fab.setBackground(round(Color.rgb(37,211,102),Color.rgb(218,191,118),dp(a,24)));
   fab.setElevation(dp(a,6));fab.setVisibility(View.GONE);
