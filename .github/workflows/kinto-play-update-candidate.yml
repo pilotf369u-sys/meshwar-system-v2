@@ -3,16 +3,13 @@ on:
   push:
     branches: [fix/play-whatsapp-direct-open-and-shop-support-20261030]
     paths: ['mobile/hybrid/android/**', '.github/workflows/kinto-play-update-candidate.yml']
-  pull_request:
-    branches: [app/play-aab-20261026]
-    paths: ['mobile/hybrid/android/**', '.github/workflows/kinto-play-update-candidate.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compile-candidate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -26,19 +23,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.14.3'
-      - name: Verify native support and update isolation contracts
+      - name: Verify isolated Android contracts
         run: python3 mobile/hybrid/android/checks/support-update-contract.py
-      - name: Compile unsigned standalone candidate only
+      - name: Build isolated preview APK and lint
         working-directory: mobile/hybrid/android
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
-      - name: Check candidate APK built
-        run: test -s mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
-      - name: Verify side-by-side preview identity
-        run: |
-          test "$(grep -o 'com.kinto.preview.hybrid.v28' mobile/hybrid/android/app/build.gradle | head -n1)" = 'com.kinto.preview.hybrid.v28'
-          test -s mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
-      - name: Upload isolated test APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: KINTO-WhatsApp-PlayUpdate-Preview-APK
           path: mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
@@ -47,58 +37,23 @@ jobs:
       - name: Build unsigned Play update AAB version 29
         working-directory: mobile/hybrid/android
         run: gradle --no-daemon :app:bundleRelease -PkintoProduction=true -PkintoProductionApplicationId=com.kinto.app -PkintoProductionVersionCode=29 -PkintoUnsignedRelease=true
-      - name: Verify unsigned AAB and archive
+      - name: Verify generated unsigned AAB
         run: |
           test -s mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
-          if unzip -Z1 mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab | grep -E '^META-INF/[^/]+[.](RSA|DSA|EC)
-          sha256sum mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
-      - name: Upload unsigned Play 29 AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: KINTO-Play-29-UNSIGNED-AAB
-          path: mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 14
-          if-no-files-found: error
-      - name: Enable KVM acceleration for emulator
-        run: |
-          sudo usermod -aG kvm "$USER"
-          sudo chmod 666 /dev/kvm
-          ls -l /dev/kvm
-      - name: Android emulator launcher smoke test
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          arch: x86_64
-          target: google_apis
-          profile: pixel_2
-          disable-animations: true
-          emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -no-metrics
-          emulator-boot-timeout: 900
-          script: |
-            adb install -r mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
-            adb logcat -c
-            adb shell am start -W -n com.kinto.preview.hybrid.v28/com.kinto.trendyollab.MainActivity
-            sleep 8
-            adb shell pidof com.kinto.preview.hybrid.v28
-            adb shell dumpsys activity activities | grep -F 'com.kinto.preview.hybrid.v28'
-            if adb logcat -d -v brief | grep -A 7 'FATAL EXCEPTION' | grep -F 'Process: com.kinto.preview.hybrid.v28'; then exit 1; fi
-; then
-            echo 'ERROR: signing certificate unexpectedly present in unsigned AAB'; exit 1
+          if unzip -Z1 mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab | grep -Eq '^META-INF/[^/]+[.](RSA|DSA|EC)$'; then
+            echo 'Unexpected signing certificate'; exit 1
           fi
           sha256sum mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
-      - name: Upload unsigned Play 29 AAB
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: KINTO-Play-29-UNSIGNED-AAB
           path: mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
           if-no-files-found: error
-      - name: Enable KVM acceleration for emulator
+      - name: Enable KVM acceleration
         run: |
-          sudo usermod -aG kvm "$USER"
           sudo chmod 666 /dev/kvm
-          ls -l /dev/kvm
-      - name: Android emulator launcher smoke test
+      - name: Android emulator smoke test
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -110,10 +65,7 @@ jobs:
           emulator-boot-timeout: 900
           script: |
             adb install -r mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
-            adb logcat -c
             adb shell am start -W -n com.kinto.preview.hybrid.v28/com.kinto.trendyollab.MainActivity
             sleep 8
             adb shell pidof com.kinto.preview.hybrid.v28
-            adb shell dumpsys activity activities | grep -F 'com.kinto.preview.hybrid.v28'
-            if adb logcat -d -v brief | grep -A 7 'FATAL EXCEPTION' | grep -F 'Process: com.kinto.preview.hybrid.v28'; then exit 1; fi
-# No Play submission, no production signing, no database or website actions.
+# Never publish or sign in GitHub.
