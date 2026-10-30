@@ -33,6 +33,11 @@ jobs:
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
       - name: Check candidate APK built
         run: test -s mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Enable KVM acceleration for emulator
+        run: |
+          sudo usermod -aG kvm "$USER"
+          sudo chmod 666 /dev/kvm
+          ls -l /dev/kvm
       - name: Android emulator launcher smoke test
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -41,6 +46,8 @@ jobs:
           target: google_apis
           profile: pixel_2
           disable-animations: true
+          emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -no-metrics
+          emulator-boot-timeout: 900
           script: |
             adb install -r mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
             adb logcat -c
