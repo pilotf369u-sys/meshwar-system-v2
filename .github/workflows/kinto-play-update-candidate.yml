@@ -26,9 +26,25 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.14.3'
+      - name: Verify native support and update isolation contracts
+        run: python3 mobile/hybrid/android/checks/support-update-contract.py
       - name: Compile unsigned standalone candidate only
         working-directory: mobile/hybrid/android
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
       - name: Check candidate APK built
         run: test -s mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Android emulator launcher smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          script: |
+            adb install -r mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -W -n com.kinto.preview.hybrid.v28/com.kinto.trendyollab.MainActivity
+            sleep 6
+            adb shell dumpsys activity activities | grep -F 'com.kinto.preview.hybrid.v28'
+            if adb logcat -d -v brief | grep -E 'FATAL EXCEPTION|Process: com.kinto.preview.hybrid.v28'; then exit 1; fi
 # No Play submission, no production signing, no database or website actions.
