@@ -33,6 +33,17 @@ jobs:
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
       - name: Check candidate APK built
         run: test -s mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Verify side-by-side preview identity
+        run: |
+          test "$(grep -o 'com.kinto.preview.hybrid.v28' mobile/hybrid/android/app/build.gradle | head -n1)" = 'com.kinto.preview.hybrid.v28'
+          test -s mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Upload isolated test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: KINTO-WhatsApp-PlayUpdate-Preview-APK
+          path: mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
       - name: Enable KVM acceleration for emulator
         run: |
           sudo usermod -aG kvm "$USER"
