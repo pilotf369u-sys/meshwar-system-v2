@@ -31,7 +31,7 @@ jobs:
       - name: Verify generated unsigned AAB
         run: |
           test -s mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
-          if unzip -Z1 mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab | grep -Ei '^META-INF/[^/]+\.(RSA|DSA|EC)
+          if unzip -Z1 mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab | grep -E '^META-INF/[^/]+[.](RSA|DSA|EC)
           sha256sum mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
       - uses: actions/upload-artifact@v4
         with:
@@ -39,7 +39,6 @@ jobs:
           path: mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
           if-no-files-found: error
-# No Play submission, private keys, production publish, or database calls.
 ; then
             echo 'ERROR: signing certificate unexpectedly present in unsigned AAB'; exit 1
           fi
