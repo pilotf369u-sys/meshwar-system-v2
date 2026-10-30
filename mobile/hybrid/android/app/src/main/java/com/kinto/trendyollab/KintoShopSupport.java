@@ -52,7 +52,7 @@ public final class KintoShopSupport {
  }
  public static void install(Activity a,LinearLayout content){
   FrameLayout outer=new FrameLayout(a);outer.addView(content,new FrameLayout.LayoutParams(-1,-1));a.setContentView(outer);
-  TextView fab=new TextView(a);fab.setText("☎");fab.setTextSize(23);fab.setTypeface(null,Typeface.BOLD);fab.setTextColor(Color.WHITE);fab.setGravity(Gravity.CENTER);
+  TextView fab=new TextView(a);fab.setText("WA");fab.setTextSize(17);fab.setTypeface(null,Typeface.BOLD);fab.setTextColor(Color.WHITE);fab.setGravity(Gravity.CENTER);
   fab.setContentDescription("مساعدة KINTO عبر واتساب");
   fab.setBackground(round(Color.rgb(37,211,102),Color.rgb(218,191,118),dp(a,24)));
   fab.setElevation(dp(a,6));fab.setVisibility(View.GONE);
