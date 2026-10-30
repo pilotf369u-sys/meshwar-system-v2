@@ -50,8 +50,41 @@ jobs:
       - name: Verify unsigned AAB and archive
         run: |
           test -s mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
-          if jarsigner -verify mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab >/dev/null 2>&1; then
-            echo 'Unsigned AAB unexpectedly has a valid signature'; exit 1
+          if unzip -Z1 mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab | grep -Ei '^META-INF/[^/]+\.(RSA|DSA|EC)
+          sha256sum mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+      - name: Upload unsigned Play 29 AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: KINTO-Play-29-UNSIGNED-AAB
+          path: mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+          if-no-files-found: error
+      - name: Enable KVM acceleration for emulator
+        run: |
+          sudo usermod -aG kvm "$USER"
+          sudo chmod 666 /dev/kvm
+          ls -l /dev/kvm
+      - name: Android emulator launcher smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -no-metrics
+          emulator-boot-timeout: 900
+          script: |
+            adb install -r mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            adb shell am start -W -n com.kinto.preview.hybrid.v28/com.kinto.trendyollab.MainActivity
+            sleep 8
+            adb shell pidof com.kinto.preview.hybrid.v28
+            adb shell dumpsys activity activities | grep -F 'com.kinto.preview.hybrid.v28'
+            if adb logcat -d -v brief | grep -A 7 'FATAL EXCEPTION' | grep -F 'Process: com.kinto.preview.hybrid.v28'; then exit 1; fi
+# No Play submission, no production signing, no database or website actions.
+; then
+            echo 'ERROR: signing certificate unexpectedly present in unsigned AAB'; exit 1
           fi
           sha256sum mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
       - name: Upload unsigned Play 29 AAB
