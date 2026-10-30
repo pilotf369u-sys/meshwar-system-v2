@@ -1,5 +1,6 @@
 plugins { id 'com.android.application' }
 def production = providers.gradleProperty('kintoProduction').orNull == 'true'
+def unsignedRelease = providers.gradleProperty('kintoUnsignedRelease').orNull == 'true'
 def productionId = providers.gradleProperty('kintoProductionApplicationId').orNull
 def productionCode = providers.gradleProperty('kintoProductionVersionCode').orNull
 if (production && (!productionId || !productionCode)) throw new GradleException('Verify Play Console identity/version before production build')
@@ -16,7 +17,7 @@ android {
  // Candidate identity only. Production identity/version/signing await Play Console verification.
  defaultConfig { applicationId production ? productionId : 'com.kinto.preview.hybrid.v28'; minSdk 28; targetSdk 36; versionCode production ? Integer.parseInt(productionCode) : 28; versionName production ? '1.0' : '0.28-candidate' }
  signingConfigs {
-  if (production) {
+  if (production && !unsignedRelease) {
    playUpload {
     storeFile secretFile('KINTO_UPLOAD_KEYSTORE')
     storePassword secretFile('KINTO_UPLOAD_STORE_PASSWORD_FILE').getText('UTF-8').replaceFirst(/\r?\n$/, '')
@@ -25,7 +26,7 @@ android {
    }
   }
  }
- buildTypes { release { debuggable false; minifyEnabled false; signingConfig production ? signingConfigs.playUpload : null } }
+ buildTypes { release { debuggable false; minifyEnabled false; signingConfig (production && !unsignedRelease) ? signingConfigs.playUpload : null } }
  sourceSets { main { assets.srcDirs = [layout.buildDirectory.dir('candidate-assets')] } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
