@@ -1,0 +1,4 @@
+4a0fe49cb726bf17e2bf92da51620946c912cfdf9485513577f4c54ec64bff4f  sql/customer-password-v1/install.sql
+8918c9c633a5788637288b485159a2a7a1b58d67d41ef21fd592bf4f8789fd91  sql/customer-password-v1/review-existing-boundaries.sql
+1a8bda64ec3b2d8d66c0ae803e70b25215f8e4d926cfa13dc8c69474980d733d  sql/customer-password-v1/rollback.sql
+6ca4e732d670658857010494d2da8160f875702d6b8e96a18b60f2af0cd71ffa  sql/customer-password-v1/verify.sql

@@ -14,7 +14,9 @@ try{
  GRANT SELECT,INSERT,UPDATE ON public.customer_review_sessions TO anon,authenticated;`);
  const defs=JSON.parse(fs.readFileSync('ci/fixtures/customer-profile-definitions-20261016.json','utf8'));
  for(const x of defs)await db.exec(x.definition);
- await db.exec(fs.readFileSync('sql/kinto-customer-password-change-proposal-20261030.sql','utf8'));
+ const installer=process.argv.includes('--installer');
+ if(installer)await db.exec('REVOKE CREATE ON SCHEMA public,private,extensions FROM PUBLIC,anon,authenticated; GRANT USAGE ON SCHEMA public TO anon,authenticated; ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;');
+ await db.exec(fs.readFileSync(installer?'sql/customer-password-v1/install.sql':'sql/kinto-customer-password-change-proposal-20261030.sql','utf8'));
  // Verify that RPC callers cannot inspect or modify the private rate-limit table.
  const acl=(await db.query(`SELECT
   has_table_privilege('anon','private.customer_password_change_attempts_v1','SELECT') AS anon_read,
