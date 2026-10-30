@@ -32,7 +32,7 @@ public class ShoppingActivity extends Activity {
   }});
   root.addView(navigation,new LinearLayout.LayoutParams(-1,Math.round(66*getResources().getDisplayMetrics().density)));
   try{navigation.loadDataWithBaseURL(null,asset("customer-navigation.html"),"text/html","UTF-8",null);}catch(IOException e){finish();}
-  setContentView(root);
+  KintoShopSupport.install(this,root);
   WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setSupportMultipleWindows(false);settings.setJavaScriptCanOpenWindowsAutomatically(false);
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
   try{injectScript=asset("order-button.js");readerScript=asset("product-reader.js");hepsiReaderScript=asset("hepsiburada-reader.js");zaraReaderScript=asset("zara-reader.js");madameReaderScript=asset("madamecoco-reader.js");mangoReaderScript=asset("mango-reader.js");madReaderScript=asset("madparfum-reader.js");}catch(IOException e){status.setText("تعذر تحميل زر الصفحة؛ أعد فتح التطبيق");}
