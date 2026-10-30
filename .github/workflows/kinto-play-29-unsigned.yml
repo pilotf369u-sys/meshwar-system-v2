@@ -31,9 +31,17 @@ jobs:
       - name: Verify generated unsigned AAB
         run: |
           test -s mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
-          if jarsigner -verify mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab >/dev/null 2>&1; then
-            echo 'ERROR: unsigned AAB was unexpectedly signed'
-            exit 1
+          if unzip -Z1 mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab | grep -Ei '^META-INF/[^/]+\.(RSA|DSA|EC)
+          sha256sum mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KINTO-Play-29-UNSIGNED-AAB
+          path: mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+          if-no-files-found: error
+# No Play submission, private keys, production publish, or database calls.
+; then
+            echo 'ERROR: signing certificate unexpectedly present in unsigned AAB'; exit 1
           fi
           sha256sum mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
       - uses: actions/upload-artifact@v4
