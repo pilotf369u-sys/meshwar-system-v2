@@ -10,7 +10,7 @@ BEGIN
   WHERE p.oid=to_regprocedure('public.customer_change_password_session_v1(text,text,text)')
     AND pg_get_userbyid(p.proowner)='postgres'
     AND obj_description(p.oid,'pg_proc')='KINTO password-v1 install-20261030'
-    AND md5(p.prosrc)='a5e5e001a9f4962e9a5b91ed85898755') THEN
+    AND md5(replace(p.prosrc, E'\r\n', E'\n'))='a5e5e001a9f4962e9a5b91ed85898755') THEN
   RAISE EXCEPTION 'ROLLBACK_IDENTITY_MISMATCH';
  END IF;
 END;
