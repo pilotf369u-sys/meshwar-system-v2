@@ -15,6 +15,18 @@ try{
  const defs=JSON.parse(fs.readFileSync('ci/fixtures/customer-profile-definitions-20261016.json','utf8'));
  for(const x of defs)await db.exec(x.definition);
  await db.exec(fs.readFileSync('sql/kinto-customer-password-change-proposal-20261030.sql','utf8'));
+ // Verify that RPC callers cannot inspect or modify the private rate-limit table.
+ const acl=(await db.query(`SELECT
+  has_table_privilege('anon','private.customer_password_change_attempts_v1','SELECT') AS anon_read,
+  has_table_privilege('anon','private.customer_password_change_attempts_v1','UPDATE') AS anon_write,
+  has_table_privilege('authenticated','private.customer_password_change_attempts_v1','SELECT') AS auth_read,
+  has_table_privilege('authenticated','private.customer_password_change_attempts_v1','UPDATE') AS auth_write,
+  has_function_privilege('anon','public.customer_change_password_session_v1(text,text,text)','EXECUTE') AS anon_rpc,
+  has_function_privilege('authenticated','public.customer_change_password_session_v1(text,text,text)','EXECUTE') AS auth_rpc`)).rows[0];
+ assert.deepEqual(acl,{anon_read:false,anon_write:false,auth_read:false,auth_write:false,anon_rpc:true,auth_rpc:true});checks++;
+ const rpcSecurity=(await db.query(`SELECT prosecdef,proconfig FROM pg_catalog.pg_proc
+  WHERE oid='public.customer_change_password_session_v1(text,text,text)'::regprocedure`)).rows[0];
+ assert.equal(rpcSecurity.prosecdef,true);assert(rpcSecurity.proconfig.includes('search_path=pg_catalog, pg_temp'));checks++;
  const id1='00000000-0000-0000-0000-000000000001',id2='00000000-0000-0000-0000-000000000002';
  await db.query("INSERT INTO public.customers(id,name,phone,password) VALUES($1,'One','user-one','legacy-old-password'),($2,'Two','user-two','other-old-password')",[id1,id2]);
  async function login(identity,password){return (await db.query('SELECT public.customer_review_login_v132($1,$2) result',[identity,password])).rows[0].result}
