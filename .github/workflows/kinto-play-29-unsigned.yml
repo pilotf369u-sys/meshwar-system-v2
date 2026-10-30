@@ -1,0 +1,45 @@
+name: KINTO Play 29 unsigned AAB candidate
+on:
+  push:
+    branches: [fix/play-whatsapp-direct-open-and-shop-support-20261030]
+    paths: ['mobile/hybrid/android/**', '.github/workflows/kinto-play-29-unsigned.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unsigned-aab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-36 build-tools;36.0.0
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Verify isolated Android support and update contracts
+        run: python3 mobile/hybrid/android/checks/support-update-contract.py
+      - name: Build unsigned Play update AAB
+        working-directory: mobile/hybrid/android
+        run: gradle --no-daemon :app:bundleRelease -PkintoProduction=true -PkintoProductionApplicationId=com.kinto.app -PkintoProductionVersionCode=29 -PkintoUnsignedRelease=true
+      - name: Verify generated unsigned AAB
+        run: |
+          test -s mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+          if jarsigner -verify mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab >/dev/null 2>&1; then
+            echo 'ERROR: unsigned AAB was unexpectedly signed'
+            exit 1
+          fi
+          sha256sum mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KINTO-Play-29-UNSIGNED-AAB
+          path: mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+          if-no-files-found: error
+# No Play submission, private keys, production publish, or database calls.
