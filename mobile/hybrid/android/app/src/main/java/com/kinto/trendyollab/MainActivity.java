@@ -3,6 +3,7 @@ import android.app.*;import android.os.*;import android.content.*;import android
 
 /** KINTO account browser. External retailer documents never load in this process. */
 public class MainActivity extends Activity {
+ private KintoPlayUpdates playUpdates;
  private LaunchOverlay launch;private boolean launchNavigationFailed;
  private WebView web;private TextView status;private FrameLayout surface;private final ArrayList<WebView> popupViews=new ArrayList<>();private final ArrayList<View> popupPanels=new ArrayList<>();private View fullVideo;private WebChromeClient.CustomViewCallback fullVideoCallback;private ValueCallback<Uri[]> upload;private boolean expectedFixture;
  private static final int SHOP=21,FILE=22;private static final String HOME="https://shopkinto.com/",DRAFTS="preview_global_orders_v1";
@@ -12,6 +13,7 @@ public class MainActivity extends Activity {
   status=new TextView(this);status.setText("KINTO Preview — الموقع حي؛ الطلب العالمي التجريبي محلي فقط");status.setTextColor(Color.WHITE);status.setTextSize(12);status.setPadding(12,8,12,6);
   ServiceWorkerController.getInstance().setServiceWorkerClient(new ServiceWorkerClient(){@Override public WebResourceResponse shouldInterceptRequest(WebResourceRequest r){return bundledReview(r.getUrl());}});
   web=new WebView(this);root.addView(web,new LinearLayout.LayoutParams(-1,0,1));surface=new FrameLayout(this);surface.addView(root);setContentView(surface);
+  playUpdates=new KintoPlayUpdates(this);
   if(Build.VERSION.SDK_INT>=31)getSplashScreen().setOnExitAnimationListener(view->{view.remove();if(launch!=null)launch.start();});
   if(state==null)launch=new LaunchOverlay(surface,()->{launchNavigationFailed=false;web.reload();});
   WebSettings s=web.getSettings();s.setUserAgentString(s.getUserAgentString()+" KINTOHybrid/0.21");s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(true);s.setJavaScriptCanOpenWindowsAutomatically(true);s.setMediaPlaybackRequiresUserGesture(true);
@@ -125,5 +127,6 @@ if(testExtra("webviewCompatFixture")&&r.getUrl().toString().equals("https://shop
  }
  @Override protected void onSaveInstanceState(Bundle b){b.putBoolean("expectedFixture",expectedFixture);web.saveState(b);super.onSaveInstanceState(b);}
  @Override public void onBackPressed(){if(fullVideo!=null){hideVideo();return;}if(!popupViews.isEmpty()){WebView v=popupViews.get(popupViews.size()-1);if(v.canGoBack())v.goBack();else closePopup(v);return;}if(web.canGoBack())web.goBack();else super.onBackPressed();}
- @Override protected void onDestroy(){if(launch!=null)launch.dispose();if(upload!=null)upload.onReceiveValue(null);super.onDestroy();}
+ @Override protected void onResume(){super.onResume();if(playUpdates!=null)playUpdates.onResume();}
+ @Override protected void onDestroy(){if(playUpdates!=null)playUpdates.onDestroy();if(launch!=null)launch.dispose();if(upload!=null)upload.onReceiveValue(null);super.onDestroy();}
 }
