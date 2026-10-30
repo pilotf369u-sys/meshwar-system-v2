@@ -16,7 +16,9 @@ CREATE OR REPLACE FUNCTION public.customer_change_password_session_v1(
   p_session_token text, p_current_password text, p_new_password text
 ) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = pg_catalog, public, private, extensions, pg_temp
+-- SECURITY DEFINER: resolve unqualified names only from trusted system catalog.
+-- Application tables/functions and pgcrypto calls use explicit schema qualification.
+SET search_path = pg_catalog, pg_temp
 AS $$
 DECLARE
   v_customer uuid;
