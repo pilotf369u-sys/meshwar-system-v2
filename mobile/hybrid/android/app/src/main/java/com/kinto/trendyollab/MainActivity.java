@@ -3,6 +3,7 @@ import android.app.*;import android.os.*;import android.content.*;import android
 
 /** KINTO account browser. External retailer documents never load in this process. */
 public class MainActivity extends Activity {
+ private KintoPlayUpdates playUpdates;
  private LaunchOverlay launch;private boolean launchNavigationFailed;
  private WebView web;private TextView status;private FrameLayout surface;private final ArrayList<WebView> popupViews=new ArrayList<>();private final ArrayList<View> popupPanels=new ArrayList<>();private View fullVideo;private WebChromeClient.CustomViewCallback fullVideoCallback;private ValueCallback<Uri[]> upload;private boolean expectedFixture;
  private static final int SHOP=21,FILE=22;private static final String HOME="https://shopkinto.com/",DRAFTS="preview_global_orders_v1";
@@ -12,6 +13,7 @@ public class MainActivity extends Activity {
   status=new TextView(this);status.setText("KINTO Preview — الموقع حي؛ الطلب العالمي التجريبي محلي فقط");status.setTextColor(Color.WHITE);status.setTextSize(12);status.setPadding(12,8,12,6);
   ServiceWorkerController.getInstance().setServiceWorkerClient(new ServiceWorkerClient(){@Override public WebResourceResponse shouldInterceptRequest(WebResourceRequest r){return bundledReview(r.getUrl());}});
   web=new WebView(this);root.addView(web,new LinearLayout.LayoutParams(-1,0,1));surface=new FrameLayout(this);surface.addView(root);setContentView(surface);
+  playUpdates=new KintoPlayUpdates(this);
   if(Build.VERSION.SDK_INT>=31)getSplashScreen().setOnExitAnimationListener(view->{view.remove();if(launch!=null)launch.start();});
   if(state==null)launch=new LaunchOverlay(surface,()->{launchNavigationFailed=false;web.reload();});
   WebSettings s=web.getSettings();s.setUserAgentString(s.getUserAgentString()+" KINTOHybrid/0.21");s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(true);s.setJavaScriptCanOpenWindowsAutomatically(true);s.setMediaPlaybackRequiresUserGesture(true);
@@ -73,7 +75,7 @@ if(testExtra("webviewCompatFixture")&&r.getUrl().toString().equals("https://shop
  @Override public boolean onKeyUp(int code,KeyEvent event){if(code==KeyEvent.KEYCODE_MENU){menu();return true;}return super.onKeyUp(code,event);}
  static boolean accountUrl(String u){try{java.net.URI x=new java.net.URI(u);return "https".equalsIgnoreCase(x.getScheme())&&"shopkinto.com".equalsIgnoreCase(x.getHost())&&x.getRawUserInfo()==null&&(x.getPort()==-1||x.getPort()==443);}catch(Exception e){return false;}}
  private boolean route(String u){if(accountUrl(u))return true;if(UrlPolicy.allowed(u)){openShop(u,false);return false;}external(u);return false;}
- private void external(String u){try{Uri x=Uri.parse(u);String s=x.getScheme();if(!Arrays.asList("https","tel","mailto","whatsapp").contains(s))throw new IllegalArgumentException();new AlertDialog.Builder(this).setMessage("فتح الرابط خارج التطبيق؟ لن تُنقل جلسة KINTO إلى المتصفح.").setPositiveButton("فتح",(d,w)->{try{startActivity(new Intent(Intent.ACTION_VIEW,x).addCategory(Intent.CATEGORY_BROWSABLE));}catch(Exception e){status.setText("لا يوجد تطبيق لفتح هذا الرابط");}}).setNegativeButton("إلغاء",null).show();}catch(Exception e){status.setText("الرابط غير مدعوم");}}
+ private void external(String u){try{Uri x=Uri.parse(u);String s=x.getScheme();if(!Arrays.asList("https","tel","mailto","whatsapp").contains(s))throw new IllegalArgumentException();if("https".equals(s)&&"wa.me".equalsIgnoreCase(x.getHost())&&x.getPort()==-1&&x.getPath()!=null&&x.getPath().matches("/[1-9][0-9]{8,14}/?")){try{startActivity(new Intent(Intent.ACTION_VIEW,x).addCategory(Intent.CATEGORY_BROWSABLE));}catch(Exception e){status.setText("لا يوجد تطبيق لفتح واتساب");}return;}new AlertDialog.Builder(this).setMessage("فتح الرابط خارج التطبيق؟ لن تُنقل جلسة KINTO إلى المتصفح.").setPositiveButton("فتح",(d,w)->{try{startActivity(new Intent(Intent.ACTION_VIEW,x).addCategory(Intent.CATEGORY_BROWSABLE));}catch(Exception e){status.setText("لا يوجد تطبيق لفتح هذا الرابط");}}).setNegativeButton("إلغاء",null).show();}catch(Exception e){status.setText("الرابط غير مدعوم");}}
  private void add(LinearLayout n,String label,Runnable run){Button b=new Button(this);b.setText(label);b.setAllCaps(false);b.setTextSize(12);n.addView(b,new LinearLayout.LayoutParams(0,-2,1));b.setOnClickListener(v->run.run());}
  private void openShop(String u,boolean fixture){if(fixture&&!PreviewMode.enabled(this))return;expectedFixture=fixture;startActivityForResult(new Intent(this,ShoppingActivity.class).putExtra("fixture",fixture).putExtra("url",u),SHOP);}
  private void menu(){if(!PreviewMode.enabled(this)){new AlertDialog.Builder(this).setTitle("KINTO").setItems(new String[]{"تحديث KINTO","طباعة الصفحة / PDF","فتح KINTO في المتصفح","منتجات بانتظار الإرسال","الخصوصية وحذف الحساب"},(d,w)->{if(w==4)web.loadUrl(HOME+"account-deletion.html?online=1");if(w==0)web.reload();if(w==1)printView(web);if(w==2)external(web.getUrl());if(w==3)drafts(null);}).show();return;}previewMenu();}
@@ -125,5 +127,6 @@ if(testExtra("webviewCompatFixture")&&r.getUrl().toString().equals("https://shop
  }
  @Override protected void onSaveInstanceState(Bundle b){b.putBoolean("expectedFixture",expectedFixture);web.saveState(b);super.onSaveInstanceState(b);}
  @Override public void onBackPressed(){if(fullVideo!=null){hideVideo();return;}if(!popupViews.isEmpty()){WebView v=popupViews.get(popupViews.size()-1);if(v.canGoBack())v.goBack();else closePopup(v);return;}if(web.canGoBack())web.goBack();else super.onBackPressed();}
- @Override protected void onDestroy(){if(launch!=null)launch.dispose();if(upload!=null)upload.onReceiveValue(null);super.onDestroy();}
+ @Override protected void onResume(){super.onResume();if(playUpdates!=null)playUpdates.onResume();}
+ @Override protected void onDestroy(){if(playUpdates!=null)playUpdates.onDestroy();if(launch!=null)launch.dispose();if(upload!=null)upload.onReceiveValue(null);super.onDestroy();}
 }

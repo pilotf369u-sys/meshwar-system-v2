@@ -1,0 +1,71 @@
+name: KINTO Android candidate compilation
+on:
+  push:
+    branches: [fix/play-whatsapp-direct-open-and-shop-support-20261030]
+    paths: ['mobile/hybrid/android/**', '.github/workflows/kinto-play-update-candidate.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile-candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-36 build-tools;36.0.0
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Verify isolated Android contracts
+        run: python3 mobile/hybrid/android/checks/support-update-contract.py
+      - name: Build isolated preview APK and lint
+        working-directory: mobile/hybrid/android
+        run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KINTO-WhatsApp-PlayUpdate-Preview-APK
+          path: mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
+      - name: Build unsigned Play update AAB version 29
+        working-directory: mobile/hybrid/android
+        run: gradle --no-daemon :app:bundleRelease -PkintoProduction=true -PkintoProductionApplicationId=com.kinto.app -PkintoProductionVersionCode=29 -PkintoUnsignedRelease=true
+      - name: Verify generated unsigned AAB
+        run: |
+          test -s mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+          if unzip -Z1 mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab | grep -Eq '^META-INF/[^/]+[.](RSA|DSA|EC)$'; then
+            echo 'Unexpected signing certificate'; exit 1
+          fi
+          sha256sum mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KINTO-Play-29-UNSIGNED-AAB
+          path: mobile/hybrid/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+          if-no-files-found: error
+      - name: Enable KVM acceleration
+        run: |
+          sudo chmod 666 /dev/kvm
+      - name: Android emulator smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -no-metrics
+          emulator-boot-timeout: 900
+          script: |
+            adb install -r mobile/hybrid/android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -W -n com.kinto.preview.hybrid.v28/com.kinto.trendyollab.MainActivity
+            sleep 8
+            adb shell pidof com.kinto.preview.hybrid.v28
+# Never publish or sign in GitHub.
