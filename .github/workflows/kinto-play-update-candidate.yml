@@ -48,5 +48,5 @@ jobs:
             sleep 8
             adb shell pidof com.kinto.preview.hybrid.v28
             adb shell dumpsys activity activities | grep -F 'com.kinto.preview.hybrid.v28'
-            adb logcat -d -v brief | grep -A 7 'FATAL EXCEPTION' | grep -F 'Process: com.kinto.preview.hybrid.v28' && exit 1 || true
+            if adb logcat -d -v brief | grep -A 7 'FATAL EXCEPTION' | grep -F 'Process: com.kinto.preview.hybrid.v28'; then exit 1; fi
 # No Play submission, no production signing, no database or website actions.
