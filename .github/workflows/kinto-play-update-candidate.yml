@@ -3,6 +3,9 @@ on:
   push:
     branches: [fix/play-whatsapp-direct-open-and-shop-support-20261030]
     paths: ['mobile/hybrid/android/**', '.github/workflows/kinto-play-update-candidate.yml']
+  pull_request:
+    branches: [app/play-aab-20261026]
+    paths: ['mobile/hybrid/android/**', '.github/workflows/kinto-play-update-candidate.yml']
   workflow_dispatch:
 permissions:
   contents: read
