@@ -8,7 +8,7 @@ BEGIN
    AND pg_get_userbyid(p.proowner)='postgres' AND p.prosecdef
    AND p.proconfig=ARRAY['search_path=pg_catalog, pg_temp']
    AND obj_description(p.oid,'pg_proc')='KINTO password-v1 install-20261030'
-   AND md5(p.prosrc)='a5e5e001a9f4962e9a5b91ed85898755') THEN RAISE EXCEPTION 'VERIFY_RPC_SECURITY'; END IF;
+   AND md5(replace(p.prosrc, E'\r\n', E'\n'))='a5e5e001a9f4962e9a5b91ed85898755') THEN RAISE EXCEPTION 'VERIFY_RPC_SECURITY'; END IF;
  IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class c
   WHERE c.oid=to_regclass('private.customer_password_change_attempts_v1')
    AND pg_get_userbyid(c.relowner)='postgres' AND c.relrowsecurity
