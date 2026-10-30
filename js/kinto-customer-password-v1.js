@@ -1,5 +1,11 @@
 (()=>{'use strict';
 const $=s=>document.querySelector(s);
+const sessionEndedMessage='انتهت جلسة الدخول. يرجى تسجيل الدخول مرة أخرى';
+// The session guard raises REVIEW_SESSION_*; PostgREST puts it in message (code P0001).
+function isSessionError(error){
+ return [error?.code,error?.message,typeof error==='string'?error:null]
+  .some(value=>typeof value==='string'&&/^(?:REVIEW_)?SESSION_(?:INVALID|EXPIRED|REQUIRED)$/.test(value));
+}
 function open(){
  if($('#kintoPasswordDialog'))return;
  const overlay=document.createElement('div');overlay.id='kintoPasswordDialog';
@@ -11,13 +17,13 @@ function open(){
  if(next!==confirm){status.textContent='تأكيد كلمة المرور غير مطابق.';return}
  if(next===current||new TextEncoder().encode(next).length<8||new TextEncoder().encode(next).length>72){status.textContent='اختر كلمة مرور مختلفة بين 8 و72 بايت.';return}
  const token=window.KintoCustomerSessionV150?.read?.()?.token;
- if(!token){status.textContent='يرجى تسجيل الدخول مرة أخرى.';return}
+ if(!token){status.textContent=sessionEndedMessage;return}
  const button=form.querySelector('[type=submit]');button.disabled=true;status.textContent='جارٍ التحقق...';
  try{const supabase=await window.ensureCustomerPortalSupabase(),{data,error}=await supabase.rpc('customer_change_password_session_v1',{p_session_token:token,p_current_password:current,p_new_password:next});
  if(error)throw error;
  if(data?.ok){form.reset();status.textContent='تم تغيير كلمة المرور بنجاح.'}
- else{status.textContent=data?.error==='PASSWORD_CHANGE_TEMPORARILY_LOCKED'?'توقف مؤقت بعد محاولات غير صحيحة. حاول بعد 15 دقيقة.':data?.error==='PASSWORD_INPUT_INVALID'?'تحقق من كلمة المرور الجديدة.':'تعذر تغيير كلمة المرور؛ تحقق من الكلمة الحالية.'}
- }catch{status.textContent='الخدمة غير متاحة حالياً. لم يتم تغيير كلمة المرور.'}finally{button.disabled=false}
+ else{status.textContent=isSessionError(data?.error)?sessionEndedMessage:data?.error==='PASSWORD_CHANGE_TEMPORARILY_LOCKED'?'توقف مؤقت بعد محاولات غير صحيحة. حاول بعد 15 دقيقة.':data?.error==='PASSWORD_INPUT_INVALID'?'تحقق من كلمة المرور الجديدة.':'تعذر تغيير كلمة المرور؛ تحقق من الكلمة الحالية.'}
+ }catch(error){status.textContent=isSessionError(error)?sessionEndedMessage:'الخدمة غير متاحة حالياً. لم يتم تغيير كلمة المرور.'}finally{button.disabled=false}
  });
  form.elements.current.focus();
 }
