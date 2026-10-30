@@ -41,3 +41,6 @@ def candidateAssets = tasks.register('prepareCandidateAssets', Sync) {
 tasks.configureEach {
  if ((name.startsWith('merge') && name.endsWith('Assets')) || name.toLowerCase().contains('lint')) dependsOn(candidateAssets)
 }
+
+// Google Play flexible in-app updates; no permissions or account access.
+dependencies { implementation 'com.google.android.play:app-update:2.1.0' }
