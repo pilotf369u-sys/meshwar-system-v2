@@ -1,9 +1,9 @@
 /* Vendor product photo preparation only; does not change storage policies or product data. */
 (() => {
   'use strict';
-  const MAX_EDGE = 1200;
+  const MAX_EDGE = 800;
   const MIN_BYTES = 120 * 1024;
-  const QUALITY = 0.78;
+  const QUALITY = 0.50;
   async function prepare(file) {
     if (!(file instanceof Blob) || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return file;
     if (!globalThis.createImageBitmap || !globalThis.document?.createElement) return file;
