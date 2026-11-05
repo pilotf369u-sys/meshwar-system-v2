@@ -32,7 +32,7 @@ test('custom groups, aliases and numeric strings obey the same rule',()=>{
 function cartContext(product){
   const add=source.slice(source.indexOf('function add(input){'),source.indexOf('function setSelected('));
   const context=vm.createContext({
-    state:[],requireCustomerShopping:()=>true,syncScope(){},currentStoreId:()=> 's',
+    state:[],requireCustomerShopping:()=>true,canEditCart:()=>true,syncScope(){},currentStoreId:()=> 's',
     normalize:x=>({...x,product_id:String(x.product_id),quantity:Number(x.quantity),selected_options:x.selected_options||{}}),
     valid:x=>x.quantity>0,save(){},open(){},snapshot(){return context.state},
     alert(){},rest:async()=>[product]
