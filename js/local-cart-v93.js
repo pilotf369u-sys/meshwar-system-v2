@@ -16,7 +16,7 @@ function requireCustomerShopping(){
 }
 function currentStoreId(preferred){return String(preferred||window.__KINTO_STORE_ID__||window.MeshwarLocalStoreV4Context?.store?.id||new URLSearchParams(location.search).get('storeId')||'').trim()}
 function makeScope(){const user=customerId();return{userId:user,key:`${PREFIX}_${token(user)}`}}
-let scope=makeScope(),state=[],checkoutBusy=false,cloudReady=false,cloudSyncing=false,cloudSaveTimer=null,cloudPollTimer=null,lastCloudUpdatedAt='',cloudDirty=false,cloudRevision=0,cloudRetryTimer=null,cloudServerRevision=null,cloudConflict=false,cloudSavingSnapshot=null,cloudConfirmedItems=[];
+let scope=makeScope(),state=[],checkoutBusy=false,cloudReady=false,cloudSyncing=false,cloudSaveTimer=null,lastCloudUpdatedAt='',cloudDirty=false,cloudRevision=0,cloudRetryTimer=null,cloudServerRevision=null,cloudConflict=false,cloudSavingSnapshot=null,cloudConfirmedItems=[];
 function valid(x){return x&&String(x.store_id||'').trim()&&String(x.product_id||'').trim()&&Number(x.quantity)>0}
 function normalize(input){const q=Math.max(1,Math.floor(Number(input.quantity)||1)),unit=Math.max(0,Number(input.unit_price_local)||0),old=Math.max(0,Number(input.old_unit_price_local)||0);return{store_id:String(input.store_id||'').trim(),store_name:String(input.store_name||'').trim(),product_id:String(input.product_id||'').trim(),product_name:String(input.product_name||'').trim(),image_url:String(input.image_url||input.product_image||''),selected_options:{color:String(input.selected_options?.color||''),size:String(input.selected_options?.size||''),volume:String(input.selected_options?.volume||'')},quantity:q,selected:input.selected!==false,unit_price_local:unit,old_unit_price_local:old||null,currency:String(input.currency||'IQD').trim().toUpperCase()||'IQD',pricing_snapshot:{vendor_price_usd:Number(input.pricing_snapshot?.vendor_price_usd)||0,customer_price_usd:Number(input.pricing_snapshot?.customer_price_usd)||0,exchange_rate:Number(input.pricing_snapshot?.exchange_rate)||0,commission_rate:Number(input.pricing_snapshot?.commission_rate)||0,captured_at:input.pricing_snapshot?.captured_at||new Date().toISOString()}}}
 function read(key=scope.key){try{const x=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(x)?x.filter(valid).map(normalize):[]}catch{return[]}}
@@ -119,7 +119,7 @@ function count(){return state.reduce((n,x)=>n+Math.max(1,Number(x.quantity)||1),
 function subtotal(items){return items.filter(x=>x.selected!==false).reduce((n,x)=>n+(Number(x.unit_price_local)||0)*(Number(x.quantity)||1),0)}
 function group(items=state){return items.reduce((m,x)=>{(m[x.store_id]??=[]).push(x);return m},{})}
 function selectedItems(){return state.filter(x=>x.selected!==false)}
-function open(){syncScope();render();const drawer=document.getElementById('kintoLocalCartDrawer');if(drawer?.hasAttribute('data-kinto-cart-embedded')){drawer.scrollIntoView({behavior:'smooth',block:'start'});return}document.documentElement.classList.add('kinto-local-cart-open')}
+function open(){syncScope();render();refreshCloudCartIfIdle();const drawer=document.getElementById('kintoLocalCartDrawer');if(drawer?.hasAttribute('data-kinto-cart-embedded')){drawer.scrollIntoView({behavior:'smooth',block:'start'});return}document.documentElement.classList.add('kinto-local-cart-open')}
 function close(){document.documentElement.classList.remove('kinto-local-cart-open')}
 async function rest(path,{method='GET',body=null,timeout=7000,returnRepresentation=false}={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);try{const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{method,signal:controller.signal,cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Accept:'application/json','Content-Type':'application/json',...(['POST','PATCH'].includes(method)?{Prefer:returnRepresentation?'return=representation':'return=minimal'}:{})},body:body===null?null:JSON.stringify(body)});if(!r.ok)throw new Error((await r.text().catch(()=>''))||`HTTP ${r.status}`);if(r.status===204)return null;const text=await r.text();return text?JSON.parse(text):null}catch(e){if(e?.name==='AbortError')throw new Error('انتهت مهلة الاتصال أثناء إرسال الطلب.');throw e}finally{clearTimeout(timer)}}
 function cloudSessionToken(){return String(customerShoppingSession()?.token||'').trim()}
@@ -187,7 +187,6 @@ async function pullCloudCart(){
   }finally{if(id===cloudCustomerId()&&sessionToken===cloudSessionToken()){cloudSyncing=false;render()}}
 }
 async function initializeCloudCart(){
-  clearInterval(cloudPollTimer);
   clearTimeout(cloudSaveTimer);
   cloudReady=false;
   cloudServerRevision=null;
@@ -197,7 +196,15 @@ async function initializeCloudCart(){
   await pullCloudCart();
   if(cloudDirty&&!cloudReady){cloudConflict=true;console.warn('KINTO V189: cart changed before cloud loaded; refresh required to avoid overwriting newer cloud data.');alert('تعذر تأكيد مزامنة السلة قبل التعديل. أعد تحميل الصفحة بعد التأكد من الاتصال لتجنب تعارض السلة.');}
   if(cloudDirty&&cloudReady)scheduleCloudSave();
-  cloudPollTimer=setInterval(()=>{if(cloudDirty)scheduleCloudSave(0);else pullCloudCart()},8000);
+}
+// Event-driven refresh: retain server revision checks and all save/checkout guards.
+let lastCloudRefreshAttempt=0;
+function refreshCloudCartIfIdle(){
+  if(document.hidden||checkoutBusy||cloudDirty||cloudConflict||cloudSyncing||!cloudReady)return;
+  const now=Date.now();
+  if(now-lastCloudRefreshAttempt<2000)return;
+  lastCloudRefreshAttempt=now;
+  pullCloudCart();
 }
 async function loadCustomer(id){if(id==='guest')return null;const {data:rows,error}=await KintoCustomerDirectoryV1.from(null).eq('id',id).limit(1);if(error)throw error;const customer=Array.isArray(rows)?rows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل الحالي.');return customer}
 function shippingDestination(customer){const c=customer||{};return{country:c.country||c.country_name||c.country_code||'',governorate:c.governorate||c.state||c.province||c.city||'',city:c.city||c.province||'',area:c.area||c.district||c.neighborhood||'',address:c.address||c.address_details||c.full_address||c.delivery_address||''}}
@@ -265,16 +272,16 @@ function render(){
 }
 function renderConfirmedView(){ensureUi();const countEl=document.getElementById('kintoLocalCartCount'),body=document.getElementById('kintoLocalCartBody'),grand=document.getElementById('kintoLocalCartGrand'),checkoutBtn=document.getElementById('kintoLocalCartCheckout');if(countEl)countEl.textContent=String(cloudDirty?cloudConfirmedItems.reduce((n,x)=>n+Math.max(1,Number(x.quantity)||1),0):count());if(!body||!grand)return;const selected=selectedItems();if(checkoutBtn){checkoutBtn.disabled=checkoutBusy||cloudDirty||cloudSyncing||cloudConflict||!cloudReady||!selected.length;checkoutBtn.textContent=checkoutBusy?'جاري إنشاء الطلبات...':cloudConflict?'تعارض في مزامنة السلة':(cloudDirty||cloudSyncing)?'جاري حفظ السلة...':!cloudReady?'جاري تحميل السلة...':'إنشاء الطلبات المستقلة'}if(!state.length){body.innerHTML='<div class="kinto-local-cart-empty">السلة متعددة المتاجر فارغة حالياً.</div>';grand.textContent='IQD 0';return}body.innerHTML=Object.entries(group()).map(([store,storeItems])=>{const currency=storeItems[0]?.currency||'IQD';return `<section class="kinto-local-cart-store" data-store-id="${esc(store)}"><div class="kinto-local-cart-store-title">${esc(storeItems[0]?.store_name||'متجر محلي')}</div>${storeItems.map(x=>{const key=itemKey(x),opts=[x.selected_options?.color&&'اللون: '+x.selected_options.color,x.selected_options?.size&&'المقاس: '+x.selected_options.size,x.selected_options?.volume&&'الحجم: '+x.selected_options.volume].filter(Boolean).join(' · '),isSelected=x.selected!==false,line=(Number(x.unit_price_local)||0)*(Number(x.quantity)||1);return `<div class="kinto-local-cart-item ${isSelected?'':'is-unselected'}"><label class="kinto-local-cart-select" title="احتساب المنتج ضمن الطلب"><input type="checkbox" data-cart-select data-key="${esc(key)}" ${isSelected?'checked':''}><span aria-hidden="true"></span></label><img class="kinto-local-cart-img" src="${esc(x.image_url)}" alt=""><div><div class="kinto-local-cart-name">${esc(x.product_name)}</div>${opts?`<div class="kinto-local-cart-options">${esc(opts)}</div>`:''}<div class="kinto-local-cart-price"><span class="kinto-money" dir="ltr">${money(x.unit_price_local)} ${esc(currency)}</span><span class="kinto-price-op">×</span><span dir="ltr">${x.quantity}</span><span class="kinto-price-op">=</span><strong class="kinto-money" dir="ltr">${money(line)} ${esc(currency)}</strong></div><div class="kinto-local-cart-actions"><div class="kinto-local-cart-qty"><button data-cart-action="minus" data-key="${esc(key)}">−</button><span>${x.quantity}</span><button data-cart-action="plus" data-key="${esc(key)}">+</button></div><button class="kinto-local-cart-remove" data-cart-action="remove" data-key="${esc(key)}">حذف</button></div></div></div>`}).join('')}<div class="kinto-local-cart-store-total">مجموع المتجر: <span dir="ltr">${money(subtotal(storeItems))} ${esc(currency)}</span></div></section>`}).join('');grand.innerHTML=`<span dir="ltr">${money(subtotal(state))} ${esc(state[0]?.currency||'IQD')}</span>`}
 const api={stockLimit,loadStockProduct,add,addItem:add,setQuantity,setSelected,remove,clear,checkout,render,syncCloud:initializeCloudCart,getItems:()=>{syncScope();return snapshot()},getCount:()=>{syncScope();return count()},getScope:()=>({...scope}),getStores:()=>buildStores(state),open,close,version:'v189-cloud-only'};Object.defineProperty(api,'storageKey',{enumerable:true,get:()=>scope.key});window.KintoLocalCartV93=api;window.KintoGlobalCartV94=api;function startCart(){render();initializeCloudCart()}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startCart,{once:true});else startCart();window.addEventListener('storage',e=>{if(['meshwar_customer_id','loggedInUser'].includes(e.key)){syncScope();render()}});// Returning with the browser Back button may restore the same document from BFCache.
-// beforeunload stopped our poll/save timers; pageshow must resume them or checkout
-// can remain disabled forever after a pending selection/removal.
+// When restored from BFCache, refresh once rather than restarting polling.
+// Server-side revision checks continue to protect another device's edits.
 window.addEventListener('pageshow',event=>{
   if(!event.persisted)return;
   if(!cloudReady){initializeCloudCart();render();return}
   if(cloudDirty&&!cloudConflict)scheduleCloudSave(0);
-  clearInterval(cloudPollTimer);
-  cloudPollTimer=setInterval(()=>{if(cloudDirty)scheduleCloudSave(0);else pullCloudCart()},8000);
-  if(!cloudDirty&&!cloudSyncing&&!cloudConflict)pullCloudCart();
+  refreshCloudCartIfIdle();
   render();
 });
-window.addEventListener('beforeunload',()=>{clearTimeout(cloudSaveTimer);clearInterval(cloudPollTimer)});
+window.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloudCartIfIdle()});
+window.addEventListener('focus',refreshCloudCartIfIdle);
+window.addEventListener('beforeunload',()=>{clearTimeout(cloudSaveTimer)});
 })();
