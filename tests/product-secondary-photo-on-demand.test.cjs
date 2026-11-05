@@ -7,7 +7,7 @@ test('second photo remains a selectable source but is not rendered as eager img 
   assert.match(src,/galleryImages=uniq\(\[product\?\.image_url/);
   assert.match(src,/galleryImages\.map\(\(src,i\)=>/);
   assert.match(src,/i===0\?'<img src="/);
-  assert.match(src,/: '<span aria-hidden="true">صورة/);
+  assert.match(src,/:'<span aria-hidden="true">صورة/);
   assert.doesNotMatch(src,/\<img src="'\+esc\(src\)\+'" alt="'\+esc\(name\)\+' '\+\(i\+1\)/);
 });
 test('customer selecting secondary button still sets its src in main media',()=>{
