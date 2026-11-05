@@ -281,7 +281,7 @@ window.addEventListener('pageshow',event=>{
   refreshCloudCartIfIdle();
   render();
 });
-window.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloudCartIfIdle()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloudCartIfIdle()});
 window.addEventListener('focus',refreshCloudCartIfIdle);
 window.addEventListener('beforeunload',()=>{clearTimeout(cloudSaveTimer)});
 })();
