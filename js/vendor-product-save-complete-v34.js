@@ -77,7 +77,7 @@
       const optionsTouched=!id||win.__mwVendorOptionsTouchedV69===true;
       const variantTouched=!id||win.__mwVendorVariantStockTouchedV69===true;
       const fields=Object.fromEntries(['productImage','productColors','productSizes','productVolumes','mwProductMainCategory','mwProductSubCategory'].map(key=>[key,$(key)?.value]));
-      const files=Array.from($('productImageFile')?.files||[]).slice(0,1); // One new photo per product
+      const files=Array.from($('productImageFile')?.files||[]).slice(0,2); // Max two photos: primary + optional detail
       const featured=$('mwProductFeatured')?!!$('mwProductFeatured').checked:null;
       const touched=!!win.__mwTaxonomyTouchedV10;
       const shadow={...win.__mwTaxonomySelectionV10};
@@ -103,9 +103,9 @@
         }
         const domGallery=Array.from(d.querySelectorAll('#productImageGallery img,#productImagesPreview img,[data-product-image-gallery] img')).map(img=>String(img.currentSrc||img.src||'').trim());
         const oldImages=uniq([...arr(oldOptions.images),...arr(oldOptions.image_urls),...arr(oldOptions.gallery),...arr(existing.images),...arr(existing.image_urls),String(existing.image_url||'').trim()]);
-        // New products and explicit photo replacements use one photo. An unrelated edit
-        // retains legacy gallery metadata to avoid silently changing existing products.
-        const images=(!id||files.length)?uniq([imageUrl]):uniq([imageUrl,...domGallery,...oldImages]);
+        // New products and explicit photo replacements use up to two photos.
+        // Unrelated edits preserve legacy gallery metadata to avoid hidden data loss.
+        const images=(!id||files.length)?uniq([imageUrl,...uploaded]).slice(0,2):uniq([imageUrl,...domGallery,...oldImages]);
         // An edit form may briefly show its empty/default option fields before late hydration finishes.
         // Existing options are authoritative unless the merchant actually changed an option field.
         const colors=optionsTouched&&fields.productColors!==undefined?split(fields.productColors):arr(oldOptions.colors);
