@@ -440,8 +440,18 @@ async function uploadProductImage(file){
   return data.publicUrl;
 }
 function previewSelectedProductImage(){
-  const file=$('productImageFile')?.files?.[0],preview=$('productImagePreview');
+  const files=$('productImageFile')?.files||[],file=files[0],preview=$('productImagePreview');
   if(!preview)return;
+  const secondBox=$('imagePreviewContainer');
+  if(secondBox){
+    secondBox.innerHTML='';
+    if(files[1]){
+      const img=document.createElement('img'),secondUrl=URL.createObjectURL(files[1]);
+      img.src=secondUrl;img.alt='معاينة الصورة الثانية';img.className='h-20 w-20 rounded-xl border border-white/10 object-cover';
+      img.onload=()=>URL.revokeObjectURL(secondUrl);
+      secondBox.appendChild(img);
+    }
+  }
   if(!file){const current=$('productImage')?.value||'';if(current){preview.src=current;preview.classList.remove('hidden')}else{preview.src='';preview.classList.add('hidden')}return}
   const url=URL.createObjectURL(file);preview.src=url;preview.classList.remove('hidden');preview.onload=()=>URL.revokeObjectURL(url);
 }
