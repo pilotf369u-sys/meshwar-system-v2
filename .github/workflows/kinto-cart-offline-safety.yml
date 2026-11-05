@@ -1,0 +1,26 @@
+name: KINTO Cart Offline Safety
+on:
+  pull_request:
+    paths:
+      - 'js/local-cart-v93.js'
+      - 'tests/cart-event-refresh-contract.test.cjs'
+      - 'tests/customer-stock-limits.test.cjs'
+      - '.github/workflows/kinto-cart-offline-safety.yml'
+  push:
+    branches:
+      - 'fix/kinto-cart-event-refresh-isolated-20261105'
+permissions:
+  contents: read
+jobs:
+  offline-cart-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run cart refresh and stock safety tests offline
+        env:
+          CI: 'true'
+        run: node --test tests/cart-event-refresh-contract.test.cjs tests/customer-stock-limits.test.cjs
