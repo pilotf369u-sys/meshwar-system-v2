@@ -200,10 +200,13 @@ async function initializeCloudCart(){
 // Event-driven refresh: retain server revision checks and all save/checkout guards.
 let lastCloudRefreshAttempt=0;
 function refreshCloudCartIfIdle(){
-  if(document.hidden||checkoutBusy||cloudDirty||cloudConflict||cloudSyncing||!cloudReady)return;
+  if(document.hidden||checkoutBusy||cloudDirty||cloudConflict||cloudSyncing)return;
   const now=Date.now();
   if(now-lastCloudRefreshAttempt<2000)return;
   lastCloudRefreshAttempt=now;
+  // A failed initial read must recover on foreground/cart-open; no local
+  // mutations are allowed until the authoritative cloud cart is loaded.
+  if(!cloudReady){initializeCloudCart();return}
   pullCloudCart();
 }
 async function loadCustomer(id){if(id==='guest')return null;const {data:rows,error}=await KintoCustomerDirectoryV1.from(null).eq('id',id).limit(1);if(error)throw error;const customer=Array.isArray(rows)?rows[0]:null;if(!customer)throw new Error('تعذر العثور على بيانات العميل الحالي.');return customer}
