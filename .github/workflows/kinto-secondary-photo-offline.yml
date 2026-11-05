@@ -1,0 +1,25 @@
+name: KINTO Secondary Photo Offline
+on:
+  pull_request:
+    paths:
+      - 'js/storefront-product-modal-v145.js'
+      - 'tests/product-secondary-photo-on-demand.test.cjs'
+      - '.github/workflows/kinto-secondary-photo-offline.yml'
+  push:
+    branches:
+      - 'fix/kinto-secondary-photo-on-demand-20261105'
+permissions:
+  contents: read
+jobs:
+  gallery-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify secondary photo is on-demand
+        run: |
+          node --check js/storefront-product-modal-v145.js
+          node --test tests/product-secondary-photo-on-demand.test.cjs
