@@ -77,7 +77,9 @@
       const optionsTouched=!id||win.__mwVendorOptionsTouchedV69===true;
       const variantTouched=!id||win.__mwVendorVariantStockTouchedV69===true;
       const fields=Object.fromEntries(['productImage','productColors','productSizes','productVolumes','mwProductMainCategory','mwProductSubCategory'].map(key=>[key,$(key)?.value]));
-      const files=Array.from($('productImageFile')?.files||[]).slice(0,2); // Max two photos: primary + optional detail
+      const selectedPhotos=Array.from($('productImageFile')?.files||[]);
+      if(selectedPhotos.length>2)return notice('يسمح بصورتين فقط لكل منتج. اختر الصورة الرئيسية وصورة إضافية اختيارية.',true);
+      const files=selectedPhotos;
       const featured=$('mwProductFeatured')?!!$('mwProductFeatured').checked:null;
       const touched=!!win.__mwTaxonomyTouchedV10;
       const shadow={...win.__mwTaxonomySelectionV10};
