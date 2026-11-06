@@ -42,7 +42,7 @@ function device(server){
     documentElement:{classList:{add(){},remove(){}}},addEventListener:(name,fn)=>on(docEvents,name,fn)};
   const window={KintoCustomerSessionV150:{read:()=>({token:'fixture-session'})},addEventListener:(name,fn)=>on(winEvents,name,fn),
     KintoCustomerDirectoryV1:{from:()=>({eq(){return this},limit:async()=>({data:[{id:CUSTOMER,country:'Iraq',city:'Erbil',address:'fixture'}],error:null})})},
-    KintoPaymentP5V1:{getMode:async()=>server.db.paymentMode||'manual'},
+    KintoPaymentP5V1:{getMode:async()=>server.db.paymentMode||'manual',checkout:async({onPaid})=>{server.db.electronicCalls=(server.db.electronicCalls||0)+1;if(server.db.electronicFailure)throw new Error('fixture simulated payment rejected');await onPaid();}},
     dispatchEvent:()=>{},location:{search:''}};
   const context=vm.createContext({window,document,localStorage,KintoCustomerDirectoryV1:window.KintoCustomerDirectoryV1,fetch:server.fetch,URLSearchParams,URL,AbortController,
     setTimeout,clearTimeout,setInterval:()=>{throw new Error('Unexpected recurring timer!')},clearInterval:()=>{},
@@ -180,4 +180,26 @@ test('orders remain successful when post-checkout cart cleanup fails; repeat che
  assert.ok(a.alerts.some(msg=>msg.includes('تم إنشاء الطلب بنجاح')));
  await a.api.checkout();
  assert.equal(server.db.checkoutCalls,1,'conflicted cart cannot create a duplicate order');
+});
+
+test('electronic payment callback clears only after success',async()=>{
+ const server=backend(),a=device(server);
+ await a.start();a.api.add(product('p1'));await delay(430);
+ server.db.paymentMode='electronic';
+ const response=await a.api.checkout();
+ assert.equal(response?.ok,true);
+ assert.equal(response?.p5,true);
+ assert.equal(server.db.electronicCalls,1);
+ assert.equal(server.db.checkoutCalls||0,0,'electronic gateway should not call manual checkout RPC');
+ assert.equal(server.db.items.length,0);
+});
+test('failed electronic payment never erases cloud cart',async()=>{
+ const server=backend(),a=device(server);
+ await a.start();a.api.add(product('p1'));await delay(430);
+ server.db.paymentMode='electronic';
+ server.db.electronicFailure=true;
+ const response=await a.api.checkout();
+ assert.equal(response?.ok,false);
+ assert.equal(server.db.items.length,1);
+ assert.equal(server.db.checkoutCalls||0,0);
 });
