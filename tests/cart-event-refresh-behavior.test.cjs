@@ -15,7 +15,9 @@ function backend(){
     const request=JSON.parse(opts.body||'{}');
     let status=200,result;
     if(url.includes('/customer_cart_get_v189')){
-      db.reads++; result={revision:db.revision,items:structuredClone(db.items)};
+      db.reads++;
+      if(db.checkoutCalls&&db.failCleanupRead){status=503;result={message:'fixture cleanup unavailable'};}
+      else result={revision:db.revision,items:structuredClone(db.items)};
     }else if(url.includes('/customer_cart_put_v189')){
       db.writes++;
       if(request.p_expected_revision!==db.revision){status=409;result={message:'CART_REVISION_CONFLICT'};}
@@ -165,4 +167,17 @@ test('unavailable payment mode never submits an order or clears cloud cart',asyn
  assert.equal(response?.ok,false);
  assert.equal(server.db.checkoutCalls||0,0);
  assert.equal(server.db.items.length,1);
+});
+
+test('orders remain successful when post-checkout cart cleanup fails; repeat checkout is blocked',async()=>{
+ const server=backend(),a=device(server);
+ await a.start();a.api.add(product('p1'));await delay(430);
+ server.db.failCleanupRead=true;
+ const response=await a.api.checkout();
+ assert.equal(response?.ok,true,'confirmed order must not be presented as a failed purchase');
+ assert.equal(server.db.checkoutCalls,1,'only one checkout request');
+ assert.equal(server.db.items.length,1,'a failed cleanup does not delete unconfirmed cart data');
+ assert.ok(a.alerts.some(msg=>msg.includes('تم إنشاء الطلب بنجاح')));
+ await a.api.checkout();
+ assert.equal(server.db.checkoutCalls,1,'conflicted cart cannot create a duplicate order');
 });
