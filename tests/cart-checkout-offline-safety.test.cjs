@@ -61,3 +61,16 @@ test('failed checkout never clears confirmed cloud cart',async()=>{
   assert.equal(s.logs.remoteItems.length,1,'failed checkout must retain confirmed product');
   assert.equal(s.logs.calls.filter(x=>x.includes('customer_cart_put_v189')).length,1);
 });
+
+test('BLOCKER: a stale second-device cart must not create a new manual order',async()=>{
+  const s=setup();await s.start();
+  s.api.add(product);await new Promise(r=>setTimeout(r,430));
+  assert.equal(s.logs.remoteItems.length,1);
+  // Another device has removed the line and committed a newer cart revision.
+  s.logs.remoteItems=[];
+  s.logs.rev++;
+  const result=await s.api.checkout();
+  assert.notEqual(result?.ok,true,'checkout must reject a cart snapshot superseded on another device');
+  assert.equal(s.logs.calls.filter(x=>x.includes('kinto_checkout_session_v1')).length,0,
+    'never send stale cart lines to manual checkout');
+});
