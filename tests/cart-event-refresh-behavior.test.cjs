@@ -84,3 +84,34 @@ test('page recovery after an initial read failure does not enable unsafe cart wr
   assert.equal(server.db.reads,1);
   assert.equal(server.db.writes,0);
 });
+
+test('selection and deletion are committed to remote cart, not browser storage',async()=>{
+  const server=backend(),a=device(server);
+  await a.start();
+  a.api.add(product('p1'));await delay(430);
+  assert.equal(server.db.items[0].selected,true);
+  const key='s1::p1::||';
+  a.api.setSelected(key,false);await delay(430);
+  assert.equal(server.db.items[0].selected,false);
+  a.api.remove(key);await delay(430);
+  assert.equal(server.db.items.length,0);
+  assert.equal(a.api.getCount(),0);
+  assert.equal(server.db.revision,3);
+});
+test('restoring a BFCache page refreshes cart from the server without recurring fetches',async()=>{
+  const server=backend(),a=device(server);
+  await a.start();
+  server.db.items=[product('remote')];
+  server.db.revision=1;
+  await a.back();
+  assert.equal(a.api.getCount(),1);
+  assert.equal(server.db.reads,2);
+  await delay(100);
+  assert.equal(server.db.reads,2);
+});
+test('hidden tab is not refreshed while invisible',async()=>{
+  const server=backend(),a=device(server);
+  await a.start();
+  a.blur();await a.focus();
+  assert.equal(server.db.reads,1);
+});
