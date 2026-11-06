@@ -42,7 +42,7 @@ function device(server){
     KintoCustomerDirectoryV1:{from:()=>({eq(){return this},limit:async()=>({data:[{id:CUSTOMER,country:'Iraq',city:'Erbil',address:'fixture'}],error:null})})},
     KintoPaymentP5V1:{getMode:async()=>server.db.paymentMode||'manual'},
     dispatchEvent:()=>{},location:{search:''}};
-  const context=vm.createContext({window,document,localStorage,fetch:server.fetch,URLSearchParams,URL,AbortController,
+  const context=vm.createContext({window,document,localStorage,KintoCustomerDirectoryV1:window.KintoCustomerDirectoryV1,fetch:server.fetch,URLSearchParams,URL,AbortController,
     setTimeout,clearTimeout,setInterval:()=>{throw new Error('Unexpected recurring timer!')},clearInterval:()=>{},
     CustomEvent:class{},alert:msg=>alerts.push(msg),location:{search:''},console:{warn(){},error(){},log(){}},Date});
   vm.runInContext(source,context,{filename:'local-cart-v93.js'});
