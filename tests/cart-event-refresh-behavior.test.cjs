@@ -20,6 +20,13 @@ function backend(){
       db.writes++;
       if(request.p_expected_revision!==db.revision){status=409;result={message:'CART_REVISION_CONFLICT'};}
       else{db.items=structuredClone(request.p_items);db.revision++;result={revision:db.revision};}
+    }else if(url.includes('/local_products?')){
+      db.stockReads=(db.stockReads||0)+1;
+      result=[{id:new URL(url).searchParams.get('id')?.replace(/^eq\./,'')||'p1',stock_quantity:20,is_out_of_stock:false,options:{}}];
+    }else if(url.includes('/kinto_checkout_session_v1')){
+      db.checkoutCalls=(db.checkoutCalls||0)+1;
+      if(db.checkoutFailure){status=500;result={message:'fixture checkout rejected'};}
+      else{db.submitted=structuredClone(request.p_items);result={orders:[{order_code:'KN-000001'}],checkout_group_id:'fixture'};}
     }else{throw new Error('Unexpected endpoint: '+url);}
     return {ok:status===200,status,text:async()=>JSON.stringify(result)};
   };
@@ -32,6 +39,8 @@ function device(server){
   const document={hidden:false,readyState:'loading',getElementById:id=>id==='kintoLocalCartDrawer'?{hasAttribute:()=>false}:null,
     documentElement:{classList:{add(){},remove(){}}},addEventListener:(name,fn)=>on(docEvents,name,fn)};
   const window={KintoCustomerSessionV150:{read:()=>({token:'fixture-session'})},addEventListener:(name,fn)=>on(winEvents,name,fn),
+    KintoCustomerDirectoryV1:{from:()=>({eq(){return this},limit:async()=>({data:[{id:CUSTOMER,country:'Iraq',city:'Erbil',address:'fixture'}],error:null})})},
+    KintoPaymentP5V1:{getMode:async()=>server.db.paymentMode||'manual'},
     dispatchEvent:()=>{},location:{search:''}};
   const context=vm.createContext({window,document,localStorage,fetch:server.fetch,URLSearchParams,URL,AbortController,
     setTimeout,clearTimeout,setInterval:()=>{throw new Error('Unexpected recurring timer!')},clearInterval:()=>{},
@@ -114,4 +123,46 @@ test('hidden tab is not refreshed while invisible',async()=>{
   await a.start();
   a.blur();await a.focus();
   assert.equal(server.db.reads,1);
+});
+
+test('pending cart save blocks checkout, avoiding an unconfirmed order',async()=>{
+ const server=backend(),a=device(server);
+ await a.start();
+ a.api.add(product('p1'));
+ const response=await a.api.checkout();
+ assert.equal(server.db.checkoutCalls||0,0,'checkout must not occur while a cart write is pending');
+ assert.equal(response,undefined);
+ await delay(430);
+ assert.equal(server.db.items.length,1);
+});
+test('manual checkout submits exactly once and cleans only submitted cart products',async()=>{
+ const server=backend(),a=device(server);
+ await a.start();
+ a.api.add(product('p1'));await delay(430);
+ const response=await a.api.checkout();
+ assert.equal(response?.ok,true);
+ assert.equal(server.db.checkoutCalls,1);
+ assert.equal(server.db.submitted?.length,1);
+ assert.equal(server.db.items.length,0,'confirmed orders are removed from cloud cart');
+ assert.equal(a.api.getCount(),0);
+});
+test('failed manual checkout never removes cart contents or reports success',async()=>{
+ const server=backend(),a=device(server);
+ await a.start();
+ a.api.add(product('p1'));await delay(430);
+ server.db.checkoutFailure=true;
+ const response=await a.api.checkout();
+ assert.equal(response?.ok,false);
+ assert.equal(server.db.items.length,1);
+ assert.equal(a.api.getCount(),1);
+});
+test('unavailable payment mode never submits an order or clears cloud cart',async()=>{
+ const server=backend(),a=device(server);
+ await a.start();
+ a.api.add(product('p1'));await delay(430);
+ server.db.paymentMode='blocked';
+ const response=await a.api.checkout();
+ assert.equal(response?.ok,false);
+ assert.equal(server.db.checkoutCalls||0,0);
+ assert.equal(server.db.items.length,1);
 });
