@@ -1,0 +1,25 @@
+name: KINTO Vendor Two Photos Offline
+on:
+  pull_request:
+    paths:
+      - 'js/vendor-product-save-complete-v34.js'
+      - 'vendor-dashboard-v2.html'
+      - 'tests/vendor-two-photo-save-offline.test.cjs'
+      - 'tests/vendor-two-photo-integration-contract.test.cjs'
+      - '.github/workflows/kinto-vendor-two-photos-offline.yml'
+  push:
+    branches:
+      - 'fix/vendor-single-photo-isolated-20261105'
+permissions:
+  contents: read
+jobs:
+  offline-vendor-photo-save:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test photo save and old variant stock without Supabase
+        run: node --test tests/vendor-two-photo-save-offline.test.cjs tests/vendor-two-photo-integration-contract.test.cjs
