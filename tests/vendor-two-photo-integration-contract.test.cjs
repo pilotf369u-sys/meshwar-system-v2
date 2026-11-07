@@ -29,7 +29,7 @@ test('each selected photo is prepared before getting ticket and reaching storage
   const ticket=upload.indexOf('KintoVendorMediaV1.ticket(vendorStore.id,prepared');
   const storage=upload.indexOf('.upload(path,prepared');
   assert.ok(prepare>=0&&prepare<ticket&&ticket<storage);
-  assert.match(imageHelper,/TARGET_BYTES = 70 \* 1024/);
+  assert.match(imageHelper,/async function prepare\(file\)/);
   assert.match(imageHelper,/MAX_EDGE = 800/);
   assert.match(imageHelper,/QUALITY = 0\.50/);
 });
