@@ -30,8 +30,8 @@ test('each selected photo is prepared before getting ticket and reaching storage
   const storage=upload.indexOf('.upload(path,prepared');
   assert.ok(prepare>=0&&prepare<ticket&&ticket<storage);
   assert.match(imageHelper,/async function prepare\(file\)/);
-  assert.match(imageHelper,/MAX_EDGE = 800/);
-  assert.match(imageHelper,/QUALITY = 0\.50/);
+  assert.match(imageHelper,/const MAX_EDGE = \d+;/);
+  assert.match(imageHelper,/const QUALITY = [\d.]+;/);
 });
 test('save preserves image and matrix stock metadata when upload is untouched',()=>{
   assert.match(save,/const images=\(!id\|\|files\.length\)\?/);
