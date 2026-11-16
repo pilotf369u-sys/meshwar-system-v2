@@ -28,8 +28,10 @@ let location = tmp.appendingPathComponent("pending.json")
 let first = PendingWorldOrder(path: location)
 let firstURL = try first.prepare(draft(), accountID: "customer_42")
 let reopened = PendingWorldOrder(path: location)
-precondition(try reopened.pending(accountID: "customer_42")?.requestKey == key)
-precondition(try reopened.prepare(draft(), accountID: "customer_42") == firstURL)
+let loaded = try reopened.pending(accountID: "customer_42")
+precondition(loaded?.requestKey == key)
+let retryURL = try reopened.prepare(draft(), accountID: "customer_42")
+precondition(retryURL == firstURL)
 do { _ = try reopened.prepare(draft(requestKey: "abcdefab-1234-4234-8234-123456789abc"), accountID: "customer_42"); fatalError("Replaced pending order") } catch {}
 do { _ = try reopened.pending(accountID: "customer_other"); fatalError("Cross-account data leak") } catch {}
 let receipt = "kinto-app://world-submitted?requestKey=" + key
@@ -42,7 +44,9 @@ for (from, main, active, url) in [
 ] {
     do { try reopened.removeAfterVerifiedReceipt(receiptURL: url, sourceURL: from, mainFrame: main, accountID: active); fatalError("Invalid receipt accepted") } catch {}
 }
-precondition(try reopened.pending(accountID: "customer_42")?.requestKey == key)
+let preserved = try reopened.pending(accountID: "customer_42")
+precondition(preserved?.requestKey == key)
 try reopened.removeAfterVerifiedReceipt(receiptURL: receipt, sourceURL: "https://shopkinto.com/dashboard.html", mainFrame: true, accountID: "customer_42")
-precondition(try reopened.pending(accountID: "customer_42") == nil)
+let removed = try reopened.pending(accountID: "customer_42")
+precondition(removed == nil)
 print("Pending draft retry, account binding and receipt guards passed")
