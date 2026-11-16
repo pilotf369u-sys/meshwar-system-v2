@@ -81,6 +81,16 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     private func openExternal(_ url: URL) {
         guard presentedViewController == nil else { return }
+        // The caller has already verified a user-activated link from the KINTO main frame.
+        if KintoURLPolicy.isDirectWhatsApp(url.absoluteString) {
+            UIApplication.shared.open(url, options: [:]) { [weak self] opened in
+                guard !opened, let self = self else { return }
+                let failure = UIAlertController(title: "تعذر فتح واتساب", message: "لا يوجد تطبيق متاح لفتح الرابط.", preferredStyle: .alert)
+                failure.addAction(UIAlertAction(title: "حسنًا", style: .cancel))
+                self.present(failure, animated: true)
+            }
+            return
+        }
         let alert = UIAlertController(title: "فتح رابط خارج KINTO", message: "سيُفتح الرابط في التطبيق أو المتصفح المناسب.", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "إلغاء", style: .cancel))
         alert.addAction(UIAlertAction(title: "فتح", style: .default) { [weak self] _ in

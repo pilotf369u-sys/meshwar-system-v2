@@ -33,6 +33,17 @@ enum KintoURLPolicy {
         }
     }
 
+    // Mirrors the published Android rule: direct open only for a valid wa.me phone link.
+    static func isDirectWhatsApp(_ raw: String) -> Bool {
+        guard raw.utf8.count <= 4096,
+              let parts = URLComponents(string: raw),
+              parts.scheme?.lowercased() == "https",
+              parts.host?.lowercased() == "wa.me",
+              parts.user == nil, parts.password == nil, parts.port == nil,
+              parts.fragment == nil else { return false }
+        return parts.percentEncodedPath.range(of: "^/[1-9][0-9]{8,14}/?$", options: .regularExpression) != nil
+    }
+
     static func classify(_ raw: String) -> Destination {
         guard let url = URLComponents(string: raw),
               url.scheme?.lowercased() == "https",
