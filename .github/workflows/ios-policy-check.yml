@@ -5,6 +5,7 @@ on:
     paths:
       - mobile/ios/Sources/**
       - mobile/ios/Tests/**
+      - mobile/ios/HandoffTests/**
       - .github/workflows/ios-policy-check.yml
 permissions:
   contents: read
