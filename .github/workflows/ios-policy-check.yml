@@ -18,6 +18,10 @@ jobs:
         run: |
           xcrun swiftc mobile/ios/Sources/KintoURLPolicy.swift mobile/ios/Tests/main.swift -o /tmp/kinto-url-check
           /tmp/kinto-url-check
+      - name: Test local one-product handoff contract
+        run: |
+          xcrun swiftc mobile/ios/Sources/KintoURLPolicy.swift mobile/ios/Sources/WorldOrderHandoff.swift mobile/ios/HandoffTests/main.swift -o /tmp/kinto-handoff-check
+          /tmp/kinto-handoff-check
       - name: Typecheck for iOS simulator
         run: |
           SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
