@@ -2,7 +2,7 @@ import Foundation
 
 // Preparing this value is local and never submits an order or opens a WebView.
 enum WorldOrderHandoff {
-    struct Draft {
+    struct Draft: Codable, Equatable {
         let url: String, title: String, image: String, price: String
         let size: String, color: String, requestKey: String
         let quantity: Int
