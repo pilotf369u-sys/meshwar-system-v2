@@ -244,7 +244,9 @@ async function checkout(){
   const customer=await loadCustomer(scope.userId),submittedKeys=items.map(itemKey),rpcItems=items.map(x=>({store_id:String(x.store_id),product_id:String(x.product_id),selected_options:{...x.selected_options},quantity:Math.max(1,Math.floor(Number(x.quantity)||1))}));
   const paymentMode=typeof window.KintoPaymentP5V1?.getMode==='function'?await window.KintoPaymentP5V1.getMode():'unknown';
   if(paymentMode==='electronic'){
-   await window.KintoPaymentP5V1.checkout({items:rpcItems,shipping:shippingDestination(customer),onPaid:async()=>{await removeSubmitted(submittedKeys);const success=document.getElementById('kintoLocalCartSuccess');if(success){success.textContent='تم اعتماد الدفعة التجريبية والطلبات التابعة لها.';success.hidden=false}render();open()}});
+   // The payment review is a separate dialog; the cart drawer must not cover it.
+   close();
+   await window.KintoPaymentP5V1.checkout({items:rpcItems,shipping:shippingDestination(customer),onPaid:async()=>{await removeSubmitted(submittedKeys);const success=document.getElementById('kintoLocalCartSuccess');if(success){success.textContent='تم اعتماد الدفعة التجريبية والطلبات التابعة لها.';success.hidden=false}render()}});
    return{ok:true,p5:true};
   }
   if(paymentMode!=='manual')throw new Error(paymentMode==='unauthorized'?'الدفع الإلكتروني التجريبي متاح لحسابات اختبار مخوّلة فقط. لم يُرسل الطلب ولم تُمسح السلة.':paymentMode==='blocked'?'الدفع الإلكتروني أو الانتقال بين وضعي الدفع غير متاح حالياً. لم يُرسل الطلب ولم تُمسح السلة.':'تعذر التحقق من وضع الدفع. لم يُرسل الطلب اليدوي أو الإلكتروني؛ أعد المحاولة بعد استعادة الاتصال.');
