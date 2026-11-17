@@ -47,7 +47,7 @@ test('V98 snapshots one resolved vendor quote on every independent order', async
   expect(sql).toContain('SHIPPING_CURRENCY_MISMATCH');
   expect(sql).toContain("'shipping_snapshot', v_quote");
   expect(sql).toContain("'grand_total_local'");
-  expect(cart).toContain('تُضاف تعرفة توصيل التاجر تلقائياً');
+  expect(cart).toContain('تُحدد أجور التوصيل حسب المنطقة، وتظهر في الفاتورة، وتُدفع عند الاستلام.');
   expect(invoice).toContain('توصيل المتجر');
   expect(vendorInvoice).toContain('vendor_get_order_segment_shipping');
   expect(vendorInvoice).toContain('data.grandTotal');
