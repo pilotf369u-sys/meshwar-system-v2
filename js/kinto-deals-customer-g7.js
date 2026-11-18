@@ -141,7 +141,7 @@ function details(r,previous){
   if(!customerSessionToken())throw Error('LOGIN_REQUIRED');
   const payment=window.KintoPaymentP5V1;
   const mode=await payment?.getMode({refresh:true});
-  if(mode==='electronic'){
+  if(mode==='electronic'||payment?.hasCampaignRecovery(data.campaign_id,items)){
    dismiss();
    await payment.checkoutCampaign({campaignId:data.campaign_id,items,shipping:{}});
    return;

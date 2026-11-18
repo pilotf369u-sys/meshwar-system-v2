@@ -13,7 +13,7 @@ const products = [
   { id: '44444444-4444-4444-8444-444444444444', name: 'Second product', price: 3000 },
 ];
 
-async function openCampaign(page, { kind, threshold, mode, available = true, loseReserveResponse = false }) {
+async function openCampaign(page, { kind, threshold, mode, available = true, loseReserveResponse = false, losePayResponse = false, recoveredStatus = null, modeAfterPay = mode }) {
   const calls = [];
   const campaign = {
     title: 'Campaign fixture', campaign_id: campaignId, store_id: storeId,
@@ -21,6 +21,7 @@ async function openCampaign(page, { kind, threshold, mode, available = true, los
     max_uses_per_customer: 5, max_units_per_customer: 2, products,
   };
   let reserveCount = 0;
+  let paid = false;
 
   await page.route('**/*', async route => {
     const url = new URL(route.request().url());
@@ -47,6 +48,8 @@ async function openCampaign(page, { kind, threshold, mode, available = true, los
     switch (name) {
       case 'kinto_local_stores_public_v1':
       case 'local_products': return json([], 404);
+      case 'customer_session_identity_v150':
+        return json({ok: true, customer: {id: route.request().postDataJSON().p_session_token === 'other-session' ? 'other' : 'original'}});
       case 'kinto_deals_v1_public_feed_g7': return json([campaign]);
       case 'kinto_deals_v1_public_detail_g14': return json(campaign);
       case 'kinto_deals_v1_public_fixed_options_g20': return json({ [products[0].id]: options });
@@ -58,7 +61,7 @@ async function openCampaign(page, { kind, threshold, mode, available = true, los
         calls.push(body);
         const reply = data => json({ ok: true, data });
         switch (body.action) {
-          case 'mode': return reply({ effective_mode: mode, transition_state: 'stable', checkout_available: available });
+          case 'mode': return reply({ effective_mode: paid ? modeAfterPay : mode, transition_state: 'stable', checkout_available: available });
           case 'campaign_reserve': {
             reserveCount += 1;
             if (loseReserveResponse && reserveCount === 1) return route.abort();
@@ -69,7 +72,11 @@ async function openCampaign(page, { kind, threshold, mode, available = true, los
               quote: { lines, amount: lines.reduce((total, line) => total + line.line_total_local, 0), currency: 'IQD' } });
           }
           case 'start': return reply({ status: 'pending' });
-          case 'pay': return reply({ status: 'paid', kp_number: 'KP-FIXTURE', real_collection_allowed: false });
+          case 'status': return reply({status: recoveredStatus || (paid ? 'paid' : 'pending'), kp_number: 'KP-FIXTURE', expires_at: '2099-01-01'});
+          case 'pay':
+            paid = true;
+            if (losePayResponse) return route.abort();
+            return reply({ status: 'paid', kp_number: 'KP-FIXTURE', real_collection_allowed: false });
           default: return json({ ok: false, error: 'Unexpected action' }, 400);
         }
       }
@@ -80,7 +87,7 @@ async function openCampaign(page, { kind, threshold, mode, available = true, los
     sessionStorage.setItem('kinto_customer_review_session_v132', JSON.stringify({
       token: 'fixture-session', expiresAt: '2099-01-01',
     }));
-    window.KintoCustomerSessionV150 = { read: () => ({ token: 'fixture-session' }) };
+    window.KintoCustomerSessionV150 = { read: () => JSON.parse(sessionStorage.getItem('kinto_customer_review_session_v132') || 'null') };
   });
   await page.goto('/store.html?storeId=' + storeId);
   return calls;
@@ -143,4 +150,61 @@ test('a lost campaign reservation response reuses the request key after reopenin
   const reservations = calls.filter(call => call.action === 'campaign_reserve');
   expect(reservations).toHaveLength(2);
   expect(reservations[1].idempotency_key).toBe(reservations[0].idempotency_key);
+});
+
+
+test('reopening after lost payment response reads the existing attempt without reserving or paying again', async ({ page }) => {
+  const calls = await openCampaign(page, { kind: 'buy_n', threshold: 3, mode: 'electronic', losePayResponse: true, modeAfterPay: 'manual' });
+  await select(page, 'buy_n');
+  await page.getByRole('button', {name: 'متابعة الدفع التجريبي'}).click();
+  await page.getByRole('button', {name: 'تأكيد الدفع التجريبي'}).click();
+  await expect(page.getByText(/تعذر استلام الرد/)).toBeVisible();
+  await page.getByLabel('إغلاق', {exact: true}).click();
+  await select(page, 'buy_n');
+  await expect(page.getByText('تم التسديد تجريبياً')).toBeVisible();
+  expect(calls.filter(call => ['campaign_reserve','pay','status'].includes(call.action)).map(call => call.action))
+    .toEqual(['campaign_reserve','pay','status']);
+});
+
+for (const [status, title] of [['expired','لم يُعتمد الطلب'], ['reconciliation_required','جارٍ التحقق']]) {
+  test('reopening a '+status+' attempt never creates a new reservation', async ({page}) => {
+    const calls = await openCampaign(page,{kind:'buy_n',threshold:3,mode:'electronic',recoveredStatus:status});
+    await select(page,'buy_n');
+    await expect(page.getByRole('button',{name:'متابعة الدفع التجريبي'})).toBeVisible();
+    await page.getByLabel('إغلاق',{exact:true}).click();
+    await select(page,'buy_n');
+    await expect(page.getByText(title,{exact:true})).toBeVisible();
+    expect(calls.filter(call=>call.action==='campaign_reserve')).toHaveLength(1);
+    expect(calls.at(-1).action).toBe('status');
+  });
+}
+
+test('switching the session during checkout blocks payment and reopening as another customer', async ({ page }) => {
+  const calls = await openCampaign(page, { kind: 'buy_n', threshold: 3, mode: 'electronic' });
+  await select(page, 'buy_n');
+  await page.getByRole('button', {name: 'متابعة الدفع التجريبي'}).click();
+  await expect(page.getByRole('button', {name: 'تأكيد الدفع التجريبي'})).toBeVisible();
+  await page.evaluate(()=>sessionStorage.setItem('kinto_customer_review_session_v132',JSON.stringify({
+    token:'other-session',expiresAt:'2099-01-01'
+  })));
+  await page.getByRole('button', {name: 'تأكيد الدفع التجريبي'}).click();
+  await expect(page.getByText(/تعذر استلام الرد/)).toBeVisible();
+  await page.getByLabel('إغلاق',{exact:true}).click();
+  await select(page,'buy_n');
+  await expect(page.getByText(/مرتبطة بحساب آخر/)).toBeVisible();
+  expect(calls.filter(call=>call.action==='campaign_reserve')).toHaveLength(1);
+  expect(calls.some(call=>call.action==='pay'||call.action==='status')).toBe(false);
+});
+
+
+test('an expired session blocks payment without clearing the saved attempt', async ({page}) => {
+  const calls = await openCampaign(page,{kind:'buy_n',threshold:3,mode:'electronic'});
+  await select(page,'buy_n');
+  await page.getByRole('button',{name:'متابعة الدفع التجريبي'}).click();
+  await expect(page.getByRole('button',{name:'تأكيد الدفع التجريبي'})).toBeVisible();
+  await page.evaluate(()=>sessionStorage.removeItem('kinto_customer_review_session_v132'));
+  await page.getByRole('button',{name:'تأكيد الدفع التجريبي'}).click();
+  await expect(page.getByText(/تعذر استلام الرد/)).toBeVisible();
+  expect(calls.some(call=>call.action==='pay')).toBe(false);
+  expect(await page.evaluate(()=>Object.keys(sessionStorage).some(key=>key.startsWith('kinto-p5-campaign:')))).toBe(true);
 });
