@@ -43,3 +43,12 @@ test('cleanup is secret-guarded and limited to the merchant ad bucket',()=>{
  assert.match(src,/from\('kinto-merchant-campaign-ads'\)/);
  assert.doesNotMatch(src,/customer-notice-media|coupon/);
 });
+
+test('merchant ad upload CORS allows only the three trusted origins',()=>{
+ const src=read('supabase/functions/kinto-deals-ad-media-g13/index.ts');
+ assert.match(src,/const origins=\['https:\/\/pilotf369u-sys\.github\.io','https:\/\/shopkinto\.com','https:\/\/www\.shopkinto\.com'\]/);
+ assert.match(src,/if\(!origins\.includes\(origin\)\)return reply\(origins\[0\],403/);
+ assert.match(src,/if\(request\.method==='OPTIONS'\)/);
+ assert.match(src,/'Access-Control-Allow-Origin':origin/);
+ assert.doesNotMatch(src,/'Access-Control-Allow-Origin':'\*'/);
+});
