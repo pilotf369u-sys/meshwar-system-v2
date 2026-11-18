@@ -70,7 +70,7 @@ const discountedSummary=window.KintoPaymentP5V1.checkoutSummaryHtml({lines:[line
 assert.ok(discountedSummary.includes('<del>30,000 IQD</del>'),'grand total shows the original amount crossed out');
 assert.ok(discountedSummary.includes('<strong>الإجمالي النهائي 27,000 IQD</strong>'),'grand total uses the server-quoted discounted amount');
 assert.ok(discountedSummary.includes('إجمالي الخصم: −3,000 IQD'),'grand discount is explicit');
-assert.ok(discountedSummary.includes('الشحن غير مشمول'),'shipping remains clearly excluded from the total');
+assert.ok(discountedSummary.includes('أجور التوصيل غير مشمولة وتُدفع عند الاستلام'),'delivery fees remain clearly excluded from the total');
 assert.match(discounted,/<details class="kp5-store-details"[^>]*open>/,'selected store can remain expanded after recalculation');
 const restoredOpen=window.KintoPaymentP5V1.reviewHtml({lines:[line],amount:10000,currency:'IQD',available_coupon_points:{'store-a':[]}}, {}, 'store-a');
 assert.match(restoredOpen,/<details class="kp5-store-details"[^>]*open>/,'the caller can restore the expanded store');
