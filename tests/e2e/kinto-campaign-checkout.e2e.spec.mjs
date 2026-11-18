@@ -45,6 +45,8 @@ async function openCampaign(page, { kind, threshold, mode, available = true, los
       } });
     }
     switch (name) {
+      case 'kinto_local_stores_public_v1':
+      case 'local_products': return json([], 404);
       case 'kinto_deals_v1_public_feed_g7': return json([campaign]);
       case 'kinto_deals_v1_public_detail_g14': return json(campaign);
       case 'kinto_deals_v1_public_fixed_options_g20': return json({ [products[0].id]: options });
@@ -89,7 +91,12 @@ async function select(page, kind) {
   const picks = page.getByRole('button', { name: 'اختيار', exact: true });
   await picks.first().click();
   if (kind === 'choose_n') await picks.first().click();
-  await page.getByRole('button', { name: 'اطلب العرض الآن' }).click();
+  const confirm = page.getByRole('button', { name: 'اطلب العرض الآن' });
+  await expect(confirm).toBeEnabled();
+  await confirm.evaluate(button => {
+    button.click();
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  });
 }
 
 for (const mode of ['manual', 'electronic']) {
@@ -130,7 +137,7 @@ test('a lost campaign reservation response reuses the request key after reopenin
   const calls = await openCampaign(page, { kind: 'buy_n', threshold: 3, mode: 'electronic', loseReserveResponse: true });
   await select(page, 'buy_n');
   await expect(page.getByText('تعذرت مراجعة الطلب')).toBeVisible();
-  await page.getByRole('button', { name: 'إغلاق', exact: true }).click();
+  await page.getByLabel('إغلاق', { exact: true }).click();
   await select(page, 'buy_n');
   await expect(page.getByRole('button', { name: 'متابعة الدفع التجريبي' })).toBeVisible();
   const reservations = calls.filter(call => call.action === 'campaign_reserve');
