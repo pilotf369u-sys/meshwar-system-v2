@@ -2,7 +2,7 @@ import {createClient} from 'npm:@supabase/supabase-js@2';
 const BUCKET='kinto-merchant-campaign-ads';
 const MAX=204800;
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const origins=['https://pilotf369u-sys.github.io','https://shopkinto.com'];
+const origins=['https://pilotf369u-sys.github.io','https://shopkinto.com','https://www.shopkinto.com'];
 const reply=(origin:string,status:number,body:unknown)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS','Vary':'Origin'}});
 Deno.serve(async request=>{
  const origin=request.headers.get('origin')||'';
