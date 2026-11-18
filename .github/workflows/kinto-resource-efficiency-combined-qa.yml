@@ -1,0 +1,49 @@
+name: KINTO Resource Efficiency Combined QA
+on:
+  push:
+    branches:
+      - 'integration/resource-efficiency-qa-20261107'
+  pull_request:
+    paths:
+      - 'js/kinto-vendor-product-image-prepare-v1.js'
+      - 'js/vendor-product-save-complete-v34.js'
+      - 'vendor-dashboard-v2.html'
+      - 'js/storefront-product-modal-v145.js'
+      - 'js/kinto-shared-tab-brand-v1.js'
+      - 'js/local-store-card-v3.js'
+      - 'tests/resource-efficiency-combined-gate.test.cjs'
+      - '.github/workflows/kinto-resource-efficiency-combined-qa.yml'
+permissions:
+  contents: read
+jobs:
+  offline-combined-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check js/kinto-vendor-product-image-prepare-v1.js
+          node --check js/vendor-product-save-complete-v34.js
+          node --check js/storefront-product-modal-v145.js
+          node --check js/kinto-shared-tab-brand-v1.js
+          node --check js/local-store-card-v3.js
+      - name: Cross-feature regressions (no Supabase network)
+        run: |
+          node --test \
+            tests/vendor-image-compression-offline.test.cjs \
+            tests/vendor-two-photo-save-offline.test.cjs \
+            tests/vendor-two-photo-integration-contract.test.cjs \
+            tests/product-secondary-photo-on-demand.test.cjs \
+            tests/public-tab-logo-settings-cache.test.cjs \
+            tests/store-product-images-lazy-contract.test.cjs \
+            tests/resource-efficiency-combined-gate.test.cjs
+      - name: Assert cart, checkout, and customer review files are untouched
+        run: |
+          git fetch --no-tags --depth=1 origin 00-hostinger-release
+          if git diff --name-only FETCH_HEAD HEAD | grep -E '^(js/local-cart-v93\.js|js/customer-product-reviews-v135\.js|js/customer-payment-p5\.js|sql/|supabase/|js/kinto-order-data-session-v1\.js)'; then
+            echo 'Critical files changed: QA gate blocked'; exit 1
+          fi

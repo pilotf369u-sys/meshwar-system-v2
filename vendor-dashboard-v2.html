@@ -324,8 +324,8 @@ if(window.top===window.self){document.documentElement.style.visibility='hidden';
     <div class="grid gap-3 md:grid-cols-2">
       <input id="productName" class="field" placeholder="اسم المنتج">
       <div class="md:col-span-2">
-        <input id="productImageFile" class="field" type="file" accept="image/jpeg, image/png, image/webp">
-        <p class="mt-2 text-xs leading-relaxed text-amber-200/90" role="note">المقاس الموصى به لصورة المنتج: <strong dir="ltr">1000 × 800 px (5:4)</strong>. اجعل المنتج واضحاً في الوسط ويملأ معظم الصورة دون قصّه، وقلّل الفراغات حوله. يمكنك رفع صور بمقاسات أخرى أيضاً.</p>
+        <input id="productImageFile" class="field" type="file" accept="image/jpeg, image/png, image/webp" multiple aria-describedby="kintoVendorImageLimitNote">
+        <p id="kintoVendorImageLimitNote" class="mt-2 text-xs leading-relaxed text-amber-200/90" role="note">اختر صورة رئيسية واحدة، وصورة ثانية اختيارية للتفاصيل. الحد صورتان لكل منتج؛ يضغط النظام الصور الجديدة إلى WebP بحد أقصى 800 بكسل وجودة 50%، و70 KB حجم مستهدف وليس حدّاً مضموناً.</p>
         <input id="productImage" type="hidden">
         <div class="mt-2 flex items-center gap-3">
           <img id="productImagePreview" class="hidden h-24 w-24 rounded-2xl border border-white/10 object-cover" alt="معاينة صورة المنتج">
@@ -440,8 +440,18 @@ async function uploadProductImage(file){
   return data.publicUrl;
 }
 function previewSelectedProductImage(){
-  const file=$('productImageFile')?.files?.[0],preview=$('productImagePreview');
+  const files=$('productImageFile')?.files||[],file=files[0],preview=$('productImagePreview');
   if(!preview)return;
+  const secondBox=$('imagePreviewContainer');
+  if(secondBox){
+    secondBox.innerHTML='';
+    if(files[1]){
+      const img=document.createElement('img'),secondUrl=URL.createObjectURL(files[1]);
+      img.src=secondUrl;img.alt='معاينة الصورة الثانية';img.className='h-20 w-20 rounded-xl border border-white/10 object-cover';
+      img.onload=()=>URL.revokeObjectURL(secondUrl);
+      secondBox.appendChild(img);
+    }
+  }
   if(!file){const current=$('productImage')?.value||'';if(current){preview.src=current;preview.classList.remove('hidden')}else{preview.src='';preview.classList.add('hidden')}return}
   const url=URL.createObjectURL(file);preview.src=url;preview.classList.remove('hidden');preview.onload=()=>URL.revokeObjectURL(url);
 }
