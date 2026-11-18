@@ -288,7 +288,14 @@ begin
    select * into ord from public.orders where id=oid for update;
    if not found or ord.customer_id<>cid::text or ord.currency<>p.currency or ord.total_price::numeric<>p.amount then
      raise exception 'PAYMENT_P5_CAMPAIGN_CANONICAL_TOTAL_MISMATCH'; end if;
-   update public.orders set status='بانتظار الدفع' where id=oid and customer_id=cid::text;
+   -- Employee and vendor views use the campaign ID for the existing order badge.
+   update public.orders
+     set status='بانتظار الدفع',
+         details=(coalesce(nullif(ord.details,'')::jsonb,'{}'::jsonb)||jsonb_build_object(
+           'deal_campaign_id',campaign.id,'deal_campaign_title',campaign.title,
+           'deal_order_kind',campaign.kind,'deal_order_contract','p5-direct-campaign-order-v1'
+         ))::text
+     where id=oid and customer_id=cid::text;
    if not found then raise exception 'PAYMENT_P5_CAMPAIGN_WAITING_TRANSITION_FAILED'; end if;
    insert into private.kinto_paid_transition_permits_v1(transaction_id,order_id) values(txid_current(),oid);
    update public.orders set status='تم التسديد' where id=oid and customer_id=cid::text;
