@@ -1,0 +1,23 @@
+name: KINTO Vendor Photo Compression Offline
+on:
+  pull_request:
+    paths:
+      - 'js/kinto-vendor-product-image-prepare-v1.js'
+      - 'tests/vendor-image-compression-offline.test.cjs'
+      - '.github/workflows/kinto-vendor-photo-offline.yml'
+  push:
+    branches:
+      - 'audit/media-efficiency-isolated-20261101'
+permissions:
+  contents: read
+jobs:
+  offline-photo-compression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check vendor images without Supabase
+        run: node --test tests/vendor-image-compression-offline.test.cjs
