@@ -239,7 +239,9 @@ begin
  select * into p from private.kinto_payments_p5 where attempt_id=p_attempt_id and payment_kind='campaign' for update;
  if not found or p.customer_id<>cid::text then raise exception 'PAYMENT_P5_NOT_FOUND' using errcode='P0002'; end if;
  if p.status='paid' then return jsonb_build_object('ok',true,'duplicate',true,'kp_number',p.kp_number,'status','paid','order_ids',p.order_ids); end if;
- select * into a from private.kinto_payment_attempts_p4 where id=p_attempt_id for update;
+ -- Expiry locks the P4 attempt before synchronizing the P5 payment row.
+ -- Keep the exclusive lock, but fail before recording an event if expiry owns it.
+ select * into a from private.kinto_payment_attempts_p4 where id=p_attempt_id for update nowait;
  select * into h from private.kinto_stock_holds_p4 where attempt_id=p_attempt_id for update;
  select * into ch from private.kinto_payment_campaign_holds_p5 where attempt_id=p_attempt_id for update;
  if a.status<>'pending' or h.status<>'active' or ch.status not in ('active','reconciliation_required') then raise exception 'PAYMENT_P5_ATTEMPT_NOT_PENDING' using errcode='55000'; end if;
