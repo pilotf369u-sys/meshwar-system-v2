@@ -191,7 +191,7 @@ Deno.serve(async (request: Request) => {
   // The isolated P5 project keeps its explicit test-account allowlist. On the
   // original project, the P6 database admission guards authorize all customer
   // sessions only while the admin has opened the no-charge simulator safely.
-  if (isTestProject && ["quote", "reserve", "start", "simulate", "pay"].includes(action)) {
+  if (isTestProject && ["quote", "reserve", "campaign_reserve", "start", "simulate", "pay"].includes(action)) {
     try { await requireTestAccess(); }
     catch (error) {
       const reason = error instanceof Error ? error.message : "PAYMENT_P5_TEST_ACCESS_CHECK_UNAVAILABLE";
@@ -199,7 +199,7 @@ Deno.serve(async (request: Request) => {
       return json(status, { ok: false, error: reason });
     }
   }
-  if (!isTestProject && ["quote", "reserve", "start", "simulate", "pay"].includes(action)) {
+  if (!isTestProject && ["quote", "reserve", "campaign_reserve", "start", "simulate", "pay"].includes(action)) {
     try {
       const { data, error } = await db.rpc("kinto_payment_p6_customer_admit_v1", { p_session_token: token });
       if (error) {

@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';
+const testCard = { number: '4242 4242 4242 4242', expiry: '12/30', cvv: '123' };
 
 const base = process.env.P5_URL;
 const key = process.env.P5_PUBLISHABLE_KEY;
@@ -9,6 +9,11 @@ const giftCampaign = process.env.P5_GIFT_CAMPAIGN;
 const quotaCampaign = process.env.P5_QUOTA_CAMPAIGN;
 for (const [name, value] of Object.entries({base,key,a,b,stockCampaign,giftCampaign,quotaCampaign})) {
   if (!value) throw new Error(`Missing ${name}`);
+}
+const endpoint = new URL(base);
+if (process.env.P5_TEST_ALLOW_WRITES !== 'YES_DISPOSABLE_ONLY'
+    || endpoint.hostname === 'hsmmbloouskqdnptiiad.supabase.co') {
+  throw new Error('Campaign payment integration requires an explicitly authorized disposable project');
 }
 const lines = {
   stock: [{store_id:'22222222-2222-4222-8222-222222222221',product_id:'33333333-3333-4333-8333-333333333333',quantity:1,selected_options:{}}],
@@ -79,16 +84,24 @@ let unknownStatus='';
 if(unknownReserve.data?.attempt_id){const u=await startAnd(a,unknownReserve.data.attempt_id,'disconnect');unknownStatus=u.data?.status||u.json.data?.status||'';}
 log('campaign unknown result retains holds',unknownStatus==='reconciliation_required',unknownStatus||JSON.stringify(unknownReserve.json));
 
-// Successful confirmation goes through G20/G5/V47; duplicate delivery is idempotent.
+// Successful confirmation goes through G5G; duplicate delivery is idempotent.
 let successStatus='';let duplicate=false;
 if(quotaAttempt){
-  await call(quotaWinnerToken,'start',{attempt_id:quotaAttempt});
-  const s=await call(quotaWinnerToken,'simulate',{attempt_id:quotaAttempt,scenario:'success',shipping:{}});
+  const otherCustomer = quotaWinnerToken === a ? b : a;
+  const privateStatus = await call(otherCustomer,'status',{attempt_id:quotaAttempt});
+  log('campaign payment belongs to its customer',privateStatus.status===404);
+  const started=await call(quotaWinnerToken,'start',{attempt_id:quotaAttempt});
+  log('campaign attempt starts before confirmation',started.data?.status==='pending');
+  const clientSuccess=await call(quotaWinnerToken,'simulate',{attempt_id:quotaAttempt,scenario:'success'});
+  log('direct success scenario is rejected at HTTP entry',clientSuccess.status===400&&clientSuccess.json.error==='INVALID_SIMULATION');
+  const s=await call(quotaWinnerToken,'pay',{attempt_id:quotaAttempt,card:testCard,shipping:{}});
   successStatus=s.data?.status||'';
-  const d=await call(quotaWinnerToken,'simulate',{attempt_id:quotaAttempt,scenario:'success',shipping:{}});
-  duplicate=d.data?.duplicate===true&&d.data?.status==='paid';
+  const d=await call(quotaWinnerToken,'pay',{attempt_id:quotaAttempt,card:testCard,shipping:{}});
+  duplicate=d.data?.duplicate===true&&d.data?.status==='paid'
+    && s.data?.real_collection_allowed===false && s.data?.order_ids?.length===1
+    && d.data?.order_ids?.[0]===s.data.order_ids[0];
 }
-log('campaign success finalizes canonical KN via G20/G5/V47',successStatus==='paid',successStatus||JSON.stringify(quotaRace[quotaWinnerIndex]?.json));
+log('campaign success finalizes canonical KN via G5G',successStatus==='paid',successStatus||JSON.stringify(quotaRace[quotaWinnerIndex]?.json));
 log('duplicate successful campaign confirmation is idempotent',duplicate,duplicate?'duplicate=true':'no paid duplicate receipt');
 
 console.log(JSON.stringify({results,exitCode:process.exitCode||0},null,2));

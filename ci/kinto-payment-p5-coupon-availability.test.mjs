@@ -25,8 +25,8 @@ assert.doesNotMatch(ui,/\[1000,3000,5000\]\.map\(/,'UI no longer offers hard-cod
 assert.match(ui,/tiers\.map\(v=>/,'only server-returned tiers are rendered as options');
 
 const exposedUi=ui.replace(
-  "window.KintoPaymentP5V1={call,checkout,isElectronic,getMode,loadPayments,version:'p5-simulator-v1'};",
-  "window.KintoPaymentP5V1={call,checkout,isElectronic,getMode,loadPayments,reviewHtml,checkoutSummaryHtml,version:'p5-simulator-v1'};"
+  "window.KintoPaymentP5V1={call,checkout,checkoutCampaign,isElectronic,getMode,loadPayments,version:'p5-simulator-v1'};",
+  "window.KintoPaymentP5V1={call,checkout,checkoutCampaign,isElectronic,getMode,loadPayments,reviewHtml,checkoutSummaryHtml,version:'p5-simulator-v1'};"
 );
 assert.notEqual(exposedUi,ui,'renderer can be exercised in this isolated test');
 const window={};
