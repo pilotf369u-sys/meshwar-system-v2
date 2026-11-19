@@ -218,6 +218,13 @@ Deno.serve(async (request: Request) => {
         console.error("Kinto P5 admission RPC rejected", {
           stage: "p6_admit",
           code: String(error.code || "UNKNOWN").slice(0, 16),
+          // Only fixed diagnostic categories; never log the raw PostgREST message.
+          auth_failure_kind: error.code === "PGRST303"
+            ? /issued at future/i.test(String(error.message || "")) ? "jwt_issued_in_future"
+              : /expired/i.test(String(error.message || "")) ? "jwt_expired"
+              : /invalid.*(jwt|token|signature)|jwt.*invalid/i.test(String(error.message || "")) ? "jwt_invalid"
+              : "other_pgrst303"
+            : "not_pgrst303",
           jwt_iat_skew_seconds: jwtIatSkewSeconds,
           key_format: serviceKey.startsWith("sb_secret_") ? "secret" : serviceKey.split(".").length === 3 ? "jwt" : "other",
         });
