@@ -203,6 +203,8 @@ Deno.serve(async (request: Request) => {
     try {
       const { data, error } = await db.rpc("kinto_payment_p6_customer_admit_v1", { p_session_token: token });
       if (error) {
+        // Diagnostic only: never log JWTs, session tokens, request bodies, or error details.
+        console.error("Kinto P5 admission RPC rejected", { stage: "p6_admit", code: String(error.code || "UNKNOWN").slice(0, 16) });
         const invalidSession = error.code === "P0001" && /REVIEW_SESSION_(INVALID|REQUIRED)/.test(String(error.message || ""));
         return json(invalidSession ? 401 : 503, { ok: false, error: invalidSession ? "CUSTOMER_SESSION_REQUIRED" : "PAYMENT_P6_ADMISSION_UNAVAILABLE" });
       }
