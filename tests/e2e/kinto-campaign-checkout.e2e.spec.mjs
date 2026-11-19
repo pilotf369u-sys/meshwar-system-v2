@@ -342,3 +342,17 @@ for (const kind of ['choose_n','buy_n','limited_purchase']) {
   expect(calls.filter(x=>x.action==='start')).toHaveLength(1);
  });
 }
+
+for(const kind of ['choose_n','buy_n','limited_purchase']) {
+ test(kind+' permits fresh reservation only after server confirms prior attempt expired',async ({page})=>{
+  const calls=await openCampaign(page,{kind,threshold:kind==='choose_n'?2:3,mode:'electronic',startConflict:true,recoveredStatus:'expired'});
+  await select(page,kind);
+  await page.getByRole('button',{name:'متابعة الدفع التجريبي'}).click();
+  await expect(page.getByRole('button',{name:'محاولة جديدة للحملة'})).toBeVisible();
+  expect(calls.filter(x=>x.action==='campaign_reserve')).toHaveLength(1);
+  await page.getByRole('button',{name:'محاولة جديدة للحملة'}).click();
+  await expect(page.getByRole('button',{name:'متابعة الدفع التجريبي'})).toBeVisible();
+  expect(calls.filter(x=>x.action==='campaign_reserve')).toHaveLength(2);
+  expect(calls.filter(x=>x.action==='pay')).toHaveLength(0);
+ });
+}
