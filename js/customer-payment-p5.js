@@ -152,7 +152,36 @@
    }
    return false;
   }
-  const start=async(attempt,kp)=>{try{const result=await request('start',{attempt_id:attempt});if(campaignId&&result.status!=='pending')await showResult(result,attempt,kp);else paymentScreen(attempt,kp)}catch(e){message(root,'جارٍ التحقق','انقطع الاتصال أثناء بدء المحاولة. نتحقق من حالتها قبل أي إجراء.');void poll(attempt,kp)}};
+  const start=async(attempt,kp)=>{try{const result=await request('start',{attempt_id:attempt});if(campaignId&&result.status!=='pending')await showResult(result,attempt,kp);else paymentScreen(attempt,kp)}catch(e){
+   // A failed start is not proof of a failed payment. Read this same attempt
+   // before allowing any retry; never reserve another campaign or guess a result.
+   const diagnostic=String(e?.code||e?.message||'START_RESPONSE_UNAVAILABLE').slice(0,120);
+   message(root,'تعذر بدء الدفع','نتحقق من حالة المحاولة الحالية. رمز التشخيص: '+diagnostic);
+   const checkStart=async()=>{if(campaignId&&(!root.isConnected||token()!==campaignSession))return;
+    try{const s=await request('status',{attempt_id:attempt});
+     if(s.status==='reserved'){
+      const expiry=Date.parse(s.expires_at);
+      if(Number.isFinite(expiry)&&expiry>Date.now()){
+       message(root,'تعذر بدء الدفع','المحاولة محفوظة ولم يبدأ الدفع. رمز التشخيص: '+diagnostic,
+        '<button class="kp5-primary" data-retry-start>إعادة محاولة البدء</button>');
+       root.querySelector('[data-retry-start]').onclick=event=>{event.currentTarget.disabled=true;void start(attempt,kp)};
+      }else{
+       message(root,'تعذر بدء الدفع','مهلة الحجز غير صالحة أو انتهت. لا يمكن إعادة بدء الدفع. رمز التشخيص: '+diagnostic,
+        '<button class="kp5-secondary" data-check>التحقق مجدداً</button>');
+       root.querySelector('[data-check]').onclick=checkStart;
+      }
+      return;
+     }
+     if(restoreCampaignConfirmation(s,attempt,kp))return;
+     await showResult(s,attempt,kp);
+    }catch{
+     message(root,'تعذر التحقق من الدفع','تعذر قراءة حالة المحاولة. لا تعِد إنشاء الطلب. رمز التشخيص: '+diagnostic,
+      '<button class="kp5-secondary" data-check>التحقق مجدداً</button>');
+     root.querySelector('[data-check]').onclick=checkStart;
+    }
+   };
+   void checkStart();
+  }};
   const showResult=async(r,attempt,kp)=>{if(r.status==='paid'){await onPaid?.(r);message(root,'تم التسديد تجريبياً',`تم اعتماد الدفعة ${kp}، ${campaignId?'وأُنشئ طلب الحملة.':'وأُنشئت الطلبات الأصلية لكل متجر.'} لا يوجد تحصيل حقيقي.`, '<button class="kp5-primary" data-done>عرض مدفوعاتي</button>');root.querySelector('[data-done]').onclick=()=>{clearCampaignKey();root.remove();location.href='dashboard.html?tab=myPayments'}}else if(['failed','cancelled','expired'].includes(r.status)){clearCampaignKey();message(root,'لم يُعتمد الطلب',`حالة الدفعة ${kp}: ${{failed:'مرفوضة',cancelled:'ملغاة',expired:'منتهية'}[r.status]}. لم تُنشأ طلبات تشغيلية.${campaignId?'':' بقيت السلة محفوظة.'}`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}else{message(root,campaignId&&r.status==='reconciliation_required'?'الدفع قيد المطابقة':'جارٍ التحقق',`حالة الدفعة ${kp} غير محسومة. سيبقى الحجز محفوظاً حتى المطابقة.`, '<button class="kp5-secondary" data-check>التحقق مجدداً</button>');root.querySelector('[data-check]').onclick=()=>poll(attempt,kp)}};
   const paymentScreen=(attempt,kp)=>{setContent(root,`<div class="kp5-state"><h3>محاكاة الدفع</h3><p>رقم الدفعة ${esc(kp)}. محاكاة دون تحصيل أموال فعلية.</p><section class="kp5-test-card" aria-label="بطاقة اختبار KINTO"><div class="kp5-test-card-mark">KINTO <span>SIMULATOR</span></div><strong dir="ltr">4242 4242 4242 4242</strong><div><span>الصلاحية</span><b dir="ltr">12/30</b><span>رمز الاختبار</span><b dir="ltr">123</b></div><small>بطاقة اختبار ثابتة — لا تدخل بيانات بطاقتك الحقيقية</small></section><p class="kp5-note">هذه بطاقة اختبار افتراضية، ولا يتم تحصيل أي مبلغ حقيقي.</p></div>`, '<button class="kp5-primary" data-pay>تأكيد الدفع التجريبي</button><button class="kp5-secondary" data-scenario="failure">اختبار الرفض</button><button class="kp5-secondary" data-scenario="cancel">إلغاء الدفع</button><button class="kp5-secondary" data-scenario="disconnect">انقطاع الاتصال / نتيجة مجهولة</button>');root.querySelector('[data-pay]').onclick=async()=>{root.querySelectorAll(campaignId?'.kp5-actions button':'button').forEach(x=>x.disabled=true);message(root,'جارٍ التحقق','يتحقق خادم KINTO من البطاقة الافتراضية والدفعة.');try{if(recovery&&token()===campaignSession){recovery.confirming=true;recovery.retryable=false;saveRecovery()}await showResult(await request('pay',{attempt_id:attempt,card:{number:'4242 4242 4242 4242',expiry:'12/30',cvv:'123'},shipping}),attempt,kp)}catch(e){if(recovery&&token()===campaignSession&&['55P03','40001','40P01'].includes(e.code)){
    recovery.retryable=true;saveRecovery();
