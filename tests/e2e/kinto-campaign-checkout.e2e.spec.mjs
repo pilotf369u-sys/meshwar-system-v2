@@ -13,7 +13,7 @@ const products = [
   { id: '44444444-4444-4444-8444-444444444444', name: 'Second product', price: 3000 },
 ];
 
-async function openCampaign(page, { kind, threshold, mode, available = true, loseReserveResponse = false, losePayResponse = false, recoveredStatus = null, modeAfterPay = mode, payConflict = false, paymentExpiresAt = '2099-01-01' }) {
+async function openCampaign(page, { kind, threshold, mode, available = true, loseReserveResponse = false, losePayResponse = false, recoveredStatus = null, modeAfterPay = mode, payConflict = false, paymentExpiresAt = '2099-01-01', statusGate }) {
   const calls = [];
   const campaign = {
     title: 'Campaign fixture', campaign_id: campaignId, store_id: storeId,
@@ -73,11 +73,15 @@ async function openCampaign(page, { kind, threshold, mode, available = true, los
               quote: { lines, amount: lines.reduce((total, line) => total + line.line_total_local, 0), currency: 'IQD' } });
           }
           case 'start': return reply({ status: 'pending' });
-          case 'status': return reply({status: recoveredStatus || (paid ? 'paid' : 'pending'), kp_number: 'KP-FIXTURE', expires_at: paymentExpiresAt});
+          case 'status':
+            await statusGate;
+            return reply({status: recoveredStatus || (paid ? 'paid' : 'pending'), kp_number: 'KP-FIXTURE',
+              expires_at: paymentExpiresAt === null ? undefined : paymentExpiresAt});
           case 'simulate': return reply({status:body.scenario==='cancel'?'cancelled':'failed',kp_number:'KP-FIXTURE'});
           case 'pay':
             payCount += 1;
             if (payConflict && payCount === 1) return json({ok:false,error:'temporary conflict',code:'55P03'},409);
+            if (losePayResponse === 'unknown') return route.abort();
             paid = true;
             if (losePayResponse) return route.abort();
             return reply({ status: 'paid', kp_number: 'KP-FIXTURE', real_collection_allowed: false });
@@ -253,3 +257,61 @@ test('temporary conflict after the hold deadline does not offer payment again', 
   await expect(payButton).toHaveCount(0);
   expect(calls.filter(x=>x.action==='pay')).toHaveLength(1);
 });
+
+
+async function reopenAfterConfirmationError(page, kind, reload) {
+  await select(page, kind);
+  await page.getByRole('button', { name: 'متابعة الدفع التجريبي' }).click();
+  await page.getByRole('button', { name: 'تأكيد الدفع التجريبي' }).click();
+  await expect(page.getByText(/تعذر استلام الرد/)).toBeVisible();
+  if (reload) await page.reload();
+  else await page.getByLabel('إغلاق', { exact: true }).click();
+  await select(page, kind);
+}
+
+for (const [kind, threshold] of [['choose_n', 2], ['buy_n', 3], ['limited_purchase', null]]) {
+  for (const reload of [true, false]) {
+    test(`${kind} ${reload ? 'reload' : 'reopen'} checks the saved attempt before offering one retry`, async ({ page }) => {
+      let releaseStatus;
+      const statusGate = new Promise(resolve => { releaseStatus = resolve; });
+      const calls = await openCampaign(page, { kind, threshold, mode: 'electronic', payConflict: true, statusGate });
+      const confirm = page.getByRole('button', { name: 'تأكيد الدفع التجريبي' });
+      try {
+        await reopenAfterConfirmationError(page, kind, reload);
+        await expect.poll(() => calls.filter(call => call.action === 'status').map(call => call.attempt_id))
+          .toEqual(['attempt']);
+        await expect(confirm).toBeHidden();
+        expect(calls.filter(call => call.action === 'pay')).toHaveLength(1);
+      } finally {
+        releaseStatus();
+      }
+      await expect(confirm).toBeVisible();
+      expect(calls.filter(call => call.action === 'pay')).toHaveLength(1);
+      await confirm.dblclick();
+      await expect(page.getByText('تم التسديد تجريبياً')).toBeVisible();
+      expect(calls.filter(call => call.action === 'campaign_reserve')).toHaveLength(1);
+      expect(calls.filter(call => call.action === 'start')).toHaveLength(1);
+      expect(calls.filter(call => call.action === 'pay').map(call => call.attempt_id)).toEqual(['attempt', 'attempt']);
+    });
+  }
+
+  for (const [reason, fixture] of [
+    ['missing expiry', { payConflict: true, paymentExpiresAt: null }],
+    ['unrecognized expiry', { payConflict: true, paymentExpiresAt: 'unknown' }],
+    ['lost payment response with a still-pending status', { losePayResponse: 'unknown' }],
+    ['unknown outcome requiring reconciliation', { losePayResponse: 'unknown', recoveredStatus: 'reconciliation_required' }],
+  ]) {
+    test(`${kind} reload does not offer payment after ${reason}`, async ({ page }) => {
+      const calls = await openCampaign(page, { kind, threshold, mode: 'electronic', ...fixture });
+      await reopenAfterConfirmationError(page, kind, true);
+      const heading = fixture.recoveredStatus ? 'الدفع قيد المطابقة' : 'جارٍ التحقق';
+      await expect(page.getByText(heading, { exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'التحقق مجدداً' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'تأكيد الدفع التجريبي' })).toBeHidden();
+      expect(calls.filter(call => call.action === 'status').map(call => call.attempt_id)).toEqual(['attempt']);
+      expect(calls.filter(call => call.action === 'campaign_reserve')).toHaveLength(1);
+      expect(calls.filter(call => call.action === 'start')).toHaveLength(1);
+      expect(calls.filter(call => call.action === 'pay').map(call => call.attempt_id)).toEqual(['attempt']);
+    });
+  }
+}
