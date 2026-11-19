@@ -12,3 +12,7 @@ verify_jwt = false
 
 [functions.kinto-world-staff-security-v1]
 verify_jwt = false
+
+# The cron hook authenticates with a dedicated shared secret.
+[functions.kinto-payment-expiry]
+verify_jwt = false
