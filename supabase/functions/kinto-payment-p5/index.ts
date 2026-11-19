@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
+import { paymentDatabaseFetch, selectPaymentDatabaseKey } from "./database-auth.mjs";
 import { isKintoSimulatorCard, isSimulatorFailureScenario } from "../_shared/kinto-simulator-card.mjs";
 
 const responseHeaders = {
@@ -18,7 +19,10 @@ Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: responseHeaders });
   if (request.method !== "POST") return json(405, { ok: false, error: "METHOD_NOT_ALLOWED" });
   const url = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceKey = selectPaymentDatabaseKey(
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+    Deno.env.get("KINTO_P5_DATABASE_LEGACY_JWT"),
+  );
   if (!url || !serviceKey) return json(503, { ok: false, error: "PAYMENT_SERVICE_UNAVAILABLE" });
   let body: Record<string, unknown>;
   try { body = await request.json(); } catch { return json(400, { ok: false, error: "INVALID_JSON" }); }
@@ -31,7 +35,7 @@ Deno.serve(async (request: Request) => {
     return json(401, { ok: false, error: "CUSTOMER_SESSION_REQUIRED" });
   const db = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    global: { headers: { "x-kinto-payment-channel": "p5-server" } },
+    global: { fetch: paymentDatabaseFetch(serviceKey), headers: { "x-kinto-payment-channel": "p5-server" } },
   });
   const requireTestAccess = async () => {
     const { data, error } = await db.rpc("kinto_payment_p5_test_access_check_v1", { p_session_token: token });

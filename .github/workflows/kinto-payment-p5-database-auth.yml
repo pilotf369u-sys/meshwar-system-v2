@@ -1,0 +1,19 @@
+name: KINTO P5 database authentication
+on:
+  pull_request:
+    paths:
+      - 'supabase/functions/kinto-payment-p5/**'
+      - 'supabase/functions/_shared/kinto-simulator-card.mjs'
+      - 'tests/payment-p5-database-auth.test.mjs'
+      - '.github/workflows/kinto-payment-p5-database-auth.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test tests/payment-p5-database-auth.test.mjs tests/payment-simulator-card-p6.test.mjs
