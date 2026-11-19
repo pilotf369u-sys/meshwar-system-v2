@@ -13,7 +13,7 @@ const products = [
   { id: '44444444-4444-4444-8444-444444444444', name: 'Second product', price: 3000 },
 ];
 
-async function openCampaign(page, { kind, threshold, mode, available = true, loseReserveResponse = false, losePayResponse = false, recoveredStatus = null, modeAfterPay = mode, payConflict = false, paymentExpiresAt = '2099-01-01', statusGate }) {
+async function openCampaign(page, { kind, threshold, mode, available = true, loseReserveResponse = false, losePayResponse = false, recoveredStatus = null, modeAfterPay = mode, payConflict = false, startConflict = false, paymentExpiresAt = '2099-01-01', statusGate }) {
   const calls = [];
   const campaign = {
     title: 'Campaign fixture', campaign_id: campaignId, store_id: storeId,
@@ -23,6 +23,7 @@ async function openCampaign(page, { kind, threshold, mode, available = true, los
   let reserveCount = 0;
   let paid = false;
   let payCount = 0;
+  let startCount = 0;
 
   await page.route('**/*', async route => {
     const url = new URL(route.request().url());
@@ -72,10 +73,13 @@ async function openCampaign(page, { kind, threshold, mode, available = true, los
             return reply({ attempt_id: 'attempt', kp_number: 'KP-FIXTURE', status: 'reserved',
               quote: { lines, amount: lines.reduce((total, line) => total + line.line_total_local, 0), currency: 'IQD' } });
           }
-          case 'start': return reply({ status: 'pending' });
+          case 'start':
+            startCount += 1;
+            if (startConflict && startCount === 1) return json({ok:false,error:'temporary start conflict',code:'55P03'},409);
+            return reply({ status: 'pending' });
           case 'status':
             await statusGate;
-            return reply({status: recoveredStatus || (paid ? 'paid' : 'pending'), kp_number: 'KP-FIXTURE',
+            return reply({status: recoveredStatus || (startConflict && startCount === 1 ? 'reserved' : (paid ? 'paid' : 'pending')), kp_number: 'KP-FIXTURE',
               expires_at: paymentExpiresAt === null ? undefined : paymentExpiresAt});
           case 'simulate': return reply({status:body.scenario==='cancel'?'cancelled':'failed',kp_number:'KP-FIXTURE'});
           case 'pay':
@@ -314,4 +318,27 @@ for (const [kind, threshold] of [['choose_n', 2], ['buy_n', 3], ['limited_purcha
       expect(calls.filter(call => call.action === 'pay').map(call => call.attempt_id)).toEqual(['attempt']);
     });
   }
+}
+
+for (const kind of ['choose_n','buy_n','limited_purchase']) {
+ test(kind+' retries failed start only after server confirms the same reserved attempt', async ({page})=>{
+  const calls=await openCampaign(page,{kind,threshold:kind==='choose_n'?2:3,mode:'electronic',startConflict:true});
+  await select(page,kind);
+  await page.getByRole('button',{name:'متابعة الدفع التجريبي'}).click();
+  await expect(page.getByText(/رمز التشخيص: 55P03/)).toBeVisible();
+  await expect(page.getByRole('button',{name:'إعادة محاولة البدء'})).toBeVisible();
+  expect(calls.filter(x=>x.action==='status').map(x=>x.attempt_id)).toEqual(['attempt']);
+  await page.getByRole('button',{name:'إعادة محاولة البدء'}).click();
+  await expect(page.getByRole('button',{name:'تأكيد الدفع التجريبي'})).toBeVisible();
+  expect(calls.filter(x=>x.action==='campaign_reserve')).toHaveLength(1);
+  expect(calls.filter(x=>x.action==='start').map(x=>x.attempt_id)).toEqual(['attempt','attempt']);
+ });
+ test(kind+' blocks start retry when the hold deadline is absent',async ({page})=>{
+  const calls=await openCampaign(page,{kind,threshold:kind==='choose_n'?2:3,mode:'electronic',startConflict:true,paymentExpiresAt:null});
+  await select(page,kind);
+  await page.getByRole('button',{name:'متابعة الدفع التجريبي'}).click();
+  await expect(page.getByText(/مهلة الحجز غير صالحة أو انتهت/)).toBeVisible();
+  await expect(page.getByRole('button',{name:'إعادة محاولة البدء'})).toHaveCount(0);
+  expect(calls.filter(x=>x.action==='start')).toHaveLength(1);
+ });
 }
