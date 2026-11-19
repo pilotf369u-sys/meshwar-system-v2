@@ -1,0 +1,24 @@
+name: KINTO Payment Expiry Edge
+on:
+  pull_request:
+    paths:
+      - 'supabase/config.toml'
+      - 'supabase/functions/kinto-payment-expiry/**'
+      - 'supabase/**/20261119090000_kinto_payment_expiry_schedule*.sql'
+      - 'tests/payment-expiry-scheduler.test.mjs'
+      - '.github/workflows/kinto-payment-expiry-edge.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  edge-handler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test expiry hook authentication and RPC failure handling
+        run: node --test tests/payment-expiry-scheduler.test.mjs
