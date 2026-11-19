@@ -8,7 +8,12 @@
  async function call(action,payload={},expectedSession){
   const cfg=config(), session=token(); if(!session||expectedSession&&session!==expectedSession)throw new Error('CUSTOMER_SESSION_REQUIRED');
   const r=await fetch(`${String(cfg.url).replace(/\/$/,'')}/functions/v1/kinto-payment-p5`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',apikey:cfg.anonKey,Authorization:`Bearer ${cfg.anonKey}`},body:JSON.stringify({action,session_token:session,...payload})});
-  const j=await r.json().catch(()=>({}));if(expectedSession&&token()!==expectedSession)throw new Error('CUSTOMER_SESSION_REQUIRED');if(!r.ok||j.ok!==true)throw new Error(j.error||'PAYMENT_REQUEST_FAILED');return j.data;
+  const j=await r.json().catch(()=>({}));if(expectedSession&&token()!==expectedSession)throw new Error('CUSTOMER_SESSION_REQUIRED');if(!r.ok||j.ok!==true){
+   const error=new Error(j.error||'PAYMENT_REQUEST_FAILED');
+   error.code=j.code;
+   throw error;
+  }
+  return j.data;
  }
  // Reading the effective mode does not require the P5 Edge Function: the
  // existing session-checked RPC is the authoritative source. This lets the
@@ -108,9 +113,8 @@
    if(recovery.attempt){
     const status=await request('status',{attempt_id:recovery.attempt});
     if(status.status!=='reserved'){
-     if(status.status==='pending'&&!recovery.confirming&&Date.parse(status.expires_at)>Date.now())
-      paymentScreen(recovery.attempt,status.kp_number);
-     else await showResult(status,recovery.attempt,status.kp_number);
+     if(!restoreCampaignConfirmation(status,recovery.attempt,status.kp_number))
+      await showResult(status,recovery.attempt,status.kp_number);
      return;
     }
    }
@@ -118,7 +122,11 @@
    const {attempt_id:attempt,kp_number:kp}=r;
    recovery.attempt=attempt;
    saveRecovery();
-   if(r.status==='pending'&&!recovery.confirming){paymentScreen(attempt,kp);return}
+   if(r.status==='pending'){
+    const status=await request('status',{attempt_id:attempt});
+    if(!restoreCampaignConfirmation(status,attempt,kp))await showResult(status,attempt,kp);
+    return;
+   }
    if(r.status!=='reserved'){await showResult(r,attempt,kp);return}
    const review=r.quote.lines.map(lineHtml).join('')+
     (r.quote.gift_line?'<p class="kp5-note">هدية مجانية</p>'+lineHtml(r.quote.gift_line):'');
@@ -129,10 +137,30 @@
     void start(attempt,kp);
    };
   };
+  function restoreCampaignConfirmation(status,attempt,kp){
+   if(!campaignId||status.status!=='pending')return false;
+   const deadline=Date.parse(status.expires_at);
+   if(Number.isFinite(deadline)&&deadline<=Date.now()){
+    message(root,'انتهت مهلة الحجز',`الدفعة ${kp} لم تُعتمد. يبقى الحجز محفوظاً حتى حسم الحالة.`,
+     '<button class="kp5-secondary" data-check>التحقق مجدداً</button>');
+    root.querySelector('[data-check]').onclick=()=>poll(attempt,kp);
+    return true;
+   }
+   if(deadline>Date.now()&&(!recovery.confirming||recovery.retryable===true)){
+    paymentScreen(attempt,kp);
+    return true;
+   }
+   return false;
+  }
   const start=async(attempt,kp)=>{try{const result=await request('start',{attempt_id:attempt});if(campaignId&&result.status!=='pending')await showResult(result,attempt,kp);else paymentScreen(attempt,kp)}catch(e){message(root,'جارٍ التحقق','انقطع الاتصال أثناء بدء المحاولة. نتحقق من حالتها قبل أي إجراء.');void poll(attempt,kp)}};
-  const showResult=async(r,attempt,kp)=>{if(r.status==='paid'){await onPaid?.(r);message(root,'تم التسديد تجريبياً',`تم اعتماد الدفعة ${kp}، ${campaignId?'وأُنشئ طلب الحملة.':'وأُنشئت الطلبات الأصلية لكل متجر.'} لا يوجد تحصيل حقيقي.`, '<button class="kp5-primary" data-done>عرض مدفوعاتي</button>');root.querySelector('[data-done]').onclick=()=>{clearCampaignKey();root.remove();location.href='dashboard.html?tab=myPayments'}}else if(['failed','cancelled','expired'].includes(r.status)){clearCampaignKey();message(root,'لم يُعتمد الطلب',`حالة الدفعة ${kp}: ${{failed:'مرفوضة',cancelled:'ملغاة',expired:'منتهية'}[r.status]}. لم تُنشأ طلبات تشغيلية.${campaignId?'':' بقيت السلة محفوظة.'}`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}else{message(root,'جارٍ التحقق',`حالة الدفعة ${kp} غير محسومة. سيبقى الحجز محفوظاً حتى المطابقة.`, '<button class="kp5-secondary" data-check>التحقق مجدداً</button>');root.querySelector('[data-check]').onclick=()=>poll(attempt,kp)}};
-  const paymentScreen=(attempt,kp)=>{setContent(root,`<div class="kp5-state"><h3>محاكاة الدفع</h3><p>رقم الدفعة ${esc(kp)}. محاكاة دون تحصيل أموال فعلية.</p><section class="kp5-test-card" aria-label="بطاقة اختبار KINTO"><div class="kp5-test-card-mark">KINTO <span>SIMULATOR</span></div><strong dir="ltr">4242 4242 4242 4242</strong><div><span>الصلاحية</span><b dir="ltr">12/30</b><span>رمز الاختبار</span><b dir="ltr">123</b></div><small>بطاقة اختبار ثابتة — لا تدخل بيانات بطاقتك الحقيقية</small></section><p class="kp5-note">هذه بطاقة اختبار افتراضية، ولا يتم تحصيل أي مبلغ حقيقي.</p></div>`, '<button class="kp5-primary" data-pay>تأكيد الدفع التجريبي</button><button class="kp5-secondary" data-scenario="failure">اختبار الرفض</button><button class="kp5-secondary" data-scenario="cancel">إلغاء الدفع</button><button class="kp5-secondary" data-scenario="disconnect">انقطاع الاتصال / نتيجة مجهولة</button>');root.querySelector('[data-pay]').onclick=async()=>{root.querySelectorAll(campaignId?'.kp5-actions button':'button').forEach(x=>x.disabled=true);message(root,'جارٍ التحقق','يتحقق خادم KINTO من البطاقة الافتراضية والدفعة.');try{if(recovery&&token()===campaignSession){recovery.confirming=true;saveRecovery()}await showResult(await request('pay',{attempt_id:attempt,card:{number:'4242 4242 4242 4242',expiry:'12/30',cvv:'123'},shipping}),attempt,kp)}catch{message(root,'جارٍ التحقق',`تعذر استلام الرد عن الدفعة ${kp}. لا نفترض النجاح أو الفشل؛ نتحقق من سجل الخادم.`);void poll(attempt,kp)}};root.querySelectorAll('[data-scenario]').forEach(b=>b.onclick=async()=>{root.querySelectorAll(campaignId?'.kp5-actions button':'button').forEach(x=>x.disabled=true);message(root,'جارٍ التحقق','نتحقق من النتيجة خادمياً. أبقِ هذه النافذة مفتوحة.');try{if(recovery&&token()===campaignSession){recovery.confirming=true;saveRecovery()}await showResult(await request('simulate',{attempt_id:attempt,scenario:b.dataset.scenario,shipping}),attempt,kp)}catch{message(root,'جارٍ التحقق',`تعذر استلام الرد عن الدفعة ${kp}. لا نفترض النجاح أو الفشل؛ نتحقق من سجل الخادم.`);void poll(attempt,kp)}})};
-  const poll=async(attempt,kp)=>{for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,2000));if(campaignId&&(!root.isConnected||token()!==campaignSession))return;try{const s=await request('status',{attempt_id:attempt});if(s.status==='paid'){await onPaid?.(s);message(root,'تم التسديد تجريبياً',`تم اعتماد الدفعة ${kp}.`, '<button class="kp5-primary" data-done>عرض مدفوعاتي</button>');root.querySelector('[data-done]').onclick=()=>{clearCampaignKey();root.remove();location.href='dashboard.html?tab=myPayments'};return}if(['failed','cancelled','expired'].includes(s.status)){clearCampaignKey();message(root,'لم يُعتمد الطلب',`حالة الدفعة ${kp}: ${s.status}. لم تُنشأ طلبات تشغيلية.`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove();return}}catch{}}message(root,'النتيجة ما زالت قيد المطابقة',`الدفعة ${kp} غير محسومة. لا تغلقها كنجاح أو فشل؛ سيبقى الحجز قائماً.`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()};
+  const showResult=async(r,attempt,kp)=>{if(r.status==='paid'){await onPaid?.(r);message(root,'تم التسديد تجريبياً',`تم اعتماد الدفعة ${kp}، ${campaignId?'وأُنشئ طلب الحملة.':'وأُنشئت الطلبات الأصلية لكل متجر.'} لا يوجد تحصيل حقيقي.`, '<button class="kp5-primary" data-done>عرض مدفوعاتي</button>');root.querySelector('[data-done]').onclick=()=>{clearCampaignKey();root.remove();location.href='dashboard.html?tab=myPayments'}}else if(['failed','cancelled','expired'].includes(r.status)){clearCampaignKey();message(root,'لم يُعتمد الطلب',`حالة الدفعة ${kp}: ${{failed:'مرفوضة',cancelled:'ملغاة',expired:'منتهية'}[r.status]}. لم تُنشأ طلبات تشغيلية.${campaignId?'':' بقيت السلة محفوظة.'}`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}else{message(root,campaignId&&r.status==='reconciliation_required'?'الدفع قيد المطابقة':'جارٍ التحقق',`حالة الدفعة ${kp} غير محسومة. سيبقى الحجز محفوظاً حتى المطابقة.`, '<button class="kp5-secondary" data-check>التحقق مجدداً</button>');root.querySelector('[data-check]').onclick=()=>poll(attempt,kp)}};
+  const paymentScreen=(attempt,kp)=>{setContent(root,`<div class="kp5-state"><h3>محاكاة الدفع</h3><p>رقم الدفعة ${esc(kp)}. محاكاة دون تحصيل أموال فعلية.</p><section class="kp5-test-card" aria-label="بطاقة اختبار KINTO"><div class="kp5-test-card-mark">KINTO <span>SIMULATOR</span></div><strong dir="ltr">4242 4242 4242 4242</strong><div><span>الصلاحية</span><b dir="ltr">12/30</b><span>رمز الاختبار</span><b dir="ltr">123</b></div><small>بطاقة اختبار ثابتة — لا تدخل بيانات بطاقتك الحقيقية</small></section><p class="kp5-note">هذه بطاقة اختبار افتراضية، ولا يتم تحصيل أي مبلغ حقيقي.</p></div>`, '<button class="kp5-primary" data-pay>تأكيد الدفع التجريبي</button><button class="kp5-secondary" data-scenario="failure">اختبار الرفض</button><button class="kp5-secondary" data-scenario="cancel">إلغاء الدفع</button><button class="kp5-secondary" data-scenario="disconnect">انقطاع الاتصال / نتيجة مجهولة</button>');root.querySelector('[data-pay]').onclick=async()=>{root.querySelectorAll(campaignId?'.kp5-actions button':'button').forEach(x=>x.disabled=true);message(root,'جارٍ التحقق','يتحقق خادم KINTO من البطاقة الافتراضية والدفعة.');try{if(recovery&&token()===campaignSession){recovery.confirming=true;recovery.retryable=false;saveRecovery()}await showResult(await request('pay',{attempt_id:attempt,card:{number:'4242 4242 4242 4242',expiry:'12/30',cvv:'123'},shipping}),attempt,kp)}catch(e){if(recovery&&token()===campaignSession&&['55P03','40001','40P01'].includes(e.code)){
+   recovery.retryable=true;saveRecovery();
+  }message(root,'جارٍ التحقق',`تعذر استلام الرد عن الدفعة ${kp}. لا نفترض النجاح أو الفشل؛ نتحقق من سجل الخادم.`);void poll(attempt,kp)}};root.querySelectorAll('[data-scenario]').forEach(b=>b.onclick=async()=>{root.querySelectorAll(campaignId?'.kp5-actions button':'button').forEach(x=>x.disabled=true);message(root,'جارٍ التحقق','نتحقق من النتيجة خادمياً. أبقِ هذه النافذة مفتوحة.');try{if(recovery&&token()===campaignSession){recovery.confirming=true;recovery.retryable=false;saveRecovery()}await showResult(await request('simulate',{attempt_id:attempt,scenario:b.dataset.scenario,shipping}),attempt,kp)}catch{message(root,'جارٍ التحقق',`تعذر استلام الرد عن الدفعة ${kp}. لا نفترض النجاح أو الفشل؛ نتحقق من سجل الخادم.`);void poll(attempt,kp)}})};
+  const poll=async(attempt,kp)=>{for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,2000));if(campaignId&&(!root.isConnected||token()!==campaignSession))return;try{const s=await request('status',{attempt_id:attempt});
+   if(campaignId&&s.status==='reconciliation_required'){await showResult(s,attempt,kp);return}
+   if(restoreCampaignConfirmation(s,attempt,kp))return;
+   if(s.status==='paid'){await onPaid?.(s);message(root,'تم التسديد تجريبياً',`تم اعتماد الدفعة ${kp}.`, '<button class="kp5-primary" data-done>عرض مدفوعاتي</button>');root.querySelector('[data-done]').onclick=()=>{clearCampaignKey();root.remove();location.href='dashboard.html?tab=myPayments'};return}if(['failed','cancelled','expired'].includes(s.status)){clearCampaignKey();message(root,'لم يُعتمد الطلب',`حالة الدفعة ${kp}: ${s.status}. لم تُنشأ طلبات تشغيلية.`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove();return}}catch{}}message(root,'النتيجة ما زالت قيد المطابقة',`الدفعة ${kp} غير محسومة. لا تغلقها كنجاح أو فشل؛ سيبقى الحجز قائماً.`, '<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()};
   try{if(campaignId)await reserveCampaign();else await quoteNow()}catch(e){message(root,'تعذرت مراجعة الطلب',e.message,'<button class="kp5-secondary" data-close>إغلاق</button>');root.querySelector('[data-close]').onclick=()=>root.remove()}
  }
  const checkoutCampaign=options=>checkout(options);
