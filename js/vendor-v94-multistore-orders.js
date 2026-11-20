@@ -233,26 +233,24 @@ async function labelInvoiceCollection(order){
   return {type,amounts};
  }
  if(type==='cod_full'){
-  // Only reuse the existing invoice calculation when the parent order is proven
-  // to belong to precisely this vendor segment. Otherwise a store label could
-  // charge for goods belonging to another store.
-  const valid=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))&&Number(v)>=0;
-  const parentDetails=parse(canonical.details);
-  const groups=window.KintoBundleV93?.storeGroups?.(canonical);
-  const sameStore=Array.isArray(groups)&&groups.length===1&&String(groups[0].store_id)===String(details?.store_id||order.details?.store_id||'');
-  const sameGoods=valid(canonical.total_price)&&valid(details?.subtotal_local)&&Number(canonical.total_price)===Number(details.subtotal_local);
-  const sameDelivery=valid(canonical.delivery_fee)&&valid(shipping?.delivery_fee)&&Number(canonical.delivery_fee)===Number(shipping.delivery_fee)&&
-   String(canonical.delivery_currency||canonical.currency||'').toUpperCase()===String(shipping.delivery_currency||'').toUpperCase();
-  const scopedExternal=shipping?.external_shipping_fee;
-  const sameExternal=valid(canonical.external_shipping_fee)&&valid(scopedExternal)&&Number(canonical.external_shipping_fee)===Number(scopedExternal)&&
-   (Number(scopedExternal)===0||shipping?.is_external_shipping_collector===true);
-  const knownGroup=Boolean(parentDetails?.store_id||Array.isArray(parentDetails?.items)&&parentDetails.items.length);
-  if(sameStore&&sameGoods&&sameDelivery&&sameExternal&&knownGroup&&
-   typeof window.KintoUnifiedShippingLabel?.invoiceCollection==='function'){
-   // The shared invoice calculator already handles coupons, campaign discounts,
-   // mixed currencies and rejects unverifiable sums.
-   return window.KintoUnifiedShippingLabel.invoiceCollection(canonical);
-  }
+  // The vendor invoice already renders the final total with the loyalty
+  // discount. Reuse that very same displayed result instead of re-calculating.
+  // Never claim a parent multi-store total on an individual store label.
+  const scopedSubtotal=details?.subtotal_local;
+  if(canonical.total_price!=null&&scopedSubtotal!=null&&
+     Number(canonical.total_price)!==Number(scopedSubtotal))return {type,amounts:null};
+  const parentItems=parse(canonical.details)?.items;
+  if(Array.isArray(parentItems)&&parentItems.some(x=>x?.store_id&&String(x.store_id)!==String(details?.store_id)))
+   return {type,amounts:null};
+  const invoiceGrand=String(await labelStoreInvoiceTotal(order)||'').trim();
+  // The existing invoice displays simple same-currency totals as "14,000 IQD".
+  // An ambiguous/mixed-currency invoice is not a single collectible amount.
+  const match=invoiceGrand.match(/^([0-9][0-9,]*(?:\\.[0-9]{1,4})?)\\s+([A-Z]{3})$/);
+  if(!match)return {type,amounts:null};
+  const due=Number(match[1].replace(/,/g,'')),currency=match[2];
+  if(!Number.isFinite(due)||due<0||currency!==String(details?.currency||order.currency||'').toUpperCase())
+   return {type,amounts:null};
+  return {type,amounts:due>0?[{amount:due,currency}]:[]};
  }
  // Never substitute an unverified parent invoice subtotal as door collection.
  return {type,amounts:null};
