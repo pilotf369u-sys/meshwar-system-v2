@@ -4,6 +4,7 @@ on:
     paths:
       - 'js/kinto-unified-shipping-label-v1.js'
       - 'ci/kinto-unified-shipping-label-v1.test.cjs'
+      - 'ci/kinto-vendor-label-scoped-collection.test.cjs'
       - 'employee-dashboard.html'
       - 'admin-dashboard.html'
       - 'branch-dashboard.html'
@@ -23,6 +24,6 @@ jobs:
         with:
           node-version: '22'
       - name: Syntax validation
-        run: node --check js/kinto-unified-shipping-label-v1.js && node --check ci/kinto-unified-shipping-label-v1.test.cjs
+        run: node --check js/kinto-unified-shipping-label-v1.js && node --check ci/kinto-unified-shipping-label-v1.test.cjs && node --check ci/kinto-vendor-label-scoped-collection.test.cjs
       - name: Collection and role tests
-        run: node ci/kinto-unified-shipping-label-v1.test.cjs
+        run: node ci/kinto-unified-shipping-label-v1.test.cjs && node ci/kinto-vendor-label-scoped-collection.test.cjs
