@@ -702,8 +702,8 @@ const restored=storeSession();if(restored){vendorStore=restored;openDashboard()}
     o._kintoCustomer=await window.KintoVendorLabelCustomer(o);
    }else if(window.KintoBundleV93?.hydrateCustomer)await window.KintoBundleV93.hydrateCustomer(o);
    const collection=o._v95SegmentId?await window.KintoVendorLabelInvoiceCollection(o):label.invoiceCollection(o);
-   const storeInvoiceTotal=o._v95SegmentId?await window.KintoVendorLabelStoreInvoiceTotal(o):'';
-   const data=label.buildOrderLabel(o,{invoiceCollection:collection,storeInvoiceTotal,
+   // Label shows verified amount due, never the store invoice total as a fallback.
+   const data=label.buildOrderLabel(o,{invoiceCollection:collection,
     storeName:runtime.getStore()?.store_name,
     pieces:runtime.labelHelpers.orderQuantity(o),
     parcels:runtime.labelHelpers.orderParcelsCount(o)
