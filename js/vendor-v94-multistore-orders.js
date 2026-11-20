@@ -245,7 +245,7 @@ async function labelInvoiceCollection(order){
   const invoiceGrand=String(await labelStoreInvoiceTotal(order)||'').trim();
   // The existing invoice displays simple same-currency totals as "14,000 IQD".
   // An ambiguous/mixed-currency invoice is not a single collectible amount.
-  const match=invoiceGrand.match(/^([0-9][0-9,]*(?:\\.[0-9]{1,4})?)\\s+([A-Z]{3})$/);
+  const match=invoiceGrand.match(/^([0-9][0-9,]*(?:\.[0-9]{1,4})?)\s+([A-Z]{3})$/);
   if(!match)return {type,amounts:null};
   const due=Number(match[1].replace(/,/g,'')),currency=match[2];
   if(!Number.isFinite(due)||due<0||currency!==String(details?.currency||order.currency||'').toUpperCase())
