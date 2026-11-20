@@ -133,7 +133,7 @@ function invoiceDate(value){const date=new Date(value||Date.now());if(Number.isN
 function invoiceOptions(item){const options=parse(item.selected_options),parts=[options.color||item.selected_color,options.size||item.selected_size,options.volume||item.selected_volume].filter(Boolean);return parts.join(' — ')}
 function invoiceCollectionInfo(value){if(value==='cod_full')return{label:'تحصيل كامل عند الاستلام',tone:'danger'};if(value==='product_paid_delivery_cod')return{label:'البضاعة مدفوعة — التوصيل عند الاستلام',tone:'warning'};if(value==='paid_prepaid')return{label:'مدفوع مقدماً شامل التوصيل',tone:'success'};return{label:'حالة التحصيل غير محددة',tone:'neutral'}}
 function vendorRewardInfo(source){const snap=parse(source?.reward_discount_snapshot),amount=Math.max(0,Number(source?.reward_discount_amount??snap.amount??0)||0),raw=String(source?.reward_discount_currency||snap.currency||'').toUpperCase(),currency=raw==='$'?'USD':raw==='TL'?'TRY':raw;return{amount,currency}}
-async function hydrateVendorCanonicalInvoice(o,shippingDetails){const orderId=o?._v95OrderId||shippingDetails?.order_id||o?.id;if(!orderId)return{};try{const{data,error}=await runtime.sb.from('orders').select('total_price,currency,external_shipping_fee,delivery_fee,delivery_currency,shipping_company_name,shipping_snapshot,delivery_payment_type,reward_discount_amount,reward_discount_currency,reward_discount_snapshot').eq('id',orderId).limit(1);if(error)throw error;return Array.isArray(data)?data[0]||{}:{}}catch(e){console.warn('Vendor canonical invoice hydration failed',e);return{}}}
+async function hydrateVendorCanonicalInvoice(o,shippingDetails){const orderId=o?._v95OrderId||shippingDetails?.order_id||o?.id;if(!orderId)return{};try{const{data,error}=await runtime.sb.from('orders').select('total_price,currency,details,external_shipping_fee,external_shipping_currency,delivery_fee,delivery_currency,shipping_company_name,shipping_snapshot,delivery_payment_type,reward_discount_amount,reward_discount_currency,reward_discount_snapshot,kinto_campaign_discount_amount,kinto_campaign_discount_currency,kinto_campaign_discount_snapshot').eq('id',orderId).limit(1);if(error)throw error;return Array.isArray(data)?data[0]||{}:{}}catch(e){console.warn('Vendor canonical invoice hydration failed',e);return{}}}
 function vendorRewardGrand(data){let goods=data.subtotal+(Number(data.externalShippingFee)||0),delivery=data.deliveryFee,r=data.reward;if(r.amount>0&&r.currency===String(data.currency).toUpperCase())goods=Math.max(0,goods-r.amount);else if(r.amount>0&&r.currency===String(data.deliveryCurrency).toUpperCase())delivery=Math.max(0,delivery-r.amount);if(data.mixedCurrency){let label=`${runtime.money(goods,data.currency)} + ${runtime.money(delivery,data.deliveryCurrency)}`;if(r.amount>0&&![String(data.currency).toUpperCase(),String(data.deliveryCurrency).toUpperCase()].includes(r.currency))label+=` − ${runtime.money(r.amount,r.currency)}`;return label}if(r.amount>0&&r.currency!==String(data.currency).toUpperCase())return `${runtime.money(data.grandTotal,data.currency)} − ${runtime.money(r.amount,r.currency)}`;return runtime.money(Math.max(0,data.grandTotal-(r.currency===String(data.currency).toUpperCase()?r.amount:0)),data.currency)}
 function vendorTrackingInfo(value){const status=normalizedStatus(value),stages=[['استلام الطلب',['بانتظار رد الموظف','بانتظار موافقة العميل','بانتظار تأكيد الدفع','تم التسديد']],['التجهيز',['قيد الطلب','مخزن الشركة','تجهيز شحن']],['الشحن والتوصيل',['محولة إلى الفرع','تم الشحن','مخزن محلي','مندوب','توزيع داخلي']],['تم التسليم',['تم التسليم']]],rejected=/ملغي|رفض|مرفوض|راجع/.test(status);let current=stages.findIndex(([,values])=>values.includes(status));if(current<0)current=0;return{status:status||'بانتظار تحديث الحالة',stages,current,rejected}}
 function vendorInvoiceTimeline(value){const t=vendorTrackingInfo(value),progress=t.rejected?0:(t.current/(t.stages.length-1))*100,icons=t.rejected?['<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/>','<circle cx="12" cy="12" r="2"/>','<circle cx="12" cy="12" r="2"/>','<circle cx="12" cy="12" r="2"/>']:['<path d="M5 4h14v13H5z"/><path d="m9 10 3 3 3-3m-3-5v8"/>','<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4.5 7.7 7.5 4.2 7.5-4.2M12 12v9"/>','<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>','<circle cx="9" cy="8" r="3"/><path d="M4 20c.5-4 2-6 5-6 1.5 0 2.7.5 3.5 1.3M14 18l2 2 4-5"/>'],steps=t.stages.map(([label],i)=>`<div class="track-step ${!t.rejected&&i<=t.current?'done':''} ${!t.rejected&&i===t.current?'current':''}"><span aria-hidden="true"><svg viewBox="0 0 24 24">${icons[i]}</svg></span><b>${html(label)}</b></div>`).join('');return `<style>.date-block{display:flex!important;flex-direction:column;align-items:flex-start}.date-block>span{display:block}.order-status{display:block!important;width:max-content;max-width:145px!important;margin:4px 0 0!important;padding:3px 7px!important;font-size:7.5px!important;line-height:1.15!important}.track-step span svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.track-step::after{display:none!important}.track-step.current span{border-color:#d4a72c!important;outline:2px solid rgba(212,167,44,.42);animation:trackGoldGlow 1.35s ease-in-out infinite!important}@keyframes trackGoldGlow{0%,100%{box-shadow:0 0 0 3px rgba(212,167,44,.28),0 0 7px rgba(212,167,44,.55);filter:drop-shadow(0 0 2px rgba(212,167,44,.55))}50%{box-shadow:0 0 0 4px rgba(212,167,44,.48),0 0 18px rgba(212,167,44,1);filter:drop-shadow(0 0 7px rgba(255,193,7,1))}}@media(prefers-reduced-motion:reduce){.track-step,.track-step::after{animation:none!important}}@media print{.track-step,.track-step::after{animation:none!important}}</style><section class="invoice-track ${t.rejected?'rejected':''}" aria-label="تتبع الطلب"><div class="track-line"><i style="width:${progress}%"></i></div>${steps}</section>`}
@@ -196,10 +196,63 @@ async function labelInvoiceCollection(order){
   shipping=response.data;shippingControlCache.set(id,shipping);
  }
  const canonical=await hydrateVendorCanonicalInvoice(order,shipping);
- const type=String(canonical.delivery_payment_type||details?.delivery_payment_type||shipping?.delivery_payment_type||order.delivery_payment_type||'');
+ // The authorized vendor shipping projection includes the live payment mode and
+ // shipment fee. Parent order reads may be blocked by RLS; they are not required.
+ const scopedType=String(shipping?.delivery_payment_type||'').trim();
+ const parentType=String(canonical.delivery_payment_type||'').trim();
+ const type=parentType||scopedType||String(details?.delivery_payment_type||order.delivery_payment_type||'').trim();
+ if(parentType&&scopedType&&parentType!==scopedType)return {type,amounts:null};
  if(type==='paid_prepaid')return {type,amounts:[]};
- // The vendor invoice has no explicit verified per-store COD due amount in this projection.
- // Do not mislabel an invoice subtotal as an outstanding collection balance.
+ if(type==='product_paid_delivery_cod'){
+  // This order's goods are paid. Do not substitute the store invoice subtotal.
+  const rawFee=shipping?.delivery_fee??canonical.delivery_fee;
+  const fee=rawFee===null||rawFee===undefined||rawFee===''?NaN:Number(rawFee);
+  const feeCurrency=String(shipping?.delivery_currency||canonical.delivery_currency||order.delivery_currency||'').trim().toUpperCase();
+  // V139 list projection identifies the one segment responsible for external
+  // shipping. Never charge parent external shipping to every store segment.
+  const ownsExternal=shipping?.is_external_shipping_collector;
+  const externalProjection=shipping?.external_shipping_fee;
+  const parentExternal=canonical.external_shipping_fee;
+  let external=0,externalCurrency='';
+  if(ownsExternal===true){
+   external=externalProjection===null||externalProjection===undefined||externalProjection===''?NaN:Number(externalProjection);
+   externalCurrency=String(shipping?.external_shipping_currency||canonical.external_shipping_currency||canonical.currency||'').trim().toUpperCase();
+  }else if(ownsExternal===false){
+   external=0;
+  }else if(parentExternal!==null&&parentExternal!==undefined&&Number(parentExternal)===0){
+   external=0;
+  }else{
+   // Old projections may not declare collector ownership; do not guess.
+   return {type,amounts:null};
+  }
+  if(!Number.isFinite(fee)||fee<0||!feeCurrency||!Number.isFinite(external)||external<0||(external>0&&!externalCurrency))
+   return {type,amounts:null};
+  const amounts=[];
+  if(fee>0)amounts.push({amount:fee,currency:feeCurrency});
+  if(external>0)amounts.push({amount:external,currency:externalCurrency});
+  return {type,amounts};
+ }
+ if(type==='cod_full'){
+  // The vendor invoice already renders the final total with the loyalty
+  // discount. Reuse that very same displayed result instead of re-calculating.
+  // Never claim a parent multi-store total on an individual store label.
+  const scopedSubtotal=details?.subtotal_local;
+  if(canonical.total_price!=null&&scopedSubtotal!=null&&
+     Number(canonical.total_price)!==Number(scopedSubtotal))return {type,amounts:null};
+  const parentItems=parse(canonical.details)?.items;
+  if(Array.isArray(parentItems)&&parentItems.some(x=>x?.store_id&&String(x.store_id)!==String(details?.store_id)))
+   return {type,amounts:null};
+  const invoiceGrand=String(await labelStoreInvoiceTotal(order)||'').trim();
+  // The existing invoice displays simple same-currency totals as "14,000 IQD".
+  // An ambiguous/mixed-currency invoice is not a single collectible amount.
+  const match=invoiceGrand.match(/^([0-9][0-9,]*(?:\.[0-9]{1,4})?)\s+([A-Z]{3})$/);
+  if(!match)return {type,amounts:null};
+  const due=Number(match[1].replace(/,/g,'')),currency=match[2];
+  if(!Number.isFinite(due)||due<0||currency!==String(details?.currency||order.currency||'').toUpperCase())
+   return {type,amounts:null};
+  return {type,amounts:due>0?[{amount:due,currency}]:[]};
+ }
+ // Never substitute an unverified parent invoice subtotal as door collection.
  return {type,amounts:null};
 }
 window.KintoVendorLabelInvoiceCollection=labelInvoiceCollection;
