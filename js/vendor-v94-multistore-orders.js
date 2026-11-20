@@ -198,8 +198,19 @@ async function labelInvoiceCollection(order){
  const canonical=await hydrateVendorCanonicalInvoice(order,shipping);
  const type=String(canonical.delivery_payment_type||details?.delivery_payment_type||shipping?.delivery_payment_type||order.delivery_payment_type||'');
  if(type==='paid_prepaid')return {type,amounts:[]};
- // The vendor invoice has no explicit verified per-store COD due amount in this projection.
- // Do not mislabel an invoice subtotal as an outstanding collection balance.
+ if(type==='product_paid_delivery_cod'){
+  // Goods are already paid: only verified delivery charges may be collected.
+  // A segment may not inherit the parent order's goods invoice or external shipping.
+  const feeRaw=canonical.delivery_fee??shipping?.delivery_fee;
+  const feeCurrency=String(canonical.delivery_currency||shipping?.delivery_currency||shipping?.shipping_snapshot?.currency||order.delivery_currency||'').trim().toUpperCase();
+  const externalRaw=canonical.external_shipping_fee??details?.external_shipping_fee??0;
+  const fee=feeRaw===null||feeRaw===undefined||feeRaw===''?NaN:Number(feeRaw);
+  const external=externalRaw===null||externalRaw===''?NaN:Number(externalRaw);
+  if(Number.isFinite(fee)&&fee>=0&&Number.isFinite(external)&&external===0&&feeCurrency)
+   return {type,amounts:fee>0?[{amount:fee,currency:feeCurrency}]:[]};
+ }
+ // A segment does not have an authoritative per-store COD balance for other modes.
+ // Never print its invoice subtotal as money due at the door.
  return {type,amounts:null};
 }
 window.KintoVendorLabelInvoiceCollection=labelInvoiceCollection;
