@@ -233,26 +233,21 @@ async function labelInvoiceCollection(order){
   return {type,amounts};
  }
  if(type==='cod_full'){
-  // Only reuse the existing invoice calculation when the parent order is proven
-  // to belong to precisely this vendor segment. Otherwise a store label could
-  // charge for goods belonging to another store.
-  const valid=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))&&Number(v)>=0;
-  const parentDetails=parse(canonical.details);
-  const groups=window.KintoBundleV93?.storeGroups?.(canonical);
-  const sameStore=Array.isArray(groups)&&groups.length===1&&String(groups[0].store_id)===String(details?.store_id||order.details?.store_id||'');
-  const sameGoods=valid(canonical.total_price)&&valid(details?.subtotal_local)&&Number(canonical.total_price)===Number(details.subtotal_local);
-  const sameDelivery=valid(canonical.delivery_fee)&&valid(shipping?.delivery_fee)&&Number(canonical.delivery_fee)===Number(shipping.delivery_fee)&&
-   String(canonical.delivery_currency||canonical.currency||'').toUpperCase()===String(shipping.delivery_currency||'').toUpperCase();
-  const scopedExternal=shipping?.external_shipping_fee;
-  const sameExternal=valid(canonical.external_shipping_fee)&&valid(scopedExternal)&&Number(canonical.external_shipping_fee)===Number(scopedExternal)&&
-   (Number(scopedExternal)===0||shipping?.is_external_shipping_collector===true);
-  const knownGroup=Boolean(parentDetails?.store_id||Array.isArray(parentDetails?.items)&&parentDetails.items.length);
-  if(sameStore&&sameGoods&&sameDelivery&&sameExternal&&knownGroup&&
-   typeof window.KintoUnifiedShippingLabel?.invoiceCollection==='function'){
-   // The shared invoice calculator already handles coupons, campaign discounts,
-   // mixed currencies and rejects unverifiable sums.
-   return window.KintoUnifiedShippingLabel.invoiceCollection(canonical);
+  // A verified parent COD total cannot be inferred from the vendor projection:
+  // use only the server-authorized one-segment, same-invoice collection value.
+  const response=await runtime.sb.rpc('vendor_label_full_cod_collection_v1',{
+   p_session_token:active.token,p_segment_id:id
+  });
+  if(response.error){
+   console.warn('KINTO vendor COD label amount unavailable',response.error.code||response.error.message);
+   return {type,amounts:null};
   }
+  const verified=response.data;
+  if(verified?.type!=='cod_full'||!Array.isArray(verified.amounts))return {type,amounts:null};
+  const amounts=verified.amounts;
+  if(amounts.some(x=>!x||typeof x.amount!=='number'||!Number.isFinite(x.amount)||
+                    x.amount<0||!String(x.currency||'').trim()))return {type,amounts:null};
+  return {type,amounts:amounts.map(x=>({amount:x.amount,currency:String(x.currency).trim().toUpperCase()}))};
  }
  // Never substitute an unverified parent invoice subtotal as door collection.
  return {type,amounts:null};
