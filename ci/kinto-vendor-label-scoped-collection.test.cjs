@@ -14,7 +14,7 @@ async function run(shipping,canonical={},opts={}){
   detailCache:new Map([['s1',{store_id:'storeA',subtotal_local:18000}]]),
   shippingControlCache:new Map([['s1',shipping]]),
   hydrateVendorCanonicalInvoice:async()=>canonical,
-  runtime:{sb:{rpc:async(name)=>{calls.push(name);return {data:shipping}}}},
+  runtime:{sb:{rpc:async(name)=>{calls.push(name);if(name==='vendor_label_full_cod_collection_v1')return opts.rpcError?{error:{message:'unavailable'}}:{data:opts.verified??{type:'cod_full',amounts:null}};return {data:shipping}}}},
   parse:x=>typeof x==='object'&&x?x:(()=>{try{return JSON.parse(x||'{}')}catch{return{}}})(),
   window:{KintoBundleV93:{storeGroups:()=>opts.groups||[]},KintoUnifiedShippingLabel:{invoiceCollection:()=>opts.calculated||{type:'cod_full',amounts:null}}},String,Number,Boolean,console
  };
@@ -33,16 +33,16 @@ async function run(shipping,canonical={},opts={}){
  assert.equal((await run({...base,is_external_shipping_collector:undefined},{external_shipping_fee:5000})).amounts,null,'unattributed external shipping must warn');
  assert.deepEqual(await run({...base,is_external_shipping_collector:true,external_shipping_fee:2000,external_shipping_currency:'USD'}),{type:'product_paid_delivery_cod',amounts:[{amount:5000,currency:'IQD'},{amount:2000,currency:'USD'}]});
  assert.equal((await run(base,{delivery_payment_type:'cod_full'})).amounts,null,'mode conflict must warn');
- const cod={...base,delivery_payment_type:'cod_full',external_shipping_fee:0};
- const canonical={delivery_payment_type:'cod_full',details:{source:'local_store',store_id:'storeA',items:[{store_id:'storeA',line_total_local:18000}]},total_price:18000,currency:'IQD',delivery_fee:5000,delivery_currency:'IQD',external_shipping_fee:0};
- const correct={type:'cod_full',amounts:[{amount:22000,currency:'IQD'}]};
- assert.deepEqual(await run(cod,canonical,{groups:[{store_id:'storeA'}],calculated:correct}),correct,'single store COD uses the verified invoice calculator, with discount already applied');
- assert.equal((await run(cod,canonical,{groups:[{store_id:'storeA'},{store_id:'storeB'}],calculated:correct})).amounts,null,'multi-store parent total cannot be printed by one vendor');
- assert.equal((await run(cod,{...canonical,total_price:36000},{groups:[{store_id:'storeA'}],calculated:correct})).amounts,null,'parent goods amount differs from segment goods');
- assert.equal((await run(cod,{...canonical,delivery_fee:7000},{groups:[{store_id:'storeA'}],calculated:correct})).amounts,null,'shipping fee mismatch');
- assert.equal((await run(cod,{...canonical,external_shipping_fee:2000},{groups:[{store_id:'storeA'}],calculated:correct})).amounts,null,'external charges are not scoped');
- assert.equal((await run(cod,{...canonical,details:{}},{groups:[{store_id:'storeA'}],calculated:correct})).amounts,null,'missing invoice item evidence');
- assert.equal((await run(cod,{}, {groups:[{store_id:'storeA'}],calculated:correct})).amounts,null,'inaccessible parent invoice remains unconfirmed');
+
+ const cod={...base,delivery_payment_type:'cod_full'};
+ const verified={type:'cod_full',amounts:[{amount:14000,currency:'IQD'}]};
+ assert.deepEqual(await run(cod,{}, {verified}),verified,'14,000 full COD from authorized RPC even when parent order is hidden by RLS');
+ assert.equal((await run(cod,{}, {rpcError:true})).amounts,null,'missing RPC cannot guess');
+ assert.equal((await run(cod,{}, {verified:{type:'cod_full',amounts:null}})).amounts,null,'ambiguous server collection cannot guess');
+ assert.equal((await run(cod,{}, {verified:{type:'cod_full',amounts:[{amount:-100,currency:'IQD'}]}})).amounts,null,'negative amount rejected');
+ assert.equal((await run(cod,{}, {verified:{type:'paid_prepaid',amounts:[]}})).amounts,null,'server payment type mismatch rejected');
+ assert.deepEqual(await run(cod,{}, {verified:{type:'cod_full',amounts:[{amount:14000,currency:'iqd'}]}}),
+  verified,'currency normalized');
 
  console.log('Vendor scoped label collection tests passed');
 })().catch(e=>{console.error(e);process.exitCode=1});
