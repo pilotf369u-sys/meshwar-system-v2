@@ -55,6 +55,6 @@ const vendorLabelSource=fs.readFileSync('vendor-dashboard-v2.html','utf8');
 assert.doesNotMatch(vendorLabelSource,/storeInvoiceTotal=o\._v95SegmentId\?await window\.KintoVendorLabelStoreInvoiceTotal/, 'vendor print path cannot use invoice-total fallback');
 const vendorCollectionSource=fs.readFileSync('js/vendor-v94-multistore-orders.js','utf8');
 assert.match(vendorCollectionSource,/if\(type==='product_paid_delivery_cod'\)/, 'paid goods with delivery COD must have a dedicated collection path');
-assert.match(vendorCollectionSource,/external===0&&feeCurrency/, 'unknown or externally collected charges must not be guessed');
-assert.match(vendorCollectionSource,/amounts:fee>0\?\[\{amount:fee,currency:feeCurrency\}\]:\[\]/, 'only verified delivery fee reaches label');
+assert.match(vendorCollectionSource,/ownsExternal===true/, 'external shipping collector scope must be checked');
+assert.match(vendorCollectionSource,/if\(fee>0\)amounts.push\(\{amount:fee,currency:feeCurrency\}\)/, 'verified delivery fee reaches label');
 console.log('KINTO invoice-grounded unified shipping label tests passed');
