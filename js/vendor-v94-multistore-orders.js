@@ -196,21 +196,44 @@ async function labelInvoiceCollection(order){
   shipping=response.data;shippingControlCache.set(id,shipping);
  }
  const canonical=await hydrateVendorCanonicalInvoice(order,shipping);
- const type=String(canonical.delivery_payment_type||details?.delivery_payment_type||shipping?.delivery_payment_type||order.delivery_payment_type||'');
+ // The authorized vendor shipping projection includes the live payment mode and
+ // shipment fee. Parent order reads may be blocked by RLS; they are not required.
+ const scopedType=String(shipping?.delivery_payment_type||'').trim();
+ const parentType=String(canonical.delivery_payment_type||'').trim();
+ const type=parentType||scopedType||String(details?.delivery_payment_type||order.delivery_payment_type||'').trim();
+ if(parentType&&scopedType&&parentType!==scopedType)return {type,amounts:null};
  if(type==='paid_prepaid')return {type,amounts:[]};
  if(type==='product_paid_delivery_cod'){
-  // Goods are already paid: only verified delivery charges may be collected.
-  // A segment may not inherit the parent order's goods invoice or external shipping.
-  const feeRaw=canonical.delivery_fee??shipping?.delivery_fee;
-  const feeCurrency=String(canonical.delivery_currency||shipping?.delivery_currency||shipping?.shipping_snapshot?.currency||order.delivery_currency||'').trim().toUpperCase();
-  const externalRaw=canonical.external_shipping_fee??details?.external_shipping_fee??0;
-  const fee=feeRaw===null||feeRaw===undefined||feeRaw===''?NaN:Number(feeRaw);
-  const external=externalRaw===null||externalRaw===''?NaN:Number(externalRaw);
-  if(Number.isFinite(fee)&&fee>=0&&Number.isFinite(external)&&external===0&&feeCurrency)
-   return {type,amounts:fee>0?[{amount:fee,currency:feeCurrency}]:[]};
+  // This order's goods are paid. Do not substitute the store invoice subtotal.
+  const rawFee=shipping?.delivery_fee??canonical.delivery_fee;
+  const fee=rawFee===null||rawFee===undefined||rawFee===''?NaN:Number(rawFee);
+  const feeCurrency=String(shipping?.delivery_currency||canonical.delivery_currency||order.delivery_currency||'').trim().toUpperCase();
+  // V139 list projection identifies the one segment responsible for external
+  // shipping. Never charge parent external shipping to every store segment.
+  const ownsExternal=shipping?.is_external_shipping_collector;
+  const externalProjection=shipping?.external_shipping_fee;
+  const parentExternal=canonical.external_shipping_fee;
+  let external=0,externalCurrency='';
+  if(ownsExternal===true){
+   external=externalProjection===null||externalProjection===undefined||externalProjection===''?NaN:Number(externalProjection);
+   externalCurrency=String(shipping?.external_shipping_currency||canonical.external_shipping_currency||canonical.currency||'').trim().toUpperCase();
+  }else if(ownsExternal===false){
+   external=0;
+  }else if(parentExternal!==null&&parentExternal!==undefined&&Number(parentExternal)===0){
+   external=0;
+  }else{
+   // Old projections may not declare collector ownership; do not guess.
+   return {type,amounts:null};
+  }
+  if(!Number.isFinite(fee)||fee<0||!feeCurrency||!Number.isFinite(external)||external<0||(external>0&&!externalCurrency))
+   return {type,amounts:null};
+  const amounts=[];
+  if(fee>0)amounts.push({amount:fee,currency:feeCurrency});
+  if(external>0)amounts.push({amount:external,currency:externalCurrency});
+  return {type,amounts};
  }
- // A segment does not have an authoritative per-store COD balance for other modes.
- // Never print its invoice subtotal as money due at the door.
+ // Full COD must have a verified segment-specific outstanding balance; a
+ // store invoice total is not proof of collection due.
  return {type,amounts:null};
 }
 window.KintoVendorLabelInvoiceCollection=labelInvoiceCollection;
