@@ -51,3 +51,12 @@
 - `js/local-store-enhancements.js` legacy direct order handler exists in the index page. Repository `sql/kinto-local-order-insert-gate-v1.sql` is designed to reject browser direct inserts; **presence of a migration file does not prove the installed trigger**. Prior to any production SQL rollout, run read-only verification of `trg_kinto_local_order_insert_gate_v1` status and the checkout session access path. Do not modify access control as part of the 250-IQD pricing patch.
 - Rollback: six live functions + owner + ACL manifest saved in `KINTO_SUPABASE_SIX_FUNCTIONS_VERIFIED_BACKUP_20261122.zip`; server rollback restores only three changed function bodies. Existing source rollback branches preserved independently for main and Hostinger.
 - **Go/no-go:** no release if a direct path bypasses authoritative quote; no manual/electronic/campaign/label/invoice mismatch. User approval and supervised SQL execution required. 
+
+## Live order-insertion gate evidence supplied by owner (2026-11-22)
+- Read-only `pg_trigger` result confirms three enabled (`tgenabled='O'`) triggers on `public.orders`:
+  - `trg_00_kinto_order_session_write_guard_v1` BEFORE INSERT OR UPDATE -> `private.kinto_order_session_write_guard_v1()`
+  - `trg_kinto_local_order_insert_gate_v1` BEFORE INSERT -> `private.kinto_local_order_insert_gate_v1()`
+  - `trg_kinto_payment_p4_order_insert_gate` BEFORE INSERT -> `private.kinto_payment_hold_gate_p4()`
+- Read-only `pg_policies` confirms INSERT policies `kinto_order_session_insert_v1` (RESTRICTIVE to anon/authenticated) and `orders_insert_anon` (PERMISSIVE to anon). The restrictive policy still applies to the anon permissive policy.
+- **Interpretation limit:** this confirms activation, not predicate/body identity or observed denial of a forged direct order. Review/test actual trigger body and role behavior before claiming a verified deny.
+- Do not disable the active triggers or modify order creation security as part of pricing release.
