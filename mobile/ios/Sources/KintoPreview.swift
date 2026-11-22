@@ -16,7 +16,9 @@ final class KintoAppDelegate: UIResponder, UIApplicationDelegate {
         } else if ProcessInfo.processInfo.arguments.contains("--reader-test") {
             window.rootViewController = ReaderTestController()
         } else {
-            window.rootViewController = UINavigationController(rootViewController: BrowserController(mode: .account))
+            let accountNavigation = UINavigationController(rootViewController: BrowserController(mode: .account))
+            accountNavigation.setNavigationBarHidden(true, animated: false)
+            window.rootViewController = accountNavigation
         }
         window.makeKeyAndVisible()
         self.window = window
