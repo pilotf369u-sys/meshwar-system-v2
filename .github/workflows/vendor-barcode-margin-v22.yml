@@ -35,6 +35,8 @@ jobs:
           grep -Fq '__mwV22ManualBase' js/vendor-barcode-margin-autopricing-v22.js
       - name: Verify 250 IQD arithmetic regression
         run: node tests/local-pricing-iqd-250.test.cjs
+      - name: Verify IQD 250 invoice and shipping label invariants
+        run: node ci/kinto-iqd250-downstream-contract.test.cjs
       - name: Validate isolated profit-margin migration
         run: |
           grep -Fiq 'add column if not exists profit_margin_percent numeric(7,3) null' supabase/migrations/20260822_vendor_profit_margin_v22.sql
