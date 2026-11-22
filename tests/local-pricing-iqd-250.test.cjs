@@ -15,4 +15,27 @@ assert.equal(iqd(0.8),1500, 'Small items preserve sub-dollar pricing');
 assert.equal(iqd(0),0, 'Zero is stable');
 assert.equal(iqd(1.16)%250,0,'Final IQD amount is a multiple of 250');
 assert.equal(p.discountPercent(2,1),50,'Discount remains based on vendor prices');
+
+// Profit margin belongs to vendor cost->base; platform commission is a separate store rate.
+// Both controls can independently be zero. 5% is ONLY the example above, never a fixed rate.
+const marginPrice=(cost,margin)=>Number((cost*(1+margin/100)).toFixed(2));
+assert.equal(marginPrice(0.8,0),0.8,'Zero vendor margin retains cost');
+assert.equal(marginPrice(0.8,45),1.16,'45% vendor margin retains cents');
+assert.equal(marginPrice(0,45),0,'Zero cost remains zero');
+assert.equal(p.customerPriceUSD(0.8,0),0.8,'Zero platform commission retains vendor USD');
+assert.equal(p.customerPriceLocal(0.8,0,1770),1500,'Zero/zero independent rates still round IQD once');
+assert.equal(p.customerPriceLocal(1.16,0,1770),2250,'45% vendor margin with 0% platform commission');
+assert.equal(p.customerPriceLocal(1.16,5,1770),2250,'45% vendor margin with 5% platform commission');
+assert.equal(p.customerPriceLocal(0.8,10,1770),1750,'0% vendor margin with 10% platform commission');
+assert.equal(p.customerPriceLocal(0.8,20,1770),2000,'0% vendor margin with 20% platform commission');
+for (const vendorMargin of [0,5,15,45,100]) {
+  for (const platformCommission of [0,1,5,10,20,50]) {
+    const vendorUsd=marginPrice(0.8,vendorMargin);
+    const raw=vendorUsd/(1-platformCommission/100)*1770;
+    const actual=p.customerPriceLocal(vendorUsd,platformCommission,1770);
+    assert.equal(actual,Math.ceil(raw/250)*250,`vendor margin ${vendorMargin}%, platform commission ${platformCommission}%`);
+    assert.equal(actual%250,0,'IQD increments');
+  }
+}
+
 console.log('Pricing 250-IQD draft assertions passed (client only; server matching required).');
