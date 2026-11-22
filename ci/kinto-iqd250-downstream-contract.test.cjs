@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const assert=require('node:assert/strict');
 const context={window:{KintoBundleV93:{totals:o=>o._invoiceTotals}},console};
-vm.runInNewContext(fs.readFileSync('js/local-store-pricing.js','utf8'),context);
+vm.runInNewContext(fs.readFileSync('js/local-store-pricing.js','utf8').split('/* PUBLIC_SITE_SETTINGS_CMS_V3 */')[0],context);
 vm.runInNewContext(fs.readFileSync('js/kinto-unified-shipping-label-v1.js','utf8'),context);
 const pricing=context.window.MeshwarLocalPricing;
 const label=context.window.KintoUnifiedShippingLabel;
