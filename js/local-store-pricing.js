@@ -10,14 +10,14 @@
   function customerPriceUSD(vendorPrice,commissionRate){
     const v=Number(vendorPrice);
     if(!Number.isFinite(v)||v<0)return null;
-    return ceilNumber(v/(1-commissionFraction(commissionRate)));
+    return v/(1-commissionFraction(commissionRate));
   }
   function customerPriceLocal(vendorPrice,commissionRate,exchangeRate){
     const usd=customerPriceUSD(vendorPrice,commissionRate);
     const rate=Number(exchangeRate);
     if(usd===null||!Number.isFinite(rate)||rate<=0)return null;
     const rawLocalPrice=usd*rate;
-    return Math.ceil(rawLocalPrice/1000)*1000;
+    return Math.ceil(rawLocalPrice/250)*250;
   }
   function discountPercent(basePrice,discountPrice){
     const base=Number(basePrice),discount=Number(discountPrice);
@@ -30,11 +30,11 @@
     const local=customerPriceLocal(vendor,commission,rate);
     if(usd===null||local===null)return null;
     return {
-      pricing_version:'iqd_ceil_1000_v1',
+      pricing_version:'iqd_ceil_250_v2',
       vendor_price_usd:vendor,
       commission_rate:Number.isFinite(commission)&&commission>=0&&commission<100?commission:10,
       exchange_rate:rate,
-      customer_price_usd:ceilNumber(usd),
+      customer_price_usd:usd,
       customer_price_local:ceilNumber(local),
       local_currency:String(localCurrency||'IQD').toUpperCase()
     };
