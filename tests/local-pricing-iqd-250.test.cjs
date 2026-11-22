@@ -38,4 +38,28 @@ for (const vendorMargin of [0,5,15,45,100]) {
   }
 }
 
+
+// Test the ACTUAL vendor autoPrice function; toFixed(2) previously failed at 1.005/3.015.
+const vendorWindow={};
+vm.runInNewContext(fs.readFileSync('js/vendor-barcode-margin-autopricing-v22.js','utf8'),{window:vendorWindow,console,Math,Number,BigInt});
+const autoPrice=vendorWindow.MeshwarVendorBarcodeMarginV22.autoPrice;
+function merchantAutoPrice(cost,margin){
+  const nodes={
+    mwProductCostPrice:{value:String(cost)},
+    productBasePrice:{value:'',dispatchEvent(){}},
+    mwGlobalProfitMargin:{value:String(margin)},
+    mwAutoPriceHint:{textContent:''}
+  };
+  const host={document:{getElementById:id=>nodes[id]},Event:class Event{}};
+  autoPrice(host);
+  assert.ok(nodes.mwAutoPriceHint.textContent.includes('سعر البيع المقترح:'),'Vendor cost hint remains present');
+  return Number(nodes.productBasePrice.value);
+}
+assert.equal(merchantAutoPrice(0.8,0),0.8,'Zero vendor margin');
+assert.equal(merchantAutoPrice(0.8,45),1.16,'45% vendor margin');
+assert.equal(merchantAutoPrice(1,0.5),1.01,'Half-cent boundary 1.005 USD must round 1.01');
+assert.equal(merchantAutoPrice(2.01,50),3.02,'Half-cent boundary 3.015 USD must round 3.02');
+assert.equal(merchantAutoPrice(1,1.5),1.02,'Half-cent boundary 1.015 USD must round 1.02');
+assert.equal(merchantAutoPrice(0,50),0,'Zero cost remains zero');
+
 console.log('Pricing 250-IQD draft assertions passed (client only; server matching required).');
