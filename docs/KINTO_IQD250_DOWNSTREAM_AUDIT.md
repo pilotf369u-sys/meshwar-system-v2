@@ -43,3 +43,11 @@
 ## Stop conditions
 - Any price mismatch between checkout quote and product card/cart; any legacy direct order ACL concern; any new failing CI; any difference in manual/electronic/sale campaign totals.
 - No merging, Hostinger publish, SQL migration, feature flag toggles or live database mutation before owner review and final test evidence.
+
+## Final pre-release update (2026-11-22)
+- PR #1169 **was merged** into `main` at `b845674e4bc6e64e19835742b60ef52067b3a5b4` (22 Nov 2026, 15:08 UTC). The same authenticated `KintoStoreControlV1.rpc` session transport is already present in the IQD250 branch; source inspected in both `main` and branch. **No unresolved PR1169 overlap at the inspected source revision**.
+- Latest checked PR1171 commit `d34af2dee75c82850566f8113a143c77ec004b3d`: GitHub Actions **14/14 completed successfully** including end-to-end integration, vendor margin, campaigns and label regressions. This is pre-SQL testing, not live checkout verification.
+- Generated guarded SQL matched **all 8 exact source substitutions once each** against the owner-exported 2026-11-22 live database definitions after normalizing CSV CRLF to LF: checkout base 3, P5 quote 3, gift 2. A PostgreSQL deployment/runtime check is still outstanding; no SQL was executed.
+- `js/local-store-enhancements.js` legacy direct order handler exists in the index page. Repository `sql/kinto-local-order-insert-gate-v1.sql` is designed to reject browser direct inserts; **presence of a migration file does not prove the installed trigger**. Prior to any production SQL rollout, run read-only verification of `trg_kinto_local_order_insert_gate_v1` status and the checkout session access path. Do not modify access control as part of the 250-IQD pricing patch.
+- Rollback: six live functions + owner + ACL manifest saved in `KINTO_SUPABASE_SIX_FUNCTIONS_VERIFIED_BACKUP_20261122.zip`; server rollback restores only three changed function bodies. Existing source rollback branches preserved independently for main and Hostinger.
+- **Go/no-go:** no release if a direct path bypasses authoritative quote; no manual/electronic/campaign/label/invoice mismatch. User approval and supervised SQL execution required. 
