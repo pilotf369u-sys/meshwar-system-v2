@@ -60,3 +60,10 @@
 - Read-only `pg_policies` confirms INSERT policies `kinto_order_session_insert_v1` (RESTRICTIVE to anon/authenticated) and `orders_insert_anon` (PERMISSIVE to anon). The restrictive policy still applies to the anon permissive policy.
 - **Interpretation limit:** this confirms activation, not predicate/body identity or observed denial of a forged direct order. Review/test actual trigger body and role behavior before claiming a verified deny.
 - Do not disable the active triggers or modify order creation security as part of pricing release.
+
+## Surgical precision audit: vendor USD-cent tie rounding (2026-11-22)
+- Audit identified a genuine issue with the prior candidate `Number((cost*(1+margin/100)).toFixed(2))`: JavaScript binary floating-point can incorrectly resolve exact half-cent ties, e.g. `1.00 * 1.005` as 1.00 instead of 1.01, and `2.01 * 1.5` as 3.01 instead of 3.02.
+- Corrected **only** the vendor `autoPrice` formula. It now converts numeric USD cost to integer cents and margin to integer thousandths of a percentage point, uses BigInt arithmetic, and rounds half-up to the nearest USD cent. Preserves zero margin, manual override, events, session RPC transport, product saves and the original function signature.
+- Exercised the real exported `MeshwarVendorBarcodeMarginV22.autoPrice` via isolated unit test for 0%, 45%, 0.5%, 1.5%, 50% and zero-cost cases. Also retains the 30 combinations of platform commission and vendor margin in separate arithmetic tests.
+- Assumption: database cost is `numeric(14,2)` and margin is configured with up to three decimal places; any future extension of scale requires a separate, reviewed change.
+- NO authorisation to merge, edit Supabase, alter discount logic, or publish site until after full CI completes and controlled SQL coordination.
