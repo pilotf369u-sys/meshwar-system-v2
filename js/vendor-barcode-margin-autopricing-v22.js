@@ -16,7 +16,13 @@
     if(/^local_products(?:\?|$)/.test(path)&&String(method).toUpperCase()!=='GET'&&!(win.KintoVendorProductsV1||window.KintoVendorProductsV1))throw Error('PRODUCT_SESSION_TRANSPORT_REQUIRED');const productTransport=(win.KintoVendorProductsV1||window.KintoVendorProductsV1)?.forWindow(win)||win.fetch.bind(win);const r=await productTransport(`${SB_URL}/rest/v1/${path}`,{method,cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Content-Type':'application/json',Accept:'application/json'},body:body==null?null:JSON.stringify(body)});
     const t=await r.text();if(!r.ok)throw new Error(t||`HTTP ${r.status}`);return t?JSON.parse(t):null;
   }
-  async function rpc(win,name,body){return rest(win,`rpc/${name}`,{method:'POST',body})}
+  async function rpc(win,name,body){
+    const control=win.parent?.KintoStoreControlV1||win.KintoStoreControlV1;
+    if(typeof control?.rpc!=='function')throw new Error('STORE_SESSION_CONTROL_UNAVAILABLE');
+    const {data,error}=await control.rpc(null,name,body,win);
+    if(error)throw error;
+    return data;
+  }
 
   async function fetchBarcodeRows(win){
     const sid=String(store(win)?.id||'').trim();if(!sid)return[];
