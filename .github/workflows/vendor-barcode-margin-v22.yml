@@ -31,7 +31,7 @@ jobs:
           grep -Fq "p?.barcode||p?.sku" js/vendor-barcode-margin-autopricing-v22.js
           ! grep -Fq 'sku=eq.' js/vendor-barcode-margin-autopricing-v22.js
           grep -Fq 'mwGlobalProfitMargin' js/vendor-barcode-margin-autopricing-v22.js
-          grep -Fq 'Number((cost*(1+margin/100)).toFixed(2))' js/vendor-barcode-margin-autopricing-v22.js
+          grep -Fq 'const costCents=BigInt(Math.round(cost*100)),marginMilli=BigInt(Math.round(margin*1000));const price=Number((costCents*(100000n+marginMilli)+50000n)/100000n)/100;'  js/vendor-barcode-margin-autopricing-v22.js
           grep -Fq '__mwV22ManualBase' js/vendor-barcode-margin-autopricing-v22.js
       - name: Verify 250 IQD arithmetic regression
         run: node tests/local-pricing-iqd-250.test.cjs
