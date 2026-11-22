@@ -27,6 +27,19 @@ jobs:
           xcrun simctl install "$DEVICE" "$RUNNER_TEMP/KintoPreview.app"
           xcrun simctl launch "$DEVICE" com.kinto.ios.simulator.preview
 
+
+      - name: Capture iPhone simulator preview
+        run: |
+          sleep 20
+          xcrun simctl io booted screenshot "$RUNNER_TEMP/kinto-iphone-preview.png"
+      - name: Save preview image
+        uses: actions/upload-artifact@v4
+        with:
+          name: kinto-iphone-simulator-preview
+          path: ${{ runner.temp }}/kinto-iphone-preview.png
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Verify website data isolation on simulator
         run: |
           DEVICE="$(xcrun simctl list devices booted -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for items in d["devices"].values() for x in items))')"
