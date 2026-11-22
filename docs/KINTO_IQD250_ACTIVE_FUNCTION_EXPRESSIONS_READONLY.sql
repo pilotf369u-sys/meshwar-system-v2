@@ -14,7 +14,7 @@ with selected as (
  ))
 ), located as (
  select s.schema_name,s.function_name,s.arguments,
-        i as occurrence,regexp_instr(s.body,'ceil[[:space:]]*\\(',1,i,0,'i') as at_pos,s.body
+        i as occurrence,regexp_instr(s.body,'ceil[[:space:]]*[(]',1,i,0,'i') as at_pos,s.body
  from selected s cross join generate_series(1,12) as i
 )
 select schema_name,function_name,arguments,occurrence,
