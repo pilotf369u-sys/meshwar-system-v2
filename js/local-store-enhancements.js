@@ -86,13 +86,14 @@ document.head.appendChild(style);
 
 function vendorPriceUsd(product){const n=Number(product?.discount_price??product?.base_price);return Number.isFinite(n)&&n>=0?n:null}
 function commissionRate(store=currentStore){const n=Number(store?.commission_rate);return Number.isFinite(n)&&n>=0&&n<100?n:10}
-function priceWithCommission(vendorUsd,store=currentStore){const n=Number(vendorUsd);if(!Number.isFinite(n)||n<0)return null;return Math.ceil(n/(1-commissionRate(store)/100))}
+function priceWithCommission(vendorUsd,store=currentStore){const n=Number(vendorUsd);if(!Number.isFinite(n)||n<0)return null;return n/(1-commissionRate(store)/100)}
 function customerPriceUsd(product,store=currentStore){return priceWithCommission(vendorPriceUsd(product),store)}
 function exchangeRate(store=currentStore){const n=Number(store?.exchange_rate??1);return Number.isFinite(n)&&n>0?n:1}
 function targetCurrency(store=currentStore){return String(store?.exchange_target_currency||store?.default_currency||'IQD').trim().toUpperCase()||'IQD'}
-function localFromUsd(usd,store=currentStore){const n=Number(usd);if(!Number.isFinite(n))return null;return targetCurrency(store)==='USD'?Math.ceil(n):Math.ceil(n*exchangeRate(store))}
+function localFromUsd(usd,store=currentStore){const n=Number(usd);if(!Number.isFinite(n))return null;return targetCurrency(store)==='USD'?n:Math.ceil(n*exchangeRate(store)/250)*250}
 function customerLocalPrice(product,store=currentStore){return localFromUsd(customerPriceUsd(product,store),store)}
 function formatInt(v){const n=Number(v);return Number.isFinite(n)?Math.ceil(n).toLocaleString('en-US'):'---'}
+function formatUsd(v){const n=Number(v);return Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:2}):'---'}
 
 async function loadStoreContext(id){
   const storeId=String(id||'').trim();
@@ -119,14 +120,14 @@ function renderEnhancedProductCards(){
     const hasDiscount=p.discount_price!=null&&p.base_price!=null&&Number(p.discount_price)<Number(p.base_price);
     const oldUsd=hasDiscount?priceWithCommission(p.base_price,currentStore):null;
     const oldLocal=hasDiscount?localFromUsd(oldUsd,currentStore):null;
-    const discountBlock=hasDiscount?`<div class="meshwar-local-product-discount"><span class="meshwar-local-product-old">قبل الخصم: ${formatInt(oldUsd)} $${localCurrency!=='USD'?' / '+formatInt(oldLocal)+' '+esc(localCurrency):''}</span><span class="meshwar-local-product-save">خصم</span></div>`:'';
+    const discountBlock=hasDiscount?`<div class="meshwar-local-product-discount"><span class="meshwar-local-product-old">قبل الخصم: ${formatUsd(oldUsd)} $${localCurrency!=='USD'?' / '+formatInt(oldLocal)+' '+esc(localCurrency):''}</span><span class="meshwar-local-product-save">خصم</span></div>`:'';
     return `<article class="meshwar-local-product-card">
       <img class="meshwar-local-product-image" src="${esc(p.image_url||placeholder)}" onerror="this.onerror=null;this.src='${esc(placeholder)}'" alt="${esc(p.product_name||'منتج')}">
       <div class="meshwar-local-product-body">
         <div class="meshwar-local-product-name">${esc(p.product_name||'منتج')}</div>
         <div class="meshwar-local-product-desc">${esc(p.description||'')}</div>
         <div class="meshwar-local-product-price">
-          ${unavailable?'غير متوفر حالياً':`${discountBlock}<div class="usd">${formatInt(finalUsd)} $</div><div class="local">${formatInt(finalLocal)} ${esc(localCurrency)}</div><small>السعر شامل هامش MeshWar — التوصيل يحدد لاحقاً</small>`}
+          ${unavailable?'غير متوفر حالياً':`${discountBlock}<div class="usd">${formatUsd(finalUsd)} $</div><div class="local">${formatInt(finalLocal)} ${esc(localCurrency)}</div><small>السعر شامل هامش MeshWar — التوصيل يحدد لاحقاً</small>`}
         </div>
         <button type="button" class="meshwar-local-product-order" ${unavailable?'disabled':''} data-product-id="${esc(p.id)}">${unavailable?'غير متوفر حالياً':'🛒 اطلب الآن'}</button>
       </div>
@@ -178,7 +179,7 @@ async function placeOrder(product){
     };
     const{error}=await sb.from('orders').insert([payload]);
     if(error)throw error;
-    alert('تم إرسال الطلب بنجاح. السعر: '+formatInt(finalUsd)+' $ / '+formatInt(finalLocal)+' '+localCurrency+' — رقم الطلب: '+orderCode);
+    alert('تم إرسال الطلب بنجاح. السعر: '+formatUsd(finalUsd)+' $ / '+formatInt(finalLocal)+' '+localCurrency+' — رقم الطلب: '+orderCode);
     location.href='dashboard.html?customerId='+encodeURIComponent(customer.id);
   }catch(e){console.error(e);alert('تعذر إرسال الطلب: '+(e.message||e))}
 }
