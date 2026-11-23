@@ -178,5 +178,28 @@ for(const role of ['admin','employee'])for(const nativeController of [false,true
  assert.equal(calls.filter(c=>c.name==='kinto_save_staff_order_session_v1').length,1);
  assert.equal(Number((await db.query('SELECT total_price FROM orders WHERE id=$1',[id(n)])).rows[0].total_price),125);checks++;
 }
+// Exercise exactly the proposed live patch in this disposable PostgreSQL test database.
+// Substitute only the known production fingerprint with the isolated fixture fingerprint.
+const fixtureOriginalHash=(await db.query("SELECT md5(pg_get_functiondef('public.kinto_save_staff_order_session_v1(text,text,uuid,text,numeric,text,jsonb)'::regprocedure)) AS fingerprint")).rows[0].fingerprint;
+const fingerprint='886b9817c86af7e067d756e9d9f3414c';
+const sqlPatch=fs.readFileSync('docs/KINTO_STAFF_BRANCH_COURIER_EXECUTE_AFTER_APPROVAL_20261123.sql','utf8').replaceAll(fingerprint,fixtureOriginalHash);
+const sqlReverse=fs.readFileSync('docs/KINTO_STAFF_BRANCH_COURIER_ROLLBACK_READY_20261123.sql','utf8').replaceAll(fingerprint,fixtureOriginalHash);
+await db.exec(sqlPatch);
+assert.equal((await db.query("SELECT position('ORDER_SAVE_BRANCH_REQUIRED' IN pg_get_functiondef('public.kinto_save_staff_order_session_v1(text,text,uuid,text,numeric,text,jsonb)'::regprocedure)) > 0 AS patched")).rows[0].patched,true);
+await order(120);
+await deny(()=>save('admin',admin,{status:'محولة إلى الفرع',branch_id:null},id(120)),/ORDER_SAVE_BRANCH_REQUIRED/);
+await save('admin',admin,{status:'محولة إلى الفرع',branch_id:id(30)},id(120));
+assert.equal((await db.query('SELECT status FROM orders WHERE id=$1',[id(120)])).rows[0].status,'محولة إلى الفرع');checks++;
+await order(121);
+await deny(()=>save('employee',employee,{status:'مندوب'},id(121)),/ORDER_SAVE_COURIER_REQUIRED/);
+await save('employee',employee,{status:'مندوب',delivery_agent_id:id(200),courier_id:'1'},id(121));
+const courierResult=(await db.query('SELECT status,delivery_agent_id,courier_id FROM orders WHERE id=$1',[id(121)])).rows[0];
+assert.equal(courierResult.status,'مندوب');assert.equal(courierResult.courier_id,'1');checks++;
+await order(122);
+await deny(()=>save('admin',admin,{status:'مندوب',delivery_agent_id:id(201),courier_id:'2'},id(122)),/ORDER_SAVE_COURIER_REQUIRED|ORDER_SAVE_COURIER_INVALID/);
+await db.exec(sqlReverse);
+assert.equal((await db.query("SELECT md5(pg_get_functiondef('public.kinto_save_staff_order_session_v1(text,text,uuid,text,numeric,text,jsonb)'::regprocedure)) AS fingerprint")).rows[0].fingerprint,fixtureOriginalHash);
+checks++;
+console.log('PASS guarded branch/courier migration and rollback on isolated SQL fixture');
 console.log(`PASS ${checks} staff order-save checks: real logins, API price denial, current role/permissions, optimistic conflicts, immutable local totals, existing paid/type RPCs, settlement lock, audit atomicity, rollback`);
 await db.close();
