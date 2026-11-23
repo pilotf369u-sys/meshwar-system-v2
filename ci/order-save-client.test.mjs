@@ -10,7 +10,7 @@ test('all original and external-shipping staff save handlers use sessions and pr
   assert(!/from\('orders'\)\.update\((?:payload|orderPatch)\)/.test(s));
   assert(s.includes("rpc('kinto_approve_paid_order_v1'"));
  }
- assert(fs.readFileSync('external-shipping-shell.html','utf8').includes('external-shipping-native-order-render-v1.js?v=20261021-receipt-badges-v1'));
+ assert(fs.readFileSync('external-shipping-shell.html','utf8').includes('external-shipping-native-order-render-v1.js?v=20261124-native-staff-paid-v2'));
 });
 test('price guard is staged separately from additive SQL, and rollback preserves existing guards',()=>{
  const additive=fs.readFileSync('sql/kinto-order-save-session-v1.sql','utf8');
@@ -88,4 +88,22 @@ test('branch and courier SQL guard changes are reversible and narrow',()=>{
  assert(!/\\b(?:UPDATE|DELETE|INSERT)\\s+public\\.orders\\b/i.test(apply),'no orders mutations');
  assert(restore.includes("KINTO_BRANCH_RESTORE_ORIGINAL_HASH_MISMATCH"),'restore guarded');
  assert(schema.includes('ORDER_SAVE_STATUS_DENIED'),'preserves whitelist');
+});
+
+test('native shell actually ships the corrected paid-order controller for both roles',()=>{
+ const src=controllerSource('employee',true);
+ for(const [handler,until] of [['window.saveOrderRow=async function(encodedId){','function installAdmin(){'],['window.saveAdminOrderRow=async function(encodedId){',"if(screen==='employee')installEmployee()"]]){
+  const portion=src.split(handler)[1]?.split(until)[0]||'';
+  assert(portion.includes("sb.rpc('kinto_approve_paid_order_v1'"),handler+' must use protected payment');
+  assert(portion.includes("sb.rpc('kinto_save_staff_order_session_v1'"),handler+' must use staff RPC');
+  assert(portion.includes("'بانتظار تأكيد الدفع':'تمت الموافقة - بانتظار الدفع'"),handler+' correct legacy paid approval');
+  assert(portion.includes("status==='محولة إلى الفرع'&&!branchId"),handler+' require branch');
+  assert(portion.includes("payload.courier_id=String(courier.id)"),handler+' preserve courier assignment id');
+ }
+ const employee=src.split('window.saveOrderRow=async function(encodedId){')[1].split('function installAdmin(){')[0];
+ assert(employee.includes('if(parcelsCount!==orderParcelsCount(o))'),'native details must be omitted for status-only save');
+ assert(!employee.includes('parcelsCount});\n    try{'),'must not send full order details on every save');
+ assert(employee.includes('payload.details=JSON.stringify'),'parcel count change remains allowed');
+ const shell=fs.readFileSync('external-shipping-shell.html','utf8');
+ assert(shell.includes('external-shipping-native-order-render-v1.js?v=20261124-native-staff-paid-v2'),'new JS cache key delivered');
 });
