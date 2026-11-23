@@ -67,3 +67,11 @@
 - Exercised the real exported `MeshwarVendorBarcodeMarginV22.autoPrice` via isolated unit test for 0%, 45%, 0.5%, 1.5%, 50% and zero-cost cases. Also retains the 30 combinations of platform commission and vendor margin in separate arithmetic tests.
 - Assumption: database cost is `numeric(14,2)` and margin is configured with up to three decimal places; any future extension of scale requires a separate, reviewed change.
 - NO authorisation to merge, edit Supabase, alter discount logic, or publish site until after full CI completes and controlled SQL coordination.
+
+## Final SQL offline exact-diff review (2026-11-23)
+- Source: owner-exported live six-function CSV `نص ملصق(20261122-191355).txt` and guarded migration `KINTO_IQD250_GUARDED_MIGRATION_REVIEW_ONLY.sql` (local review artifact; do NOT run without approval).
+- Extracted all **8** `before_text`/`after_text` pairs from the SQL script and applied them to the *actual* exported `function_definition` body for each of the six functions.
+- Only three bodies change: gift **2** replacements; private P5 quote **3**; manual base checkout **3**. All matching fragments occurred **once** in their intended function. The other three checkout wrappers were unchanged.
+- After replacement, the three target bodies each have zero `iqd_ceil_1000_v1` instances and exactly one `iqd_ceil_250_v2` instance. Applying the eight inverse replacements recovered the original exported bodies byte-for-byte (**3/3 round-trip equal**).
+- This is offline string/diff verification, **NOT PostgreSQL execution**. It cannot prove SQL parser/plpgsql compilation, trigger interaction, live cart checkout, or site hosting compatibility; coordinated practical smoke remains mandatory.
+- Verified final GitHub Actions for commit `76223572654111e3a8f1c2d0606fe8ab540b8b04`: **14/14 successful**, including E2E and strict vendor function protection. No merge, Hostinger publish or Supabase SQL executed.
