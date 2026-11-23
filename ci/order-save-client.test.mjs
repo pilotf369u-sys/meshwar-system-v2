@@ -46,3 +46,13 @@ test('employee unified status aliases are mapped to original server-allowed labe
  assert(src.includes("rpc('kinto_save_staff_order_session_v1'"),'trusted RPC unchanged');
  assert(src.includes("rpc('kinto_approve_paid_order_v1'"),'paid approval RPC unchanged');
 });
+
+test('obsolete staff reward status removed only from unified order dropdowns',()=>{
+ for(const role of ['employee','admin']){
+  const source=fs.readFileSync(role+'-dashboard.html','utf8');
+  const block=source.split('/* UNIFIED_ORDER_STATUS_DROPDOWN_V1 */')[1]?.split('/* UNIFIED_ORDER_STATUS_DROPDOWN_V1_')[0]||'';
+  assert(block.includes("'محولة إلى الفرع'"),'branch transfer option remains in '+role);
+  assert(block.includes("'مندوب'"),'courier option remains in '+role);
+  assert(!block.includes("'مستحق مكافأة'"),'obsolete reward option removed from '+role);
+ }
+});
