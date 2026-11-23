@@ -61,7 +61,15 @@ jobs:
             ['js/vendor-barcode-margin-autopricing-v22.js',['autoPrice','bindProductPricing','loadMargin','saveMargin','injectMarginUi','wrapProductFunctions','persistCanonicalBarcode','bindBarcodeSaveGuard','resolveProductId','handleSmartSearch']]
           ]){
             const before=cp.execFileSync('git',['show',base+':'+path],{encoding:'utf8'}),after=fs.readFileSync(path,'utf8');
-            for(const name of names)assert.equal(fn(normalize(after),name),fn(normalize(before),name),path+': '+name+' unchanged');
+            for(const name of names){
+              const baseline=fn(normalize(before),name);
+              const current=fn(normalize(after),name);
+              // Only the verified integer-USD ceiling in autoPrice may change.
+              const expected=path==='js/vendor-barcode-margin-autopricing-v22.js'&&name==='autoPrice'
+                ?baseline.replace('const price=Math.ceil(cost*(1+margin/100));',"const costCents=BigInt(Math.round(cost*100)),marginMilli=BigInt(Math.round(margin*1000));const price=Number((costCents*(100000n+marginMilli)+50000n)/100000n)/100;")
+                :baseline;
+              assert.equal(current,expected,path+': '+name+' unchanged except approved cost precision');
+            }
           }
           NODE
 

@@ -36,7 +36,7 @@ test('vendor margin uses canonical barcode without missing sku requests',async({
  await page.addScriptTag({path:path.resolve('js/vendor-barcode-margin-autopricing-v22.js')});
  await page.evaluate(async()=>{window.MeshwarVendorBarcodeMarginV22.install(window);await window.MeshwarVendorBarcodeMarginV22.hydrateBarcode(window,'p');window.MeshwarVendorBarcodeMarginV22.autoPrice(window)});
  await expect(page.locator('#productBarcode')).toHaveValue('1234');
- await expect(page.locator('#productBasePrice')).toHaveValue('63');
+ await expect(page.locator('#productBasePrice')).toHaveValue('62.5');
  await expect(page.locator('[data-mw-barcode-label]')).toContainText('1234');
  const calls=await page.evaluate(()=>window.barcodeCalls);
  expect(calls.every(c=>!c.url.includes('sku'))).toBe(true);
