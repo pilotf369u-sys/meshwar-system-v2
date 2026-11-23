@@ -20,3 +20,13 @@ test('price guard is staged separately from additive SQL, and rollback preserves
  const rollback=fs.readFileSync('sql/kinto-order-price-rollback-v1.sql','utf8');
  assert(!/UPDATE public|DELETE FROM|REVOKE|DROP FUNCTION/i.test(rollback));
 });
+
+test('employee status save does not submit unrelated order details',()=>{
+ const src=controllerSource('employee',false);
+ assert(src.includes('if(parcelsCount!==orderParcelsCount(o))'),'details patch is conditional on parcel-count change');
+ assert(!src.includes('payload.details=JSON.stringify(nextDetails);try{'),'no unconditional details overwrite');
+ assert(src.includes('payload.details=JSON.stringify(nextDetails)'),'actual parcel-count edits remain supported');
+ const guard=fs.readFileSync('sql/kinto-order-save-session-v1.sql','utf8');
+ assert(guard.includes("RAISE EXCEPTION 'ORDER_SAVE_DETAILS_DENIED'"),'database denies changes outside parcel count');
+ assert(guard.includes("old_details-'parcels_count'"),'server protects all unrelated details');
+});
