@@ -71,13 +71,14 @@ function installEmployee(){
   };
   window.saveOrderRow=async function(encodedId){
     const id=cloudId(decodeURIComponent(encodedId)),o=cloudOrders.find(x=>cloudId(x.id)===id);if(!o)return;
-    let status=document.getElementById('status-'+encodedId)?.value||o.status;
+    let status=document.getElementById('status-'+encodedId)?.value||o.status;status=({'بانتظار رد الموظف':'انتظار رد الموظف','بانتظار تأكيد الدفع':'تمت الموافقة - بانتظار الدفع','مخزن الشركة':'مخزن شركة'})[status]||status;
     const reference=document.getElementById('ref-'+encodedId)?.value?.trim()||null,payment=paymentType(document.getElementById('pay-'+encodedId)?.value),branchId=cloudId(document.getElementById('branch-'+encodedId)?.value),branch=cloudBranches.find(b=>cloudId(b.id)===branchId),agentId=cloudId(document.getElementById('courier-'+encodedId)?.value),extRaw=document.getElementById('externalFee-'+encodedId)?.value??'0',extFee=Number(extRaw),extCur=document.getElementById('externalCurrency-'+encodedId)?.value||document.getElementById('currency-'+encodedId)?.value||'USD',payload={status,reference_order_no:reference,delivery_payment_type:payment,branch_id:branchId||null,branch_name:branch?(branch.name||branch.branch_name||null):null,external_shipping_fee:Number.isFinite(extFee)?extFee:0,external_shipping_currency:extCur};
     if(!Number.isFinite(extFee)||extFee<0)return alert('أجور الشحن الخارجي يجب أن تكون رقماً صحيحاً أكبر من أو يساوي صفر.');
-    if(status==='مندوب'){if(!isCloudUuid(agentId))return alert('معرف موظف التوصيل غير صالح. يجب أن يكون UUID صحيحاً.');payload.delivery_agent_id=agentId}else if(o.status==='مندوب'){payload.delivery_agent_id=null}
+    if(status==='محولة إلى الفرع'&&!branchId)return alert('اختر الفرع أولاً قبل تحويل الطلب إلى الفرع.');
+    if(status==='مندوب'){const courier=cloudCouriers.find(c=>String(c.courier_uuid||'')===agentId);if(!isCloudUuid(agentId)||!courier)return alert('اختر مندوباً صالحاً من القائمة.');payload.delivery_agent_id=agentId;payload.courier_id=String(courier.id)}else if(o.status==='مندوب'){payload.delivery_agent_id=null;payload.courier_id=null}
     if(can('pricing')){const raw=document.getElementById('price-'+encodedId)?.value??'';if(raw==='')payload.total_price=null;else{const n=Number(raw);if(!Number.isFinite(n)||n<0)return alert('أدخل مبلغاً صحيحاً');payload.total_price=n;payload.currency=document.getElementById('currency-'+encodedId)?.value||'$';if(n>0&&o.status==='انتظار رد الموظف'&&status==='انتظار رد الموظف'){status='بانتظار موافقة العميل';payload.status=status}}}
     if(status!=='رفض الطلب'&&Object.prototype.hasOwnProperty.call(o,'rejection_reason'))payload.rejection_reason=null;
-    const parcelsRaw=document.getElementById('parcels-'+encodedId)?.value??orderParcelsCount(o),parcelsCount=Math.max(1,Math.floor(Number(parcelsRaw)||1));payload.details=JSON.stringify({...parseDetails(o.details),parcels_count:parcelsCount});
+    const parcelsRaw=document.getElementById('parcels-'+encodedId)?.value??orderParcelsCount(o),parcelsCount=Math.max(1,Math.floor(Number(parcelsRaw)||1));if(parcelsCount!==orderParcelsCount(o)){payload.details=JSON.stringify({...parseDetails(o.details),parcels_count:parcelsCount})}
     try{
       const sb=await ensureEmployeeSupabase();
       let error;
@@ -156,10 +157,11 @@ function installAdmin(){
 </tr>`;
   };
   window.saveAdminOrderRow=async function(encodedId){
-    const id=decodeURIComponent(encodedId),o=adminOrdersCloud.find(x=>String(x.id)===String(id));if(!o)return;let status=document.getElementById('adminStatus-'+encodedId).value;
+    const id=decodeURIComponent(encodedId),o=adminOrdersCloud.find(x=>String(x.id)===String(id));if(!o)return;let status=document.getElementById('adminStatus-'+encodedId).value;status=({'بانتظار رد الموظف':'انتظار رد الموظف','بانتظار تأكيد الدفع':'تمت الموافقة - بانتظار الدفع','مخزن الشركة':'مخزن شركة'})[status]||status;
     const branchId=document.getElementById('adminBranch-'+encodedId).value,branch=adminBranches.find(b=>String(b.id)===String(branchId)),reason=document.getElementById('adminReject-'+encodedId)?.value.trim()||null,raw=document.getElementById('adminPrice-'+encodedId)?.value??'',agentId=String(document.getElementById('adminCourier-'+encodedId)?.value||'').trim(),extRaw=document.getElementById('adminExternalFee-'+encodedId)?.value??'0',extFee=Number(extRaw),extCur=document.getElementById('adminExternalCurrency-'+encodedId)?.value||document.getElementById('adminCurrency-'+encodedId)?.value||'USD',payload={reference_order_no:document.getElementById('adminRef-'+encodedId)?.value.trim()||null,delivery_payment_type:payType(document.getElementById('adminPay-'+encodedId)?.value),branch_id:branchId||null,branch_name:branch?(branch.name||branch.branch_name||null):null,status,rejection_reason:status==='رفض الطلب'?reason:null,external_shipping_fee:Number.isFinite(extFee)?extFee:0,external_shipping_currency:extCur};
     if(!Number.isFinite(extFee)||extFee<0)return alert('أجور الشحن الخارجي يجب أن تكون رقماً صحيحاً أكبر من أو يساوي صفر.');
-    if(status==='مندوب'){if(!isAdminUuid(agentId))return alert('معرف موظف التوصيل غير صالح. يجب أن يكون UUID صحيحاً.');payload.delivery_agent_id=agentId}else if(o.status==='مندوب'){payload.delivery_agent_id=null}
+    if(status==='محولة إلى الفرع'&&!branchId)return alert('اختر الفرع أولاً قبل تحويل الطلب إلى الفرع.');
+    if(status==='مندوب'){const courier=adminCouriersForOrders.find(c=>String(c.courier_uuid||'')===agentId);if(!isAdminUuid(agentId)||!courier)return alert('اختر مندوباً صالحاً من القائمة.');payload.delivery_agent_id=agentId;payload.courier_id=String(courier.id)}else if(o.status==='مندوب'){payload.delivery_agent_id=null;payload.courier_id=null}
     if(raw==='')payload.total_price=null;else{const n=Number(raw);if(!Number.isFinite(n)||n<0)return alert('أدخل مبلغاً صحيحاً');payload.total_price=n;payload.currency=document.getElementById('adminCurrency-'+encodedId)?.value||'$';if(n>0&&o.status==='انتظار رد الموظف'&&status==='انتظار رد الموظف'){status='بانتظار موافقة العميل';payload.status=status}}
     if(status==='رفض الطلب'&&!reason)return alert('أدخل سبب الرفض');
     try{
