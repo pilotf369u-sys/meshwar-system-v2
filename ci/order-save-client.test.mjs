@@ -30,3 +30,19 @@ test('employee status save does not submit unrelated order details',()=>{
  assert(guard.includes("RAISE EXCEPTION 'ORDER_SAVE_DETAILS_DENIED'"),'database denies changes outside parcel count');
  assert(guard.includes("old_details-'parcels_count'"),'server protects all unrelated details');
 });
+
+test('employee unified status aliases are mapped to original server-allowed labels only',()=>{
+ const src=controllerSource('employee',false);
+ const allowed=fs.readFileSync('sql/kinto-order-save-session-v1.sql','utf8');
+ const mapping={"بانتظار رد الموظف":"انتظار رد الموظف","بانتظار تأكيد الدفع":"تمت الموافقة - بانتظار الدفع","مخزن الشركة":"مخزن شركة"};
+ for(const [label,canonical] of Object.entries(mapping)){
+   assert(src.includes("'"+label+"':'"+canonical+"'"),'missing alias '+label);
+   assert(allowed.includes("'"+canonical+"'"),'server lacks canonical status '+canonical);
+ }
+ assert(src.indexOf('status=canonicalStatus[status]||status') < src.indexOf('payload={status,'),'normalize before patch');
+ for(const forbidden of ['محولة إلى الفرع','مستحق مكافأة','رفض التسليم','ملغية من قبل العميل']){
+   assert(!src.includes("'"+forbidden+"':"),'special workflow must not be remapped in generic save: '+forbidden);
+ }
+ assert(src.includes("rpc('kinto_save_staff_order_session_v1'"),'trusted RPC unchanged');
+ assert(src.includes("rpc('kinto_approve_paid_order_v1'"),'paid approval RPC unchanged');
+});
