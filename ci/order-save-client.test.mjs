@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import {controllerSource} from './order-save-controller-harness.mjs';
 test('all original and external-shipping staff save handlers use sessions and price concurrency',()=>{
  for(const role of ['admin','employee'])for(const native of [false,true]){
@@ -106,4 +107,45 @@ test('native shell actually ships the corrected paid-order controller for both r
  assert(employee.includes('payload.details=JSON.stringify'),'parcel count change remains allowed');
  const shell=fs.readFileSync('external-shipping-shell.html','utf8');
  assert(shell.includes('external-shipping-native-order-render-v1.js?v=20261124-native-staff-paid-v2'),'new JS cache key delivered');
+});
+
+test('native staff paid-save invokes secure RPC without unchanged details (actual handler execution)',async()=>{
+ const full=fs.readFileSync('js/external-shipping-native-order-render-v1.js','utf8');
+ for(const role of ['employee','admin']){
+  const isAdmin=role==='admin',handlerName=isAdmin?'saveAdminOrderRow':'saveOrderRow';
+  const marker='window.'+handlerName+'=async function(encodedId){';
+  const start=full.indexOf(marker),end=full.indexOf('\n  setTimeout(',start);
+  assert(start>=0&&end>start,role+' native handler found');
+  const calls=[],alerts=[],id='00000000-0000-4000-8000-000000000123';
+  const row={id,status:'تمت الموافقة - بانتظار الدفع',total_price:1500,currency:'IQD',delivery_fee:0,delivery_payment_type:'cod_full',branch_id:null,branch_name:null,details:'{"items":[{"product_id":"unchanged"}]}',external_shipping_fee:0,external_shipping_currency:'IQD'};
+  const values=isAdmin?{
+   ['adminStatus-'+id]:'تم التسديد',['adminBranch-'+id]:'',['adminPrice-'+id]:'1500',
+   ['adminCurrency-'+id]:'IQD',['adminPay-'+id]:'cod_full',['adminRef-'+id]:'',
+   ['adminCourier-'+id]:'',['adminExternalFee-'+id]:'0',['adminExternalCurrency-'+id]:'IQD',
+   ['adminReject-'+id]:''
+  }:{
+   ['status-'+id]:'تم التسديد',['branch-'+id]:'',['price-'+id]:'1500',
+   ['currency-'+id]:'IQD',['pay-'+id]:'cod_full',['ref-'+id]:'',
+   ['courier-'+id]:'',['externalFee-'+id]:'0',['externalCurrency-'+id]:'IQD',
+   ['parcels-'+id]:'1'
+  };
+  const sb={async rpc(name,args){calls.push({name,args});return {data:null,error:null}}};
+  const g={console,alert:msg=>alerts.push(msg),document:{getElementById:sel=>Object.prototype.hasOwnProperty.call(values,sel)?{value:values[sel]}:null},
+   cloudId:x=>String(x??''),cloudOrders:[row],adminOrdersCloud:[row],cloudBranches:[],adminBranches:[],cloudCouriers:[],adminCouriersForOrders:[],
+   paymentType:x=>x,payType:x=>x,parseDetails:x=>JSON.parse(x||'{}'),orderParcelsCount:()=>1,
+   isCloudUuid:()=>false,isAdminUuid:()=>false,can:()=>true,
+   checkEmployeePaymentStockV53:async()=>{},ensureEmployeeSupabase:async()=>sb,ensureCustomerSupabase:async()=>sb,
+   loadPipelineOrders:async()=>{},refreshPipelineCounts:async()=>{},loadAdminOrders:async()=>{},refreshAdminPipelineCounts:async()=>{},
+   KintoEmployeeSessionV143:{read:()=>({token:'employee-session'})},
+   KintoAdminSessionV147:{read:()=>({token:'admin-session'})}};
+  g.window=g;vm.createContext(g);vm.runInContext(full.slice(start,end),g);
+  await g[handlerName](id);
+  assert.deepEqual(alerts,[],role+' paid save must not alert');
+  assert.equal(calls.length,1,role+' exactly one protected payment request');
+  assert.equal(calls[0].name,'kinto_approve_paid_order_v1');
+  const p=calls[0].args.p_patch;
+  assert.equal(p.status,'تم التسديد');assert.equal(p.total_price,1500);assert.equal(p.currency,'IQD');
+  assert.equal(Object.prototype.hasOwnProperty.call(p,'details'),false,role+' unchanged order details never sent');
+  assert.equal(Object.prototype.hasOwnProperty.call(p,'external_shipping_fee'),false,role+' external fee excluded from approval');
+ }
 });
