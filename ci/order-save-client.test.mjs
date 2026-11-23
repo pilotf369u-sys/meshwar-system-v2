@@ -59,3 +59,33 @@ test('obsolete staff reward status removed only from unified order dropdowns',()
   assert(!block.includes("'مستحق مكافأة'"),'obsolete reward option removed from '+role);
  }
 });
+
+test('admin branch transfer preflight uses the rendered row identifiers',()=>{
+ const page=fs.readFileSync('admin-dashboard.html','utf8');
+ const wrapper=page.split('/* UNIFIED_ORDER_STATUS_DROPDOWN_V1_ADMIN */')[1]?.split('</script>')[0]||'';
+ assert(page.includes('id="adminStatus-'), 'admin status control exists');
+ assert(page.includes('id="adminBranch-'), 'admin branch selector exists');
+ assert(wrapper.includes("document.getElementById('adminStatus-'+encodedId)"),'reads real status control');
+ assert(wrapper.includes("document.getElementById('adminBranch-'+encodedId)"),'reads real branch selector');
+ assert(!wrapper.includes("document.getElementById('admin-status-'+encodedId)"),'no incorrect old ID');
+ assert(!wrapper.includes("document.getElementById('admin-branch-'+encodedId)"),'no incorrect old ID');
+ assert(wrapper.includes("if(statusEl?.value==='محولة إلى الفرع')"),'branch precondition exists');
+});
+test('branch and courier SQL guard changes are reversible and narrow',()=>{
+ const apply=fs.readFileSync('docs/KINTO_STAFF_BRANCH_COURIER_GUARDED_SQL_REVIEW_ONLY_20261123.sql','utf8');
+ const restore=fs.readFileSync('docs/KINTO_STAFF_BRANCH_COURIER_REVERSE_SQL_REVIEW_ONLY_20261123.sql','utf8');
+ const schema=fs.readFileSync('sql/kinto-order-save-session-v1.sql','utf8');
+ assert(apply.includes("'886b9817c86af7e067d756e9d9f3414c'"),'live body hash gate');
+ assert(apply.includes("typed.status='محولة إلى الفرع'"),'branch requires selected branch');
+ assert(apply.includes("typed.status='مندوب'"),'courier requires selected courier');
+ assert(apply.includes('ORDER_SAVE_BRANCH_REQUIRED'));
+ assert(apply.includes('ORDER_SAVE_COURIER_REQUIRED'));
+ assert(apply.includes('SELECT 1 FROM public.branches'),'branch lookup');
+ assert(apply.includes('SELECT 1 FROM public.couriers'),'courier lookup');
+ assert(apply.includes('coalesce(c.is_active,true)'),'courier active check');
+ assert(apply.includes('EXECUTE definition'),'updates actual live definition');
+ assert(!/\\b(?:ALTER|CREATE|DROP)\\s+TABLE\\b/i.test(apply),'no table DDL');
+ assert(!/\\b(?:UPDATE|DELETE|INSERT)\\s+public\\.orders\\b/i.test(apply),'no orders mutations');
+ assert(restore.includes("KINTO_BRANCH_RESTORE_ORIGINAL_HASH_MISMATCH"),'restore guarded');
+ assert(schema.includes('ORDER_SAVE_STATUS_DENIED'),'preserves whitelist');
+});
