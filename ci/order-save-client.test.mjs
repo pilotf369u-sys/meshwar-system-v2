@@ -43,6 +43,9 @@ test('employee unified status aliases are mapped to original server-allowed labe
  for(const forbidden of ['محولة إلى الفرع','مستحق مكافأة','رفض التسليم','ملغية من قبل العميل']){
    assert(!src.includes("'"+forbidden+"':"),'special workflow must not be remapped in generic save: '+forbidden);
  }
+ const admin=controllerSource('admin',false);
+ for(const [label,canonical] of Object.entries(mapping))assert(admin.includes("'"+label+"':'"+canonical+"'"),'admin missing alias '+label);
+ assert(admin.indexOf('status=canonicalStatus[status]||status') < admin.indexOf('payload={reference_order_no:'),'normalize admin before patch');
  assert(src.includes("rpc('kinto_save_staff_order_session_v1'"),'trusted RPC unchanged');
  assert(src.includes("rpc('kinto_approve_paid_order_v1'"),'paid approval RPC unchanged');
 });
