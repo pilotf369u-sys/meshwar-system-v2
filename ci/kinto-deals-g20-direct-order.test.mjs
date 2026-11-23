@@ -47,7 +47,7 @@ test('customer retry reuses the same campaign checkout request id',()=>{
 // Never calls production Supabase and never writes to orders, stock or campaigns.
 test('2026-11-24 IQD 250 campaign price: choose N, buy N, limited purchase, and gift',async()=>{
  const vm=await import('node:vm');
- const pricingScript=fs.readFileSync('js/local-store-pricing.js','utf8');
+ const pricingScript=fs.readFileSync('js/local-store-pricing.js','utf8').split('/* PUBLIC_SITE_SETTINGS_CMS_V3 */')[0];
  const campaignScript=fs.readFileSync('js/kinto-deals-customer-g7.js','utf8');
  const start=campaignScript.indexOf('async function storePricingDetail(data){');
  const end=campaignScript.indexOf('function productCard(p){',start);
