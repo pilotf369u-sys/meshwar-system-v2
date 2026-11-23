@@ -69,7 +69,10 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
             let html = "<html><body>INVOICE FIXTURE</body></html>"
             browser.loadHTMLString(html, baseURL: URL(string: "https://shopkinto.com/__invoice_fixture"))
         case .retailer(let url):
-            navigationItem.leftBarButtonItem = UIBarButtonItem(title: "العودة إلى KINTO", style: .plain, target: self, action: #selector(close))
+            navigationItem.leftBarButtonItems = [
+                UIBarButtonItem(title: "KINTO", style: .plain, target: self, action: #selector(close)),
+                UIBarButtonItem(title: "السابق", style: .plain, target: self, action: #selector(goBackInRetailer))
+            ]
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "مراجعة المنتج", style: .plain, target: self, action: #selector(reviewProduct))
             browser.load(URLRequest(url: url))
         }
@@ -107,6 +110,11 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
     }
 
     @objc private func close() { productReview = nil; dismiss(animated: true) }
+
+    @objc private func goBackInRetailer() {
+        guard case .retailer = mode, browser.canGoBack else { return }
+        browser.goBack()
+    }
 
     @objc private func reviewProduct() {
         guard productReview == nil else { return }
