@@ -26,7 +26,7 @@ test('G20 rejects duplicate campaign products so one selected product is exactly
 
 test('employee pipeline marks campaign orders without changing order status',()=>{
  assert.match(employee,/deal_campaign_id/);
- assert.match(employee,/>حملة</);
+ assert.match(employee,/title="طلب عروض"/);
 });
 
 test('merchant draft and frozen variants use one atomic G20 RPC',()=>{
@@ -93,7 +93,7 @@ test('2026-11-24 IQD 250 campaign price: choose N, buy N, limited purchase, and 
  assert.equal(context.window.MeshwarLocalPricing.pricingSnapshot(.80,5,1700).pricing_version,'iqd_ceil_250_v2');
  assert.ok(responses.every(url=>url.includes('/rest/v1/')),'campaign price hydration remains read-only REST GET');
  const campaignBackend=fs.readFileSync('supabase/migrations/20261005_kinto_deals_v1_g20_direct_order_pipe.sql','utf8');
- assert.match(campaignBackend,/checkout_independent_vendor_orders_v101\(/,'manual campaign checkout uses canonical checkout');
+ assert.match(campaignBackend,/kinto_deals_v1_checkout_no_gift_g5d\(/,'manual campaign checkout uses existing atomic G5 canonical checkout, delegating to V101');
  assert.doesNotMatch(campaignBackend,/insert\s+into\s+public\.orders/i,'campaign wrapper must not insert orders directly');
  const giftBackend=fs.readFileSync('supabase/migrations/20261002_kinto_deals_v1_g5g_atomic_gift_checkout_off.sql','utf8');
  assert.match(giftBackend,/v_gift->>'unit_price_local'<>'0'/,'server gift price must be zero');
