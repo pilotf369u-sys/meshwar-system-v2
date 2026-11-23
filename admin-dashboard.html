@@ -982,10 +982,10 @@ Object.assign(window,{switchAdminPipeline,adminBranchFilterChanged,syncAdminBran
   const originalSave=typeof saveAdminOrderRow==='function'?saveAdminOrderRow:(typeof saveOrderRow==='function'?saveOrderRow:null);
   if(originalSave){
     const wrapped=async function(encodedId){
-      const statusEl=document.getElementById('admin-status-'+encodedId)||document.getElementById('status-'+encodedId);
+      const statusEl=document.getElementById('adminStatus-'+encodedId);
       if(statusEl)statusEl.value=window.normalizeMeshwarOrderStatus(statusEl.value);
       if(statusEl?.value==='محولة إلى الفرع'){
-        const branchEl=document.getElementById('admin-branch-'+encodedId)||document.getElementById('branch-'+encodedId);
+        const branchEl=document.getElementById('adminBranch-'+encodedId);
         if(!String(branchEl?.value||'').trim()){alert('اختر الفرع أولاً قبل تحويل الطلب إلى الفرع.');return;}
       }
       const result=await originalSave(encodedId);
