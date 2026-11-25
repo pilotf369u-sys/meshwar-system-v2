@@ -24,5 +24,12 @@ Status: **isolated preparation only; NOT deployed or linked to production UI**.
 6. Test three method choices, admin disabled/unverified cards, default switching, OTP, employee access restrictions, WebView/cache, WhatsApp/chat, and **no mutations** to payment status, stock, receipts, invoices, shipping labels, or merchant routing.
 7. Prepare a separate integration PR with migrations and review/rollback scripts. Do not merge to `main`, `00-hostinger-release`, or deploy Supabase until all tests pass and the user approves.
 
+## Staged implementation (2026-11-25)
+
+- Phase 1 — isolated visual preview: `previews/kinto-manual-payment-card-isolated-v1.html`. Mock bank-card artwork and logo placeholder only; no Supabase, external request, production image, saving, or sending. Has all three modes and three independent copy controls. Preview wording uses the final approved customer reassurance text. Amounts and card data are explicitly synthetic.
+- Phase 2 — admin image upload/default-card controls: NOT STARTED; requires secured storage/API and OTP review.
+- Phase 3 — staff card selection and customer message dispatch: NOT STARTED; requires server-side eligibility and invoice-derived amount.
+- Phase 4 — live integration/regression tests: NOT STARTED; hold all deployment.
+
 ## Current branch deliverable
 `js/kinto-manual-card-policy-v1.js` is a pure policy helper for local previews only and is NOT a trusted authorization control. `tests/kinto-manual-card-policy-v1.test.cjs` exercises the policy.
