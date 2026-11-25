@@ -36,3 +36,10 @@
 - These pure-function checks do **not** prove real integration, end-to-end security, Supabase RLS, image upload, or successful merchant/employee workflow.
 
 **HOLD:** Do not merge into `main` or `00-hostinger-release`; do not run SQL or deploy Edge Functions or Hostinger files until full integration and independent verification.
+
+## Follow-up isolated batch — 2026-11-25
+- Created `js/kinto-payment-instruction-snapshot-v1.js`: immutable instruction snapshot and duplicate request-ID conflict detection. **In memory only**, not a transactional server idempotency guarantee.
+- Created `js/kinto-payment-brand-v1.js`: selects `brand_logo_url` from existing `get_site_settings` response shape; refuses insecure URLs and SVG. Must be verified in a browser because URL handling is not provided by the limited JS test isolate.
+- Created `previews/kinto-employee-payment-instruction-isolated-v1.html`: employee preview of all 3 modes and both communication channels; uses synthetic invoices/cards and no network/send/order writes.
+- Added unit test files for snapshot and logo. 10 of 11 direct in-isolate verification checks passed; the sole unchecked logo-positive case returned null because that test environment lacks a global `URL` constructor, not because production browser behavior was verified. Browser test remains required.
+- No service function, card image storage, admin write, verified employee send, or WhatsApp API has been deployed.
