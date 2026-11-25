@@ -2,7 +2,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const policy=require('../js/kinto-manual-card-policy-v1.js');
 const card=(id,extras={})=>({id,label:'بطاقة '+id,method_type:'manual',is_enabled:true,
- destination_verified_at:'2026-11-24T10:00:00Z',account_reference:'TEST-REF-'+id,...extras});
+ destination_verified_at:'2026-11-24T10:00:00Z',recipient_name:'اسم حساب تجريبي',account_reference:'TEST-REF-'+id,...extras});
 test('employee can choose only among enabled verified admin cards',()=>{
  const cards=[card('a',{is_default:true}),card('b'),card('off',{is_enabled:false}),card('unverified',{destination_verified_at:null})];
  assert.equal(policy.choose(cards,'card_full').id,'a');
@@ -10,6 +10,9 @@ test('employee can choose only among enabled verified admin cards',()=>{
  assert.throws(()=>policy.choose(cards,'card_full','off'),/CARD_NOT_APPROVED/);
  assert.throws(()=>policy.choose(cards,'card_full','unverified'),/CARD_NOT_APPROVED/);
  assert.equal(policy.list(cards).length,2);
+});
+test('verified cards require the approved account name',()=>{
+ assert.equal(policy.list([card('a',{recipient_name:''})]).length,0);
 });
 test('both transfer paths expose the chosen approved card',()=>{
  const cards=[card('a')];
