@@ -57,3 +57,11 @@
 - All values are explicitly synthetic. **Not** proof that chat, bank image upload, invoice read, or payment processing works in production.
 - The user reaffirmed that only reading a previously approved final invoice amount is allowed. Existing invoice calculations, views, cart, customer page, and status `تم التسديد` are outside scope.
 - Production SQL migration remains disabled. Without validated SQL and server integration, do not proceed with deployment.
+
+## Latest execution — read-only invoice and isolation gate
+- Created `js/kinto-invoice-readonly-v1.js` and its tests. This is a strict, frozen, fail-closed adapter for already-approved invoice amounts **without summing, subtracting, currency conversion, price, coupon or freight recalculation**. It makes no network calls and touches no existing invoice.
+- Updated the standalone employee demo and six-mode/channel matrix to use that read-only adapter.
+- Executed 14/14 direct JS assertions for authorized invoice snapshot extraction and the complete 3×2 dispatch preview matrix; no production calls.
+- Added `scripts/kinto-g16-card-safety-gate-v1.cjs`: a stand-alone, read-only Git diff gate that allows *only* known isolated files, requires the unsafe SQL draft to remain disabled, and requires the Edge function security lock. Compared the current PR file list against its allowlist: all 33 changed paths allowed, none are production operational files. Full Node command execution in a cloned checkout is still required before treating the gate as green in CI.
+- Added server-only lock `KINTO_G16_CARD_IMAGES_APPROVED` (default absent/disabled) to the draft Edge function, so accidental publication fails closed. This is **not** a deployment or approval.
+- Production account-image storage remains blocked because the initial review-only SQL was unsafe; live employee chat and WhatsApp dispatch remain NOT implemented. Do not imply successful production feature delivery.
