@@ -7,12 +7,14 @@
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
 const root=path.resolve(__dirname,'..');
 const ref=process.argv[2]||'origin/main';
-const prohibited=[
- /^admin-dashboard[.]html$/,/^employee-dashboard[.]html$/,/^dashboard[.]html$/,
- /^index[.]html$/,/^js\/admin-payment-methods-g16[.]js$/,
- /^supabase\/functions\/kinto-payment-security-g16\//,
- /^supabase\/migrations\//,/^mobile\//,/^css\//,
- /^js\/.*(?:checkout|cart|invoice|order|stock|auth|vendor|payment-mode).*[.]js$/
+const permitted=[
+ /^docs\\/KINTO_G16_[^/]+[.]md$/,
+ /^js\\/kinto-(?:card-image-(?:prepare|share)|g16-card-api|manual-card-policy|manual-dispatch-preflight|manual-payment-message|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|invoice-readonly)-v1[.]js$/,
+ /^previews\\/kinto-(?:admin-card-image|employee-payment-instruction|manual-payment-card)-isolated-v1[.]html$/,
+ /^tests\\/kinto-(?:g16-card-api|g16-card-extension-security-contract|manual-card-policy|manual-dispatch-preflight|manual-payment-isolated|manual-payment-flow-matrix|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|card-image-share|invoice-readonly)-v1[.]test[.]cjs$/,
+ /^sql\\/kinto-g16-card-assets-isolated-v1[.](?:review|verify-readonly|rollback[.]review)[.]sql$/,
+ /^supabase\\/functions\\/kinto-card-images-v1\\/index[.]ts$/,
+ /^scripts\\/kinto-g16-card-safety-gate-v1[.]cjs$/
 ];
 function run(){
  let files;
@@ -20,7 +22,7 @@ function run(){
   files=cp.execFileSync('git',['diff','--name-only',ref+'...HEAD'],{
    cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim().split('\n').filter(Boolean);
  }catch(e){throw Error('Unable to compare PR to '+ref+'; cannot assert isolation')}
- const forbidden=files.filter(f=>prohibited.some(re=>re.test(f)));
+ const forbidden=files.filter(f=>!permitted.some(re=>re.test(f)));
  if(forbidden.length)throw Error('Protected operational files changed: '+forbidden.join(', '));
  const proposed=path.join(root,'sql/kinto-g16-card-assets-isolated-v1.review.sql');
  const sql=fs.readFileSync(proposed,'utf8');
