@@ -31,5 +31,13 @@ Status: **isolated preparation only; NOT deployed or linked to production UI**.
 - Phase 3 — staff card selection and customer message dispatch: NOT STARTED; requires server-side eligibility and invoice-derived amount.
 - Phase 4 — live integration/regression tests: NOT STARTED; hold all deployment.
 
+## Phase 2 independent deliverables — 2026-11-25
+- `js/kinto-card-image-prepare-v1.js`: validates JPEG/PNG/WebP image (source cap 5 MiB), downsizes to at most 1200 px, produces WebP at most 200 KiB. Client-side transformation only; no upload/storage. A visual design mockup is not a real bank card and must never be treated as proof of bank authorization.
+- `previews/kinto-admin-card-image-isolated-v1.html`: opt-in local file selection, compressed image preview, demo default-card selector. No live API calls or persisted values.
+- `js/kinto-manual-payment-message-v1.js`: pure message formatter. Requires an already approved invoice breakdown supplied by an authorized server before future live use. Uses the approved final reassurance text; clearly separates transfer amount and delivery due. It does not read or write production order data.
+- `tests/kinto-manual-payment-isolated-v1.test.cjs`: proposed regression tests for images, three payment modes, decimal USD, and invalid inputs.
+- Executed 11 in-isolate runtime assertions against these source modules: all passed; three modules passed JavaScript syntax checks. This is **not** a substitute for browser, security, SQL, or end-to-end tests.
+- Actual admin G16 image/default fields, secure storage RPC, server-side employee role checks, WhatsApp/chat integration, and dynamic admin brand logo remain NOT IMPLEMENTED. Do not deploy or merge.
+
 ## Current branch deliverable
 `js/kinto-manual-card-policy-v1.js` is a pure policy helper for local previews only and is NOT a trusted authorization control. `tests/kinto-manual-card-policy-v1.test.cjs` exercises the policy.
