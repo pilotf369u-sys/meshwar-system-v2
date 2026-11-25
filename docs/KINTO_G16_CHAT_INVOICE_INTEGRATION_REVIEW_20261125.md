@@ -23,3 +23,8 @@
 - No browser or Android WebView E2E verification.
 
 **Do not alter existing chat RPC, G16 admin code, order status, stock, invoices, checkout, or customer authentication.**
+
+## Isolated hardening batch — 25 November 2026
+- Duplicate request guard now compares the *actual approved account name, account number, card label, and image object key*, not just the card identifier. A changed destination under the same request ID fails closed instead of replaying a stale instruction. This is a preview-level check, **not** yet server transactional idempotency.
+- Added `js/kinto-payment-whatsapp-handoff-v1.js` and matching tests. It validates an international customer phone and percent-encodes the full message for `wa.me` without navigating or sending. Requires the employee to press send; cannot auto-attach a bank image. No current dashboard integration.
+- Direct source execution checks passed for the new handoff builder and changed-account duplicate rejection. These are unit-level checks only.
