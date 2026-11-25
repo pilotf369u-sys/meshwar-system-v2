@@ -42,6 +42,13 @@ function decodeBase64(value:unknown){
  webpDimensions(bytes);return bytes;
 }
 Deno.serve(async request=>{
+ // Deliberate safety lock: endpoint is not audited or deployed. Even an accidental
+ // publication cannot access card images without an explicit server-only setting.
+ // Do not enable until a separately validated SQL migration and security review.
+ if(Deno.env.get('KINTO_G16_CARD_IMAGES_APPROVED')!=='true')return new Response(
+  JSON.stringify({ok:false,error:'FEATURE_NOT_APPROVED'}),{
+   status:503,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
+
  const origin=request.headers.get('origin')||'';
  const headers={
   'Access-Control-Allow-Origin': allowedOrigins.includes(origin)?origin:allowedOrigins[0],
