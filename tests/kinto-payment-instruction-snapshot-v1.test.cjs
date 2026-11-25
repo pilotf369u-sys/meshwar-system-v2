@@ -19,6 +19,13 @@ test('changed card, invoice version, amount or channel with same ID fails closed
    {amountMinor:1600},{channel:'internal_chat'},{orderCode:'KN-000161'}])
   assert.throws(()=>inspect([old],{...base,...patch}),/IDEMPOTENCY_CONFLICT/);
 });
+test('same card ID with changed account details must not replay stale instructions',()=>{
+ const old=make(base);
+ for(const patch of [{recipient_name:'اسم آخر'},{account_reference:'ACCOUNT-CHANGED'},
+   {image_object_key:'cards/another.webp'},{label:'اسم بطاقة مغاير'}]){
+  assert.throws(()=>inspect([old],{...base,card:{...card,...patch}}),/IDEMPOTENCY_CONFLICT/);
+ }
+});
 test('new instruction requires a new request ID',()=>{
  const old=make(base),out=inspect([old],{...base,requestId:'test-request-02'});
  assert.equal(out.decision,'new');assert.equal(out.snapshot.requestId,'test-request-02');
