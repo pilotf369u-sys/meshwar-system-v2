@@ -11,7 +11,7 @@ create table if not exists public.kinto_g16_card_assets_v1(
  constraint kinto_g16_card_assets_image_key check (
   image_object_key is null or
   (char_length(image_object_key) between 55 and 180 and
-   image_object_key ~ '^g16-cards/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{32,64}\\.webp$')
+   image_object_key ~ '^g16-cards/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{32,64}[.]webp$')
  )
 );
 -- A preferred/default card is optional; never more than one.
@@ -43,7 +43,7 @@ begin
   raise exception 'CARD_METHOD_NOT_AUTHORIZED';
  end if;
  if p_image_object_key is null or p_image_object_key !~
-  ('^g16-cards/' || p_method_id::text || '/[0-9a-f]{32,64}\\.webp$') then
+  ('^g16-cards/' || p_method_id::text || '/[0-9a-f]{32,64}[.]webp$') then
   raise exception 'CARD_OBJECT_KEY_INVALID';
  end if;
  -- Prevent competing default changes; same transaction holds an advisory lock.
