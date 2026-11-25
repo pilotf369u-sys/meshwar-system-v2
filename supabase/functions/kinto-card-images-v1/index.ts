@@ -119,7 +119,7 @@ Deno.serve(async request=>{
   const bytes=decodeBase64(body.webp_base64);
   const objectName=hex(crypto.getRandomValues(new Uint8Array(16)))+'.webp';
   const objectPath='g16-cards/'+methodId+'/'+objectName;
-  const {error:ue}=await sb.storage.from(bucket).upload(objectPath,bytes,{
+  const {error:ue}=await sb.storage.from(bucket).upload(objectPath,new Blob([bytes],{type:'image/webp'}),{
    contentType:'image/webp',cacheControl:'3600',upsert:false});
   if(ue)return reply(500,{ok:false,error:'PRIVATE_IMAGE_UPLOAD_FAILED'});
   const {data:committed,error:de}=await sb.rpc('kinto_g16_card_asset_commit_v1',{
