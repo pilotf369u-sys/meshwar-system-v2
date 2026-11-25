@@ -1,10 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
+const readonly=require('../js/kinto-invoice-readonly-v1.js');
 const policy=require('../js/kinto-manual-card-policy-v1.js');
 const guard=require('../js/kinto-manual-dispatch-preflight-v1.js');
 const messages=require('../js/kinto-manual-payment-message-v1.js');
 const snapshot=require('../js/kinto-payment-instruction-snapshot-v1.js');
 const handoff=require('../js/kinto-payment-whatsapp-handoff-v1.js');
-const invoice={orderCode:'KN-000160',version:'v1',currency:'IQD',prepaidMinor:1500,goodsMinor:1200,deliveryDueMinor:300};
+const invoice=readonly.extract({trustedInvoiceSource:true,accessApproved:true,invoice:{orderCode:'KN-000160',version:'v1',currency:'IQD',prepaidMinor:1500,goodsMinor:1200,deliveryDueMinor:300}});
 const verified={id:'card-a',label:'حساب تجريبي',provider:'مصرف تجريبي',recipient_name:'اسم حساب تجريبي',
  account_reference:'TEST-ACCOUNT-001',method_type:'manual',is_enabled:true,
  destination_verified_at:'2026-11-24T10:00:00Z',is_default:true};
