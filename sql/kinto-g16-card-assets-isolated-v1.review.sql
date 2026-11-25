@@ -26,40 +26,7 @@ insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
  values('kinto-g16-card-images-v1','kinto-g16-card-images-v1',false,204800,array['image/webp'])
  on conflict (id) do nothing;
 
--- SERVICE-ROLE-ONLY metadata mutation. Call strictly *after* OTP verification.
--- Not exposed to anon/authenticated; fail closed on unverified/inactive methods.
-create or replace function public.kinto_g16_card_asset_apply_v1(
- p_admin_session_token text, p_method_id uuid, p_image_object_key text,
- p_make_default boolean default false
-) returns jsonb language plpgsql security definer
-set search_path = public, private, pg_temp as $$
-declare v_admin text; v_method public.kinto_payment_methods_g16%rowtype;
-begin
- v_admin := private.require_admin_session_v147(p_admin_session_token);
- if nullif(btrim(v_admin),'') is null then raise exception 'ADMIN_SESSION_REQUIRED'; end if;
- select * into v_method from public.kinto_payment_methods_g16 where id=p_method_id for update;
- if not found or v_method.method_type<>'manual' or v_method.is_enabled is not true
-    or v_method.destination_verified_at is null then
-  raise exception 'CARD_METHOD_NOT_AUTHORIZED';
- end if;
- if p_image_object_key is null or p_image_object_key !~
-  ('^g16-cards/' || p_method_id::text || '/[0-9a-f]{32,64}[.]webp$') then
-  raise exception 'CARD_OBJECT_KEY_INVALID';
- end if;
- -- Prevent competing default changes; same transaction holds an advisory lock.
- perform pg_advisory_xact_lock(160025);
- if p_make_default then
-  update public.kinto_g16_card_assets_v1 set is_default=false,updated_at=now(),
-   updated_by=v_admin where is_default=true and method_id<>p_method_id;
- end if;
- insert into public.kinto_g16_card_assets_v1(method_id,image_object_key,is_default,updated_by)
- values(p_method_id,p_image_object_key,p_make_default,v_admin)
- on conflict (method_id) do update set image_object_key=excluded.image_object_key,
-  is_default=excluded.is_default,updated_at=now(),updated_by=excluded.updated_by;
- return jsonb_build_object('ok',true,'method_id',p_method_id);
-end $$;
-revoke all on function public.kinto_g16_card_asset_apply_v1(text,uuid,text,boolean) from public,anon,authenticated;
-grant execute on function public.kinto_g16_card_asset_apply_v1(text,uuid,text,boolean) to service_role;
+-- All image/default metadata writes require the one-time OTP commit function below.
 
 -- Employee session is independently verified server-side. Read-only,
 -- and only returns enabled + destination-verified manual cards.
