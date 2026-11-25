@@ -27,8 +27,8 @@ Status: **isolated preparation only; NOT deployed or linked to production UI**.
 ## Staged implementation (2026-11-25)
 
 - Phase 1 — isolated visual preview: `previews/kinto-manual-payment-card-isolated-v1.html`. Mock bank-card artwork and logo placeholder only; no Supabase, external request, production image, saving, or sending. Has all three modes and three independent copy controls. Preview wording uses the final approved customer reassurance text. Amounts and card data are explicitly synthetic.
-- Phase 2 — admin image upload/default-card controls: NOT STARTED; requires secured storage/API and OTP review.
-- Phase 3 — staff card selection and customer message dispatch: NOT STARTED; requires server-side eligibility and invoice-derived amount.
+- Phase 2 — admin image upload/default-card controls: independent UI and compression prepared; proposed additive SQL, OTP and private image Edge endpoint staged for security review only (not installed).
+- Phase 3 — staff card selection and customer message dispatch: isolated employee preview/guard/message formatter prepared; card catalogue RPC staged but not installed; real approved-invoice retrieval and channel dispatch NOT IMPLEMENTED.
 - Phase 4 — live integration/regression tests: NOT STARTED; hold all deployment.
 
 ## Phase 2 independent deliverables — 2026-11-25
@@ -37,7 +37,7 @@ Status: **isolated preparation only; NOT deployed or linked to production UI**.
 - `js/kinto-manual-payment-message-v1.js`: pure message formatter. Requires an already approved invoice breakdown supplied by an authorized server before future live use. Uses the approved final reassurance text; clearly separates transfer amount and delivery due. It does not read or write production order data.
 - `tests/kinto-manual-payment-isolated-v1.test.cjs`: proposed regression tests for images, three payment modes, decimal USD, and invalid inputs.
 - Executed 11 in-isolate runtime assertions against these source modules: all passed; three modules passed JavaScript syntax checks. This is **not** a substitute for browser, security, SQL, or end-to-end tests.
-- Actual admin G16 image/default fields, secure storage RPC, server-side employee role checks, WhatsApp/chat integration, and dynamic admin brand logo remain NOT IMPLEMENTED. Do not deploy or merge.
+- Proposed G16 image/default metadata, OTP-protected Edge upload, and employee read-only RPC now exist as **review-only new files**; nothing is installed. WhatsApp/chat integration, authoritative invoice lookup and real admin-site logo integration remain NOT IMPLEMENTED. Do not deploy or merge.
 
 ## Current branch deliverable
 `js/kinto-manual-card-policy-v1.js` is a pure policy helper for local previews only and is NOT a trusted authorization control. `tests/kinto-manual-card-policy-v1.test.cjs` exercises the policy.
