@@ -15,13 +15,15 @@
  }
  function eligible(m){
    return !!m&&m.method_type==='manual'&&m.is_enabled===true&&isVerified(m)
-     &&String(m.id||'').trim()!==''&&String(m.account_reference||'').trim()!=='';
+     &&String(m.id||'').trim()!==''&&String(m.account_reference||'').trim()!==''
+     &&String(m.recipient_name||'').trim()!=='';
  }
  function list(cards){
    return (Array.isArray(cards)?cards:[]).filter(eligible)
      .map(m=>({id:String(m.id),label:String(m.label||''),provider:String(m.provider||''),
        recipient_name:String(m.recipient_name||''),account_reference:String(m.account_reference),
        instructions:String(m.instructions||''),image_url:typeof m.image_url==='string'?m.image_url:null,
+       image_object_key:typeof m.image_object_key==='string'?m.image_object_key:null,
        is_default:m.is_default===true}));
  }
  function choose(cards,mode,requestedId){
