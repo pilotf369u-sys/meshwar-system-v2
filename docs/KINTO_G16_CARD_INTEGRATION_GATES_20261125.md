@@ -50,3 +50,10 @@
 - Hardened instruction idempotency snapshot conflict detection to compare approved account name, account number, label and image object key; the card ID alone is not sufficient. Direct tests passed.
 - **The proposed SQL draft is intentionally disabled** because static inspection found malformed PL/pgSQL. Neither the Edge endpoint nor image-saving integration may be deployed until a fresh script passes actual PostgreSQL tests and the user approves rollout. Previous isolated SQL review claims do not constitute deployment approval.
 - No runtime UI files touched; no new deployment or merge.
+
+## Verified six-way instruction matrix (isolated code only)
+- New `tests/kinto-manual-payment-flow-matrix-v1.test.cjs` executes the **three payment modes × WhatsApp/internal chat** across the actual independent helpers: verified card selection → employee preflight → invoice-field-only message composition → immutable snapshot, with WhatsApp handoff where relevant.
+- All nine assertions/cases passed using a JS runtime harness (6 channel/mode cases + disabled card + missing account name + changed account number).
+- All values are explicitly synthetic. **Not** proof that chat, bank image upload, invoice read, or payment processing works in production.
+- The user reaffirmed that only reading a previously approved final invoice amount is allowed. Existing invoice calculations, views, cart, customer page, and status `تم التسديد` are outside scope.
+- Production SQL migration remains disabled. Without validated SQL and server integration, do not proceed with deployment.
