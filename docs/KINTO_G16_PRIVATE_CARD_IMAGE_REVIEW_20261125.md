@@ -1,3 +1,6 @@
+## SAFETY BLOCKER — 25 November 2026
+The initial review-only SQL script was found malformed (duplicated procedure text and broken SQL string delimiters). It has been intentionally replaced with a **DO NOT RUN** stub in `sql/kinto-g16-card-assets-isolated-v1.review.sql`. The dependent Edge endpoint and verification/rollback scripts are likewise UNDEPLOYABLE until a new separately validated migration is prepared and tests are run. No Supabase schema change was attempted; existing G16 and commerce workflows are unaffected.
+
 # KINTO — G16 Private Card Image Integration Review (2026-11-25)
 
 **STATUS: SOURCE-CODE ONLY. NOT EXECUTED IN SUPABASE, HOSTINGER OR A LIVE APP.**
