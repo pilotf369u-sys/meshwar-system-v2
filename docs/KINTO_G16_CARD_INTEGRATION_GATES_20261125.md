@@ -43,3 +43,10 @@
 - Created `previews/kinto-employee-payment-instruction-isolated-v1.html`: employee preview of all 3 modes and both communication channels; uses synthetic invoices/cards and no network/send/order writes.
 - Added unit test files for snapshot and logo. 10 of 11 direct in-isolate verification checks passed; the sole unchecked logo-positive case returned null because that test environment lacks a global `URL` constructor, not because production browser behavior was verified. Browser test remains required.
 - No service function, card image storage, admin write, verified employee send, or WhatsApp API has been deployed.
+
+## Latest safe isolation checks
+- Added separate `kinto-payment-whatsapp-handoff-v1.js` and tests: validates the recipient, encodes message, and requires manual send inside WhatsApp. No image attachment claimed.
+- Added separate `kinto-card-image-share-v1.js` and tests: accepts compressed WebP card image and invokes OS share sheet *only* when a future employee/customer UI explicitly calls it. Share sheet opening is not proof of delivery.
+- Hardened instruction idempotency snapshot conflict detection to compare approved account name, account number, label and image object key; the card ID alone is not sufficient. Direct tests passed.
+- **The proposed SQL draft is intentionally disabled** because static inspection found malformed PL/pgSQL. Neither the Edge endpoint nor image-saving integration may be deployed until a fresh script passes actual PostgreSQL tests and the user approves rollout. Previous isolated SQL review claims do not constitute deployment approval.
+- No runtime UI files touched; no new deployment or merge.
