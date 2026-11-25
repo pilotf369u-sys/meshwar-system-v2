@@ -9,7 +9,7 @@
 <button id="preview" type="button">تجهيز المعاينة</button><button id="copy" type="button" class="secondary">نسخ الرسالة التجريبية</button>
 </section>
 <section class="panel"><h2>معاينة البطاقة والتعليمات</h2><div class="card" id="cardview"></div><p id="total"></p><pre id="message"></pre><p id="status" aria-live="polite" class="subtitle"></p></section>
-</main><script src="../js/kinto-manual-card-policy-v1.js"></script><script src="../js/kinto-manual-payment-message-v1.js"></script><script src="../js/kinto-manual-dispatch-preflight-v1.js"></script><script src="../js/kinto-payment-instruction-snapshot-v1.js"></script><script>
+</main><script src="../js/kinto-invoice-readonly-v1.js"></script><script src="../js/kinto-manual-card-policy-v1.js"></script><script src="../js/kinto-manual-payment-message-v1.js"></script><script src="../js/kinto-manual-dispatch-preflight-v1.js"></script><script src="../js/kinto-payment-instruction-snapshot-v1.js"></script><script>
 (function(){'use strict';
  const p=window.KintoManualCardPolicyV1,msg=window.KintoManualPaymentMessageV1,guard=window.KintoManualDispatchPreflightV1,snapshot=window.KintoPaymentInstructionSnapshotV1;
  const $=id=>document.getElementById(id),cards=[
@@ -17,7 +17,7 @@
  destination_verified_at:'2026-11-24T10:00:00Z',is_default:true,recipient_name:'اسم حساب تجريبي',account_reference:'TEST-ACCOUNT-001'},
  {id:'b',label:'بطاقة تجريبية ثانية',provider:'مصرف تجريبي',method_type:'manual',is_enabled:true,
  destination_verified_at:'2026-11-24T10:00:00Z',is_default:false,recipient_name:'اسم حساب تجريبي ثانٍ',account_reference:'TEST-ACCOUNT-002'}];
- const invoice={orderCode:'KN-000160',currency:'IQD',version:'demo-v1',prepaidMinor:1500,goodsMinor:1200,deliveryDueMinor:300};
+ const invoice=window.KintoInvoiceReadOnlyV1.extract({trustedInvoiceSource:true,accessApproved:true,invoice:{orderCode:'KN-000160',currency:'IQD',version:'demo-v1',prepaidMinor:1500,goodsMinor:1200,deliveryDueMinor:300}});
  let current=null;
  function update(){const mode=$('mode').value;$('card-select').hidden=mode==='full_cod';$('cardview').hidden=mode==='full_cod'}
  function render(){
