@@ -42,7 +42,9 @@
   if(!previous)return {decision:'new',snapshot:proposed};
   const keys=['actorId','orderCode','invoiceVersion','mode','channel','amountMinor','currency'];
   if(keys.some(k=>previous[k]!==proposed[k])||
-   String(previous.card?.id||'')!==String(proposed.card?.id||''))throw Error('IDEMPOTENCY_CONFLICT');
+   ['id','label','recipient_name','account_reference','image_object_key'].some(field=>
+    String(previous.card?.[field]||'')!==String(proposed.card?.[field]||'')))
+   throw Error('IDEMPOTENCY_CONFLICT');
   return {decision:'duplicate',snapshot:previous};
  }
  return Object.freeze({make,inspect});
