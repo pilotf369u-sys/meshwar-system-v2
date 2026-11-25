@@ -1,10 +1,10 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {create,method}=require('../js/kinto-g16-card-api-v1.js');
 const session='a'.repeat(32),methodId='11111111-1111-4111-8111-111111111111',challengeId='22222222-2222-4222-8222-222222222222';
-test('rejects missing authenticated invoker/session and arbitrary card IDs',()=>{
+test('rejects missing authenticated invoker/session and arbitrary card IDs',async()=>{
  assert.throws(()=>create(),/API_INVOKER_REQUIRED/);
  assert.throws(()=>method('../steal'),/INVALID_METHOD_ID/);
- assert.throws(()=>create(async()=>({data:{ok:true}})).employeeCards('short'),/SESSION_TOKEN_REQUIRED/);
+ await assert.rejects(()=>create(async()=>({data:{ok:true}})).employeeCards('short'),/SESSION_TOKEN_REQUIRED/);
 });
 test('employee fetch is read-only and never sends financial transitions',async()=>{
  const calls=[],api=create(async(name,payload)=>{calls.push({name,payload});return{data:{ok:true,cards:[]}}});
