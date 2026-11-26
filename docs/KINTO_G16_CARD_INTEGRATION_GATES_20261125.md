@@ -73,3 +73,12 @@
 - Updated `previews/kinto-employee-payment-instruction-isolated-v1.html` to use the unified assembly instead of duplicating preflight/formatter code; static JavaScript syntax verified and no network calls present in the inline demo.
 - Updated the independent safety gate allowlist and checked every changed path against it; all 35 changed files matched isolated patterns. Production page files remain untouched.
 - **Release BLOCKED:** proposed image SQL is intentionally disabled; no confirmed server invoice provider, media storage deployment, existing-chat dispatch or production tests. The new authorization booleans are demonstrative placeholders, not a security boundary, and MUST NOT be supplied from an untrusted browser.
+
+## 2026-11-26 — Customer asks for a discount / shipping estimates (non-mutating)
+- The customer may request a discount **after** receiving instructions. This is only a *question* for the employee, not an approved reduction, and NEVER changes the amount of previously approved payment instructions or invoice.
+- If a discount is actually approved, use only the existing authorized price/order review flow (outside this feature). **Do not implement a new discount-adjustment RPC**. The employee must obtain a fresh approved invoice and generate a fresh instruction after that separate approved workflow. A stale instruction must be marked obsolete by human process; no automatic payment or reprice action.
+- Existing source code distinguishes `delivery_fee` from `external_shipping_fee` and supports payment type `product_paid_delivery_cod`. These are real existing charges; never infer an internal delivery tariff from an estimate.
+- The optional estimated local-delivery amount may be **communicated as approximate only**, independently from the approved bank transfer amount. Exact amount and payment at door must come from the invoice/employee-approved order charge; do not add estimates to it.
+- Created `js/kinto-payment-questions-v1.js` with request-only discount and shipping questions and distinct `estimate`, `confirmed`, `unavailable` shipping wording; **no API, DB or order mutation**.
+- Added a separate section to the isolated employee preview to demonstrate both inquiries using an explicitly synthetic `350 IQD` delivery estimate; this **is not a KINTO shipping tariff** and is not added to the payment message.
+- Executed 6/6 direct JavaScript tests for discount-request no-op and shipping estimate vs confirmed semantics. Do not assume a live chat send, price change, or customer UI button exists.
