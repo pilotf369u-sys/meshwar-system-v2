@@ -78,3 +78,10 @@
 - Only the initially approved manual bank card instruction feature remains in scope.
 - New customer discount requests, shipping estimates, delivery tariff suggestions, and changes to the customer UI have been explicitly abandoned.
 - Read existing final invoice amounts only. No price recalculation, no customer workflow changes, no modifications to shipping, orders, stock, or payment status.
+
+## 2026-11-26 — Main feature only, employee presentation finishing pass
+- Focus remains strictly: admin-approved manual bank card → verified employee instruction preview → approved invoice amounts shown without reprice → explicit copy or manual communication. No customer-page changes, discount requests, or delivery-tariff feature.
+- Employee preview has a more legible green/gold illustrative card with prominent **demo-only/non-payable** label; no real bank identity or downloadable card image.
+- Three independent copy controls stay disabled under full cash-on-delivery. In goods-now/shipping-at-door mode, the read-only delivery amount is displayed separately using the already approved snapshot; it is not recalculated.
+- Added static checks to forbid shipping arithmetic and ensure demonstration-only art. All 6 preview contract checks passed in a controlled JavaScript test harness.
+- Important final blockers remain the independent live server trust boundary for invoice and card, private image storage/OTP, real chat integration and actual browser/SQL integration testing. The disabled SQL draft is not a migration and must not be executed.
