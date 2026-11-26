@@ -21,3 +21,15 @@ test('preview never sends a message, accesses live APIs or changes orders',()=>{
  }
  assert.match(file,/لم تُرسل ولم تُحفظ/);
 });
+
+test('goods-now delivery amount is read from assembled approved invoice, not hard-coded',()=>{
+ assert.match(file,/assembled[.]shippingAtDoorMinor/);
+ assert.match(file,/msg[.]money[(]assembled[.]shippingAtDoorMinor,assembled[.]currency[)]/);
+ assert.doesNotMatch(file,/deliveryDueMinor\s*[+*/-]/);
+});
+test('card mockup must remain unmistakably demonstration-only',()=>{
+ assert.match(file,/بطاقة توضيحية فقط/);
+ assert.match(file,/اسم حساب تجريبي/);
+ assert.match(file,/TEST-ACCOUNT-001/);
+ assert.doesNotMatch(file,/data:image|https:\/\/.*(?:visa|mastercard|rafidain)/i);
+});
