@@ -9,10 +9,10 @@ const root=path.resolve(__dirname,'..');
 const ref=process.argv[2]||'origin/main';
 const permitted=[
  /^docs\/KINTO_G16_[^/]+[.]md$/,
- /^js\/kinto-(?:card-image-(?:prepare|share)|g16-card-api|manual-card-policy|manual-dispatch-preflight|manual-payment-message|manual-instruction-assembly|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|invoice-readonly)-v1[.]js$/,
+ /^js\/kinto-(?:card-image-(?:prepare|share)|g16-card-api|manual-card-policy|manual-dispatch-preflight|manual-payment-message|manual-instruction-assembly|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|payment-questions|invoice-readonly)-v1[.]js$/,
  /^previews\/kinto-(?:admin-card-image|employee-payment-instruction|manual-payment-card)-isolated-v1[.]html$/,
  /^tests\/kinto-g16-card-extension-security-contract[.]test[.]cjs$/,
- /^tests\/kinto-(?:g16-card-api|manual-card-policy|manual-dispatch-preflight|manual-payment-isolated|manual-instruction-assembly|manual-payment-flow-matrix|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|card-image-share|invoice-readonly)-v1[.]test[.]cjs$/,
+ /^tests\/kinto-(?:g16-card-api|manual-card-policy|manual-dispatch-preflight|manual-payment-isolated|manual-instruction-assembly|manual-payment-flow-matrix|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|payment-questions|card-image-share|invoice-readonly)-v1[.]test[.]cjs$/,
  /^sql\/kinto-g16-card-assets-isolated-v1[.](?:review|verify-readonly|rollback[.]review)[.]sql$/,
  /^supabase\/functions\/kinto-card-images-v1\/index[.]ts$/,
  /^scripts\/kinto-g16-card-safety-gate-v1[.]cjs$/
