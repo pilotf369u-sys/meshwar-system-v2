@@ -8,14 +8,8 @@
 <label for="channel">طريقة التواصل</label><select id="channel"><option value="whatsapp">واتساب</option><option value="internal_chat">الدردشة الداخلية</option></select>
 <button id="preview" type="button">تجهيز المعاينة</button><button id="copy" type="button" class="secondary">نسخ الرسالة التجريبية</button>
 </section>
-<section class="panel"><h2>استفسارات العميل — بدون تغيير الطلب</h2>
-<label for="question">نوع الاستفسار</label><select id="question"><option value="discount_request">العميل يطلب خصماً</option><option value="delivery_estimate_question">العميل يسأل عن أجور التوصيل</option></select>
-<button id="questionPreview" type="button" class="secondary">معاينة الاستفسار فقط</button>
-<pre id="questionText"></pre><p class="subtitle" id="deliveryNotice"></p>
-<p class="alert">الاستفسار لا يوافق على خصم، ولا يغير مبلغ الفاتورة. أجور التوصيل التقريبية ليست مبلغاً نهائياً ولا تدخل في رسالة التحويل.</p>
-</section>
 <section class="panel"><h2>معاينة البطاقة والتعليمات</h2><div class="card" id="cardview"></div><p id="total"></p><pre id="message"></pre><p id="status" aria-live="polite" class="subtitle"></p></section>
-</main><script src="../js/kinto-invoice-readonly-v1.js"></script><script src="../js/kinto-manual-card-policy-v1.js"></script><script src="../js/kinto-manual-payment-message-v1.js"></script><script src="../js/kinto-manual-dispatch-preflight-v1.js"></script><script src="../js/kinto-payment-instruction-snapshot-v1.js"></script><script src="../js/kinto-manual-instruction-assembly-v1.js"></script><script src="../js/kinto-payment-questions-v1.js"></script><script>
+</main><script src="../js/kinto-invoice-readonly-v1.js"></script><script src="../js/kinto-manual-card-policy-v1.js"></script><script src="../js/kinto-manual-payment-message-v1.js"></script><script src="../js/kinto-manual-dispatch-preflight-v1.js"></script><script src="../js/kinto-payment-instruction-snapshot-v1.js"></script><script src="../js/kinto-manual-instruction-assembly-v1.js"></script><script>
 (function(){'use strict';
  const p=window.KintoManualCardPolicyV1,msg=window.KintoManualPaymentMessageV1,guard=window.KintoManualDispatchPreflightV1,snapshot=window.KintoPaymentInstructionSnapshotV1;
  const $=id=>document.getElementById(id),cards=[
@@ -50,12 +44,6 @@
  $('mode').addEventListener('change',()=>{update();render()});
  $('card').addEventListener('change',render);$('channel').addEventListener('change',render);
  $('preview').addEventListener('click',render);
- $('questionPreview').addEventListener('click',()=>{
-  const q=window.KintoPaymentQuestionsV1.make({kind:$('question').value,orderCode:invoice.orderCode,actor:'customer'});
-  $('questionText').textContent=q.text+'\n\nهذا طلب مراجعة فقط، لم يُطبّق أي تغيير.';
-  $('deliveryNotice').textContent=window.KintoPaymentQuestionsV1.deliveryNotice({
-   status:'estimate',amountMinor:350,currency:'IQD'}).text+' (مثال توضيحي فقط، وليس تعرفة معتمدة)';
- });
  $('copy').addEventListener('click',async()=>{if(!current)return;try{if(!navigator.clipboard)throw Error('Clipboard unavailable');await navigator.clipboard.writeText($('message').textContent);$('status').textContent='تم نسخ الرسالة التجريبية، ولم تُرسل.'}catch{$('status').textContent='النسخ غير متاح هنا، يمكنك تحديد النص يدوياً.'}});
  update();render();
 })();
