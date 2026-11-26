@@ -9,7 +9,7 @@
 <button id="preview" type="button">تجهيز المعاينة</button><button id="copy" type="button" class="secondary">نسخ الرسالة التجريبية</button>
 </section>
 <section class="panel"><h2>معاينة البطاقة والتعليمات</h2><div class="card" id="cardview"></div><p id="total"></p><pre id="message"></pre><p id="status" aria-live="polite" class="subtitle"></p></section>
-</main><script src="../js/kinto-invoice-readonly-v1.js"></script><script src="../js/kinto-manual-card-policy-v1.js"></script><script src="../js/kinto-manual-payment-message-v1.js"></script><script src="../js/kinto-manual-dispatch-preflight-v1.js"></script><script src="../js/kinto-payment-instruction-snapshot-v1.js"></script><script>
+</main><script src="../js/kinto-invoice-readonly-v1.js"></script><script src="../js/kinto-manual-card-policy-v1.js"></script><script src="../js/kinto-manual-payment-message-v1.js"></script><script src="../js/kinto-manual-dispatch-preflight-v1.js"></script><script src="../js/kinto-payment-instruction-snapshot-v1.js"></script><script src="../js/kinto-manual-instruction-assembly-v1.js"></script><script>
 (function(){'use strict';
  const p=window.KintoManualCardPolicyV1,msg=window.KintoManualPaymentMessageV1,guard=window.KintoManualDispatchPreflightV1,snapshot=window.KintoPaymentInstructionSnapshotV1;
  const $=id=>document.getElementById(id),cards=[
@@ -22,23 +22,23 @@
  function update(){const mode=$('mode').value;$('card-select').hidden=mode==='full_cod';$('cardview').hidden=mode==='full_cod'}
  function render(){
   try{
-   const mode=$('mode').value,card=p.choose(cards,mode,mode==='full_cod'?'':$('card').value);
-   const pre=guard.preflight({employeeAuthorized:true,invoiceAuthorized:true,orderEligible:true,mode,
-   channel:$('channel').value,invoice,invoiceVersion:invoice.version,serverCards:cards,cardId:card?.id||''});
-   const x=msg.compose({mode,card,approvedInvoice:invoice});
-   // Request IDs are synthetic and only used in this isolated browser page.
-   const operation=snapshot.make({employeeAuthorized:true,invoiceAuthorized:true,orderEligible:true,
-     requestId:'DEMO-'+invoice.orderCode+'-'+mode+'-'+(card?.id||'cash')+'-'+$('channel').value,
-     actorId:'demo-employee',orderCode:invoice.orderCode,invoiceVersion:invoice.version,
-     mode,channel:$('channel').value,amountMinor:pre.amountMinor,currency:invoice.currency,card});
+   const mode=$('mode').value;
+   const assembled=window.KintoManualInstructionAssemblyV1.assemble({
+    serverAuthorized:true,employeeAuthorized:true,invoiceAuthorized:true,orderEligible:true,
+    approvedInvoice:invoice,orderCode:invoice.orderCode,invoiceVersion:invoice.version,
+    serverCards:cards,selectedCardId:mode==='full_cod'?null:$('card').value,
+    requestId:'DEMO-'+invoice.orderCode+'-'+mode+'-'+$('card').value+'-'+$('channel').value,
+    actorId:'demo-employee',mode,channel:$('channel').value
+   });
+   const card=assembled.selectedCard;
    $('cardview').replaceChildren();if(card){const title=document.createElement('b');title.textContent=card.label;
     const name=document.createElement('p');name.textContent='اسم الحساب: '+card.recipient_name;
     const number=document.createElement('p');number.textContent='رقم التحويل: '+card.account_reference;
     $('cardview').append(title,name,number);}
-   $('total').textContent=mode==='full_cod'?'دفع كامل عند الباب — دون تحويل':'المبلغ المطلوب الآن: '+msg.money(x.amountMinor,x.currency);
-   $('message').textContent=x.text;
+   $('total').textContent=mode==='full_cod'?'دفع كامل عند الباب — دون تحويل':'المبلغ المطلوب الآن: '+msg.money(assembled.transferAmountMinor,assembled.currency);
+   $('message').textContent=assembled.messageText;
    $('status').textContent='معاينة جاهزة فقط — لم تُرسل ولم تُحفظ. لا تغيير على الطلب.';
-   current=operation;
+   current=assembled.instructionSnapshot;
   }catch(error){current=null;$('message').textContent='';$('status').textContent='تعذر تجهيز المعاينة: '+String(error.message||error);}
  }
  $('mode').addEventListener('change',()=>{update();render()});
