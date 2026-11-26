@@ -85,3 +85,10 @@
 - Three independent copy controls stay disabled under full cash-on-delivery. In goods-now/shipping-at-door mode, the read-only delivery amount is displayed separately using the already approved snapshot; it is not recalculated.
 - Added static checks to forbid shipping arithmetic and ensure demonstration-only art. All 6 preview contract checks passed in a controlled JavaScript test harness.
 - Important final blockers remain the independent live server trust boundary for invoice and card, private image storage/OTP, real chat integration and actual browser/SQL integration testing. The disabled SQL draft is not a migration and must not be executed.
+
+## 2026-11-26 — More concrete, isolated employee card catalogue
+- Added `sql/kinto-g16-employee-methods-readonly-v1.review.sql`: **one new function only**, reads from the existing G16 manual payment catalogue after checking the existing employee session and role, returns enabled and destination-verified bank methods. No new tables and no changes to existing G16 mutation functions, invoices, sale/cart, inventory, orders, or status. **Not applied to any database.**
+- Added `tests/kinto-g16-employee-methods-readonly-v1.test.cjs`: 4 source-level contract tests (staff session, verified bank account, only read-only ops, no data permissions) passed in an isolated JS test harness. Actual PostgreSQL compile and permission simulation have **not** been run.
+- Polished the standalone employee instruction preview with a clearly *demo-only* green/gold card, separate delivery-due display based on approved invoice snapshot, and three explicit copy buttons; 6 static contract checks passed.
+- Revalidated allowlist against the entire current draft PR: 38 changed paths, all restricted to new isolated G16 files, no operational files modified.
+- **Hard hold:** This read-only review RPC cannot be used until SQL syntax/permission tests, legitimate source of staff session and approved invoice data, safe bank-card imagery, and the deployment process have been explicitly reviewed. The separately disabled image SQL remains DO NOT RUN.
