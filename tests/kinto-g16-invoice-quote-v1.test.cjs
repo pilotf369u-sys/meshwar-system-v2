@@ -120,3 +120,27 @@ test('deterministic 1,800-case integer-IQD parity across supported payment modes
   }
  }
 });
+
+test('deterministic 1,200-case USD cents parity including coupons/campaigns',async()=>{
+ const {derive}=await load();
+ let seed=9123;
+ const rnd=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);
+ const value=max=>((Math.floor(rnd()*max)+1)/100).toFixed(2);
+ for(let i=0;i<1200;i++){
+  const goods=value(5000000),external=value(20000),delivery=value(15000);
+  const reward=value(8000),campaign=value(5000);
+  const mode=i%3===0?'card_full':i%3===1?'full_cod':'goods_now_shipping_cod';
+  const type={card_full:'paid_prepaid',full_cod:'cod_full',
+   goods_now_shipping_cod:'product_paid_delivery_cod'}[mode];
+  const order=base({currency:'USD',total_price:goods,external_shipping_fee:external,
+   delivery_fee:delivery,reward_discount_amount:reward,reward_discount_currency:'USD',
+   kinto_campaign_discount_amount:mode==='goods_now_shipping_cod'?0:campaign,
+   kinto_campaign_discount_currency:'USD',delivery_payment_type:type});
+  const got=derive(order,mode),want=canonical.globalTotals(order);
+  assert.equal(got.prepaidMinor,Math.round(want.grand*100),'USD grand mismatch '+i);
+  if(mode==='goods_now_shipping_cod'){
+   const paid=canonical.paidGoodsInfo(order,{currency:'USD',subtotal_local:goods});
+   assert.equal(got.goodsMinor,Math.round(paid.net*100),'USD partial mismatch '+i);
+  }
+ }
+});
