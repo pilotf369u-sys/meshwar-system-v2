@@ -85,3 +85,11 @@ test('V94 priority: authoritative coupon/campaign snapshot wins over conflicting
  assert.equal(quote.prepaidMinor,current.grand);
  assert.equal(quote.amountMinor,231100);
 });
+
+test('legacy order without updated_at still uses created_at, but never invents an invoice amount',async()=>{
+ const {derive}=await load();
+ const order=base({updated_at:null,created_at:'2026-11-27T06:00:00Z'});
+ const quote=derive(order,'card_full');
+ assert.equal(quote.version,'2026-11-27T06:00:00Z');
+ assert.equal(quote.amountMinor,canonical.globalTotals(order).grand);
+});
