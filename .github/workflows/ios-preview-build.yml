@@ -31,6 +31,31 @@ jobs:
             mobile/ios/Sources/IsolationTestController.swift \
             mobile/ios/Sources/ReaderTestController.swift \
             mobile/ios/Sources/KintoPreview.swift
+      - name: Build unsigned iPhone preview bundle
+        run: |
+          OUT="$RUNNER_TEMP/KintoDevicePreview.app"
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          mkdir -p "$OUT"
+          cp mobile/ios/Preview-Info.plist "$OUT/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.kinto.ios.device.preview' "$OUT/Info.plist"
+          cp mobile/ios/Resources/*-reader.js "$OUT/"
+          cp mobile/ios/Resources/kinto-global-pricing-core-v1.js "$OUT/"
+          cp mobile/ios/Resources/invoice-mobile.css "$OUT/"
+          cp mobile/ios/Resources/pricing-fixture.json "$OUT/"
+          cp mobile/ios/Resources/fixture-*.html "$OUT/"
+          xcrun swiftc -parse-as-library -sdk "$SDK" -target arm64-apple-ios15.0 \
+            mobile/ios/Sources/KintoURLPolicy.swift \
+            mobile/ios/Sources/WorldOrderHandoff.swift \
+            mobile/ios/Sources/PendingWorldOrder.swift \
+            mobile/ios/Sources/ProductReviewService.swift \
+            mobile/ios/Sources/InvoiceDocumentController.swift \
+            mobile/ios/Sources/IsolationTestController.swift \
+            mobile/ios/Sources/ReaderTestController.swift \
+            mobile/ios/Sources/KintoPreview.swift \
+            -o "$OUT/KintoPreview"
+          xcrun lipo -verify_arch arm64 "$OUT/KintoPreview"
+          xcrun vtool -show-build "$OUT/KintoPreview" | grep -E 'platform (IOS|2)'
+          echo "Unsigned internal preview only; not an App Store or TestFlight build."
       - name: Install and launch on simulator
         run: |
           DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for runtime,items in d["devices"].items() if "iOS" in runtime for x in items if x["name"].startswith("iPhone")))')"
