@@ -53,7 +53,7 @@ jobs:
             mobile/ios/Sources/ReaderTestController.swift \
             mobile/ios/Sources/KintoPreview.swift \
             -o "$OUT/KintoPreview"
-          xcrun lipo -verify_arch arm64 "$OUT/KintoPreview"
+          xcrun lipo "$OUT/KintoPreview" -verify_arch arm64
           xcrun vtool -show-build "$OUT/KintoPreview" | grep -E 'platform (IOS|2)'
           echo "Unsigned internal preview only; not an App Store or TestFlight build."
       - name: Install and launch on simulator
