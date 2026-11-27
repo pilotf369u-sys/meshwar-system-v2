@@ -152,3 +152,9 @@ The original no-amount interim mode has been superseded **for strictly supported
 - Confirmed G16 OTP migration defines `destination_verified_at`; source migrations define selected rewards, campaigns and shipping columns. Real Supabase installation/schema/runtime has NOT been queried.
 - GitHub Actions run `46055475617` completed: **62 Node tests, 4 Chromium tests, 0 failures** (before adding the 1,200 USD property case). Separate current head rerun should be verified.
 - **Important stop-ship:** user's database is production-only; do not repurpose it as staging. A production read/write probe or Edge deployment was intentionally NOT attempted. PGRST303 behavior in the actual Supabase project remains unverified, and existing invoice discounts/partial scenarios that are not explicitly supported remain blocked.
+
+## Verified GitHub Actions result — 2026-11-27 19:17 UTC
+- Run `46055617204` passed on commit `b6685daa391b2268761f96987ada643296ff4048`: **63 Node tests passing and 4 real headless Chromium UI tests passing**, zero failures.
+- Finance property tests contain **1,800 IQD + 1,200 USD synthetic invoice parity fixtures**, all tested against the source functions extracted from shipped V94. These are scenarios inside test cases, not 3,000 separate Node test entries.
+- Real Supabase access, deploy, PGRST303 recovery, bank account verification against active production rows and behavior for unsupported mixed-currency/complex campaign orders remain untested; **not approved for rollout**.
+- User's explicit standing instruction not to use the production DB for staging remains in force. `main` and `00-hostinger-release` remain identical to their protected checkpoints at verification time.
