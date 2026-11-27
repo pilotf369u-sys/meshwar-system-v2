@@ -93,3 +93,30 @@ test('legacy order without updated_at still uses created_at, but never invents a
  assert.equal(quote.version,'2026-11-27T06:00:00Z');
  assert.equal(quote.amountMinor,canonical.globalTotals(order).grand);
 });
+
+test('deterministic 1,800-case integer-IQD parity across supported payment modes',async()=>{
+ const {derive}=await load();
+ let seed=17027;
+ const next=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
+ for(let i=0;i<1800;i++){
+  const goods=Math.floor(next()*2000000)+10000;
+  const delivery=Math.floor(next()*10000);
+  const external=Math.floor(next()*20000);
+  const reward=Math.floor(next()*Math.min(goods/4,25000));
+  const campaign=Math.floor(next()*Math.min(goods/4,25000));
+  const mode=i%3===0?'card_full':i%3===1?'full_cod':'goods_now_shipping_cod';
+  const type={card_full:'paid_prepaid',full_cod:'cod_full',
+   goods_now_shipping_cod:'product_paid_delivery_cod'}[mode];
+  const order=base({total_price:goods,delivery_fee:delivery,
+   external_shipping_fee:external,reward_discount_amount:reward,
+   kinto_campaign_discount_amount:mode==='goods_now_shipping_cod'?0:campaign,
+   delivery_payment_type:type});
+  const quote=derive(order,mode);
+  const t=canonical.globalTotals(order);
+  assert.equal(quote.prepaidMinor,t.grand,'grand mismatch for case '+i);
+  if(mode==='goods_now_shipping_cod'){
+   const paid=canonical.paidGoodsInfo(order,{currency:'IQD',subtotal_local:goods});
+   assert.equal(quote.goodsMinor,paid.net,'goods mismatch for case '+i);
+  }
+ }
+});
