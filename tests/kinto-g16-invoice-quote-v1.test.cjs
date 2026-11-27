@@ -73,3 +73,15 @@ test('full COD returns no transfer amount but matches total payable at door',asy
  const q=derive(o,'full_cod');
  assert.equal(q.amountMinor,0);assert.equal(q.prepaidMinor,canonical.globalTotals(o).grand);
 });
+
+test('V94 priority: authoritative coupon/campaign snapshot wins over conflicting legacy details',async()=>{
+ const {derive}=await load();
+ const o=base({reward_discount_amount:null,
+  reward_discount_snapshot:{amount:1200,currency:'IQD'},
+  kinto_campaign_discount_amount:null,
+  kinto_campaign_discount_snapshot:{amount:700,currency:'IQD'},
+  details:JSON.stringify({reward_discount_amount:8000,kinto_campaign_discount_amount:9000})});
+ const quote=derive(o,'card_full'),current=canonical.globalTotals(o);
+ assert.equal(quote.prepaidMinor,current.grand);
+ assert.equal(quote.amountMinor,231100);
+});
