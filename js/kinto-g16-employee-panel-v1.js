@@ -40,7 +40,7 @@
   const shade=el('div',null,{className:'g16shade'}),panel=el('section',null,{className:'g16panel'});
   panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
   const header=el('h3','KINTO | تجهيز تعليمات التسديد');
-  const note=el('p','معاينة مستقلة — لا تتغير حالة الطلب ولا تُنفّذ حوالة. المبلغ النهائي يُراجع في الفاتورة؛ لا تجرِ التحويل قبل التحقق.',{className:'g16note'});
+  const note=el('p','معاينة مستقلة — لا تتغير حالة الطلب ولا تُنفّذ حوالة. المبلغ يُقرأ من بيانات الفاتورة المعتمدة على الخادم؛ الطلبات المختلطة أو غير المدعومة تُرفض تلقائياً.',{className:'g16note'});
   const close=el('button','إغلاق');close.type='button';close.onclick=()=>shade.remove();
   const status=el('p','جارٍ التحقق من وسيلة الدفع...', {className:'g16note'});
   const orderLabel=el('label','الطلب الموافق عليه');
@@ -93,17 +93,41 @@
    finally{refreshButtons()}
   });
   function refreshButtons(){prepare.disabled=!orders.length||(!verifiedCards.length&&modeFor(orders.find(x=>String(x.id)===orderSelect.value)?.delivery_payment_type)!=='full_cod')}
+  async function currentConfirmed(){
+   if(!last)throw Error('NO_PREPARED_INSTRUCTIONS');
+   const order=orders.find(x=>String(x.id)===orderSelect.value);
+   if(!order)throw Error('ORDER_MISSING');
+   const sb=await ensureEmployeeSupabase();
+   const fresh=await root.KintoG16EmployeeInstructionsReadV1.prepare({
+    invoke:sb.functions.invoke.bind(sb.functions),
+    employeeSessionToken:employeeChatTokenV61(),orderId:String(order.id),
+    mode:modeFor(order.delivery_payment_type),
+    cardId:last.mode==='full_cod'?null:cardSelect.value
+   });
+   const identity=x=>JSON.stringify({orderCode:x.orderCode,mode:x.mode,
+    revision:x.invoice?.version,currency:x.currency,amount:x.amountMinor,
+    prepaid:x.invoice?.prepaidMinor,goods:x.invoice?.goodsMinor,
+    shipping:x.invoice?.deliveryDueMinor,
+    cardId:x.card?.id,recipient:x.card?.recipient_name,
+    account:x.card?.account_reference,label:x.card?.label});
+   if(identity(fresh)!==identity(last)){
+    clear();throw Error('INSTRUCTIONS_STALE_PREPARE_AGAIN');
+   }
+   return fresh;
+  }
   copy.addEventListener('click',async()=>{
    if(!last)return;
    try{
-    await root.KintoG16EmployeeInstructionsReadV1.copy(last,navigator.clipboard);
+    const fresh=await currentConfirmed();
+    await root.KintoG16EmployeeInstructionsReadV1.copy(fresh,navigator.clipboard);
     status.textContent='تم النسخ فقط. الصق النص في المحادثة الداخلية أو واتساب بعد مراجعته.';
    }catch(e){status.textContent='تعذر النسخ: '+String(e.message||e)}
   });
   artwork.addEventListener('click',async()=>{
    if(!last?.card)return;
    try{
-    const info=await root.KintoG16DestinationCardArtworkV1.create(last.card,{document});
+    const fresh=await currentConfirmed();
+    const info=await root.KintoG16DestinationCardArtworkV1.create(fresh.card,{document});
     const local=URL.createObjectURL(info.blob);
     try{const a=el('a');a.download=info.filename;a.href=local;
      document.body.append(a);a.click();a.remove();
