@@ -66,7 +66,8 @@ Deno.serve(async req=>{
   const {data:order,error:oe}=await sb.from('orders')
    .select('id,order_code,status,customer_id,currency,delivery_payment_type,created_at,details,total_price,external_shipping_fee,external_shipping_currency,delivery_fee,delivery_currency,shipping_snapshot,reward_discount_amount,reward_discount_currency,reward_discount_snapshot,kinto_campaign_discount_amount,kinto_campaign_discount_currency,kinto_campaign_discount_snapshot')
    .eq('id',orderId).maybeSingle();
-  if(oe||!order)return reply(404,{ok:false,error:'ORDER_NOT_AVAILABLE'},origin);
+  if(oe)return reply(503,{ok:false,error:'ORDER_READ_UNAVAILABLE'},origin);
+  if(!order)return reply(404,{ok:false,error:'ORDER_NOT_AVAILABLE'},origin);
   if(!statusAllowed.has(String(order.status||'').trim())||
    !uuid.test(String(order.customer_id||''))||!code.test(String(order.order_code||''))||
    !['USD','IQD'].includes(String(order.currency||'').trim().toUpperCase())||
@@ -91,7 +92,8 @@ Deno.serve(async req=>{
   const {data:card,error:ce}=await sb.from('kinto_payment_methods_g16')
    .select('id,method_type,is_enabled,destination_verified_at,label,provider,recipient_name,account_reference')
    .eq('id',cardId).maybeSingle();
-  if(ce||!card||card.method_type!=='manual'||card.is_enabled!==true||
+  if(ce)return reply(503,{ok:false,error:'CARD_READ_UNAVAILABLE'},origin);
+  if(!card||card.method_type!=='manual'||card.is_enabled!==true||
    !card.destination_verified_at)
    return reply(403,{ok:false,error:'CARD_NOT_VERIFIED'},origin);
   const bank=clean(card.provider,80),label=clean(card.label,100);
