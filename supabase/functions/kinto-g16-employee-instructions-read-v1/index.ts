@@ -64,7 +64,7 @@ Deno.serve(async req=>{
   if(ae||actor?.ok!==true||!['employee','موظف'].includes(String(actor?.employee?.role||'').trim().toLowerCase()))
    return reply(403,{ok:false,error:'EMPLOYEE_DENIED'},origin);
   const {data:order,error:oe}=await sb.from('orders')
-   .select('id,order_code,status,customer_id,currency,delivery_payment_type,updated_at,details,total_price,external_shipping_fee,external_shipping_currency,delivery_fee,delivery_currency,shipping_snapshot,reward_discount_amount,reward_discount_currency,reward_discount_snapshot,kinto_campaign_discount_amount,kinto_campaign_discount_currency,kinto_campaign_discount_snapshot')
+   .select('id,order_code,status,customer_id,currency,delivery_payment_type,created_at,details,total_price,external_shipping_fee,external_shipping_currency,delivery_fee,delivery_currency,shipping_snapshot,reward_discount_amount,reward_discount_currency,reward_discount_snapshot,kinto_campaign_discount_amount,kinto_campaign_discount_currency,kinto_campaign_discount_snapshot')
    .eq('id',orderId).maybeSingle();
   if(oe||!order)return reply(404,{ok:false,error:'ORDER_NOT_AVAILABLE'},origin);
   if(!statusAllowed.has(String(order.status||'').trim())||
