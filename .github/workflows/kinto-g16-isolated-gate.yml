@@ -19,6 +19,8 @@ permissions:
 jobs:
   gated-no-write-tests:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.55.0-noble
     steps:
       - name: Checkout exact proposed branch
         uses: actions/checkout@v4
@@ -47,9 +49,7 @@ jobs:
             tests/kinto-g16-instruction-freshness-v1.test.cjs \
             tests/kinto-manual-instruction-assembly-v1.test.cjs \
             tests/kinto-manual-payment-preview-scope-v1.test.cjs
-      - name: Install isolated Chromium browser
-        run: |
-          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
-          npx playwright install --with-deps chromium
+      - name: Install isolated Playwright runner (Chromium is preinstalled in image)
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
       - name: Run opt-in employee panel Chromium interaction tests
         run: npx playwright test tests/e2e/kinto-g16-isolated-ui.spec.cjs --project=chromium
