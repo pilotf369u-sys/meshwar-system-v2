@@ -9,6 +9,7 @@ const root=path.resolve(__dirname,'..');
 const ref=process.argv[2]||'origin/main';
 const permitted=[
  /^employee-dashboard[.]html$/,
+ /^supabase\/config[.]toml$/,
  /^[.]github\/workflows\/kinto-g16-isolated-gate[.]yml$/,
  /^docs\/KINTO_G16_[^/]+[.]md$/,
  /^js\/kinto-(?:card-image-(?:prepare|share)|g16-card-api|g16-verified-manual-cards-read|g16-employee-chat-handoff|g16-employee-instructions-read|g16-employee-panel|g16-instruction-freshness|g16-destination-card-artwork|manual-card-policy|manual-dispatch-preflight|manual-payment-message|manual-instruction-assembly|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|invoice-readonly)-v1[.]js$/,
@@ -50,6 +51,15 @@ function run(){
   const current=fs.readFileSync(path.join(root,'employee-dashboard.html'),'utf8');
   const suffix="\n<!-- G16 opt-in add-on: no effect without ?kintoG16Preview=1; never touches order workflows -->\n<script src=\"js/kinto-g16-employee-panel-v1.js?v=20261127-opt-in\" defer></script>\n";
   if(current!==original+suffix)throw Error('G16 altered protected employee dashboard beyond one optional script loader');
+ }
+
+ // Ensure only isolated G16 sections were appended to Supabase config.
+ if(files.includes('supabase/config.toml')){
+  const original=cp.execFileSync('git',['show',ref+':supabase/config.toml'],{
+   cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']});
+  const current=fs.readFileSync(path.join(root,'supabase/config.toml'),'utf8');
+  const suffix="\n# Isolated G16 employee functions authenticate KINTO's verified V143 session\n# internally. Each is additionally disabled without a server-only release flag\n# and explicit Origin allowlist. These settings do NOT deploy or enable them.\n[functions.kinto-g16-employee-manual-cards-read-v1]\nverify_jwt = false\n\n[functions.kinto-g16-employee-order-context-read-v1]\nverify_jwt = false\n\n[functions.kinto-g16-employee-instructions-read-v1]\nverify_jwt = false\n";
+  if(current!==original+suffix)throw Error('Existing Supabase function settings must remain byte-for-byte unchanged');
  }
 
  const proposed=path.join(root,'sql/kinto-g16-card-assets-isolated-v1.review.sql');
