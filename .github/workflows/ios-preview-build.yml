@@ -19,6 +19,18 @@ jobs:
         run: bash mobile/ios/test-android-readers.sh
       - name: Build simulator app
         run: bash mobile/ios/build-simulator.sh
+      - name: Typecheck app sources for a physical iPhone
+        run: |
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          xcrun swiftc -typecheck -parse-as-library -sdk "$SDK" -target arm64-apple-ios15.0 \
+            mobile/ios/Sources/KintoURLPolicy.swift \
+            mobile/ios/Sources/WorldOrderHandoff.swift \
+            mobile/ios/Sources/PendingWorldOrder.swift \
+            mobile/ios/Sources/ProductReviewService.swift \
+            mobile/ios/Sources/InvoiceDocumentController.swift \
+            mobile/ios/Sources/IsolationTestController.swift \
+            mobile/ios/Sources/ReaderTestController.swift \
+            mobile/ios/Sources/KintoPreview.swift
       - name: Install and launch on simulator
         run: |
           DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for runtime,items in d["devices"].items() if "iOS" in runtime for x in items if x["name"].startswith("iPhone")))')"
