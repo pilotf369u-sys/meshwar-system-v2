@@ -1,0 +1,46 @@
+name: KINTO G16 isolated bank instructions safety
+on:
+  pull_request:
+    paths:
+      - 'employee-dashboard.html'
+      - 'js/kinto-g16-*.js'
+      - 'js/kinto-manual-*.js'
+      - 'js/kinto-invoice-readonly-v1.js'
+      - 'previews/kinto-*.html'
+      - 'supabase/functions/kinto-g16-*/**'
+      - 'tests/kinto-*.test.cjs'
+      - 'scripts/kinto-g16-card-safety-gate-v1.cjs'
+      - '.github/workflows/kinto-g16-isolated-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gated-no-write-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact proposed branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify protected files differ only by one opt-in loader
+        run: |
+          git fetch origin main
+          node scripts/kinto-g16-card-safety-gate-v1.cjs origin/main
+      - name: Test isolated G16 functions, image export and employee UI
+        run: |
+          node --test \
+            tests/kinto-g16-destination-card-artwork-v1.test.cjs \
+            tests/kinto-g16-employee-instructions-read-runtime-v1.test.cjs \
+            tests/kinto-g16-employee-instructions-read-v1.test.cjs \
+            tests/kinto-g16-employee-panel-opt-in-v1.test.cjs \
+            tests/kinto-g16-verified-manual-cards-read-v1.test.cjs \
+            tests/kinto-g16-employee-manual-cards-edge-runtime-v1.test.cjs \
+            tests/kinto-g16-employee-order-context-runtime-v1.test.cjs \
+            tests/kinto-g16-instruction-freshness-v1.test.cjs \
+            tests/kinto-manual-instruction-assembly-v1.test.cjs \
+            tests/kinto-manual-payment-preview-scope-v1.test.cjs
