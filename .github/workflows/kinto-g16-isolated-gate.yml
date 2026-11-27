@@ -10,6 +10,7 @@ on:
       - 'supabase/functions/kinto-g16-*/**'
       - 'supabase/functions/_shared/kinto-g16-invoice-quote-v1.mjs'
       - 'tests/kinto-*.test.cjs'
+      - 'tests/e2e/kinto-g16-isolated-ui.spec.cjs'
       - 'scripts/kinto-g16-card-safety-gate-v1.cjs'
       - '.github/workflows/kinto-g16-isolated-gate.yml'
   workflow_dispatch:
@@ -46,3 +47,9 @@ jobs:
             tests/kinto-g16-instruction-freshness-v1.test.cjs \
             tests/kinto-manual-instruction-assembly-v1.test.cjs \
             tests/kinto-manual-payment-preview-scope-v1.test.cjs
+      - name: Install isolated Chromium browser
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Run opt-in employee panel Chromium interaction tests
+        run: npx playwright test tests/e2e/kinto-g16-isolated-ui.spec.cjs --project=chromium
