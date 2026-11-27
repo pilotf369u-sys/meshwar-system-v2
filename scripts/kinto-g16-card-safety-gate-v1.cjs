@@ -9,6 +9,7 @@ const root=path.resolve(__dirname,'..');
 const ref=process.argv[2]||'origin/main';
 const permitted=[
  /^employee-dashboard[.]html$/,
+ /^[.]github\/workflows\/kinto-g16-isolated-gate[.]yml$/,
  /^docs\/KINTO_G16_[^/]+[.]md$/,
  /^js\/kinto-(?:card-image-(?:prepare|share)|g16-card-api|g16-verified-manual-cards-read|g16-employee-chat-handoff|g16-employee-instructions-read|g16-employee-panel|g16-instruction-freshness|g16-destination-card-artwork|manual-card-policy|manual-dispatch-preflight|manual-payment-message|manual-instruction-assembly|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|invoice-readonly)-v1[.]js$/,
  /^previews\/kinto-(?:admin-card-image|employee-payment-instruction|manual-payment-card)-isolated-v1[.]html$/,
