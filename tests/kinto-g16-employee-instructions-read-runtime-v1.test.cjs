@@ -16,7 +16,8 @@ function harness(){
  .replace('const value:unknown','const value')
  .replace('body=value as Record<string,unknown>;','body=value;');
  let handler,enabled=false,role='employee',status='تمت الموافقة - بانتظار الدفع',
- paymentType='paid_prepaid',cardEnabled=true,queries=[],deliveryCurrency='IQD';
+ paymentType='paid_prepaid',cardEnabled=true,queries=[],deliveryCurrency='IQD',
+ authFailure=false,orderReadFailure=false,cardReadFailure=false;
  const origin='https://shopkinto.com',id='11111111-2222-3333-4444-555555555555';
  class MockResponse{constructor(body,init){this.body=body;this.status=init.status}}
  const deno={env:{get(name){return({
@@ -24,9 +25,11 @@ function harness(){
   KINTO_G16_INSTRUCTIONS_ALLOWED_ORIGINS:origin,
   SUPABASE_URL:'https://example.invalid',SUPABASE_SERVICE_ROLE_KEY:'mock'
  })[name]}},serve(fn){handler=fn}};
- const sb={rpc:async()=>({data:{ok:true,employee:{role}},error:null}),
+ const sb={rpc:async()=>authFailure?({data:null,error:{code:'PGRST303'}}):({data:{ok:true,employee:{role}},error:null}),
   from(table){queries.push(table);return{select(){return this},eq(){return this},
    async maybeSingle(){
+    if((table==='orders'&&orderReadFailure)||(table!=='orders'&&cardReadFailure))
+     return {data:null,error:{code:'PGRST303',message:'JWT issued in future'}};
     return{data:table==='orders'?{id,order_code:'KN-000160',status,
      customer_id:'99999999-2222-3333-4444-555555555555',currency:'IQD',
      delivery_payment_type:paymentType,updated_at:'2026-11-27T10:00:00Z',
@@ -44,7 +47,9 @@ function harness(){
  });
  return {call,enable(){enabled=true},role:x=>{role=x},status:x=>{status=x},
   paymentType:x=>{paymentType=x},cardEnabled:x=>{cardEnabled=x},
-  deliveryCurrency:x=>{deliveryCurrency=x},queries:()=>queries};
+  deliveryCurrency:x=>{deliveryCurrency=x},queries:()=>queries,
+  failAuth:()=>{authFailure=true},failOrderRead:()=>{orderReadFailure=true},
+  failCardRead:()=>{cardReadFailure=true}};
 }
 test('disabled by default with no database reads',async()=>{
  const h=harness();assert.equal((await h.call()).status,503);assert.equal(h.queries().length,0);
@@ -86,4 +91,22 @@ test('COD displays verified amount due at door, without any bank account',async(
  assert.match(payload.message,/233,000 IQD/);assert.equal(payload.amountIncluded,true);
  assert.equal(payload.invoice.prepaidMinor,233000);
  assert.deepEqual(h.queries(),['orders']);
+});
+
+test('PGRST303 errors fail closed with no bank data or amount disclosed',async()=>{
+ const a=harness();a.enable();a.failAuth();
+ const auth=await a.call();
+ assert.equal(auth.status,403);
+ assert.equal(JSON.parse(auth.body).ok,false);
+ assert.deepEqual(a.queries(),[]);
+ const b=harness();b.enable();b.failOrderRead();
+ const order=await b.call();
+ assert.equal(order.status,503);
+ assert.equal(JSON.parse(order.body).error,'ORDER_READ_UNAVAILABLE');
+ assert.deepEqual(b.queries(),['orders']);
+ const c=harness();c.enable();c.failCardRead();
+ const bank=await c.call();
+ assert.equal(bank.status,503);
+ assert.equal(JSON.parse(bank.body).error,'CARD_READ_UNAVAILABLE');
+ assert.deepEqual(c.queries(),['orders','kinto_payment_methods_g16']);
 });
