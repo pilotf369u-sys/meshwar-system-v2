@@ -9,6 +9,7 @@ final class KintoAppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         let window = UIWindow(frame: UIScreen.main.bounds)
+#if !KINTO_DISTRIBUTION_CANDIDATE
         if ProcessInfo.processInfo.arguments.contains("--isolation-test") {
             window.rootViewController = IsolationTestController()
         } else if ProcessInfo.processInfo.arguments.contains("--invoice-test") {
@@ -20,6 +21,11 @@ final class KintoAppDelegate: UIResponder, UIApplicationDelegate {
             accountNavigation.setNavigationBarHidden(true, animated: false)
             window.rootViewController = accountNavigation
         }
+#else
+        let accountNavigation = UINavigationController(rootViewController: BrowserController(mode: .account))
+        accountNavigation.setNavigationBarHidden(true, animated: false)
+        window.rootViewController = accountNavigation
+#endif
         window.makeKeyAndVisible()
         self.window = window
         return true
