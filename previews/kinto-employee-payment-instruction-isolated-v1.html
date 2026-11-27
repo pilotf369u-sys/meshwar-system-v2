@@ -6,10 +6,10 @@
 <label for="mode">طريقة التسديد</label><select id="mode"><option value="card_full">تحويل كامل إلى البطاقة</option><option value="goods_now_shipping_cod">دفع المنتجات الآن والشحن عند الباب</option><option value="full_cod">دفع كامل عند الباب</option></select>
 <div id="card-select"><label for="card">اختر البطاقة المعتمدة من الأدمن</label><select id="card"><option value="a">بطاقة تجريبية رئيسية — افتراضية</option><option value="b">بطاقة تجريبية ثانية — معتمدة</option></select></div>
 <label for="channel">طريقة التواصل</label><select id="channel"><option value="whatsapp">واتساب</option><option value="internal_chat">الدردشة الداخلية</option></select>
-<button id="preview" type="button">تجهيز المعاينة</button><button id="copy" type="button" class="secondary">نسخ الرسالة التجريبية</button>
+<button id="preview" type="button">تجهيز المعاينة</button><button id="copy" type="button" class="secondary">نسخ الرسالة التجريبية</button><button id="artwork" type="button" class="secondary">حفظ صورة بطاقة التحويل التجريبية WebP</button>
 </section>
 <section class="panel"><h2>معاينة البطاقة والتعليمات</h2><p class="card-note">بيانات تجريبية للمعاينة — تُستبدل لاحقاً ببيانات البطاقة المتحقق منها من الأدمن</p><div class="card" id="cardview"></div><p id="total"></p><div class="copybar" aria-label="نسخ تفاصيل التحويل"><button id="copyRecipient" type="button" class="secondary">نسخ اسم الحساب</button><button id="copyAccount" type="button" class="secondary">نسخ رقم الحساب</button><button id="copyAmount" type="button" class="secondary">نسخ المبلغ</button></div><pre id="message"></pre><p id="status" aria-live="polite" class="subtitle"></p></section>
-</main><script src="../js/kinto-invoice-readonly-v1.js"></script><script src="../js/kinto-manual-card-policy-v1.js"></script><script src="../js/kinto-manual-payment-message-v1.js"></script><script src="../js/kinto-manual-dispatch-preflight-v1.js"></script><script src="../js/kinto-payment-instruction-snapshot-v1.js"></script><script src="../js/kinto-manual-instruction-assembly-v1.js"></script><script>
+</main><script src="../js/kinto-invoice-readonly-v1.js"></script><script src="../js/kinto-manual-card-policy-v1.js"></script><script src="../js/kinto-manual-payment-message-v1.js"></script><script src="../js/kinto-manual-dispatch-preflight-v1.js"></script><script src="../js/kinto-payment-instruction-snapshot-v1.js"></script><script src="../js/kinto-manual-instruction-assembly-v1.js"></script><script src="../js/kinto-g16-destination-card-artwork-v1.js"></script><script>
 (function(){'use strict';
  const p=window.KintoManualCardPolicyV1,msg=window.KintoManualPaymentMessageV1,guard=window.KintoManualDispatchPreflightV1,snapshot=window.KintoPaymentInstructionSnapshotV1;
  const $=id=>document.getElementById(id),cards=[
@@ -18,7 +18,7 @@
  {id:'b',label:'بطاقة تجريبية ثانية',provider:'مصرف تجريبي',method_type:'manual',is_enabled:true,
  destination_verified_at:'2026-11-24T10:00:00Z',is_default:false,recipient_name:'اسم حساب تجريبي ثانٍ',account_reference:'TEST-ACCOUNT-002'}];
  const invoice=window.KintoInvoiceReadOnlyV1.extract({trustedInvoiceSource:true,accessApproved:true,invoice:{orderCode:'KN-000160',currency:'IQD',version:'demo-v1',prepaidMinor:1500,goodsMinor:1200,deliveryDueMinor:300}});
- let current=null,copyData=null;
+ let current=null,copyData=null,artworkCard=null;
  function update(){const mode=$('mode').value;$('card-select').hidden=mode==='full_cod';$('cardview').hidden=mode==='full_cod'}
  function render(){
   try{
@@ -40,9 +40,11 @@
    $('message').textContent=assembled.messageText;
    $('status').textContent='معاينة جاهزة فقط — لم تُرسل ولم تُحفظ. لا تغيير على الطلب.';
    current=assembled.instructionSnapshot;
+   artworkCard=card?cards.find(x=>x.id===card.id)||null:null;
+   $('artwork').disabled=!artworkCard;
    copyData=card?{recipient:card.recipient_name,account:card.account_reference,amount:msg.money(assembled.transferAmountMinor,assembled.currency)}:null;
    for(const id of ['copyRecipient','copyAccount','copyAmount'])$(id).disabled=!copyData;
-  }catch(error){current=null;copyData=null;for(const id of ['copyRecipient','copyAccount','copyAmount'])$(id).disabled=true;$('message').textContent='';$('status').textContent='تعذر تجهيز المعاينة: '+String(error.message||error);}
+  }catch(error){current=null;copyData=null;artworkCard=null;$('artwork').disabled=true;for(const id of ['copyRecipient','copyAccount','copyAmount'])$(id).disabled=true;$('message').textContent='';$('status').textContent='تعذر تجهيز المعاينة: '+String(error.message||error);}
  }
  $('mode').addEventListener('change',()=>{update();render()});
  $('card').addEventListener('change',render);$('channel').addEventListener('change',render);
@@ -55,6 +57,18 @@
  $('copyRecipient').addEventListener('click',()=>copyOne('recipient'));
  $('copyAccount').addEventListener('click',()=>copyOne('account'));
  $('copyAmount').addEventListener('click',()=>copyOne('amount'));
+ $('artwork').addEventListener('click',async()=>{
+  if(!artworkCard)return;
+  try{
+   const result=await window.KintoG16DestinationCardArtworkV1.create(artworkCard,{document});
+   const localUrl=URL.createObjectURL(result.blob);
+   try{
+    const a=document.createElement('a');a.href=localUrl;a.download=result.filename;
+    document.body.append(a);a.click();a.remove();
+    $('status').textContent='تم تجهيز صورة محلية توضيحية؛ لم تُرفع ولم تُرسل للعميل.';
+   }finally{URL.revokeObjectURL(localUrl)}
+  }catch(error){$('status').textContent='تعذر تجهيز صورة المعاينة: '+String(error.message||error)}
+ });
  $('copy').addEventListener('click',async()=>{if(!current)return;try{if(!navigator.clipboard)throw Error('Clipboard unavailable');await navigator.clipboard.writeText($('message').textContent);$('status').textContent='تم نسخ الرسالة التجريبية، ولم تُرسل.'}catch{$('status').textContent='النسخ غير متاح هنا، يمكنك تحديد النص يدوياً.'}});
  update();render();
 })();
