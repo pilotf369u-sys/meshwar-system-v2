@@ -37,7 +37,9 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private let mode: Mode
     private var browser: WKWebView!
     private var store: WKWebsiteDataStore?
+#if !KINTO_DISTRIBUTION_CANDIDATE
     private var invoiceTestState = "initial"
+#endif
     private var productReview: ProductReviewService?
     init(mode: Mode) { self.mode = mode; super.init(nibName: nil, bundle: nil) }
     required init?(coder: NSCoder) { fatalError("init(coder:) is unsupported") }
@@ -72,8 +74,12 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
             guard let home = URL(string: "https://shopkinto.com/") else { return }
             browser.load(URLRequest(url: home))
         case .invoiceFixture:
+#if !KINTO_DISTRIBUTION_CANDIDATE
             let html = "<html><body>INVOICE FIXTURE</body></html>"
             browser.loadHTMLString(html, baseURL: URL(string: "https://shopkinto.com/__invoice_fixture"))
+#else
+            break
+#endif
         case .retailer(let url):
             navigationItem.leftBarButtonItems = [
                 UIBarButtonItem(title: "KINTO", style: .plain, target: self, action: #selector(close)),
@@ -154,7 +160,9 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
             switch mode {
             case .account, .invoiceFixture:
                 let origin = action.sourceFrame.securityOrigin
+#if !KINTO_DISTRIBUTION_CANDIDATE
                 if case .invoiceFixture = mode { invoiceTestState = "action: " + origin.protocol + "://" + origin.host + ":" + String(origin.port) + " " + url.absoluteString }
+#endif
                 let trusted = action.sourceFrame.isMainFrame && origin.protocol.lowercased() == "https" &&
                     origin.host.lowercased() == "shopkinto.com" && (origin.port == 0 || origin.port == 443)
                 let isBlank = url.absoluteString.isEmpty || url.absoluteString == "about:blank"
@@ -232,7 +240,9 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
             openExternal(url)
             return nil
         }
+#if !KINTO_DISTRIBUTION_CANDIDATE
         if case .invoiceFixture = mode { invoiceTestState = "popup: " + origin.protocol + "://" + origin.host + ":" + String(origin.port) + " main=" + String(navigationAction.sourceFrame.isMainFrame) + " modal=" + String(presentedViewController != nil) + " url=" + (navigationAction.request.url?.absoluteString ?? "<nil>") }
+#endif
         guard webView === browser, presentedViewController == nil, navigationAction.sourceFrame.isMainFrame,
               origin.protocol.lowercased() == "https", origin.host.lowercased() == "shopkinto.com",
               origin.port == 0 || origin.port == 443 else { return nil }
@@ -241,6 +251,7 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         let document = InvoiceDocumentController(configuration: configuration)
         let nav = UINavigationController(rootViewController: document)
         present(nav, animated: true)
+#if !KINTO_DISTRIBUTION_CANDIDATE
         if case .invoiceFixture = mode {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 document.web.evaluateJavaScript("Boolean(document.body && document.body.innerText.includes('KINTO SYNTHETIC INVOICE') && document.getElementById('kinto-app-invoice-layout'))") { result, error in
@@ -248,9 +259,11 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 }
             }
         }
+#endif
         return document.web
     }
 
+#if !KINTO_DISTRIBUTION_CANDIDATE
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         if case .invoiceFixture = mode {
             invoiceTestState = "fixture loaded"
@@ -272,5 +285,6 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try? (ok ? "PASS" : "FAIL: popup content").write(to: directory.appendingPathComponent("invoice-result.txt"), atomically: true, encoding: .utf8)
-    }
+    }#endif
+
 }
