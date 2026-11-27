@@ -24,6 +24,7 @@ const permitted=[
  /^tests\/kinto-g16-employee-instructions-read-v1[.]test[.]cjs$/,
  /^tests\/kinto-g16-employee-panel-opt-in-v1[.]test[.]cjs$/,
  /^tests\/kinto-g16-invoice-quote-v1[.]test[.]cjs$/,
+ /^tests\/e2e\/kinto-g16-isolated-ui[.]spec[.]cjs$/,
  /^tests\/kinto-(?:g16-card-api|g16-verified-manual-cards-read|manual-card-policy|manual-dispatch-preflight|manual-payment-isolated|manual-payment-preview-scope|manual-instruction-assembly|manual-payment-flow-matrix|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|card-image-share|invoice-readonly)-v1[.]test[.]cjs$/,
  /^sql\/kinto-g16-card-assets-isolated-v1[.](?:review|verify-readonly|rollback[.]review)[.]sql$/,
  /^supabase\/functions\/kinto-card-images-v1\/index[.]ts$/,
