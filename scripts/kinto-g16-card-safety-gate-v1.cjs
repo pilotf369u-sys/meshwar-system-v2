@@ -10,7 +10,7 @@ const ref=process.argv[2]||'origin/main';
 const permitted=[
  /^employee-dashboard[.]html$/,
  /^docs\/KINTO_G16_[^/]+[.]md$/,
- /^js\/kinto-(?:card-image-(?:prepare|share)|g16-card-api|g16-verified-manual-cards-read|g16-employee-chat-handoff|g16-instruction-freshness|g16-destination-card-artwork|manual-card-policy|manual-dispatch-preflight|manual-payment-message|manual-instruction-assembly|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|invoice-readonly)-v1[.]js$/,
+ /^js\/kinto-(?:card-image-(?:prepare|share)|g16-card-api|g16-verified-manual-cards-read|g16-employee-chat-handoff|g16-employee-instructions-read|g16-employee-panel|g16-instruction-freshness|g16-destination-card-artwork|manual-card-policy|manual-dispatch-preflight|manual-payment-message|manual-instruction-assembly|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|invoice-readonly)-v1[.]js$/,
  /^previews\/kinto-(?:admin-card-image|employee-payment-instruction|manual-payment-card)-isolated-v1[.]html$/,
  /^tests\/kinto-g16-card-extension-security-contract[.]test[.]cjs$/,
  /^tests\/kinto-g16-employee-manual-cards-edge-v1[.]test[.]cjs$/,
@@ -20,6 +20,7 @@ const permitted=[
  /^tests\/kinto-g16-destination-card-artwork-v1[.]test[.]cjs$/,
  /^tests\/kinto-g16-employee-order-context-runtime-v1[.]test[.]cjs$/,
  /^tests\/kinto-g16-employee-instructions-read-runtime-v1[.]test[.]cjs$/,
+ /^tests\/kinto-g16-employee-instructions-read-v1[.]test[.]cjs$/,
  /^tests\/kinto-(?:g16-card-api|g16-verified-manual-cards-read|manual-card-policy|manual-dispatch-preflight|manual-payment-isolated|manual-payment-preview-scope|manual-instruction-assembly|manual-payment-flow-matrix|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|card-image-share|invoice-readonly)-v1[.]test[.]cjs$/,
  /^sql\/kinto-g16-card-assets-isolated-v1[.](?:review|verify-readonly|rollback[.]review)[.]sql$/,
  /^supabase\/functions\/kinto-card-images-v1\/index[.]ts$/,
