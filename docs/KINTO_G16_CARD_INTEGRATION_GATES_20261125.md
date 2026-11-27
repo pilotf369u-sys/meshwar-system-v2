@@ -92,3 +92,21 @@
 - Polished the standalone employee instruction preview with a clearly *demo-only* green/gold card, separate delivery-due display based on approved invoice snapshot, and three explicit copy buttons; 6 static contract checks passed.
 - Revalidated allowlist against the entire current draft PR: 38 changed paths, all restricted to new isolated G16 files, no operational files modified.
 - **Hard hold:** This read-only review RPC cannot be used until SQL syntax/permission tests, legitimate source of staff session and approved invoice data, safe bank-card imagery, and the deployment process have been explicitly reviewed. The separately disabled image SQL remains DO NOT RUN.
+
+## 2026-11-27 — Owner-requested saved checkpoints and concrete backend progress
+Protected rollback branches were created **before** the subsequent commits:
+- `safety/20261127-before-g16-main` points to the unchanged `main` checkpoint.
+- `safety/20261127-before-g16-hostinger` points to the unchanged production release branch checkpoint.
+- `safety/20261127-before-g16-feature` preserves the original isolated PR #1178 feature head.
+Do not edit or delete these three rollback branches; never use a force push for them.
+
+NEW CONCRETE RESULT: `supabase/functions/kinto-g16-employee-manual-cards-read-v1/index.ts`
+now serves the verified **G16 manual bank card catalogue without any new SQL migration**.
+It uses the actual existing `employee_session_identity_v143` authorization, validates employee role,
+then uses service-role *read-only* queries for existing `kinto_payment_methods_g16`
+enabled, destination-verified manual rows. It does not access invoices, carts, orders, payment status, stock, or media storage. No data is exposed when its server-only release switch is off.
+- `js/kinto-g16-verified-manual-cards-read-v1.js` adds a separate client adapter.
+- Four client-adapter tests, four Edge source-contract tests and four mock runtime checks succeeded. The actual server code was exercised with mocked sessions/data, yielding 503 disabled, 403 wrong origin, 200 employee verified card and 403 wrong role.
+- No production endpoint was deployed; server-only secrets/origin configuration were **not changed**.
+- No real customer invoice is yet read by this new service; the invoice display remains a separate trusted-source integration requirement.
+- Not yet complete: bank-card private image upload/OTP storage (the invalid draft SQL stays disabled), real approved invoice extraction and employee chat/WhatsApp attachment handoff, end-to-end tests. These must be individually validated before deployment; do not bypass user approval for live data changes.
