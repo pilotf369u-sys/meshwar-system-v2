@@ -28,7 +28,14 @@ Deno.serve(async req=>{
  if(!Number.isFinite(length)||length>2048)
   return response(413,{ok:false,error:'REQUEST_TOO_LARGE'},origin);
  let payload:Record<string,unknown>;
- try{payload=await req.json();}catch{return response(400,{ok:false,error:'INVALID_BODY'},origin)}
+ try{
+  const raw=await req.text();
+  if(raw.length>2048)return response(413,{ok:false,error:'REQUEST_TOO_LARGE'},origin);
+  const candidate:unknown=JSON.parse(raw);
+  if(!candidate||typeof candidate!=='object'||Array.isArray(candidate))
+   return response(400,{ok:false,error:'INVALID_BODY'},origin);
+  payload=candidate as Record<string,unknown>;
+ }catch{return response(400,{ok:false,error:'INVALID_BODY'},origin)}
  if(payload?.action!=='list_verified_manual_cards')
   return response(400,{ok:false,error:'INVALID_ACTION'},origin);
  const token=payload.session_token;
