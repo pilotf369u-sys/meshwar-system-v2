@@ -13,6 +13,7 @@ const permitted=[
  /^previews\/kinto-(?:admin-card-image|employee-payment-instruction|manual-payment-card)-isolated-v1[.]html$/,
  /^tests\/kinto-g16-card-extension-security-contract[.]test[.]cjs$/,
  /^tests\/kinto-g16-employee-methods-readonly-v1[.]test[.]cjs$/,
+ /^tests\/kinto-g16-employee-manual-cards-edge-v1[.]test[.]cjs$,
  /^tests\/kinto-(?:g16-card-api|g16-verified-manual-cards-read|manual-card-policy|manual-dispatch-preflight|manual-payment-isolated|manual-payment-preview-scope|manual-instruction-assembly|manual-payment-flow-matrix|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|card-image-share|invoice-readonly)-v1[.]test[.]cjs$/,
  /^sql\/kinto-g16-employee-methods-readonly-v1[.]review[.]sql$/,
  /^sql\/kinto-g16-card-assets-isolated-v1[.](?:review|verify-readonly|rollback[.]review)[.]sql$/,
