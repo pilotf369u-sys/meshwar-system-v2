@@ -1,8 +1,10 @@
 // KINTO G16 employee bank instructions — usable read-only service / REVIEW ONLY.
-// No amount or invoice calculation. Account and order eligibility are read
-// server-side on EVERY request; employee manually copies/sends the text.
+// Approved current order finance is projected server-side using the
+// conservative read-only V94 invoice-parity adapter. Unsupported cases block.
+// Employee manually copies/sends the verified text.
 // DOES NOT send automatically, modify checkout, mark paid, or deduct inventory.
 import {createClient} from 'npm:@supabase/supabase-js@2';
+import {derive} from '../_shared/kinto-g16-invoice-quote-v1.mjs';
 const origins=(Deno.env.get('KINTO_G16_INSTRUCTIONS_ALLOWED_ORIGINS')||'')
  .split(',').map(x=>x.trim()).filter(Boolean);
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
@@ -18,6 +20,12 @@ function reply(status:number,payload:unknown,origin:string){
   'Access-Control-Allow-Methods':'POST,OPTIONS'};
  if(origins.includes(origin))headers['Access-Control-Allow-Origin']=origin;
  return new Response(JSON.stringify(payload),{status,headers});
+}
+function formatted(amount:number,currency:string){
+ return new Intl.NumberFormat('en-US',{
+  minimumFractionDigits:currency==='USD'?2:0,
+  maximumFractionDigits:currency==='USD'?2:0
+ }).format(amount/(currency==='USD'?100:1))+' '+currency;
 }
 function clean(v:unknown,max:number){
  if(typeof v!=='string'||!v.trim()||v.length>max||/[\u0000-\u001f\u007f]/.test(v))throw Error('INVALID_ACCOUNT_DATA');
@@ -56,7 +64,7 @@ Deno.serve(async req=>{
   if(ae||actor?.ok!==true||!['employee','موظف'].includes(String(actor?.employee?.role||'').trim().toLowerCase()))
    return reply(403,{ok:false,error:'EMPLOYEE_DENIED'},origin);
   const {data:order,error:oe}=await sb.from('orders')
-   .select('id,order_code,status,customer_id,currency,delivery_payment_type')
+   .select('id,order_code,status,customer_id,currency,delivery_payment_type,updated_at,details,total_price,external_shipping_fee,external_shipping_currency,delivery_fee,delivery_currency,shipping_snapshot,reward_discount_amount,reward_discount_currency,reward_discount_snapshot,kinto_campaign_discount_amount,kinto_campaign_discount_currency,kinto_campaign_discount_snapshot')
    .eq('id',orderId).maybeSingle();
   if(oe||!order)return reply(404,{ok:false,error:'ORDER_NOT_AVAILABLE'},origin);
   if(!statusAllowed.has(String(order.status||'').trim())||
@@ -64,11 +72,18 @@ Deno.serve(async req=>{
    !['USD','IQD'].includes(String(order.currency||'').trim().toUpperCase())||
    order.delivery_payment_type!==modeTypes[mode])
    return reply(409,{ok:false,error:'ORDER_NOT_ELIGIBLE'},origin);
+  let quote;
+  try{quote=derive(order,mode)}catch(e){
+   const reason=String(e instanceof Error?e.message:'INVOICE_UNAVAILABLE');
+   const safe=/^[A-Z_]{5,80}$/.test(reason)?reason:'INVOICE_UNAVAILABLE';
+   return reply(422,{ok:false,error:'INVOICE_QUOTE_NOT_VERIFIED',reason:safe},origin);
+  }
   if(mode==='full_cod'){
    if(body.card_id!=null&&body.card_id!=='')return reply(400,{ok:false,error:'CARD_NOT_ALLOWED'},origin);
-   const msg='KINTO | تسديد الطلب '+order.order_code+'\nتم اختيار الدفع الكامل عند الباب. يرجى مراجعة المبلغ النهائي في الفاتورة المعتمدة عند التسليم.\nKINTO — راحتك وثقتك أولويتنا.';
+   const msg='KINTO | تسديد الطلب '+order.order_code+'\nتم اختيار الدفع الكامل عند الباب.\nالمبلغ المعتمد عند الباب: '+formatted(quote.prepaidMinor,quote.currency)+'\nKINTO — راحتك وثقتك أولويتنا.';
    return reply(200,{ok:true,orderCode:order.order_code,mode,message:msg,
-    amountIncluded:false,requiresEmployeeSend:true,paymentConfirmed:false,changesOrder:false});
+    invoice:quote,amountMinor:0,currency:quote.currency,amountIncluded:true,
+    requiresEmployeeSend:true,paymentConfirmed:false,changesOrder:false});
   }
   const cardId=body.card_id;
   if(typeof cardId!=='string'||!uuid.test(cardId))
@@ -84,14 +99,15 @@ Deno.serve(async req=>{
   const subject=mode==='card_full'?'تحويل كامل إلى البطاقة المصرفية':'دفع المنتجات الآن والشحن عند الباب';
   const msg='KINTO | تسديد الطلب '+order.order_code+'\n'+
    'طريقة التسديد: '+subject+'\n'+
-   'المبلغ: يرجى اعتماد المبلغ النهائي الظاهر في فاتورة الطلب وتأكيده مع الموظف قبل التحويل.\n'+
-   (mode==='goods_now_shipping_cod'?'أجور الشحن تُراجع وفق الفاتورة المعتمدة وتُحصّل عند الباب.\n':'')+
+   'المبلغ المطلوب تحويله الآن: '+formatted(quote.amountMinor,quote.currency)+'\n'+
+   (mode==='goods_now_shipping_cod'?'الشحن المستحق عند الباب: '+formatted(quote.deliveryDueMinor,quote.currency)+'\n':'')+
    'البطاقة المعتمدة: '+label+' — '+bank+'\n'+
    'اسم الحساب: '+recipient+'\nرقم التحويل: '+account+'\n\n'+reassurance;
   return reply(200,{ok:true,orderCode:order.order_code,mode,
    card:{id:card.id,label,provider:bank,recipient_name:recipient,account_reference:account,
     method_type:'manual',is_enabled:true,destination_verified_at:card.destination_verified_at},
-   message:msg,amountIncluded:false,requiresEmployeeSend:true,
+   message:msg,invoice:quote,amountMinor:quote.amountMinor,currency:quote.currency,
+   amountIncluded:true,requiresEmployeeSend:true,
    paymentConfirmed:false,changesOrder:false});
  }catch{return reply(503,{ok:false,error:'INSTRUCTIONS_UNAVAILABLE'},origin)}
 });
