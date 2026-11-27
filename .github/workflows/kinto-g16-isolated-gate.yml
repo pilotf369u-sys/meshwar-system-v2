@@ -8,6 +8,7 @@ on:
       - 'js/kinto-invoice-readonly-v1.js'
       - 'previews/kinto-*.html'
       - 'supabase/functions/kinto-g16-*/**'
+      - 'supabase/functions/_shared/kinto-g16-invoice-quote-v1.mjs'
       - 'tests/kinto-*.test.cjs'
       - 'scripts/kinto-g16-card-safety-gate-v1.cjs'
       - '.github/workflows/kinto-g16-isolated-gate.yml'
@@ -35,6 +36,7 @@ jobs:
         run: |
           node --test \
             tests/kinto-g16-destination-card-artwork-v1.test.cjs \
+            tests/kinto-g16-invoice-quote-v1.test.cjs \
             tests/kinto-g16-employee-instructions-read-runtime-v1.test.cjs \
             tests/kinto-g16-employee-instructions-read-v1.test.cjs \
             tests/kinto-g16-employee-panel-opt-in-v1.test.cjs \
