@@ -76,7 +76,7 @@ jobs:
             mobile/ios/Sources/KintoPreview.swift \
             -o "$OUT/KintoPreview"
           xcrun lipo "$OUT/KintoPreview" -verify_arch arm64
-          if /usr/bin/strings "$OUT/KintoPreview" | grep -E -- '--isolation-test|--invoice-test|--reader-test'; then
+          if /usr/bin/strings "$OUT/KintoPreview" | grep -E -- '--isolation-test|--invoice-test|--reader-test|KINTO SYNTHETIC INVOICE|__invoice_fixture|invoice-result.txt'; then
             echo "Preview launch mode found in candidate" >&2
             exit 1
           fi
