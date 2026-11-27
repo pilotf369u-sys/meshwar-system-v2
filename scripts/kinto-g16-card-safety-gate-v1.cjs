@@ -18,11 +18,13 @@ const permitted=[
  /^tests\/kinto-g16-instruction-freshness-v1[.]test[.]cjs$/,
  /^tests\/kinto-g16-destination-card-artwork-v1[.]test[.]cjs$/,
  /^tests\/kinto-g16-employee-order-context-runtime-v1[.]test[.]cjs$/,
+ /^tests\/kinto-g16-employee-instructions-read-runtime-v1[.]test[.]cjs$/,
  /^tests\/kinto-(?:g16-card-api|g16-verified-manual-cards-read|manual-card-policy|manual-dispatch-preflight|manual-payment-isolated|manual-payment-preview-scope|manual-instruction-assembly|manual-payment-flow-matrix|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|card-image-share|invoice-readonly)-v1[.]test[.]cjs$/,
  /^sql\/kinto-g16-card-assets-isolated-v1[.](?:review|verify-readonly|rollback[.]review)[.]sql$/,
  /^supabase\/functions\/kinto-card-images-v1\/index[.]ts$/,
  /^supabase\/functions\/kinto-g16-employee-manual-cards-read-v1\/index[.]ts$/,
  /^supabase\/functions\/kinto-g16-employee-order-context-read-v1\/index[.]ts$/,
+ /^supabase\/functions\/kinto-g16-employee-instructions-read-v1\/index[.]ts$/,
  /^scripts\/kinto-g16-card-safety-gate-v1[.]cjs$/
 ];
 function run(){
