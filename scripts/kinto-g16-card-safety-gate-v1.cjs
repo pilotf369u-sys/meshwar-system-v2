@@ -8,6 +8,7 @@ const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_pro
 const root=path.resolve(__dirname,'..');
 const ref=process.argv[2]||'origin/main';
 const permitted=[
+ /^employee-dashboard[.]html$/,
  /^docs\/KINTO_G16_[^/]+[.]md$/,
  /^js\/kinto-(?:card-image-(?:prepare|share)|g16-card-api|g16-verified-manual-cards-read|g16-employee-chat-handoff|g16-instruction-freshness|g16-destination-card-artwork|manual-card-policy|manual-dispatch-preflight|manual-payment-message|manual-instruction-assembly|payment-brand|payment-instruction-snapshot|payment-whatsapp-handoff|invoice-readonly)-v1[.]js$/,
  /^previews\/kinto-(?:admin-card-image|employee-payment-instruction|manual-payment-card)-isolated-v1[.]html$/,
@@ -35,6 +36,16 @@ function run(){
  }catch(e){throw Error('Unable to compare PR to '+ref+'; cannot assert isolation')}
  const forbidden=files.filter(f=>!permitted.some(re=>re.test(f)));
  if(forbidden.length)throw Error('Protected operational files changed: '+forbidden.join(', '));
+ // Exactly ONE additive optional loader is permitted; all preexisting employee
+ // logic must remain byte-for-byte equal to the protected base ref.
+ if(files.includes('employee-dashboard.html')){
+  const original=cp.execFileSync('git',['show',ref+':employee-dashboard.html'],{
+   cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']});
+  const current=fs.readFileSync(path.join(root,'employee-dashboard.html'),'utf8');
+  const suffix="\n<!-- G16 opt-in add-on: no effect without ?kintoG16Preview=1; never touches order workflows -->\n<script src=\"js/kinto-g16-employee-panel-v1.js?v=20261127-opt-in\" defer></script>\n";
+  if(current!==original+suffix)throw Error('G16 altered protected employee dashboard beyond one optional script loader');
+ }
+
  const proposed=path.join(root,'sql/kinto-g16-card-assets-isolated-v1.review.sql');
  const sql=fs.readFileSync(proposed,'utf8');
  if(!sql.includes('DO NOT RUN')||/\b(?:create|alter|drop|insert|update|delete|commit)\s+(?:table|function|into|from|[a-z_])/i.test(sql.replace(/^--[^\n]*/gm,'')))
