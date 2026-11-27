@@ -34,6 +34,7 @@ export function derive(order,mode){
   throw Error('STOCK_PROJECTION_REVIEW_REQUIRED');
  const c=cur(order.currency||d.local_currency),deliveryCurrency=cur(order.delivery_currency||ship.currency||c);
  const externalCurrency=cur(order.external_shipping_currency||c);
+ if(order.total_price==null&&d.customer_total_local==null)throw Error('GOODS_TOTAL_MISSING');
  const goods=money(order.total_price??d.customer_total_local,c);
  const external=money(field(order,d,'external_shipping_fee',d.shipping_fee??0),c);
  const local=money(field(order,d,'delivery_fee',d.local_delivery_fee??0),c);
@@ -41,8 +42,10 @@ export function derive(order,mode){
   throw Error('MIXED_SHIPPING_CURRENCY_MANUAL_REQUIRED');
  const cs=obj(order.kinto_campaign_discount_snapshot||d.kinto_campaign_discount_snapshot);
  const rs=obj(order.reward_discount_snapshot||d.reward_discount);
- const campRaw=field(order,d,'kinto_campaign_discount_amount',cs.amount??0);
- const rewRaw=field(order,d,'reward_discount_amount',rs.amount??0);
+ // Exact priority from shipped V94 campaignInfo()/rewardInfo():
+ // column > verified snapshot > legacy details > zero.
+ const campRaw=order.kinto_campaign_discount_amount??cs.amount??d.kinto_campaign_discount_amount??0;
+ const rewRaw=order.reward_discount_amount??rs.amount??d.reward_discount_amount??0;
  const campaign=money(campRaw,c),reward=money(rewRaw,c);
  if(campaign&&cur(order.kinto_campaign_discount_currency||cs.currency||d.kinto_campaign_discount_currency||c)!==c)
   throw Error('MIXED_DISCOUNT_CURRENCY_MANUAL_REQUIRED');
