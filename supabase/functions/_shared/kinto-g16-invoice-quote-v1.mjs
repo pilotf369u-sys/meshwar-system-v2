@@ -27,7 +27,7 @@ export function derive(order,mode){
  if(order.delivery_payment_type!==types[mode])throw Error('PAYMENT_MODE_MISMATCH');
  const code=String(order.order_code||'');
  if(!/^(?:KN|MW)-[0-9]{4,12}$/.test(code))throw Error('ORDER_CODE_UNSUPPORTED');
- const rev=String(order.updated_at||'');
+ const rev=String(order.updated_at||order.created_at||'');
  if(!rev||!Number.isFinite(Date.parse(rev)))throw Error('INVOICE_REVISION_UNAVAILABLE');
  const d=obj(order.details),ship=obj(order.shipping_snapshot);
  if(d.stock_adjustment_v58||d._invoiceRequestedV57||d._invoiceAvailableV57)
