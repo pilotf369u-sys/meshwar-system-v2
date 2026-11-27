@@ -33,3 +33,13 @@ test('card mockup must remain unmistakably demonstration-only',()=>{
  assert.match(file,/TEST-ACCOUNT-001/);
  assert.doesNotMatch(file,/data:image|https:\/\/.*(?:visa|mastercard|rafidain)/i);
 });
+
+test('visual bank destination card is exported locally only after employee button click',()=>{
+ assert.match(file,/id="artwork"/);
+ assert.match(file,/KintoG16DestinationCardArtworkV1[.]create/);
+ assert.match(file,/URL[.]createObjectURL/);
+ assert.match(file,/URL[.]revokeObjectURL/);
+ assert.match(file,/artworkCard=card\?/);
+ assert.match(file,/artwork'[)]?[.]disabled=!artworkCard/);
+ assert.doesNotMatch(file,/storage[.]from[(]|adminCommitImage[(]/);
+});
