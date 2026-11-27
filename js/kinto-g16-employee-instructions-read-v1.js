@@ -1,7 +1,7 @@
 /* KINTO G16 employee manual instruction client — isolated and read-only.
  * Requires an authenticated employee session plus an existing Supabase
  * functions.invoke reference. No customer/admin status or price writes.
- * Server MUST return verified account data. No numeric amount is invented.
+ * Server MUST return verified account data + a current V94-equivalent\n * read-only invoice quote. Unsupported currencies/orders fail closed.
  */
 (function(root,factory){const api=factory();
  if(typeof module==='object'&&module.exports)module.exports=api;
@@ -21,24 +21,35 @@
   if(mode!=='full_cod'&&(!cardId||!uuid.test(cardId)))throw Error('VERIFIED_CARD_ID_REQUIRED');
   const {data,error}=await input.invoke(endpoint,{body:{action:'prepare_manual_instructions',
    session_token:token,order_id:orderId,mode,card_id:cardId}});
-  if(error||data?.ok!==true||data?.amountIncluded!==false||
+  if(error||data?.ok!==true||data?.amountIncluded!==true||
    data?.requiresEmployeeSend!==true||data?.paymentConfirmed!==false||
    typeof data.message!=='string'||data.message.length<25||data.message.length>3900||
    !/^(?:KN|MW)-[0-9]{4,12}$/.test(String(data.orderCode||''))||
    !data.message.includes(data.orderCode))
    throw Error('APPROVED_INSTRUCTIONS_UNAVAILABLE');
+  const quote=data.invoice;
+  if(data.mode!==mode||!quote||quote.serverVerified!==true||quote.orderEligible!==true||
+   quote.source!=='server_readonly_v94_parity'||
+   quote.orderCode!==data.orderCode||quote.mode!==mode||
+   typeof quote.version!=='string'||!quote.version||
+   !['IQD','USD'].includes(quote.currency)||quote.currency!==data.currency||
+   !Number.isSafeInteger(quote.amountMinor)||quote.amountMinor<0||
+   !Number.isSafeInteger(data.amountMinor)||data.amountMinor!==quote.amountMinor||
+   (mode!=='full_cod'&&quote.amountMinor===0))
+   throw Error('APPROVED_INVOICE_QUOTE_UNAVAILABLE');
   if(mode!=='full_cod'&&(!data.card||String(data.card.id)!==cardId||
    typeof data.card.account_reference!=='string'||!data.card.account_reference.trim()))
    throw Error('CARD_ACCOUNT_MISMATCH');
   return Object.freeze({
    message:data.message,orderCode:data.orderCode,mode,
    card:mode==='full_cod'?null:Object.freeze({...data.card}),
-   employeeMustSend:true,amountIncluded:false,
+   invoice:Object.freeze({...quote}),amountMinor:quote.amountMinor,currency:quote.currency,
+   employeeMustSend:true,amountIncluded:true,
    paymentConfirmed:false,changesInvoice:false,changesOrder:false
   });
  }
  async function copy(result,clipboard){
-  if(!result||result.employeeMustSend!==true||result.amountIncluded!==false||
+  if(!result||result.employeeMustSend!==true||result.amountIncluded!==true||
    typeof result.message!=='string'||typeof clipboard?.writeText!=='function')
    throw Error('MANUAL_COPY_UNAVAILABLE');
   await clipboard.writeText(result.message);
