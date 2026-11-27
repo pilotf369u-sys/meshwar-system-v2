@@ -28,6 +28,7 @@ enum CapturedProduct {
     }
 }
 
+#if !KINTO_DISTRIBUTION_CANDIDATE
 // Simulator-only: Android fixtures and readers, no real retailer or server requests.
 final class ReaderTestController: UIViewController, WKNavigationDelegate {
     struct Sample {
@@ -176,3 +177,5 @@ final class ReaderTestController: UIViewController, WKNavigationDelegate {
         try? result.write(to: directory.appendingPathComponent("reader-result.txt"), atomically: true, encoding: .utf8)
     }
 }
+
+#endif
