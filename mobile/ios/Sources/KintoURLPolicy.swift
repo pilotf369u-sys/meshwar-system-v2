@@ -33,6 +33,18 @@ enum KintoURLPolicy {
         }
     }
 
+    // A short-lived gesture from the isolated support script only authorizes
+    // a single valid WhatsApp popup from the same trusted top-level page.
+    static func canOpenSupportPopup(scheme: String, host: String, port: Int,
+                                    mainFrame: Bool, popup: Bool, destination: String,
+                                    tapPage: String?, currentPage: String?, age: TimeInterval) -> Bool {
+        guard mainFrame, popup, scheme.lowercased() == "https",
+              host.lowercased() == "shopkinto.com", port == 0 || port == 443,
+              let tapPage = tapPage, tapPage == currentPage, classify(tapPage) == .account,
+              age >= 0, age < 1.5, isDirectWhatsApp(destination) else { return false }
+        return true
+    }
+
     // Mirrors the published Android rule: direct open only for a valid wa.me phone link.
     static func isDirectWhatsApp(_ raw: String) -> Bool {
         guard raw.utf8.count <= 4096,
