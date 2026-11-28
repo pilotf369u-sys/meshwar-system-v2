@@ -9,6 +9,12 @@ const origins=(Deno.env.get('KINTO_G16_INSTRUCTIONS_ALLOWED_ORIGINS')||'')
  .split(',').map(x=>x.trim()).filter(Boolean);
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const code=/^(?:KN|MW)-[0-9]{4,12}$/;
+// Production orders.customer_id is TEXT, not a UUID column. Preserve legacy
+// non-UUID customer IDs; reject absent, oversized or control-character values.
+function validCustomerId(v:unknown){
+ return typeof v==='string'&&v.length>0&&v.length<=128&&
+  v.trim().length>0&&!/[\u0000-\u001f\u007f]/.test(v);
+}
 const statusAllowed=new Set(['تمت الموافقة - بانتظار الدفع','تمت الموافقة']);
 const modeTypes:Record<string,string>={
  card_full:'paid_prepaid',goods_now_shipping_cod:'product_paid_delivery_cod',full_cod:'cod_full'
@@ -69,7 +75,7 @@ Deno.serve(async req=>{
   if(oe)return reply(503,{ok:false,error:'ORDER_READ_UNAVAILABLE'},origin);
   if(!order)return reply(404,{ok:false,error:'ORDER_NOT_AVAILABLE'},origin);
   if(!statusAllowed.has(String(order.status||'').trim())||
-   !uuid.test(String(order.customer_id||''))||!code.test(String(order.order_code||''))||
+   !validCustomerId(order.customer_id)||!code.test(String(order.order_code||''))||
    !['USD','IQD'].includes(String(order.currency||'').trim().toUpperCase())||
    order.delivery_payment_type!==modeTypes[mode])
    return reply(409,{ok:false,error:'ORDER_NOT_ELIGIBLE'},origin);
