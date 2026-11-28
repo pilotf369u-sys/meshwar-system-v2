@@ -12,3 +12,15 @@ verify_jwt = false
 
 [functions.kinto-world-staff-security-v1]
 verify_jwt = false
+
+# Isolated G16 employee functions authenticate KINTO's verified V143 session
+# internally. Each is additionally disabled without a server-only release flag
+# and explicit Origin allowlist. These settings do NOT deploy or enable them.
+[functions.kinto-g16-employee-manual-cards-read-v1]
+verify_jwt = false
+
+[functions.kinto-g16-employee-order-context-read-v1]
+verify_jwt = false
+
+[functions.kinto-g16-employee-instructions-read-v1]
+verify_jwt = false

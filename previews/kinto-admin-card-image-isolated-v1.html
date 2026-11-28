@@ -1,0 +1,23 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KINTO — معاينة إدارة صورة بطاقة الدفع</title><style>
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,system-ui,sans-serif;background:#09251c;color:#f7f4e8}main{max-width:700px;margin:auto;padding:22px 15px}h1{color:#ebcb75;font-size:1.5rem}.panel{background:#104432;padding:18px;border:1px solid #bb9957;border-radius:18px;margin:13px 0}.hint{font-size:.85rem;color:#c9dfd3}label{display:block;margin:12px 0 6px}input,select{max-width:100%;width:100%;border-radius:10px;border:1px solid #6d9780;background:#081f1b;color:white;padding:12px;font:inherit}button{background:#dec16c;color:#0b291e;border:0;border-radius:10px;font:inherit;font-weight:bold;padding:12px;margin:8px 0;cursor:pointer}button:disabled{opacity:.4}img{max-width:100%;max-height:320px;object-fit:contain;border-radius:16px;display:block;margin:auto}.preview{min-height:180px;background:#071f18;border:1px dashed #bfa35d;border-radius:16px;display:grid;place-items:center;padding:12px}.status{min-height:24px}.row{display:flex;gap:8px;flex-wrap:wrap}.row button{flex:1}.warn{color:#efd37e}</style></head><body><main><h1>KINTO | إدارة صور بطاقات الدفع</h1>
+<p class="hint">معاينة أدمن مستقلة. لا تتصل بقاعدة البيانات ولا تخزن بطاقة حقيقية ولا ترسل صورة إلى الإنترنت. لا تستخدم صورة تحتوي معلومات سرية أو رقم بطاقة كامل في هذه التجربة.</p>
+<section class="panel"><h2>إضافة صورة بطاقة معتمدة</h2><label for="file">اختر صورة من جهازك (JPG، PNG أو WebP)</label><input id="file" type="file" accept="image/jpeg,image/png,image/webp">
+<p class="hint">صورة مصدر حتى 5 MB؛ يتم ضغط العرض إلى WebP حتى 200 KB وعرض 1200 بكسل كحد أقصى. لا يوجد رفع للخادم في هذه النسخة.</p>
+<div class="preview" id="preview"><span>صورة البطاقة ستظهر هنا بعد الاختيار</span></div>
+<div class="status warn" id="status" role="status" aria-live="polite"></div>
+<button type="button" id="discard">إزالة صورة المعاينة</button></section>
+<section class="panel"><h2>إدارة البطاقات المعتمدة</h2>
+<p class="hint">هذا مثال للعرض، وليس بيانات البطاقات الحقيقية. التفعيل والتعطيل وتغيير البطاقة الافتراضية ستتحقق من جهة الخادم بعد اعتماد OTP.</p>
+<label for="card">البطاقة الافتراضية</label><select id="card"><option value="a">بطاقة تحويل تجريبية 1</option><option value="b">بطاقة تحويل تجريبية 2</option></select>
+<div class="row"><button id="switch" type="button">تغيير الاختيار في المعاينة</button></div><div id="choice" class="status" aria-live="polite"></div>
+</section><p class="hint">الصور الفعلية ستُربط بمعرّف البطاقة المعتمدة في G16. هذا الملف لا يغيّر وسائل الدفع ولا حالات الطلبات.</p></main>
+<script src="../js/kinto-card-image-prepare-v1.js"></script><script>
+(function(){'use strict';const input=document.getElementById('file'),status=document.getElementById('status'),panel=document.getElementById('preview'),discard=document.getElementById('discard');let url=null;
+function clear(){if(url){URL.revokeObjectURL(url);url=null}panel.replaceChildren(document.createTextNode('صورة البطاقة ستظهر هنا بعد الاختيار'));input.value='';status.textContent=''}
+discard.addEventListener('click',clear);
+input.addEventListener('change',async()=>{if(!input.files?.[0])return;clearPreviewOnly();const file=input.files[0];try{status.textContent='جارٍ تجهيز الصورة محلياً...';const blob=await window.KintoCardImagePrepareV1.prepare(file,window);url=URL.createObjectURL(blob);const img=document.createElement('img');img.alt='معاينة صورة بطاقة التحويل';img.src=url;panel.replaceChildren(img);status.textContent='جاهزة للمعاينة — الحجم المضغوط '+Math.round(blob.size/1024)+' KB، ولم تُرفع إلى أي خادم.'}catch(e){status.textContent='تعذرت معالجة الصورة: '+String(e.message||e)}}});
+function clearPreviewOnly(){if(url){URL.revokeObjectURL(url);url=null}panel.replaceChildren()}
+document.getElementById('switch').addEventListener('click',()=>{document.getElementById('choice').textContent='اختيار تجريبي فقط: '+document.getElementById('card').selectedOptions[0].textContent+' — لم يُحفظ في الأدمن.'});
+window.addEventListener('pagehide',()=>{if(url)URL.revokeObjectURL(url)});
+})();
+</script></body></html>

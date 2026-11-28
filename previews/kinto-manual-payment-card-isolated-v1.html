@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KINTO | تسديد الطلب — معاينة معزولة</title>
+<style>
+:root{color-scheme:dark;--green:#082e22;--green2:#154735;--gold:#e9c46c;--line:#47715d}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#136249,#06241b 70%);color:#f2f7f2;font:16px/1.7 system-ui,Tahoma,Arial,sans-serif}
+main{max-width:520px;margin:auto;padding:22px 16px 45px}h1,h2,p{margin:0}h1{font-size:1.7rem}h2{font-size:1.2rem}
+.brand{text-align:center;color:var(--gold);font-size:2rem;font-weight:900;letter-spacing:.14em}
+.subtitle{text-align:center;margin:0 0 18px;color:#d8e9de}
+.panel{background:linear-gradient(145deg,#18533e,#0b3024);border:1px solid var(--line);border-radius:22px;padding:18px;margin-top:14px;box-shadow:0 10px 35px #001a1155}
+.hero{border-color:#a08a42}.hero h2{font-size:1.45rem;margin-bottom:8px}
+.mini{color:#c9dfd0;font-size:.83rem}.gold{color:var(--gold)}
+.control{display:flex;gap:8px;flex-wrap:wrap}label{display:block;margin:10px 0 5px;font-weight:700}
+select{width:100%;background:#07251d;color:white;padding:11px;border:1px solid #638876;border-radius:10px;font:inherit}
+.card-art{min-height:195px;border-radius:18px;position:relative;overflow:hidden;background:radial-gradient(circle at 30% 90%,#38b060 0%,transparent 50%),linear-gradient(135deg,#0a612f,#0a3923);border:1px solid #71aa79;box-shadow:0 10px 30px #0006;padding:20px}
+.card-art:before{content:"";position:absolute;inset:15% -20%;border:2px solid #ffffff16;border-radius:50%;transform:rotate(-20deg)}
+.card-art .bank{position:relative;font-weight:900;font-size:1.2rem}.card-art .emblem{position:absolute;left:18px;top:15px;border:2px solid #f1cd69;border-radius:100%;padding:0 12px;font-weight:900;font-size:1.7rem;color:#f1cd69}.card-art .chip{position:absolute;bottom:20px;right:20px;font-size:1.9rem;color:#edd17b}
+.card-art .placeholder{position:absolute;bottom:26px;left:18px;font-size:.75rem;background:#092c2380;padding:4px 8px;border-radius:8px}
+.data-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #668a714d}.data-row:last-child{border:0}
+.data-row strong{display:block;font-size:1.05rem;overflow-wrap:anywhere}.data-row button{flex-shrink:0}
+button{border:1px solid var(--gold);border-radius:100px;background:#214b37;color:#f4de94;font:inherit;font-weight:800;padding:6px 15px;cursor:pointer}
+button:focus-visible,select:focus-visible{outline:3px solid #f9df8a;outline-offset:3px}
+.assurance{border-color:#d7b967}.assurance h2{color:var(--gold);margin-bottom:10px}.assurance p{margin:10px 0}
+.steps{padding:0 22px}.steps li{margin:8px 0}.note{margin-top:16px;border:1px dashed #789e88;border-radius:12px;padding:10px;color:#d1ded7;font-size:.81rem}
+[hidden]{display:none!important}
+</style></head><body><main>
+<div class="brand" id="brand">KINTO</div>
+<h1 style="text-align:center">تسديد الطلب</h1><p class="subtitle">تعليمات الدفع الخاصة بطلبك</p>
+<p class="note" role="note">معاينة مستقلة ببيانات تجريبية فقط. لا اتصال بسيرفر، ولا إرسال، ولا حفظ، ولا تغيير لطلب حقيقي. شعار الأدمن وصورة البطاقة سيُربطان لاحقاً عبر مصادر آمنة.</p>
+<section class="panel"><h2>اختيار طريقة التسديد</h2>
+<label for="mode">طريقة الدفع</label><select id="mode"><option value="card_full">تحويل كامل إلى البطاقة المصرفية</option><option value="goods_now_shipping_cod">دفع المنتجات الآن والشحن عند الباب</option><option value="full_cod">دفع كامل عند الباب</option></select>
+<label for="approved-card">البطاقة المعتمدة</label><select id="approved-card"><option value="a">بطاقة الرافدين — افتراضية (مثال)</option><option value="b">بطاقة معتمدة ثانية (مثال)</option></select>
+</section>
+<section class="panel hero"><h2 id="hero-title">طلبك جاهز لاستكمال الدفع</h2><p id="hero-body">تمت الموافقة على طلبك KN-000160. يمكنك إكمال التحويل باستخدام المعلومات المعتمدة من KINTO أدناه.</p></section>
+<div id="transfer">
+<section class="panel"><div class="card-art" role="img" aria-label="موضع صورة البطاقة المعتمدة من الأدمن، رسم توضيحي غير قابل للتحويل"><div class="bank">KINTO</div><div class="emblem">K</div><div class="chip">▣</div><div class="placeholder">معاينة رسومية — صورة الأدمن تُربط لاحقاً</div></div></section>
+<section class="panel" aria-label="بيانات التحويل التجريبية">
+<div class="data-row"><div><span class="mini">اسم الحساب</span><strong id="account-name">اسم حساب تجريبي</strong></div><button type="button" data-copy="account-name">نسخ</button></div>
+<div class="data-row"><div><span class="mini">رقم التحويل</span><strong id="account-number" dir="ltr">TEST-ACCOUNT-001</strong></div><button type="button" data-copy="account-number">نسخ</button></div>
+<div class="data-row"><div><span class="mini" id="amount-label">المبلغ المطلوب الآن — مثال</span><strong class="gold" id="amount">1,500 IQD</strong></div><button type="button" data-copy="amount">نسخ</button></div>
+<p class="mini" id="shipping-note" hidden>قيمة المنتجات تُدفع الآن، والشحن عند الباب وفق الفاتورة.</p>
+</section>
+<section class="panel assurance"><h2>تسوّق بثقة مع KINTO 💚</h2>
+<p>عزيزي العميل، حرصاً على راحتك وأمانك، نوفر لك بيانات التحويل المعتمدة من إدارة KINTO مباشرة.</p>
+<p>يرجى إتمام التحويل <b>بعد مطابقة اسم ورقم الحساب عند التحويل</b>.</p>
+<p>لن نطلب منك مطلقاً كلمة المرور أو الرقم السري أو رمز التحقق الخاص بحسابك المصرفي.</p>
+<p>بعد إتمام التحويل، أرسل إشعار العملية، وسيتولى فريقنا مراجعة وصول المبلغ وتأكيد تسديد طلبك.</p>
+<p class="gold"><strong>KINTO — راحتك وثقتك أولويتنا.</strong></p></section>
+<section class="panel"><h2 class="gold">طريقة التسديد في 3 خطوات</h2><ol class="steps"><li>انسخ رقم البطاقة أو الحساب المعتمد.</li><li>افتح تطبيق مصرفك وحوّل المبلغ المطلوب.</li><li>أرسل إشعار التحويل إلى موظف KINTO لتأكيد الاستلام.</li></ol></section>
+</div>
+<section id="cod" class="panel" hidden><h2>الدفع الكامل عند الباب</h2><p>لن تحتاج إلى بطاقة تحويل. سيتم تحصيل المبلغ عند التسليم وفق فاتورة الطلب المعتمدة.</p><p class="gold">لا يتم تسجيل هذا الطلب مدفوعاً من هذه المعاينة.</p></section>
+<p id="feedback" aria-live="polite" class="mini" style="margin-top:10px"></p>
+</main><script>
+(function(){'use strict';
+ const mode=document.getElementById('mode'),cards=document.getElementById('approved-card'),transfer=document.getElementById('transfer'),cod=document.getElementById('cod'),body=document.getElementById('hero-body'),shipping=document.getElementById('shipping-note');
+ function render(){const cash=mode.value==='full_cod',partial=mode.value==='goods_now_shipping_cod';
+ transfer.hidden=cash;cod.hidden=!cash;cards.disabled=cash;cards.closest('section').querySelector('label[for="approved-card"]').hidden=cash;cards.hidden=cash;
+ document.getElementById('hero-title').textContent=cash?'تم اختيار الدفع عند الباب':'طلبك جاهز لاستكمال الدفع';
+ body.textContent=cash?'سيُحصّل المبلغ عند الاستلام وفق الفاتورة المعتمدة.':'تمت الموافقة على طلبك KN-000160. يمكنك إكمال التحويل باستخدام المعلومات المعتمدة من KINTO أدناه.';
+ document.getElementById('amount').textContent=partial?'1,200 IQD':'1,500 IQD';
+ shipping.hidden=!partial;
+ document.getElementById('account-number').textContent=cards.value==='a'?'TEST-ACCOUNT-001':'TEST-ACCOUNT-002';
+ document.getElementById('account-name').textContent=cards.value==='a'?'اسم حساب تجريبي':'اسم حساب تجريبي ثانٍ';
+ }
+ mode.addEventListener('change',render);cards.addEventListener('change',render);
+ document.querySelectorAll('button[data-copy]').forEach(button=>button.addEventListener('click',()=>{
+ const value=document.getElementById(button.dataset.copy).textContent.trim();
+ if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(value).then(()=>{document.getElementById('feedback').textContent='تم نسخ بيانات تجريبية فقط.'}).catch(()=>{document.getElementById('feedback').textContent='تعذر النسخ في هذه المعاينة.'});}
+ else document.getElementById('feedback').textContent='النسخ يتطلب صفحة آمنة (HTTPS).';
+ }));render();
+})();
+</script></body></html>

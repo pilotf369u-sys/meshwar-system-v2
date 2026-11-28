@@ -1,0 +1,4 @@
+-- DEPRECATED REVIEW DRAFT — DO NOT RUN.
+-- The previous version contained duplicated/malformed PL/pgSQL and is intentionally disabled.
+-- No safe installation script is approved. Existing G16 must remain untouched.
+-- Use only the separate architecture notes until a validated migration is prepared.
