@@ -12,12 +12,14 @@ function harness(){
  .replace('function formatted(amount:number,currency:string)','function formatted(amount,currency)')
  .replace('const headers:Record<string,string>','const headers')
  .replace('function clean(v:unknown,max:number)','function clean(v,max)')
+ .replace('function validCustomerId(v:unknown)','function validCustomerId(v)')
  .replace('let body:Record<string,unknown>;','let body;')
  .replace('const value:unknown','const value')
  .replace('body=value as Record<string,unknown>;','body=value;');
  let handler,enabled=false,role='employee',status='تمت الموافقة - بانتظار الدفع',
  paymentType='paid_prepaid',cardEnabled=true,queries=[],deliveryCurrency='IQD',
- authFailure=false,orderReadFailure=false,cardReadFailure=false;
+ authFailure=false,orderReadFailure=false,cardReadFailure=false,
+ customerId='99999999-2222-3333-4444-555555555555';
  const origin='https://shopkinto.com',id='11111111-2222-3333-4444-555555555555';
  class MockResponse{constructor(body,init){this.body=body;this.status=init.status}}
  const deno={env:{get(name){return({
@@ -31,7 +33,7 @@ function harness(){
     if((table==='orders'&&orderReadFailure)||(table!=='orders'&&cardReadFailure))
      return {data:null,error:{code:'PGRST303',message:'JWT issued in future'}};
     return{data:table==='orders'?{id,order_code:'KN-000160',status,
-     customer_id:'99999999-2222-3333-4444-555555555555',currency:'IQD',
+     customer_id:customerId,currency:'IQD',
      delivery_payment_type:paymentType,updated_at:'2026-11-27T10:00:00Z',
      details:'{}',total_price:218000,external_shipping_fee:10000,delivery_fee:5000,
      delivery_currency:deliveryCurrency}:
@@ -47,7 +49,7 @@ function harness(){
  });
  return {call,enable(){enabled=true},role:x=>{role=x},status:x=>{status=x},
   paymentType:x=>{paymentType=x},cardEnabled:x=>{cardEnabled=x},
-  deliveryCurrency:x=>{deliveryCurrency=x},queries:()=>queries,
+  deliveryCurrency:x=>{deliveryCurrency=x},customerId:x=>{customerId=x},queries:()=>queries,
   failAuth:()=>{authFailure=true},failOrderRead:()=>{orderReadFailure=true},
   failCardRead:()=>{cardReadFailure=true}};
 }
@@ -109,4 +111,24 @@ test('PGRST303 errors fail closed with no bank data or amount disclosed',async()
  assert.equal(bank.status,503);
  assert.equal(JSON.parse(bank.body).error,'CARD_READ_UNAVAILABLE');
  assert.deepEqual(c.queries(),['orders','kinto_payment_methods_g16']);
+});
+
+test('production TEXT customer IDs pass approval for supported transfer and COD modes',async()=>{
+ for(const identifier of ['customer_12345','IraqiCustomer-2026','12345','legacy:customer.9']){
+  const h=harness();h.enable();h.customerId(identifier);
+  const bank=await h.call();assert.equal(bank.status,200,identifier);
+  assert.equal(JSON.parse(bank.body).ok,true);
+  const cod=harness();cod.enable();cod.customerId(identifier);
+  cod.paymentType('cod_full');
+  assert.equal((await cod.call({mode:'full_cod'})).status,200,identifier);
+ }
+});
+test('empty, control-character, nonstring and oversized customer IDs fail closed',async()=>{
+ for(const identifier of ['', '   ', '\\nfoo', '\\u0000abc', 'x'.repeat(129), null, 123]){
+  const h=harness();h.enable();h.customerId(identifier);
+  const response=await h.call();
+  assert.equal(response.status,409,JSON.stringify(identifier));
+  assert.equal(JSON.parse(response.body).error,'ORDER_NOT_ELIGIBLE');
+  assert.deepEqual(h.queries(),['orders']);
+ }
 });
