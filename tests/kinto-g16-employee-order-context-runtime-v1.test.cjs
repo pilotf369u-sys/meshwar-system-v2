@@ -57,7 +57,7 @@ test('legacy TEXT customer ID is accepted while customer context never authorize
  assert.equal(body.canSendInstructions,false);
 });
 test('bad customer identifiers block order-context release',async()=>{
- for(const identifier of ['', '  ', '\\u0000', 'a'.repeat(129), 74, null]){
+ for(const identifier of ['', '  ', String.fromCharCode(0), 'a'.repeat(129), 74, null]){
   const r=boot();r.enable();r.setCustomerId(identifier);
   const result=await r.call();
   assert.equal(result.status,409,JSON.stringify(identifier));
