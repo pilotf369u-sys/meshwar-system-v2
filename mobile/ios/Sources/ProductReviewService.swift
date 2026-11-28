@@ -136,8 +136,20 @@ final class ProductReviewService: NSObject, WKNavigationDelegate, URLSessionTask
                   let title = item["title"] as? String,
                   let options = item["observedOptions"] as? [String: Any]
             else { self?.fail(); return }
-            let values = ["size", "color"].compactMap { options[$0] as? String }.filter { !$0.isEmpty }
-            self.finish(.success(ReviewedQuote(title: title, options: values.joined(separator: " • "), amount: amount, currency: currency)))
+            // The product may change while the pricing calculator runs. Read again
+            // before displaying the quote; never show a stale price or choice.
+            web.evaluateJavaScript(self.reader) { [weak self, weak web] value, error in
+                guard let self = self, let web = web, !web.isLoading, error == nil,
+                      let text = value as? String,
+                      let final = CapturedProduct.validate(text, expectedURL: self.page,
+                          currentURL: web.url?.absoluteString ?? "", source: self.source),
+                      let finalPrice = final["price"] as? NSNumber, finalPrice == price,
+                      let finalOptions = final["observedOptions"] as? NSDictionary,
+                      finalOptions == (options as NSDictionary),
+                      final["title"] as? String == title else { self?.fail(); return }
+                let values = ["size", "color"].compactMap { options[$0] as? String }.filter { !$0.isEmpty }
+                self.finish(.success(ReviewedQuote(title: title, options: values.joined(separator: " • "), amount: amount, currency: currency)))
+            }
         }
     }
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { fail() }
