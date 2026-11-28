@@ -8,6 +8,12 @@ const permittedOrigins=(Deno.env.get('KINTO_G16_ORDER_CONTEXT_ALLOWED_ORIGINS')|
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const allowedStates=new Set(['تمت الموافقة - بانتظار الدفع','تمت الموافقة']);
 const currencies=new Set(['IQD','USD']);
+// Production orders.customer_id is TEXT; accept existing non-UUID IDs while
+// denying empty, control-character or unusually long identifiers.
+function validCustomerId(v:unknown){
+ return typeof v==='string'&&v.length>0&&v.length<=128&&
+  v.trim().length>0&&!/[\u0000-\u001f\u007f]/.test(v);
+}
 function output(status:number,data:unknown,origin:string){
  const headers:Record<string,string>={'Content-Type':'application/json','Cache-Control':'no-store',
   'Vary':'Origin','Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info',
@@ -52,7 +58,7 @@ Deno.serve(async request=>{
   if(orderError)return output(503,{ok:false,error:'ORDER_READ_UNAVAILABLE'},origin);
   if(!order)return output(404,{ok:false,error:'ORDER_NOT_FOUND'},origin);
   const status=String(order.status||'').trim(),currency=String(order.currency||'').trim().toUpperCase();
-  if(!allowedStates.has(status)||!currencies.has(currency)||!uuid.test(String(order.customer_id||'')))
+  if(!allowedStates.has(status)||!currencies.has(currency)||!validCustomerId(order.customer_id))
    return output(409,{ok:false,error:'ORDER_NOT_ELIGIBLE'},origin);
   if(!['cod_full','product_paid_delivery_cod','paid_prepaid'].includes(String(order.delivery_payment_type||'')))
    return output(409,{ok:false,error:'PAYMENT_TYPE_NOT_SUPPORTED'},origin);
