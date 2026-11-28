@@ -124,7 +124,7 @@ test('production TEXT customer IDs pass approval for supported transfer and COD 
  }
 });
 test('empty, control-character, nonstring and oversized customer IDs fail closed',async()=>{
- for(const identifier of ['', '   ', '\\nfoo', '\\u0000abc', 'x'.repeat(129), null, 123]){
+ for(const identifier of ['', '   ', (String.fromCharCode(10)+'foo'), (String.fromCharCode(0)+'abc'), 'x'.repeat(129), null, 123]){
   const h=harness();h.enable();h.customerId(identifier);
   const response=await h.call();
   assert.equal(response.status,409,JSON.stringify(identifier));
