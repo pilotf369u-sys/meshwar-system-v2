@@ -32,7 +32,7 @@ final class KintoAppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
-final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDelegate {
+final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
     enum Mode { case account, retailer(URL), invoiceFixture }
     private let mode: Mode
     private var browser: WKWebView!
@@ -41,6 +41,9 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private var invoiceTestState = "initial"
 #endif
     private var productReview: ProductReviewService?
+    private var supportTapAt: TimeInterval = 0
+    private var supportTapPage: String?
+    private let supportWorld = WKContentWorld.world(name: "KINTO.SupportGesture")
     init(mode: Mode) { self.mode = mode; super.init(nibName: nil, bundle: nil) }
     required init?(coder: NSCoder) { fatalError("init(coder:) is unsupported") }
 
@@ -53,6 +56,20 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         case .account, .invoiceFixture:
             config.websiteDataStore = .default()
             config.preferences.javaScriptCanOpenWindowsAutomatically = true
+            if case .account = mode {
+                let script = """
+                (() => {
+                  document.addEventListener('click', e => {
+                    if (!e.isTrusted || !e.target || typeof e.target.closest !== 'function') return;
+                    if (!e.target.closest('#kinto-support-v1-panel .kinto-support-choice')) return;
+                    window.webkit.messageHandlers.kintoSupportTap.postMessage('support-tap');
+                  }, true);
+                })();
+                """
+                config.userContentController.add(self, contentWorld: supportWorld, name: "kintoSupportTap")
+                config.userContentController.addUserScript(WKUserScript(source: script,
+                    injectionTime: .atDocumentStart, forMainFrameOnly: true, in: supportWorld))
+            }
         case .retailer:
             let isolated = WKWebsiteDataStore.nonPersistent()
             store = isolated
@@ -88,6 +105,33 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "مراجعة المنتج", style: .plain, target: self, action: #selector(reviewProduct))
             browser.load(URLRequest(url: url))
         }
+    }
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard case .account = mode, message.name == "kintoSupportTap",
+              message.webView === browser, message.frameInfo.isMainFrame,
+              message.world == supportWorld, message.body as? String == "support-tap",
+              message.frameInfo.securityOrigin.protocol.lowercased() == "https",
+              message.frameInfo.securityOrigin.host.lowercased() == "shopkinto.com",
+              message.frameInfo.securityOrigin.port == 0 || message.frameInfo.securityOrigin.port == 443,
+              let current = browser.url?.absoluteString,
+              KintoURLPolicy.classify(current) == .account else { return }
+        supportTapAt = ProcessInfo.processInfo.systemUptime
+        supportTapPage = current
+    }
+
+    private func consumeSupportPopup(_ action: WKNavigationAction, url: URL) -> Bool {
+        guard case .account = mode, action.targetFrame == nil,
+              action.sourceFrame.isMainFrame,
+              action.sourceFrame.securityOrigin.protocol.lowercased() == "https",
+              action.sourceFrame.securityOrigin.host.lowercased() == "shopkinto.com",
+              action.sourceFrame.securityOrigin.port == 0 || action.sourceFrame.securityOrigin.port == 443,
+              KintoURLPolicy.isDirectWhatsApp(url.absoluteString),
+              let page = supportTapPage, browser.url?.absoluteString == page,
+              ProcessInfo.processInfo.systemUptime - supportTapAt < 1.5 else { return false }
+        supportTapAt = 0
+        supportTapPage = nil
+        return true
     }
 
     private func openRetailer(_ url: URL) {
@@ -157,6 +201,11 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         if let frame = action.targetFrame, !frame.isMainFrame { decisionHandler(.allow); return }
         let destination = KintoURLPolicy.classify(url.absoluteString)
         if action.targetFrame == nil {
+            if consumeSupportPopup(action, url: url) {
+                decisionHandler(.cancel)
+                openExternal(url)
+                return
+            }
             switch mode {
             case .account, .invoiceFixture:
                 let origin = action.sourceFrame.securityOrigin
@@ -224,6 +273,10 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
         case .account, .invoiceFixture: break
         }
         let origin = navigationAction.sourceFrame.securityOrigin
+        if let url = navigationAction.request.url, consumeSupportPopup(navigationAction, url: url) {
+            openExternal(url)
+            return nil
+        }
         if let url = navigationAction.request.url,
            KintoURLPolicy.canOpenRetailer(scheme: origin.protocol, host: origin.host, port: origin.port,
                                            mainFrame: navigationAction.sourceFrame.isMainFrame,
