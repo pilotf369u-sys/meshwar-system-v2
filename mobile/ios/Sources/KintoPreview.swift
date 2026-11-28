@@ -121,14 +121,13 @@ final class BrowserController: UIViewController, WKNavigationDelegate, WKUIDeleg
     }
 
     private func consumeSupportPopup(_ action: WKNavigationAction, url: URL) -> Bool {
-        guard case .account = mode, action.targetFrame == nil,
-              action.sourceFrame.isMainFrame,
-              action.sourceFrame.securityOrigin.protocol.lowercased() == "https",
-              action.sourceFrame.securityOrigin.host.lowercased() == "shopkinto.com",
-              action.sourceFrame.securityOrigin.port == 0 || action.sourceFrame.securityOrigin.port == 443,
-              KintoURLPolicy.isDirectWhatsApp(url.absoluteString),
-              let page = supportTapPage, browser.url?.absoluteString == page,
-              ProcessInfo.processInfo.systemUptime - supportTapAt < 1.5 else { return false }
+        let origin = action.sourceFrame.securityOrigin
+        guard case .account = mode,
+              KintoURLPolicy.canOpenSupportPopup(scheme: origin.protocol, host: origin.host,
+                  port: origin.port, mainFrame: action.sourceFrame.isMainFrame,
+                  popup: action.targetFrame == nil, destination: url.absoluteString,
+                  tapPage: supportTapPage, currentPage: browser.url?.absoluteString,
+                  age: ProcessInfo.processInfo.systemUptime - supportTapAt) else { return false }
         supportTapAt = 0
         supportTapPage = nil
         return true
