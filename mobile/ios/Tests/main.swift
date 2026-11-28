@@ -68,3 +68,24 @@ precondition(!KintoURLPolicy.isDirectWhatsApp("https://wa.me/12345"))
 precondition(!KintoURLPolicy.isDirectWhatsApp("https://wa.me/000000000"))
 precondition(!KintoURLPolicy.isDirectWhatsApp("https://wa.me/9647701234567#fragment"))
 print("Direct WhatsApp destination checks passed")
+
+func support(_ scheme: String = "https", _ host: String = "shopkinto.com", _ port: Int = 443,
+             _ main: Bool = true, _ popup: Bool = true, _ dest: String = "https://wa.me/9647701234567",
+             _ tap: String? = "https://shopkinto.com/global-stores.html",
+             _ page: String? = "https://shopkinto.com/global-stores.html", _ age: TimeInterval = 0.2) -> Bool {
+    KintoURLPolicy.canOpenSupportPopup(scheme: scheme, host: host, port: port, mainFrame: main,
+        popup: popup, destination: dest, tapPage: tap, currentPage: page, age: age)
+}
+precondition(support())
+precondition(!support("http"))
+precondition(!support("https", "shopkinto.com.evil.test"))
+precondition(!support("https", "shopkinto.com", 444))
+precondition(!support("https", "shopkinto.com", 443, false))
+precondition(!support("https", "shopkinto.com", 443, true, false))
+precondition(!support("https", "shopkinto.com", 443, true, true, "https://wa.me.evil.test/9647701234567"))
+precondition(!support("https", "shopkinto.com", 443, true, true, "https://wa.me/123"))
+precondition(!support("https", "shopkinto.com", 443, true, true, "https://wa.me/9647701234567", nil))
+precondition(!support("https", "shopkinto.com", 443, true, true, "https://wa.me/9647701234567", "https://shopkinto.com/a", "https://shopkinto.com/b"))
+precondition(!support("https", "shopkinto.com", 443, true, true, "https://wa.me/9647701234567", "https://shopkinto.com/a", "https://shopkinto.com/a", 1.5))
+precondition(!support("https", "shopkinto.com", 443, true, true, "https://wa.me/9647701234567", "https://shopkinto.com/a", "https://shopkinto.com/a", -1))
+print("Support popup policy checks passed")
